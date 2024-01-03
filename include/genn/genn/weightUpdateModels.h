@@ -6,10 +6,10 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define SET_SIM_CODE(SIM_CODE) virtual std::string getSimCode() const override{ return SIM_CODE; }
-#define SET_PRE_EVENT_CODE(EVENT_CODE) virtual std::string getPreEventCode() const override{ return EVENT_CODE; }
-#define SET_POST_EVENT_CODE(EVENT_CODE) virtual std::string getPostEventCode() const override{ return EVENT_CODE; }
-#define SET_LEARN_POST_CODE(LEARN_POST_CODE) virtual std::string getLearnPostCode() const override{ return LEARN_POST_CODE; }
+#define SET_PRE_SPIKE_SYN_CODE(CODE) virtual std::string getPreSpikeSynCode() const override{ return CODE; }
+#define SET_PRE_EVENT_SYN_CODE(CODE) virtual std::string getPreEventSynCode() const override{ return CODE; }
+#define SET_POST_EVENT_SYN_CODE(CODE) virtual std::string getPostEventSynCode() const override{ return CODE; }
+#define SET_POST_SPIKE_SYN_CODE(CODE) virtual std::string getPostSpikeSynCode() const override{ return CODE; }
 #define SET_SYNAPSE_DYNAMICS_CODE(SYNAPSE_DYNAMICS_CODE) virtual std::string getSynapseDynamicsCode() const override{ return SYNAPSE_DYNAMICS_CODE; }
 #define SET_PRE_EVENT_THRESHOLD_CONDITION_CODE(EVENT_THRESHOLD_CONDITION_CODE) virtual std::string getPreEventThresholdConditionCode() const override{ return EVENT_THRESHOLD_CONDITION_CODE; }
 #define SET_POST_EVENT_THRESHOLD_CONDITION_CODE(EVENT_THRESHOLD_CONDITION_CODE) virtual std::string getPostEventThresholdConditionCode() const override{ return EVENT_THRESHOLD_CONDITION_CODE; }
@@ -37,23 +37,23 @@ public:
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
-    //! Gets simulation code run when 'true' spikes are received
-    virtual std::string getSimCode() const{ return ""; }
+    //! Gets code run when a presynaptic spike is received at the synapse
+    virtual std::string getPreSpikeSynCode() const{ return ""; }
 
-    //! Gets code run when presynaptic events are received
+    //! Gets code run when a presynaptic spike-like event is received at the synapse
     /*! Presynaptic events are triggered for all presynaptic neurons where 
         the presynaptic event threshold condition is met*/
-    virtual std::string getPreEventCode() const{ return ""; }
+    virtual std::string getPreEventSynCode() const{ return ""; }
 
-    //! Gets code run when postsynaptic events are received
+    //! Gets code run when a postsynaptic spike-like event is received at the synapse
     /*! Postsynaptic events are triggered for all postsynaptic neurons where 
         the postsynaptic event threshold condition is met*/
-    virtual std::string getPostEventCode() const{ return ""; }
+    virtual std::string getPostEventSynCode() const{ return ""; }
 
-    //! Gets code to include in the learnSynapsesPost kernel/function.
+    //! Gets code run when a postsynaptic spike is received at the synapse
     /*! For examples when modelling STDP, this is where the effect of postsynaptic
         spikes which occur _after_ presynaptic spikes are applied. */
-    virtual std::string getLearnPostCode() const{ return ""; }
+    virtual std::string getPostSpikeSynCode() const{ return ""; }
 
     //! Gets code for synapse dynamics which are independent of spike detection
     virtual std::string getSynapseDynamicsCode() const{ return ""; }
@@ -64,14 +64,12 @@ public:
     //! Gets codes to test for postsynaptic events
     virtual std::string getPostEventThresholdConditionCode() const{ return ""; }
 
-    //! Gets code to be run once per spiking presynaptic
-    //! neuron before sim code is run on synapses
+    //! Gets code to be run once per spiking presynaptic neuron before sim code is run on synapses
     /*! This is typically for the code to update presynaptic variables. Postsynaptic
         and synapse variables are not accesible from within this code */
     virtual std::string getPreSpikeCode() const{ return ""; }
 
-    //! Gets code to be run once per spiking postsynaptic
-    //! neuron before learn post code is run on synapses
+    //! Gets code to be run once per spiking postsynaptic neuron before learn post code is run on synapses
     /*! This is typically for the code to update postsynaptic variables. Presynaptic
         and synapse variables are not accesible from within this code */
     virtual std::string getPostSpikeCode() const{ return ""; }
@@ -173,10 +171,10 @@ public:
     const std::unordered_map<std::string, Models::VarReference> &getPreNeuronVarReferences() const{ return m_PreNeuronVarReferences;  }
     const std::unordered_map<std::string, Models::VarReference> &getPostNeuronVarReferences() const{ return m_PostNeuronVarReferences;  }
     
-    const std::vector<Transpiler::Token> &getSimCodeTokens() const{ return m_SimCodeTokens; }
-    const std::vector<Transpiler::Token> &getPreEventCodeTokens() const{ return m_PreEventCodeTokens; }
-    const std::vector<Transpiler::Token> &getPostEventCodeTokens() const{ return m_PostEventCodeTokens; }
-    const std::vector<Transpiler::Token> &getPostLearnCodeTokens() const{ return m_PostLearnCodeTokens; }
+    const std::vector<Transpiler::Token> &getPreSpikeSynCodeTokens() const{ return m_PreSpikeSynCodeTokens; }
+    const std::vector<Transpiler::Token> &getPreEventSynCodeTokens() const{ return m_PreEventSynCodeTokens; }
+    const std::vector<Transpiler::Token> &getPostEventSynCodeTokens() const{ return m_PostEventSynCodeTokens; }
+    const std::vector<Transpiler::Token> &getPostSpikeSynCodeTokens() const{ return m_PostSpikeSynCodeTokens; }
     const std::vector<Transpiler::Token> &getSynapseDynamicsCodeTokens() const{ return m_SynapseDynamicsCodeTokens; }
     const std::vector<Transpiler::Token> &getPreEventThresholdCodeTokens() const{ return m_PreEventThresholdCodeTokens; }
     const std::vector<Transpiler::Token> &getPostEventThresholdCodeTokens() const{ return m_PostEventThresholdCodeTokens; }
@@ -191,10 +189,10 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::vector<Transpiler::Token> m_SimCodeTokens;
-    std::vector<Transpiler::Token> m_PreEventCodeTokens;
-    std::vector<Transpiler::Token> m_PostEventCodeTokens;
-    std::vector<Transpiler::Token> m_PostLearnCodeTokens;
+    std::vector<Transpiler::Token> m_PreSpikeSynCodeTokens;
+    std::vector<Transpiler::Token> m_PreEventSynCodeTokens;
+    std::vector<Transpiler::Token> m_PostEventSynCodeTokens;
+    std::vector<Transpiler::Token> m_PostSpikeSynCodeTokens;
     std::vector<Transpiler::Token> m_SynapseDynamicsCodeTokens;
     std::vector<Transpiler::Token> m_PreEventThresholdCodeTokens;
     std::vector<Transpiler::Token> m_PostEventThresholdCodeTokens;
@@ -232,7 +230,7 @@ public:
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
-    SET_SIM_CODE("addToPost(g);\n");
+    SET_PRE_SPIKE_SYN_CODE("addToPost(g);\n");
 };
 
 //----------------------------------------------------------------------------
@@ -257,7 +255,7 @@ public:
 
     SET_PARAMS({"g"});
 
-    SET_SIM_CODE("addToPost(g);\n");
+    SET_PRE_SPIKE_SYN_CODE("addToPost(g);\n");
 };
 
 //----------------------------------------------------------------------------
@@ -283,7 +281,7 @@ public:
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}, {"d", "uint8_t", VarAccess::READ_ONLY}});
 
-    SET_SIM_CODE("addToPostDelay(g, d);\n");
+    SET_PRE_SPIKE_SYN_CODE("addToPostDelay(g, d);\n");
 };
 
 //----------------------------------------------------------------------------
@@ -321,7 +319,7 @@ public:
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
     SET_PRE_EVENT_THRESHOLD_CONDITION_CODE("V_pre > Epre");
-    SET_PRE_EVENT_CODE("addToPost(fmax(0.0, g * tanh((V_pre - Epre) / Vslope) * dt));\n");
+    SET_PRE_EVENT_SYN_CODE("addToPost(fmax(0.0, g * tanh((V_pre - Epre) / Vslope) * dt));\n");
 };
 
 //----------------------------------------------------------------------------
@@ -390,7 +388,7 @@ public:
                 "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
     SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
 
-    SET_SIM_CODE(
+    SET_PRE_SPIKE_SYN_CODE(
         "addToPost(g);\n"
         "scalar dt = st_post - t - tauShift; \n"
         "scalar dg = 0;\n"
@@ -403,7 +401,7 @@ public:
         "else dg = - (off2) ; \n"
         "gRaw += dg; \n"
         "g=gMax/2 *(tanh(gSlope*(gRaw - (gMid)))+1); \n");
-    SET_LEARN_POST_CODE(
+    SET_POST_SPIKE_SYN_CODE(
         "scalar dt = t - st_pre - (tauShift); \n"
         "scalar dg =0; \n"
         "if (dt > lim0)  \n"

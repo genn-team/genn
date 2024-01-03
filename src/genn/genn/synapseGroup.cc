@@ -213,22 +213,22 @@ size_t SynapseGroup::getKernelSizeFlattened() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isPreSpikeRequired() const
 {
-    return !Utils::areTokensEmpty(getWUInitialiser().getSimCodeTokens());
+    return !Utils::areTokensEmpty(getWUInitialiser().getPreSpikeSynCodeTokens());
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isPreSpikeEventRequired() const
 {
-     return !Utils::areTokensEmpty(getWUInitialiser().getPreEventCodeTokens());
+     return !Utils::areTokensEmpty(getWUInitialiser().getPreEventSynCodeTokens());
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isPostSpikeRequired() const
 {
-     return !Utils::areTokensEmpty(getWUInitialiser().getPostLearnCodeTokens());
+     return !Utils::areTokensEmpty(getWUInitialiser().getPostSpikeSynCodeTokens());
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isPostSpikeEventRequired() const
 {
-     return !Utils::areTokensEmpty(getWUInitialiser().getPostEventCodeTokens());
+     return !Utils::areTokensEmpty(getWUInitialiser().getPostEventSynCodeTokens());
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isPreSpikeTimeRequired() const
@@ -374,7 +374,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         }
 
         // If the weight update model has code for postsynaptic-spike triggered updating, give an error
-        if(!Utils::areTokensEmpty(getWUInitialiser().getPostLearnCodeTokens())) {
+        if(!Utils::areTokensEmpty(getWUInitialiser().getPostSpikeSynCodeTokens())) {
             throw std::runtime_error("TOEPLITZ connectivity cannot be used for synapse groups with postsynaptic spike-triggered learning");
         }
 
@@ -515,10 +515,10 @@ void SynapseGroup::finalise(double dt)
     for(const auto &v : getWUInitialiser().getPreNeuronVarReferences()) {
         // If variable reference is referenced in synapse code, mark variable 
         // reference target as requiring queuing on source neuron group
-        if(Utils::isIdentifierReferenced(v.first, getWUInitialiser().getSimCodeTokens())
-           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPreEventCodeTokens())
-           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPostEventCodeTokens())
-           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPostLearnCodeTokens())
+        if(Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPreSpikeSynCodeTokens())
+           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPreEventSynCodeTokens())
+           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPostEventSynCodeTokens())
+           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPostSpikeSynCodeTokens())
            || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getSynapseDynamicsCodeTokens()))
         {
             getSrcNeuronGroup()->setVarQueueRequired(v.second.getVarName());
@@ -529,10 +529,10 @@ void SynapseGroup::finalise(double dt)
     for(const auto &v : getWUInitialiser().getPostNeuronVarReferences()) {
         // If variable reference is referenced in synapse code, mark variable 
         // reference target as requiring queuing on target neuron group
-        if(Utils::isIdentifierReferenced(v.first, getWUInitialiser().getSimCodeTokens())
-           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPreEventCodeTokens())
-           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPostEventCodeTokens())
-           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPostLearnCodeTokens())
+        if(Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPreSpikeSynCodeTokens())
+           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPreEventSynCodeTokens())
+           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPostEventSynCodeTokens())
+           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPostSpikeSynCodeTokens())
            || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getSynapseDynamicsCodeTokens()))
         {
             getTrgNeuronGroup()->setVarQueueRequired(v.second.getVarName());
@@ -681,18 +681,18 @@ bool SynapseGroup::canWUMPrePostUpdateBeFused(const NeuronGroup *ng) const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isDendriticDelayRequired() const
 {
-    return (Utils::isIdentifierReferenced("addToPostDelay", getWUInitialiser().getSimCodeTokens())
-            || Utils::isIdentifierReferenced("addToPostDelay", getWUInitialiser().getPreEventCodeTokens())
-            || Utils::isIdentifierReferenced("addToPostDelay", getWUInitialiser().getPostEventCodeTokens())
+    return (Utils::isIdentifierReferenced("addToPostDelay", getWUInitialiser().getPreSpikeSynCodeTokens())
+            || Utils::isIdentifierReferenced("addToPostDelay", getWUInitialiser().getPreEventSynCodeTokens())
+            || Utils::isIdentifierReferenced("addToPostDelay", getWUInitialiser().getPostEventSynCodeTokens())
             || Utils::isIdentifierReferenced("addToPostDelay", getWUInitialiser().getSynapseDynamicsCodeTokens()));
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isPresynapticOutputRequired() const
 {
-    return (Utils::isIdentifierReferenced("addToPre", getWUInitialiser().getSimCodeTokens())
-            || Utils::isIdentifierReferenced("addToPre", getWUInitialiser().getPreEventCodeTokens())
-            || Utils::isIdentifierReferenced("addToPre", getWUInitialiser().getPostEventCodeTokens())
-            || Utils::isIdentifierReferenced("addToPre", getWUInitialiser().getPostLearnCodeTokens())
+    return (Utils::isIdentifierReferenced("addToPre", getWUInitialiser().getPreSpikeSynCodeTokens())
+            || Utils::isIdentifierReferenced("addToPre", getWUInitialiser().getPreEventSynCodeTokens())
+            || Utils::isIdentifierReferenced("addToPre", getWUInitialiser().getPostEventSynCodeTokens())
+            || Utils::isIdentifierReferenced("addToPre", getWUInitialiser().getPostSpikeSynCodeTokens())
             || Utils::isIdentifierReferenced("addToPre", getWUInitialiser().getSynapseDynamicsCodeTokens()));
 }
 //----------------------------------------------------------------------------
@@ -702,9 +702,9 @@ bool SynapseGroup::isPostsynapticOutputRequired() const
         return true;
     }
     else {
-        return (Utils::isIdentifierReferenced("addToPost", getWUInitialiser().getSimCodeTokens())
-                || Utils::isIdentifierReferenced("addToPost", getWUInitialiser().getPreEventCodeTokens())
-                || Utils::isIdentifierReferenced("addToPost", getWUInitialiser().getPostEventCodeTokens())
+        return (Utils::isIdentifierReferenced("addToPost", getWUInitialiser().getPreSpikeSynCodeTokens())
+                || Utils::isIdentifierReferenced("addToPost", getWUInitialiser().getPreEventSynCodeTokens())
+                || Utils::isIdentifierReferenced("addToPost", getWUInitialiser().getPostEventSynCodeTokens())
                 || Utils::isIdentifierReferenced("addToPost", getWUInitialiser().getSynapseDynamicsCodeTokens()));
     }
 }
@@ -788,27 +788,27 @@ bool SynapseGroup::isSparseConnectivityInitRequired() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isPreTimeReferenced(const std::string &identifier) const
 {
-    return (Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPreEventCodeTokens())
-            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostEventCodeTokens())
+    return (Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPreEventSynCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostEventSynCodeTokens())
             || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPreEventThresholdCodeTokens())
             || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostEventThresholdCodeTokens())
-            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostLearnCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostSpikeSynCodeTokens())
             || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPreDynamicsCodeTokens())
             || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPreSpikeCodeTokens())
-            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getSimCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPreSpikeSynCodeTokens())
             || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getSynapseDynamicsCodeTokens()));
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isPostTimeReferenced(const std::string &identifier) const
 {
-    return (Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPreEventCodeTokens())
-            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostEventCodeTokens())
+    return (Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPreEventSynCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostEventSynCodeTokens())
             || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPreEventThresholdCodeTokens())
             || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostEventThresholdCodeTokens())
-            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostLearnCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostSpikeSynCodeTokens())
             || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostDynamicsCodeTokens())
             || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostSpikeCodeTokens())
-            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getSimCodeTokens())
+            || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPreSpikeSynCodeTokens())
             || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getSynapseDynamicsCodeTokens()));
 }
 //----------------------------------------------------------------------------
