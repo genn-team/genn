@@ -92,7 +92,7 @@ def test_custom_update(make_model, backend, precision, batch_size):
         ss_pop, n_pop,
         init_weight_update(weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0}),
         init_postsynaptic("DeltaCurr"),
-        init_sparse_connectivity("FixedNumberPostWithReplacement", {"rowLength": 10}))
+        init_sparse_connectivity("FixedNumberPostWithReplacement", {"num": 10}))
     
     conv_params = {"conv_kh": 3, "conv_kw": 3,
                    "conv_ih": 10, "conv_iw": 10, "conv_ic": 1,

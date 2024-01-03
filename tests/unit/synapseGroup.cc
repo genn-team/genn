@@ -776,8 +776,8 @@ TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
-    ParamValues fixedNumberPostParamsA{{"rowLength", 4}};
-    ParamValues fixedNumberPostParamsB{{"rowLength", 8}};
+    ParamValues fixedNumberPostParamsA{{"num", 4}};
+    ParamValues fixedNumberPostParamsB{{"num", 8}};
     VarValues staticPulseVarVals{{"g", 0.1}};
     auto *sg0 = model.addSynapsePopulation(
         "Synapses0", SynapseMatrixType::SPARSE,
@@ -829,7 +829,7 @@ TEST(SynapseGroup, InitCompareWUSynapseDynamicsPostLearn)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
-    ParamValues fixedNumberPostParams{{"rowLength", 8}};
+    ParamValues fixedNumberPostParams{{"num", 8}};
     VarValues staticPulseVarVals{{"g", 0.1}};
     auto* sg0 = model.addSynapsePopulation(
         "Synapses0", SynapseMatrixType::SPARSE,

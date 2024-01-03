@@ -236,7 +236,7 @@ public:
 
     SET_ROW_BUILD_CODE(
         "scalar x = 0.0;\n"
-        "for(unsigned int c = (unsigned int)rowLength; c != 0; c--) {\n"
+        "for(unsigned int c = num; c != 0; c--) {\n"
         "   const scalar u = gennrand_uniform();\n"
         "   x += (1.0 - x) * (1.0 - pow(u, 1.0 / (scalar)c));\n"
         "   unsigned int postIdx = (unsigned int)(x * num_post);\n"
@@ -244,12 +244,12 @@ public:
         "   addSynapse(postIdx + id_post_begin);\n"
         "}\n");
 
-    SET_PARAMS({{"rowLength", "unsigned int"}});
+    SET_PARAMS({{"num", "unsigned int"}});
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int, unsigned int, const ParamValues &pars)
         {
-            return pars.at("rowLength").cast<unsigned int>();
+            return pars.at("num").cast<unsigned int>();
         });
 
     SET_CALC_MAX_COL_LENGTH_FUNC(
@@ -261,7 +261,7 @@ public:
             // In each row the number of connections that end up in a column are distributed
             // binomially with n=numConnections and p=1.0 / numPost. As there are numPre rows the total number
             // of connections that end up in each column are distributed binomially with n=numConnections * numPre and p=1.0 / numPost
-            return binomialInverseCDF(quantile, pars.at("rowLength").cast<unsigned int>() * numPre, 1.0 / (double)numPost);
+            return binomialInverseCDF(quantile, pars.at("num").cast<unsigned int>() * numPre, 1.0 / (double)numPost);
         });
 };
 
@@ -291,7 +291,7 @@ public:
         "   addSynapse(postIdx + id_post_begin);\n"
         "}\n");
 
-    SET_PARAMS({{"total", "unsigned int"}});
+    SET_PARAMS({{"num", "unsigned int"}});
     SET_EXTRA_GLOBAL_PARAMS({{"preCalcRowLength", "uint16_t*"}})
 
     SET_HOST_INIT_CODE(
@@ -300,7 +300,7 @@ public:
         "// Calculate row lengths\n"
         "const size_t numPostPerThread = (num_post + num_threads - 1) / num_threads;\n"
         "const size_t leftOverNeurons = num_post % numPostPerThread;\n"
-        "size_t remainingConnections = total;\n"
+        "size_t remainingConnections = num;\n"
         "size_t matrixSize = (size_t)num_pre * (size_t)num_post;\n"
         "uint16_t *subRowLengths = preCalcRowLength;\n"
         "// Loop through rows\n"
@@ -340,7 +340,7 @@ public:
             // There are numConnections connections amongst the numPre*numPost possible connections.
             // Each of the numConnections connections has an independent p=float(numPost)/(numPre*numPost)
             // probability of being selected and the number of synapses in the sub-row is binomially distributed
-            return binomialInverseCDF(quantile, pars.at("total").cast<unsigned int>(), (double)numPost / ((double)numPre * (double)numPost));
+            return binomialInverseCDF(quantile, pars.at("num").cast<unsigned int>(), (double)numPost / ((double)numPre * (double)numPost));
         });
 
     SET_CALC_MAX_COL_LENGTH_FUNC(
@@ -352,7 +352,7 @@ public:
             // There are numConnections connections amongst the numPre*numPost possible connections.
             // Each of the numConnections connections has an independent p=float(numPre)/(numPre*numPost)
             // probability of being selected and the number of synapses in the sub-row is binomially distributed
-            return binomialInverseCDF(quantile, pars.at("total").cast<unsigned int>(), (double)numPre / ((double)numPre * (double)numPost));
+            return binomialInverseCDF(quantile, pars.at("num").cast<unsigned int>(), (double)numPre / ((double)numPre * (double)numPost));
         });
 };
 
@@ -367,12 +367,12 @@ public:
     DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedNumberPreWithReplacement);
 
     SET_COL_BUILD_CODE(
-        "for(unsigned int c = colLength; c != 0; c--) {\n"
+        "for(unsigned int c = num; c != 0; c--) {\n"
         "   const unsigned int idPre = (unsigned int)ceil(gennrand_uniform() * num_pre) - 1;\n"
         "   addSynapse(idPre + id_pre_begin);\n"
         "}\n");
  
-    SET_PARAMS({{"colLength", "unsigned int"}});
+    SET_PARAMS({{"num", "unsigned int"}});
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int numPre, unsigned int numPost, const ParamValues &pars)
@@ -383,13 +383,13 @@ public:
             // In each column the number of connections that end up in a row are distributed
             // binomially with n=numConnections and p=1.0 / numPre. As there are numPost columns the total number
             // of connections that end up in each row are distributed binomially with n=numConnections * numPost and p=1.0 / numPre
-            return binomialInverseCDF(quantile, pars.at("colLength").cast<unsigned int>() * numPost, 1.0 / (double)numPre);
+            return binomialInverseCDF(quantile, pars.at("num").cast<unsigned int>() * numPost, 1.0 / (double)numPre);
         });
 
     SET_CALC_MAX_COL_LENGTH_FUNC(
         [](unsigned int, unsigned int, const ParamValues &pars)
         {
-            return pars.at("colLength").cast<unsigned int>();
+            return pars.at("num").cast<unsigned int>();
         });
 };
 

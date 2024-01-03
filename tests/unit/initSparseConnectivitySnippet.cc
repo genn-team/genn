@@ -105,8 +105,8 @@ TEST(InitSparseConnectivitySnippet, CompareVarInitParameters)
 
 TEST(InitSparseConnectivitySnippet, CompareUnusedParameters)
 {
-    ParamValues fixedNumberParamsA{{"total", 1000}};
-    ParamValues fixedNumberParamsB{{"total", 1200}};
+    ParamValues fixedNumberParamsA{{"num", 1000}};
+    ParamValues fixedNumberParamsB{{"num", 1200}};
 
     auto connectivityInit0 = initConnectivity<FixedNumberTotalWithReplacement>(fixedNumberParamsA);
     auto connectivityInit1 = initConnectivity<FixedNumberTotalWithReplacement>(fixedNumberParamsB);
