@@ -305,11 +305,11 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                               env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_syn", 0}, indexType.addConst(), errorHandler);
 
                               // Add types for variables and variable references accessible within loop
-                              // **TODO** filter
+                              // **NOTE** postsynaptic variables and variable references are read-only as many rows will access simultaneously
                               addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getVars(), errorHandler);
-                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getPostVars(), errorHandler);
+                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getPostVars(), errorHandler, true);
                               addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getVarRefs(), errorHandler);
-                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getPostVarRefs(), errorHandler);
+                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getPostVarRefs(), errorHandler, true);
                           },
                           [batchSize, &backend, &indexType, &indexTypeName, &removeSynapseStream, this](auto &env, auto generateBody)
                           {

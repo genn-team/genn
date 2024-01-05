@@ -89,12 +89,12 @@ private:
     
     template<typename V>
     void addTypes(GeNN::Transpiler::TypeChecker::EnvironmentBase &env, const std::vector<V> &vars, 
-                  GeNN::Transpiler::ErrorHandlerBase &errorHandler)
+                  GeNN::Transpiler::ErrorHandlerBase &errorHandler, bool readOnly = false)
     {
         // Loop through variables
         for(const auto &v : vars) {
             const auto resolvedType = v.type.resolve(getTypeContext());
-            const auto qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
+            const auto qualifiedType = (readOnly || (v.access & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
             env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, v.name, 0}, qualifiedType, errorHandler);
         }
     }

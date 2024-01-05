@@ -141,7 +141,7 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
             [&sg, batchSize](VarAccess a, const std::string&) 
             { 
                 return sg.getKernelVarIndex(batchSize, getVarAccessDim(a), "$(id_kernel)");
-            });
+            }, "", true);
     }
 
 
