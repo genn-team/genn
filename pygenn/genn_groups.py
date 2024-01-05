@@ -231,6 +231,9 @@ class NeuronGroupMixin(GroupMixin):
         self.extra_global_params = prepare_egps(
             self.neuron_model.get_extra_global_params(), self)
 
+        self.spike_times = None
+        self.prev_spike_times = None
+
         # **YUCK** in order to ensure model stays in scope
         # as long as the group, keep Python reference
         self._neuron_model = self.neuron_model
@@ -241,11 +244,28 @@ class NeuronGroupMixin(GroupMixin):
 
     def load(self, num_recording_timesteps):
         """Loads neuron group"""
-        # If spike data is present on the host
         batch_size = self._model.batch_size
-
-        # Load neuron state variables
         delay_group = self if self.num_delay_slots > 1 else None
+        
+        # If spike time is available and accessible on host, get array
+        if (self.spike_time_required 
+            and (self.spike_time_location & VarLocation.HOST)):
+            self.spike_times = self._get_array(
+                "sT", self._model.time_precision,
+                _get_neuron_var_shape(
+                    VarAccessDim.ELEMENT | VarAccessDim.BATCH,
+                    self.num_neurons, self._model.batch_size, delay_group))
+        
+        # If previos spike time is availabel and accessible on host, get array
+        if (self.prev_spike_time_required
+            and (self.prev_spike_time_location & VarLocation.HOST)):
+            self.prev_spike_times = self._get_array(
+                "prevST", self._model.time_precision,
+                _get_neuron_var_shape(
+                    VarAccessDim.ELEMENT | VarAccessDim.BATCH,
+                    self.num_neurons, self._model.batch_size, delay_group))
+                    
+        # Load neuron state variables
         self._load_vars(
             self.neuron_model.get_vars(),
             lambda v, d: _get_neuron_var_shape(
@@ -261,6 +281,9 @@ class NeuronGroupMixin(GroupMixin):
     def unload(self):
         self._unload_vars()
         self._unload_egps()
+
+        self.spike_times = None
+        self.prev_spike_times = None
 
     def load_init_egps(self):
         # Load any egps used for variable initialisation

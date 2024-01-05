@@ -303,6 +303,8 @@ PYBIND11_MODULE(genn, m)
         .value("BATCH", VarAccessDim::BATCH)
 
         .def("__and__", [](VarAccessDim a, VarAccessDim b){ return a & b; }, 
+             pybind11::is_operator())
+        .def("__or__", [](VarAccessDim a, VarAccessDim b){ return a | b; }, 
              pybind11::is_operator());
 
     //! Supported combinations of access mode and dimension for neuron variables
@@ -561,10 +563,14 @@ PYBIND11_MODULE(genn, m)
         .def_property_readonly("params", &NeuronGroup::getParams)
         .def_property_readonly("var_initialisers", &NeuronGroup::getVarInitialisers)
         .def_property_readonly("num_delay_slots", &NeuronGroup::getNumDelaySlots)
-        
+        .def_property_readonly("spike_time_required", &NeuronGroup::isSpikeTimeRequired)
+        .def_property_readonly("prev_spike_time_required", &NeuronGroup::isPrevSpikeTimeRequired)
+
         .def_property("spike_recording_enabled", &NeuronGroup::isSpikeRecordingEnabled, &NeuronGroup::setSpikeRecordingEnabled)
         .def_property("spike_event_recording_enabled", &NeuronGroup::isSpikeEventRecordingEnabled, &NeuronGroup::setSpikeEventRecordingEnabled)
-        
+        .def_property("spike_time_location", &NeuronGroup::getSpikeTimeLocation, &NeuronGroup::setSpikeTimeLocation)
+        .def_property("prev_spike_time_location", &NeuronGroup::getPrevSpikeTimeLocation, &NeuronGroup::setPrevSpikeTimeLocation)
+
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
@@ -572,6 +578,7 @@ PYBIND11_MODULE(genn, m)
              pybind11::arg("param_name"), pybind11::arg("dynamic") = true)
         .def("set_var_location", &NeuronGroup::setVarLocation)
         .def("get_var_location", pybind11::overload_cast<const std::string&>(&NeuronGroup::getVarLocation, pybind11::const_))
+
         // **NOTE** we use the 'publicist' pattern to expose some protected methods
         .def("_is_var_queue_required", &NeuronGroupInternal::isVarQueueRequired);
     
