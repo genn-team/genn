@@ -55,8 +55,8 @@ def test_sim(make_model, backend, precision, batch_size):
         pushpostUniformToDevice();
         pushpostNormalToDevice();
         """,
-        pre_var_name_types=[("preUniform", "scalar"), ("preNormal", "scalar")],
-        post_var_name_types=[("postUniform", "scalar"), ("postNormal", "scalar")])
+        pre_vars=[("preUniform", "scalar"), ("preNormal", "scalar")],
+        post_vars=[("postUniform", "scalar"), ("postNormal", "scalar")])
 
     model = make_model(precision, "test_sim", backend=backend)
     model.batch_size = batch_size

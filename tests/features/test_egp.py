@@ -3,7 +3,6 @@ import pytest
 from pygenn import types
 
 from pygenn import (create_current_source_model, 
-                    create_custom_connectivity_update_model,
                     create_custom_update_model,
                     create_egp_ref,
                     create_neuron_model,

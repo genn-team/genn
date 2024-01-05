@@ -82,8 +82,8 @@ def test_dynamic_param(make_model, backend, precision):
         pushxHostToDevice();
         """,
         params=["input"],
-        pre_var_name_types=[("xDevice", "scalar"), ("xHost", "scalar"),
-                            ("shift", "scalar")])
+        pre_vars=[("xDevice", "scalar"), ("xHost", "scalar"),
+                  ("shift", "scalar")])
 
     model = make_model(precision, "test_dynamic_param", backend=backend)
     model.dt = 1.0

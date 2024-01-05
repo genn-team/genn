@@ -918,7 +918,7 @@ def create_model(class_name, base, params, param_names, derived_params,
     return type(class_name, (base,), body)()
 
 def create_neuron_model(class_name, params=None, param_names=None,
-                        var_name_types=None, derived_params=None,
+                        vars=None, var_name_types=None, derived_params=None,
                         sim_code=None, threshold_condition_code=None,
                         reset_code=None, extra_global_params=None,
                         additional_input_vars=None,
@@ -937,7 +937,7 @@ def create_neuron_model(class_name, params=None, param_names=None,
     Keyword args:
     param_names                 --  list of strings with param names
                                     of the model
-    var_name_types              --  list of pairs of strings with varible names
+    vars                        --  list of pairs of strings with varible names
                                     and types of the model
     derived_params              --  list of pairs, where the first member
                                     is string with name of the derived
@@ -955,6 +955,11 @@ def create_neuron_model(class_name, params=None, param_names=None,
                                     logic to be generated?
     """
     body = {}
+    
+    if var_name_types is not None:
+        warn("The 'var_name_types' parameter has been renamed to 'vars' "
+             "and will be removed in future", FutureWarning)
+        vars = var_name_types
 
     if sim_code is not None:
         body["get_sim_code"] =\
@@ -974,9 +979,9 @@ def create_neuron_model(class_name, params=None, param_names=None,
             lambda self: [ParamVal(a[0], a[1], NumericValue(a[2]))
                           for a in additional_input_vars]
 
-    if var_name_types is not None:
+    if vars is not None:
         body["get_vars"] = \
-            lambda self: [Var(*vn) for vn in var_name_types]
+            lambda self: [Var(*vn) for vn in vars]
 
     if is_auto_refractory_required is not None:
         body["is_auto_refractory_required"] = \
@@ -987,9 +992,10 @@ def create_neuron_model(class_name, params=None, param_names=None,
 
 
 def create_postsynaptic_model(class_name, params=None, param_names=None,
-                              var_name_types=None, neuron_var_refs=None,
-                              derived_params=None, sim_code=None, 
-                              decay_code=None, apply_input_code=None, 
+                              vars=None, var_name_types=None, 
+                              neuron_var_refs=None, derived_params=None,
+                              sim_code=None, decay_code=None,
+                              apply_input_code=None,
                               extra_global_params=None):
     """This helper function creates a custom PostsynapticModel class.
     See also:
@@ -1004,7 +1010,7 @@ def create_postsynaptic_model(class_name, params=None, param_names=None,
 
     Keyword args:
     param_names         --  list of strings with param names of the model
-    var_name_types      --  list of pairs of strings with varible names and
+    vars                --  list of pairs of strings with varible names and
                             types of the model
     neuron_var_refs     --  references to neuron variables
     derived_params      --  list of pairs, where the first member is string
@@ -1022,13 +1028,18 @@ def create_postsynaptic_model(class_name, params=None, param_names=None,
                            "'decay_code' and 'apply_code' code strings is no "
                            "longer supported. Please provide 'sim_code' using "
                            "the injectCurrent(X) function to provide input.")
+    if var_name_types is not None:
+        warn("The 'var_name_types' parameter has been renamed to 'vars' "
+             "and will be removed in future", FutureWarning)
+        vars = var_name_types
+
     if sim_code is not None:
         body["get_sim_code"] =\
             lambda self: dedent(upgrade_code_string(sim_code, class_name))
 
-    if var_name_types is not None:
+    if vars is not None:
         body["get_vars"] = \
-            lambda self: [Var(*vn) for vn in var_name_types]
+            lambda self: [Var(*vn) for vn in vars]
     
     if neuron_var_refs is not None:
         body["get_neuron_var_refs"] =\
@@ -1040,8 +1051,9 @@ def create_postsynaptic_model(class_name, params=None, param_names=None,
 
 
 def create_weight_update_model(class_name, params=None, param_names=None,
-                               var_name_types=None, pre_var_name_types=None,
-                               post_var_name_types=None, 
+                               vars=None, var_name_types=None, 
+                               pre_vars=None, pre_var_name_types=None,
+                               post_vars=None, post_var_name_types=None, 
                                pre_neuron_var_refs=None,
                                post_neuron_var_refs=None,
                                derived_params=None, sim_code=None,
@@ -1070,12 +1082,12 @@ def create_weight_update_model(class_name, params=None, param_names=None,
     Keyword args:
     param_names                         --  list of strings with param names of
                                             the model
-    var_name_types                      --  list of pairs of strings with variable
+    vars                                --  list of pairs of strings with variable
                                             names and types of the model
-    pre_var_name_types                  --  list of pairs of strings with
+    pre_vars                            --  list of pairs of strings with
                                             presynaptic variable names and
                                             types of the model
-    post_var_name_types                 --  list of pairs of strings with
+    post_vars                           --  list of pairs of strings with
                                             postsynaptic variable names and
                                             types of the model
     pre_neuron_var_refs                 --  references to presynaptic neuron variables
@@ -1125,7 +1137,19 @@ def create_weight_update_model(class_name, params=None, param_names=None,
              "renamed to 'pre_event_threshold_condition_code' and will "
              "be removed in future", FutureWarning)
         pre_event_threshold_condition_code = event_threshold_condition_code
-
+    if var_name_types is not None:
+        warn("The 'var_name_types' parameter has been renamed to 'vars' "
+             "and will be removed in future", FutureWarning)
+        vars = var_name_types
+    if pre_var_name_types is not None:
+        warn("The 'pre_var_name_types' parameter has been renamed to 'pre_vars' "
+             "and will be removed in future", FutureWarning)
+        pre_vars = pre_var_name_types
+    if post_var_name_types is not None:
+        warn("The 'post_var_name_types' parameter has been renamed to 'post_vars' "
+             "and will be removed in future", FutureWarning)
+        post_vars = post_var_name_types
+        
     if pre_spike_syn_code is not None:
         body["get_pre_spike_syn_code"] =\
             lambda self: dedent(upgrade_code_string(pre_spike_syn_code,
@@ -1181,17 +1205,17 @@ def create_weight_update_model(class_name, params=None, param_names=None,
             lambda self: dedent(upgrade_code_string(post_dynamics_code,
                                                     class_name))
     
-    if var_name_types is not None:
+    if vars is not None:
         body["get_vars"] = \
-            lambda self: [Var(*vn) for vn in var_name_types]
+            lambda self: [Var(*vn) for vn in vars]
     
-    if pre_var_name_types is not None:
+    if pre_vars is not None:
         body["get_pre_vars"] = \
-            lambda self: [Var(*vn) for vn in pre_var_name_types]
+            lambda self: [Var(*vn) for vn in post_vars]
 
-    if post_var_name_types is not None:
+    if post_vars is not None:
         body["get_post_vars"] = \
-            lambda self: [Var(*vn) for vn in post_var_name_types]
+            lambda self: [Var(*vn) for vn in post_vars]
     
     if pre_neuron_var_refs is not None:
         body["get_pre_neuron_var_refs"] =\
@@ -1207,9 +1231,9 @@ def create_weight_update_model(class_name, params=None, param_names=None,
 
 
 def create_current_source_model(class_name, params=None, param_names=None,
-                                var_name_types=None, neuron_var_refs=None,
-                                derived_params=None, injection_code=None,
-                                extra_global_params=None):
+                                vars=None, var_name_types=None,
+                                neuron_var_refs=None, derived_params=None,
+                                injection_code=None, extra_global_params=None):
     """This helper function creates a custom NeuronModel class.
     See also:
     create_neuron_model
@@ -1223,7 +1247,7 @@ def create_current_source_model(class_name, params=None, param_names=None,
 
     Keyword args:
     param_names         --  list of strings with param names of the model
-    var_name_types      --  list of pairs of strings with varible names and
+    vars                --  list of pairs of strings with varible names and
                             types of the model
     neuron_var_refs     --  references to neuron variables
     derived_params      --  list of pairs, where the first member is string
@@ -1234,15 +1258,19 @@ def create_current_source_model(class_name, params=None, param_names=None,
                             additional parameters
     """
     body = {}
+    if var_name_types is not None:
+        warn("The 'var_name_types' parameter has been renamed to 'vars' "
+             "and will be removed in future", FutureWarning)
+        vars = var_name_types
 
     if injection_code is not None:
         body["get_injection_code"] =\
             lambda self: dedent(upgrade_code_string(injection_code,
                                                     class_name))
 
-    if var_name_types is not None:
+    if vars is not None:
         body["get_vars"] = \
-            lambda self: [Var(*vn) for vn in var_name_types]
+            lambda self: [Var(*vn) for vn in vars]
     
     if neuron_var_refs is not None:
         body["get_neuron_var_refs"] =\
@@ -1254,9 +1282,9 @@ def create_current_source_model(class_name, params=None, param_names=None,
 
 
 def create_custom_update_model(class_name, params=None, param_names=None, 
-                               var_name_types=None, derived_params=None, 
-                               var_refs=None, update_code=None, 
-                               extra_global_params=None,
+                               vars=None, var_name_types=None,
+                               derived_params=None, var_refs=None, 
+                               update_code=None, extra_global_params=None,
                                extra_global_param_refs=None):
     """This helper function creates a custom CustomUpdate class.
     See also:
@@ -1286,6 +1314,10 @@ def create_custom_update_model(class_name, params=None, param_names=None,
     
     """
     body = {}
+    if var_name_types is not None:
+        warn("The 'var_name_types' parameter has been renamed to 'vars' "
+             "and will be removed in future", FutureWarning)
+        vars = var_name_types
 
     if update_code is not None:
         body["get_update_code"] =\
@@ -1294,9 +1326,9 @@ def create_custom_update_model(class_name, params=None, param_names=None,
     if var_refs is not None:
         body["get_var_refs"] = lambda self: [VarRef(*v) for v in var_refs]
 
-    if var_name_types is not None:
+    if vars is not None:
         body["get_vars"] = \
-            lambda self: [CustomUpdateVar(*vn) for vn in var_name_types]
+            lambda self: [CustomUpdateVar(*vn) for vn in vars]
 
     if extra_global_param_refs is not None:
         body["get_extra_global_param_refs"] =\
@@ -1306,12 +1338,10 @@ def create_custom_update_model(class_name, params=None, param_names=None,
                         param_names, derived_params,
                         extra_global_params, body)
 
-def create_custom_connectivity_update_model(class_name, params=None, 
-                                            param_names=None,
-                                            var_name_types=None,
-                                            pre_var_name_types=None,
-                                            post_var_name_types=None,
-                                            derived_params=None,
+def create_custom_connectivity_update_model(class_name, params=None,
+                                            vars=None, pre_vars=None,
+                                            post_vars=None,
+                                            derived_params=None, 
                                             var_refs=None,
                                             pre_var_refs=None,
                                             post_var_refs=None,
@@ -1331,18 +1361,23 @@ def create_custom_connectivity_update_model(class_name, params=None,
 
     Keyword args:
     param_names         --  list of strings with param names of the model
-    var_name_types      --  list of tuples of strings with variable names and
+    vars                --  list of tuples of strings with variable names and
                             types of the variable
-    pre_var_name_types  --  list of tuples of strings with variable names and
-                            types of the variable
-    var_name_types      --  list of tuples of strings with variable names and
-                            types of the variable
+    pre_vars            --  list of tuples of strings with variable names and
+                            types of presynaptic  variable
+    post_vars           --  list of tuples of strings with variable names and
+                            types of postsynaptic variable
     derived_params      --  list of tuples, where the first member is string
                             with name of the derived parameter and the second
                             should be a functor returned by create_dpf_class
     var_refs            --  list of tuples of strings with variable names and
-                            types of variabled variable
-    update_code         --  string with the current injection code
+                            types of synaptic variable references
+    pre_var_refs        --  list of tuples of strings with variable names and
+                            types of presynaptic variable references
+    post_var_refs       --  list of tuples of strings with variable names and
+                            types of postsynaptic variable references
+    row_update_code     --  string with per-row update code
+    host_update_code    --  string with host update code
     extra_global_params --  list of pairs of strings with names and types of
                             additional parameters
     """
@@ -1358,17 +1393,17 @@ def create_custom_connectivity_update_model(class_name, params=None,
             lambda self: dedent(upgrade_code_string(host_update_code,
                                                     class_name))
 
-    if var_name_types is not None:
+    if vars is not None:
         body["get_vars"] = \
-            lambda self: [Var(*vn) for vn in var_name_types]
+            lambda self: [Var(*vn) for vn in vars]
 
-    if pre_var_name_types is not None:
+    if pre_vars is not None:
         body["get_pre_vars"] = \
-            lambda self: [Var(*vn) for vn in pre_var_name_types]
+            lambda self: [Var(*vn) for vn in pre_vars]
 
-    if post_var_name_types is not None:
+    if post_vars is not None:
         body["get_post_vars"] = \
-            lambda self: [Var(*vn) for vn in post_var_name_types]
+            lambda self: [Var(*vn) for vn in post_vars]
 
     if var_refs is not None:
         body["get_var_refs"] = lambda self: [VarRef(*v) for v in var_refs]
@@ -1382,7 +1417,7 @@ def create_custom_connectivity_update_model(class_name, params=None,
             lambda self: [VarRef(*v) for v in post_var_refs]
 
     return create_model(class_name, CustomConnectivityUpdateModelBase,
-                        params, param_names, derived_params, 
+                        params, None, derived_params, 
                         extra_global_params, body)
 
 

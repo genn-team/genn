@@ -109,7 +109,7 @@ def test_custom_connectivity_update(make_model, backend, precision, batch_size):
     # Custom connectivity update which removes synapses on diagonal
     remove_synapse_model = create_custom_connectivity_update_model(
         "remove_synapse",
-        var_name_types=[("a", "scalar")],
+        vars=[("a", "scalar")],
         row_update_code=
         """
         for_each_synapse {
@@ -153,7 +153,7 @@ def test_custom_connectivity_update(make_model, backend, precision, batch_size):
     # based on presynaptic variable set in host code
     remove_synapse_host_pre_var_model = create_custom_connectivity_update_model(
         "remove_synapse_host_pre_var",
-        pre_var_name_types=[("postInd", "unsigned int")],
+        pre_vars=[("postInd", "unsigned int")],
         row_update_code=
         """
         for_each_synapse {
