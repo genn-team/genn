@@ -332,8 +332,8 @@ if args.kernel_profiling:
 if args.save_data:
     # Loop through populations and write spike data to CSV
     for n, pop in neuron_populations.items():
-        np.savetxt(f"{n}_spikes.csv", np.vstack(pop.spike_recording_data[0]).T,
-                   delimiter=",", fmt=("%f", "%d"), header="Times (ms), Neuron ID")
+        np.savetxt(f"{n}_spikes.csv", np.column_stack(pop.spike_recording_data[0]),
+                   delimiter=",", fmt=("%f", "%d"), header="Times [ms], Neuron ID")
 
 else:
     import matplotlib.pyplot as plt

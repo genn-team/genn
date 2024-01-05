@@ -1,5 +1,6 @@
 import numpy as np
 
+from argparse import ArgumentParser
 from pygenn import (create_custom_update_model, create_neuron_model,
                     create_postsynaptic_model, create_var_ref,
                     create_weight_update_model, create_wu_var_ref,
@@ -10,7 +11,6 @@ from pygenn import GeNNModel
 # Parameters
 # ----------------------------------------------------------------------------
 TIMESTEP_MS = 0.1
-TIMING = True
 
 # Network structure
 NUM_INPUT = 200
@@ -37,7 +37,6 @@ W0 = 0.05 * 1000.0
 
 # Experiment parameters
 INPUT_FREQ_HZ = 5.0
-NUM_TRIALS = 600
 UPDATE_TIME_MS = 500.0
 TRIAL_MS = 1890.0
 
@@ -60,8 +59,8 @@ def write_spike_file(filename, data):
 # ----------------------------------------------------------------------------
 r_max_prop_model = create_custom_update_model(
     "r_max_prop",
-    param_names=["updateTime", "tauRMS", "epsilon", "wMin", "wMax", "r0"],
-    var_name_types=[("upsilon", "scalar")],
+    params=["updateTime", "tauRMS", "epsilon", "wMin", "wMax", "r0"],
+    vars=[("upsilon", "scalar")],
     derived_params=[("updateTimesteps", lambda pars, dt: pars["updateTime"] / dt),
                     ("expRMS", lambda pars, dt: np.exp(-pars["updateTime"] / pars["tauRMS"]))],
     var_refs=[("m", "scalar"), ("variable", "scalar")],
@@ -79,14 +78,14 @@ r_max_prop_model = create_custom_update_model(
 
 superspike_model = create_weight_update_model(
     "superspike",
-    param_names=["tauRise", "tauDecay", "beta", "Vthresh"],
-    var_name_types=[("w", "scalar"), ("e", "scalar"), 
-                    ("lambda", "scalar"), ("m", "scalar")],
-    pre_var_name_types=[("z", "scalar"), ("zTilda", "scalar")],
-    post_var_name_types=[("sigmaPrime", "scalar")],
+    params=["tauRise", "tauDecay", "beta", "Vthresh"],
+    vars=[("w", "scalar"), ("e", "scalar"), 
+          ("lambda", "scalar"), ("m", "scalar")],
+    pre_vars=[("z", "scalar"), ("zTilda", "scalar")],
+    post_vars=[("sigmaPrime", "scalar")],
     post_neuron_var_refs=[("V", "scalar"), ("errTilda", "scalar")],
 
-    sim_code="""
+    pre_spike_syn_code="""
     addToPost(w);
     """,
 
@@ -113,7 +112,7 @@ superspike_model = create_weight_update_model(
     synapse_dynamics_code="""
     // Filtered eligibility trace
     e += (zTilda * sigmaPrime - e / tauRise) * dt;
-    $(lambda) += ((-lambda + e) / tauDecay) * dt;
+    lambda += ((-lambda + e) / tauDecay) * dt;
 
     // Get error from neuron model and compute full
     // expression under integral and calculate m
@@ -122,7 +121,7 @@ superspike_model = create_weight_update_model(
 
 feedback_model = create_weight_update_model(
     "feedback",
-    var_name_types=[("w", "scalar")],
+    vars=[("w", "scalar")],
     pre_neuron_var_refs=[("errTilda", "scalar")],
     synapse_dynamics_code="""
     addToPost(w * errTilda);
@@ -130,8 +129,8 @@ feedback_model = create_weight_update_model(
 
 hidden_neuron_model = create_neuron_model(
     "hidden",
-    param_names=["C", "tauMem", "Vrest", "Vthresh", "tauRefrac"],
-    var_name_types=[("V", "scalar"), ("refracTime", "scalar"), ("errTilda", "scalar")],
+    params=["C", "tauMem", "Vrest", "Vthresh", "tauRefrac"],
+    vars=[("V", "scalar"), ("refracTime", "scalar"), ("errTilda", "scalar")],
     additional_input_vars=[("ISynFeedback", "scalar", 0.0)],
     derived_params=[("ExpTC", lambda pars, dt: np.exp(-dt / pars["tauMem"])),
                     ("Rmembrane", lambda pars, dt: pars["tauMem"] / pars["C"])],
@@ -161,11 +160,11 @@ hidden_neuron_model = create_neuron_model(
 
 output_neuron_model = create_neuron_model(
     "output",
-    param_names=["C", "tauMem", "Vrest", "Vthresh", "tauRefrac",
-                 "tauRise", "tauDecay", "tauAvgErr"],
-    var_name_types=[("V", "scalar"), ("refracTime", "scalar"), ("errRise", "scalar"),
-                    ("errTilda", "scalar"), ("avgSqrErr", "scalar"), ("errDecay", "scalar"),
-                    ("startSpike", "unsigned int"), ("endSpike", "unsigned int")],
+    params=["C", "tauMem", "Vrest", "Vthresh", "tauRefrac",
+            "tauRise", "tauDecay", "tauAvgErr"],
+    vars=[("V", "scalar"), ("refracTime", "scalar"), ("errRise", "scalar"),
+          ("errTilda", "scalar"), ("avgSqrErr", "scalar"), ("errDecay", "scalar"),
+           ("startSpike", "unsigned int"), ("endSpike", "unsigned int")],
     extra_global_params=[("spikeTimes", "scalar*")],
     derived_params=[("ExpTC", lambda pars, dt: np.exp(-dt / pars["tauMem"])),
                     ("Rmembrane", lambda pars, dt: pars["tauMem"] / pars["C"]),
@@ -212,10 +211,25 @@ output_neuron_model = create_neuron_model(
     is_auto_refractory_required=False)
 
 # ----------------------------------------------------------------------------
+# CLI
+# ----------------------------------------------------------------------------
+parser = ArgumentParser()
+parser.add_argument("--record-trial", type=int, nargs="*", help="Index of trial(s) to record")
+parser.add_argument("--target-file", type=str, default="oxford-target.ras", help="Filename of spike file to train model on")
+parser.add_argument("--num-trials", type=int, default=600, help="Number of trials to train for")
+parser.add_argument("--kernel-profiling", action="store_true", help="Output kernel profiling data")
+parser.add_argument("--save-data", action="store_true", help="Save spike data (rather than plotting it)")
+
+args = parser.parse_args()
+
+# Sort trial indices to record
+args.record_trial = sorted(args.record_trial)
+
+# ----------------------------------------------------------------------------
 # Load target data
 # ----------------------------------------------------------------------------
 # Load target data
-target_spikes = np.loadtxt("oxford-target.ras",
+target_spikes = np.loadtxt(args.target_file,
                            dtype={"names": ("time", "neuron_id"),
                                   "formats": (float, int)})
 
@@ -310,7 +324,7 @@ r_max_prop_params = {"updateTime": UPDATE_TIME_MS, "tauRMS": TAU_RMS_MS,
 # ----------------------------------------------------------------------------
 model = GeNNModel("float", "superspike_demo", generateLineInfo=True)
 model.dt = TIMESTEP_MS
-model.timing_enabled = TIMING
+model.timing_enabled = args.kernel_profiling
 
 # Add neuron populations
 input = model.add_neuron_population("Input", NUM_INPUT, "SpikeSourceArray", 
@@ -324,9 +338,10 @@ input.extra_global_params["spikeTimes"].set_init_values(input_spikes)
 output.extra_global_params["spikeTimes"].set_init_values(target_spikes["time"])
 
 # Turn on recording
-input.spike_recording_enabled = True
-hidden.spike_recording_enabled = True
-output.spike_recording_enabled = True
+any_recording = (len(args.record_trial) > 0)
+input.spike_recording_enabled = any_recording
+hidden.spike_recording_enabled = any_recording
+output.spike_recording_enabled = any_recording
 
 # Add synapse populations
 input_hidden = model.add_synapse_population(
@@ -378,7 +393,10 @@ model.custom_update("CalculateTranspose")
 output_avg_sqr_err_var = output.vars["avgSqrErr"]
 current_r0 = R0
 timestep = 0
-for trial in range(NUM_TRIALS):
+input_spikes = []
+hidden_spikes = []
+output_spikes = []
+for trial in range(args.num_trials):
     # Reduce learning rate every 400 trials
     if trial != 0 and (trial % 400) == 0:
         current_r0 *= 0.1
@@ -416,14 +434,19 @@ for trial in range(NUM_TRIALS):
     input.vars["startSpike"].push_to_device()
     output.vars["startSpike"].push_to_device()
 
-    if (trial % 100) == 0:
+    if trial in args.record_trial:
         model.pull_recording_buffers_from_device();
+        
+        if args.save_data:
+            write_spike_file("input_spikes_%u.csv" % trial, input.spike_recording_data)
+            write_spike_file("hidden_spikes_%u.csv" % trial, hidden.spike_recording_data)
+            write_spike_file("output_spikes_%u.csv" % trial, output.spike_recording_data)
+        else:
+            input_spikes.append(input.spike_recording_data[0])
+            hidden_spikes.append(hidden.spike_recording_data[0])
+            output_spikes.append(output.spike_recording_data[0])
 
-        write_spike_file("input_spikes_%u.csv" % trial, input.spike_recording_data)
-        write_spike_file("hidden_spikes_%u.csv" % trial, hidden.spike_recording_data)
-        write_spike_file("output_spikes_%u.csv" % trial, output.spike_recording_data)
-
-if TIMING:
+if args.kernel_profiling:
     print("Init: %f" % model.init_time)
     print("Init sparse: %f" % model.init_sparse_time)
     print("Neuron update: %f" % model.neuron_update_time)
@@ -431,4 +454,25 @@ if TIMING:
     print("Synapse dynamics: %f" % model.synapse_dynamics_time)
     print("Gradient learning custom update: %f" % model.get_custom_update_time("GradientLearn"))
     print("Gradient learning custom update transpose: %f" % model.get_custom_update_transpose_time("GradientLearn"))
-   
+
+if not args.save_data:
+    import matplotlib.pyplot as plt
+    
+    # Create plot
+    fig, axes = plt.subplots(3, len(input_spikes), sharex="col", sharey="row")
+
+    for i, spikes in enumerate(zip(input_spikes, hidden_spikes, output_spikes)):
+        # Plot spikes
+        start_time_s = float(args.record_trial[i]) * 1.890
+        axes[0, i].scatter(start_time_s + (spikes[0][0] / 1000.0), spikes[0][1], s=2, edgecolors="none")
+        axes[1, i].scatter(start_time_s + (spikes[1][0] / 1000.0), spikes[1][1], s=2, edgecolors="none")
+        axes[2, i].scatter(start_time_s + (spikes[2][0] / 1000.0), spikes[2][1], s=2, edgecolors="none")
+
+        axes[2, i].set_xlabel("Time [s]")
+
+    axes[0, 0].set_ylabel("Neuron number")
+    axes[1, 0].set_ylabel("Neuron number")
+    axes[2, 0].set_ylabel("Neuron number")
+
+    # Show plot
+    plt.show()
