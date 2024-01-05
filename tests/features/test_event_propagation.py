@@ -43,11 +43,11 @@ decoder_dense_model = create_var_init_snippet(
 static_event_pulse_model = create_weight_update_model(
     "static_event_pulse",
     var_name_types=[("g", "scalar")],
-    event_threshold_condition_code=
+    pre_event_threshold_condition_code=
     """
     (unsigned int)round(t) == id
     """,
-    pre_event_threshold_condition_code=
+    pre_event_syn_code=
     """
     addToPost(g);
     """)
@@ -575,11 +575,11 @@ def test_reverse(make_model, backend, precision):
     static_event_pulse_reverse_model = create_weight_update_model(
         "static_event_pulse_reverse",
         var_name_types=[("g", "scalar")],
-        event_threshold_condition_code=
+        pre_event_threshold_condition_code=
         """
         (unsigned int)round(t) == id
         """,
-        pre_event_threshold_condition_code=
+        pre_event_syn_code=
         """
         addToPre(g);
         """)

@@ -28,11 +28,11 @@ static_event_pulse_model = create_weight_update_model(
     "static_event_pulse",
     params=[("g", "scalar")],
     pre_neuron_var_refs=[("output", "bool", VarAccessMode.READ_ONLY)],
-    event_threshold_condition_code=
+    pre_event_threshold_condition_code=
     """
     output
     """,
-    pre_event_threshold_condition_code=
+    pre_event_syn_code=
     """
     addToPost(g);
     """)

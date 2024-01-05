@@ -37,11 +37,11 @@ pre_event_weight_update_model = create_weight_update_model(
     var_name_types=[("w", "scalar")],
     pre_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
 
-    pre_event_threshold_condition_code=
+    pre_event_syn_code=
     """
     w = s;
     """,
-    event_threshold_condition_code=
+    pre_event_threshold_condition_code=
     """
     t >= (scalar)id && fmod(t - (scalar)id, 10.0) < 1e-4
     """)
@@ -73,11 +73,11 @@ post_event_weight_update_model = create_weight_update_model(
     var_name_types=[("w", "scalar")],
     post_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
 
-    pre_event_threshold_condition_code=
+    pre_event_syn_code=
     """
     w = s;
     """,
-    event_threshold_condition_code=
+    pre_event_threshold_condition_code=
     """
     t >= (scalar)id && fmod(t - (scalar)id, 10.0) < 1e-4
     """)
