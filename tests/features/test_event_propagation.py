@@ -47,7 +47,7 @@ static_event_pulse_model = create_weight_update_model(
     """
     (unsigned int)round(t) == id
     """,
-    event_code=
+    pre_event_threshold_condition_code=
     """
     addToPost(g);
     """)
@@ -567,7 +567,7 @@ def test_reverse(make_model, backend, precision):
         "static_pulse_reverse",
         sim_code=
         """
-        $(addToPre, $(g));
+        addToPre(g);
         """,
         var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
 
@@ -579,7 +579,7 @@ def test_reverse(make_model, backend, precision):
         """
         (unsigned int)round(t) == id
         """,
-        event_code=
+        pre_event_threshold_condition_code=
         """
         addToPre(g);
         """)
@@ -675,9 +675,9 @@ def test_reverse_post(make_model, backend, precision):
 
     static_pulse_reverse_post_model = create_weight_update_model(
         "static_pulse_reverse_post",
-        learn_post_code=
+        post_spike_syn_code=
         """
-        $(addToPre, $(g));
+        addToPre(g);
         """,
         var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
     
@@ -685,7 +685,7 @@ def test_reverse_post(make_model, backend, precision):
         "static_pulse_reverse_event_post",
         post_event_syn_code=
         """
-        $(addToPre, $(g));
+        addToPre(g);
         """,
         post_event_threshold_condition_code=
         """

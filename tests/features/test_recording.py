@@ -32,7 +32,7 @@ static_event_pulse_model = create_weight_update_model(
     """
     output
     """,
-    event_code=
+    pre_event_threshold_condition_code=
     """
     addToPost(g);
     """)

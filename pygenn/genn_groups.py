@@ -39,7 +39,7 @@ def _get_synapse_var_shape(var_dims, sg, batch_size):
     num_copies = _get_num_var_copies(var_dims, batch_size)
     if (var_dims & VarAccessDim.ELEMENT):
         if sg.matrix_type & SynapseMatrixWeight.KERNEL:
-            return num_copies + (np.product(sg.kernel_size),)
+            return num_copies + (np.prod(sg.kernel_size),)
         else:
             # **YUCK** this isn't correct - only backend knows correct stride
             return num_copies + (sg.src.num_neurons * sg.max_connections,)
@@ -354,7 +354,7 @@ class SynapseGroupMixin(GroupMixin):
         elif self.matrix_type & SynapseMatrixConnectivity.SPARSE:
             return self.max_connections * self.src.num_neurons
         elif self.matrix_type & SynapseMatrixWeight.KERNEL:
-            return int(np.product(self.kernel_size))
+            return int(np.prod(self.kernel_size))
         else:
             raise Exception("Matrix format not supported")
 

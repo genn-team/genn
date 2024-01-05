@@ -72,7 +72,7 @@ def test_spike_times(make_model, backend, precision):
         """
         a = prev_st_pre;
         """,
-        learn_post_code=
+        post_spike_syn_code=
         """
         b = st_pre;
         """,
@@ -84,11 +84,11 @@ def test_spike_times(make_model, backend, precision):
     post_weight_update_model = create_weight_update_model(
         "post_weight_update",
         var_name_types=[("a", "scalar"), ("b", "scalar")],
-        sim_code=
+        pre_spike_syn_code=
         """
         a = st_post;
         """,
-        learn_post_code=
+        post_spike_syn_code=
         """
         b = prev_st_post;
         """)
@@ -162,7 +162,7 @@ def test_spike_event_times(make_model, backend, precision):
     pre_weight_update_model = create_weight_update_model(
         "pre_weight_update",
         var_name_types=[("a", "scalar"), ("b", "scalar")],
-        pre_event_syn_code=
+        pre_event_threshold_condition_code=
         """
         a = prev_set_pre;
         """,
@@ -170,7 +170,7 @@ def test_spike_event_times(make_model, backend, precision):
         """
         t >= (scalar)id && fmod(t - (scalar)id, 10.0) < 1e-4
         """,
-        learn_post_code=
+        post_spike_syn_code=
         """
         b = set_pre;
         """)
@@ -178,7 +178,7 @@ def test_spike_event_times(make_model, backend, precision):
     post_weight_update_model = create_weight_update_model(
         "post_weight_update",
         var_name_types=[("a", "scalar"), ("b", "scalar")],
-        sim_code=
+        pre_spike_syn_code=
         """
         a = set_post;
         """,

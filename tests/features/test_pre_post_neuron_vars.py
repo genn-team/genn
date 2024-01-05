@@ -17,7 +17,7 @@ pre_learn_post_weight_update_model = create_weight_update_model(
     var_name_types=[("w", "scalar")],
     pre_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
     
-    learn_post_code=
+    post_spike_syn_code=
     """
     w = s;
     """)
@@ -37,7 +37,7 @@ pre_event_weight_update_model = create_weight_update_model(
     var_name_types=[("w", "scalar")],
     pre_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
 
-    event_code=
+    pre_event_threshold_condition_code=
     """
     w = s;
     """,
@@ -63,7 +63,7 @@ post_learn_post_weight_update_model = create_weight_update_model(
     var_name_types=[("w", "scalar")],
     post_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
     
-    learn_post_code=
+    post_spike_syn_code=
     """
     w = s;
     """)
@@ -73,7 +73,7 @@ post_event_weight_update_model = create_weight_update_model(
     var_name_types=[("w", "scalar")],
     post_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
 
-    event_code=
+    pre_event_threshold_condition_code=
     """
     w = s;
     """,
