@@ -403,12 +403,12 @@ PYBIND11_MODULE(genn, m)
         //--------------------------------------------------------------------
         .def("add_current_source",  
              static_cast<CurrentSource* (ModelSpecInternal::*)(
-                const std::string&, const CurrentSourceModels::Base*, const std::string&, 
+                const std::string&, const CurrentSourceModels::Base*, NeuronGroup*, 
                 const ParamValues&, const VarValues&, const VarReferences&)>(&ModelSpecInternal::addCurrentSource),
             pybind11::return_value_policy::reference)
         .def("add_custom_connectivity_update",  
              static_cast<CustomConnectivityUpdate* (ModelSpecInternal::*)(
-                const std::string&, const std::string&, const std::string&, const CustomConnectivityUpdateModels::Base*, 
+                const std::string&, const std::string&, SynapseGroup*, const CustomConnectivityUpdateModels::Base*, 
                 const ParamValues&, const VarValues&, const VarValues&, const VarValues&, 
                 const WUVarReferences&, const VarReferences&, const VarReferences&)>(&ModelSpecInternal::addCustomConnectivityUpdate),
             pybind11::return_value_policy::reference)
@@ -429,13 +429,13 @@ PYBIND11_MODULE(genn, m)
             pybind11::return_value_policy::reference)
         .def("add_synapse_population",
             static_cast<SynapseGroup* (ModelSpecInternal::*)(
-                const std::string&, SynapseMatrixType, const std::string&, const std::string&,
+                const std::string&, SynapseMatrixType, NeuronGroup*, NeuronGroup*,
                 const WeightUpdateModels::Init&, const PostsynapticModels::Init&,
                 const InitSparseConnectivitySnippet::Init&)>(&ModelSpecInternal::addSynapsePopulation),
             pybind11::return_value_policy::reference)
         .def("add_synapse_population",
             static_cast<SynapseGroup* (ModelSpecInternal::*)(
-                const std::string&, SynapseMatrixType, const std::string&, const std::string&,
+                const std::string&, SynapseMatrixType, NeuronGroup*, NeuronGroup*,
                 const WeightUpdateModels::Init&, const PostsynapticModels::Init&,
                 const InitToeplitzConnectivitySnippet::Init&)>(&ModelSpecInternal::addSynapsePopulation), 
             pybind11::return_value_policy::reference)

@@ -372,8 +372,8 @@ class GeNNModel(ModelSpecInternal):
         Args:
         pop_name             --  name of the new population
         matrix_type          --  SynapseMatrixType describing type of the matrix
-        source               --  source neuron group (either name or NeuronGroup object)
-        target               --  target neuron group (either name or NeuronGroup object)
+        source               --  source neuron group (NeuronGroup object)
+        target               --  target neuron group (NeuronGroup object)
         
         connectivity_init    --  SparseConnectivityInit or 
                                  ToeplitzConnectivityInit used to 
@@ -381,11 +381,6 @@ class GeNNModel(ModelSpecInternal):
         """
         if self._built:
             raise Exception("GeNN model already built")
-
-        # Validate source and target groups
-        # **TODO** remove once underlying 
-        source = self._validate_neuron_group(source, "source")
-        target = self._validate_neuron_group(target, "target")
 
         # If matrix type is a string, loop up enumeration value
         if isinstance(matrix_type, str):
@@ -399,7 +394,7 @@ class GeNNModel(ModelSpecInternal):
 
         # Use superclass to add population
         s_group = super(GeNNModel, self).add_synapse_population(
-            pop_name, matrix_type, source.name, target.name, 
+            pop_name, matrix_type, source, target, 
             weight_update_init[0], postsynaptic_init[0],
             connectivity_init)
 
@@ -422,7 +417,7 @@ class GeNNModel(ModelSpecInternal):
                                     ``pygenn.genn_wrapper.CurrentSourceModels.Custom`` (see also
                                     pygenn.genn_model.create_custom_current_source_class)
         pop                     --  population into which the current source 
-                                    should be injected (either name or NeuronGroup object)
+                                    should be injected (NeuronGroup object)
         params                  --  dict with param values for the
                                     CurrentSourceModel class
         vars                    --  dict with initial variable values for the
@@ -433,10 +428,6 @@ class GeNNModel(ModelSpecInternal):
         if self._built:
             raise Exception("GeNN model already built")
 
-        # Validate population
-        # **TODO** remove once underlying 
-        pop = self._validate_neuron_group(pop, "pop")
-
         # Resolve current source model
         current_source_model = get_snippet(current_source_model, CurrentSourceModelBase,
                                            current_source_models)
@@ -446,7 +437,7 @@ class GeNNModel(ModelSpecInternal):
         
         # Use superclass to add population
         c_source = super(GeNNModel, self).add_current_source(
-            cs_name, current_source_model, pop.name, 
+            cs_name, current_source_model, pop, 
             prepare_param_vals(params), var_init, var_refs)
         
         # Initialise group, store group in dictionary and return
@@ -508,8 +499,8 @@ class GeNNModel(ModelSpecInternal):
         group_name                  -- name of group this custom connectivity update
                                        should be performed within
         syn_group                   -- synapse group this custom connectivity
-                                       update should be attached to (either
-                                       name or SynapseGroup object)
+                                       update should be attached to
+                                       (SynapseGroup object)
         custom_conn_update_model    -- type of the CustomConnetivityUpdateModel 
                                        class as string or instance of 
                                        CustomConnectivityUpdateModel class 
@@ -549,9 +540,8 @@ class GeNNModel(ModelSpecInternal):
         post_var_init = get_var_init(post_vars)
 
         # Use superclass to add population
-        syn_group = self._validate_synapse_group(syn_group, "syn_group")
         c_update = super(GeNNModel, self).add_custom_connectivity_update(
-            cu_name, group_name, syn_group.name, custom_connectivity_update_model,
+            cu_name, group_name, syn_group, custom_connectivity_update_model,
             prepare_param_vals(params), var_init, pre_var_init, post_var_init,
             var_refs, pre_var_refs, post_var_refs)
 
@@ -729,40 +719,6 @@ class GeNNModel(ModelSpecInternal):
 
         # Pull recording buffers from device
         self._runtime.pull_recording_buffers_from_device()
-
-    def _validate_neuron_group(self, group, context):
-        # If group is a string
-        if isinstance(group, str):
-            # If it's the name of a neuron group, return it
-            if group in self.neuron_populations:
-                return self.neuron_populations[group]
-            # Otherwise, raise error
-            else:
-                raise ValueError("'%s' neuron group '%s' not found" % 
-                                 (context, group))
-        # Otherwise, if group is a neuron group, return it
-        elif isinstance(group, NeuronGroup):
-            return group
-        # Otherwise, raise error
-        else:
-            raise ValueError("'%s' must be a NeuronGroup or string" % context)
-
-    def _validate_synapse_group(self, group, context):
-        # If group is a string
-        if isinstance(group, str):
-            # If it's the name of a neuron group, return it
-            if group in self.synapse_populations:
-                return self.synapse_populations[group]
-            # Otherwise, raise error
-            else:
-                raise ValueError("'%s' synapse group '%s' not found" % 
-                                 (context, group))
-        # Otherwise, if group is a synapse group, return it
-        elif isinstance(group, SynapseGroup):
-            return group
-        # Otherwise, raise error
-        else:
-            raise ValueError("'%s' must be a SynapseGroup or string" % context)
 
 def init_var(snippet, params={}):
     """This helper function creates a VarInit object
