@@ -324,10 +324,10 @@ public:
     unsigned int getNumNeurons() const;
 
     //! Find a neuron group by name
-    NeuronGroup *findNeuronGroup(const std::string &name){ return static_cast<NeuronGroup*>(findNeuronGroupInternal(name)); }
+    NeuronGroup *findNeuronGroup(const std::string &name);
 
     //! Find a neuron group by name
-    const NeuronGroup *findNeuronGroup(const std::string &name) const{ return static_cast<const NeuronGroup*>(findNeuronGroupInternal(name)); }
+    const NeuronGroup *findNeuronGroup(const std::string &name) const;
 
     //! Adds a new neuron group to the model using a neuron model managed by the user
     /*! \param name string containing unique name of neuron population.
@@ -356,16 +356,16 @@ public:
     // PUBLIC SYNAPSE FUNCTIONS
     //=========================
     //! Find a synapse group by name
-    SynapseGroup *findSynapseGroup(const std::string &name){ return static_cast<SynapseGroup*>(findSynapseGroupInternal(name)); }
+    SynapseGroup *findSynapseGroup(const std::string &name);
     
     //! Find a synapse group by name
-    const SynapseGroup *findSynapseGroup(const std::string &name) const{ return static_cast<const SynapseGroup*>(findSynapseGroupInternal(name)); }
+    const SynapseGroup *findSynapseGroup(const std::string &name) const;
 
     //! Adds a synapse population to the model using weight update and postsynaptic models managed by the user
     /*! \param name                             string containing unique name of synapse population.
         \param mtype                            how the synaptic matrix associated with this synapse population should be represented.
-        \param src                              string specifying name of presynaptic (source) population
-        \param trg                              string specifying name of postsynaptic (target) population
+        \param src                              pointer to presynaptic neuron group
+        \param trg                              pointer to postsynaptic neuron group
         \param wum                              weight update model to use for synapse group.
         \param wumInitialiser                   WeightUpdateModels::Init object used to initialiser weight update model
         \param psmInitialiser                   PostsynapticModels::Init object used to initialiser postsynaptic model
@@ -373,7 +373,7 @@ public:
                                                 SynapseMatrixConnectivity::SPARSE or SynapseMatrixConnectivity::BITMASK.
                                                 Typically wrapped with it's parameters using ``initConnectivity`` function
         \return pointer to newly created SynapseGroup */
-    SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, const std::string& src, const std::string& trg,
+    SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, NeuronGroup *src, NeuronGroup *trg,
                                        const WeightUpdateModels::Init &wumInitialiser, const PostsynapticModels::Init &psmInitialiser,
                                        const InitSparseConnectivitySnippet::Init &connectivityInitialiser = uninitialisedConnectivity())
     {
@@ -386,15 +386,15 @@ public:
      //! Adds a synapse population to the model using weight update and postsynaptic models managed by the user
     /*! \param name                             string containing unique name of synapse population.
         \param mtype                            how the synaptic matrix associated with this synapse population should be represented.
-        \param src                              string specifying name of presynaptic (source) population
-        \param trg                              string specifying name of postsynaptic (target) population
+        \param src                              pointer to presynaptic neuron group
+        \param trg                              pointer to postsynaptic neuron group
         \param wum                              weight update model to use for synapse group.
         \param wumInitialiser                   WeightUpdateModels::Init object used to initialiser weight update model
         \param psmInitialiser                   PostsynapticModels::Init object used to initialiser postsynaptic model
          \param connectivityInitialiser          toeplitz connectivity initialisation snippet used to initialise connectivity for
                                                 SynapseMatrixConnectivity::TOEPLITZ. Typically wrapped with it's parameters using ``initToeplitzConnectivity`` function
         \return pointer to newly created SynapseGroup */
-    SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, const std::string& src, const std::string& trg,
+    SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, NeuronGroup *src, NeuronGroup *trg,
                                        const WeightUpdateModels::Init &wumInitialiser, const PostsynapticModels::Init &psmInitialiser,
                                        const InitToeplitzConnectivitySnippet::Init &connectivityInitialiser)
     {
@@ -411,27 +411,27 @@ public:
     //! Adds a new current source to the model using a current source model managed by the user
     /*! \param currentSourceName string containing unique name of current source.
         \param model current source model to use for current source.
-        \param targetNeuronGroupName string name of the target neuron group
+        \param neuronGroup pointer to target neuron group
         \param paramValues parameters for model wrapped in ParamValues object.
         \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
         \return pointer to newly created CurrentSource */
-    CurrentSource *addCurrentSource(const std::string &currentSourceName, const CurrentSourceModels::Base *model, const std::string &targetNeuronGroupName,
+    CurrentSource *addCurrentSource(const std::string &currentSourceName, const CurrentSourceModels::Base *model, NeuronGroup *neuronGroup,
                                     const ParamValues &paramValues = {}, const VarValues &varInitialisers = {}, const VarReferences &neuronVarReferences = {});
 
     //! Adds a new current source to the model using a singleton current source model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
     /*! \tparam CurrentSourceModel type of neuron model (derived from CurrentSourceModel::Base).
         \param currentSourceName string containing unique name of current source.
-        \param targetNeuronGroupName string name of the target neuron group
+        \param neuronGroup pointer to target neuron group
         \param paramValues parameters for model wrapped in ParamValues object.
         \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
         \return pointer to newly created CurrentSource */
     template<typename CurrentSourceModel>
-    CurrentSource *addCurrentSource(const std::string &currentSourceName, const std::string &targetNeuronGroupName,
+    CurrentSource *addCurrentSource(const std::string &currentSourceName, NeuronGroup *neuronGroup,
                                     const ParamValues &paramValues = {}, const VarValues &varInitialisers = {}, 
                                     const VarReferences &neuronVarReferences = {})
     {
         return addCurrentSource(currentSourceName, CurrentSourceModel::getInstance(),
-                                targetNeuronGroupName, paramValues, varInitialisers, neuronVarReferences);
+                                neuronGroup, paramValues, varInitialisers, neuronVarReferences);
     }
 
     //! Adds a new custom update with references to the model using a custom update model managed by the user
@@ -501,7 +501,7 @@ public:
     /*! \tparam CustomConnectivityUpdateModel type of custom connectivity update model (derived from CustomConnectivityUpdateModels::Base).
         \param name string containing unique name of custom update
         \param updateGroupName string containing name of group to add this custom update to
-        \param targetSynapseGroupName string name of the target synapse group whose connectivity this group will update
+        \param synapseGroup pointer to the synapse group whose connectivity this group will update
         \param model custom update model to use for custom update.
         \param paramValues parameters for model wrapped in ParamValues object.
         \param varInitialisers synaptic state variable initialiser snippets and parameters wrapped in VarValues object.
@@ -512,7 +512,7 @@ public:
         \param varReferences variable references wrapped in VarReferences object.
         \return pointer to newly created CustomConnectivityUpdate */
     CustomConnectivityUpdate *addCustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, 
-                                                          const std::string &targetSynapseGroupName, const CustomConnectivityUpdateModels::Base *model, 
+                                                          SynapseGroup *synapseGroup, const CustomConnectivityUpdateModels::Base *model, 
                                                           const ParamValues &paramValues = {}, const VarValues &varInitialisers = {},
                                                           const VarValues &preVarInitialisers = {}, const VarValues &postVarInitialisers = {},
                                                           const WUVarReferences &varReferences = {}, const VarReferences &preVarReferences = {},
@@ -524,7 +524,7 @@ public:
     /*! \tparam CustomConnectivityUpdateModel type of custom connectivity update model (derived from CustomConnectivityUpdateModels::Base).
         \param name string containing unique name of custom update
         \param updateGroupName string containing name of group to add this custom update to
-        \param targetSynapseGroupName string name of the target synapse group whose connectivity this group will update
+        \param synapseGroup pointer to the synapse group whose connectivity this group will update
         \param model custom update model to use for custom update.
         \param paramValues parameters for model wrapped in ParamValues object.
         \param varInitialisers synaptic state variable initialiser snippets and parameters wrapped in VarValues object.
@@ -535,14 +535,13 @@ public:
         \param varReferences variable references wrapped in VarReferences object.
         \return pointer to newly created CustomConnectivityUpdate */
     template<typename CustomConnectivityUpdateModel>
-    CustomConnectivityUpdate *addCustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName,
-                                                          const std::string &targetSynapseGroupName,
+    CustomConnectivityUpdate *addCustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, SynapseGroup *synapseGroup,
                                                           const ParamValues &paramValues = {}, const VarValues &varInitialisers = {},
                                                           const VarValues &preVarInitialisers = {}, const VarValues &postVarInitialisers = {},
                                                           const WUVarReferences &varReferences = {}, const VarReferences &preVarReferences = {},
                                                           const VarReferences &postVarReferences = {})
     {
-        return addCustomConnectivityUpdate(name, updateGroupName, targetSynapseGroupName, 
+        return addCustomConnectivityUpdate(name, updateGroupName, synapseGroup, 
                                            CustomConnectivityUpdateModel::getInstance(), paramValues,
                                            varInitialisers, preVarInitialisers, postVarInitialisers, 
                                            varReferences, preVarReferences, postVarReferences);
@@ -589,19 +588,7 @@ private:
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
-    //! Find a neuron group by name
-    NeuronGroupInternal *findNeuronGroupInternal(const std::string &name);
-    
-    //! Find a neuron group by name
-    const NeuronGroupInternal *findNeuronGroupInternal(const std::string &name) const;
-
-    //! Find a synapse group by name
-    SynapseGroupInternal *findSynapseGroupInternal(const std::string &name);
-
-    //! Find a synapse group by name
-    const SynapseGroupInternal *findSynapseGroupInternal(const std::string &name) const;
-
-    SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, const std::string &src, const std::string &trg,
+    SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, NeuronGroup *src, NeuronGroup *trg,
                                        const WeightUpdateModels::Init &wumInitialiser, const PostsynapticModels::Init &psmInitialiser,
                                        const InitSparseConnectivitySnippet::Init &connectivityInitialiser, const InitToeplitzConnectivitySnippet::Init &toeplitzConnectivityInitialiser);
 
