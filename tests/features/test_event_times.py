@@ -17,6 +17,37 @@ always_spike_neuron_model = create_neuron_model(
     "always_spike_neuron",
     threshold_condition_code="true")
 
+def _gen_st_syn(t, float_min):
+    # **NOTE** we delay by 22 timesteps because:
+    # 1) delay = 20
+    # 2) spike times are read in postsynaptic kernel one timestep AFTER being emitted
+    # 3) t is incremented one timestep at the end of step_time
+    delayed_time = np.arange(10) + 11.0 + (10.0 * np.floor((t - 22.0 - np.arange(10)) / 10.0))
+    delayed_time[delayed_time < 21.0] = float_min
+    return delayed_time
+
+def _gen_prev_st_syn(t, float_min):
+    # **NOTE** we delay by 22 timesteps because:
+    # 1) delay = 20
+    # 2) spike times are read in postsynaptic kernel one timestep AFTER being emitted
+    # 3) t is incremented one timestep at the end of step_time
+    delayed_time = np.arange(10) + 21.0 + (10.0 * np.floor((t - 22.0 - np.arange(10)) / 10.0))
+    delayed_time[delayed_time < 21.0] = float_min
+    return delayed_time
+
+def _gen_st_neuron(t, float_min):
+    delayed_time = np.arange(10) + (10.0 * np.floor((t - 2.0 - np.arange(10)) / 10.0))
+    delayed_time[delayed_time < 0.0] = float_min
+    return delayed_time
+    
+def _gen_st_neuron_event(t, float_min):
+    # **NOTE** we delay by 21 timesteps because:
+    # 1) delay = 20
+    # 2) t is incremented one timestep at the end of step_time
+    delayed_time = np.arange(10) + 10.0 + (10.0 * np.floor((t - 21.0 - np.arange(10)) / 10.0))
+    delayed_time[delayed_time < 0.0] = float_min
+    return delayed_time
+
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_spike_times(make_model, backend, precision):
@@ -99,28 +130,19 @@ def test_spike_times(make_model, backend, precision):
     s_pre_pop.pull_connectivity_from_device()
     s_post_pop.pull_connectivity_from_device()
 
-    samples = [(s_pre_pop.vars["a"], 11.0),
-               (s_pre_pop.vars["b"], 21.0),
-               (s_post_pop.vars["a"], 21.0),
-               (s_post_pop.vars["b"], 11.0),
-               (pre_n_pop.vars["a"], None)]
-               #(s_pre_pop.pre_vars["c"], None)]
+    samples = [(s_pre_pop.vars["a"], _gen_st_syn),
+               (s_pre_pop.vars["b"], _gen_prev_st_syn),
+               (s_post_pop.vars["a"], _gen_prev_st_syn),
+               (s_post_pop.vars["b"], _gen_st_syn),
+               (pre_n_pop.vars["a"], _gen_st_neuron),
+               (s_pre_pop.pre_vars["c"], _gen_st_neuron_event)]
     while model.timestep < 100:
         model.step_time()
         
         # Loop through synapse groups and compare value of w with delayed time
-        for var, offset in samples:
+        for var, gen_fn in samples:
             # Calculate time of spikes we SHOULD be reading
-            if offset is None:
-                delayed_time = np.arange(10) + (10.0 * np.floor((model.t - 2.0 - np.arange(10)) / 10.0))
-                delayed_time[delayed_time < 0.0] = float_min
-            else:
-                # **NOTE** we delay by 22 timesteps because:
-                # 1) delay = 20
-                # 2) spike times are read in postsynaptic kernel one timestep AFTER being emitted
-                # 3) t is incremented one timestep at te end of StepGeNN
-                delayed_time = np.arange(10) + offset + (10.0 * np.floor((model.t - 22.0 - np.arange(10)) / 10.0))
-                delayed_time[delayed_time < 21.0] = float_min
+            delayed_time = gen_fn(model.t, float_min)
 
             var.pull_from_device()
             var_value = var.current_values
@@ -205,24 +227,19 @@ def test_spike_event_times(make_model, backend, precision):
     s_pre_pop.pull_connectivity_from_device()
     s_post_pop.pull_connectivity_from_device()
 
-    samples = [(s_pre_pop, "a", 11.0),
-               (s_pre_pop, "b", 21.0),
-               (s_post_pop, "a", 21.0),
-               (s_post_pop, "b", 11.0)]
+    samples = [(s_pre_pop.vars["a"], _gen_st_syn),
+               (s_pre_pop.vars["b"], _gen_prev_st_syn),
+               (s_post_pop.vars["a"], _gen_prev_st_syn),
+               (s_post_pop.vars["b"], _gen_st_syn)]
     while model.timestep < 100:
         model.step_time()
 
         # Loop through synapse groups and compare value of w with delayed time
-        for pop, var_name, offset in samples:
+        for var, gen_fn in samples:
             # Calculate time of spikes we SHOULD be reading
-            # **NOTE** we delay by 22 timesteps because:
-            # 1) delay = 20
-            # 2) spike times are read in postsynaptic kernel one timestep AFTER being emitted
-            # 3) t is incremented one timestep at te end of StepGeNN
-            delayed_time = np.arange(10) + offset + (10.0 * np.floor((model.t - 22.0 - np.arange(10)) / 10.0))
-            delayed_time[delayed_time < 21.0] = float_min
-
-            pop.vars[var_name].pull_from_device()
-            var_value = pop.vars[var_name].values
+            delayed_time = gen_fn(model.t, float_min)
+            
+            var.pull_from_device()
+            var_value = var.values
             if not np.allclose(delayed_time, var_value):
-                assert False, f"{pop.name} var '{var_name}' has wrong value ({var_value} rather than {delayed_time})"
+                assert False, f"{var.group.name} var '{var.name}' has wrong value ({var_value} rather than {delayed_time})"
