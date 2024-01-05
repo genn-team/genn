@@ -77,16 +77,6 @@ class VariableBase(ArrayBase):
         self._delay_group = (None if delay_group is None 
                              else ref(delay_group))
 
-    def set_extra_global_init_param(self, param_name, param_values):
-        """Set values of extra global parameter associated with
-        variable initialisation snippet
-
-        Args
-        param_name      -- string, name of parameter
-        param_values    -- iterable or single value
-        """
-        self.extra_global_params[param_name].set_init_values(param_values)
-
     @deprecated("Please use set_init_values method instead",
                 category=FutureWarning)
     def set_values(self, values):
