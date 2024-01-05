@@ -318,7 +318,7 @@ def test_custom_update_transpose(make_model, backend, precision, batch_size):
     static_pulse_duplicate_model = create_weight_update_model(
         "static_pulse_duplicate",
         var_name_types=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
-        sim_code=
+        pre_spike_syn_code=
         """
         addToPost(g);
         """)

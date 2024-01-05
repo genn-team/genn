@@ -299,7 +299,7 @@ def test_custom_connectivity_update_delay(make_model, backend, precision):
         "pre_weight_update",
         pre_neuron_var_refs=[("removeIdx", "int", VarAccessMode.READ_ONLY)],
         var_name_types=[("g", "scalar", VarAccess.READ_ONLY)],
-        sim_code=
+        pre_spike_syn_code=
         """
         addToPost(g * (float)removeIdx);
         """)
@@ -310,7 +310,7 @@ def test_custom_connectivity_update_delay(make_model, backend, precision):
         "post_weight_update",
         post_neuron_var_refs=[("remove", "bool", VarAccessMode.READ_ONLY)],
         var_name_types=[("g", "scalar", VarAccess.READ_ONLY)],
-        sim_code=
+        pre_spike_syn_code=
         """
         addToPost(g * (float)remove);
         """)

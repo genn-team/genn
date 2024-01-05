@@ -162,7 +162,7 @@ def test_spike_event_times(make_model, backend, precision):
     pre_weight_update_model = create_weight_update_model(
         "pre_weight_update",
         var_name_types=[("a", "scalar"), ("b", "scalar")],
-        pre_event_threshold_condition_code=
+        pre_event_syn_code=
         """
         a = prev_set_pre;
         """,

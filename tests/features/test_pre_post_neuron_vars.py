@@ -27,7 +27,7 @@ pre_sim_weight_update_model = create_weight_update_model(
     var_name_types=[("w", "scalar")],
     pre_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
 
-    sim_code=
+    pre_spike_syn_code=
     """
     w = s;
     """)
@@ -52,8 +52,8 @@ post_sim_weight_update_model = create_weight_update_model(
     "post_sim_weight_update",
     var_name_types=[("w", "scalar")],
     post_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
-    
-    sim_code=
+
+    pre_spike_syn_code=
     """
     w = s;
     """)
@@ -62,7 +62,7 @@ post_learn_post_weight_update_model = create_weight_update_model(
     "post_learn_post_weight_update",
     var_name_types=[("w", "scalar")],
     post_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
-    
+
     post_spike_syn_code=
     """
     w = s;

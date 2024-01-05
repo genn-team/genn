@@ -32,7 +32,7 @@ def test_dynamic_param(make_model, backend, precision):
         """
         injectCurrent(inSyn);
         psmX = t + psmShift + psmInput;
-        $(inSyn) = 0;
+        inSyn = 0;
         """,
         params=["psmInput"],
         var_name_types=[("psmX", "scalar"), ("psmShift", "scalar")])
