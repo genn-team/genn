@@ -19,7 +19,7 @@ public:
                      "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
     SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
 
-    SET_SIM_CODE(
+    SET_PRE_SPIKE_SYN_CODE(
         "addToPost(g);\n"
         "scalar dt = st_post - t - tauShift; \n"
         "scalar dg = 0;\n"
@@ -32,7 +32,7 @@ public:
         "else dg = - (off2) ; \n"
         "gRaw += dg; \n"
         "g=gMax/2 *(tanh(gSlope*(gRaw - (gMid)))+1); \n");
-    SET_LEARN_POST_CODE(
+    SET_POST_SPIKE_SYN_CODE(
         "scalar dt = t - st_pre - (tauShift); \n"
         "scalar dg =0; \n"
         "if (dt > lim0)  \n"
@@ -69,14 +69,14 @@ public:
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});
     
-    SET_SIM_CODE(
+    SET_PRE_SPIKE_SYN_CODE(
         "addToPost(g);\n"
         "const scalar dt = t - sT_post; \n"
         "if (dt > 0) {\n"
         "    const scalar newWeight = g - (Aminus * postTrace);\n"
         "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
         "}\n");
-    SET_LEARN_POST_CODE(
+    SET_POST_SPIKE_SYN_CODE(
         "const scalar dt = t - sT_pre;\n"
         "if (dt > 0) {\n"
         "    const scalar newWeight = g + (Aplus * preTrace);\n"
