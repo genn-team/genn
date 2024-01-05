@@ -1,10 +1,9 @@
 import numpy as np 
-import matplotlib.pyplot as plt 
 
+from argparse import ArgumentParser
 from pygenn import (GeNNModel, VarLocation, SpanType, init_postsynaptic,
                     init_sparse_connectivity, init_weight_update, init_var)
 from scipy.stats import norm
-from six import iteritems, itervalues
 from time import perf_counter
 
 # ----------------------------------------------------------------------------
@@ -19,24 +18,8 @@ POPULATION_NAMES = ["E", "I"]
 # Simulation timestep [ms]
 DT_MS = 0.1
 
-# Simulation duration [ms]
-DURATION_MS = 1000.0
-
-# Should kernel timing be measured?
-MEASURE_TIMING = True
-
-# Should we use procedural rather than in-memory connectivity?
-PROCEDURAL_CONNECTIVITY = False
-
-# Should we rebuild the model rather than loading previous version
-BUILD_MODEL = True
-
 # How many threads to use per spike for procedural connectivity?
 NUM_THREADS_PER_SPIKE = 8
-
-# Scaling factors for number of neurons and synapses
-NEURON_SCALING_FACTOR = 1.0
-CONNECTIVITY_SCALING_FACTOR = 1.0
 
 # Background rate per synapse
 BACKGROUND_RATE = 8.0  # spikes/s
@@ -105,8 +88,8 @@ DELAY_SD = {"E": 0.75, "I": 0.375}
 # ----------------------------------------------------------------------------
 # Helper functions
 # ----------------------------------------------------------------------------
-def get_scaled_num_neurons(layer, pop):
-    return int(round(NEURON_SCALING_FACTOR * NUM_NEURONS[layer][pop]))
+def get_scaled_num_neurons(layer, pop, neuron_scale):
+    return int(round(neuron_scale * NUM_NEURONS[layer][pop]))
 
 def get_full_num_inputs(src_layer, src_pop, trg_layer, trg_pop):
     num_src = NUM_NEURONS[src_layer][src_pop]
@@ -125,13 +108,15 @@ def get_mean_weight(src_layer, src_pop, trg_layer, trg_pop):
     else:
         return G * MEAN_W
 
-def get_scaled_num_connections(src_layer, src_pop, trg_layer, trg_pop):
+def get_scaled_num_connections(src_layer, src_pop, trg_layer, trg_pop,
+                               neuron_scale, connectivity_scale):
     # Scale full number of inputs by scaling factor
-    num_inputs = get_full_num_inputs(src_layer, src_pop, trg_layer, trg_pop) * CONNECTIVITY_SCALING_FACTOR
+    num_inputs = get_full_num_inputs(src_layer, src_pop, trg_layer, trg_pop) * connectivity_scale
     assert num_inputs >= 0.0
 
     # Multiply this by number of postsynaptic neurons
-    return int(round(num_inputs * float(get_scaled_num_neurons(trg_layer, trg_pop))))
+    num_neurons = get_scaled_num_neurons(trg_layer, trg_pop, neuron_scale)
+    return int(round(num_inputs * float(num_neurons)))
 
 def get_full_mean_input_current(layer, pop):
     # Loop through source populations
@@ -148,13 +133,26 @@ def get_full_mean_input_current(layer, pop):
     return mean_input_current
 
 # ----------------------------------------------------------------------------
+# CLI
+# ----------------------------------------------------------------------------
+parser = ArgumentParser()
+parser.add_argument("--duration", type=float, default=1000.0, help="Duration to simulate (ms)")
+parser.add_argument("--neuron-scale", type=float, default=1.0, help="Scaling factor to apply to number of neurons")
+parser.add_argument("--connectivity-scale", type=float, default=1.0, help="Scaling factor to apply to number of neurons")
+parser.add_argument("--kernel-profiling", action="store_true", help="Output kernel profiling data")
+parser.add_argument("--procedural-connectivity", action="store_true", help="Use procedural connectivity")
+parser.add_argument("--save-data", action="store_true", help="Save spike data (rather than plotting it)")
+
+args = parser.parse_args()
+
+# ----------------------------------------------------------------------------
 # Network creation
 # ----------------------------------------------------------------------------
 model = GeNNModel("float", "potjans_microcircuit")
 model.dt = DT_MS
 model.fuse_postsynaptic_models = True
 model.default_narrow_sparse_ind_enabled = True
-model.timing_enabled = MEASURE_TIMING
+model.timing_enabled = args.kernel_profiling
 model.default_var_location = VarLocation.DEVICE
 model.default_sparse_connectivity_location = VarLocation.DEVICE
 
@@ -171,7 +169,7 @@ print("Max excitatory delay:%fms , max inhibitory delay:%fms" % (max_delay["E"],
 
 # Calculate maximum dendritic delay slots
 # **NOTE** it seems inefficient using maximum for all but this allows more aggressive merging of postsynaptic models
-max_dendritic_delay_slots = int(round(max(itervalues(max_delay)) / DT_MS))
+max_dendritic_delay_slots = int(round(max(max_delay.values()) / DT_MS))
 print("Max dendritic delay slots:%d" % max_dendritic_delay_slots)
 
 print("Creating neuron populations:")
@@ -182,18 +180,18 @@ for layer in LAYER_NAMES:
         pop_name = layer + pop
 
         # Calculate external input rate, weight and current
-        ext_input_rate = NUM_EXTERNAL_INPUTS[layer][pop] * CONNECTIVITY_SCALING_FACTOR * BACKGROUND_RATE
-        ext_weight = EXTERNAL_W / np.sqrt(CONNECTIVITY_SCALING_FACTOR)
-        ext_input_current = 0.001 * 0.5 * (1.0 - np.sqrt(CONNECTIVITY_SCALING_FACTOR)) * get_full_mean_input_current(layer, pop)
+        ext_input_rate = NUM_EXTERNAL_INPUTS[layer][pop] * args.connectivity_scale * BACKGROUND_RATE
+        ext_weight = EXTERNAL_W / np.sqrt(args.connectivity_scale)
+        ext_input_current = 0.001 * 0.5 * (1.0 - np.sqrt(args.connectivity_scale)) * get_full_mean_input_current(layer, pop)
         assert ext_input_current >= 0.0
 
         lif_params = {"C": 0.25, "TauM": 10.0, "Vrest": -65.0, "Vreset": -65.0, "Vthresh" : -50.0,
                       "Ioffset": ext_input_current, "TauRefrac": 2.0}
         poisson_params = {"weight": ext_weight, "tauSyn": 0.5, "rate": ext_input_rate}
 
-        pop_size = get_scaled_num_neurons(layer, pop)
+        pop_size = get_scaled_num_neurons(layer, pop, args.neuron_scale)
         neuron_pop = model.add_neuron_population(pop_name, pop_size, "LIF", lif_params, lif_init)
-        model.add_current_source(pop_name + "_poisson", "PoissonExp", pop_name, poisson_params, poisson_init)
+        model.add_current_source(pop_name + "_poisson", "PoissonExp", neuron_pop, poisson_params, poisson_init)
 
         # Enable spike recording
         neuron_pop.spike_recording_enabled = True
@@ -209,7 +207,7 @@ for layer in LAYER_NAMES:
 # Loop through target populations and layers
 print("Creating synapse populations:")
 total_synapses = 0
-num_sub_rows = NUM_THREADS_PER_SPIKE if PROCEDURAL_CONNECTIVITY else 1
+num_sub_rows = NUM_THREADS_PER_SPIKE if args.procedural_connectivity else 1
 for trg_layer in LAYER_NAMES:
     for trg_pop in POPULATION_NAMES:
         trg_name = trg_layer + trg_pop
@@ -220,7 +218,7 @@ for trg_layer in LAYER_NAMES:
                 src_name = src_layer + src_pop
 
                 # Determine mean weight
-                mean_weight = get_mean_weight(src_layer, src_pop, trg_layer, trg_pop) / np.sqrt(CONNECTIVITY_SCALING_FACTOR)
+                mean_weight = get_mean_weight(src_layer, src_pop, trg_layer, trg_pop) / np.sqrt(args.connectivity_scale)
 
                 # Determine weight standard deviation
                 if src_pop == "E" and src_layer == "4" and trg_layer == "23" and trg_pop == "E":
@@ -229,17 +227,16 @@ for trg_layer in LAYER_NAMES:
                     weight_sd = abs(mean_weight * REL_W)
 
                 # Calculate number of connections
-                num_connections = get_scaled_num_connections(src_layer, src_pop, trg_layer, trg_pop)
+                num_connections = get_scaled_num_connections(src_layer, src_pop,
+                                                             trg_layer, trg_pop,
+                                                             args.neuron_scale, args.connectivity_scale)
 
                 if num_connections > 0:
-                    num_src_neurons = get_scaled_num_neurons(src_layer, src_pop)
-                    num_trg_neurons = get_scaled_num_neurons(trg_layer, trg_pop)
-
                     print("\tConnection between '%s' and '%s': numConnections=%u, meanWeight=%f, weightSD=%f, meanDelay=%f, delaySD=%f" 
                           % (src_name, trg_name, num_connections, mean_weight, weight_sd, MEAN_DELAY[src_pop], DELAY_SD[src_pop]))
 
                     # Build parameters for fixed number total connector
-                    connect_params = {"total": num_connections}
+                    connect_params = {"num": num_connections}
 
                     # Build distribution for delay parameters
                     d_dist = {"mean": MEAN_DELAY[src_pop], "sd": DELAY_SD[src_pop], "min": 0.0, "max": max_delay[src_pop]}
@@ -249,7 +246,7 @@ for trg_layer in LAYER_NAMES:
                     # Build unique synapse name
                     synapse_name = src_name + "_" + trg_name
 
-                    matrix_type = "PROCEDURAL" if PROCEDURAL_CONNECTIVITY else "SPARSE"
+                    matrix_type = "PROCEDURAL" if args.procedural_connectivity else "SPARSE"
 
                     # Excitatory
                     if src_pop == "E":
@@ -270,7 +267,7 @@ for trg_layer in LAYER_NAMES:
                         # Set max dendritic delay and span type
                         syn_pop.max_dendritic_delay_timesteps = max_dendritic_delay_slots
 
-                        if PROCEDURAL_CONNECTIVITY:
+                        if args.procedural_connectivity:
                             syn_pop.span_type = SpanType.PRESYNAPTIC
                             syn_pop.num_threads_per_spike = NUM_THREADS_PER_SPIKE
                     # Inhibitory
@@ -292,17 +289,16 @@ for trg_layer in LAYER_NAMES:
                         # Set max dendritic delay and span type
                         syn_pop.max_dendritic_delay_timesteps = max_dendritic_delay_slots
 
-                        if PROCEDURAL_CONNECTIVITY:
+                        if args.procedural_connectivity:
                             syn_pop.span_type = SpanType.PRESYNAPTIC
                             syn_pop.num_threads_per_spike = NUM_THREADS_PER_SPIKE
 print("Total neurons=%u, total synapses=%u" % (total_neurons, total_synapses))
 
-if BUILD_MODEL:
-    print("Building Model")
-    model.build()
+print("Building Model")
+model.build()
 
 print("Loading Model")
-duration_timesteps = int(round(DURATION_MS / DT_MS))
+duration_timesteps = int(round(args.duration / DT_MS))
 ten_percent_timestep = duration_timesteps // 10
 model.load(num_recording_timesteps=duration_timesteps)
 
@@ -310,7 +306,7 @@ print("Simulating")
 
 # Loop through timesteps
 sim_start_time = perf_counter()
-while model.t < DURATION_MS:
+while model.t < args.duration:
     # Advance simulation
     model.step_time()
 
@@ -327,45 +323,53 @@ model.pull_recording_buffers_from_device()
 print("Timing:")
 print("\tSimulation:%f" % ((sim_end_time - sim_start_time) * 1000.0))
 
-if MEASURE_TIMING:
+if args.kernel_profiling:
     print("\tInit:%f" % (1000.0 * model.init_time))
     print("\tSparse init:%f" % (1000.0 * model.init_sparse_time))
     print("\tNeuron simulation:%f" % (1000.0 * model.neuron_update_time))
     print("\tSynapse simulation:%f" % (1000.0 * model.presynaptic_update_time))
 
+if args.save_data:
+    # Loop through populations and write spike data to CSV
+    for n, pop in neuron_populations.items():
+        np.savetxt(f"{n}_spikes.csv", np.vstack(pop.spike_recording_data[0]).T,
+                   delimiter=",", fmt=("%f", "%d"), header="Times (ms), Neuron ID")
 
-# Create plot
-figure, axes = plt.subplots(1, 2)
+else:
+    import matplotlib.pyplot as plt
 
-# **YUCK** re-order neuron populationsf for plotting
-ordered_neuron_populations = list(reversed(list(itervalues(neuron_populations))))
+    # Create plot
+    figure, axes = plt.subplots(1, 2)
 
-start_id = 0
-bar_y = 0.0
-for pop in ordered_neuron_populations:
-    # Get recording data
-    spike_times, spike_ids = pop.spike_recording_data[0]
-    
-    # Plot spikes
-    actor = axes[0].scatter(spike_times, spike_ids + start_id, s=2, edgecolors="none")
+    # **YUCK** re-order neuron populations for plotting
+    ordered_neuron_populations = list(reversed(list(neuron_populations.values())))
 
-    # Plot bar showing rate in matching colour
-    axes[1].barh(bar_y, len(spike_times) / (float(pop.size) * DURATION_MS / 1000.0), 
-                 align="center", color=actor.get_facecolor(), ecolor="black")
+    start_id = 0
+    bar_y = 0.0
+    for pop in ordered_neuron_populations:
+        # Get recording data
+        spike_times, spike_ids = pop.spike_recording_data[0]
+        
+        # Plot spikes
+        actor = axes[0].scatter(spike_times, spike_ids + start_id, s=2, edgecolors="none")
 
-    # Update offset
-    start_id += pop.size
+        # Plot bar showing rate in matching colour
+        axes[1].barh(bar_y, len(spike_times) / (float(pop.num_neurons) * args.duration / 1000.0), 
+                     align="center", color=actor.get_facecolor(), ecolor="black")
 
-    # Update bar pos
-    bar_y += 1.0
+        # Update offset
+        start_id += pop.num_neurons
 
-axes[0].set_xlabel("Time [ms]")
-axes[0].set_ylabel("Neuron number")
+        # Update bar pos
+        bar_y += 1.0
 
-axes[1].set_xlabel("Mean firingrate [Hz]")
-axes[1].set_yticks(np.arange(0.0, len(neuron_populations), 1.0))
-axes[1].set_yticklabels([n.name for n in ordered_neuron_populations])
+    axes[0].set_xlabel("Time [ms]")
+    axes[0].set_ylabel("Neuron number")
 
-# Show plot
-plt.show()
+    axes[1].set_xlabel("Mean firingrate [Hz]")
+    axes[1].set_yticks(np.arange(0.0, len(neuron_populations), 1.0))
+    axes[1].set_yticklabels([n.name for n in ordered_neuron_populations])
+
+    # Show plot
+    plt.show()
 
