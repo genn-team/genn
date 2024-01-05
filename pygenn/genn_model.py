@@ -1211,7 +1211,7 @@ def create_weight_update_model(class_name, params=None, param_names=None,
     
     if pre_vars is not None:
         body["get_pre_vars"] = \
-            lambda self: [Var(*vn) for vn in post_vars]
+            lambda self: [Var(*vn) for vn in pre_vars]
 
     if post_vars is not None:
         body["get_post_vars"] = \
