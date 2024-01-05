@@ -52,7 +52,18 @@ def test_connect_init(make_model, backend, precision):
     assert np.all(np.bincount(fixed_number_post_s_pop.get_sparse_pre_inds()) == 10)
     assert np.all(np.bincount(fixed_number_pre_s_pop.get_sparse_post_inds()) == 10)
     assert len(fixed_number_total_s_pop.get_sparse_pre_inds()) == 1000
-
+    
+    """
+    After considerable thought as to why these fail:
+     * Each connectivity is tested in single and double precisison
+     * Each connectivity is tested using 5 different RNGs (OpenCL, CUDA, MSVC standard library, Clang standard library, GCC standard library)
+     = 10 permutations
+     We want the probability that one or more of the 5 tests fail simply by chance 
+     to be less than 2%; for significance level a the probability that none of the 
+     tests fail is (1-a)^60 which we want to be 0.98, i.e. 98% of the time the test 
+    passes if the algorithm is correct. Hence, a= 1- 0.98^(1/10) = 0.0020
+    """
     # Check neurons are uniformly distributed within each row/column
-    assert stats.chisquare(np.bincount(fixed_number_post_s_pop.get_sparse_post_inds(), minlength=100)).pvalue > 0.05
-    assert stats.chisquare(np.bincount(fixed_number_pre_s_pop.get_sparse_pre_inds(), minlength=100)).pvalue > 0.05
+    confidence_interval = 0.0020
+    assert stats.chisquare(np.bincount(fixed_number_post_s_pop.get_sparse_post_inds(), minlength=100)).pvalue > confidence_interval
+    assert stats.chisquare(np.bincount(fixed_number_pre_s_pop.get_sparse_pre_inds(), minlength=100)).pvalue > confidence_interval
