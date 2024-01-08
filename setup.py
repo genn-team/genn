@@ -2,12 +2,25 @@ import os
 import sys
 from copy import deepcopy
 from platform import system, uname
-from psutil import cpu_count
 from shutil import copytree, rmtree
 from subprocess import check_call
-from pybind11.setup_helpers import Pybind11Extension, build_ext, WIN, MACOS
 from setuptools import find_packages, setup
 
+# **HACK** to support two-pass setup.py
+try:
+    from psutil import cpu_count
+except ImportError:
+    pass
+
+# **HACK** to support two-pass setup.py
+try:
+    from pybind11.setup_helpers import Pybind11Extension, build_ext, WIN, MACOS
+except ImportError:
+    from setuptools import build_ext
+    from setuptools import Extension as Pybind11Extension
+    WIN = False
+    MACOS = False
+    
 # Determine is this is a debug build
 # **YUCK** this is not a great test
 debug_build = "--debug" in sys.argv
@@ -62,13 +75,10 @@ genn_third_party_include = os.path.join(genn_path, "include", "genn", "third_par
 genn_share = os.path.join(genn_path, "share", "genn")
 pygenn_share = os.path.join(pygenn_path, "share")
 
-# Always package LibGeNN
-package_data = ["genn" + genn_lib_suffix + ".*" if WIN 
-                else "libgenn" + genn_lib_suffix + ".*"]
-
 
 # Copy GeNN 'share' tree into pygenn and add all files to package
 # **THINK** this could be done on a per-backend basis
+package_data = []
 rmtree(pygenn_share, ignore_errors=True)
 copytree(genn_share, pygenn_share)
 for root, _, filenames in os.walk(pygenn_share):
@@ -80,7 +90,7 @@ for root, _, filenames in os.walk(pygenn_share):
 # Define standard kwargs for building all extensions
 genn_extension_kwargs = {
     "include_dirs": [pygenn_include, genn_include, genn_third_party_include],
-    "library_dirs": [pygenn_path],
+    "library_dirs": [],
     "libraries": ["genn" + genn_lib_suffix],
     "cxx_std": 17,
     "extra_compile_args": [],
@@ -218,13 +228,9 @@ for module_stem, source_stem, kwargs in backends:
     if WIN:
         backend_extension_kwargs["depends"].append(
             os.path.join(pygenn_path, "genn_" + module_stem + "_backend" + genn_lib_suffix + ".dll"))
-
-        package_data.append("genn_" + module_stem + "_backend" + genn_lib_suffix + ".*")
     else:
         backend_extension_kwargs["depends"].append(
             os.path.join(pygenn_path, "libgenn_" + module_stem + "_backend" + genn_lib_suffix + ".so"))
-
-        package_data.append("libgenn_" + module_stem + "_backend" + genn_lib_suffix + ".*")
 
     # Add backend include directory to both SWIG and C++ compiler options
     backend_include_dir = os.path.join(genn_path, "include", "genn", "backends", module_stem)
@@ -238,13 +244,22 @@ for module_stem, source_stem, kwargs in backends:
 
 class BuildGeNNExt(build_ext):
     def build_extensions(self):
-        # Build set of required backends
-        required_backends = set(
-            l for e in self.extensions for l in e.libraries
-            if "_backend_" in l)
-        
-        # Ensure output directory has trailing slash to make MSVC happy
-        out_dir = os.path.join(pygenn_path, "")
+        # We want to build libraries directly into setuptools build_lib directory so that install_lib.copy_tree copies them to where they belong
+        # **NOTE** empty string ensures trailing slash to make MSVC happy
+        out_dir = os.path.join(genn_path, self.build_lib, "pygenn", "")
+        temp_dir = os.path.join(genn_path, self.build_temp, "")
+
+        # Loop through extensions
+        required_backends = set()
+        for e in self.extensions:
+            # Add output directory to library directories so GeNN can be found
+            e.library_dirs.append(out_dir)
+            
+            # Loop through required libraries and, 
+            # if they are a GeNN backend, add to set
+            for l in e.libraries:
+                if "_backend_" in l:
+                    required_backends.add(l)
 
         # Loop through required backends
         for b in required_backends:
@@ -256,7 +271,7 @@ class BuildGeNNExt(build_ext):
             assert backend_title.endswith(genn_lib_suffix)
             assert backend_title.startswith("genn_")
 
-            # Slice out name of target
+            # Slice out name of target and add to list
             target = backend_title[5:-len(genn_lib_suffix)]
 
             # If compiler is MSVC
@@ -264,12 +279,14 @@ class BuildGeNNExt(build_ext):
                 check_call(["msbuild", "genn.sln", f"/t:{target}",
                             f"/p:Configuration={genn_lib_suffix[1:]}",
                             "/m", "/verbosity:quiet",
-                            f"/p:OutDir={out_dir}"],
+                            f"/p:OutDir={out_dir}",
+                            f"/p:IntermediateDirectory={temp_dir}"],
                            cwd=genn_path)
             else:
                 # Define make arguments
                 make_arguments = ["make", target, "DYNAMIC=1",
-                                  f"LIBRARY_DIRECTORY={pygenn_path}",
+                                  f"LIBRARY_DIRECTORY={out_dir}",
+                                  f"OBJECT_DIRECTORY={temp_dir}",
                                   f"--jobs={cpu_count(logical=False)}"]
                 if debug_build:
                     make_arguments.append("DEBUG=1")
@@ -298,5 +315,6 @@ setup(
     cmdclass={"build_ext": BuildGeNNExt},
     zip_safe=False,
     python_requires=">=3.6",
+    setup_requires=["pybind11", "psutil"],
     install_requires=["numpy>=1.17", "deprecated", "psutil",
                       "importlib-metadata>=1.0;python_version<'3.8'"])
