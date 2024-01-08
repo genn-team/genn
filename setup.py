@@ -1,8 +1,9 @@
 import os
 import sys
 from copy import deepcopy
+from glob import glob
 from platform import system, uname
-from shutil import copytree, rmtree
+from shutil import copyfile, copytree, rmtree
 from subprocess import check_call
 from setuptools import find_packages, setup
 
@@ -243,6 +244,20 @@ for module_stem, source_stem, kwargs in backends:
                                          **backend_extension_kwargs))
 
 class BuildGeNNExt(build_ext):
+    def copy_extensions_to_source(self):
+        # Search for bits of GeNN built during this process
+        files = glob(os.path.join(genn_path, self.build_lib, "pygenn",
+                                   f"*{genn_lib_suffix}.*" if WIN else f"libgenn*{genn_lib_suffix}.so"))
+
+        # Copy into source directory
+        for f in files:
+            dst = os.path.join(pygenn_path, os.path.basename(f))
+            print(f"Copying {f} -> {dst}")
+            copyfile(f, dst)
+
+        # Copy extensions to source
+        super().copy_extensions_to_source()
+
     def build_extensions(self):
         # We want to build libraries directly into setuptools build_lib directory so that install_lib.copy_tree copies them to where they belong
         # **NOTE** empty string ensures trailing slash to make MSVC happy
@@ -254,7 +269,7 @@ class BuildGeNNExt(build_ext):
         for e in self.extensions:
             # Add output directory to library directories so GeNN can be found
             e.library_dirs.append(out_dir)
-            
+
             # Loop through required libraries and, 
             # if they are a GeNN backend, add to set
             for l in e.libraries:
