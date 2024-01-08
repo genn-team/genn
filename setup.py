@@ -110,15 +110,8 @@ if WIN:
     # Add FFI library with correct suffix
     # **TODO** just call this ffi
     genn_extension_kwargs["libraries"].append("libffi" + genn_lib_suffix)
-
-    # Add GeNN and FFI libraries to dependencies
-    genn_extension_kwargs["depends"] = [os.path.join(pygenn_path, "genn" + genn_lib_suffix + ".dll"),
-                                        os.path.join(pygenn_path, "libffi" + genn_lib_suffix + ".dll")]
 # Otherwise
 else:
-    # Add GeNN library to dependencies
-    genn_extension_kwargs["depends"] = [os.path.join(pygenn_path, "libgenn" + genn_lib_suffix + ".so")]
-
     # If this is Linux, we want to add extension directory i.e. $ORIGIN to runtime
     # directories so libGeNN and backends can be found wherever package is installed
     if LINUX:
@@ -224,15 +217,6 @@ for module_stem, source_stem, kwargs in backends:
     for n, v in kwargs.items():
         backend_extension_kwargs[n].extend(v)
 
-    # Add relocatable version of backend library to libraries
-    # **NOTE** this is added BEFORE libGeNN as this library needs symbols FROM libGeNN
-    if WIN:
-        backend_extension_kwargs["depends"].append(
-            os.path.join(pygenn_path, "genn_" + module_stem + "_backend" + genn_lib_suffix + ".dll"))
-    else:
-        backend_extension_kwargs["depends"].append(
-            os.path.join(pygenn_path, "libgenn_" + module_stem + "_backend" + genn_lib_suffix + ".so"))
-
     # Add backend include directory to both SWIG and C++ compiler options
     backend_include_dir = os.path.join(genn_path, "include", "genn", "backends", module_stem)
     backend_extension_kwargs["libraries"].insert(0, "genn_" + module_stem + "_backend" + genn_lib_suffix)
@@ -270,11 +254,27 @@ class BuildGeNNExt(build_ext):
             # Add output directory to library directories so GeNN can be found
             e.library_dirs.append(out_dir)
 
+            # Add standard dependencies
+            # **YUCK** these need absolute paths so must be done here
+            if WIN:
+                e.depends.extend([os.path.join(out_dir, "genn" + genn_lib_suffix + ".dll"),
+                                  os.path.join(out_dir, "libffi" + genn_lib_suffix + ".dll")])
+            # Otherwise
+            else:
+                e.depends.append(os.path.join(out_dir, "libgenn" + genn_lib_suffix + ".so"))
+
             # Loop through required libraries and, 
             # if they are a GeNN backend, add to set
             for l in e.libraries:
                 if "_backend_" in l:
                     required_backends.add(l)
+                    if WIN:
+                        e.depends.append(
+                            os.path.join(out_dir, "genn_" + l + genn_lib_suffix + ".dll"))
+                    else:
+                        e.depends.append(
+                            os.path.join(out_dir, "libgenn_" + l + genn_lib_suffix + ".so"))
+            print(e.name, e.depends)
 
         # Loop through required backends
         for b in required_backends:
