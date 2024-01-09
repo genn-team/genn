@@ -35,6 +35,13 @@ struct Preferences : public PreferencesBase
 //--------------------------------------------------------------------------
 // CodeGenerator::SingleThreadedCPU::Backend
 //--------------------------------------------------------------------------
+class State : public Runtime::StateBase
+{
+};
+
+//--------------------------------------------------------------------------
+// CodeGenerator::SingleThreadedCPU::Backend
+//--------------------------------------------------------------------------
 class BACKEND_EXPORT Backend : public BackendBase
 {
 public:
@@ -65,6 +72,10 @@ public:
     virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+
+    //! Create backend-specific runtime state object
+    /*! \param runtime  runtime object */
+    virtual std::unique_ptr<GeNN::Runtime::StateBase> createState(const Runtime::Runtime &runtime) const final;
 
     //! Create backend-specific array object
     /*! \param type         data type of array

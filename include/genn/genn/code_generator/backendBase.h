@@ -70,6 +70,8 @@ class SynapseSparseInitGroupMerged;
 namespace Runtime
 {
 class ArrayBase;
+class Runtime;
+class StateBase;
 }
 }
 
@@ -263,6 +265,10 @@ public:
 
     //! After all timestep logic is complete
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
+
+    //! Create backend-specific runtime state object
+    /*! \param runtime  runtime object */
+    virtual std::unique_ptr<GeNN::Runtime::StateBase> createState(const Runtime::Runtime &runtime) const = 0;
 
     //! Create backend-specific array object
     /*! \param type         data type of array

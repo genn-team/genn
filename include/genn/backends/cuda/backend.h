@@ -15,6 +15,12 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#if __has_include(<nccl.h>)
+    #include <nccl.h>
+
+    #define NCCL_AVAILABLE
+#endif
+
 // GeNN includes
 #include "backendExport.h"
 
@@ -111,6 +117,47 @@ struct Preferences : public PreferencesBase
 //--------------------------------------------------------------------------
 // CodeGenerator::CUDA::Backend
 //--------------------------------------------------------------------------
+class BACKEND_EXPORT State : public Runtime::StateBase
+{
+public:
+    State(const Runtime::Runtime &base);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    //! To be called on one rank to generate ID before creating communicator
+    void ncclGenerateUniqueID();
+    
+    //! Get pointer to unique ID
+    std::byte *ncclGetUniqueID();
+    
+    //! Get size of unique ID in bytes
+    size_t ncclGetUniqueIDSize() const;
+
+    //! Initialise communicator
+    void ncclInitCommunicator(int rank, int numRanks);
+
+private:
+    //----------------------------------------------------------------------------
+    // Type defines
+    //----------------------------------------------------------------------------
+    typedef void (*VoidFunction)(void);
+    typedef std::byte* (*BytePtrFunction)(void);
+    typedef void (*NCCLInitCommunicatorFunction)(int, int);
+
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    bool m_EnableNCCLReductions;
+    VoidFunction m_NCCLGenerateUniqueID;
+    BytePtrFunction m_NCCLGetUniqueID;
+    NCCLInitCommunicatorFunction m_NCCLInitCommunicator;
+    const size_t *m_NCCLUniqueIDSize;
+};
+
+//--------------------------------------------------------------------------
+// CodeGenerator::CUDA::Backend
+//--------------------------------------------------------------------------
 class BACKEND_EXPORT Backend : public BackendSIMT
 {
 public:
@@ -179,6 +226,10 @@ public:
     virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+
+    //! Create backend-specific runtime state object
+    /*! \param runtime  runtime object */
+    virtual std::unique_ptr<GeNN::Runtime::StateBase> createState(const Runtime::Runtime &runtime) const final;
 
     //! Create backend-specific array object
     /*! \param type         data type of array

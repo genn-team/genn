@@ -119,6 +119,9 @@ Runtime::Runtime(const filesystem::path &modelPath, const CodeGenerator::ModelSp
                        { 
                            return std::make_pair(n, (CustomUpdateFunction)getSymbol("update" + n)); 
                        });
+
+        // Create  state
+        m_State = backend.createState(*this);
     }
     else {
 #ifdef _WIN32
@@ -755,11 +758,6 @@ ArrayBase *Runtime::getFusedTrgSpikeEventArray(const SynapseGroupInternal &g, co
     return getArray(f, prefix + name); 
 }
 //----------------------------------------------------------------------------
-const ModelSpecInternal &Runtime::getModel() const
-{
-    return m_ModelMerged.get().getModel();
-}
-//----------------------------------------------------------------------------
 void *Runtime::getSymbol(const std::string &symbolName, bool allowMissing) const
 {
 #ifdef _WIN32
@@ -783,6 +781,11 @@ void *Runtime::getSymbol(const std::string &symbolName, bool allowMissing) const
             return nullptr;
         }
     }
+}
+//----------------------------------------------------------------------------
+const ModelSpecInternal &Runtime::getModel() const
+{
+    return m_ModelMerged.get().getModel();
 }
 //----------------------------------------------------------------------------
 void Runtime::createArray(ArrayMap &groupArrays, const std::string &varName, const Type::ResolvedType &type, 

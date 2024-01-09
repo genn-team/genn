@@ -33,7 +33,8 @@ Backend createBackend(const ModelSpecInternal &model, const std::string &outputP
 PYBIND11_MODULE(cuda_backend, m) 
 {
     pybind11::module_::import("pygenn.genn");
-    
+    pybind11::module_::import("pygenn.runtime");
+
     //------------------------------------------------------------------------
     // Enumerations
     //------------------------------------------------------------------------
@@ -51,7 +52,7 @@ PYBIND11_MODULE(cuda_backend, m)
     //------------------------------------------------------------------------
     pybind11::class_<Preferences, CodeGenerator::PreferencesBase>(m, "Preferences")
         .def(pybind11::init<>())
-        
+
         .def_readwrite("show_ptx_info", &Preferences::showPtxInfo)
         .def_readwrite("generate_line_info", &Preferences::generateLineInfo)
         .def_readwrite("enable_nccl_reductions", &Preferences::enableNCCLReductions)
@@ -61,7 +62,21 @@ PYBIND11_MODULE(cuda_backend, m)
         // **TODO** some weirdness with "opaque types" means this doesn't work
         .def_readwrite("manual_block_sizes", &Preferences::manualBlockSizes)
         .def_readwrite("constant_cache_overhead", &Preferences::constantCacheOverhead);
-    
+
+    //------------------------------------------------------------------------
+    // cuda_backend.State
+    //------------------------------------------------------------------------
+    pybind11::class_<State, Runtime::StateBase>(m, "Runtime")
+        .def("nccl_generate_unique_id", &State::ncclGenerateUniqueID)
+        .def("nccl_init_communicator", &State::ncclGenerateUniqueID)
+
+        .def_property_readonly("nccl_unique_id",
+            [](State &a)
+            {
+               return pybind11::memoryview::from_memory(a.ncclGetUniqueID(),
+                                                        a.ncclGetUniqueIDSize());
+            });
+
     //------------------------------------------------------------------------
     // cuda_backend.Backend
     //------------------------------------------------------------------------

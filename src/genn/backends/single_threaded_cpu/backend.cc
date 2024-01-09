@@ -1447,6 +1447,11 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &, const ModelSpecMerged &)
 {
 }
 //--------------------------------------------------------------------------
+std::unique_ptr<GeNN::Runtime::StateBase> Backend::createState(const Runtime::Runtime&) const
+{
+    return std::make_unique<State>();
+}
+//--------------------------------------------------------------------------
 std::unique_ptr<Runtime::ArrayBase> Backend::createArray(const Type::ResolvedType &type, size_t count, 
                                                          VarLocation location, bool uninitialized) const
 {

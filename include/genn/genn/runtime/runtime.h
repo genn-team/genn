@@ -181,6 +181,13 @@ private:
     std::byte *m_HostPointer;
 };
 
+class GENN_EXPORT StateBase
+{
+public:
+    virtual ~StateBase()
+    {
+    }
+};
 //----------------------------------------------------------------------------
 // GeNN::Runtime::MergedDynamicFieldDestinations
 //----------------------------------------------------------------------------
@@ -314,6 +321,9 @@ public:
     //! Get current simulation time
     double getTime() const;
 
+    //! Get backend-specific state
+    StateBase *getState(){ return m_State.get(); }
+
     double getNeuronUpdateTime() const{ return *(double*)getSymbol("neuronUpdateTime"); }
     double getInitTime() const{ return *(double*)getSymbol("initTime"); }
     double getPresynapticUpdateTime() const{ return *(double*)getSymbol("presynapticUpdateTime"); }
@@ -395,6 +405,8 @@ public:
 
     ArrayBase *getFusedTrgSpikeEventArray(const SynapseGroupInternal &g, const std::string &name) const;
    
+    void *getSymbol(const std::string &symbolName, bool allowMissing = false) const;
+
 private:
     //----------------------------------------------------------------------------
     // Type defines
@@ -414,7 +426,6 @@ private:
     // Private API
     //----------------------------------------------------------------------------
     const ModelSpecInternal &getModel() const;
-    void *getSymbol(const std::string &symbolName, bool allowMissing = false) const;
 
     void createArray(ArrayMap &groupArrays, const std::string &varName, const Type::ResolvedType &type, 
                      size_t count, VarLocation location, bool uninitialized = false, unsigned int logIndent = 1);
@@ -668,6 +679,9 @@ private:
     uint64_t m_Timestep;
 
     std::optional<uint64_t> m_NumRecordingTimesteps;
+
+    //! Backend-specific state object
+    std::unique_ptr<StateBase> m_State;
 
     //! Reference to merged model being run
     std::reference_wrapper<const CodeGenerator::ModelSpecMerged> m_ModelMerged;

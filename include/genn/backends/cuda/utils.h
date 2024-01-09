@@ -29,3 +29,12 @@
         exit(EXIT_FAILURE);                                                                                             \
     }                                                                                                                   \
 }
+
+#define CHECK_NCCL_ERRORS(call)                                                                                         \
+{                                                                                                                       \
+    ncclResult_t error = call;                                                                                          \
+    if (error != ncclSuccess) {                                                                                         \
+        LOGE_BACKEND << __FILE__ << ": " << __LINE__ << ": nccl error " << error << ": " << ncclGetErrorString(error);  \
+        exit(EXIT_FAILURE);                                                                                             \
+    }                                                                                                                   \
+}

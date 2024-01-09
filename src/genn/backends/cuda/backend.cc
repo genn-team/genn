@@ -398,10 +398,55 @@ const EnvironmentLibrary::Library &getRNGFunctions(const Type::ResolvedType &pre
 
 
 //--------------------------------------------------------------------------
-// GeNN::CodeGenerator::CUDA::Backend
+// GeNN::CodeGenerator::CUDA::State
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator::CUDA
 {
+State::State(const Runtime::Runtime &runtime)
+{
+    // Lookup NCCL symbols
+    m_NCCLGenerateUniqueID = (VoidFunction)runtime.getSymbol("ncclGenerateUniqueID", true);
+    m_NCCLGetUniqueID = (BytePtrFunction)runtime.getSymbol("ncclGetUniqueID", true);
+    m_NCCLInitCommunicator = (NCCLInitCommunicatorFunction)runtime.getSymbol("ncclInitCommunicator", true);
+    m_NCCLUniqueIDSize = (size_t*)runtime.getSymbol("ncclUniqueIDSize", true);
+}
+//--------------------------------------------------------------------------
+void State::ncclGenerateUniqueID()
+{
+    if(m_NCCLGenerateUniqueID == nullptr) {
+        throw std::runtime_error("Cannot generate NCCL unique ID - model may not have been built with NCCL support");
+    }
+    m_NCCLGenerateUniqueID();
+}
+//--------------------------------------------------------------------------
+std::byte *State::ncclGetUniqueID()
+{ 
+    if(m_NCCLGetUniqueID == nullptr) {
+        throw std::runtime_error("Cannot get NCCL unique ID - model may not have been built with NCCL support");
+    }
+    return m_NCCLGetUniqueID();
+}
+//--------------------------------------------------------------------------
+size_t State::ncclGetUniqueIDSize() const
+{
+    if(m_NCCLUniqueIDSize == nullptr) {
+        throw std::runtime_error("Cannot get NCCL unique ID size - model may not have been built with NCCL support");
+    }
+    
+    return *m_NCCLUniqueIDSize;
+}
+//--------------------------------------------------------------------------    
+void State::ncclInitCommunicator(int rank, int numRanks)
+{
+     if(m_NCCLInitCommunicator == nullptr) {
+        throw std::runtime_error("Cannot initialise NCCL communicator - model may not have been built with NCCL support");
+    }
+    m_NCCLInitCommunicator(rank, numRanks);
+}
+
+//--------------------------------------------------------------------------
+// GeNN::CodeGenerator::CUDA::Backend
+//--------------------------------------------------------------------------
 Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, 
                  int device, bool zeroCopy)
 :   BackendSIMT(kernelBlockSizes, preferences), m_ChosenDeviceID(device)
@@ -1271,10 +1316,10 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &) co
 
         // Export ncclGetUniqueId function
         os << "extern \"C\" {" << std::endl;
-        os << "EXPORT_VAR const unsigned int ncclUniqueIDBytes;" << std::endl;
+        os << "EXPORT_VAR const size_t ncclUniqueIDSize;" << std::endl;
         os << "EXPORT_FUNC void ncclGenerateUniqueID();" << std::endl;
         os << "EXPORT_FUNC void ncclInitCommunicator(int rank, int numRanks);" << std::endl;
-        os << "EXPORT_FUNC unsigned char *ncclGetUniqueID();" << std::endl;
+        os << "EXPORT_FUNC std::byte *ncclGetUniqueID();" << std::endl;
         os << "}" << std::endl;
     }
 
@@ -1594,7 +1639,7 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&) const
         os << "ncclComm_t ncclCommunicator;" << std::endl;
 
         // Define constant to expose NCCL_UNIQUE_ID_BYTES
-        os << "const unsigned int ncclUniqueIDBytes = NCCL_UNIQUE_ID_BYTES;" << std::endl;
+        os << "const size_t ncclUniqueIDSize = NCCL_UNIQUE_ID_BYTES;" << std::endl;
 
         // Define wrapper to generate a unique NCCL ID
         os << std::endl;
@@ -1604,10 +1649,10 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&) const
             os << "CHECK_NCCL_ERRORS(ncclGetUniqueId(&ncclID));" << std::endl;
         }
         os << std::endl;
-        os << "unsigned char *ncclGetUniqueID()";
+        os << "std::byte *ncclGetUniqueID()";
         {
             CodeStream::Scope b(os);
-            os << "return reinterpret_cast<unsigned char*>(&ncclID);" << std::endl;
+            os << "return reinterpret_cast<std::byte*>(&ncclID);" << std::endl;
         }
         os << std::endl;
         os << "void ncclInitCommunicator(int rank, int numRanks)";
@@ -1642,6 +1687,11 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged 
     if(modelMerged.getModel().isTimingEnabled()) {
         os << "CHECK_CUDA_ERRORS(cudaEventSynchronize(neuronUpdateStop));" << std::endl;
     }
+}
+//--------------------------------------------------------------------------
+std::unique_ptr<GeNN::Runtime::StateBase> Backend::createState(const Runtime::Runtime &runtime) const
+{
+    return std::make_unique<State>(runtime);
 }
 //--------------------------------------------------------------------------
 std::unique_ptr<Runtime::ArrayBase> Backend::createArray(const Type::ResolvedType &type, size_t count, 

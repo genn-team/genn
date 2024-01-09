@@ -26,7 +26,7 @@ PYBIND11_MODULE(runtime, m)
     //------------------------------------------------------------------------
     // runtime.ArrayBase
     //------------------------------------------------------------------------
-    pybind11::class_<ArrayBase>(m, "ArrayBase")    
+    pybind11::class_<ArrayBase>(m, "ArrayBase")
         //--------------------------------------------------------------------
         // Properties
         //--------------------------------------------------------------------
@@ -36,7 +36,12 @@ PYBIND11_MODULE(runtime, m)
                return pybind11::memoryview::from_memory(a.getHostPointer(), 
                                                         a.getSizeBytes());
             })
-        
+        .def_property_readonly("state",
+            [](ArrayBase &a)
+            {
+               return pybind11::memoryview::from_memory(a.getHostPointer(),
+                                                        a.getSizeBytes());
+            })
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
@@ -45,6 +50,10 @@ PYBIND11_MODULE(runtime, m)
         .def("push_slice_1d_to_device", &ArrayBase::pushSlice1DToDevice)
         .def("pull_slice_1d_from_device", &ArrayBase::pullSlice1DFromDevice);
     
+    //------------------------------------------------------------------------
+    // runtime.StateBase
+    //------------------------------------------------------------------------
+    pybind11::class_<StateBase>(m, "StateBase");
 
     //------------------------------------------------------------------------
     // runtime.Runtime
