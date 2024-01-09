@@ -8,16 +8,24 @@ from subprocess import check_call
 from pybind11.setup_helpers import Pybind11Extension, build_ext, WIN, MACOS
 from setuptools import find_packages, setup
 
-# Determine is this is a debug build
-# **YUCK** this is not a great test
-debug_build = "--debug" in sys.argv
+# Loop through command line arguments
+debug_build = False
+coverage_build = False
+build_genn_libs = True
+filtered_args = []
+for arg in sys.argv:
+    if arg == "--debug":
+        debug_build = True
+    elif arg == "--coverage":
+        coverage_build = True
+        continue
+    elif arg in ["clean", "egg_info", "sdist"]:
+        build_genn_libs = False
 
-# Determine if this is a coverage build
-if "--coverage" in sys.argv:
-    coverage_build = True
-    sys.argv.remove("--coverage")
-else:
-    coverage_build = False
+    filtered_args.append(arg)
+
+# Add filtered (those that setuptools will understand) back to sys.argv
+sys.argv = filtered_args
 
 # Get CUDA path from environment variable - setting this up is a required CUDA post-install step
 cuda_path = os.environ.get("CUDA_PATH")
@@ -204,7 +212,7 @@ ext_modules = [
                       [os.path.join(pygenn_src, "weightUpdateModels.cc")],
                       **genn_extension_kwargs)]
 
- # Loop through namespaces of supported backends
+# Loop through namespaces of supported backends
 for module_stem, source_stem, kwargs in backends:
     # Take a copy of the standard extension kwargs
     backend_extension_kwargs = deepcopy(genn_extension_kwargs)
@@ -236,51 +244,27 @@ for module_stem, source_stem, kwargs in backends:
                                          [os.path.join(pygenn_src, source_stem + "Backend.cc")],
                                          **backend_extension_kwargs))
 
-class BuildGeNNExt(build_ext):
-    def build_extensions(self):
-        # Build set of required backends
-        required_backends = set(
-            l for e in self.extensions for l in e.libraries
-            if "_backend_" in l)
-        
-        # Ensure output directory has trailing slash to make MSVC happy
-        out_dir = os.path.join(pygenn_path, "")
+    if build_genn_libs:
+        # If compiler is MSVC
+        if WIN:
+            check_call(["msbuild", "genn.sln", f"/t:{module_stem}_backend",
+                        f"/p:Configuration={genn_lib_suffix[1:]}",
+                        "/m", "/verbosity:quiet",
+                        f"/p:OutDir={out_dir}"],
+                        cwd=genn_path)
+        else:
+            # Define make arguments
+            make_arguments = ["make", f"{module_stem}_backend", "DYNAMIC=1",
+                                f"LIBRARY_DIRECTORY={pygenn_path}",
+                                f"--jobs={cpu_count(logical=False)}"]
+            if debug_build:
+                make_arguments.append("DEBUG=1")
 
-        # Loop through required backends
-        for b in required_backends:
-            # Remove extension from backend name
-            backend_title = os.path.splitext(b)[0]
+            if coverage_build:
+                make_arguments.append("COVERAGE=1")
 
-            # Check that backend title ends with configuration
-            # and starts with genn_
-            assert backend_title.endswith(genn_lib_suffix)
-            assert backend_title.startswith("genn_")
-
-            # Slice out name of target
-            target = backend_title[5:-len(genn_lib_suffix)]
-
-            # If compiler is MSVC
-            if self.compiler.compiler_type == "msvc":
-                check_call(["msbuild", "genn.sln", f"/t:{target}",
-                            f"/p:Configuration={genn_lib_suffix[1:]}",
-                            "/m", "/verbosity:quiet",
-                            f"/p:OutDir={out_dir}"],
-                           cwd=genn_path)
-            else:
-                # Define make arguments
-                make_arguments = ["make", target, "DYNAMIC=1",
-                                  f"LIBRARY_DIRECTORY={pygenn_path}",
-                                  f"--jobs={cpu_count(logical=False)}"]
-                if debug_build:
-                    make_arguments.append("DEBUG=1")
-
-                if coverage_build:
-                    make_arguments.append("COVERAGE=1")
-
-                # Build
-                check_call(make_arguments, cwd=genn_path)
-
-        super().build_extensions()
+            # Build
+            check_call(make_arguments, cwd=genn_path)
 
 # Read version from txt file
 with open(os.path.join(genn_path, "version.txt")) as version_file:
@@ -295,7 +279,6 @@ setup(
     url="https://github.com/genn_team/genn",
     ext_package="pygenn",
     ext_modules=ext_modules,
-    cmdclass={"build_ext": BuildGeNNExt},
     zip_safe=False,
     python_requires=">=3.6",
     install_requires=["numpy>=1.17", "deprecated", "psutil",
