@@ -11,8 +11,8 @@
 // CUDA backend includes
 #include "optimiser.h"
 
-
-using namespace CodeGenerator::SingleThreadedCPU;
+using namespace GeNN;
+using namespace GeNN::CodeGenerator::SingleThreadedCPU;
 
 //----------------------------------------------------------------------------
 // Anonymous namespace

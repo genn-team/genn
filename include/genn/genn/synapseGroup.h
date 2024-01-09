@@ -15,14 +15,19 @@
 #include "variableMode.h"
 
 // Forward declarations
+namespace GeNN
+{
 class CustomConnectivityUpdateInternal;
 class CustomUpdateWUInternal;
 class NeuronGroupInternal;
 class SynapseGroupInternal;
+}
 
 //------------------------------------------------------------------------
-// SynapseGroup
+// GeNN::SynapseGroup
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class GENN_EXPORT SynapseGroup
 {
 public:
@@ -141,24 +146,42 @@ public:
     //! Get variable mode used for this synapse group's dendritic delay buffers
     VarLocation getDendriticDelayLocation() const{ return m_DendriticDelayLocation; }
 
-    //! Does synapse group need to handle 'true' spikes
+    //! Does synapse group need to handle 'true' spikes/
     bool isTrueSpikeRequired() const;
 
-    //! Does synapse group need to handle spike-like events
+    //! Does synapse group need to handle spike-like events?
     bool isSpikeEventRequired() const;
+
+    //! Are presynaptic spike times needed?
+    bool isPreSpikeTimeRequired() const;
+
+    //! Are presynaptic spike-like-event times needed?
+    bool isPreSpikeEventTimeRequired() const;
+
+    //! Are PREVIOUS presynaptic spike times needed?
+    bool isPrevPreSpikeTimeRequired() const;
+
+    //! Are PREVIOUS presynaptic spike-like-event times needed?
+    bool isPrevPreSpikeEventTimeRequired() const;
+
+    //! Are postsynaptic spike times needed?
+    bool isPostSpikeTimeRequired() const;
+
+    //! Are PREVIOUS postsynaptic spike times needed?
+    bool isPrevPostSpikeTimeRequired() const;
 
     const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
 
     const std::unordered_map<std::string, double> &getWUParams() const{ return m_WUParams; }
-    const std::unordered_map<std::string, Models::VarInit> &getWUVarInitialisers() const{ return m_WUVarInitialisers; }
-    const std::unordered_map<std::string, Models::VarInit> &getWUPreVarInitialisers() const{ return m_WUPreVarInitialisers; }
-    const std::unordered_map<std::string, Models::VarInit> &getWUPostVarInitialisers() const{ return m_WUPostVarInitialisers; }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getWUVarInitialisers() const{ return m_WUVarInitialisers; }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getWUPreVarInitialisers() const{ return m_WUPreVarInitialisers; }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getWUPostVarInitialisers() const{ return m_WUPostVarInitialisers; }
     const std::unordered_map<std::string, double> getWUConstInitVals() const;
 
     const PostsynapticModels::Base *getPSModel() const{ return m_PSModel; }
 
     const std::unordered_map<std::string, double> &getPSParams() const{ return m_PSParams; }
-    const std::unordered_map<std::string, Models::VarInit> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
 
     const InitSparseConnectivitySnippet::Init &getConnectivityInitialiser() const{ return m_SparseConnectivityInitialiser; }
     const InitToeplitzConnectivitySnippet::Init &getToeplitzConnectivityInitialiser() const { return m_ToeplitzConnectivityInitialiser; }
@@ -167,6 +190,7 @@ public:
 
     //! Get location of weight update model per-synapse state variable by name
     VarLocation getWUVarLocation(const std::string &var) const;
+
     //! Get location of weight update model presynaptic state variable by name
     VarLocation getWUPreVarLocation(const std::string &var) const;
 
@@ -196,40 +220,10 @@ public:
     /*! This is only used by extra global parameters which are pointers*/
     VarLocation getSparseConnectivityExtraGlobalParamLocation(const std::string &paramName) const;
 
-    //! Does this synapse group require dendritic delay?
-    bool isDendriticDelayRequired() const;
-
-    //! Does this synapse group define presynaptic output?
-    bool isPresynapticOutputRequired() const;    
-    
-    //! Does this synapse group require an RNG to generate procedural connectivity?
-    bool isProceduralConnectivityRNGRequired() const;
-
-    //! Does this synapse group require an RNG for it's postsynaptic init code?
-    bool isPSInitRNGRequired() const;
-
-    //! Does this synapse group require an RNG for it's weight update init code?
-    bool isWUInitRNGRequired() const;
-
-    //! Does this synapse group require an RNG for it's weight update presynaptic variable init code?
-    bool isWUPreInitRNGRequired() const;
-
-    //! Does this synapse group require an RNG for it's weight update postsynaptic variable init code?
-    bool isWUPostInitRNGRequired() const;
-
-    //! Does this synapse group require a RNG for any sort of initialization
-    bool isHostInitRNGRequired() const;
-
-    //! Is var init code required for any variables in this synapse group's weight update model?
-    bool isWUVarInitRequired() const;
-
-    //! Is sparse connectivity initialisation code required for this synapse group?
-    bool isSparseConnectivityInitRequired() const;
-
 protected:
     SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                 const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, Models::VarInit> &wuVarInitialisers, const std::unordered_map<std::string, Models::VarInit> &wuPreVarInitialisers, const std::unordered_map<std::string, Models::VarInit> &wuPostVarInitialisers,
-                 const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, Models::VarInit> &psVarInitialisers,
+                 const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPreVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPostVarInitialisers,
+                 const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, InitVarSnippet::Init> &psVarInitialisers,
                  NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                  const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                  const InitToeplitzConnectivitySnippet::Init &toeplitzInitialiser,
@@ -249,7 +243,7 @@ protected:
     void setFusedWUPostVarSuffix(const std::string &suffix){ m_FusedWUPostVarSuffix = suffix; }
     void setFusedPreOutputSuffix(const std::string &suffix){ m_FusedPreOutputSuffix = suffix; }
     
-    void initDerivedParams(double dt);
+    void finalise(double dt);
 
     //! Add reference to custom connectivity update, referencing this synapse group
     void addCustomUpdateReference(CustomConnectivityUpdateInternal *cu){ m_CustomConnectivityUpdateReferences.push_back(cu); }
@@ -266,7 +260,17 @@ protected:
     const std::unordered_map<std::string, double> &getWUDerivedParams() const{ return m_WUDerivedParams; }
     const std::unordered_map<std::string, double> &getPSDerivedParams() const{ return m_PSDerivedParams; }
 
-    const SynapseGroupInternal *getWeightSharingMaster() const { return m_WeightSharingMaster; }
+    const std::vector<Transpiler::Token> &getWUSimCodeTokens() const{ return m_WUSimCodeTokens; }
+    const std::vector<Transpiler::Token> &getWUEventCodeTokens() const{ return m_WUEventCodeTokens; }
+    const std::vector<Transpiler::Token> &getWUPostLearnCodeTokens() const{ return m_WUPostLearnCodeTokens; }
+    const std::vector<Transpiler::Token> &getWUSynapseDynamicsCodeTokens() const{ return m_WUSynapseDynamicsCodeTokens; }
+    const std::vector<Transpiler::Token> &getWUEventThresholdCodeTokens() const{ return m_WUEventThresholdCodeTokens; }
+    const std::vector<Transpiler::Token> &getWUPreSpikeCodeTokens() const{ return m_WUPreSpikeCodeTokens; }
+    const std::vector<Transpiler::Token> &getWUPostSpikeCodeTokens() const{ return m_WUPostSpikeCodeTokens; }
+    const std::vector<Transpiler::Token> &getWUPreDynamicsCodeTokens() const{ return m_WUPreDynamicsCodeTokens; }
+    const std::vector<Transpiler::Token> &getWUPostDynamicsCodeTokens() const{ return m_WUPostDynamicsCodeTokens; }
+    const std::vector<Transpiler::Token> &getPSApplyInputCodeTokens() const{ return m_PSApplyInputCodeTokens; }
+    const std::vector<Transpiler::Token> &getPSDecayCodeTokens() const{ return m_PSDecayCodeTokens; }
 
     //!< Does the event threshold needs to be retested in the synapse kernel?
     /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
@@ -308,8 +312,35 @@ protected:
     //! model been fused with those from other synapse groups?
     bool isWUPostModelFused() const { return m_FusedWUPostVarSuffix != getName(); }
 
+    //! Does this synapse group require dendritic delay?
+    bool isDendriticDelayRequired() const;
+
+    //! Does this synapse group provide presynaptic output?
+    bool isPresynapticOutputRequired() const; 
+
+    //! Does this synapse group provide postsynaptic output?
+    bool isPostsynapticOutputRequired() const; 
+
+    //! Does this synapse group require an RNG to generate procedural connectivity?
+    bool isProceduralConnectivityRNGRequired() const;
+
+    //! Does this synapse group require an RNG for it's weight update init code?
+    bool isWUInitRNGRequired() const;
+
+    //! Is var init code required for any variables in this synapse group's weight update model?
+    bool isWUVarInitRequired() const;
+
+    //! Is sparse connectivity initialisation code required for this synapse group?
+    bool isSparseConnectivityInitRequired() const;
+
+    //! Is the presynaptic time variable with identifier referenced in weight update model?
+    bool isPreTimeReferenced(const std::string &identifier) const;
+
+    //! Is the postsynaptic time variable with identifier referenced in weight update model?
+    bool isPostTimeReferenced(const std::string &identifier) const;
+
     //! Get the type to use for sparse connectivity indices for synapse group
-    std::string getSparseIndType() const;
+    const Type::ResolvedType &getSparseIndType() const;
 
     //! Generate hash of weight update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
@@ -417,9 +448,6 @@ private:
     //! Pointer to postsynaptic neuron group
     NeuronGroupInternal * const m_TrgNeuronGroup;
 
-    //! Pointer to 'master' weight sharing group if this is a slave
-    const SynapseGroupInternal *m_WeightSharingMaster;
-
     //! Does the event threshold needs to be retested in the synapse kernel?
     /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
     bool m_EventThresholdReTestRequired;
@@ -443,13 +471,13 @@ private:
     std::unordered_map<std::string, double> m_WUDerivedParams;
 
     //! Initialisers for weight update model per-synapse variables
-    std::unordered_map<std::string, Models::VarInit> m_WUVarInitialisers;
+    std::unordered_map<std::string, InitVarSnippet::Init> m_WUVarInitialisers;
 
     //! Initialisers for weight update model per-presynaptic neuron variables
-    std::unordered_map<std::string, Models::VarInit> m_WUPreVarInitialisers;
+    std::unordered_map<std::string, InitVarSnippet::Init> m_WUPreVarInitialisers;
 
     //! Initialisers for weight update model post-presynaptic neuron variables
-    std::unordered_map<std::string, Models::VarInit> m_WUPostVarInitialisers;
+    std::unordered_map<std::string, InitVarSnippet::Init> m_WUPostVarInitialisers;
     
     //! Post synapse update model type
     const PostsynapticModels::Base *m_PSModel;
@@ -461,7 +489,7 @@ private:
     std::unordered_map<std::string, double> m_PSDerivedParams;
 
     //! Initialisers for post synapse model variables
-    std::unordered_map<std::string, Models::VarInit> m_PSVarInitialisers;
+    std::unordered_map<std::string, InitVarSnippet::Init> m_PSVarInitialisers;
 
     //! Location of individual per-synapse state variables
     std::vector<VarLocation> m_WUVarLocation;
@@ -524,4 +552,32 @@ private:
     //! Custom updates which reference this synapse group
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
     std::vector<CustomUpdateWUInternal*> m_CustomUpdateReferences;
+
+    //! Tokens produced by scanner from threshold condition code
+    std::vector<Transpiler::Token> m_WUSimCodeTokens;
+
+    std::vector<Transpiler::Token> m_WUEventCodeTokens;
+
+    std::vector<Transpiler::Token> m_WUPostLearnCodeTokens;
+
+    std::vector<Transpiler::Token> m_WUSynapseDynamicsCodeTokens;
+
+    std::vector<Transpiler::Token> m_WUEventThresholdCodeTokens;
+
+    std::vector<Transpiler::Token> m_WUPreSpikeCodeTokens;
+
+    std::vector<Transpiler::Token> m_WUPostSpikeCodeTokens;
+
+    std::vector<Transpiler::Token> m_WUPreDynamicsCodeTokens;
+
+    std::vector<Transpiler::Token> m_WUPostDynamicsCodeTokens;
+
+    std::vector<Transpiler::Token> m_PSApplyInputCodeTokens;
+
+    std::vector<Transpiler::Token> m_PSDecayCodeTokens;
+
+    //! Tokens produced by scanner from reset code
+    std::vector<Transpiler::Token> m_ResetCodeTokens;
+    
 };
+}   // namespace GeNN

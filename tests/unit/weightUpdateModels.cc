@@ -5,6 +5,8 @@
 #include "modelSpec.h"
 #include "weightUpdateModels.h"
 
+using namespace GeNN;
+
 namespace
 {
 //--------------------------------------------------------------------------
@@ -14,19 +16,19 @@ class PiecewiseSTDPCopy : public WeightUpdateModels::Base
 {
 public:
     SET_PARAM_NAMES({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
-        "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
+                     "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
     SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
 
     SET_SIM_CODE(
-        "$(addToInSyn, $(g));\n"
-        "scalar dt = $(sT_post) - $(t) - ($(tauShift)); \n"
+        "addToPost(g);\n"
+        "scalar dt = sT_post - t - tauShift; \n"
         "scalar dg = 0;\n"
-        "if (dt > $(lim0))  \n"
-        "    dg = -($(off0)) ; \n"
+        "if (dt > lim0)  \n"
+        "    dg = -off0 ; \n"
         "else if (dt > 0)  \n"
-        "    dg = $(slope0) * dt + ($(off1)); \n"
-        "else if (dt > $(lim1))  \n"
-        "    dg = $(slope1) * dt + ($(off1)); \n"
+        "    dg = slope0 * dt + off1; \n"
+        "else if (dt > lim1)  \n"
+        "    dg = slope1 * dt + ($(off1)); \n"
         "else dg = - ($(off2)) ; \n"
         "$(gRaw) += dg; \n"
         "$(g)=$(gMax)/2 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");
@@ -52,8 +54,6 @@ public:
         {"off1", [](const ParamValues &pars, double) { return  pars.at("gMax") / pars.at("tChng"); }},
         {"off2", [](const ParamValues &pars, double) { return  pars.at("gMax") / pars.at("tPunish10"); }}});
 
-    SET_NEEDS_PRE_SPIKE_TIME(true);
-    SET_NEEDS_POST_SPIKE_TIME(true);
 };
 
 class STDPAdditive : public WeightUpdateModels::Base
@@ -86,9 +86,6 @@ public:
     SET_POST_SPIKE_CODE("$(postTrace) += 1.0;\n");
     SET_PRE_DYNAMICS_CODE("$(preTrace) *= $(tauPlusDecay);\n");
     SET_POST_DYNAMICS_CODE("$(postTrace) *= $(tauMinusDecay);\n");
-    
-    SET_NEEDS_PRE_SPIKE_TIME(true);
-    SET_NEEDS_POST_SPIKE_TIME(true);
 };
 IMPLEMENT_SNIPPET(STDPAdditive);
 }
@@ -154,10 +151,10 @@ TEST(WeightUpdateModels, ValidateVarValues)
     const VarValues postVarVals{{"postTrace", 0.0}};
     const std::unordered_map<std::string, double> paramVals{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
     
-    const std::unordered_map<std::string, Models::VarInit> varValsCorrect{{"g", uninitialisedVar()}};
-    const std::unordered_map<std::string, Models::VarInit> varValsMisSpelled{{"G", uninitialisedVar()}};
-    const std::unordered_map<std::string, Models::VarInit> varValsMissing{};
-    const std::unordered_map<std::string, Models::VarInit> varValsExtra{{"g", uninitialisedVar()}, {"d", uninitialisedVar()}};
+    const std::unordered_map<std::string, InitVarSnippet::Init> varValsCorrect{{"g", uninitialisedVar()}};
+    const std::unordered_map<std::string, InitVarSnippet::Init> varValsMisSpelled{{"G", uninitialisedVar()}};
+    const std::unordered_map<std::string, InitVarSnippet::Init> varValsMissing{};
+    const std::unordered_map<std::string, InitVarSnippet::Init> varValsExtra{{"g", uninitialisedVar()}, {"d", uninitialisedVar()}};
 
     STDPAdditive::getInstance()->validate(paramVals, varValsCorrect, preVarVals, postVarVals, "Synapse group");
 
@@ -186,13 +183,13 @@ TEST(WeightUpdateModels, ValidateVarValues)
 TEST(WeightUpdateModels, ValidatePreVarValues) 
 {
     const VarValues postVarVals{{"postTrace", 0.0}};
-    const std::unordered_map<std::string, Models::VarInit> varVals{{"g", uninitialisedVar()}};
+    const std::unordered_map<std::string, InitVarSnippet::Init> varVals{{"g", uninitialisedVar()}};
     const std::unordered_map<std::string, double> paramVals{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
     
-    const std::unordered_map<std::string, Models::VarInit> preVarValsCorrect{{"preTrace", 0.0}};
-    const std::unordered_map<std::string, Models::VarInit> preVarValsMisSpelled{{"prETrace", 0.0}};
-    const std::unordered_map<std::string, Models::VarInit> preVarValsMissing{};
-    const std::unordered_map<std::string, Models::VarInit> preVarValsExtra{{"preTrace", 0.0}, {"postTrace", 0.0}};
+    const std::unordered_map<std::string, InitVarSnippet::Init> preVarValsCorrect{{"preTrace", 0.0}};
+    const std::unordered_map<std::string, InitVarSnippet::Init> preVarValsMisSpelled{{"prETrace", 0.0}};
+    const std::unordered_map<std::string, InitVarSnippet::Init> preVarValsMissing{};
+    const std::unordered_map<std::string, InitVarSnippet::Init> preVarValsExtra{{"preTrace", 0.0}, {"postTrace", 0.0}};
 
     STDPAdditive::getInstance()->validate(paramVals, varVals, preVarValsCorrect, postVarVals, "Synapse group");
 
@@ -221,13 +218,13 @@ TEST(WeightUpdateModels, ValidatePreVarValues)
 TEST(WeightUpdateModels, ValidatePostVarValues) 
 {
     const VarValues preVarVals{{"preTrace", 0.0}};
-    const std::unordered_map<std::string, Models::VarInit> varVals{{"g", uninitialisedVar()}};
+    const std::unordered_map<std::string, InitVarSnippet::Init> varVals{{"g", uninitialisedVar()}};
     const std::unordered_map<std::string, double> paramVals{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
     
-    const std::unordered_map<std::string, Models::VarInit> postVarValsCorrect{{"postTrace", 0.0}};
-    const std::unordered_map<std::string, Models::VarInit> postVarValsMisSpelled{{"PostTrace", 0.0}};
-    const std::unordered_map<std::string, Models::VarInit> postVarValsMissing{};
-    const std::unordered_map<std::string, Models::VarInit> postVarValsExtra{{"postTrace", 0.0}, {"preTrace", 0.0}};
+    const std::unordered_map<std::string, InitVarSnippet::Init> postVarValsCorrect{{"postTrace", 0.0}};
+    const std::unordered_map<std::string, InitVarSnippet::Init> postVarValsMisSpelled{{"PostTrace", 0.0}};
+    const std::unordered_map<std::string, InitVarSnippet::Init> postVarValsMissing{};
+    const std::unordered_map<std::string, InitVarSnippet::Init> postVarValsExtra{{"postTrace", 0.0}, {"preTrace", 0.0}};
 
     STDPAdditive::getInstance()->validate(paramVals, varVals, preVarVals, postVarValsCorrect, "Synapse group");
 

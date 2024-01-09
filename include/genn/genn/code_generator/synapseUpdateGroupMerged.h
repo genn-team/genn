@@ -1,44 +1,130 @@
 #pragma once
 
+// GeNN includes
+#include "synapseGroupInternal.h"
+
 // GeNN code generator includes
 #include "code_generator/groupMerged.h"
 
 //----------------------------------------------------------------------------
-// CodeGenerator::
+// GeNN::CodeGenerator::SynapseGroupMergedBase
 //----------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
+class GENN_EXPORT SynapseGroupMergedBase : public GroupMerged<SynapseGroupInternal>
+{
+public:
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    //! Should the weight update model parameter be implemented heterogeneously?
+    bool isWUParamHeterogeneous(const std::string &paramName) const;
+
+    //! Should the weight update model derived parameter be implemented heterogeneously?
+    bool isWUDerivedParamHeterogeneous(const std::string &paramName) const;
+
+    //! Should the weight update model variable initialization parameter be implemented heterogeneously?
+    bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+    
+    //! Should the weight update model variable initialization derived parameter be implemented heterogeneously?
+    bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
+
+    //! Should the sparse connectivity initialization parameter be implemented heterogeneously?
+    bool isSparseConnectivityInitParamHeterogeneous(const std::string &paramName) const;
+
+    //! Should the sparse connectivity initialization parameter be implemented heterogeneously?
+    bool isSparseConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const;
+
+    //! Should the Toeplitz connectivity initialization parameter be implemented heterogeneously?
+    bool isToeplitzConnectivityInitParamHeterogeneous(const std::string &paramName) const;
+
+    //! Should the Toeplitz connectivity initialization parameter be implemented heterogeneously?
+    bool isToeplitzConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const;
+
+    std::string getPreSlot(unsigned int batchSize) const;
+    std::string getPostSlot(unsigned int batchSize) const;
+
+    std::string getPreVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+    {
+        return getPreVarIndex(getArchetype().getSrcNeuronGroup()->isDelayRequired(), batchSize, varDuplication, index);
+    }
+    
+    std::string getPostVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+    {
+        return getPostVarIndex(getArchetype().getTrgNeuronGroup()->isDelayRequired(), batchSize, varDuplication, index);
+    }
+
+    std::string getPreWUVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+    {
+        return getPreVarIndex(getArchetype().getDelaySteps() != 0, batchSize, varDuplication, index);
+    }
+    
+    std::string getPostWUVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+    {
+        return getPostVarIndex(getArchetype().getBackPropDelaySteps() != 0, batchSize, varDuplication, index);
+    }
+
+    std::string getPostDenDelayIndex(unsigned int batchSize, const std::string &index, const std::string &offset) const;
+
+    std::string getPreVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
+    std::string getPostVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
+
+    std::string getPrePrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
+    std::string getPostPrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
+    
+    std::string getPostISynIndex(unsigned int batchSize, const std::string &index) const
+    {
+        return ((batchSize == 1) ? "" : "$(_post_batch_offset) + ") + index;
+    }
+
+    std::string getPreISynIndex(unsigned int batchSize, const std::string &index) const
+    {
+        return ((batchSize == 1) ? "" : "$(pre_batch_offset) + ") + index;
+    }
+
+    std::string getSynVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
+    std::string getKernelVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
+    
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
+protected:
+    using GroupMerged::GroupMerged;
+    
+
+private:
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+    std::string getVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication,
+                            const std::string &index, const std::string &prefix) const;
+};
 
 //----------------------------------------------------------------------------
-// CodeGenerator::PresynapticUpdateGroupMerged
+// GeNN::CodeGenerator::PresynapticUpdateGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT PresynapticUpdateGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    PresynapticUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
-                                 const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::PresynapticUpdate, 
-                               groups.front().get().getWUModel()->getSimCode() + groups.front().get().getWUModel()->getEventCode() + groups.front().get().getWUModel()->getEventThresholdConditionCode(), groups)
-    {}
+    using SynapseGroupMergedBase::SynapseGroupMergedBase;
 
-    boost::uuids::detail::sha1::digest_type getHashDigest() const
-    {
-        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::PresynapticUpdate);
-    }
-
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend,
+                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
+                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
+                        CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateSpikeEventThreshold(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
-    void generateSpikeEventUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
-    void generateSpikeUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
-    void generateProceduralConnectivity(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
-    void generateToeplitzConnectivity(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+    void generateSpikeEventThreshold(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
+    void generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                                  unsigned int batchSize, double dt);
+    void generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                             unsigned int batchSize, double dt);
+    void generateProceduralConnectivity(const BackendBase &backend, EnvironmentExternalBase &env);
+    void generateToeplitzConnectivity(const BackendBase &backend, EnvironmentExternalBase &env,
+                                      Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
+                                      Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -47,31 +133,24 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// CodeGenerator::PostsynapticUpdateGroupMerged
+// GeNN::CodeGenerator::PostsynapticUpdateGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT PostsynapticUpdateGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    PostsynapticUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
-                                  const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::PostsynapticUpdate, 
-                               groups.front().get().getWUModel()->getLearnPostCode(), groups)
-    {}
+    using SynapseGroupMergedBase::SynapseGroupMergedBase;
 
-    boost::uuids::detail::sha1::digest_type getHashDigest() const
-    {
-        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::PostsynapticUpdate);
-    }
-
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend,
+                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
+                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
+                        CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateSynapseUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+    void generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                               unsigned int batchSize, double dt);
     
     //----------------------------------------------------------------------------
     // Static constants
@@ -80,31 +159,24 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// CodeGenerator::SynapseDynamicsGroupMerged
+// GeNN::CodeGenerator::SynapseDynamicsGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT SynapseDynamicsGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    SynapseDynamicsGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
-                               const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::SynapseDynamics, 
-                               groups.front().get().getWUModel()->getSynapseDynamicsCode(), groups)
-    {}
+    using SynapseGroupMergedBase::SynapseGroupMergedBase;
 
-    boost::uuids::detail::sha1::digest_type getHashDigest() const
-    {
-        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::SynapseDynamics);
-    }
-
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend,
+                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
+                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
+                        CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateSynapseUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+    void generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                               unsigned int batchSize, double dt);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -113,20 +185,20 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// CodeGenerator::SynapseDendriticDelayUpdateGroupMerged
+// GeNN::CodeGenerator::SynapseDendriticDelayUpdateGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT SynapseDendriticDelayUpdateGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
-                                           const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &group);
+    using GroupMerged::GroupMerged;
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend,
+                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
+                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
+                        CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
@@ -137,4 +209,4 @@ public:
     //----------------------------------------------------------------------------
     static const std::string name;
 };
-}
+}   // namespace GeNN::CodeGenerator

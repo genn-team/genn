@@ -1,9 +1,10 @@
 #pragma once
 
-
 //----------------------------------------------------------------------------
 // Enumerations
 //----------------------------------------------------------------------------
+namespace GeNN
+{
 //! Flags defining attributes of var access models
 //! **NOTE** Read-only and read-write are seperate flags rather than read and write so you can test mode & VarAccessMode::READ_ONLY
 enum class VarAccessModeAttribute : unsigned int
@@ -68,6 +69,12 @@ inline bool operator & (VarAccessMode mode, VarAccessModeAttribute modeAttribute
     return (static_cast<unsigned int>(mode) & static_cast<unsigned int>(modeAttribute)) != 0;
 }
 
+inline bool operator & (VarAccessMode a, VarAccessMode b)
+{
+    return (static_cast<unsigned int>(a) & static_cast<unsigned int>(b)) != 0;
+}
+
+
 //----------------------------------------------------------------------------
 // Helpers
 //----------------------------------------------------------------------------
@@ -80,3 +87,4 @@ inline VarAccessDuplication getVarAccessDuplication(VarAccess type)
 {
     return static_cast<VarAccessDuplication>(static_cast<unsigned int>(type) & ~0x1F);
 }
+}   // namespace GeNN

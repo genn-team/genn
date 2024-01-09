@@ -18,9 +18,9 @@
 #define SET_HOST_UPDATE_CODE(HOST_UPDATE_CODE) virtual std::string getHostUpdateCode() const override{ return HOST_UPDATE_CODE; }
 
 //----------------------------------------------------------------------------
-// CustomConnectivityUpdateModels::Base
+// GeNN::CustomConnectivityUpdateModels::Base
 //----------------------------------------------------------------------------
-namespace CustomConnectivityUpdateModels
+namespace GeNN::CustomConnectivityUpdateModels
 {
 //! Base class for all current source models
 class GENN_EXPORT Base : public Models::Base
@@ -72,12 +72,12 @@ public:
 
     //! Validate names of parameters etc
     void validate(const std::unordered_map<std::string, double> &paramValues, 
-                  const std::unordered_map<std::string, Models::VarInit> &varValues,
-                  const std::unordered_map<std::string, Models::VarInit> &preVarValues,
-                  const std::unordered_map<std::string, Models::VarInit> &postVarValues,
+                  const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
+                  const std::unordered_map<std::string, InitVarSnippet::Init> &preVarValues,
+                  const std::unordered_map<std::string, InitVarSnippet::Init> &postVarValues,
                   const std::unordered_map<std::string, Models::WUVarReference> &varRefTargets,
                   const std::unordered_map<std::string, Models::VarReference> &preVarRefTargets,
                   const std::unordered_map<std::string, Models::VarReference> &postVarRefTargets,
                   const std::string &description) const;
 };
-}   // CustomConnectivityUpdateModels
+}   // GeNN::CustomConnectivityUpdateModels

@@ -11,8 +11,8 @@
 // CUDA backend includes
 #include "optimiser.h"
 
-
-using namespace CodeGenerator::CUDA;
+using namespace GeNN;
+using namespace GeNN::CodeGenerator::CUDA;
 
 //----------------------------------------------------------------------------
 // Anonymous namespace

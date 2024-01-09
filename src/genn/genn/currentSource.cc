@@ -8,8 +8,10 @@
 #include "gennUtils.h"
 
 //------------------------------------------------------------------------
-// CurrentSource
+// GeNN::CurrentSource
 //------------------------------------------------------------------------
+namespace GeNN
+{
 void CurrentSource::setVarLocation(const std::string &varName, VarLocation loc)
 {
     m_VarLocation[getCurrentSourceModel()->getVarIndex(varName)] = loc;
@@ -17,11 +19,7 @@ void CurrentSource::setVarLocation(const std::string &varName, VarLocation loc)
 //----------------------------------------------------------------------------
 void CurrentSource::setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
 {
-    const size_t extraGlobalParamIndex = getCurrentSourceModel()->getExtraGlobalParamIndex(paramName);
-    if(!Utils::isTypePointer(getCurrentSourceModel()->getExtraGlobalParams()[extraGlobalParamIndex].type)) {
-        throw std::runtime_error("Only extra global parameters with a pointer type have a location");
-    }
-    m_ExtraGlobalParamLocation[extraGlobalParamIndex] = loc;
+    m_ExtraGlobalParamLocation[getCurrentSourceModel()->getExtraGlobalParamIndex(paramName)] = loc;
 }
 //----------------------------------------------------------------------------
 VarLocation CurrentSource::getVarLocation(const std::string &varName) const
@@ -35,7 +33,7 @@ VarLocation CurrentSource::getExtraGlobalParamLocation(const std::string &varNam
 }
 //----------------------------------------------------------------------------
 CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
-                             const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
+                             const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                              const NeuronGroupInternal *trgNeuronGroup, VarLocation defaultVarLocation,
                              VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_CurrentSourceModel(currentSourceModel), m_Params(params), m_VarInitialisers(varInitialisers),
@@ -45,9 +43,13 @@ CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels:
     // Validate names
     Utils::validatePopName(name, "Current source");
     getCurrentSourceModel()->validate(getParams(), getVarInitialisers(), "Current source " + getName());
+
+    // Scan current source model code string
+    m_InjectionCodeTokens = Utils::scanCode(getCurrentSourceModel()->getInjectionCode(), 
+                                            "Current source '" + getName() + "' injection code");
 }
 //----------------------------------------------------------------------------
-void CurrentSource::initDerivedParams(double dt)
+void CurrentSource::finalise(double dt)
 {
     auto derivedParams = getCurrentSourceModel()->getDerivedParams();
 
@@ -58,28 +60,8 @@ void CurrentSource::initDerivedParams(double dt)
 
     // Initialise derived parameters for variable initialisers
     for(auto &v : m_VarInitialisers) {
-        v.second.initDerivedParams(dt);
+        v.second.finalise(dt);
     }
-}
-//----------------------------------------------------------------------------
-bool CurrentSource::isSimRNGRequired() const
-{
-    // Returns true if any parts of the current source code require an RNG
-    if(Utils::isRNGRequired(getCurrentSourceModel()->getInjectionCode())) {
-        return true;
-    }
-
-    return false;
-}
-//----------------------------------------------------------------------------
-bool CurrentSource::isInitRNGRequired() const
-{
-    // If initialising the neuron variables require an RNG, return true
-    if(Utils::isRNGRequired(getVarInitialisers())) {
-        return true;
-    }
-
-    return false;
 }
 //----------------------------------------------------------------------------
 bool CurrentSource::isZeroCopyEnabled() const
@@ -114,3 +96,4 @@ boost::uuids::detail::sha1::digest_type CurrentSource::getVarLocationHashDigest(
     Utils::updateHash(m_ExtraGlobalParamLocation, hash);
     return hash.get_digest();
 }
+}   // namespace GeNN

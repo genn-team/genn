@@ -13,12 +13,17 @@
 #include "variableMode.h"
 
 // Forward declarations
+namespace GeNN
+{
 class CurrentSourceInternal;
 class SynapseGroupInternal;
+}
 
 //------------------------------------------------------------------------
-// NeuronGroup
+// GeNN::NeuronGroup
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class GENN_EXPORT NeuronGroup
 {
 public:
@@ -120,7 +125,7 @@ public:
     const NeuronModels::Base *getNeuronModel() const{ return m_NeuronModel; }
 
     const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     bool isSpikeTimeRequired() const;
     bool isPrevSpikeTimeRequired() const;
@@ -154,9 +159,6 @@ public:
     //! Get location of neuron model state variable by name
     VarLocation getVarLocation(const std::string &varName) const;
 
-    //! Get location of neuron model state variable by index
-    VarLocation getVarLocation(size_t index) const{ return m_VarLocation.at(index); }
-
     //! Get location of neuron model extra global parameter by name
     /*! This is only used by extra global parameters which are pointers*/
     VarLocation getExtraGlobalParamLocation(const std::string &paramName) const;
@@ -171,18 +173,9 @@ public:
     //! Is spike event recording enabled for this population?
     bool isSpikeEventRecordingEnabled() const { return m_SpikeEventRecordingEnabled; }
 
-    //! Does this neuron group require an RNG to simulate?
-    bool isSimRNGRequired() const;
-
-    //! Does this neuron group require an RNG for it's init code?
-    bool isInitRNGRequired() const;
-
-    //! Does this neuron group require any sort of recording?
-    bool isRecordingEnabled() const;
-
 protected:
     NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
+                const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
@@ -192,17 +185,17 @@ protected:
     void checkNumDelaySlots(unsigned int requiredDelay);
 
     //! Update which presynaptic variables require queues based on piece of code
-    void updatePreVarQueues(const std::string &code);
+    void updatePreVarQueues(const std::vector<Transpiler::Token> &tokens);
 
     //! Update which postsynaptic variables  require queues based on piece of code
-    void updatePostVarQueues(const std::string &code);
+    void updatePostVarQueues(const std::vector<Transpiler::Token> &tokens);
 
     void addSpkEventCondition(const std::string &code, SynapseGroupInternal *synapseGroup);
 
     void addInSyn(SynapseGroupInternal *synapseGroup){ m_InSyn.push_back(synapseGroup); }
     void addOutSyn(SynapseGroupInternal *synapseGroup){ m_OutSyn.push_back(synapseGroup); }
 
-    void initDerivedParams(double dt);
+    void finalise(double dt);
 
     //! Fuse incoming postsynaptic models
     void fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM);
@@ -223,8 +216,17 @@ protected:
     const std::vector<SynapseGroupInternal *> &getFusedWUPreOutSyn() const { return m_FusedWUPreOutSyn; }
     const std::vector<SynapseGroupInternal *> &getFusedPreOutputOutSyn() const { return m_FusedPreOutputOutSyn; }
 
+    //! Does this neuron group require an RNG to simulate?
+    bool isSimRNGRequired() const;
+
+    //! Does this neuron group require an RNG for it's init code?
+    bool isInitRNGRequired() const;
+
+    //! Does this neuron group require any sort of recording?
+    bool isRecordingEnabled() const;
+
     //! Gets pointers to all current sources which provide input to this neuron group
-    const std::vector<CurrentSourceInternal*> &getCurrentSources() const { return m_CurrentSources; }
+    const std::vector<CurrentSourceInternal*> &getCurrentSources() const { return m_MergedCurrentSourceGroups; }
 
     const std::unordered_map<std::string, double> &getDerivedParams() const{ return m_DerivedParams; }
 
@@ -241,6 +243,15 @@ protected:
 
     //! Helper to get vector of outgoing synapse groups which have presynaptic variables
     std::vector<SynapseGroupInternal *> getFusedOutSynWithPreVars() const;
+
+    //! Tokens produced by scanner from simc ode
+    const std::vector<Transpiler::Token> &getSimCodeTokens() const { return m_SimCodeTokens; }
+
+    //! Tokens produced by scanner from threshold condition code
+    const std::vector<Transpiler::Token> &getThresholdConditionCodeTokens() const { return m_ThresholdConditionCodeTokens; }
+    
+    //! Tokens produced by scanner from reset code
+    const std::vector<Transpiler::Token> &getResetCodeTokens() const { return m_ResetCodeTokens; }
 
     bool isVarQueueRequired(const std::string &var) const;
     bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
@@ -264,7 +275,7 @@ private:
     // Private methods
     //------------------------------------------------------------------------
     //! Update which variables require queues based on piece of code
-    void updateVarQueues(const std::string &code, const std::string &suffix);
+    void updateVarQueues(const std::vector<Transpiler::Token> &tokens, const std::string &suffix);
 
     //------------------------------------------------------------------------
     // Members
@@ -276,7 +287,7 @@ private:
     const NeuronModels::Base *m_NeuronModel;
     const std::unordered_map<std::string, double> m_Params;
     std::unordered_map<std::string, double> m_DerivedParams;
-    std::unordered_map<std::string, Models::VarInit> m_VarInitialisers;
+    std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
     std::vector<SynapseGroupInternal*> m_InSyn;
     std::vector<SynapseGroupInternal*> m_OutSyn;
     std::vector<SynapseGroupInternal*> m_FusedPSMInSyn;
@@ -285,7 +296,7 @@ private:
     std::vector<SynapseGroupInternal *> m_FusedPreOutputOutSyn;
     std::set<SpikeEventThreshold> m_SpikeEventCondition;
     unsigned int m_NumDelaySlots;
-    std::vector<CurrentSourceInternal*> m_CurrentSources;
+    std::vector<CurrentSourceInternal*> m_MergedCurrentSourceGroups;
 
     //! Vector specifying which variables require queues
     std::vector<bool> m_VarQueueRequired;
@@ -314,9 +325,19 @@ private:
     //! Location of extra global parameters
     std::vector<VarLocation> m_ExtraGlobalParamLocation;
 
+    //! Tokens produced by scanner from simc ode
+    std::vector<Transpiler::Token> m_SimCodeTokens;
+
+    //! Tokens produced by scanner from threshold condition code
+    std::vector<Transpiler::Token> m_ThresholdConditionCodeTokens;
+    
+    //! Tokens produced by scanner from reset code
+    std::vector<Transpiler::Token> m_ResetCodeTokens;
+    
     //! Is spike recording enabled for this population?
     bool m_SpikeRecordingEnabled;
 
     //! Is spike event recording enabled?
     bool m_SpikeEventRecordingEnabled;
 };
+}   // namespace GeNN

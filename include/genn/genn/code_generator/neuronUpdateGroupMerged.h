@@ -4,57 +4,202 @@
 #include "code_generator/groupMerged.h"
 
 //----------------------------------------------------------------------------
-// CodeGenerator::NeuronUpdateGroupMerged
+// GeNN::CodeGenerator::NeuronUpdateGroupMerged
 //----------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 class GENN_EXPORT NeuronUpdateGroupMerged : public NeuronGroupMergedBase
 {
 public:
-    NeuronUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronUpdateGroupMerged::CurrentSource
+    //----------------------------------------------------------------------------
+    //! Child group merged for current sources attached to this neuron update group
+    class CurrentSource : public ChildGroupMerged<CurrentSourceInternal>
+    {
+    public:
+        using ChildGroupMerged::ChildGroupMerged;
+
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                      NeuronUpdateGroupMerged &ng, unsigned int batchSize);
+
+        //! Update hash with child groups
+        void updateHash(boost::uuids::detail::sha1 &hash) const;
+
+        //! Should the current source parameter be implemented heterogeneously?
+        bool isParamHeterogeneous(const std::string &paramName) const;
+
+        //! Should the current source derived parameter be implemented heterogeneously?
+        bool isDerivedParamHeterogeneous(const std::string &paramName) const;
+
+    private:
+        //----------------------------------------------------------------------------
+        // Private API
+        //----------------------------------------------------------------------------
+        //! Is the parameter referenced? **YUCK** only used for hashing
+        bool isParamReferenced(const std::string &paramName) const;
+    };
+
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronUpdateGroupMerged::InSynPSM
+    //----------------------------------------------------------------------------
+    //! Child group merged for incoming synapse groups
+    class InSynPSM : public ChildGroupMerged<SynapseGroupInternal>
+    {
+    public:
+        using ChildGroupMerged::ChildGroupMerged;
+
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env,
+                      NeuronUpdateGroupMerged &ng, unsigned int batchSize);
+
+        //! Update hash with child groups
+        void updateHash(boost::uuids::detail::sha1 &hash) const;
+
+        //! Should the current source parameter be implemented heterogeneously?
+        bool isParamHeterogeneous(const std::string &paramName) const;
+
+        //! Should the current source derived parameter be implemented heterogeneously?
+        bool isDerivedParamHeterogeneous(const std::string &paramName) const;
+
+    private:
+        //----------------------------------------------------------------------------
+        // Private API
+        //----------------------------------------------------------------------------
+        //! Is the parameter referenced? **YUCK** only used for hashing
+        bool isParamReferenced(const std::string &paramName) const;
+    };
+
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronUpdateGroupMerged::OutSynPreOutput
+    //----------------------------------------------------------------------------
+    //! Child group merged for outgoing synapse groups with $(addToPre) logic
+    class OutSynPreOutput : public ChildGroupMerged<SynapseGroupInternal>
+    {
+    public:
+        using ChildGroupMerged::ChildGroupMerged;
+
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                      NeuronUpdateGroupMerged &ng, unsigned int batchSize);
+    };
+
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronUpdateGroupMerged::InSynWUMPostCode
+    //----------------------------------------------------------------------------
+    //! Child group merged for incoming synapse groups with postsynaptic update/spike code
+    class InSynWUMPostCode : public ChildGroupMerged<SynapseGroupInternal>
+    {
+    public:
+        using ChildGroupMerged::ChildGroupMerged;
+
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+                      unsigned int batchSize, bool dynamicsNotSpike);
+
+        void genCopyDelayedVars(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
+                                unsigned int batchSize);
+
+        //! Update hash with child groups
+        void updateHash(boost::uuids::detail::sha1 &hash) const;
+
+        //! Should the current source parameter be implemented heterogeneously?
+        bool isParamHeterogeneous(const std::string &paramName) const;
+
+        //! Should the current source derived parameter be implemented heterogeneously?
+        bool isDerivedParamHeterogeneous(const std::string &paramName) const;
+
+    private:
+        //----------------------------------------------------------------------------
+        // Private API
+        //----------------------------------------------------------------------------
+        //! Is the parameter referenced? **YUCK** only used for hashing
+        bool isParamReferenced(const std::string &paramName) const;
+    };
+
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronUpdateGroupMerged::OutSynWUMPreCode
+    //----------------------------------------------------------------------------
+    //! Child group merged for outgoing synapse groups with presynaptic update/spike code
+    class OutSynWUMPreCode : public ChildGroupMerged<SynapseGroupInternal>
+    {
+    public:
+        using ChildGroupMerged::ChildGroupMerged;
+
+        //----------------------------------------------------------------------------
+        // Public API
+        //----------------------------------------------------------------------------
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+                      unsigned int batchSize, bool dynamicsNotSpike);
+
+        void genCopyDelayedVars(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
+                                unsigned int batchSize);
+
+        //! Update hash with child groups
+        void updateHash(boost::uuids::detail::sha1 &hash) const;
+
+        //! Should the current source parameter be implemented heterogeneously?
+        bool isParamHeterogeneous(const std::string &paramName) const;
+
+        //! Should the current source derived parameter be implemented heterogeneously?
+        bool isDerivedParamHeterogeneous(const std::string &paramName) const;
+
+    private:
+        //----------------------------------------------------------------------------
+        // Private API
+        //----------------------------------------------------------------------------
+        //! Is the parameter referenced? **YUCK** only used for hashing
+        bool isParamReferenced(const std::string &paramName) const;
+    };
+
+    NeuronUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext,
                             const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    //! Should the incoming synapse weight update model parameter be implemented heterogeneously?
-    bool isInSynWUMParamHeterogeneous(size_t childIndex, const std::string &paramName) const;
-
-    //! Should the incoming synapse weight update model derived parameter be implemented heterogeneously?
-    bool isInSynWUMDerivedParamHeterogeneous(size_t childIndex, const std::string &paramName) const;
-
-    //! Should the outgoing synapse weight update model parameter be implemented heterogeneously?
-    bool isOutSynWUMParamHeterogeneous(size_t childIndex, const std::string &paramName) const;
-
-    //! Should the outgoing synapse weight update model derived parameter be implemented heterogeneously?
-    bool isOutSynWUMDerivedParamHeterogeneous(size_t childIndex, const std::string &paramName) const;
-
-    //! Get sorted vectors of incoming synapse groups with postsynaptic code belonging to archetype group
-    const std::vector<SynapseGroupInternal*> &getSortedArchetypeInSynWithPostCode() const { return m_SortedInSynWithPostCode.front(); }
-
-    //! Get sorted vectors of outgoing synapse groups with presynaptic code belonging to archetype group
-    const std::vector<SynapseGroupInternal*> &getSortedArchetypeOutSynWithPreCode() const { return m_SortedOutSynWithPreCode.front(); }
-
     //! Get hash digest used for detecting changes
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, 
+                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
+                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
+                        CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
     
-    void generateNeuronUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs,
-                              BackendBase::GroupHandler<NeuronUpdateGroupMerged> genEmitTrueSpike,
-                              BackendBase::GroupHandler<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent) const;
+    void generateNeuronUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize,
+                              BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitTrueSpike,
+                              BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent);
     
-    void generateWUVarUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+    void generateWUVarUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
     
     std::string getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
     std::string getReadVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
     std::string getWriteVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
+
+    const std::vector<CurrentSource> &getMergedCurrentSourceGroups() const { return m_MergedCurrentSourceGroups; }
+    const std::vector<InSynPSM> &getMergedInSynPSMGroups() const { return m_MergedInSynPSMGroups; }
+    const std::vector<OutSynPreOutput> &getMergedOutSynPreOutputGroups() const { return m_MergedOutSynPreOutputGroups; }
+    const std::vector<InSynWUMPostCode> &getMergedInSynWUMPostCodeGroups() const { return m_MergedInSynWUMPostCodeGroups; }
+    const std::vector<OutSynWUMPreCode> &getMergedOutSynWUMPreCodeGroups() const { return m_MergedOutSynWUMPreCodeGroups; }
+    
+    //! Should the parameter be implemented heterogeneously?
+    bool isParamHeterogeneous(const std::string &paramName) const;
+
+    //! Should the derived parameter be implemented heterogeneously?
+    bool isDerivedParamHeterogeneous(const std::string &paramName) const;
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -63,38 +208,67 @@ public:
 
 private:
     //------------------------------------------------------------------------
-    // Private methods
-    //------------------------------------------------------------------------
-    //! Helper to generate merged struct fields for WU pre and post vars
-    void generateWUVar(const BackendBase &backend, const std::string &fieldPrefixStem, 
-                       const std::vector<std::vector<SynapseGroupInternal*>> &sortedSyn,
-                       Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
-                       bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, const std::string&) const,
-                       bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, const std::string&) const,
-                       const std::string&(SynapseGroupInternal::*getFusedVarSuffix)(void) const);
-
-    //! Is the incoming synapse weight update model parameter referenced?
-    bool isInSynWUMParamReferenced(size_t childIndex, const std::string &paramName) const;
-
-    //! Is the outgoing synapse weight update model parameter referenced?
-    bool isOutSynWUMParamReferenced(size_t childIndex, const std::string &paramName) const;
-
-    void addNeuronModelSubstitutions(Substitutions &substitution, const std::string &sourceSuffix = "", const std::string &destSuffix = "") const;
-    
-    void generateWUVarUpdate(CodeStream &os, const Substitutions &popSubs,
-                             const std::string &fieldPrefixStem, const std::string &precision, const std::string &sourceSuffix, 
-                             bool useLocalNeuronVars, unsigned int batchSize, 
-                             const std::vector<SynapseGroupInternal*> &archetypeSyn,
-                             unsigned int(SynapseGroupInternal::*getDelaySteps)(void) const,
-                             Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
-                             std::string(WeightUpdateModels::Base::*getCode)(void) const,
-                             bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, const std::string&) const,
-                             bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, const std::string&) const) const;
-    
-    //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::vector<std::vector<SynapseGroupInternal *>> m_SortedInSynWithPostCode;
-    std::vector<std::vector<SynapseGroupInternal *>> m_SortedOutSynWithPreCode;
+    std::vector<CurrentSource> m_MergedCurrentSourceGroups;
+    std::vector<InSynPSM> m_MergedInSynPSMGroups;
+    std::vector<OutSynPreOutput> m_MergedOutSynPreOutputGroups;
+    std::vector<InSynWUMPostCode> m_MergedInSynWUMPostCodeGroups;
+    std::vector<OutSynWUMPreCode> m_MergedOutSynWUMPreCodeGroups;
 };
-}   // namespace CodeGenerator
+
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::NeuronSpikeQueueUpdateGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT NeuronSpikeQueueUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
+{
+public:
+    using GroupMerged::GroupMerged;
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void generateRunner(const BackendBase &backend,
+                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
+                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
+                        CodeStream &runnerMergedStructAlloc) const
+    {
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    void genMergedGroupSpikeCountReset(EnvironmentExternalBase &env, unsigned int batchSize) const;
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::NeuronPrevSpikeTimeUpdateGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT NeuronPrevSpikeTimeUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
+{
+public:
+    using GroupMerged::GroupMerged;
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void generateRunner(const BackendBase &backend,
+                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
+                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
+                        CodeStream &runnerMergedStructAlloc) const
+    {
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
+}   // namespace GeNN::CodeGenerator

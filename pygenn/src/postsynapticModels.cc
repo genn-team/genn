@@ -5,7 +5,7 @@
 // GeNN includes
 #include "postsynapticModels.h"
 
-using namespace PostsynapticModels;
+using namespace GeNN::PostsynapticModels;
 
 namespace
 {

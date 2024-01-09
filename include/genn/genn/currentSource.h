@@ -13,11 +13,16 @@
 #include "variableMode.h"
 
 // Forward declarations
+namespace GeNN
+{
 class NeuronGroupInternal;
+}
 
 //------------------------------------------------------------------------
-// CurrentSource
+// GeNN::CurrentSource
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class GENN_EXPORT CurrentSource
 {
 public:
@@ -44,7 +49,7 @@ public:
     const CurrentSourceModels::Base *getCurrentSourceModel() const{ return m_CurrentSourceModel; }
 
     const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     //! Get variable location for current source model state variable
     VarLocation getVarLocation(const std::string &varName) const;
@@ -62,14 +67,14 @@ public:
 
 protected:
     CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
-                  const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
+                  const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                   const NeuronGroupInternal *trgNeuronGroup, VarLocation defaultVarLocation,
                   VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    void initDerivedParams(double dt);
+    void finalise(double dt);
 
     //------------------------------------------------------------------------
     // Protected const methods
@@ -77,12 +82,6 @@ protected:
     const NeuronGroupInternal *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
 
     const std::unordered_map<std::string, double> &getDerivedParams() const{ return m_DerivedParams; }
-
-    //! Does this current source require an RNG to simulate
-    bool isSimRNGRequired() const;
-
-    //! Does this current source group require an RNG for it's init code
-    bool isInitRNGRequired() const;
 
     bool isZeroCopyEnabled() const;
 
@@ -96,6 +95,8 @@ protected:
 
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
 
+    const std::vector<Transpiler::Token> getInjectionCodeTokens() const{ return m_InjectionCodeTokens; }
+    
 private:
     //------------------------------------------------------------------------
     // Members
@@ -105,7 +106,7 @@ private:
     const CurrentSourceModels::Base *m_CurrentSourceModel;
     std::unordered_map<std::string, double> m_Params;
     std::unordered_map<std::string, double> m_DerivedParams;
-    std::unordered_map<std::string, Models::VarInit> m_VarInitialisers;
+    std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
 
     const NeuronGroupInternal *m_TrgNeuronGroup;
 
@@ -114,4 +115,8 @@ private:
 
     //! Location of extra global parameters
     std::vector<VarLocation> m_ExtraGlobalParamLocation;
+
+    //! Tokens produced by scanner from injection code
+    std::vector<Transpiler::Token> m_InjectionCodeTokens;
 };
+}   // namespace GeNN

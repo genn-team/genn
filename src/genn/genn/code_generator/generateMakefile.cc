@@ -10,10 +10,10 @@
 #include "code_generator/backendBase.h"
 
 //--------------------------------------------------------------------------
-// CodeGenerator
+// GeNN::CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateMakefile(std::ostream &os, const BackendBase &backend,
-                                     const std::vector<std::string> &moduleNames)
+void GeNN::CodeGenerator::generateMakefile(std::ostream &os, const BackendBase &backend,
+                                           const std::vector<std::string> &moduleNames)
 {
     //**TODO** deal with standard include paths e.g. MPI here
 

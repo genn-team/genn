@@ -5,14 +5,18 @@
 #include "synapseGroup.h"
 
 //------------------------------------------------------------------------
-// SynapseGroupInternal
+// GeNN::SynapseGroupInternal
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class SynapseGroupInternal : public SynapseGroup
 {
 public:
+    using GroupExternal = SynapseGroup;
+
     SynapseGroupInternal(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                         const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, Models::VarInit> &wuVarInitialisers, const std::unordered_map<std::string, Models::VarInit> &wuPreVarInitialisers, const std::unordered_map<std::string, Models::VarInit> &wuPostVarInitialisers,
-                         const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, Models::VarInit> &psVarInitialisers,
+                         const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPreVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPostVarInitialisers,
+                         const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, InitVarSnippet::Init> &psVarInitialisers,
                          NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                          const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                          const InitToeplitzConnectivitySnippet::Init &toeplitzConnectivityInitialiser,
@@ -30,15 +34,25 @@ public:
 
     using SynapseGroup::getSrcNeuronGroup;
     using SynapseGroup::getTrgNeuronGroup;
-    using SynapseGroup::getWeightSharingMaster;
     using SynapseGroup::getWUDerivedParams;
     using SynapseGroup::getPSDerivedParams;
+    using SynapseGroup::getWUSimCodeTokens;
+    using SynapseGroup::getWUEventCodeTokens;
+    using SynapseGroup::getWUPostLearnCodeTokens;
+    using SynapseGroup::getWUSynapseDynamicsCodeTokens;
+    using SynapseGroup::getWUEventThresholdCodeTokens;
+    using SynapseGroup::getWUPreSpikeCodeTokens;
+    using SynapseGroup::getWUPostSpikeCodeTokens;
+    using SynapseGroup::getWUPreDynamicsCodeTokens;
+    using SynapseGroup::getWUPostDynamicsCodeTokens;
+    using SynapseGroup::getPSApplyInputCodeTokens;
+    using SynapseGroup::getPSDecayCodeTokens;
     using SynapseGroup::setEventThresholdReTestRequired;
     using SynapseGroup::setFusedPSVarSuffix;
     using SynapseGroup::setFusedPreOutputSuffix;
     using SynapseGroup::setFusedWUPreVarSuffix;
     using SynapseGroup::setFusedWUPostVarSuffix;
-    using SynapseGroup::initDerivedParams;
+    using SynapseGroup::finalise;
     using SynapseGroup::addCustomUpdateReference;
     using SynapseGroup::isEventThresholdReTestRequired;
     using SynapseGroup::getFusedPSVarSuffix;
@@ -55,6 +69,13 @@ public:
     using SynapseGroup::isPSModelFused;
     using SynapseGroup::isWUPreModelFused;
     using SynapseGroup::isWUPostModelFused;
+    using SynapseGroup::isDendriticDelayRequired;
+    using SynapseGroup::isPresynapticOutputRequired; 
+    using SynapseGroup::isPostsynapticOutputRequired;
+    using SynapseGroup::isProceduralConnectivityRNGRequired;
+    using SynapseGroup::isWUInitRNGRequired;
+    using SynapseGroup::isWUVarInitRequired;
+    using SynapseGroup::isSparseConnectivityInitRequired;
     using SynapseGroup::getWUHashDigest;
     using SynapseGroup::getWUPreHashDigest;
     using SynapseGroup::getWUPostHashDigest;
@@ -87,13 +108,38 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const{ return m_SG.getPSVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_SG.getPSVarLocation(varName); }
 
-    Models::Base::VarVec getVars() const{ return m_SG.getPSModel()->getVars(); }
+    Models::Base::VarVec getDefs() const{ return m_SG.getPSModel()->getVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_SG.getPSVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getPSVarInitialisers(); }
 
-    const std::string &getFusedVarSuffix() const{ return m_SG.getFusedPSVarSuffix(); }
+    const std::string &getNameSuffix() const{ return m_SG.getFusedPSVarSuffix(); }
+
+    bool isVarDelayed(const std::string &) const { return false; }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const SynapseGroupInternal &m_SG;
+};
+
+//----------------------------------------------------------------------------
+// SynapsePSMEGPAdapter
+//----------------------------------------------------------------------------
+class SynapsePSMEGPAdapter
+{
+public:
+    SynapsePSMEGPAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getLoc(const std::string &varName) const{ return m_SG.getPSExtraGlobalParamLocation(varName); }
+    
+    Snippet::Base::EGPVec getDefs() const{ return m_SG.getPSModel()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -114,12 +160,13 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const{ return m_SG.getWUVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUVarLocation(varName); }
     
-    Models::Base::VarVec getVars() const{ return m_SG.getWUModel()->getVars(); }
+    Models::Base::VarVec getDefs() const{ return m_SG.getWUModel()->getVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_SG.getWUVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getWUVarInitialisers(); }
 
+    const std::string &getNameSuffix() const{ return m_SG.getName(); }
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -139,13 +186,15 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const{ return m_SG.getWUPreVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUPreVarLocation(varName); }
 
-    Models::Base::VarVec getVars() const{ return m_SG.getWUModel()->getPreVars(); }
+    Models::Base::VarVec getDefs() const{ return m_SG.getWUModel()->getPreVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_SG.getWUPreVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getWUPreVarInitialisers(); }
 
-    const std::string &getFusedVarSuffix() const{ return m_SG.getFusedWUPreVarSuffix(); }
+    const std::string &getNameSuffix() const{ return m_SG.getFusedWUPreVarSuffix(); }
+
+    bool isVarDelayed(const std::string&) const{ return (m_SG.getDelaySteps() != 0); }
 
 private:
     //----------------------------------------------------------------------------
@@ -166,13 +215,15 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const{ return m_SG.getWUPostVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUPostVarLocation(varName); }
 
-    Models::Base::VarVec getVars() const{ return m_SG.getWUModel()->getPostVars(); }
+    Models::Base::VarVec getDefs() const{ return m_SG.getWUModel()->getPostVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_SG.getWUPostVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_SG.getWUPostVarInitialisers(); }
 
-    const std::string &getFusedVarSuffix() const{ return m_SG.getFusedWUPostVarSuffix(); }
+    const std::string &getNameSuffix() const{ return m_SG.getFusedWUPostVarSuffix(); }
+
+    bool isVarDelayed(const std::string&) const{ return (m_SG.getBackPropDelaySteps() != 0); }
 
 private:
     //----------------------------------------------------------------------------
@@ -194,9 +245,9 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getEGPLocation(const std::string &varName) const{ return m_SG.getWUExtraGlobalParamLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUExtraGlobalParamLocation(varName); }
     
-    Snippet::Base::EGPVec getEGPs() const{ return m_SG.getWUModel()->getExtraGlobalParams(); }
+    Snippet::Base::EGPVec getDefs() const{ return m_SG.getWUModel()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -204,3 +255,4 @@ private:
     //----------------------------------------------------------------------------
     const SynapseGroupInternal &m_SG;
 };
+}   // namespace GeNN

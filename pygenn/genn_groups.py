@@ -13,7 +13,7 @@ from warnings import warn
 from weakref import proxy
 import numpy as np
 
-from . import neuron_models
+from . import neuron_models, types
 from .genn import (CustomUpdateWU, SynapseMatrixConnectivity,
                    SynapseMatrixWeight, VarAccessDuplication, VarLocation)
 from .model_preprocessor import prepare_model, ExtraGlobalParameter, Variable
@@ -90,11 +90,7 @@ class GroupMixin(object):
         Args:
         var_name    --  string a fully qualified name of the variable to assign
         var_size    --  int the size of the variable
-        var_type    --  string type of the variable. The supported types are
-                        char, unsigned char, short, unsigned short, int,
-                        unsigned int, long, unsigned long, long long,
-                        unsigned long long, float, double, long double
-                        and scalar.
+        var_type    --  ResolvedType object
 
         Returns numpy array of type var_type
 
@@ -103,10 +99,7 @@ class GroupMixin(object):
 
         internal_var_name = var_name + self.name
 
-        if var_type == "scalar":
-            var_type = self._model.precision
-
-        # Get numpy data type corresponding to type string
+        # Get numpy data type corresponding to type
         dtype = self._model.genn_types[var_type]
         
         # Calculate bytes
@@ -123,11 +116,7 @@ class GroupMixin(object):
 
         Args:
         var_name    --  string a fully qualified name of the variable to assign
-        var_type    --  string type of the variable. The supported types are
-                        char, unsigned char, short, unsigned short, int,
-                        unsigned int, long, unsigned long, long long,
-                        unsigned long long, float, double, long double
-                        and scalar.
+        var_type    --  ResolvedType object
 
         Returns numpy array of type var_type
 
@@ -136,10 +125,7 @@ class GroupMixin(object):
 
         internal_var_name = var_name + self.name
 
-        if var_type == "scalar":
-            var_type = self._model.precision
-
-        # Get numpy data type corresponding to type string
+        # Get numpy data type corresponding to type
         dtype = self._model.genn_types[var_type]
         
         # Get dtype view of array memoryview
@@ -162,11 +148,6 @@ class GroupMixin(object):
         # Retrieve EGP from dictionary
         egp = egp_dict[egp_name]
 
-        # If EGP is scalar, give error
-        if egp.is_scalar:
-            raise Exception("Only pointer-type extra global parameters "
-                            "need to be pushed")
-
         self._model._slm.push_extra_global_param_to_device(self.name, egp_name,
                                                            len(egp.values))
 
@@ -184,15 +165,11 @@ class GroupMixin(object):
         # Retrieve EGP from dictionary
         egp = egp_dict[egp_name]
 
-        # If EGP is scalar, give error
-        if egp.is_scalar:
-            raise Exception("Only pointer-type extra global parameters "
-                            "need to be pulled")
-
         self._model._slm.pull_extra_global_param_from_device(self.name, egp_name,
                                                              len(egp.values))
 
-    def _load_vars(self, vars, size=None, var_dict=None, get_location_fn=None):
+    def _load_vars(self, vars, size=None, var_dict=None, 
+                   get_location_fn=None, batched=True):
         # If no size is specified, use standard size
         if size is None:
             size = self.size
@@ -214,23 +191,29 @@ class GroupMixin(object):
             var_loc = get_location_fn(v.name) 
             if var_loc & VarLocation.HOST:
                 # Determine how many copies of this variable are present
-                num_copies = (1 if v.access & VarAccessDuplication.SHARED
-                              else self._model.batch_size)
-
+                var_batched = (batched and not v.access & VarAccessDuplication.SHARED)
+                num_copies = self._model.batch_size if var_batched else 1
+                
+                # Determine size of this variable
+                var_size = (1 if v.access & VarAccessDuplication.SHARED_NEURON
+                            else size)
+                            
                 # Get view
-                var_data.view = self._assign_ext_ptr_array(v.name, size * num_copies,
-                                                           var_data.type)
+                resolved_type = var_data.type.resolve(self._model.type_context)
+                var_data._view = self._assign_ext_ptr_array(
+                    v.name, var_size * num_copies, resolved_type)
 
                 # If there is more than one copy, reshape view to 2D
                 if num_copies > 1:
-                    var_data.view = np.reshape(var_data.view, (num_copies, -1))
+                    var_data._view = np.reshape(var_data._view,
+                                                (num_copies, -1))
 
                 # If manual initialisation is required, copy over variables
                 if var_data.init_required:
                     var_data.view[:] = var_data.values
             else:
                 assert not var_data.init_required
-                var_data.view = None
+                var_data._view = None
 
     def _load_egp(self, egp_dict=None, egp_suffix=""):
         # If no EGP dictionary is specified, use standard one
@@ -239,21 +222,16 @@ class GroupMixin(object):
 
         # Loop through extra global params
         for egp_name, egp_data in iteritems(egp_dict):
-            if egp_data.is_scalar:
-                # Assign view
-                egp_data.view = self._assign_ext_ptr_single(egp_name + egp_suffix,
-                                                            egp_data.type)
-                # Copy values
-                egp_data.view[:] = egp_data.values
-            elif egp_data.values is not None:
+            resolved_type = egp_data.type.resolve(self._model.type_context)
+            if egp_data.values is not None:
                 # Allocate memory
                 self._model._slm.allocate_extra_global_param(
                     self.name, egp_name + egp_suffix, len(egp_data.values))
 
                 # Assign view
-                egp_data.view = self._assign_ext_ptr_array(egp_name + egp_suffix,
-                                                           len(egp_data.values), 
-                                                           egp_data.type)
+                egp_data._view = self._assign_ext_ptr_array(
+                    egp_name + egp_suffix, len(egp_data.values), 
+                    resolved_type)
 
                 # Copy values
                 egp_data.view[:] = egp_data.values
@@ -271,6 +249,23 @@ class GroupMixin(object):
         for var_name, var_data in iteritems(var_dict):
             self._load_egp(var_data.extra_global_params, var_name)
 
+    def _unload_vars(self, var_dict=None):
+        # If no variable dictionary is specified, use standard one
+        if var_dict is None:
+            var_dict = self.vars
+
+        # Loop through variables and clear views
+        for v in itervalues(var_dict):
+            v._unload()
+
+    def _unload_egps(self, egp_dict=None):
+        # If no EGP dictionary is specified, use standard one
+        if egp_dict is None:
+            egp_dict = self.extra_global_params
+
+        # Loop through extra global params and clear views
+        for e in itervalues(egp_dict):
+            e._unload()
 
 class NeuronGroupMixin(GroupMixin):
 
@@ -283,8 +278,10 @@ class NeuronGroupMixin(GroupMixin):
         model   -- pygenn.genn_model.GeNNModel this neuron group is part of
         """
         super(NeuronGroupMixin, self)._init_group(model)
-        self.spike_que_ptr = [0]
-        
+        self.spike_que_ptr = None
+        self._spike_recording_data = None
+        self._spike_event_recording_data = None
+
         self.vars, self.extra_global_params = prepare_model(
             self.neuron_model, self, var_space)
 
@@ -313,7 +310,7 @@ class NeuronGroupMixin(GroupMixin):
 
             # Assign pointer to recording data
             self._spike_recording_data = self._assign_ext_ptr_array(
-                "recordSpk", recording_words, "uint32_t")
+                "recordSpk", recording_words, types.Uint32)
 
         # If spike-event recording is enabled
         if self.spike_event_recording_enabled:
@@ -323,17 +320,25 @@ class NeuronGroupMixin(GroupMixin):
 
             # Assign pointer to recording data
             self._spike_event_recording_data = self._assign_ext_ptr_array(
-                "recordSpkEvent", recording_words, "uint32_t")
+                "recordSpkEvent", recording_words, types.Uint32)
 
         if self.num_delay_slots > 1:
-            self.spike_que_ptr = self._model._slm.assign_external_pointer_single_ui(
-                "spkQuePtr" + self.name)
+            self.spike_que_ptr = self._assign_ext_ptr_single(
+                "spkQuePtr", types.Uint32)
 
         # Load neuron state variables
         self._load_vars(self.neuron_model.get_vars())
 
         # Load neuron extra global params
         self._load_egp()
+
+    def unload(self):
+        self.spike_que_ptr = None
+        self._spike_recording_data = None
+        self._spike_event_recording_data = None
+
+        self._unload_vars()
+        self._unload_egps()
 
     def load_init_egps(self):
         # Load any egps used for variable initialisation
@@ -434,16 +439,6 @@ class SynapseGroupMixin(GroupMixin):
             for egp in connect_init.snippet.get_extra_global_params()}
 
     @property
-    def num_synapses(self):
-        """Number of synapses in group"""
-        if self.matrix_type & SynapseMatrixConnectivity.DENSE:
-            return self.trg.size * self.src.size
-        elif (self.matrix_type & SynapseMatrixConnectivity.SPARSE):
-            return self._num_synapses
-        else:
-            raise Exception("Matrix format not supported")
-
-    @property
     def weight_update_var_size(self):
         """Size of each weight update variable"""
         if self.matrix_type & SynapseMatrixConnectivity.DENSE:
@@ -456,24 +451,7 @@ class SynapseGroupMixin(GroupMixin):
             raise Exception("Matrix format not supported")
 
     def get_var_values(self, var_name):
-        var_view = self.vars[var_name].view
-
-        if self.matrix_type & SynapseMatrixConnectivity.DENSE:
-            return np.copy(var_view)
-        elif self.matrix_type & SynapseMatrixConnectivity.SPARSE:
-            max_rl = self.max_row_length
-            row_ls = self._row_lengths if self._connectivity_initialiser_provided else self.row_lengths
-
-            # Create range containing the index where each row starts in ind
-            row_start_idx = xrange(0, self.weight_update_var_size, max_rl)
-
-            # Build list of subviews representing each row
-            rows = [var_view[i:i + r] for i, r in zip(row_start_idx, row_ls)]
-
-            # Stack all rows together into single array
-            return np.hstack(rows)
-        else:
-            raise Exception("Matrix format not supported")
+        return self._get_view_values(self.vars[var_name].view)
 
     def set_sparse_connections(self, pre_indices, post_indices):
         """Set ragged format connections between two groups of neurons
@@ -485,9 +463,6 @@ class SynapseGroupMixin(GroupMixin):
         if self.matrix_type & SynapseMatrixConnectivity.SPARSE:
             # Lexically sort indices
             self.synapse_order = np.lexsort((post_indices, pre_indices))
-
-            # Count synapses
-            self._num_synapses = len(post_indices)
 
             # Count the number of synapses in each row
             row_lengths = np.bincount(pre_indices, minlength=self.src.size)
@@ -550,7 +525,7 @@ class SynapseGroupMixin(GroupMixin):
                 # the _ind array view still has some non-valid data so we remove them
                 # with the row_lengths
                 return np.hstack([
-                    self._ind[i * self.max_row_length: (i * self.max_row_length) + r]
+                    self._ind[i * self.max_connections: (i * self.max_connections) + r]
                         for i, r in enumerate(self._row_lengths)])
 
         else:
@@ -559,7 +534,7 @@ class SynapseGroupMixin(GroupMixin):
 
     def pull_connectivity_from_device(self):
         """Wrapper around GeNNModel.pull_connectivity_from_device"""
-        self._model._slmpull_connectivity_from_device(self.name)
+        self._model._slm.pull_connectivity_from_device(self.name)
 
     def push_connectivity_to_device(self):
         """Wrapper around GeNNModel.push_connectivity_to_device"""
@@ -567,11 +542,11 @@ class SynapseGroupMixin(GroupMixin):
     
     def pull_in_syn_from_device(self):
         """Pull synaptic input current from device"""
-        self.pull_var_from_device("inSyn")
+        self.pull_var_from_device("outPost")
 
     def push_in_syn_to_device(self):
         """Push synaptic input current to device"""
-        self.push_var_to_device("inSyn")
+        self.push_var_to_device("outPost")
         
     def pull_psm_extra_global_param_from_device(self, egp_name):
         """Wrapper around GeNNModel.pull_extra_global_param_from_device
@@ -605,7 +580,7 @@ class SynapseGroupMixin(GroupMixin):
                                                      self._sparse_ind_type)
                     row_length = self._assign_ext_ptr_array("rowLength",
                                                             self.src.size,
-                                                            "unsigned int")
+                                                            types.Uint32)
                     # add pointers to the object
                     self._ind = ind
                     self._row_lengths = row_length
@@ -617,7 +592,7 @@ class SynapseGroupMixin(GroupMixin):
 
                         # Create (x)range containing the index where each row starts in ind
                         row_start_idx = xrange(0, self.weight_update_var_size,
-                                               self.max_row_length)
+                                               self.max_connections)
 
                         # Loop through ragged matrix rows
                         syn = 0
@@ -652,20 +627,21 @@ class SynapseGroupMixin(GroupMixin):
                     num_copies = (1 if (v.access & VarAccessDuplication.SHARED) != 0
                                     else self._model.batch_size)
                     # Get view
-                    var_data.view = self._assign_ext_ptr_array(
+                    resolved_type = var_data.type.resolve(self._model.type_context)
+                    var_data._view = self._assign_ext_ptr_array(
                         v.name, self.weight_update_var_size * num_copies, 
-                        var_data.type)
+                        resolved_type)
 
                     # If there is more than one copy, reshape view to 2D
                     if num_copies > 1:
-                        var_data.view = np.reshape(var_data.view, 
+                        var_data._view = np.reshape(var_data._view, 
                                                     (num_copies, -1))
 
                     # Initialise variable if necessary
                     self._init_wum_var(var_data, num_copies)
                 else:
                     assert not var_data.init_required
-                    var_data.view = None
+                    var_data._view = None
 
             # Load any var initialisation egps associated with this variable
             self._load_egp(var_data.extra_global_params, v.name)
@@ -691,13 +667,13 @@ class SynapseGroupMixin(GroupMixin):
             # If it's inSyn is accessible on the host
             if self.in_syn_location & VarLocation.HOST:
                 # Get view
-                self.in_syn = self._assign_ext_ptr_array(
-                    "inSyn", self.trg.size * self._model.batch_size,
-                    "scalar")
+                self.out_post = self._assign_ext_ptr_array(
+                    "outPost", self.trg.size * self._model.batch_size,
+                    self._model.precision)
 
                 # Reshape to expose batches
-                self.in_syn = np.reshape(self.in_syn, (self._model.batch_size,
-                                                       self.trg.size))
+                self.out_post = np.reshape(self.out_post, (self._model.batch_size,
+                                                           self.trg.size))
 
         # Load extra global parameters
         self._load_egp()
@@ -724,33 +700,74 @@ class SynapseGroupMixin(GroupMixin):
         snippet = self.sparse_connectivity_initialiser.snippet
         return (len(snippet.get_row_build_code()) > 0 
                 or len(snippet.get_col_build_code()) > 0)
+
+    def unload(self):
+        self._ind = None
+        self._row_lengths = None
+        self.in_syn = None
+
+        self._unload_vars()
+        self._unload_vars(self.pre_vars)
+        self._unload_vars(self.post_vars)
+        self._unload_vars(self.psm_vars)
+        self._unload_egps()
+        self._unload_egps(self.psm_extra_global_params)
+        self._unload_egps(self.connectivity_extra_global_params)
     
+    def _get_view_values(self, var_view):
+        if self.matrix_type & SynapseMatrixConnectivity.DENSE:
+            return np.copy(var_view)
+        elif self.matrix_type & SynapseMatrixWeight.KERNEL:
+            return np.copy(var_view)
+        elif self.matrix_type & SynapseMatrixConnectivity.SPARSE:
+            max_rl = self.max_connections
+            row_ls = self._row_lengths if self._connectivity_initialiser_provided else self.row_lengths
+
+            # Create range containing the index where each row starts in ind
+            row_start_idx = xrange(0, self.weight_update_var_size, max_rl)
+
+            # Build list of subviews representing each row
+            if len(var_view.shape) == 1:
+                rows = [var_view[i:i + r] 
+                        for i, r in zip(row_start_idx, row_ls)]
+            else:
+                rows = [var_view[:,i:i + r] 
+                        for i, r in zip(row_start_idx, row_ls)]
+            
+            # Stack all rows together into single array
+            return np.hstack(rows)
+        else:
+            raise Exception("Matrix format not supported")
+            
     def _init_wum_var(self, var_data, num_copies):
         # If initialisation is required
         if var_data.init_required:
             # If connectivity is dense,
             # copy variables  directly into view
             # **NOTE** we assume order is row-major
-            if ((self.matrix_type & SynapseMatrixWeight.DENSE) or 
-                    (self.matrix_type & SynapseMatrixWeight.KERNEL)):
-                var_data.view[:] = var_data.values
+            if ((self.matrix_type & SynapseMatrixConnectivity.DENSE) or
+                (self.matrix_type & SynapseMatrixWeight.KERNEL)):
+                var_data._view[:] = var_data.values
             elif (self.matrix_type & SynapseMatrixConnectivity.SPARSE):
                 # Sort variable to match GeNN order
-                sorted_var = var_data.values[self.synapse_order]
+                if num_copies == 1:
+                    sorted_var = var_data.values[self.synapse_order]
+                else:
+                    sorted_var = var_data.values[:,self.synapse_order]
 
                 # Create (x)range containing the index
                 # where each row starts in ind
                 row_start_idx = xrange(0, self.weight_update_var_size,
-                                       self.max_row_length)
+                                       self.max_connections)
 
                 # Loop through ragged matrix rows
                 syn = 0
                 for i, r in zip(row_start_idx, self.row_lengths):
                     # Copy row from non-padded indices into correct location
                     if num_copies == 1:
-                        var_data.view[i:i + r] = sorted_var[syn:syn + r]
+                        var_data._view[i:i + r] = sorted_var[syn:syn + r]
                     else:
-                        var_data.view[i:i + r,:] = sorted_var[syn:syn + r,:]
+                        var_data._view[:,i:i + r] = sorted_var[:,syn:syn + r]
                     syn += r
             else:
                 raise Exception("Matrix format not supported")
@@ -788,10 +805,15 @@ class CurrentSourceMixin(GroupMixin):
         # Load any egps used for variable initialisation
         self._load_var_init_egps()
 
+    def unload(self):
+        self._unload_vars()
+        self._unload_egps()
+
+
 class CustomUpdateMixin(GroupMixin):
     """Class representing a custom update"""
     def _init_group(self, model, var_space):
-        """Init NeuronGroup
+        """Init CustomUpdate
 
         Args:
         name    -- string name of the group
@@ -800,47 +822,142 @@ class CustomUpdateMixin(GroupMixin):
         super(CustomUpdateMixin, self)._init_group(model)
         self.vars, self.extra_global_params = prepare_model(
             self.custom_update_model, self, var_space)
-    
+ 
+    def load(self):
+        self._load_vars(self.custom_update_model.get_vars(),
+                        size=self.size, batched=self._is_batched)
+        self._load_egp()
+ 
+    def load_init_egps(self):
+        # Load any egps used for variable initialisation
+        self._load_var_init_egps()
+
+    def unload(self):
+        self._unload_vars()
+        self._unload_egps()
+
+
+class CustomUpdateWUMixin(GroupMixin):
+    """Class representing a custom weight update"""
+    def _init_group(self, model, var_space):
+        """Init CustomUpdateWUMixin
+
+        Args:
+        name    -- string name of the group
+        model   -- pygenn.genn_model.GeNNModel this neuron group is part of
+        """
+        super(CustomUpdateWUMixin, self)._init_group(model)
+        self.vars, self.extra_global_params = prepare_model(
+            self.custom_update_model, self, var_space)
 
     def load(self):
-        # If this is a custom weight update
-        if self._custom_wu_update:
-            # Assert that population has individual synapse variables
-            assert (self._synapse_group.has_individual_synapse_vars or
-                    self._synapse_group.has_kernel_synapse_vars)
-            # Loop through state variables
-            for v in self.custom_update_model.get_vars():
-                # Get corresponding data from dictionary
-                var_data = self.vars[v.name]
+        # Assert that population doesn't have procedural connectivity
+        assert not (self.synapse_group.matrix_type 
+                    & SynapseMatrixConnectivity.PROCEDURAL)
 
-                # If variable is located on host
-                var_loc = self.get_var_location(v.name) 
-                if var_loc & VarLocation.HOST:
-                    # **TODO** WHAT IS HAPPENING HERE?
-                    # Determine how many copies of this variable are present
-                    #num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
-                    #              else self._model.batch_size)
-                    num_copies = 1
+        # Loop through state variables
+        for v in self.custom_update_model.get_vars():
+            # Get corresponding data from dictionary
+            var_data = self.vars[v.name]
 
-                    # Get view
-                    size = self._synapse_group.weight_update_var_size * num_copies
-                    var_data.view = self._assign_ext_ptr_array(
-                        v.name, size, var_data.type)
+            # If variable is located on host
+            var_loc = self.get_var_location(v.name) 
+            if var_loc & VarLocation.HOST:
+                # Determine how many copies of this variable are present
+                var_batched = (self._is_batched and not v.access & VarAccessDuplication.SHARED)
+                num_copies = self._model.batch_size if var_batched else 1
 
-                    # If there is more than one copy, reshape view to 2D
-                    if num_copies > 1:
-                        var_data.view = np.reshape(var_data.view, 
-                                                   (num_copies, -1))
+                # Get view
+                size = self.synapse_group.weight_update_var_size * num_copies
+                resolved_type = var_data.type.resolve(self._model.type_context)
+                var_data._view = self._assign_ext_ptr_array(
+                    v.name, size, resolved_type)
 
-                    # Initialise variable if necessary
-                    self._synapse_group._init_wum_var(var_data, num_copies)
+                # If there is more than one copy, reshape view to 2D
+                if num_copies > 1:
+                    var_data._view = np.reshape(var_data._view, 
+                                                (num_copies, -1))
 
-                # Load any var initialisation egps associated with this variable
-                self._load_egp(var_data.extra_global_params, v.name)
-        # Otherwise, load variables 
-        else:
-            self._load_vars(self.custom_update_model.get_vars(),
-                            size=self.size)
+                # Initialise variable if necessary
+                self.synapse_group._init_wum_var(var_data, num_copies)
+
+            # Load any var initialisation egps associated with this variable
+            self._load_egp(var_data.extra_global_params, v.name)
+
+        # Load custom update extra global parameters
+        self._load_egp()
+    
+    def get_var_values(self, var_name):
+        return self.synapse_group._get_view_values(self.vars[var_name].view)
+
+    def load_init_egps(self):
+        # Load any egps used for variable initialisation
+        self._load_var_init_egps()
+
+    def unload(self):
+        self._unload_vars()
+        self._unload_egps()
+
+    @property
+    def synapse_group(self):
+        """Get SynapseGroup associated with custom weight update"""
+        # Return Python synapse group reference from 
+        # first (arbitrarily) variable reference
+        return next(itervalues(self.var_references)).synapse_group
+
+
+class CustomConnectivityUpdateMixin(GroupMixin):
+    """Class representing a custom connectivity update"""
+    def _init_group(self, model, var_space, pre_var_space, 
+                    post_var_space, synapse_group):
+        """Init CustomConnectivityUpdateGroup
+
+        Args:
+        name    -- string name of the group
+        model   -- pygenn.genn_model.GeNNModel this neuron group is part of
+        """
+        super(CustomConnectivityUpdateMixin, self)._init_group(model)
+        self.synapse_group = synapse_group
+        self.vars, self.extra_global_params = prepare_model(
+            self.model, self, var_space)
+        self.pre_vars = {vnt.name: Variable(vnt.name, vnt.type, 
+                                            pre_var_space[vnt.name], self)
+                         for vnt in self.model.get_pre_vars()}
+        self.post_vars = {vnt.name: Variable(vnt.name, vnt.type, 
+                                             post_var_space[vnt.name], self)
+                          for vnt in self.model.get_post_vars()}
+    
+    def get_var_values(self, var_name):
+        return self.synapse_group._get_view_values(self.vars[var_name].view)
+
+    def load(self):
+        # Loop through state variables
+        for v in self.model.get_vars():
+            # Get corresponding data from dictionary
+            var_data = self.vars[v.name]
+
+            # If variable is located on host
+            var_loc = self.get_var_location(v.name) 
+            if var_loc & VarLocation.HOST:
+                # Get view
+                size = self.synapse_group.weight_update_var_size
+                resolved_type = var_data.type.resolve(self._model.type_context)
+                var_data._view = self._assign_ext_ptr_array(
+                    v.name, size, resolved_type)
+
+                # Initialise variable if necessary
+                self.synapse_group._init_wum_var(var_data, 1)
+
+            # Load any var initialisation egps associated with this variable
+            self._load_egp(var_data.extra_global_params, v.name)
+  
+        # Load pre and postsynaptic variables
+        self._load_vars(self.model.get_pre_vars(), 
+                        self.synapse_group.src.size,
+                        self.pre_vars, self.get_pre_var_location, False)
+        self._load_vars(self.model.get_post_vars(), 
+                        self.synapse_group.trg.size,
+                        self.post_vars, self.get_post_var_location, False)
 
         # Load custom update extra global parameters
         self._load_egp()
@@ -848,16 +965,13 @@ class CustomUpdateMixin(GroupMixin):
     def load_init_egps(self):
         # Load any egps used for variable initialisation
         self._load_var_init_egps()
+        
+        # Load any egps used for pre and postsynaptic variable initialisation
+        self._load_var_init_egps(self.pre_vars)
+        self._load_var_init_egps(self.post_vars)
 
-    @property
-    def _custom_wu_update(self):
-        return isinstance(self, CustomUpdateWU)
-
-    @property
-    def _synapse_group(self):
-        """Get SynapseGroup associated with custom weight update"""
-        assert self._custom_wu_update
-
-        # Return Python synapse group reference from 
-        # first (arbitrarily) variable reference
-        return next(itervalues(self.var_references)).synapse_group
+    def unload(self):
+        self._unload_vars()
+        self._unload_vars(self.pre_vars)
+        self._unload_vars(self.post_vars)
+        self._unload_egps()

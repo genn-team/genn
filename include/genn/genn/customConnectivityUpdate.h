@@ -11,8 +11,10 @@
 #include "variableMode.h"
 
 //------------------------------------------------------------------------
-// CustomConnectivityUpdate
+// GeNN::CustomConnectivityUpdate
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class GENN_EXPORT CustomConnectivityUpdate
 {
 public:
@@ -44,9 +46,9 @@ public:
     const CustomConnectivityUpdateModels::Base *getCustomConnectivityUpdateModel() const { return m_CustomConnectivityUpdateModel; }
 
     const std::unordered_map<std::string, double> &getParams() const { return m_Params; }
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const { return m_VarInitialisers; }
-    const std::unordered_map<std::string, Models::VarInit> &getPreVarInitialisers() const { return m_PreVarInitialisers; }
-    const std::unordered_map<std::string, Models::VarInit> &getPostVarInitialisers() const { return m_PostVarInitialisers; }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const { return m_VarInitialisers; }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getPreVarInitialisers() const { return m_PreVarInitialisers; }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getPostVarInitialisers() const { return m_PostVarInitialisers; }
 
     const std::unordered_map<std::string, Models::WUVarReference> &getVarReferences() const{ return m_VarReferences;  }
     const std::unordered_map<std::string, Models::VarReference> &getPreVarReferences() const{ return m_PreVarReferences;  }
@@ -70,17 +72,11 @@ public:
     //! Is var init code required for any postsynaptic variables in this custom connectivity update group?
     bool isPostVarInitRequired() const;
 
-    //! Is a per-row RNG required for this custom connectivity update group
-    bool isRowSimRNGRequired() const;
-
-    //! Is a host RNG required for this custom connectivity update group
-    bool isHostRNGRequired() const;
-    
 protected:
     CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup,
                              const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel,
-                             const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
-                             const std::unordered_map<std::string, Models::VarInit> &preVarInitialisers, const std::unordered_map<std::string, Models::VarInit> &postVarInitialisers,
+                             const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
+                             const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
                              const std::unordered_map<std::string, Models::WUVarReference> &varReferences, const std::unordered_map<std::string, Models::VarReference> &preVarReferences,
                              const std::unordered_map<std::string, Models::VarReference> &postVarReferences, VarLocation defaultVarLocation,
                              VarLocation defaultExtraGlobalParamLocation);
@@ -88,23 +84,12 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    void initDerivedParams(double dt);
-
-    void finalize(unsigned int batchSize);
+    void finalise(double dt, unsigned int batchSize);
 
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
     const std::unordered_map<std::string, double> &getDerivedParams() const { return m_DerivedParams; }
-
-    //! Does this current source group require an RNG for initialising its presynaptic variables
-    bool isPreVarInitRNGRequired() const;
-
-    //! Does this current source group require an RNG for initialising its postsynaptic variables
-    bool isPostVarInitRNGRequired() const;
-
-    //! Does this current source group require an RNG for initialising its synaptic variables
-    bool isVarInitRNGRequired() const;
 
     bool isZeroCopyEnabled() const;
 
@@ -124,6 +109,10 @@ protected:
     boost::uuids::detail::sha1::digest_type getInitHashDigest() const;
 
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
+
+    const std::vector<Transpiler::Token> getRowUpdateCodeTokens() const{ return m_RowUpdateCodeTokens; }
+
+    const std::vector<Transpiler::Token> getHostUpdateCodeTokens() const{ return m_HostUpdateCodeTokens; }
 
     const NeuronGroup *getPreDelayNeuronGroup() const { return m_PreDelayNeuronGroup; }
     
@@ -146,9 +135,9 @@ private:
     const CustomConnectivityUpdateModels::Base *m_CustomConnectivityUpdateModel;
     const std::unordered_map<std::string, double> m_Params;
     std::unordered_map<std::string, double> m_DerivedParams;
-    std::unordered_map<std::string, Models::VarInit> m_VarInitialisers;
-    std::unordered_map<std::string, Models::VarInit> m_PreVarInitialisers;
-    std::unordered_map<std::string, Models::VarInit> m_PostVarInitialisers;
+    std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
+    std::unordered_map<std::string, InitVarSnippet::Init> m_PreVarInitialisers;
+    std::unordered_map<std::string, InitVarSnippet::Init> m_PostVarInitialisers;
 
     //! Location of individual state variables
     std::vector<VarLocation> m_VarLocation;
@@ -164,4 +153,11 @@ private:
     
     const NeuronGroup *m_PreDelayNeuronGroup;
     const NeuronGroup *m_PostDelayNeuronGroup;
+
+    //! Tokens produced by scanner from row update code
+    std::vector<Transpiler::Token> m_RowUpdateCodeTokens;
+
+    //! Tokens produced by scanner from host update code
+    std::vector<Transpiler::Token> m_HostUpdateCodeTokens;
 };
+}   // namespace GeNN

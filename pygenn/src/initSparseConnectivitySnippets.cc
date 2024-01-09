@@ -5,7 +5,7 @@
 // GeNN includes
 #include "initSparseConnectivitySnippet.h"
 
-using namespace InitSparseConnectivitySnippet;
+using namespace GeNN::InitSparseConnectivitySnippet;
 
 namespace
 {

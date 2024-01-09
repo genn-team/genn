@@ -12,12 +12,11 @@
 #define SET_DECAY_CODE(DECAY_CODE) virtual std::string getDecayCode() const override{ return DECAY_CODE; }
 #define SET_CURRENT_CONVERTER_CODE(CURRENT_CONVERTER_CODE) virtual std::string getApplyInputCode() const override{ return "$(Isyn) += " CURRENT_CONVERTER_CODE ";"; }
 #define SET_APPLY_INPUT_CODE(APPLY_INPUT_CODE) virtual std::string getApplyInputCode() const override{ return APPLY_INPUT_CODE; }
-#define SET_SUPPORT_CODE(SUPPORT_CODE) virtual std::string getSupportCode() const override{ return SUPPORT_CODE; }
 
 //----------------------------------------------------------------------------
-// PostsynapticModels::Base
+// GeNN::PostsynapticModels::Base
 //----------------------------------------------------------------------------
-namespace PostsynapticModels
+namespace GeNN::PostsynapticModels
 {
 //! Base class for all postsynaptic models
 class GENN_EXPORT Base : public Models::Base
@@ -28,7 +27,6 @@ public:
     //----------------------------------------------------------------------------
     virtual std::string getDecayCode() const{ return ""; }
     virtual std::string getApplyInputCode() const{ return ""; }
-    virtual std::string getSupportCode() const{ return ""; }
 
     //----------------------------------------------------------------------------
     // Public API
@@ -38,12 +36,12 @@ public:
 
     //! Validate names of parameters etc
     void validate(const std::unordered_map<std::string, double> &paramValues, 
-                  const std::unordered_map<std::string, Models::VarInit> &varValues,
+                  const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                   const std::string &description) const;
 };
 
 //----------------------------------------------------------------------------
-// PostsynapticModels::ExpCurr
+// GeNN::PostsynapticModels::ExpCurr
 //----------------------------------------------------------------------------
 //! Exponential decay with synaptic input treated as a current value.
 /*! This model has no variables and a single parameter:
@@ -65,7 +63,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// PostsynapticModels::ExpCond
+// GeNN::PostsynapticModels::ExpCond
 //----------------------------------------------------------------------------
 //! Exponential decay with synaptic input treated as a conductance value.
 /*! This model has no variables and two parameters:
@@ -88,7 +86,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// PostsynapticModels::DeltaCurr
+// GeNN::PostsynapticModels::DeltaCurr
 //----------------------------------------------------------------------------
 //! Simple delta current synapse.
 /*! Synaptic input provides a direct inject of instantaneous current*/
@@ -99,4 +97,4 @@ public:
 
     SET_CURRENT_CONVERTER_CODE("$(inSyn); $(inSyn) = 0");
 };
-}
+}   // namespace GeNN::PostsynapticModels

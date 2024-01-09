@@ -1,23 +1,30 @@
 #include "neuronModels.h"
 
+// GeNN includes
+#include "gennUtils.h"
+
+using namespace GeNN;
+
+namespace GeNN::NeuronModels
+{
 // Implement models
-IMPLEMENT_SNIPPET(NeuronModels::RulkovMap);
-IMPLEMENT_SNIPPET(NeuronModels::Izhikevich);
-IMPLEMENT_SNIPPET(NeuronModels::IzhikevichVariable);
-IMPLEMENT_SNIPPET(NeuronModels::LIF);
-IMPLEMENT_SNIPPET(NeuronModels::SpikeSource);
-IMPLEMENT_SNIPPET(NeuronModels::SpikeSourceArray);
-IMPLEMENT_SNIPPET(NeuronModels::Poisson);
-IMPLEMENT_SNIPPET(NeuronModels::PoissonNew);
-IMPLEMENT_SNIPPET(NeuronModels::TraubMiles);
-IMPLEMENT_SNIPPET(NeuronModels::TraubMilesFast);
-IMPLEMENT_SNIPPET(NeuronModels::TraubMilesAlt);
-IMPLEMENT_SNIPPET(NeuronModels::TraubMilesNStep);
+IMPLEMENT_SNIPPET(RulkovMap);
+IMPLEMENT_SNIPPET(Izhikevich);
+IMPLEMENT_SNIPPET(IzhikevichVariable);
+IMPLEMENT_SNIPPET(LIF);
+IMPLEMENT_SNIPPET(SpikeSource);
+IMPLEMENT_SNIPPET(SpikeSourceArray);
+IMPLEMENT_SNIPPET(Poisson);
+IMPLEMENT_SNIPPET(PoissonNew);
+IMPLEMENT_SNIPPET(TraubMiles);
+IMPLEMENT_SNIPPET(TraubMilesFast);
+IMPLEMENT_SNIPPET(TraubMilesAlt);
+IMPLEMENT_SNIPPET(TraubMilesNStep);
 
 //----------------------------------------------------------------------------
-// NeuronModels::Base
+// GeNN::NeuronModels::Base
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type NeuronModels::Base::getHashDigest() const
+boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 {
     // Superclass
     boost::uuids::detail::sha1 hash;
@@ -26,15 +33,14 @@ boost::uuids::detail::sha1::digest_type NeuronModels::Base::getHashDigest() cons
     Utils::updateHash(getSimCode(), hash);
     Utils::updateHash(getThresholdConditionCode(), hash);
     Utils::updateHash(getResetCode(), hash);
-    Utils::updateHash(getSupportCode(), hash);
     Utils::updateHash(isAutoRefractoryRequired(), hash);
     Utils::updateHash(getAdditionalInputVars(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void NeuronModels::Base::validate(const std::unordered_map<std::string, double> &paramValues, 
-                                  const std::unordered_map<std::string, Models::VarInit> &varValues,
-                                  const std::string &description) const
+void Base::validate(const std::unordered_map<std::string, double> &paramValues, 
+                    const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
+                    const std::string &description) const
 {
     // Superclass
     Models::Base::validate(paramValues, varValues, description);
@@ -49,3 +55,4 @@ void NeuronModels::Base::validate(const std::unordered_map<std::string, double> 
         throw std::runtime_error("Neuron models cannot include variables with REDUCE access modes - they are only supported by custom update models");
     }
 }
+}   // namespace GeNN::NeuronModels

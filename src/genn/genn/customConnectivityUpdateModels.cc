@@ -1,9 +1,14 @@
 #include "customConnectivityUpdateModels.h"
 
+// GeNN includes
+#include "gennUtils.h"
+
 //----------------------------------------------------------------------------
-// CustomConnectivityUpdateModels::Base
+// GeNN::CustomConnectivityUpdateModels::Base
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateModels::Base::getHashDigest() const
+namespace GeNN::CustomConnectivityUpdateModels
+{
+boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 {
     // Superclass
     boost::uuids::detail::sha1 hash;
@@ -22,14 +27,14 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateModels::Base::ge
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomConnectivityUpdateModels::Base::validate(const std::unordered_map<std::string, double> &paramValues, 
-                                                    const std::unordered_map<std::string, Models::VarInit> &varValues,
-                                                    const std::unordered_map<std::string, Models::VarInit> &preVarValues,
-                                                    const std::unordered_map<std::string, Models::VarInit> &postVarValues,
-                                                    const std::unordered_map<std::string, Models::WUVarReference> &varRefTargets,
-                                                    const std::unordered_map<std::string, Models::VarReference> &preVarRefTargets,
-                                                    const std::unordered_map<std::string, Models::VarReference> &postVarRefTargets,
-                                                    const std::string &description) const
+void Base::validate(const std::unordered_map<std::string, double> &paramValues, 
+                    const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
+                    const std::unordered_map<std::string, InitVarSnippet::Init> &preVarValues,
+                    const std::unordered_map<std::string, InitVarSnippet::Init> &postVarValues,
+                    const std::unordered_map<std::string, Models::WUVarReference> &varRefTargets,
+                    const std::unordered_map<std::string, Models::VarReference> &preVarRefTargets,
+                    const std::unordered_map<std::string, Models::VarReference> &postVarRefTargets,
+                    const std::string &description) const
 {
     // Superclass
     Models::Base::validate(paramValues, varValues, description);
@@ -73,3 +78,4 @@ void CustomConnectivityUpdateModels::Base::validate(const std::unordered_map<std
         throw std::runtime_error("Custom connectivity update models cannot include variables with SHARED_NEURON access modes - they are only supported on pre, postsynaptic or neuron variables");
     }
 }
+}   // namespace GeNN::CustomConnectivityUpdateModels

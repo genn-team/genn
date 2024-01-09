@@ -110,7 +110,7 @@ class Variable(object):
         self.name = variable_name
         self.type = variable_type
         self.group = proxy(group)
-        self.view = None
+        self._view = None
         self.set_values(values)
 
     def set_extra_global_init_param(self, param_name, param_values):
@@ -148,13 +148,21 @@ class Variable(object):
             # they must be loaded at simulate time
             try:
                 iter(values)
-                self.values = np.asarray(
-                    values, dtype=self.group._model.genn_types[self.type])
+                self.values = np.asarray(values)
                 self.init_required = True
                 self.extra_global_params = {}
             # Otherwise - they can be initialised on device as a scalar
             except TypeError:
                 self.extra_global_params = {}
+    
+    def _unload(self):
+        self._view = None
+        for e in itervalues(self.extra_global_params):
+            e._unload()
+
+    @property
+    def view(self):
+        return self._view
 
 class ExtraGlobalParameter(object):
 
@@ -172,16 +180,10 @@ class ExtraGlobalParameter(object):
         Keyword args:
         values          --  iterable
         """
-        if variable_type[-1] == "*":
-            self.is_scalar = False
-            self.type = variable_type[:-1]
-        else:
-            self.is_scalar = True
-            self.type = variable_type
-
+        self.type = variable_type
         self.group = group if type(group) in ProxyTypes else proxy(group)
         self.name = variable_name
-        self.view = None
+        self._view = None
         self.set_values(values)
 
     def set_values(self, values):
@@ -192,19 +194,19 @@ class ExtraGlobalParameter(object):
         """
         if values is None:
             self.values = None
-        elif self.is_scalar:
-            if isinstance(values, Number):
-                self.values = values
-            else:
-                raise ValueError("scalar extra global variables can only be "
-                                 "initialised with a number")
         else:
             # Try and iterate values
             try:
                 iter(values)
-                self.values = np.asarray(
-                    values, dtype=self.group._model.genn_types[self.type])
+                self.values = np.asarray(values)
             # Otherwise give an error
             except TypeError:
                 raise ValueError("extra global variables can only be "
                                  "initialised with iterables")
+
+    def _unload(self):
+        self._view = None
+
+    @property
+    def view(self):
+        return self._view

@@ -25,6 +25,7 @@ Part of the code generation and generated code sections.
 
 // Standard C++ includes
 #include <map>
+#include <optional>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -40,52 +41,39 @@ Part of the code generation and generated code sections.
 
 #define NO_DELAY 0 //!< Macro used to indicate no synapse delay for the group (only one queue slot will be generated)
 
+namespace GeNN
+{
 using ParamValues = std::unordered_map<std::string, double>;
-using VarValues = std::unordered_map<std::string, Models::VarInit>;
+using VarValues = std::unordered_map<std::string, InitVarSnippet::Init>;
 using VarReferences = std::unordered_map<std::string, Models::VarReference>;
 using WUVarReferences = std::unordered_map<std::string, Models::WUVarReference>;
-
-//! Floating point precision to use for "scalar" type variables models
-enum class ScalarPrecision
-{
-    FLOAT,
-    DOUBLE,
-    LONG_DOUBLE,
-};
-
-//! Precision to use for variables which store time
-enum class TimePrecision
-{
-    DEFAULT,    //!< Time uses default model precision
-    FLOAT,      //!< Time uses single precision - not suitable for long simulations
-    DOUBLE,     //!< Time uses double precision - may reduce performance
-};
+using EGPReferences = std::unordered_map<std::string, Models::EGPReference>;
 
 //! Initialise a variable using an initialisation snippet
 /*! \tparam S       type of variable initialisation snippet (derived from InitVarSnippet::Base).
     \param params   parameters for snippet wrapped in ParamValues object.
-    \return         Models::VarInit object for use within model's VarValues*/
+    \return         InitVarSnippet::Init object for use within model's VarValues*/
 template<typename S>
-inline Models::VarInit initVar(const ParamValues &params)
+inline InitVarSnippet::Init initVar(const ParamValues &params)
 {
-    return Models::VarInit(S::getInstance(), params);
+    return InitVarSnippet::Init(S::getInstance(), params);
 }
 
 //! Initialise a variable using an initialisation snippet
 /*! \tparam S       type of variable initialisation snippet (derived from InitVarSnippet::Base).
-    \return         Models::VarInit object for use within model's VarValues*/
+    \return         InitVarSnippet::Init object for use within model's VarValues*/
 template<typename S>
-inline Models::VarInit initVar()
+inline InitVarSnippet::Init initVar()
 {
-    return Models::VarInit(S::getInstance(), {});
+    return InitVarSnippet::Init(S::getInstance(), {});
 }
 
 //! Mark a variable as uninitialised
 /*! This means that the backend will not generate any automatic initialization code, but will instead
     copy the variable from host to device during ``initializeSparse`` function */
-inline Models::VarInit uninitialisedVar()
+inline InitVarSnippet::Init uninitialisedVar()
 {
-    return Models::VarInit(InitVarSnippet::Uninitialised::getInstance(), {});
+    return InitVarSnippet::Init(InitVarSnippet::Uninitialised::getInstance(), {});
 }
 
 //! Initialise connectivity using a sparse connectivity snippet
@@ -187,23 +175,59 @@ inline Models::VarReference createWUPostVarRef(SynapseGroup *sg, const std::stri
 inline Models::WUVarReference createWUVarRef(SynapseGroup *sg, const std::string &varName,
                                              SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "")
 {
-    return Models::WUVarReference(sg, varName, transposeSG, transposeVarName);
+    return Models::WUVarReference::createWUVarReference(sg, varName, transposeSG, transposeVarName);
 }
 
 //! Creates a reference to a custom weight update variable
 inline Models::WUVarReference createWUVarRef(CustomUpdateWU *cu, const std::string &varName)
 {
-    return Models::WUVarReference(cu, varName);
+    return Models::WUVarReference::createWUVarReference(cu, varName);
 }
 
 //! Creates a reference to a custom connectivity update update variable
 inline Models::WUVarReference createWUVarRef(CustomConnectivityUpdate *cu, const std::string &varName)
 {
-    return Models::WUVarReference(cu, varName);
+    return Models::WUVarReference::createWUVarReference(cu, varName);
+}
+
+//! Creates a reference to a neuron group extra global parameter
+inline Models::EGPReference createEGPRef(const NeuronGroup *ng, const std::string &egpName)
+{
+    return Models::EGPReference::createEGPRef(ng, egpName);
+}
+
+//! Creates a reference to a current source extra global parameter
+inline Models::EGPReference createEGPRef(const CurrentSource *cs, const std::string &egpName)
+{
+    return Models::EGPReference::createEGPRef(cs, egpName);
+}
+
+//! Creates a reference to a custom update extra global parameter
+inline Models::EGPReference createEGPRef(const CustomUpdate *cu, const std::string &egpName)
+{
+    return Models::EGPReference::createEGPRef(cu, egpName);
+}
+
+//! Creates a reference to a custom weight update extra global parameter
+inline Models::EGPReference createEGPRef(const CustomUpdateWU *cu, const std::string &egpName)
+{
+    return Models::EGPReference::createEGPRef(cu, egpName);
+}
+
+//! Creates a reference to a postsynaptic model extra global parameter
+inline Models::EGPReference createPSMEGPRef(const SynapseGroup *sg, const std::string &egpName)
+{
+    return Models::EGPReference::createPSMEGPRef(sg, egpName);
+}
+
+//! Creates a reference to a weight update model extra global parameter
+inline Models::EGPReference createWUEGPRef(const SynapseGroup *sg, const std::string &egpName)
+{
+    return Models::EGPReference::createWUEGPRef(sg, egpName);
 }
 
 //----------------------------------------------------------------------------
-// ModelSpec
+// GeNN::ModelSpec
 //----------------------------------------------------------------------------
 //! Object used for specifying a neuronal network model
 class GENN_EXPORT ModelSpec
@@ -228,11 +252,11 @@ public:
     //! Method to set the neuronal network model name
     void setName(const std::string &name){ m_Name = name; }
 
-    //! Set numerical precision for floating point
-    void setPrecision(ScalarPrecision scalarPrecision);
+    //! Set numerical precision for scalar type
+    void setPrecision(const Type::UnresolvedType &precision);
 
-    //! Set numerical precision for time
-    void setTimePrecision(TimePrecision timePrecision){ m_TimePrecision = timePrecision; }
+    //! Set numerical precision for time type
+    void setTimePrecision(const Type::UnresolvedType &timePrecision);
 
     //! Set the integration step size of the model
     void setDT(double dt){ m_DT = dt; }
@@ -276,10 +300,10 @@ public:
     const std::string &getName() const{ return m_Name; }
 
     //! Gets the floating point numerical precision
-    const std::string &getPrecision() const{ return m_Precision; }
+    const Type::ResolvedType &getPrecision() const{ return m_Precision; }
 
     //! Gets the floating point numerical precision used to represent time
-    std::string getTimePrecision() const;
+    const Type::ResolvedType &getTimePrecision() const{ return m_TimePrecision ? m_TimePrecision.value() : m_Precision; }
 
     //! Gets the model integration step size
     double getDT() const { return m_DT; }
@@ -549,7 +573,7 @@ public:
         \return pointer to newly created CustomUpdateBase */
     CustomUpdate *addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model,
                                   const ParamValues &paramValues, const VarValues &varInitialisers,
-                                  const VarReferences &varReferences);
+                                  const VarReferences &varReferences, const EGPReferences &egpReferences = {});
 
     //! Adds a new custom update with references to weight update model variable to the 
     //! model using a custom update model managed by the user
@@ -562,7 +586,7 @@ public:
         \return pointer to newly created CustomUpdateBase */
     CustomUpdateWU *addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model, 
                                     const ParamValues &paramValues, const VarValues &varInitialisers,
-                                    const WUVarReferences &varReferences);
+                                    const WUVarReferences &varReferences, const EGPReferences &egpReferences = {});
 
     //! Adds a new custom update to the model using a singleton custom update model 
     //! created using standard DECLARE_CUSTOM_UPDATE_MODEL and IMPLEMENT_MODEL macros
@@ -576,10 +600,10 @@ public:
     template<typename CustomUpdateModel>
     CustomUpdate *addCustomUpdate(const std::string &name, const std::string &updateGroupName,
                                   const ParamValues &paramValues, const VarValues &varInitialisers,
-                                  const VarReferences &varReferences)
+                                  const VarReferences &varReferences, const EGPReferences &egpReferences = {})
     {
         return addCustomUpdate(name, updateGroupName, CustomUpdateModel::getInstance(),
-                               paramValues, varInitialisers, varReferences);
+                               paramValues, varInitialisers, varReferences, egpReferences);
     }
 
 
@@ -595,10 +619,10 @@ public:
     template<typename CustomUpdateModel>
     CustomUpdateWU *addCustomUpdate(const std::string &name, const std::string &updateGroupName,
                                     const ParamValues &paramValues, const VarValues &varInitialisers,
-                                    const WUVarReferences &varReferences)
+                                    const WUVarReferences &varReferences, const EGPReferences &egpReferences = {})
     {
         return addCustomUpdate(name, updateGroupName, CustomUpdateModel::getInstance(),
-                               paramValues, varInitialisers, varReferences);
+                               paramValues, varInitialisers, varReferences, egpReferences);
     }
 
     //! Adds a new custom connectivity update attached to synapse group and potentially with synaptic, presynaptic and 
@@ -658,14 +682,11 @@ protected:
     // Protected methods
     //--------------------------------------------------------------------------
     //! Finalise model
-    void finalize();
+    void finalise();
 
     //--------------------------------------------------------------------------
     // Protected const methods
     //--------------------------------------------------------------------------
-    //! Get the string literal that should be used to represent a value in the model's floating-point type
-    std::string scalarExpr(double) const;
-
     //! Are any variables in any populations in this model using zero-copy memory?
     bool zeroCopyInUse() const;
 
@@ -674,6 +695,8 @@ protected:
 
     //! Get hash digest used for detecting changes
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
+    const Type::TypeContext &getTypeContext() const{ return m_TypeContext; }
 
     //! Get std::map containing local named NeuronGroup objects in model
     const std::map<std::string, NeuronGroupInternal> &getNeuronGroups() const{ return m_LocalNeuronGroups; }
@@ -729,10 +752,12 @@ private:
     std::string m_Name;
 
     //! Type of floating point variables (float, double, ...; default: float)
-    std::string m_Precision;
+    Type::ResolvedType m_Precision;
+
+    Type::TypeContext m_TypeContext;
 
     //! Type of floating point variables used to store time
-    TimePrecision m_TimePrecision;
+    std::optional<Type::ResolvedType> m_TimePrecision;
 
     //! The integration time step of the model
     double m_DT;
@@ -766,6 +791,4 @@ private:
     //! Batch size of this model - efficiently duplicates model
     unsigned int m_BatchSize;
 };
-
-// Typedefine NNmodel for backward compatibility
-typedef ModelSpec NNmodel;
+}   // namespace GeNN

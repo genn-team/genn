@@ -18,9 +18,9 @@
 #define SET_INJECTION_CODE(INJECTION_CODE) virtual std::string getInjectionCode() const override{ return INJECTION_CODE; }
 
 //----------------------------------------------------------------------------
-// CurrentSourceModels::Base
+// GeNN::CurrentSourceModels::Base
 //----------------------------------------------------------------------------
-namespace CurrentSourceModels
+namespace GeNN::CurrentSourceModels
 {
 //! Base class for all current source models
 class GENN_EXPORT Base : public Models::Base
@@ -40,7 +40,7 @@ public:
 
     //! Validate names of parameters etc
     void validate(const std::unordered_map<std::string, double> &paramValues, 
-                  const std::unordered_map<std::string, Models::VarInit> &varValues,
+                  const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                   const std::string &description) const;
 };
 
@@ -55,7 +55,7 @@ class DC : public Base
 {
     DECLARE_SNIPPET(DC);
 
-    SET_INJECTION_CODE("$(injectCurrent, $(amp));\n");
+    SET_INJECTION_CODE("injectCurrent(amp);\n");
 
     SET_PARAM_NAMES({"amp"});
 };
@@ -72,7 +72,7 @@ class GaussianNoise : public Base
 {
     DECLARE_SNIPPET(GaussianNoise);
 
-    SET_INJECTION_CODE("$(injectCurrent, $(mean) + $(gennrand_normal) * $(sd));\n");
+    SET_INJECTION_CODE("injectCurrent(mean + (gennrand_normal() * sd));\n");
 
     SET_PARAM_NAMES({"mean", "sd"} );
 };
@@ -92,16 +92,16 @@ class PoissonExp : public Base
     DECLARE_SNIPPET(PoissonExp);
 
     SET_INJECTION_CODE(
-        "scalar p = 1.0f;\n"
+        "scalar p = 1.0;\n"
         "unsigned int numSpikes = 0;\n"
         "do\n"
         "{\n"
         "    numSpikes++;\n"
-        "    p *= $(gennrand_uniform);\n"
-        "} while (p > $(ExpMinusLambda));\n"
-        "$(current) += $(Init) * (scalar)(numSpikes - 1);\n"
-        "$(injectCurrent, $(current));\n"
-        "$(current) *= $(ExpDecay);\n");
+        "    p *= gennrand_uniform();\n"
+        "} while (p > ExpMinusLambda);\n"
+        "current += Init * (scalar)(numSpikes - 1);\n"
+        "injectCurrent(current);\n"
+        "current *= ExpDecay;\n");
 
     SET_PARAM_NAMES({"weight", "tauSyn", "rate"});
     SET_VARS({{"current", "scalar"}});
@@ -110,4 +110,4 @@ class PoissonExp : public Base
         {"Init", [](const std::unordered_map<std::string, double> &pars, double dt){ return pars.at("weight") * (1.0 - std::exp(-dt / pars.at("tauSyn"))) * (pars.at("tauSyn") / dt); }},
         {"ExpMinusLambda", [](const std::unordered_map<std::string, double> &pars, double dt){ return std::exp(-(pars.at("rate") / 1000.0) * dt); }}});
 };
-} // CurrentSourceModels
+} // GeNN::CurrentSourceModels

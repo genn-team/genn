@@ -15,7 +15,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="binomial.cc" />
-    <ClCompile Include="codeGenUtils.cc" />
     <ClCompile Include="currentSource.cc" />
     <ClCompile Include="currentSourceModels.cc" />
     <ClCompile Include="customConnectivityUpdate.cc" />
@@ -27,9 +26,13 @@
     <ClCompile Include="modelSpecMerged.cc" />
     <ClCompile Include="neuronGroup.cc" />
     <ClCompile Include="neuronModels.cc" />
+    <ClCompile Include="parser.cc" />
     <ClCompile Include="postsynapticModels.cc" />
+    <ClCompile Include="scanner.cc" />
     <ClCompile Include="synapseGroup.cc" />
     <ClCompile Include="models.cc" />
+    <ClCompile Include="type.cc" />
+    <ClCompile Include="typeChecker.cc" />
     <ClCompile Include="weightUpdateModels.cc" />
     <ClCompile Include="$(GTEST_DIR)/src/gtest-all.cc" />
     <ClCompile Include="$(GTEST_DIR)/src/gtest_main.cc" />
@@ -67,7 +70,7 @@
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\include\genn\genn;..\..\include\genn\third_party;..\..\include\genn\backends\single_threaded_cpu;$(GTEST_DIR);$(GTEST_DIR)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NOMINMAX;_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;WIN32_LEAN_AND_MEAN;_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>

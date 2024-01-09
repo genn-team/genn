@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard includes
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -12,8 +13,10 @@
 #include "variableMode.h"
 
 //------------------------------------------------------------------------
-// CustomUpdateBase
+// GeNN::CustomUpdateBase
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class GENN_EXPORT CustomUpdateBase
 {
 public:
@@ -37,35 +40,25 @@ public:
     const CustomUpdateModels::Base *getCustomUpdateModel() const{ return m_CustomUpdateModel; }
 
     const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
+
+    const std::unordered_map<std::string, Models::EGPReference> &getEGPReferences() const{ return m_EGPReferences;  }
 
     //! Get variable location for custom update model state variable
     VarLocation getVarLocation(const std::string &varName) const;
-
-    //! Get variable location for custom update model state variable
-    VarLocation getVarLocation(size_t index) const{ return m_VarLocation.at(index); }
 
     //! Is var init code required for any variables in this custom update group's custom update model?
     bool isVarInitRequired() const;
 
 protected:
     CustomUpdateBase(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 
-                     const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
-                     VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-    :   m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
-        m_VarInitialisers(varInitialisers), m_VarLocation(varInitialisers.size(), defaultVarLocation),
-        m_ExtraGlobalParamLocation(customUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
-        m_Batched(false)
-    {
-        // Validate names
-        Utils::validatePopName(name, "Custom update");
-        Utils::validatePopName(updateGroupName, "Custom update group name");
-    }
+                     const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
+                     const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    void initDerivedParams(double dt);
+    void finalise(double dt);
 
     //------------------------------------------------------------------------
     // Protected const methods
@@ -89,6 +82,8 @@ protected:
     void updateInitHash(boost::uuids::detail::sha1 &hash) const;
 
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
+
+    const std::vector<Transpiler::Token> getUpdateCodeTokens() const{ return m_UpdateCodeTokens; }
 
     template<typename V>
     bool isReduction(const std::unordered_map<std::string, V> &varRefs, VarAccessDuplication duplication) const
@@ -143,6 +138,24 @@ protected:
         }
     }
 
+    template<typename G, typename V>
+    std::vector<G*> getReferencedCustomUpdates(const std::unordered_map<std::string, V>& varRefs) const
+    {
+        // Loop through variable references
+        std::vector<G*> references;
+        for(const auto &v : varRefs) {
+            // If a custom update is referenced, add to set
+            auto *refCU = v.second.getReferencedCustomUpdate();
+            if(refCU != nullptr) {
+                references.push_back(refCU);
+            }
+        }
+
+        // Return set
+        return references;
+    }
+
+
 private:
     //------------------------------------------------------------------------
     // Members
@@ -153,13 +166,18 @@ private:
     const CustomUpdateModels::Base *m_CustomUpdateModel;
     const std::unordered_map<std::string, double> m_Params;
     std::unordered_map<std::string, double> m_DerivedParams;
-    std::unordered_map<std::string, Models::VarInit> m_VarInitialisers;
+    std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
+
+    std::unordered_map<std::string, Models::EGPReference> m_EGPReferences;
 
     //! Location of individual state variables
     std::vector<VarLocation> m_VarLocation;
 
     //! Location of extra global parameters
     std::vector<VarLocation> m_ExtraGlobalParamLocation;
+
+    //! Tokens produced by scanner from update code
+    std::vector<Transpiler::Token> m_UpdateCodeTokens;
 
     //! Is this custom update batched i.e. run in parallel across model batches
     bool m_Batched;
@@ -177,11 +195,15 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
 
-    Models::Base::VarVec getVars() const{ return m_CU.getCustomUpdateModel()->getVars(); }
+    Models::Base::VarVec getDefs() const{ return m_CU.getCustomUpdateModel()->getVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_CU.getVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getVarInitialisers(); }
+
+    bool isVarDelayed(const std::string &) const { return false; }
+
+    const std::string &getNameSuffix() const{ return m_CU.getName(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -202,11 +224,9 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getEGPLocation(const std::string&) const{ return VarLocation::HOST_DEVICE; }
+    VarLocation getLoc(const std::string&) const{ return VarLocation::HOST_DEVICE; }
 
-    VarLocation getEGPLocation(size_t) const{ return VarLocation::HOST_DEVICE; }
-    
-    Snippet::Base::EGPVec getEGPs() const{ return m_CU.getCustomUpdateModel()->getExtraGlobalParams(); }
+    Snippet::Base::EGPVec getDefs() const{ return m_CU.getCustomUpdateModel()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -230,19 +250,28 @@ public:
 protected:
     CustomUpdate(const std::string &name, const std::string &updateGroupName,
                  const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
-                 const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
-                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
+                 const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
+                 const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    void finalize(unsigned int batchSize);
+    void finalise(double dt, unsigned int batchSize);
 
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
     bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED); }
     bool isNeuronReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED_NEURON); }
+    bool isPerNeuron() const{ return m_PerNeuron; }
+
+    const NeuronGroup *getDelayNeuronGroup() const { return m_DelayNeuronGroup; }
+
+    //! Get vector of other custom updates referenced by this custom update
+    std::vector<CustomUpdate*> getReferencedCustomUpdates() const
+    { 
+        return CustomUpdateBase::getReferencedCustomUpdates<CustomUpdate>(m_VarReferences);
+    }
 
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
@@ -252,8 +281,6 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getInitHashDigest() const;
 
-    const NeuronGroup *getDelayNeuronGroup() const { return m_DelayNeuronGroup; }
-
 private:
     //------------------------------------------------------------------------
     // Members
@@ -261,6 +288,9 @@ private:
     const std::unordered_map<std::string, Models::VarReference> m_VarReferences;
     const unsigned int m_Size;
     const NeuronGroup *m_DelayNeuronGroup;
+
+    //! Is this custom update per-neuron i.e. run in parallel across all neurons
+    bool m_PerNeuron;
 };
 
 //------------------------------------------------------------------------
@@ -277,13 +307,13 @@ public:
 protected:
     CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
                    const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
-                   const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
-                   VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
+                   const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
+                   const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    void finalize(unsigned int batchSize);
+    void finalise(double dt, unsigned int batchSize);
 
     //------------------------------------------------------------------------
     // Protected const methods
@@ -292,6 +322,14 @@ protected:
     bool isTransposeOperation() const;
 
     SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }
+
+    const std::vector<unsigned int> &getKernelSize() const;
+
+    //! Get vector of other custom updates referenced by this custom update
+    std::vector<CustomUpdateWU*> getReferencedCustomUpdates() const
+    { 
+        return CustomUpdateBase::getReferencedCustomUpdates<CustomUpdateWU>(m_VarReferences); 
+    }
 
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
@@ -308,3 +346,4 @@ private:
     const std::unordered_map<std::string, Models::WUVarReference> m_VarReferences;
     SynapseGroupInternal *m_SynapseGroup;
 };
+}   // namespace GeNN

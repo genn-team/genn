@@ -37,9 +37,16 @@ public:
                     // 2) PREVIOUS spike occurred (-)20 timesteps before
                     // 3) t is incremented one timestep at the end of StepGeNN
                     const float delayedLastSpikeTime = (scalar)i + 1.0f + (20.0f * std::floor((t - 22.0f - (scalar)i) / 20.0f));
-                    
-                    // If, theoretically, spike would have arrived before delay it's impossible so time should be a very large negative number
+
+                    // Check wsyn read from delayed population
                     if(delayedLastSpikeTime < 21.0f) {
+                        ASSERT_LT(wsynDelay[i], -1.0E6);
+                    }
+                    else {
+                        ASSERT_FLOAT_EQ(wsynDelay[i], delayedLastSpikeTime);
+                    }
+                    // Check wsyn read from non-delayed population
+                    if(delayedLastSpikeTime < 1.0f) {
                         ASSERT_LT(wsyn[i], -1.0E6);
                     }
                     else {

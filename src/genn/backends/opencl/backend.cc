@@ -17,7 +17,8 @@
 // OpenCL backend includes
 #include "utils.h"
 
-using namespace CodeGenerator;
+using namespace GeNN;
+using namespace GeNN::CodeGenerator;
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -41,7 +42,46 @@ const std::vector<Substitutions::FunctionTemplate> openclPhilloxFunctions = {
     {"gennrand_gamma", 1, "gammaDistPhilox432($(rng), $(0))"},
     {"gennrand_binomial", 2, "binomialDistPhilox432($(rng), $(0), $(1))"}
 };
+
 //--------------------------------------------------------------------------
+// CLRRNGLFSR113Stream
+//--------------------------------------------------------------------------
+class CLRRNGLFSR113Stream : public Type::ValueBase
+{
+public:
+    DECLARE_TYPE(CLRRNGLFSR113Stream);
+    
+    CLRRNGLFSR113Stream(Type::Qualifier qualifiers = Type::Qualifier{0}) : ValueBase(qualifiers){}
+
+    //------------------------------------------------------------------------
+    // Base overloads
+    //------------------------------------------------------------------------
+    virtual std::string getName() const final{ return "clrngLfsr113Stream"; }
+    virtual Base *getQualifiedType(Type::Qualifier qualifiers) const { return new CLRRNGLFSR113Stream(qualifiers); }
+    virtual size_t getSizeBytes() const final{ return 48; }
+};
+IMPLEMENT_TYPE(CLRRNGLFSR113Stream);
+
+//--------------------------------------------------------------------------
+// CLRRNGPhilox432Stream
+//--------------------------------------------------------------------------
+class CLRRNGPhilox432Stream : public Type::ValueBase
+{
+public:
+    DECLARE_TYPE(CLRRNGPhilox432Stream);
+    
+    CLRRNGPhilox432Stream(Type::Qualifier qualifiers = Type::Qualifier{0}) : ValueBase(qualifiers){}
+
+    //------------------------------------------------------------------------
+    // Base overloads
+    //------------------------------------------------------------------------
+    virtual std::string getName() const final{ return "clrngPhilox432Stream"; }
+    virtual Base *getQualifiedType(Type::Qualifier qualifiers) const { return new CLRRNGLFSR113Stream(qualifiers); }
+    virtual size_t getSizeBytes() const final{ return 132; }
+};
+IMPLEMENT_TYPE(CLRRNGLFSR113Stream);
+
+
 template<typename T>
 void genMergedGroupKernelParams(CodeStream &os, const std::vector<T> &groups, bool includeFinalComma = false)
 {
@@ -148,13 +188,10 @@ void genReadEventTiming(CodeStream &os, const std::string &name)
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::OpenCL::Backend
+// GeNN::CodeGenerator::OpenCL::Backend
 //--------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator::OpenCL
 {
-namespace OpenCL
-{
-//--------------------------------------------------------------------------
 Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences,
                  const std::string &scalarType, unsigned int platformIndex, unsigned int deviceIndex)
 :   BackendSIMT(kernelBlockSizes, preferences, scalarType), m_ChosenPlatformIndex(platformIndex), m_ChosenDeviceIndex(deviceIndex)
@@ -196,10 +233,6 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     // Determine minimum alignement
     m_AllocationAlignementBytes = m_ChosenDevice.getInfo<CL_DEVICE_MEM_BASE_ADDR_ALIGN>() / 8;
     LOGI_BACKEND << "Device uses " << m_AllocationAlignementBytes << " byte alignement";
-
-    // Add OpenCL-specific types
-    addType("clrngLfsr113Stream", 48);
-    addType("clrngPhilox432Stream", 132);
 }
 //--------------------------------------------------------------------------
 bool Backend::areSharedMemAtomicsSlow() const
@@ -244,11 +277,11 @@ void Backend::genPopulationRNGInit(CodeStream&, const std::string&, const std::s
     assert(false);
 }
 //--------------------------------------------------------------------------
-void Backend::genPopulationRNGPreamble(CodeStream &os, Substitutions &subs, const std::string &globalRNG, const std::string &name) const
+std::string Backend::genPopulationRNGPreamble(CodeStream &os, const std::string &globalRNG) const
 {
     os << "clrngLfsr113Stream localStream;" << std::endl;
     os << "clrngLfsr113CopyOverStreamsFromGlobal(1, &localStream, &" << globalRNG << ");" << std::endl;
-    subs.addVarSubstitution(name, "&localStream");
+    return "&localStream";
 }
 //--------------------------------------------------------------------------
 void Backend::genPopulationRNGPostamble(CodeStream &os, const std::string &globalRNG) const
@@ -256,7 +289,7 @@ void Backend::genPopulationRNGPostamble(CodeStream &os, const std::string &globa
     os << "clrngLfsr113CopyOverStreamsToGlobal(1, &" << globalRNG << ", &localStream);" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const std::string &sequence, const std::string &name) const
+std::string Backend::genGlobalRNGSkipAhead(CodeStream &os, const std::string &sequence) const
 {
     // Make local copy of host stream
     os << "clrngPhilox432Stream localStream;" << std::endl;
@@ -267,11 +300,10 @@ void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const s
     os << "const clrngPhilox432Counter steps = {{0, " << sequence << "}, {0, 0}};" << std::endl;
     os << "localStream.current.ctr = clrngPhilox432Add(localStream.current.ctr, steps);" << std::endl;
     os << "localStream.current.deckIndex = 0;" << std::endl;
-    subs.addVarSubstitution(name, "&localStream");
+    return "&localStream";
 }
 //--------------------------------------------------------------------------
-void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                              HostHandler preambleHandler, HostHandler pushEGPHandler) const
+void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -487,9 +519,6 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     {
         CodeStream::Scope b(os);
 
-        // Push any required EGPS
-        pushEGPHandler(os);
-
         if (idNeuronPrevSpikeTimeUpdate > 0) {
             CodeStream::Scope b(os);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << ".setArg(" << modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups().size() << ", t));" << std::endl;
@@ -520,8 +549,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                               HostHandler preambleHandler, HostHandler pushEGPHandler) const
+void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -779,9 +807,6 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     {
         CodeStream::Scope b(os);
 
-        // Push any required EGPs
-        pushEGPHandler(os);
-
         // Launch pre-synapse reset kernel if required
         if (idSynapseDendriticDelayUpdate > 0) {
             CodeStream::Scope b(os);
@@ -830,8 +855,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                              HostHandler preambleHandler, HostHandler pushEGPHandler) const
+void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -994,9 +1018,6 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 }
             }
 
-            // Push any required EGPs
-            pushEGPHandler(os);
-
             // If there are any custom update work-items
             if(g.second.first > 0) {
                 CodeStream::Scope b(os);
@@ -1102,8 +1123,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                      HostHandler preambleHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
+void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -1356,9 +1376,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
         }
         os << std::endl;
 
-        // Push any required EGPs
-        initPushEGPHandler(os);
-
         // If there are any initialisation work-items
         if (idInitStart > 0) {
             CodeStream::Scope b(os);
@@ -1391,9 +1408,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     os << "void initializeSparse()";
     {
         CodeStream::Scope b(os);
-
-        // Push any required EGPs
-        initSparsePushEGPHandler(os);
 
         // Copy all uninitialised state variables to device
         os << "copyStateToDevice(true);" << std::endl;
@@ -1937,7 +1951,7 @@ void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream 
         definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
         definitionsInternal << "EXPORT_VAR cl::Buffer h_" << name << ";" << std::endl;
     }
-    if (loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
+    if (loc & VarLocation::DEVICE && GeNN::Utils::isTypePointer(type)) {
         definitionsInternal << "EXPORT_VAR cl::Buffer d_" << name << ";" << std::endl;
     }
 }
@@ -1948,7 +1962,7 @@ void Backend::genExtraGlobalParamImplementation(CodeStream &os, const std::strin
         os << type << " " << name << ";" << std::endl;
         os << "cl::Buffer h_" << name << ";" << std::endl;
     }
-    if (loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
+    if (loc & VarLocation::DEVICE && GeNN::Utils::isTypePointer(type)) {
         os << "cl::Buffer d_" << name << ";" << std::endl;
     }
 }
@@ -1957,8 +1971,8 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
                                             VarLocation loc, const std::string &countVarName, const std::string &prefix) const
 {
     // Get underlying type
-    const std::string underlyingType = ::Utils::getUnderlyingType(type);
-    const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
+    const std::string underlyingType = GeNN::Utils::getUnderlyingType(type);
+    const bool pointerToPointer = GeNN::Utils::isTypePointerToPointer(type);
 
     const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
     const std::string deviceBuffer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
@@ -2011,8 +2025,8 @@ void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, c
     assert(!getPreferences().automaticCopy);
 
     // Get underlying type
-    const std::string underlyingType = ::Utils::getUnderlyingType(type);
-    const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
+    const std::string underlyingType = GeNN::Utils::getUnderlyingType(type);
+    const bool pointerToPointer = GeNN::Utils::isTypePointerToPointer(type);
 
     const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
     const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
@@ -2032,8 +2046,8 @@ void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, c
     assert(!getPreferences().automaticCopy);
 
     // Get underlying type
-    const std::string underlyingType = ::Utils::getUnderlyingType(type);
-    const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
+    const std::string underlyingType = GeNN::Utils::getUnderlyingType(type);
+    const bool pointerToPointer = GeNN::Utils::isTypePointerToPointer(type);
 
     const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
     const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
@@ -2060,18 +2074,18 @@ void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &s
     os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << kernelName << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
 }
 //--------------------------------------------------------------------------
-std::string Backend::getMergedGroupFieldHostType(const std::string &type) const
+std::string Backend::getMergedGroupFieldHostTypeName(const Type::Base *type, const Type::TypeContext &context) const
 {
     // If type is a pointer, on the host it is represented by an OpenCL buffer
-    if(::Utils::isTypePointerToPointer(type)) {
+    /*if(GeNN::Utils::isTypePointerToPointer(type)) {
         return "cl::Buffer*";
     }
-    if(::Utils::isTypePointer(type)) {
+    else */if(dynamic_cast<Type::Pointer*>(type)) {
         return "cl::Buffer";
     }
     // Otherwise, type remains the same
     else {
-        return type;
+        return type->getName();
     }
 }
 //--------------------------------------------------------------------------
@@ -2410,13 +2424,13 @@ boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
     boost::uuids::detail::sha1 hash;
 
     // Update hash was name of backend
-    ::Utils::updateHash("OpenCL", hash);
+    GeNN::Utils::updateHash("OpenCL", hash);
     
     // Update hash with chosen device ID and kernel block sizes
-    ::Utils::updateHash(m_ChosenPlatformIndex, hash);
-    ::Utils::updateHash(m_ChosenDeviceIndex, hash);
-    ::Utils::updateHash(m_AllocationAlignementBytes, hash);
-    ::Utils::updateHash(getKernelBlockSize(), hash);
+    GeNN::Utils::updateHash(m_ChosenPlatformIndex, hash);
+    GeNN::Utils::updateHash(m_ChosenDeviceIndex, hash);
+    GeNN::Utils::updateHash(m_AllocationAlignementBytes, hash);
+    GeNN::Utils::updateHash(getKernelBlockSize(), hash);
 
     // Update hash with preferences
     getPreferences<Preferences>().updateHash(hash);
@@ -2607,7 +2621,7 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     os << "#include <clRNG/philox432.clh>" << std::endl;
 
     os << "typedef " << precision << " scalar;" << std::endl;
-    os << "#define DT " << model.scalarExpr(model.getDT()) << std::endl;
+    os << "#define DT " << modelMerged.scalarExprr(model.getDT()) << std::endl;
     os << "#define SUPPORT_CODE_FUNC" << std::endl;
     genTypeRange(os, model.getTimePrecision(), "TIME");
 
@@ -2623,7 +2637,7 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
             {
                 CodeStream::Scope b(os);
                 os << "const " << precision << " u = clrng" << r << "RandomU01(rng);" << std::endl;
-                os << "if (u != " << model.scalarExpr(0.0) << ")";
+                os << "if (u != " << modelMerged.scalarExprr(0.0) << ")";
                 {
                     CodeStream::Scope b(os);
                     os << "return -log(u);" << std::endl;
@@ -2639,8 +2653,8 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
             const std::string pi = (model.getPrecision() == "float") ? "M_PI_F" : "M_PI";
             os << "const " << precision << " u1 = clrng" << r << "RandomU01(rng);" << std::endl;
             os << "const " << precision << " u2 = clrng" << r << "RandomU01(rng);" << std::endl;
-            os << "const " << precision << " r = sqrt(" << model.scalarExpr(-2.0) << " * log(u1));" << std::endl;
-            os << "const " << precision << " theta = " << model.scalarExpr(2.0) << " * " << pi << " * u2;" << std::endl;
+            os << "const " << precision << " r = sqrt(" << modelMerged.scalarExprr(-2.0) << " * log(u1));" << std::endl;
+            os << "const " << precision << " theta = " << modelMerged.scalarExprr(2.0) << " * " << pi << " * u2;" << std::endl;
             os << "return r * sin(theta);" << std::endl;
         }
         os << std::endl;
@@ -2665,9 +2679,9 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
                 {
                     CodeStream::Scope b(os);
                     os << "x = normalDist" << r << "(rng);" << std::endl;
-                    os << "v = " << model.scalarExpr(1.0) << " + c*x;" << std::endl;
+                    os << "v = " << modelMerged.scalarExprr(1.0) << " + c*x;" << std::endl;
                 }
-                os << "while (v <= " << model.scalarExpr(0.0) << ");" << std::endl;
+                os << "while (v <= " << modelMerged.scalarExprr(0.0) << ");" << std::endl;
                 os << std::endl;
                 os << "v = v*v*v;" << std::endl;
                 os << "do";
@@ -2675,10 +2689,10 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
                     CodeStream::Scope b(os);
                     os << "u = clrng" << r << "RandomU01(rng);" << std::endl;
                 }
-                os << "while (u == " << model.scalarExpr(1.0) << ");" << std::endl;
+                os << "while (u == " << modelMerged.scalarExprr(1.0) << ");" << std::endl;
                 os << std::endl;
-                os << "if (u < " << model.scalarExpr(1.0) << " - " << model.scalarExpr(0.0331) << "*x*x*x*x) break;" << std::endl;
-                os << "if (log(u) < " << model.scalarExpr(0.5) << "*x*x + d*(" << model.scalarExpr(1.0) << " - v + log(v))) break;" << std::endl;
+                os << "if (u < " << modelMerged.scalarExprr(1.0) << " - " << modelMerged.scalarExprr(0.0331) << "*x*x*x*x) break;" << std::endl;
+                os << "if (log(u) < " << modelMerged.scalarExprr(0.5) << "*x*x + d*(" << modelMerged.scalarExprr(1.0) << " - v + log(v))) break;" << std::endl;
             }
             os << std::endl;
             os << "return d*v;" << std::endl;
@@ -2692,15 +2706,15 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
             {
                 CodeStream::Scope b(os);
                 os << "const " << precision << " u = clrng" << r << "RandomU01 (rng);" << std::endl;
-                os << "const " << precision << " d = (" << model.scalarExpr(1.0) << " + a) - " << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ";" << std::endl;
-                os << "const " << precision << " c = (" << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ") / sqrt(d);" << std::endl;
-                os << "return gammaDistInternal" << r << "(rng, c, d) * pow(u, " << model.scalarExpr(1.0) << " / a);" << std::endl;
+                os << "const " << precision << " d = (" << modelMerged.scalarExprr(1.0) << " + a) - " << modelMerged.scalarExprr(1.0) << " / " << modelMerged.scalarExprr(3.0) << ";" << std::endl;
+                os << "const " << precision << " c = (" << modelMerged.scalarExprr(1.0) << " / " << modelMerged.scalarExprr(3.0) << ") / sqrt(d);" << std::endl;
+                os << "return gammaDistInternal" << r << "(rng, c, d) * pow(u, " << modelMerged.scalarExprr(1.0) << " / a);" << std::endl;
             }
             os << "else" << std::endl;
             {
                 CodeStream::Scope b(os);
-                os << "const " << precision << " d = a - " << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ";" << std::endl;
-                os << "const " << precision << " c = (" << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ") / sqrt(d);" << std::endl;
+                os << "const " << precision << " d = a - " << modelMerged.scalarExprr(1.0) << " / " << modelMerged.scalarExprr(3.0) << ";" << std::endl;
+                os << "const " << precision << " c = (" << modelMerged.scalarExprr(1.0) << " / " << modelMerged.scalarExprr(3.0) << ") / sqrt(d);" << std::endl;
                 os << "return gammaDistInternal" << r << "(rng, c, d);" << std::endl;
             }
         }
@@ -2710,10 +2724,10 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
         os << "inline unsigned int binomialDist" << r << "Internal(clrng" << r << "Stream *rng, unsigned int n, " << precision << " p)" << std::endl;
         {
             CodeStream::Scope b(os);
-            os << "const " << precision << " q = " << model.scalarExpr(1.0) << " - p;" << std::endl;
+            os << "const " << precision << " q = " << modelMerged.scalarExprr(1.0) << " - p;" << std::endl;
             os << "const " << precision << " qn = exp(n * log(q));" << std::endl;
             os << "const " << precision << " np = n * p;" << std::endl;
-            os << "const unsigned int bound = min(n, (unsigned int)(np + (" << model.scalarExpr(10.0) << " * sqrt((np * q) + " << model.scalarExpr(1.0) << "))));" << std::endl;
+            os << "const unsigned int bound = min(n, (unsigned int)(np + (" << modelMerged.scalarExprr(10.0) << " * sqrt((np * q) + " << modelMerged.scalarExprr(1.0) << "))));" << std::endl;
 
             os << "unsigned int x = 0;" << std::endl;
             os << precision << " px = qn;" << std::endl;
@@ -2743,7 +2757,7 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
         os << "inline unsigned int binomialDist" << r << "(clrng" << r << "Stream *rng, unsigned int n, " << precision << " p)" << std::endl;
         {
             CodeStream::Scope b(os);
-            os << "if(p <= " << model.scalarExpr(0.5) << ")";
+            os << "if(p <= " << modelMerged.scalarExprr(0.5) << ")";
             {
                 CodeStream::Scope b(os);
                 os << "return binomialDist" << r << "Internal(rng, n, p);" << std::endl;
@@ -2752,7 +2766,7 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
             os << "else";
             {
                 CodeStream::Scope b(os);
-                os << "return (n - binomialDist" << r << "Internal(rng, n, " << model.scalarExpr(1.0) << " - p));" << std::endl;
+                os << "return (n - binomialDist" << r << "Internal(rng, n, " << modelMerged.scalarExprr(1.0) << " - p));" << std::endl;
             }
         }
         os << std::endl;
@@ -2804,5 +2818,4 @@ bool Backend::shouldUseSubBufferAllocations() const
 {
     return isChosenDeviceAMD();
 }
-} // namespace OpenCL
-} // namespace CodeGenerator
+} // namespace GeNN::CodeGenerator::OpenCL

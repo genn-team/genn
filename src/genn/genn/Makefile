@@ -2,9 +2,10 @@
 include ../MakefileCommon
 
 # Find source files
-FRONTEND_SOURCES	:=$(wildcard *.cc)
-BACKEND_SOURCES		:=$(wildcard code_generator/*.cc)
-SOURCES			:=$(FRONTEND_SOURCES) $(BACKEND_SOURCES) 
+FRONTEND_SOURCES		:=$(wildcard *.cc)
+CODE_GENERATOR_SOURCES	:=$(wildcard code_generator/*.cc)
+TRANSPILER_SOURCES		:=$(wildcard transpiler/*.cc)
+SOURCES					:=$(FRONTEND_SOURCES) $(CODE_GENERATOR_SOURCES) $(TRANSPILER_SOURCES)
 
 # Build objecs in sub-directory
 OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/genn/genn

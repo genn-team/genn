@@ -1,18 +1,11 @@
 #include "optimiser.h"
 
-// GeNN includes
-#include "modelSpecInternal.h"
-
 //--------------------------------------------------------------------------
-// CodeGenerator::SingleThreadedCPU::Optimiser
+// GeNN::CodeGenerator::SingleThreadedCPU::Optimiser
 //--------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator::SingleThreadedCPU::Optimiser
 {
-namespace SingleThreadedCPU
-{
-namespace Optimiser
-{
-Backend createBackend(const ModelSpecInternal &model, const filesystem::path&,
+Backend createBackend(const ModelSpecInternal&,const filesystem::path&,
                       plog::Severity backendLevel, plog::IAppender *backendAppender, 
                       const Preferences &preferences)
 {
@@ -25,8 +18,6 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path&,
         plog::get<Logging::CHANNEL_BACKEND>()->setMaxSeverity(backendLevel);
     }
 
-    return Backend(model.getPrecision(), preferences);
+    return Backend(preferences);
 }
-}   // namespace Optimiser
-}   // namespace CUDA
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator::SingleThreadedCPU::Optimiser

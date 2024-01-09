@@ -4,13 +4,17 @@
 #include "neuronGroup.h"
 
 //------------------------------------------------------------------------
-// NeuronGroupInternal
+// GeNN::NeuronGroupInternal
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class NeuronGroupInternal : public NeuronGroup
 {
 public:
+    using GroupExternal = NeuronGroup;
+
     NeuronGroupInternal(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                        const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
+                        const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                         VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   NeuronGroup(name, numNeurons, neuronModel, params, varInitialisers,
                     defaultVarLocation, defaultExtraGlobalParamLocation)
@@ -23,7 +27,7 @@ public:
     using NeuronGroup::addSpkEventCondition;
     using NeuronGroup::addInSyn;
     using NeuronGroup::addOutSyn;
-    using NeuronGroup::initDerivedParams;
+    using NeuronGroup::finalise;
     using NeuronGroup::fusePrePostSynapses;
     using NeuronGroup::injectCurrent;
     using NeuronGroup::getFusedPSMInSyn;
@@ -38,6 +42,12 @@ public:
     using NeuronGroup::getFusedOutSynWithPreCode;
     using NeuronGroup::getFusedInSynWithPostVars;
     using NeuronGroup::getFusedOutSynWithPreVars;
+    using NeuronGroup::getSimCodeTokens;
+    using NeuronGroup::getThresholdConditionCodeTokens;
+    using NeuronGroup::getResetCodeTokens;
+    using NeuronGroup::isSimRNGRequired;
+    using NeuronGroup::isInitRNGRequired;
+    using NeuronGroup::isRecordingEnabled;
     using NeuronGroup::isVarQueueRequired;
     using NeuronGroup::getHashDigest;
     using NeuronGroup::getInitHashDigest;
@@ -45,7 +55,6 @@ public:
     using NeuronGroup::getPrevSpikeTimeUpdateHashDigest;
     using NeuronGroup::getVarLocationHashDigest;
 };
-
 
 //----------------------------------------------------------------------------
 // NeuronVarAdapter
@@ -59,11 +68,15 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const{ return m_NG.getVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_NG.getVarLocation(varName); }
     
-    Models::Base::VarVec getVars() const{ return m_NG.getNeuronModel()->getVars(); }
+    Models::Base::VarVec getDefs() const{ return m_NG.getNeuronModel()->getVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_NG.getVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_NG.getVarInitialisers(); }
+
+    bool isVarDelayed(const std::string &varName) const{ return m_NG.isVarQueueRequired(varName); }
+
+    const std::string &getNameSuffix() const{ return m_NG.getName(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -84,9 +97,9 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getEGPLocation(const std::string &varName) const{ return m_NG.getExtraGlobalParamLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_NG.getExtraGlobalParamLocation(varName); }
 
-    Snippet::Base::EGPVec getEGPs() const{ return m_NG.getNeuronModel()->getExtraGlobalParams(); }
+    Snippet::Base::EGPVec getDefs() const{ return m_NG.getNeuronModel()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -94,3 +107,4 @@ private:
     //----------------------------------------------------------------------------
     const NeuronGroupInternal &m_NG;
 };
+}   // namespace GeNN

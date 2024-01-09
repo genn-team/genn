@@ -10,6 +10,8 @@
 // (Single-threaded CPU) backend includes
 #include "backend.h"
 
+using namespace GeNN;
+
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
@@ -72,10 +74,57 @@ class Sum3 : public CustomUpdateModels::Base
     SET_UPDATE_CODE("$(sum) = $(scale) * ($(a) + $(b));\n");
 
     SET_VARS({{"sum", "scalar"}, {"scale", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});
-    SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_ONLY},
+    SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE},
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
 IMPLEMENT_SNIPPET(Sum3);
+
+class Copy : public CustomUpdateModels::Base
+{
+    DECLARE_SNIPPET(Copy);
+
+    SET_UPDATE_CODE("a = b;\n");
+
+    SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE}, 
+                  {"b", "scalar", VarAccessMode::READ_ONLY}});
+};
+IMPLEMENT_SNIPPET(Copy);
+
+class EGPScale : public CustomUpdateModels::Base
+{
+    DECLARE_SNIPPET(EGPScale);
+
+    SET_UPDATE_CODE("$(a) = $(b) * $(c)[$(id)];\n");
+
+    SET_EXTRA_GLOBAL_PARAMS({{"c", "scalar*"}});
+    SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE}, 
+                  {"b", "scalar", VarAccessMode::READ_ONLY}});
+};
+IMPLEMENT_SNIPPET(EGPScale);
+
+class EGPRefScale : public CustomUpdateModels::Base
+{
+    DECLARE_SNIPPET(EGPRefScale);
+
+    SET_UPDATE_CODE("$(a) = $(b) * $(c)[$(id)];\n");
+
+    SET_EXTRA_GLOBAL_PARAM_REFS({{"c", "scalar*"}});
+    SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE}, 
+                  {"b", "scalar", VarAccessMode::READ_ONLY}});
+};
+IMPLEMENT_SNIPPET(EGPRefScale);
+
+class EGPRefScaleInt : public CustomUpdateModels::Base
+{
+    DECLARE_SNIPPET(EGPRefScaleInt);
+
+    SET_UPDATE_CODE("$(a) = $(b) * $(c)[$(id)];\n");
+
+    SET_EXTRA_GLOBAL_PARAM_REFS({{"c", "int*"}});
+    SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE}, 
+                  {"b", "scalar", VarAccessMode::READ_ONLY}});
+};
+IMPLEMENT_SNIPPET(EGPRefScaleInt);
 
 class Cont : public WeightUpdateModels::Base
 {
@@ -85,7 +134,7 @@ public:
     SET_VARS({{"g", "scalar"}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
-        "$(addToInSyn, $(g) * $(V_pre));\n");
+        "addToPost(g * V_pre);\n");
 };
 IMPLEMENT_SNIPPET(Cont);
 
@@ -97,7 +146,7 @@ public:
     SET_VARS({{"g", "scalar"}, {"x", "scalar"}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
-        "$(addToInSyn, ($(g) + $(x)) * $(V_pre));\n");
+        "addToPost((g + x) * V_pre);\n");
 };
 IMPLEMENT_SNIPPET(Cont2);
 
@@ -105,7 +154,7 @@ class Reduce : public CustomUpdateModels::Base
 {
     DECLARE_SNIPPET(Reduce);
 
-    SET_UPDATE_CODE("$(reduction) = $(var);\n");
+    SET_UPDATE_CODE("reduction = var;\n");
 
     SET_VAR_REFS({{"var", "scalar", VarAccessMode::READ_ONLY}, 
                   {"reduction", "scalar", VarAccessMode::REDUCE_SUM}});
@@ -117,8 +166,8 @@ class ReduceDouble : public CustomUpdateModels::Base
     DECLARE_SNIPPET(ReduceDouble);
 
     SET_UPDATE_CODE(
-        "$(reduction1) = $(var1);\n"
-        "$(reduction2) = $(var2);\n");
+        "reduction1 = var1;\n"
+        "reduction2 = var2;\n");
 
     SET_VARS({{"reduction1", "scalar", VarAccess::REDUCE_BATCH_SUM},
               {"reduction2", "scalar", VarAccess::REDUCE_NEURON_SUM}});
@@ -132,7 +181,7 @@ class ReduceSharedVar : public CustomUpdateModels::Base
 {
     DECLARE_SNIPPET(ReduceSharedVar);
 
-    SET_UPDATE_CODE("$(reduction) = $(var);\n");
+    SET_UPDATE_CODE("reduction = var;\n");
 
     SET_VARS({{"reduction", "scalar", VarAccess::REDUCE_BATCH_SUM}})
     SET_VAR_REFS({{"var", "scalar", VarAccessMode::READ_ONLY}});
@@ -144,7 +193,7 @@ class ReduceNeuronSharedVar : public CustomUpdateModels::Base
 {
     DECLARE_SNIPPET(ReduceNeuronSharedVar);
 
-    SET_UPDATE_CODE("$(reduction) = $(var);\n");
+    SET_UPDATE_CODE("reduction = var;\n");
 
     SET_VARS({{"reduction", "scalar", VarAccess::REDUCE_NEURON_SUM}})
     SET_VAR_REFS({{"var", "scalar", VarAccessMode::READ_ONLY}});
@@ -169,7 +218,7 @@ TEST(CustomUpdates, ConstantVarSum)
  
     CustomUpdate *cu = model.addCustomUpdate<Sum>("Sum", "CustomUpdate",
                                                   {}, sumVarValues, sumVarReferences1);
-    model.finalize();
+    model.finalise();
 
     CustomUpdateInternal *cuInternal = static_cast<CustomUpdateInternal*>(cu);
     ASSERT_FALSE(cuInternal->isZeroCopyEnabled());
@@ -177,12 +226,8 @@ TEST(CustomUpdates, ConstantVarSum)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
-
-    // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
-
-    ASSERT_FALSE(backend.isGlobalHostRNGRequired(modelSpecMerged));
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
+    ASSERT_FALSE(backend.isGlobalHostRNGRequired(model));
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, UninitialisedVarSum)
@@ -198,7 +243,7 @@ TEST(CustomUpdates, UninitialisedVarSum)
  
     CustomUpdate *cu = model.addCustomUpdate<Sum>("Sum", "CustomUpdate",
                                                   {}, sumVarValues, sumVarReferences1);
-    model.finalize();
+    model.finalise();
 
     CustomUpdateInternal *cuInternal = static_cast<CustomUpdateInternal*>(cu);
     ASSERT_FALSE(cuInternal->isZeroCopyEnabled());
@@ -206,12 +251,8 @@ TEST(CustomUpdates, UninitialisedVarSum)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
-
-    // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
-
-    ASSERT_FALSE(backend.isGlobalHostRNGRequired(modelSpecMerged));
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
+    ASSERT_FALSE(backend.isGlobalHostRNGRequired(model));
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, RandVarSum)
@@ -228,7 +269,7 @@ TEST(CustomUpdates, RandVarSum)
  
     CustomUpdate *cu = model.addCustomUpdate<Sum>("Sum", "CustomUpdate",
                                                   {}, sumVarValues, sumVarReferences1);
-    model.finalize();
+    model.finalise();
 
     CustomUpdateInternal *cuInternal = static_cast<CustomUpdateInternal*>(cu);
     ASSERT_FALSE(cuInternal->isZeroCopyEnabled());
@@ -236,12 +277,8 @@ TEST(CustomUpdates, RandVarSum)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
-
-    // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
-
-    ASSERT_TRUE(backend.isGlobalHostRNGRequired(modelSpecMerged));
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
+    ASSERT_TRUE(backend.isGlobalHostRNGRequired(model));
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, VarReferenceTypeChecks)
@@ -255,7 +292,7 @@ TEST(CustomUpdates, VarReferenceTypeChecks)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
     auto *sg1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
-        "Synapses", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Synapses", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         {}, {{"g", 1.0}, {"d", 4}},
         {}, {});
@@ -275,7 +312,42 @@ TEST(CustomUpdates, VarReferenceTypeChecks)
     catch(const std::runtime_error &) {
     }
 
-    model.finalize();
+    model.finalise();
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, EGPReferenceTypeChecks)
+{
+    ModelSpecInternal model;
+
+    // Add three neuron group to model
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
+    auto *pop1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pop1", 10, paramVals, varVals);
+    auto *pop2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pop2", 10, paramVals, varVals);
+    auto *pop3 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pop3", 10, paramVals, varVals);
+
+    // Add scaling custom update with EGP
+    VarReferences scaleVarReferences1{{"a", createVarRef(pop1, "V")}, {"b", createVarRef(pop1, "U")}};
+    auto *egpScale = model.addCustomUpdate<EGPScale>("Scale1", "CustomUpdate",
+                                                     {}, {}, scaleVarReferences1);
+
+    // Add scaling custom update with EGP ref sharing "c" EGP
+    VarReferences scaleVarReferences2{{"a", createVarRef(pop2, "V")}, {"b", createVarRef(pop2, "U")}};
+    EGPReferences scaleEGPReferences2{{"c", createEGPRef(egpScale, "c")}};
+    model.addCustomUpdate<EGPRefScale>("Scale2", "CustomUpdate",
+                                       ParamValues{}, VarValues{}, scaleVarReferences2, scaleEGPReferences2);
+    try {
+        // Add scaling custom update with EGP ref sharing "c" EGP
+        VarReferences scaleVarReferences3{{"a", createVarRef(pop3, "V")}, {"b", createVarRef(pop3, "U")}};
+        EGPReferences scaleEGPReferences3{{"c", createEGPRef(egpScale, "c")}};
+        model.addCustomUpdate<EGPRefScaleInt>("Scale3", "CustomUpdate",
+                                              ParamValues{}, VarValues{}, scaleVarReferences3, scaleEGPReferences3);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+
+    model.finalise();
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, VarSizeChecks)
@@ -307,7 +379,7 @@ TEST(CustomUpdates, VarSizeChecks)
     catch(const std::runtime_error &) {
     }
 
-    model.finalize();
+    model.finalise();
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, VarDelayChecks)
@@ -321,7 +393,7 @@ TEST(CustomUpdates, VarDelayChecks)
     auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
     // Add synapse groups to force pre1's v to be delayed by 10 timesteps and pre2's v to be delayed by 5 timesteps
-    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn1", SynapseMatrixType::DENSE_INDIVIDUALG,
+    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn1", SynapseMatrixType::DENSE,
                                                                     10, "Pre1", "Post",
                                                                     {}, {{"g", 0.1}}, 
                                                                     {}, {});
@@ -332,7 +404,7 @@ TEST(CustomUpdates, VarDelayChecks)
     model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
                                {}, sumVarValues, sumVarReferences1);
 
-    model.finalize();
+    model.finalise();
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, VarMixedDelayChecks)
@@ -347,11 +419,11 @@ TEST(CustomUpdates, VarMixedDelayChecks)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
     // Add synapse groups to force pre1's v to be delayed by 10 timesteps and pre2's v to be delayed by 5 timesteps
-    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn1", SynapseMatrixType::DENSE_INDIVIDUALG,
+    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn1", SynapseMatrixType::DENSE,
                                                                     10, "Pre1", "Post",
                                                                     {}, {{"g", 0.1}}, 
                                                                     {}, {});
-    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn2", SynapseMatrixType::DENSE_INDIVIDUALG,
+    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn2", SynapseMatrixType::DENSE,
                                                                     5, "Pre2", "Post",
                                                                     {}, {{"g", 0.1}}, 
                                                                     {}, {});
@@ -362,7 +434,7 @@ TEST(CustomUpdates, VarMixedDelayChecks)
                                {}, sumVarValues, sumVarReferences2);
 
     try {
-        model.finalize();
+        model.finalise();
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -380,12 +452,12 @@ TEST(CustomUpdates, WUVarSynapseGroupChecks)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
     auto *sg1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
-        "Synapses1", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Synapses1", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         {}, {{"g", 1.0}, {"d", 4}},
         {}, {});
     auto *sg2 = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
-        "Synapses2", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Synapses2", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         {}, {{"g", 1.0}, {"d", 4}},
         {}, {});
@@ -405,7 +477,7 @@ TEST(CustomUpdates, WUVarSynapseGroupChecks)
     catch(const std::runtime_error &) {
     }
 
-    model.finalize();
+    model.finalise();
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, BatchingVars)
@@ -416,7 +488,6 @@ TEST(CustomUpdates, BatchingVars)
     // Add neuron and spike source (arbitrary choice of model with read_only variables) to model
     VarValues izkVarVals{{"V", 0.0}, {"U", 0.0}, {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
-    
 
     // Create updates where variable is shared and references vary
     VarValues sumVarValues{{"sum", 1.0}};
@@ -436,12 +507,35 @@ TEST(CustomUpdates, BatchingVars)
     auto *sum4 = model.addCustomUpdate<Sum>("Sum4", "CustomUpdate",
                                             {}, sumVarValues, sumVarReferences4);
     
-    model.finalize();
+    model.finalise();
 
     EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum1)->isBatched());
+    EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum1)->isPerNeuron());
     EXPECT_FALSE(static_cast<CustomUpdateInternal*>(sum2)->isBatched());
+    EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum2)->isPerNeuron());
     EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum3)->isBatched());
+    EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum3)->isPerNeuron());
     EXPECT_FALSE(static_cast<CustomUpdateInternal*>(sum4)->isBatched());
+    EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum4)->isPerNeuron());
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, NeuronSharedVars)
+{
+    ModelSpecInternal model;
+    model.setBatchSize(5);
+
+    // Add neuron and spike source (arbitrary choice of model with read-only neuron shared variables) to model
+    VarValues izkVarVals{{"V", 0.0}, {"U", 0.0}, {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    auto *pop = model.addNeuronPopulation<IzhikevichVariableShared>("Pop", 10, {}, izkVarVals);
+
+    VarReferences copyVarReferences1{{"a", createVarRef(pop, "a")}, {"b", createVarRef(pop, "b")}};
+    CustomUpdate *cu = model.addCustomUpdate<Copy>("Copy", "CustomUpdate",
+                                                   {}, {}, copyVarReferences1);
+    model.finalise();
+
+    auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
+    EXPECT_TRUE(cuInternal->isBatched());
+    EXPECT_FALSE(cuInternal->isPerNeuron());
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, BatchingWriteShared)
@@ -464,7 +558,28 @@ TEST(CustomUpdates, BatchingWriteShared)
     }
 }
 //--------------------------------------------------------------------------
-TEST(CustomUpdates, ReduceDuplicate)
+TEST(CustomUpdates, WriteNeuronShared)
+{
+    ModelSpecInternal model;
+    model.setBatchSize(5);
+
+    // Add neuron and spike source (arbitrary choice of model with read-only neuron shared variables) to model
+    VarValues izkVarVals{{"V", 0.0}, {"U", 0.0}, {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    auto *pop = model.addNeuronPopulation<IzhikevichVariableShared>("Pop", 10, {}, izkVarVals);
+    
+    // Create custom update which tries to create a read-write reference to a (which isn't per-neuron)
+    VarValues sum2VarValues{{"mult", 1.0}};
+    VarReferences sum2VarReferences{{"a", createVarRef(pop, "a")}, {"b", createVarRef(pop, "V")}};
+    try {
+        model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
+                                    {}, sum2VarValues, sum2VarReferences);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, WriteBatchShared)
 {
     ModelSpecInternal model;
     model.setBatchSize(5);
@@ -479,7 +594,7 @@ TEST(CustomUpdates, ReduceDuplicate)
     model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
                                 {}, sum2VarValues, sum2VarReferences);
     try {
-        model.finalize();
+        model.finalise();
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -500,11 +615,12 @@ TEST(CustomUpdates, ReductionTypeDuplicateNeuron)
     VarReferences reduceVarReferences{{"var", createVarRef(pop, "V")}, {"reduction", createVarRef(pop, "a")}};
     auto *cu = model.addCustomUpdate<Reduce>("Reduction", "CustomUpdate",
                                              {}, {}, reduceVarReferences);
-    model.finalize();
+    model.finalise();
     auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
     ASSERT_TRUE(cuInternal->isBatched());
     ASSERT_FALSE(cuInternal->isBatchReduction());
     ASSERT_TRUE(cuInternal->isNeuronReduction());
+    ASSERT_TRUE(cuInternal->isPerNeuron());
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, ReductionTypeDuplicateNeuronInternal)
@@ -522,11 +638,12 @@ TEST(CustomUpdates, ReductionTypeDuplicateNeuronInternal)
     VarValues reduceVars{{"reduction", 0.0}};
     auto *cu = model.addCustomUpdate<ReduceNeuronSharedVar>("Reduction", "CustomUpdate",
                                                             {}, reduceVars, reduceVarReferences);
-    model.finalize();
+    model.finalise();
     auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
     ASSERT_TRUE(cuInternal->isBatched());
     ASSERT_FALSE(cuInternal->isBatchReduction());
     ASSERT_TRUE(cuInternal->isNeuronReduction());
+    ASSERT_TRUE(cuInternal->isPerNeuron());
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, ReductionTypeSharedNeuronInternal)
@@ -544,11 +661,12 @@ TEST(CustomUpdates, ReductionTypeSharedNeuronInternal)
     VarValues reduceVars{{"reduction", 0.0}};
     auto *cu = model.addCustomUpdate<ReduceNeuronSharedVar>("Reduction", "CustomUpdate",
                                                             {}, reduceVars, reduceVarReferences);
-    model.finalize();
+    model.finalise();
     auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
     ASSERT_FALSE(cuInternal->isBatched());
     ASSERT_FALSE(cuInternal->isBatchReduction());
     ASSERT_TRUE(cuInternal->isNeuronReduction());
+    ASSERT_TRUE(cuInternal->isPerNeuron());
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, ReductionTypeDuplicateBatch)
@@ -565,11 +683,12 @@ TEST(CustomUpdates, ReductionTypeDuplicateBatch)
     VarReferences reduceVarReferences{{"var", createVarRef(pop, "V")}, {"reduction", createVarRef(pop, "a")}};
     auto *cu = model.addCustomUpdate<Reduce>("Reduction", "CustomUpdate",
                                              {}, {}, reduceVarReferences);
-    model.finalize();
+    model.finalise();
     auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
     ASSERT_TRUE(cuInternal->isBatched());
     ASSERT_TRUE(cuInternal->isBatchReduction());
     ASSERT_FALSE(cuInternal->isNeuronReduction());
+    ASSERT_TRUE(cuInternal->isPerNeuron());
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, ReductionTypeDuplicateBatchInternal)
@@ -587,11 +706,12 @@ TEST(CustomUpdates, ReductionTypeDuplicateBatchInternal)
     VarValues reduceVars{{"reduction", 0.0}};
     auto *cu = model.addCustomUpdate<ReduceSharedVar>("Reduction", "CustomUpdate",
                                                       {}, reduceVars, reduceVarReferences);
-    model.finalize();
+    model.finalise();
     auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
     ASSERT_TRUE(cuInternal->isBatched());
     ASSERT_TRUE(cuInternal->isBatchReduction());
     ASSERT_FALSE(cuInternal->isNeuronReduction());
+    ASSERT_TRUE(cuInternal->isPerNeuron());
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, NeuronSharedCustomUpdateWU)
@@ -605,7 +725,7 @@ TEST(CustomUpdates, NeuronSharedCustomUpdateWU)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
     auto *sg1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
-        "Synapses", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Synapses", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         {}, {{"g", 1.0}},
         {}, {});
@@ -665,7 +785,7 @@ TEST(CustomUpdates, CompareDifferentModel)
                                              {}, {{"mult", 1.0}}, sum2VarReferences);
 
     // Finalize model
-    model.finalize();
+    model.finalise();
 
     CustomUpdateInternal *sum0Internal = static_cast<CustomUpdateInternal*>(sum0);
     CustomUpdateInternal *sum1Internal = static_cast<CustomUpdateInternal*>(sum1);
@@ -677,10 +797,10 @@ TEST(CustomUpdates, CompareDifferentModel)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
     // Check correct groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateGroups().size() == 2);
@@ -705,7 +825,7 @@ TEST(CustomUpdates, CompareDifferentUpdateGroup)
     auto *sum2 = model.addCustomUpdate<Sum>("Sum2", "CustomUpdate1",
                                             {}, {{"sum", 1.0}}, sumVarReferences);
     // Finalize model
-    model.finalize();
+    model.finalise();
 
     CustomUpdateInternal *sum0Internal = static_cast<CustomUpdateInternal*>(sum0);
     CustomUpdateInternal *sum1Internal = static_cast<CustomUpdateInternal*>(sum1);
@@ -717,10 +837,10 @@ TEST(CustomUpdates, CompareDifferentUpdateGroup)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
     // Check correct groups are merged
     // **NOTE** update groups don't matter for initialization
@@ -741,16 +861,16 @@ TEST(CustomUpdates, CompareDifferentDelay)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
     // Add synapse groups to force pre1's v to be delayed by 0 timesteps, pre2 and pre3's v to be delayed by 5 timesteps and pre4's to be delayed by 10 timesteps
-    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn1", SynapseMatrixType::DENSE_INDIVIDUALG,
+    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn1", SynapseMatrixType::DENSE,
                                                                     NO_DELAY, "Pre1", "Post",
                                                                     {}, {{"g", 0.1}}, {}, {});
-    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn2", SynapseMatrixType::DENSE_INDIVIDUALG,
+    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn2", SynapseMatrixType::DENSE,
                                                                     5, "Pre2", "Post",
                                                                     {}, {{"g", 0.1}}, {}, {});
-    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn3", SynapseMatrixType::DENSE_INDIVIDUALG,
+    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn3", SynapseMatrixType::DENSE,
                                                                     5, "Pre3", "Post",
                                                                     {}, {{"g", 0.1}}, {}, {});
-    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn4", SynapseMatrixType::DENSE_INDIVIDUALG,
+    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn4", SynapseMatrixType::DENSE,
                                                                     10, "Pre4", "Post",
                                                                     {}, {{"g", 0.1}}, {}, {});
     
@@ -770,7 +890,7 @@ TEST(CustomUpdates, CompareDifferentDelay)
                                             {}, {{"sum", 0.0}}, sumVarReferences4);
 
     // Finalize model
-    model.finalize();
+    model.finalise();
 
     // No delay group can't be merged with any others
     CustomUpdateInternal *sum1Internal = static_cast<CustomUpdateInternal*>(sum1);
@@ -792,10 +912,10 @@ TEST(CustomUpdates, CompareDifferentDelay)
     
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
     // Check correct groups are merged
     // **NOTE** delay groups don't matter for initialization
@@ -823,7 +943,7 @@ TEST(CustomUpdates, CompareDifferentBatched)
     auto *sum3 = model.addCustomUpdate<Sum>("Sum3", "CustomUpdate",
                                             {}, {{"sum", 0.0}}, sumVarReferences3);
 
-    model.finalize();
+    model.finalise();
 
     // Check that sum1 and sum3 are batched and sum2 is not
     CustomUpdateInternal *sum1Internal = static_cast<CustomUpdateInternal*>(sum1);
@@ -840,18 +960,6 @@ TEST(CustomUpdates, CompareDifferentBatched)
     // Check that initialisation of batched and mixed can be merged but not update
     ASSERT_EQ(sum1Internal->getInitHashDigest(), sum3Internal->getInitHashDigest());
     ASSERT_NE(sum1Internal->getHashDigest(), sum3Internal->getHashDigest());
-
-    // Create a backend
-    CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
-
-    // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
-
-    // Check correct groups are merged
-    // **NOTE** delay groups don't matter for initialization
-    ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateGroups().size() == 3);
-    ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateInitGroups().size() == 2);
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, CompareDifferentWUTranspose)
@@ -864,10 +972,10 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
     // Add synapse groups to force pre1's v to be delayed by 0 timesteps, pre2 and pre3's v to be delayed by 5 timesteps and pre4's to be delayed by 10 timesteps
-    auto *fwdSyn = model.addSynapsePopulation<Cont2, PostsynapticModels::DeltaCurr>("fwdSyn", SynapseMatrixType::DENSE_INDIVIDUALG,
+    auto *fwdSyn = model.addSynapsePopulation<Cont2, PostsynapticModels::DeltaCurr>("fwdSyn", SynapseMatrixType::DENSE,
                                                                                     NO_DELAY, "Pre", "Post",
                                                                                     {}, {{"g", 0.0}, {"x", 0.0}}, {}, {});
-    auto *backSyn = model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("backSyn", SynapseMatrixType::DENSE_INDIVIDUALG,
+    auto *backSyn = model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("backSyn", SynapseMatrixType::DENSE,
                                                                                      NO_DELAY, "Post", "Pre",
                                                                                      {}, {{"g", 0.0}}, {}, {});
 
@@ -880,7 +988,7 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
                                             {}, {{"mult", 0.0}}, sumVarReferences2);
     
     // Finalize model
-    model.finalize();
+    model.finalise();
 
     // Updates which transpose different variables can't be merged with any others
     CustomUpdateWUInternal *sum1Internal = static_cast<CustomUpdateWUInternal*>(sum1);
@@ -892,10 +1000,10 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
     // Check correct groups are merged
     // **NOTE** transpose variables don't matter for initialization
@@ -916,11 +1024,11 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
 
     // Add a sparse and a dense synapse group
     auto *syn1 = model.addSynapsePopulation<Cont2, PostsynapticModels::DeltaCurr>(
-        "Syn1", SynapseMatrixType::DENSE_INDIVIDUALG,
+        "Syn1", SynapseMatrixType::DENSE,
         NO_DELAY, "Pre", "Post",
         {}, {{"g", 0.0}, {"x", 0.0}}, {}, {});
     auto *syn2 = model.addSynapsePopulation<Cont2, PostsynapticModels::DeltaCurr>(
-        "Syn2", SynapseMatrixType::SPARSE_INDIVIDUALG,
+        "Syn2", SynapseMatrixType::SPARSE,
         NO_DELAY, "Pre", "Post",
         {}, {{"g", 0.0}, {"x", 0.0}}, {}, {},
         initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({{"prob", 0.1}}));
@@ -934,7 +1042,7 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
                                              {}, {{"sum", 0.0}}, sumVarReferences2);
     
     // Finalize model
-    model.finalize();
+    model.finalise();
 
     // Updates and initialisation with different connectivity can't be merged with any others
     CustomUpdateWUInternal *sum1Internal = static_cast<CustomUpdateWUInternal*>(sum1);
@@ -944,10 +1052,10 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
     
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
     // Check correct groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateTransposeWUGroups().empty());
@@ -970,7 +1078,7 @@ TEST(CustomUpdates, CompareDifferentWUBatched)
     // Add synapse group 
     VarValues synVarInit{{"gCommon", 1.0}, {"g", 1.0}, {"dCommon",1.0}, {"d", 1.0}};
     auto *sg1 = model.addSynapsePopulation<StaticPulseDendriticDelaySplit, PostsynapticModels::DeltaCurr>(
-        "Synapses", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Synapses", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
         {}, synVarInit,
         {}, {});
@@ -985,7 +1093,7 @@ TEST(CustomUpdates, CompareDifferentWUBatched)
                                             {}, {{"sum", 0.0}}, sumVarReferences2);
     auto *sum3 = model.addCustomUpdate<Sum>("Sum3", "CustomUpdate",
                                             {}, {{"sum", 0.0}}, sumVarReferences3);
-    model.finalize();
+    model.finalise();
 
     // Check that sum1 and sum3 are batched and sum2 is not
     CustomUpdateWUInternal *sum1Internal = static_cast<CustomUpdateWUInternal*>(sum1);
@@ -1005,10 +1113,10 @@ TEST(CustomUpdates, CompareDifferentWUBatched)
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
 
     // Merge model
-    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+    CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
     // Check correct groups are merged
     // **NOTE** delay groups don't matter for initialization

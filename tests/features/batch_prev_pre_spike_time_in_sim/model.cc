@@ -66,13 +66,20 @@ void modelDefinition(ModelSpec &model)
     model.setBatchSize(2);
     
     model.addNeuronPopulation<PreNeuron>("pre", 10, {}, {});
+    model.addNeuronPopulation<PreNeuron>("preDelay", 10, {}, {});
     model.addNeuronPopulation<PostNeuron>("post", 10, {}, {});
+    model.addNeuronPopulation<PostNeuron>("postDelay", 10, {}, {});
 
     model.addSynapsePopulation<WeightUpdateModel, PostsynapticModels::DeltaCurr>(
-        "syn", SynapseMatrixType::SPARSE_INDIVIDUALG, 20, "pre", "post",
+        "syn", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY, "pre", "post",
         {}, WeightUpdateModel::VarValues(-std::numeric_limits<float>::max()),
         {}, {},
         initConnectivity<InitSparseConnectivitySnippet::OneToOne>({}));
-
+    
+    model.addSynapsePopulation<WeightUpdateModel, PostsynapticModels::DeltaCurr>(
+        "synDelay", SynapseMatrixType::SPARSE_INDIVIDUALG, 20, "preDelay", "postDelay",
+        {}, WeightUpdateModel::VarValues(-std::numeric_limits<float>::max()),
+        {}, {},
+        initConnectivity<InitSparseConnectivitySnippet::OneToOne>({}));
     model.setPrecision(GENN_FLOAT);
 }

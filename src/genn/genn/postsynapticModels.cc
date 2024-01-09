@@ -1,15 +1,21 @@
 #include "postsynapticModels.h"
 
+// GeNN includes
+#include "gennUtils.h"
+
+using namespace GeNN;
+
+namespace GeNN::PostsynapticModels
+{
 // Implement models
-IMPLEMENT_SNIPPET(PostsynapticModels::ExpCurr);
-IMPLEMENT_SNIPPET(PostsynapticModels::ExpCond);
-IMPLEMENT_SNIPPET(PostsynapticModels::DeltaCurr);
-
+IMPLEMENT_SNIPPET(ExpCurr);
+IMPLEMENT_SNIPPET(ExpCond);
+IMPLEMENT_SNIPPET(DeltaCurr);
 
 //----------------------------------------------------------------------------
-// PostsynapticModels::Base
+// GeNN::PostsynapticModels::Base
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type PostsynapticModels::Base::getHashDigest() const
+boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 {
     // Superclass
     boost::uuids::detail::sha1 hash;
@@ -17,13 +23,12 @@ boost::uuids::detail::sha1::digest_type PostsynapticModels::Base::getHashDigest(
 
     Utils::updateHash(getDecayCode(), hash);
     Utils::updateHash(getApplyInputCode(), hash);
-    Utils::updateHash(getSupportCode(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void PostsynapticModels::Base::validate(const std::unordered_map<std::string, double> &paramValues, 
-                                        const std::unordered_map<std::string, Models::VarInit> &varValues,
-                                        const std::string &description) const
+void Base::validate(const std::unordered_map<std::string, double> &paramValues, 
+                    const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
+                    const std::string &description) const
 {
     // Superclass
     Models::Base::validate(paramValues, varValues, description);
@@ -35,3 +40,4 @@ void PostsynapticModels::Base::validate(const std::unordered_map<std::string, do
         throw std::runtime_error("Postsynaptic models cannot include variables with REDUCE access modes - they are only supported by custom update models");
     }
 }
+}   // namespace GeNN::PostsynapticModels

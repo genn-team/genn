@@ -4,6 +4,8 @@
 // GeNN includes
 #include "modelSpec.h"
 
+using namespace GeNN;
+
 //--------------------------------------------------------------------------
 // UniformCopy
 //--------------------------------------------------------------------------
@@ -11,8 +13,8 @@ class UniformCopy : public InitVarSnippet::Base
 {
 public:
     SET_CODE(
-        "const scalar scale = $(max) - $(min);\n"
-        "$(value) = $(min) + ($(gennrand_uniform) * scale);");
+        "const scalar scale = max - min;\n"
+        "value = min + (gennrand_uniform() * scale);");
 
     SET_PARAM_NAMES({"min", "max"});
 };

@@ -1,7 +1,7 @@
 import os
 import sys
 from copy import deepcopy
-from platform import system
+from platform import system, uname
 from shutil import copytree, rmtree
 from pybind11.setup_helpers import Pybind11Extension, build_ext, WIN, MACOS
 from setuptools import find_packages, setup
@@ -9,6 +9,13 @@ from setuptools import find_packages, setup
 # Determine is this is a debug build
 # **YUCK** this is not a great test
 debug_build = "--debug" in sys.argv
+
+# Determine if this is a coverage build
+if "--coverage" in sys.argv:
+    coverage_build = True
+    sys.argv.remove("--coverage")
+else:
+    coverage_build = False
 
 # Get CUDA path from environment variable - setting this up is a required CUDA post-install step
 cuda_path = os.environ.get("CUDA_PATH")
@@ -26,11 +33,22 @@ opencl_installed = opencl_path is not None and os.path.exists(opencl_path)
 # **NOTE** Pybind11Extension provides WIN and MAC
 LINUX = system() == "Linux"
 
+# Are we on WSL?
+if sys.version_info < (3, 3):
+    WSL = "microsoft" in uname()[2]
+else:
+    WSL = "microsoft" in uname().release
+
 # Determine correct suffix for GeNN libraries
 if WIN:
     genn_lib_suffix = "_Debug_DLL" if debug_build else "_Release_DLL"
 else:
-    genn_lib_suffix = "_dynamic_debug" if debug_build else "_dynamic"
+    if coverage_build:
+        genn_lib_suffix = "_coverage_dynamic"
+    elif debug_build:
+        genn_lib_suffix = "_dynamic_debug"
+    else:
+        genn_lib_suffix = "_dynamic"
 
 genn_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -68,7 +86,14 @@ extension_kwargs = {
 # If this is Windows, turn off warnings about dll-interface being required 
 # for stuff to be used by clients and prevent windows.h exporting TOO many awful macros
 if WIN:
-    extension_kwargs["extra_compile_args"].extend(["/wd\"4251\"", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX"])
+    extension_kwargs["extra_compile_args"].extend(["/wd4251", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX"])
+
+if coverage_build:
+    if LINUX:
+        extension_kwargs["extra_compile_args"].extend(["--coverage"])
+        extension_kwargs["extra_link_args"].extend(["--coverage"])
+    elif MAC:
+        extension_kwargs["extra_compile_args"].extend(["-fprofile-instr-generate", "-fcoverage-mapping"])
 
 # Extend these kwargs for extensions which link against GeNN
 genn_extension_kwargs = deepcopy(extension_kwargs)
@@ -87,20 +112,25 @@ backends = [("single_threaded_cpu", "singleThreadedCPU", {})]
 # If CUDA was found, add backend configuration
 if cuda_installed:
     # Get CUDA library directory
+    cuda_library_dirs = []
     if MACOS:
-        cuda_library_dir = os.path.join(cuda_path, "lib")
+        cuda_library_dirs.append(os.path.join(cuda_path, "lib"))
     elif WIN:
-        cuda_library_dir = os.path.join(cuda_path, "lib", "x64")
+        cuda_library_dirs.append(os.path.join(cuda_path, "lib", "x64"))
     else:
-        cuda_library_dir = os.path.join(cuda_path, "lib64")
+        cuda_library_dirs.append(os.path.join(cuda_path, "lib64"))
+
+    # If we're running on WSL, add additional library path so libcuda can be found
+    if WSL:
+        cuda_library_dirs.append("/usr/lib/wsl/lib")
 
     # Add backend
     # **NOTE** on Mac OS X, a)runtime_library_dirs doesn't work b)setting rpath is required to find CUDA
     backends.append(("cuda", "cuda",
                      {"libraries": ["cuda", "cudart"],
                       "include_dirs": [os.path.join(cuda_path, "include")],
-                      "library_dirs": [cuda_library_dir],
-                      "extra_link_args": ["-Wl,-rpath," + cuda_library_dir] if MACOS else []}))
+                      "library_dirs": cuda_library_dirs,
+                      "extra_link_args": ["-Wl,-rpath," + cuda_library_dirs[0]] if MACOS else []}))
 
 # If OpenCL was found, add backend configuration
 if opencl_installed:
@@ -128,6 +158,9 @@ ext_modules = [
     Pybind11Extension("genn",
                       [os.path.join(pygenn_src, "genn.cc")],
                       **genn_extension_kwargs),
+    Pybind11Extension("types",
+                      [os.path.join(pygenn_src, "types.cc")],
+                      **genn_extension_kwargs),
     Pybind11Extension("init_sparse_connectivity_snippets",
                       [os.path.join(pygenn_src, "initSparseConnectivitySnippets.cc")],
                       **genn_extension_kwargs),
@@ -139,6 +172,9 @@ ext_modules = [
                       **genn_extension_kwargs),
     Pybind11Extension("current_source_models",
                       [os.path.join(pygenn_src, "currentSourceModels.cc")],
+                      **genn_extension_kwargs),
+    Pybind11Extension("custom_connectivity_update_models",
+                      [os.path.join(pygenn_src, "customConnectivityUpdateModels.cc")],
                       **genn_extension_kwargs),
     Pybind11Extension("custom_update_models",
                       [os.path.join(pygenn_src, "customUpdateModels.cc")],

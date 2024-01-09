@@ -5,7 +5,7 @@
 // GeNN includes
 #include "initVarSnippet.h"
 
-using namespace InitVarSnippet;
+using namespace GeNN::InitVarSnippet;
 
 namespace
 {
@@ -37,4 +37,5 @@ PYBIND11_MODULE(init_var_snippets, m)
     m.def("NormalClippedDelay", &getBaseInstance<NormalClippedDelay>, pybind11::return_value_policy::reference);
     m.def("Exponential", &getBaseInstance<Exponential>, pybind11::return_value_policy::reference);
     m.def("Gamma", &getBaseInstance<Gamma>, pybind11::return_value_policy::reference);
+    m.def("Binomial", &getBaseInstance<Binomial>, pybind11::return_value_policy::reference);
 }

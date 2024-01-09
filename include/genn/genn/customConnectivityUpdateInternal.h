@@ -7,13 +7,17 @@
 //------------------------------------------------------------------------
 // CustomUpdateInternal
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class CustomConnectivityUpdateInternal : public CustomConnectivityUpdate
 {
 public:
+    using GroupExternal = CustomConnectivityUpdate;
+
     CustomConnectivityUpdateInternal(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup, 
                                      const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel, 
-                                     const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
-                                     const std::unordered_map<std::string, Models::VarInit> &preVarInitialisers, const std::unordered_map<std::string, Models::VarInit> &postVarInitialisers,
+                                     const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
+                                     const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
                                      const std::unordered_map<std::string, Models::WUVarReference> &varReferences, const std::unordered_map<std::string, Models::VarReference> &preVarReferences,
                                      const std::unordered_map<std::string, Models::VarReference> &postVarReferences, VarLocation defaultVarLocation,
                                      VarLocation defaultExtraGlobalParamLocation)
@@ -23,16 +27,14 @@ public:
         getSynapseGroup()->addCustomUpdateReference(this);
     }
 
-    using CustomConnectivityUpdate::initDerivedParams;
     using CustomConnectivityUpdate::getDerivedParams;
-    using CustomConnectivityUpdate::isPreVarInitRNGRequired;
-    using CustomConnectivityUpdate::isPostVarInitRNGRequired;
-    using CustomConnectivityUpdate::isVarInitRNGRequired;
     using CustomConnectivityUpdate::isZeroCopyEnabled;
     using CustomConnectivityUpdate::getVarLocationHashDigest;
+    using CustomConnectivityUpdate::getRowUpdateCodeTokens;
+    using CustomConnectivityUpdate::getHostUpdateCodeTokens;
     using CustomConnectivityUpdate::getSynapseGroup;
     using CustomConnectivityUpdate::getDependentVariables;
-    using CustomConnectivityUpdate::finalize;
+    using CustomConnectivityUpdate::finalise;
     using CustomConnectivityUpdate::getHashDigest;
     using CustomConnectivityUpdate::getInitHashDigest;
     using CustomConnectivityUpdate::getPreDelayNeuronGroup;
@@ -51,11 +53,13 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
 
-    Models::Base::VarVec getVars() const{ return m_CU.getCustomConnectivityUpdateModel()->getVars(); }
+    Models::Base::VarVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_CU.getVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getVarInitialisers(); }
+
+    const std::string &getNameSuffix() const{ return m_CU.getName(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -76,11 +80,15 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const{ return m_CU.getPreVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_CU.getPreVarLocation(varName); }
 
-    Models::Base::VarVec getVars() const{ return m_CU.getCustomConnectivityUpdateModel()->getPreVars(); }
+    Models::Base::VarVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPreVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_CU.getPreVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getPreVarInitialisers(); }
+
+    bool isVarDelayed(const std::string &) const { return false; }
+
+    const std::string &getNameSuffix() const{ return m_CU.getName(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -101,11 +109,15 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const{ return m_CU.getPostVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_CU.getPostVarLocation(varName); }
 
-    Models::Base::VarVec getVars() const{ return m_CU.getCustomConnectivityUpdateModel()->getPostVars(); }
+    Models::Base::VarVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPostVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_CU.getPostVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getPostVarInitialisers(); }
+
+    bool isVarDelayed(const std::string &) const { return false; }
+
+    const std::string &getNameSuffix() const{ return m_CU.getName(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -127,9 +139,9 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getEGPLocation(const std::string&) const{ return VarLocation::HOST_DEVICE; }
+    VarLocation getLoc(const std::string&) const{ return VarLocation::HOST_DEVICE; }
 
-    Snippet::Base::EGPVec getEGPs() const{ return m_CU.getCustomConnectivityUpdateModel()->getExtraGlobalParams(); }
+    Snippet::Base::EGPVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -137,3 +149,79 @@ private:
     //----------------------------------------------------------------------------
     const CustomConnectivityUpdateInternal &m_CU;
 };
+
+//----------------------------------------------------------------------------
+// CustomConnectivityUpdateVarRefAdapter
+//----------------------------------------------------------------------------
+class CustomConnectivityUpdateVarRefAdapter
+{
+public:
+    CustomConnectivityUpdateVarRefAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
+    {}
+
+    using RefType = Models::WUVarReference;
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    Models::Base::VarRefVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getVarRefs(); }
+
+    const std::unordered_map<std::string, Models::WUVarReference> &getInitialisers() const{ return m_CU.getVarReferences(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CustomConnectivityUpdateInternal &m_CU;
+};
+
+//----------------------------------------------------------------------------
+// CustomConnectivityUpdatePreVarRefAdapter
+//----------------------------------------------------------------------------
+class CustomConnectivityUpdatePreVarRefAdapter
+{
+public:
+    CustomConnectivityUpdatePreVarRefAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
+    {}
+
+    using RefType = Models::VarReference;
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    Models::Base::VarRefVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPreVarRefs(); }
+
+    const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_CU.getPreVarReferences(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CustomConnectivityUpdateInternal &m_CU;
+};
+
+//----------------------------------------------------------------------------
+// CustomConnectivityUpdatePostVarRefAdapter
+//----------------------------------------------------------------------------
+class CustomConnectivityUpdatePostVarRefAdapter
+{
+public:
+    CustomConnectivityUpdatePostVarRefAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
+    {}
+
+    using RefType = Models::VarReference;
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    Models::Base::VarRefVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPostVarRefs(); }
+
+    const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_CU.getPostVarReferences(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CustomConnectivityUpdateInternal &m_CU;
+};
+}   // namespace GeNN

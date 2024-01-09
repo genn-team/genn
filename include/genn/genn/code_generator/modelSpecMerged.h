@@ -16,23 +16,24 @@
 #include "code_generator/initGroupMerged.h"
 #include "code_generator/neuronUpdateGroupMerged.h"
 #include "code_generator/synapseUpdateGroupMerged.h"
-#include "code_generator/supportCodeMerged.h"
 
 // Forward declarations
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 class BackendBase;
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::ModelSpecMerged
+// GeNN::CodeGenerator::ModelSpecMerged
 //--------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 class GENN_EXPORT ModelSpecMerged
 {
 public:
-    ModelSpecMerged(const ModelSpecInternal &model, const BackendBase &backend);
+    ModelSpecMerged(const BackendBase &backend, const ModelSpecInternal &model);
+    ModelSpecMerged(const ModelSpecMerged&) = delete;
+    ModelSpecMerged &operator=(const ModelSpecMerged &) = delete;
 
     //--------------------------------------------------------------------------
     // CodeGenerator::ModelSpecMerged::EGPField
@@ -40,20 +41,20 @@ public:
     //! Immutable structure for tracking fields of merged group structure containing EGPs
     struct EGPField
     {
-        EGPField(size_t m, const std::string &t, const std::string &f, bool h)
+        EGPField(size_t m, const Type::ResolvedType &t, const std::string &f, bool h)
         :   mergedGroupIndex(m), type(t), fieldName(f), hostGroup(h) {}
 
-        const size_t mergedGroupIndex;
-        const std::string type;
-        const std::string fieldName;
-        const bool hostGroup;
+        size_t mergedGroupIndex;
+        Type::ResolvedType type;
+        std::string fieldName;
+        bool hostGroup;
 
         //! Less than operator (used for std::set::insert), 
         //! lexicographically compares all three struct members
         bool operator < (const EGPField &other) const
         {
-            return (std::tie(mergedGroupIndex, type, fieldName, hostGroup) 
-                    < std::tie(other.mergedGroupIndex, other.type, other.fieldName, other.hostGroup));
+            return (std::make_tuple(mergedGroupIndex, type, fieldName, hostGroup) 
+                    < std::make_tuple(other.mergedGroupIndex, other.type, other.fieldName, other.hostGroup));
         }
     };
     
@@ -63,7 +64,7 @@ public:
     //! Immutable structure for tracking where an extra global variable ends up after merging
     struct MergedEGP : public EGPField
     {
-        MergedEGP(size_t m, size_t g, const std::string &t, const std::string &f, bool h)
+        MergedEGP(size_t m, size_t g, const Type::ResolvedType &t, const std::string &f, bool h)
         :   EGPField(m, t, f, h), groupIndex(g) {}
 
         const size_t groupIndex;
@@ -76,6 +77,9 @@ public:
     // **THINK** why is this a multimap? A variable is only going to be in one merged group of each type....right?
     typedef std::unordered_multimap<std::string, MergedEGP> MergedEGPDestinations;
     typedef std::map<std::string, MergedEGPDestinations> MergedEGPMap;
+
+    template<typename G>
+    using GenMergedGroupFn = std::function<void(G &)>;
 
     //--------------------------------------------------------------------------
     // Public API
@@ -158,6 +162,58 @@ public:
     //! Get merged custom connectivity update groups where host processing needs to be performed
     const std::vector<CustomConnectivityHostUpdateGroupMerged> &getMergedCustomConnectivityHostUpdateGroups() const { return m_MergedCustomConnectivityHostUpdateGroups; }
 
+    void genMergedNeuronUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+                                     GenMergedGroupFn<NeuronUpdateGroupMerged> generateGroup);
+    void genMergedPresynapticUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+                                          GenMergedGroupFn<PresynapticUpdateGroupMerged> generateGroup);
+    void genMergedPostsynapticUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+                                           GenMergedGroupFn<PostsynapticUpdateGroupMerged> generateGroup);
+    void genMergedSynapseDynamicsGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+                                        GenMergedGroupFn<SynapseDynamicsGroupMerged> generateGroup);
+    void genMergedCustomUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroupName, 
+                                     GenMergedGroupFn<CustomUpdateGroupMerged> generateGroup);
+    void genMergedCustomUpdateWUGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroupName, 
+                                       GenMergedGroupFn<CustomUpdateWUGroupMerged> generateGroup);
+    void genMergedCustomUpdateTransposeWUGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroupName, 
+                                                GenMergedGroupFn<CustomUpdateTransposeWUGroupMerged> generateGroup);
+    void genMergedCustomUpdateHostReductionGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroupName, 
+                                                  GenMergedGroupFn<CustomUpdateHostReductionGroupMerged> generateGroup);
+    void genMergedCustomWUUpdateHostReductionGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroupName, 
+                                                    GenMergedGroupFn<CustomWUUpdateHostReductionGroupMerged> generateGroup);
+    void genMergedCustomConnectivityUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroupName, 
+                                                 GenMergedGroupFn<CustomConnectivityUpdateGroupMerged> generateGroup);
+    void genMergedCustomConnectivityHostUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroupName, 
+                                                     GenMergedGroupFn<CustomConnectivityHostUpdateGroupMerged> generateGroup);
+    void genMergedNeuronSpikeQueueUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+                                               GenMergedGroupFn<NeuronSpikeQueueUpdateGroupMerged> generateGroup);
+    void genMergedNeuronPrevSpikeTimeUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+                                                  GenMergedGroupFn<NeuronPrevSpikeTimeUpdateGroupMerged> generateGroup);
+    void genMergedSynapseDendriticDelayUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+                                                    GenMergedGroupFn<SynapseDendriticDelayUpdateGroupMerged> generateGroup);
+    void genMergedNeuronInitGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+                                   GenMergedGroupFn<NeuronInitGroupMerged> generateGroup);
+    void genMergedCustomUpdateInitGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+                                         GenMergedGroupFn<CustomUpdateInitGroupMerged> generateGroup);
+    void genMergedCustomWUUpdateInitGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+                                           GenMergedGroupFn<CustomWUUpdateInitGroupMerged> generateGroup);
+    void genMergedSynapseInitGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+                                    GenMergedGroupFn<SynapseInitGroupMerged> generateGroup);
+    void genMergedSynapseConnectivityInitGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+                                                GenMergedGroupFn<SynapseConnectivityInitGroupMerged> generateGroup);
+    void genMergedSynapseSparseInitGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+                                          GenMergedGroupFn<SynapseSparseInitGroupMerged> generateGroup);
+    void genMergedCustomWUUpdateSparseInitGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+                                                 GenMergedGroupFn<CustomWUUpdateSparseInitGroupMerged> generateGroup);
+    void genMergedCustomConnectivityUpdatePreInitGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+                                                        GenMergedGroupFn<CustomConnectivityUpdatePreInitGroupMerged> generateGroup);
+    void genMergedCustomConnectivityUpdatePostInitGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+                                                         GenMergedGroupFn<CustomConnectivityUpdatePostInitGroupMerged> generateGroup);
+    void genMergedCustomConnectivityUpdateSparseInitGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+                                                           GenMergedGroupFn<CustomConnectivityUpdateSparseInitGroupMerged> generateGroup);
+    void genMergedSynapseConnectivityHostInitGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+                                                    GenMergedGroupFn<SynapseConnectivityHostInitGroupMerged> generateGroup);
+
+
     void genMergedNeuronUpdateGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedNeuronUpdateGroups); }
     void genMergedPresynapticUpdateGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedPresynapticUpdateGroups); }
     void genMergedPostsynapticUpdateGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedPostsynapticUpdateGroups); }
@@ -183,18 +239,6 @@ public:
     void genMergedCustomWUUpdateHostReductionStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomWUUpdateHostReductionGroups); }
     void genMergedCustomConnectivityUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomConnectivityUpdateGroups); }
     void genMergedCustomConnectivityHostUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomConnectivityHostUpdateGroups); }
-
-    void genNeuronUpdateGroupSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_NeuronUpdateSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
-    void genPostsynapticDynamicsSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_PostsynapticDynamicsSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
-    void genPresynapticUpdateSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_PresynapticUpdateSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
-    void genPostsynapticUpdateSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_PostsynapticUpdateSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
-    void genSynapseDynamicsSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_SynapseDynamicsSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
-
-    const std::string &getNeuronUpdateSupportCodeNamespace(const std::string &code) const{ return m_NeuronUpdateSupportCode.getSupportCodeNamespace(code); }
-    const std::string &getPostsynapticDynamicsSupportCodeNamespace(const std::string &code) const{ return m_PostsynapticDynamicsSupportCode.getSupportCodeNamespace(code); }
-    const std::string &getPresynapticUpdateSupportCodeNamespace(const std::string &code) const{ return m_PresynapticUpdateSupportCode.getSupportCodeNamespace(code); }
-    const std::string &getPostsynapticUpdateSupportCodeNamespace(const std::string &code) const{ return m_PostsynapticUpdateSupportCode.getSupportCodeNamespace(code); }
-    const std::string &getSynapseDynamicsSupportCodeNamespace(const std::string &code) const{ return m_SynapseDynamicsSupportCode.getSupportCodeNamespace(code); }
 
     //! Get hash digest of entire model
     boost::uuids::detail::sha1::digest_type getHashDigest(const BackendBase &backend) const;
@@ -224,26 +268,6 @@ public:
     const MergedEGPDestinations &getMergedEGPDestinations(const std::string &name) const
     {
         return m_MergedEGPs.at(name);
-    }
-
-    //! Generate calls to update all target merged groups
-    template<typename T>
-    void genScalarEGPPush(CodeStream &os, const BackendBase &backend) const
-    {
-        // Loop through all merged EGPs
-        for(const auto &e : m_MergedEGPs) {
-            // Loop through all destination structures with this suffix
-            const auto groupEGPs = e.second.equal_range(T::name);
-            for(auto g = groupEGPs.first; g != groupEGPs.second; ++g) {
-                // If EGP is scalar, generate code to copy
-                if(!Utils::isTypePointer(g->second.type)) {
-                    backend.genMergedExtraGlobalParamPush(os, T::name, g->second.mergedGroupIndex,
-                                                          std::to_string(g->second.groupIndex),
-                                                          g->second.fieldName, e.first);
-                }
-
-            }
-        }
     }
 
     // Get set of unique fields referenced in a merged group
@@ -279,18 +303,14 @@ public:
             os << "// ------------------------------------------------------------------------" << std::endl;
             os << "// merged extra global parameter functions" << std::endl;
             os << "// ------------------------------------------------------------------------" << std::endl;
-            // Loop through resultant fields and generate push function for pointer extra global parameters
+            // Loop through resultant fields and generate function to push updated pointers into group merged
             for(auto f : mergedGroupFields) {
-                // If EGP is a pointer
-                // **NOTE** this is common to all references!
-                if(Utils::isTypePointer(f.type)) {
-                    os << "void pushMerged" << T::name << f.mergedGroupIndex << f.fieldName << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostType(f.type) << " value)";
-                    {
-                        CodeStream::Scope b(os);
-                        backend.genMergedExtraGlobalParamPush(os, T::name, f.mergedGroupIndex, "idx", f.fieldName, "value");
-                    }
-                    os << std::endl;
+                os << "void pushMerged" << T::name << f.mergedGroupIndex << f.fieldName << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostTypeName(f.type) << " value)";
+                {
+                    CodeStream::Scope b(os);
+                    backend.genMergedDynamicVariablePush(os, T::name, f.mergedGroupIndex, "idx", f.fieldName, "value");
                 }
+                os << std::endl;
             }
         }
     }
@@ -308,58 +328,37 @@ private:
         }
     }
 
-    template<typename Group, typename MergedGroup, typename D>
-    void createMergedGroupsHash(const ModelSpecInternal &model, const BackendBase &backend,
-                                const std::vector<std::reference_wrapper<const Group>> &unmergedGroups,
-                                std::vector<MergedGroup> &mergedGroups, D getHashDigest, bool host = false)
+    template<typename MergedGroup, typename D>
+    void createMergedGroups(const std::vector<std::reference_wrapper<const typename MergedGroup::GroupInternal>> &unmergedGroups,
+                            std::vector<MergedGroup> &mergedGroups, D getHashDigest)
     {
         // Create a hash map to group together groups with the same SHA1 digest
         std::unordered_map<boost::uuids::detail::sha1::digest_type, 
-                           std::vector<std::reference_wrapper<const Group>>, 
+                           std::vector<std::reference_wrapper<const typename MergedGroup::GroupInternal>>, 
                            Utils::SHA1Hash> protoMergedGroups;
 
         // Add unmerged groups to correct vector
         for(const auto &g : unmergedGroups) {
-            protoMergedGroups[(g.get().*getHashDigest)()].push_back(g);
+            protoMergedGroups[std::invoke(getHashDigest, g.get())].push_back(g);
         }
 
         // Reserve final merged groups vector
+        assert(mergedGroups.empty());
         mergedGroups.reserve(protoMergedGroups.size());
 
-        // Loop through resultant merged groups
+        // Construct merged groups
         size_t i = 0;
-        for(const auto &p : protoMergedGroups) {
-            // Add group to vector
-            mergedGroups.emplace_back(i, model.getPrecision(), model.getTimePrecision(), backend, p.second);
-
-            // Loop through fields
-            for(const auto &f : mergedGroups.back().getFields()) {
-                // If field is dynamic, add record to merged EGPS
-                if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC)) {
-                    // Loop through groups within newly-created merged group
-                    for(size_t groupIndex = 0; groupIndex < mergedGroups.back().getGroups().size(); groupIndex++) {
-                        const auto &g = mergedGroups.back().getGroups()[groupIndex];
-
-                        // Add reference to this group's variable to data structure
-                        m_MergedEGPs[std::get<2>(f)(g, groupIndex)].emplace(
-                            std::piecewise_construct,
-                            std::forward_as_tuple(MergedGroup::name),
-                            std::forward_as_tuple(i, groupIndex, std::get<0>(f), std::get<1>(f), host));
-                    }
-                }
-            }
-
-            i++;
+        for(auto &p : protoMergedGroups) {
+            mergedGroups.emplace_back(i++, m_Model.getTypeContext(), p.second);
         }
     }
 
-    template<typename Group, typename MergedGroup, typename F, typename U>
-    void createMergedGroupsHash(const ModelSpecInternal &model, const BackendBase &backend,
-                                const std::map<std::string, Group> &groups, std::vector<MergedGroup> &mergedGroups,
-                                F filter, U updateHash, bool host = false)
+    template<typename MergedGroup, typename F, typename D>
+    void createMergedGroups(const std::map<std::string, typename MergedGroup::GroupInternal> &groups, 
+                            std::vector<MergedGroup> &mergedGroups, F filter, D getHashDigest)
     {
         // Build temporary vector of references to groups that pass filter
-        std::vector<std::reference_wrapper<const Group>> unmergedGroups;
+        std::vector<std::reference_wrapper<const typename MergedGroup::GroupInternal>> unmergedGroups;
         for(const auto &g : groups) {
             if(filter(g.second)) {
                 unmergedGroups.emplace_back(std::cref(g.second));
@@ -367,7 +366,61 @@ private:
         }
 
         // Merge filtered vector
-        createMergedGroupsHash(model, backend, unmergedGroups, mergedGroups, updateHash, host);
+        createMergedGroups(unmergedGroups, mergedGroups, getHashDigest);
+    }
+
+    template<typename MergedGroup>
+    void genMergedGroup(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces,
+                        MergedGroup &mergedGroup, size_t i, GenMergedGroupFn<MergedGroup> generateGroup, bool host = false)
+    {
+        // Call generate function
+        generateGroup(mergedGroup);
+
+        // Assign memory spaces
+        mergedGroup.assignMemorySpaces(backend, memorySpaces);
+
+        // Loop through fields
+        for(const auto &f : mergedGroup.getFields()) {
+            // If field is dynamic, add record to merged EGPS
+            if((std::get<3>(f) & GroupMergedFieldType::DYNAMIC)) {
+                // Loop through groups within newly-created merged group
+                for(size_t groupIndex = 0; groupIndex < mergedGroup.getGroups().size(); groupIndex++) {
+                    const auto &g = mergedGroup.getGroups()[groupIndex];
+
+                    // Add reference to this group's variable to data structure
+                    // **NOTE** this works fine with EGP references because the function to
+                    // get their value will just return the name of the referenced EGP
+                    assert(std::get<0>(f).isPointer());
+                    m_MergedEGPs[std::get<2>(f)(g, groupIndex)].emplace(
+                        std::piecewise_construct,
+                        std::forward_as_tuple(MergedGroup::name),
+                        std::forward_as_tuple(i, groupIndex, std::get<0>(f), std::get<1>(f), host));
+                }
+            }
+        }
+    }
+
+    template<typename MergedGroup>
+    void genMergedGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces,
+                         std::vector<MergedGroup> &mergedGroups, GenMergedGroupFn<MergedGroup> generateGroup, bool host = false)
+    {
+        // Loop through merged groups and generate
+        for(size_t i = 0; i < mergedGroups.size(); i++) {
+            genMergedGroup(backend, memorySpaces, mergedGroups[i], i, generateGroup, host);
+        }
+    }
+
+    template<typename MergedGroup>
+    void genMergedCustomUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces,
+                                     std::vector<MergedGroup> &mergedGroups, const std::string &updateGroupName,
+                                     GenMergedGroupFn<MergedGroup> generateGroup, bool host = false)
+    {
+        // Loop through merged groups and generate if they are in specified update group
+        for(size_t i = 0; i < mergedGroups.size(); i++) {
+            if(mergedGroups[i].getArchetype().getUpdateGroupName() == updateGroupName) {
+                genMergedGroup(backend, memorySpaces, mergedGroups[i], i, generateGroup, host);
+            }
+        }
     }
 
     //--------------------------------------------------------------------------
@@ -451,23 +504,7 @@ private:
     //! Merged custom connectivity update groups where host processing needs to be performed
     std::vector<CustomConnectivityHostUpdateGroupMerged> m_MergedCustomConnectivityHostUpdateGroups;
 
-    //! Unique support code strings for neuron update
-    SupportCodeMerged m_NeuronUpdateSupportCode;
-
-    //! Unique support code strings for postsynaptic model
-    SupportCodeMerged m_PostsynapticDynamicsSupportCode;
-
-    //! Unique support code strings for presynaptic update
-    SupportCodeMerged m_PresynapticUpdateSupportCode;
-
-    //! Unique support code strings for postsynaptic update
-    SupportCodeMerged m_PostsynapticUpdateSupportCode;
-
-    //! Unique support code strings for synapse dynamics
-    SupportCodeMerged m_SynapseDynamicsSupportCode;
-
-    // Map containing mapping of original extra global param names to their locations within merged groups
+    //! Map containing mapping of original extra global param names to their locations within merged groups
     MergedEGPMap m_MergedEGPs;
-
 };
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator

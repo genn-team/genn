@@ -3,16 +3,19 @@
 // GeNN includes
 #include "snippet.h"
 
+// GeNN transpiler includes
+#include "transpiler/token.h"
+
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
 #define SET_CODE(CODE) virtual std::string getCode() const override{ return CODE; }
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::Base
+// GeNN::InitVarSnippet::Base
 //----------------------------------------------------------------------------
 //! Base class for all value initialisation snippets
-namespace InitVarSnippet
+namespace GeNN::InitVarSnippet
 {
 class GENN_EXPORT Base : public Snippet::Base
 {
@@ -30,13 +33,39 @@ public:
 
     //! Validate names of parameters etc
     void validate(const std::unordered_map<std::string, double> &paramValues) const;
+};
 
-    //! Does this var init snippet require kernel-based connectivity
-    bool requiresKernel() const;
+
+//----------------------------------------------------------------------------
+// GeNN::InitVarSnippet::Init
+//----------------------------------------------------------------------------
+//! Class used to bind together everything required to initialise a variable:
+//! 1. A pointer to a variable initialisation snippet
+//! 2. The parameters required to control the variable initialisation snippet
+class GENN_EXPORT Init : public Snippet::Init<Base>
+{
+public:
+    Init(const Base *snippet, const std::unordered_map<std::string, double> &params);
+    Init(double constant);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    bool isRNGRequired() const;
+
+    bool isKernelRequired() const;
+    
+    const std::vector<Transpiler::Token> &getCodeTokens() const{ return m_CodeTokens; }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::vector<Transpiler::Token> m_CodeTokens;
 };
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::Uninitialised
+// GeNN::InitVarSnippet::Uninitialised
 //----------------------------------------------------------------------------
 //! Used to mark variables as uninitialised - no initialisation code will be run
 class Uninitialised : public Base
@@ -46,40 +75,40 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::Constant
+// GeNN::InitVarSnippet::Constant
 //----------------------------------------------------------------------------
 //! Initialises variable to a constant value
 /*! This snippet takes 1 parameter:
  *
     - \c value - The value to intialise the variable to
 
-    \note This snippet type is seldom used directly - Models::VarInit
+    \note This snippet type is seldom used directly - InitVarSnippet::Init
     has an implicit constructor that, internally, creates one of these snippets*/
 class Constant : public Base
 {
 public:
     DECLARE_SNIPPET(InitVarSnippet::Constant);
 
-    SET_CODE("$(value) = $(constant);");
+    SET_CODE("value = constant;");
 
     SET_PARAM_NAMES({"constant"});
 };
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::Kernel
+// GeNN::InitVarSnippet::Kernel
 //----------------------------------------------------------------------------
 //! Used to initialise synapse variables from a kernel
 class Kernel : public Base
 {
     DECLARE_SNIPPET(InitVarSnippet::Kernel);
 
-    SET_CODE("$(value) = $(kernel)[$(id_kernel)];");
+    SET_CODE("value = kernel[id_kernel];");
 
     SET_EXTRA_GLOBAL_PARAMS({{"kernel", "scalar*"}});
 };
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::Uniform
+// GeNN::InitVarSnippet::Uniform
 //----------------------------------------------------------------------------
 //! Initialises variable by sampling from the uniform distribution
 /*! This snippet takes 2 parameters:
@@ -92,14 +121,14 @@ public:
     DECLARE_SNIPPET(InitVarSnippet::Uniform);
 
     SET_CODE(
-        "const scalar scale = $(max) - $(min);\n"
-        "$(value) = $(min) + ($(gennrand_uniform) * scale);");
+        "const scalar scale = max - min;\n"
+        "value = min + (gennrand_uniform() * scale);");
 
     SET_PARAM_NAMES({"min", "max"});
 };
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::Normal
+// GeNN::InitVarSnippet::Normal
 //----------------------------------------------------------------------------
 //! Initialises variable by sampling from the normal distribution
 /*! This snippet takes 2 parameters:
@@ -111,20 +140,20 @@ class Normal : public Base
 public:
     DECLARE_SNIPPET(InitVarSnippet::Normal);
 
-    SET_CODE("$(value) = $(mean) + ($(gennrand_normal) * $(sd));");
+    SET_CODE("value = mean + (gennrand_normal() * sd);");
 
     SET_PARAM_NAMES({"mean", "sd"});
 };
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::NormalClipped
+// GeNN::InitVarSnippet::NormalClipped
 //----------------------------------------------------------------------------
 //! Initialises variable by sampling from the normal distribution,
 //! Resamples value if out of range specified my min and max
 /*! This snippet takes 2 parameters:
  *
     - \c mean - The mean
-    - \c sd - The standard deviation
+    - \c sd - ThGeNN::e standard deviation
     - \c min - The minimum value
     - \c max - The maximum value*/
 class NormalClipped : public Base
@@ -136,15 +165,15 @@ public:
         "scalar normal;\n"
         "do\n"
         "{\n"
-        "   normal = $(mean) + ($(gennrand_normal) * $(sd));\n"
-        "} while (normal > $(max) || normal < $(min));\n"
-        "$(value) = normal;\n");
+        "   normal = mean + (gennrand_normal() * sd);\n"
+        "} while (normal > max || normal < min);\n"
+        "value = normal;\n");
 
     SET_PARAM_NAMES({"mean", "sd", "min", "max"});
 };
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::NormalClippedDelay
+// GeNN::InitVarSnippet::NormalClippedDelay
 //----------------------------------------------------------------------------
 //! Initialises variable by sampling from the normal distribution,
 //! Resamples value of out of range specified my min and max.
@@ -165,9 +194,9 @@ public:
         "scalar normal;\n"
         "do\n"
         "{\n"
-        "   normal = $(meanTimestep) + ($(gennrand_normal) * $(sdTimestep));\n"
-        "} while (normal > $(maxTimestep) || normal < $(minTimestep));\n"
-        "$(value) = rint(normal);\n");
+        "   normal = meanTimestep + (gennrand_normal() * sdTimestep);\n"
+        "} while (normal > maxTimestep || normal < minTimestep);\n"
+        "value = rint(normal);\n");
 
     SET_PARAM_NAMES({"mean", "sd", "min", "max"});
     SET_DERIVED_PARAMS({
@@ -178,7 +207,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::Exponential
+// GeNN::InitVarSnippet::Exponential
 //----------------------------------------------------------------------------
 //! Initialises variable by sampling from the exponential distribution
 /*! This snippet takes 1 parameter:
@@ -189,13 +218,13 @@ class Exponential : public Base
 public:
     DECLARE_SNIPPET(InitVarSnippet::Exponential);
 
-    SET_CODE("$(value) = $(lambda) * $(gennrand_exponential);");
+    SET_CODE("value = lambda * gennrand_exponential();");
 
     SET_PARAM_NAMES({"lambda"});
 };
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::Gamma
+// GeNN::InitVarSnippet::Gamma
 //----------------------------------------------------------------------------
 //! Initialises variable by sampling from the gamma distribution
 /*! This snippet takes 2 parameters:
@@ -207,13 +236,13 @@ class Gamma : public Base
 public:
     DECLARE_SNIPPET(InitVarSnippet::Gamma);
 
-    SET_CODE("$(value) = $(b) * $(gennrand_gamma, $(a));");
+    SET_CODE("value = b * gennrand_gamma(a);");
 
     SET_PARAM_NAMES({"a", "b"});
 };
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::Binomial
+// GeNN::InitVarSnippet::Binomial
 //----------------------------------------------------------------------------
 //! Initialises variable by sampling from the binomial distribution
 /*! This snippet takes 2 parameters:
@@ -225,8 +254,8 @@ class Binomial : public Base
 public:
     DECLARE_SNIPPET(InitVarSnippet::Binomial);
 
-    SET_CODE("$(value) = $(gennrand_binomial, (unsigned int)$(n), $(p));");
+    SET_CODE("value = gennrand_binomial((unsigned int)n, p);");
 
     SET_PARAM_NAMES({"n", "p"});
 };
-}   // namespace InitVarSnippet
+}   // namespace GeNN::InitVarSnippet

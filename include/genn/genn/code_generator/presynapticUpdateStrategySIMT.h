@@ -4,20 +4,20 @@
 #include "code_generator/backendBase.h"
 
 // Forward declarations
+namespace GeNN
+{
 class SynapseGroupInternal;
 
 namespace CodeGenerator
 {
 class BackendSIMT;
-class ModelSpecMerged;
+}
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::PresynapticUpdateStrategySIMT::Base
+// GeNN::CodeGenerator::PresynapticUpdateStrategySIMT::Base
 //--------------------------------------------------------------------------
-namespace CodeGenerator
-{
-namespace PresynapticUpdateStrategySIMT
+namespace GeNN::CodeGenerator::PresynapticUpdateStrategySIMT
 {
 class Base
 {
@@ -35,21 +35,21 @@ public:
     virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const = 0;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const = 0;
+    virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const BackendSIMT &backend) const = 0;
 
-    virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                             const Substitutions &popSubs, const BackendSIMT &backend) const = 0;
+    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                             const BackendSIMT &backend) const = 0;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike) const = 0;
+    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+                           unsigned int batchSize, double dt, bool trueSpike) const = 0;
 
-    virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                              const Substitutions &popSubs, const BackendSIMT &backend) const = 0;
+    virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                              const BackendSIMT &backend, unsigned int batchSize) const = 0;
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::PresynapticUpdateStrategySIMT::PreSpan
+// GeNN::CodeGenerator::PresynapticUpdateStrategySIMT::PreSpan
 //--------------------------------------------------------------------------
 //! Presynaptic parallelism
 class PreSpan : public Base
@@ -59,30 +59,30 @@ public:
     // PresynapticUpdateStrategy::Base virtuals
     //------------------------------------------------------------------------
     //! Get the number of threads that presynaptic updates should be parallelised across
-    virtual size_t getNumThreads(const SynapseGroupInternal &sg) const override;
+    virtual size_t getNumThreads(const SynapseGroupInternal &sg) const final;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
-    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const final;
 
     //! Is this presynaptic update strategy compatible with a given synapse group?
-    virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const override;
+    virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const final;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const override;
+    virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const BackendSIMT &backend) const final;
 
-    virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                             const Substitutions &popSubs, const BackendSIMT &backend) const override;
+    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                             const BackendSIMT &backend) const final;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike) const override;
+    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+                           unsigned int batchSize, double dt, bool trueSpike) const final;
 
-    virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                              const Substitutions &popSubs, const BackendSIMT &backend) const override;
+    virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                              const BackendSIMT &backend, unsigned int batchSize) const final;
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::PresynapticUpdateStrategySIMT::PostSpan
+// GeNN::CodeGenerator::PresynapticUpdateStrategySIMT::PostSpan
 //--------------------------------------------------------------------------
 //! Postsynaptic parallelism
 class PostSpan : public Base
@@ -92,26 +92,26 @@ public:
     // PresynapticUpdateStrategy::Base virtuals
     //------------------------------------------------------------------------
     //! Get the number of threads that presynaptic updates should be parallelised across
-    virtual size_t getNumThreads(const SynapseGroupInternal &sg) const override;
+    virtual size_t getNumThreads(const SynapseGroupInternal &sg) const final;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
-    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const final;
 
     //! Is this presynaptic update strategy compatible with a given synapse group?
-    virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const override;
+    virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const final;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const override;
+    virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const BackendSIMT &backend) const final;
 
-    virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                             const Substitutions &popSubs, const BackendSIMT &backend) const override;
+    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                             const BackendSIMT &backend) const final;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike) const override;
+    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+                           unsigned int batchSize, double dt, bool trueSpike) const final;
 
-    virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                              const Substitutions &popSubs, const BackendSIMT &backend) const override;
+    virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                              const BackendSIMT &backend, unsigned int batchSize) const final;
 
 private:
     //--------------------------------------------------------------------------
@@ -125,7 +125,7 @@ private:
 //--------------------------------------------------------------------------
 // CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanBitmask
 //--------------------------------------------------------------------------
-//! Postsynaptic parallelism
+//! GeNN::Postsynaptic parallelism
 class PostSpanBitmask : public Base
 {
 public:
@@ -133,30 +133,30 @@ public:
     // PresynapticUpdateStrategy::Base virtuals
     //------------------------------------------------------------------------
     //! Get the number of threads that presynaptic updates should be parallelised across
-    virtual size_t getNumThreads(const SynapseGroupInternal &sg) const override;
+    virtual size_t getNumThreads(const SynapseGroupInternal &sg) const final;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
-    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const final;
 
     //! Is this presynaptic update strategy compatible with a given synapse group?
-    virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const override;
+    virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const final;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const override;
+    virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const BackendSIMT &backend) const final;
 
-    virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                             const Substitutions &popSubs, const BackendSIMT &backend) const override;
+    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                             const BackendSIMT &backend) const final;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike) const override;
+    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+                           unsigned int batchSize, double dt, bool trueSpike) const final;
 
-    virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                              const Substitutions &popSubs, const BackendSIMT &backend) const override;
+    virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                              const BackendSIMT &backend, unsigned int batchSize) const final;
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::PresynapticUpdateStrategySIMT::PreSpanProcedural
+// GeNN::CodeGenerator::PresynapticUpdateStrategySIMT::PreSpanProcedural
 //--------------------------------------------------------------------------
 //! Presynaptic parallelism with procedural connectivity
 class PreSpanProcedural : public Base
@@ -166,30 +166,30 @@ public:
     // PresynapticUpdateStrategy::Base virtuals
     //------------------------------------------------------------------------
     //! Get the number of threads that presynaptic updates should be parallelised across
-    virtual size_t getNumThreads(const SynapseGroupInternal &sg) const override;
+    virtual size_t getNumThreads(const SynapseGroupInternal &sg) const final;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
-    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const final;
 
     //! Is this presynaptic update strategy compatible with a given synapse group?
-    virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const override;
+    virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const final;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const override;
+    virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const BackendSIMT &backend) const final;
 
-    virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                             const Substitutions &popSubs, const BackendSIMT &backend) const override;
+    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                             const BackendSIMT &backend) const final;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike) const override;
+    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+                           unsigned int batchSize, double dt, bool trueSpike) const final;
 
-    virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                              const Substitutions &popSubs, const BackendSIMT &backend) const override;
+    virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                              const BackendSIMT &backend, unsigned int batchSize) const final;
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanToeplitz
+// GeNN::CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanToeplitz
 //--------------------------------------------------------------------------
 //! Postsynaptic parallelism for Toeplitz connectivity
 class PostSpanToeplitz : public Base
@@ -199,26 +199,25 @@ public:
     // PresynapticUpdateStrategy::Base virtuals
     //------------------------------------------------------------------------
     //! Get the number of threads that presynaptic updates should be parallelised across
-    virtual size_t getNumThreads(const SynapseGroupInternal &sg) const override;
+    virtual size_t getNumThreads(const SynapseGroupInternal &sg) const final;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
-    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const final;
 
     //! Is this presynaptic update strategy compatible with a given synapse group?
-    virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const override;
+    virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const final;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const override;
+    virtual size_t getSharedMemoryPerThread(const SynapseGroupInternal &sg, const BackendSIMT &backend) const final;
 
-    virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                             const Substitutions &popSubs, const BackendSIMT &backend) const override;
+    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                             const BackendSIMT &backend) const final;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike) const override;
+    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+                           unsigned int batchSize, double dt, bool trueSpike) const final;
 
-    virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                              const Substitutions &popSubs, const BackendSIMT &backend) const override;
+    virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                              const BackendSIMT &backend, unsigned int batchSize) const final;
 };
-}   // namespace PresynapticUpdateStrategySIMT
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator::PresynapticUpdateStrategySIMT

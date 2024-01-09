@@ -12,7 +12,7 @@
 
 // GeNN includes
 #include "gennExport.h"
-#include "gennUtils.h"
+#include "type.h"
 
 //----------------------------------------------------------------------------
 // Macros
@@ -38,10 +38,10 @@ public:                                                 \
 #define SET_EXTRA_GLOBAL_PARAMS(...) virtual EGPVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
-// Snippet::Base
+// GeNN::Snippet::Base
 //----------------------------------------------------------------------------
 //! Base class for all code snippets
-namespace Snippet
+namespace GeNN::Snippet
 {
 class GENN_EXPORT Base
 {
@@ -54,47 +54,54 @@ public:
     // Structs
     //----------------------------------------------------------------------------
     //! An extra global parameter has a name and a type
-    struct EGP
+    struct GENN_EXPORT EGP
     {
+        EGP(const std::string &n, const Type::ResolvedType &t) : name(n), type(t)
+        {}
+        EGP(const std::string &n, const std::string &t);
+        
         bool operator == (const EGP &other) const
         {
-            return ((name == other.name) && (type == other.type));
+            return (std::tie(name, type) == std::tie(other.name, other.type));
         }
 
-        const std::string name;
-        const std::string type;
+        std::string name;
+        Type::UnresolvedType type;
     };
 
     //! Additional input variables, row state variables and other things have a name, a type and an initial value
-    struct ParamVal
+    struct GENN_EXPORT ParamVal
     {
-        ParamVal(const std::string &n, const std::string &t, const std::string &v) : name(n), type(t), value(v)
+        ParamVal(const std::string &n, const Type::ResolvedType &t, double v)
+        :   name(n), type(t), value(v)
         {}
-        ParamVal(const std::string &n, const std::string &t, double v) : ParamVal(n, t, Utils::writePreciseString(v))
+
+        ParamVal(const std::string &n, const std::string &t, double v)
+        :   name(n), type(t), value(v)
         {}
 
         bool operator == (const ParamVal &other) const
         {
-            return ((name == other.name) && (type == other.type) && (value == other.value));
+            // **THINK** why isn't value included?
+            return (std::tie(name, type) == std::tie(other.name, other.type));
         }
 
-        const std::string name;
-        const std::string type;
-        const std::string value;
+        std::string name;
+        Type::UnresolvedType type;
+        double value;
     };
 
     //! A derived parameter has a name and a function for obtaining its value
-    struct DerivedParam
+    struct GENN_EXPORT DerivedParam
     {
         bool operator == (const DerivedParam &other) const
         {
             return (name == other.name);
         }
 
-        const std::string name;
-        const std::function<double(const std::unordered_map<std::string, double>&, double)> func;
+        std::string name;
+        std::function<double(const std::unordered_map<std::string, double>&, double)> func;
     };
-
 
     //----------------------------------------------------------------------------
     // Typedefines
@@ -180,7 +187,13 @@ public:
     const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
     const std::unordered_map<std::string, double> &getDerivedParams() const{ return m_DerivedParams; }
 
-    void initDerivedParams(double dt)
+
+    boost::uuids::detail::sha1::digest_type getHashDigest() const
+    {
+        return getSnippet()->getHashDigest();
+    }
+
+    void finalise(double dt)
     {
         auto derivedParams = m_Snippet->getDerivedParams();
 
@@ -189,12 +202,6 @@ public:
             m_DerivedParams.emplace(d.name, d.func(m_Params, dt));
         }
     }
-
-    boost::uuids::detail::sha1::digest_type getHashDigest() const
-    {
-        return getSnippet()->getHashDigest();
-    }
-
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -207,21 +214,7 @@ private:
 //----------------------------------------------------------------------------
 // updateHash overrides
 //----------------------------------------------------------------------------
-inline void updateHash(const Base::EGP &e, boost::uuids::detail::sha1 &hash)
-{
-    Utils::updateHash(e.name, hash);
-    Utils::updateHash(e.type, hash);
-}
-
-inline void updateHash(const Base::ParamVal &p, boost::uuids::detail::sha1 &hash)
-{
-    Utils::updateHash(p.name, hash);
-    Utils::updateHash(p.type, hash);
-    Utils::updateHash(p.value, hash);
-}
-
-inline void updateHash(const Base::DerivedParam &d, boost::uuids::detail::sha1 &hash)
-{
-    Utils::updateHash(d.name, hash);
-}
-}   // namespace Snippet
+GENN_EXPORT void updateHash(const Base::EGP &e, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const Base::ParamVal &p, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const Base::DerivedParam &d, boost::uuids::detail::sha1 &hash);
+}   // namespace GeNN::Snippet

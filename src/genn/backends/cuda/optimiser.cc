@@ -31,13 +31,13 @@
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/generateModules.h"
 #include "code_generator/generateRunner.h"
-#include "code_generator/generateSupportCode.h"
 #include "code_generator/modelSpecMerged.h"
 
 // CUDA backend includes
 #include "utils.h"
 
-using namespace CodeGenerator;
+using namespace GeNN;
+using namespace GeNN::CodeGenerator;
 using namespace CUDA;
 
 //--------------------------------------------------------------------------
@@ -451,24 +451,23 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         std::fill(blockSize.begin(), blockSize.end(), repBlockSizes[r]);
 
         // Create backend
-        Backend backend(blockSize, preferences, model.getPrecision(), deviceID);
+        Backend backend(blockSize, preferences, deviceID);
 
         // Create merged model
-        ModelSpecMerged modelMerged(model, backend);
+        ModelSpecMerged modelMerged(backend, model);
+
+        // Get memory spaces available to this backend
+        // **NOTE** Memory spaces are given out on a first-come, first-serve basis so subsequent groups are in preferential order
+        auto memorySpaces = backend.getMergedGroupMemorySpaces(modelMerged);
 
         // Generate code with suffix so it doesn't interfere with primary generated code
         // **NOTE** we don't really need to generate all the code but, on windows, generating code selectively seems to result in werid b
         const std::string dryRunSuffix = "CUDAOptim";
-        generateRunner(outputPath, modelMerged, backend, dryRunSuffix);
-        generateSynapseUpdate(outputPath, modelMerged, backend, dryRunSuffix);
-        generateNeuronUpdate(outputPath, modelMerged, backend, dryRunSuffix);
-        generateCustomUpdate(outputPath, modelMerged, backend, dryRunSuffix);
-        generateInit(outputPath, modelMerged, backend, dryRunSuffix);
-
-        // Generate support code module if the backend supports namespaces
-        if (backend.supportsNamespace()) {
-            generateSupportCode(outputPath, modelMerged, dryRunSuffix);
-        }
+        generateSynapseUpdate(outputPath, modelMerged, backend, memorySpaces, dryRunSuffix);
+        generateNeuronUpdate(outputPath, modelMerged, backend, memorySpaces, dryRunSuffix);
+        generateCustomUpdate(outputPath, modelMerged, backend, memorySpaces, dryRunSuffix);
+        generateInit(outputPath, modelMerged, backend, memorySpaces, dryRunSuffix);
+        generateRunner(outputPath, modelMerged, backend, memorySpaces, dryRunSuffix);
 
         // Loop through modules
         std::vector<std::thread> threads;
@@ -476,7 +475,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
             // Calculate module's hash digest
             // **NOTE** this COULD be done in thread functions but, because when using GeNN from Python,
             // this will call into Python code it would require whole Python interface to be made thread-safe
-            const auto hashDigest = (modelMerged.*m.getArchetypeHashDigest)();
+            const auto hashDigest = std::invoke(m.getArchetypeHashDigest, modelMerged);
 
             // Launch thread to analyse kernels in this module (if required)
             threads.emplace_back(analyseModule, std::cref(m), r, cuContext, hashDigest, std::cref(outputPath), std::cref(nvccPath),
@@ -491,9 +490,6 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
 
         // Remove tempory source file
         if(std::remove((outputPath / ("runner" + dryRunSuffix + ".cc")).str().c_str())) {
-            LOGW_BACKEND << "Cannot remove dry-run source file";
-        }
-        if(std::remove((outputPath / ("supportCode" + dryRunSuffix + ".h")).str().c_str())) {
             LOGW_BACKEND << "Cannot remove dry-run source file";
         }
         if(std::remove((outputPath / ("definitions" + dryRunSuffix + ".h")).str().c_str())) {
@@ -731,13 +727,12 @@ int chooseDeviceWithMostGlobalMemory()
     LOGI_BACKEND << "Using device " << bestDevice << " which has " << mostGlobalMemory << " bytes of global memory";
     return bestDevice;
 }
-}
+}   // anonymous namespace
+
+//--------------------------------------------------------------------------
 // CodeGenerator::Backends::Optimiser
-namespace CodeGenerator
-{
-namespace CUDA
-{
-namespace Optimiser
+//--------------------------------------------------------------------------
+namespace GeNN::CodeGenerator::CUDA::Optimiser
 {
 Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath, 
                       plog::Severity backendLevel, plog::IAppender *backendAppender, 
@@ -763,7 +758,7 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &ou
         const int deviceID = chooseOptimalDevice(model, cudaBlockSize, preferences, outputPath);
 
         // Create backend
-        return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);
+        return Backend(cudaBlockSize, preferences, deviceID);
     }
     // Otherwise
     else {
@@ -782,15 +777,13 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &ou
             optimizeBlockSize(deviceID, deviceProps, model, cudaBlockSize, preferences, outputPath);
 
             // Create backend
-            return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);
+            return Backend(cudaBlockSize, preferences, deviceID);
         }
         // Otherwise, create backend using manual block sizes specified in preferences
         else {
-            return Backend(preferences.manualBlockSizes, preferences, model.getPrecision(), deviceID);
+            return Backend(preferences.manualBlockSizes, preferences, deviceID);
         }
 
     }
 }
-}   // namespace Optimiser
-}   // namespace CUDA
-}   // namespace CodeGenerator
+}   // namespace CodeGenerator::Backends::Optimiser

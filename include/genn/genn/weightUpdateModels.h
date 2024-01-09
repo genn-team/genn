@@ -12,9 +12,6 @@
 #define SET_SYNAPSE_DYNAMICS_CODE(SYNAPSE_DYNAMICS_CODE) virtual std::string getSynapseDynamicsCode() const override{ return SYNAPSE_DYNAMICS_CODE; }
 #define SET_EVENT_THRESHOLD_CONDITION_CODE(EVENT_THRESHOLD_CONDITION_CODE) virtual std::string getEventThresholdConditionCode() const override{ return EVENT_THRESHOLD_CONDITION_CODE; }
 
-#define SET_SIM_SUPPORT_CODE(SIM_SUPPORT_CODE) virtual std::string getSimSupportCode() const override{ return SIM_SUPPORT_CODE; }
-#define SET_LEARN_POST_SUPPORT_CODE(LEARN_POST_SUPPORT_CODE) virtual std::string getLearnPostSupportCode() const override{ return LEARN_POST_SUPPORT_CODE; }
-#define SET_SYNAPSE_DYNAMICS_SUPPORT_CODE(SYNAPSE_DYNAMICS_SUPPORT_CODE) virtual std::string getSynapseDynamicsSuppportCode() const override{ return SYNAPSE_DYNAMICS_SUPPORT_CODE; }
 #define SET_PRE_SPIKE_CODE(PRE_SPIKE_CODE) virtual std::string getPreSpikeCode() const override{ return PRE_SPIKE_CODE; }
 #define SET_POST_SPIKE_CODE(POST_SPIKE_CODE) virtual std::string getPostSpikeCode() const override{ return POST_SPIKE_CODE; }
 #define SET_PRE_DYNAMICS_CODE(PRE_DYNAMICS_CODE) virtual std::string getPreDynamicsCode() const override{ return PRE_DYNAMICS_CODE; }
@@ -23,18 +20,10 @@
 #define SET_PRE_VARS(...) virtual VarVec getPreVars() const override{ return __VA_ARGS__; }
 #define SET_POST_VARS(...) virtual VarVec getPostVars() const override{ return __VA_ARGS__; }
 
-#define SET_NEEDS_PRE_SPIKE_TIME(PRE_SPIKE_TIME_REQUIRED) virtual bool isPreSpikeTimeRequired() const override{ return PRE_SPIKE_TIME_REQUIRED; }
-#define SET_NEEDS_POST_SPIKE_TIME(POST_SPIKE_TIME_REQUIRED) virtual bool isPostSpikeTimeRequired() const override{ return POST_SPIKE_TIME_REQUIRED; }
-#define SET_NEEDS_PRE_SPIKE_EVENT_TIME(PRE_SPIKE_EVENT_TIME_REQUIRED) virtual bool isPreSpikeEventTimeRequired() const override{ return PRE_SPIKE_EVENT_TIME_REQUIRED; }
-
-#define SET_NEEDS_PREV_PRE_SPIKE_TIME(PREV_PRE_SPIKE_TIME_REQUIRED) virtual bool isPrevPreSpikeTimeRequired() const override{ return PREV_PRE_SPIKE_TIME_REQUIRED; }
-#define SET_NEEDS_PREV_POST_SPIKE_TIME(PREV_POST_SPIKE_TIME_REQUIRED) virtual bool isPrevPostSpikeTimeRequired() const override{ return PREV_POST_SPIKE_TIME_REQUIRED; }
-#define SET_NEEDS_PREV_PRE_SPIKE_EVENT_TIME(PREV_PRE_SPIKE_EVENT_TIME_REQUIRED) virtual bool isPrevPreSpikeEventTimeRequired() const override{ return PREV_PRE_SPIKE_EVENT_TIME_REQUIRED; }
-
 //----------------------------------------------------------------------------
-// WeightUpdateModels::Base
+// GeNN::WeightUpdateModels::Base
 //----------------------------------------------------------------------------
-namespace WeightUpdateModels
+namespace GeNN::WeightUpdateModels
 {
 //! Base class for all weight update models
 class GENN_EXPORT Base : public Models::Base
@@ -59,26 +48,6 @@ public:
 
     //! Gets codes to test for events
     virtual std::string getEventThresholdConditionCode() const{ return ""; }
-
-    //! Gets support code to be made available within the synapse kernel/function.
-    /*! This is intended to contain user defined device functions that are used in the weight update code.
-        Preprocessor defines are also allowed if appropriately safeguarded against multiple
-        definition by using ifndef; functions should be declared as "__host__ __device__"
-        to be available for both GPU and CPU versions; note that this support code is available to
-        sim, event threshold and event code */
-    virtual std::string getSimSupportCode() const{ return ""; }
-
-    //! Gets support code to be made available within learnSynapsesPost kernel/function.
-    /*! Preprocessor defines are also allowed if appropriately safeguarded against multiple
-        definition by using ifndef; functions should be declared as "__host__ __device__"
-        to be available for both GPU and CPU versions. */
-    virtual std::string getLearnPostSupportCode() const{ return ""; }
-
-    //! Gets support code to be made available within the synapse dynamics kernel/function.
-    /*! Preprocessor defines are also allowed if appropriately safeguarded against multiple
-        definition by using ifndef; functions should be declared as "__host__ __device__"
-        to be available for both GPU and CPU versions. */
-    virtual std::string getSynapseDynamicsSuppportCode() const{ return ""; }
 
     //! Gets code to be run once per spiking presynaptic
     //! neuron before sim code is run on synapses
@@ -110,24 +79,6 @@ public:
     //! across all synapses going to the same postsynaptic neuron
     virtual VarVec getPostVars() const{ return {}; }
 
-    //! Whether presynaptic spike times are needed or not
-    virtual bool isPreSpikeTimeRequired() const{ return false; }
-
-    //! Whether postsynaptic spike times are needed or not
-    virtual bool isPostSpikeTimeRequired() const{ return false; }
-
-    //! Whether presynaptic spike-like-event times are needed or not
-    virtual bool isPreSpikeEventTimeRequired() const { return false;  }
-
-    //! Whether PREVIOUS presynaptic spike times are needed or not
-    virtual bool isPrevPreSpikeTimeRequired() const{ return false; }
-
-    //! Whether PREVIOUS postsynaptic spike times are needed or not
-    virtual bool isPrevPostSpikeTimeRequired() const{ return false; }
-
-    //! Whether PREVIOUS presynaptic spike-like-event times are needed or not
-    virtual bool isPrevPreSpikeEventTimeRequired() const { return false;  }
-
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
@@ -146,16 +97,22 @@ public:
     //! Update hash from model
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
+    //! Update hash from presynaptic components of model
+    boost::uuids::detail::sha1::digest_type getPreHashDigest() const;
+
+    //! Update hash from postsynaptic components of  model
+    boost::uuids::detail::sha1::digest_type getPostHashDigest() const;
+
     //! Validate names of parameters etc
     void validate(const std::unordered_map<std::string, double> &paramValues, 
-                  const std::unordered_map<std::string, Models::VarInit> &varValues,
-                  const std::unordered_map<std::string, Models::VarInit> &preVarValues,
-                  const std::unordered_map<std::string, Models::VarInit> &postVarValues,
+                  const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
+                  const std::unordered_map<std::string, InitVarSnippet::Init> &preVarValues,
+                  const std::unordered_map<std::string, InitVarSnippet::Init> &postVarValues,
                   const std::string &description) const;
 };
 
 //----------------------------------------------------------------------------
-// WeightUpdateModels::StaticPulse
+// GeNN::WeightUpdateModels::StaticPulse
 //----------------------------------------------------------------------------
 //! Pulse-coupled, static synapse.
 /*! No learning rule is applied to the synapse and for each pre-synaptic spikes,
@@ -176,11 +133,36 @@ public:
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
-    SET_SIM_CODE("$(addToInSyn, $(g));\n");
+    SET_SIM_CODE("addToPost(g);\n");
 };
 
 //----------------------------------------------------------------------------
-// WeightUpdateModels::StaticPulseDendriticDelay
+// GeNN::WeightUpdateModels::StaticPulseConstantWeight
+//----------------------------------------------------------------------------
+//! Pulse-coupled, static synapse.
+/*! No learning rule is applied to the synapse and for each pre-synaptic spikes,
+    the synaptic conductances are simply added to the postsynaptic input variable.
+    The model has 1 parameter:
+    - g - conductance
+    and no other variables.
+
+    \c sim code is:
+
+    \code
+    "addToPost(g);"
+    \endcode*/
+class StaticPulseConstantWeight : public Base
+{
+public:
+    DECLARE_SNIPPET(StaticPulseConstantWeight);
+
+    SET_PARAM_NAMES({"g"});
+
+    SET_SIM_CODE("addToPost(g);\n");
+};
+
+//----------------------------------------------------------------------------
+// GeNN::WeightUpdateModels::StaticPulseDendriticDelay
 //----------------------------------------------------------------------------
 //! Pulse-coupled, static synapse with heterogenous dendritic delays
 /*! No learning rule is applied to the synapse and for each pre-synaptic spikes,
@@ -202,11 +184,11 @@ public:
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}, {"d", "uint8_t", VarAccess::READ_ONLY}});
 
-    SET_SIM_CODE("$(addToInSynDelay, $(g), $(d));\n");
+    SET_SIM_CODE("addToPostDelay(g, d);\n");
 };
 
 //----------------------------------------------------------------------------
-// WeightUpdateModels::StaticGraded
+// GeNN::WeightUpdateModels::StaticGraded
 //----------------------------------------------------------------------------
 //! Graded-potential, static synapse
 /*! In a graded synapse, the conductance is updated gradually with the rule:
@@ -239,13 +221,13 @@ public:
     SET_PARAM_NAMES({"Epre", "Vslope"});
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
-    SET_EVENT_CODE("$(addToInSyn, fmax(0.0, $(g) * tanh(($(V_pre) - $(Epre)) / $(Vslope))* DT));\n");
+    SET_EVENT_CODE("addToPost(fmax(0.0, g * tanh((V_pre - Epre) / Vslope) * DT));\n");
 
-    SET_EVENT_THRESHOLD_CONDITION_CODE("$(V_pre) > $(Epre)");
+    SET_EVENT_THRESHOLD_CONDITION_CODE("V_pre > Epre");
 };
 
 //----------------------------------------------------------------------------
-// PiecewiseSTDP
+// GeNN::PiecewiseSTDP
 //----------------------------------------------------------------------------
 //! This is a simple STDP rule including a time delay for the finite transmission speed of the synapse.
 /*! The STDP window is defined as a piecewise function:
@@ -311,15 +293,15 @@ public:
     SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
 
     SET_SIM_CODE(
-        "$(addToInSyn, $(g));\n"
-        "scalar dt = $(sT_post) - $(t) - ($(tauShift)); \n"
+        "addToPost(g);\n"
+        "scalar dt = sT_post - t - tauShift; \n"
         "scalar dg = 0;\n"
-        "if (dt > $(lim0))  \n"
-        "    dg = -($(off0)) ; \n"
+        "if (dt > lim0)  \n"
+        "    dg = -off0 ; \n"
         "else if (dt > 0)  \n"
-        "    dg = $(slope0) * dt + ($(off1)); \n"
-        "else if (dt > $(lim1))  \n"
-        "    dg = $(slope1) * dt + ($(off1)); \n"
+        "    dg = slope0 * dt + off1; \n"
+        "else if (dt > lim1)  \n"
+        "    dg = slope1 * dt + ($(off1)); \n"
         "else dg = - ($(off2)) ; \n"
         "$(gRaw) += dg; \n"
         "$(g)=$(gMax)/2 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");
@@ -344,8 +326,5 @@ public:
         {"off0", [](const std::unordered_map<std::string, double> &pars, double){ return  pars.at("gMax") / pars.at("tPunish01"); }},
         {"off1", [](const std::unordered_map<std::string, double> &pars, double){ return  pars.at("gMax") / pars.at("tChng"); }},
         {"off2", [](const std::unordered_map<std::string, double> &pars, double){ return  pars.at("gMax") / pars.at("tPunish10"); }}});
-
-    SET_NEEDS_PRE_SPIKE_TIME(true);
-    SET_NEEDS_POST_SPIKE_TIME(true);
 };
-} // WeightUpdateModels
+}   //namespace GeNN::WeightUpdateModels

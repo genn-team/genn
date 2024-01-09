@@ -19,14 +19,13 @@
 #define SET_SIM_CODE(SIM_CODE) virtual std::string getSimCode() const override{ return SIM_CODE; }
 #define SET_THRESHOLD_CONDITION_CODE(THRESHOLD_CONDITION_CODE) virtual std::string getThresholdConditionCode() const override{ return THRESHOLD_CONDITION_CODE; }
 #define SET_RESET_CODE(RESET_CODE) virtual std::string getResetCode() const override{ return RESET_CODE; }
-#define SET_SUPPORT_CODE(SUPPORT_CODE) virtual std::string getSupportCode() const override{ return SUPPORT_CODE; }
 #define SET_ADDITIONAL_INPUT_VARS(...) virtual ParamValVec getAdditionalInputVars() const override{ return __VA_ARGS__; }
 #define SET_NEEDS_AUTO_REFRACTORY(AUTO_REFRACTORY_REQUIRED) virtual bool isAutoRefractoryRequired() const override{ return AUTO_REFRACTORY_REQUIRED; }
 
 //----------------------------------------------------------------------------
-// NeuronModels::Base
+// GeNN::NeuronModels::Base
 //----------------------------------------------------------------------------
-namespace NeuronModels
+namespace GeNN::NeuronModels
 {
 //! Base class for all neuron models
 class GENN_EXPORT Base : public Models::Base
@@ -47,18 +46,12 @@ public:
     //! Gets code that defines the reset action taken after a spike occurred. This can be empty
     virtual std::string getResetCode() const{ return ""; }
 
-    //! Gets support code to be made available within the neuron kernel/funcion.
-    /*! This is intended to contain user defined device functions that are used in the neuron codes.
-        Preprocessor defines are also allowed if appropriately safeguarded against multiple definition by using ifndef;
-        functions should be declared as "__host__ __device__" to be available for both GPU and CPU versions. */
-    virtual std::string getSupportCode() const{ return ""; }
-
     //! Gets names, types (as strings) and initial values of local variables into which
     //! the 'apply input code' of (potentially) multiple postsynaptic input models can apply input
     virtual Models::Base::ParamValVec getAdditionalInputVars() const{ return {}; }
 
     //! Does this model require auto-refractory logic?
-    virtual bool isAutoRefractoryRequired() const{ return true; }
+    virtual bool isAutoRefractoryRequired() const{ return false; }
 
     //----------------------------------------------------------------------------
     // Public API
@@ -68,12 +61,12 @@ public:
 
     //! Validate names of parameters etc
     void validate(const std::unordered_map<std::string, double> &paramValues, 
-                  const std::unordered_map<std::string, Models::VarInit> &varValues,
+                  const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                   const std::string &description) const;
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::RulkovMap
+// GeNN::NeuronModels::RulkovMap
 //----------------------------------------------------------------------------
 //! Rulkov Map neuron
 /*! The RulkovMap type is a map based neuron model based on \cite Rulkov2002 but in
@@ -135,7 +128,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::Izhikevich
+// GeNN::NeuronModels::Izhikevich
 //----------------------------------------------------------------------------
 //! Izhikevich neuron with fixed parameters \cite izhikevich2003simple.
 /*! It is usually described as
@@ -165,9 +158,9 @@ public:
         "   $(V)=$(c);\n"
         "   $(U)+=$(d);\n"
         "} \n"
-        "$(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*DT; //at two times for numerical stability\n"
-        "$(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*DT;\n"
-        "$(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n"
+        "$(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*dt; //at two times for numerical stability\n"
+        "$(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*dt;\n"
+        "$(U)+=$(a)*($(b)*$(V)-$(U))*dt;\n"
         "if ($(V) > 30.0){   //keep this to not confuse users with unrealistiv voltage values \n"
         "  $(V)=30.0; \n"
         "}\n");
@@ -181,7 +174,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::IzhikevichVariable
+// GeNN::NeuronModels::IzhikevichVariable
 //----------------------------------------------------------------------------
 //! Izhikevich neuron with variable parameters \cite izhikevich2003simple.
 /*! This is the same model as NeuronModels::Izhikevich but parameters are defined as
@@ -209,7 +202,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::LIF
+// GeNN::NeuronModels::LIF
 //----------------------------------------------------------------------------
 class LIF : public Base
 {
@@ -222,7 +215,7 @@ public:
         "  $(V) = alpha - ($(ExpTC) * (alpha - $(V)));\n"
         "}\n"
         "else {\n"
-        "  $(RefracTime) -= DT;\n"
+        "  $(RefracTime) -= dt;\n"
         "}\n"
     );
 
@@ -251,7 +244,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::SpikeSource
+// GeNN::NeuronModels::SpikeSource
 //----------------------------------------------------------------------------
 //! Empty neuron which allows setting spikes from external sources
 /*! This model does not contain any update code and can be used to implement
@@ -266,7 +259,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::SpikeSourceArray
+// GeNN::NeuronModels::SpikeSourceArray
 //----------------------------------------------------------------------------
 //! Spike source array
 /*! A neuron which reads spike times from a global spikes array.
@@ -295,7 +288,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::Poisson
+// GeNN::NeuronModels::Poisson
 //----------------------------------------------------------------------------
 //! Poisson neurons
 /*! Poisson neurons have constant membrane potential (\c Vrest) unless they are
@@ -354,7 +347,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::PoissonNew
+// GeNN::NeuronModels::PoissonNew
 //----------------------------------------------------------------------------
 //! Poisson neurons
 /*! This neuron model emits spikes according to the Poisson distribution with a mean firing
@@ -391,7 +384,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::TraubMiles
+// GeNN::NeuronModels::TraubMiles
 //----------------------------------------------------------------------------
 //! Hodgkin-Huxley neurons with Traub & Miles algorithm.
 /*! This conductance based model has been taken from \cite Traub1991 and can be described by the equations:
@@ -446,7 +439,7 @@ public:
     SET_SIM_CODE(
         "scalar Imem;\n"
         "unsigned int mt;\n"
-        "scalar mdt= DT/25.0;\n"
+        "scalar mdt= dt/25.0;\n"
         "for (mt=0; mt < 25; mt++) {\n"
         "   Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n"
         "       $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n"
@@ -487,7 +480,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::TraubMilesFast
+// GeNN::NeuronModels::TraubMilesFast
 //----------------------------------------------------------------------------
 //! Hodgkin-Huxley neurons with Traub & Miles algorithm: Original fast implementation, using 25 inner iterations.
 /*! There are singularities in this model, which can be easily hit in float precision
@@ -501,7 +494,7 @@ public:
     SET_SIM_CODE(
         "scalar Imem;\n"
         "unsigned int mt;\n"
-        "scalar mdt= DT/25.0;\n"
+        "scalar mdt= dt/25.0;\n"
         "for (mt=0; mt < 25; mt++) {\n"
         "   Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n"
         "       $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n"
@@ -520,7 +513,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::TraubMilesAlt
+// GeNN::NeuronModels::TraubMilesAlt
 //----------------------------------------------------------------------------
 //! Hodgkin-Huxley neurons with Traub & Miles algorithm
 /*! Using a workaround to avoid singularity: adding the munimum numerical value of the floating point precision used.
@@ -534,7 +527,7 @@ public:
     SET_SIM_CODE(
         "scalar Imem;\n"
         "unsigned int mt;\n"
-        "scalar mdt= DT/25.0;\n"
+        "scalar mdt= dt/25.0;\n"
         "for (mt=0; mt < 25; mt++) {\n"
         "   Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n"
         "       $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n"
@@ -556,7 +549,7 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// NeuronModels::TraubMilesNStep
+// GeNN::NeuronModels::TraubMilesNStep
 //----------------------------------------------------------------------------
 //! Hodgkin-Huxley neurons with Traub & Miles algorithm.
 /*! Same as standard TraubMiles model but number of inner loops can be set using a parameter
@@ -606,4 +599,4 @@ public:
 
     SET_PARAM_NAMES({"gNa", "ENa", "gK", "EK", "gl", "El", "C", "ntimes"});
 };
-} // NeuronModels
+} // GeNN::NeuronModels

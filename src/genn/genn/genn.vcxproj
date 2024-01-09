@@ -25,17 +25,17 @@
     <ClCompile Include="code_generator\codeStream.cc" />
     <ClCompile Include="code_generator\customConnectivityUpdateGroupMerged.cc" />
     <ClCompile Include="code_generator\customUpdateGroupMerged.cc" />
+    <ClCompile Include="code_generator\environment.cc" />
     <ClCompile Include="code_generator\generateModules.cc" />
     <ClCompile Include="code_generator\generateMakefile.cc" />
     <ClCompile Include="code_generator\generateMSBuild.cc" />
     <ClCompile Include="code_generator\generateRunner.cc" />
-    <ClCompile Include="code_generator\generateSupportCode.cc" />
-    <ClCompile Include="code_generator\groupMerged.cc" />
     <ClCompile Include="code_generator\initGroupMerged.cc" />
+    <ClCompile Include="code_generator\lazyString.cc" />
     <ClCompile Include="code_generator\neuronUpdateGroupMerged.cc" />
     <ClCompile Include="code_generator\modelSpecMerged.cc" />
     <ClCompile Include="code_generator\presynapticUpdateStrategySIMT.cc" />
-    <ClCompile Include="code_generator\substitutions.cc" />
+    <ClCompile Include="code_generator\standardLibrary.cc" />
     <ClCompile Include="binomial.cc" />
     <ClCompile Include="code_generator\synapseUpdateGroupMerged.cc" />
     <ClCompile Include="currentSource.cc" />
@@ -55,6 +55,12 @@
     <ClCompile Include="postsynapticModels.cc" />
     <ClCompile Include="gennUtils.cc" />
     <ClCompile Include="snippet.cc" />
+    <ClCompile Include="transpiler\errorHandler.cc" />
+    <ClCompile Include="transpiler\parser.cc" />
+    <ClCompile Include="transpiler\prettyPrinter.cc" />
+    <ClCompile Include="transpiler\scanner.cc" />
+    <ClCompile Include="transpiler\typeChecker.cc" />
+    <ClCompile Include="type.cc" />
     <ClCompile Include="weightUpdateModels.cc" />
     <ClCompile Include="synapseGroup.cc" />
   </ItemGroup>
@@ -70,18 +76,18 @@
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\codeStream.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\customConnectivityUpdateGroupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\customUpdateGroupMerged.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\environment.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateModules.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMakefile.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMSBuild.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateRunner.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateSupportCode.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\groupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\initGroupMerged.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\lazyString.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\neuronUpdateGroupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\modelSpecMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\presynapticUpdateStrategySIMT.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\code_generator\substitutions.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\code_generator\supportCodeMerged.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\standardLibrary.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\synapseUpdateGroupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\teeStream.h" />
     <ClInclude Include="..\..\..\include\genn\genn\currentSource.h" />
@@ -110,6 +116,15 @@
     <ClInclude Include="..\..\..\include\genn\genn\synapseGroup.h" />
     <ClInclude Include="..\..\..\include\genn\genn\synapseGroupInternal.h" />
     <ClInclude Include="..\..\..\include\genn\genn\synapseMatrixType.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\transpiler\errorHandler.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\transpiler\expression.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\transpiler\parser.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\transpiler\prettyPrinter.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\transpiler\scanner.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\transpiler\statement.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\transpiler\token.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\transpiler\typeChecker.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\type.h" />
     <ClInclude Include="..\..\..\include\genn\genn\varAccess.h" />
     <ClInclude Include="..\..\..\include\genn\genn\variableMode.h" />
     <ClInclude Include="..\..\..\include\genn\genn\weightUpdateModels.h" />
@@ -154,6 +169,7 @@
       <DisableSpecificWarnings Condition=" $(Configuration.Contains('DLL')) ">4251</DisableSpecificWarnings>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

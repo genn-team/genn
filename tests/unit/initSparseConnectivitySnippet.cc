@@ -4,6 +4,8 @@
 // GeNN includes
 #include "modelSpec.h"
 
+using namespace GeNN;
+
 //--------------------------------------------------------------------------
 // OneToOneCopy
 //--------------------------------------------------------------------------
@@ -11,8 +13,7 @@ class OneToOneCopy : public InitSparseConnectivitySnippet::Base
 {
 public:
     SET_ROW_BUILD_CODE(
-        "$(addSynapse, $(id_pre));\n"
-        "$(endRow);\n");
+        "addSynapse(id_pre);\n");
 
     SET_MAX_ROW_LENGTH(1);
     SET_MAX_COL_LENGTH(1);
@@ -28,19 +29,15 @@ class FixedNumberTotalWithReplacement : public InitSparseConnectivitySnippet::Ba
 public:
     DECLARE_SNIPPET(FixedNumberTotalWithReplacement);
 
-    SET_ROW_BUILD_CODE(
-        "const unsigned int rowLength = $(preCalcRowLength)[($(id_pre) * $(num_threads)) + $(id_thread)];\n"
-        "if(c >= rowLength) {\n"
-        "   $(endRow);\n"
-        "}\n"
-        "const scalar u = $(gennrand_uniform);\n"
-        "x += (1.0 - x) * (1.0 - pow(u, 1.0 / (scalar)(rowLength - c)));\n"
-        "unsigned int postIdx = (unsigned int)(x * $(num_post));\n"
-        "postIdx = (postIdx < $(num_post)) ? postIdx : ($(num_post) - 1);\n"
-        "$(addSynapse, postIdx + $(id_post_begin));\n"
-        "c++;\n");
-    SET_ROW_BUILD_STATE_VARS({{"x", "scalar", 0.0},{"c", "unsigned int", 0}});
-
+     SET_ROW_BUILD_CODE(
+        "scalar x = 0.0;\n"
+        "for(unsigned int c = 0; c < preCalcRowLength[(id_pre * num_threads) + id_thread]; c++) {\n"
+        "   const scalar u = gennrand_uniform();\n"
+        "   x += (1.0 - x) * (1.0 - pow(u, 1.0 / (scalar)(rowLength - c)));\n"
+        "   unsigned int postIdx = (unsigned int)(x * num_post);\n"
+        "   postIdx = (postIdx < num_post) ? postIdx : (num_post - 1);\n"
+        "   addSynapse(postIdx + id_post_begin);\n"
+        "}\n");
     SET_PARAM_NAMES({"total"});
     SET_EXTRA_GLOBAL_PARAMS({{"preCalcRowLength", "unsigned int*"}})
 
@@ -98,9 +95,9 @@ TEST(InitSparseConnectivitySnippet, CompareVarInitParameters)
     auto connectivityInit1 = initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProbParamsA);
     auto connectivityInit2 = initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProbParamsB);
 
-    connectivityInit0.initDerivedParams(0.1);
-    connectivityInit1.initDerivedParams(0.1);
-    connectivityInit2.initDerivedParams(0.1);
+    connectivityInit0.finalise(0.1);
+    connectivityInit1.finalise(0.1);
+    connectivityInit2.finalise(0.1);
 
     ASSERT_EQ(connectivityInit0.getHashDigest(), connectivityInit1.getHashDigest());
     ASSERT_EQ(connectivityInit0.getHashDigest(), connectivityInit2.getHashDigest());
@@ -114,8 +111,8 @@ TEST(InitSparseConnectivitySnippet, CompareUnusedParameters)
     auto connectivityInit0 = initConnectivity<FixedNumberTotalWithReplacement>(fixedNumberParamsA);
     auto connectivityInit1 = initConnectivity<FixedNumberTotalWithReplacement>(fixedNumberParamsB);
 
-    connectivityInit0.initDerivedParams(0.1);
-    connectivityInit1.initDerivedParams(0.1);
+    connectivityInit0.finalise(0.1);
+    connectivityInit1.finalise(0.1);
 
     ASSERT_EQ(connectivityInit0.getHashDigest(), connectivityInit1.getHashDigest());
 }

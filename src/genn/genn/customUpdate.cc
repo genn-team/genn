@@ -9,10 +9,13 @@
 #include "currentSource.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
+#include "type.h"
 
 //------------------------------------------------------------------------
-// CustomUpdateBase
+// GeNN::CustomUpdateBase
 //------------------------------------------------------------------------
+namespace GeNN
+{
 void CustomUpdateBase::setVarLocation(const std::string &varName, VarLocation loc)
 {
     m_VarLocation[getCustomUpdateModel()->getVarIndex(varName)] = loc;
@@ -26,10 +29,37 @@ VarLocation CustomUpdateBase::getVarLocation(const std::string &varName) const
 bool CustomUpdateBase::isVarInitRequired() const
 {
     return std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),
-                       [](const auto &init){ return !init.second.getSnippet()->getCode().empty(); });
+                       [](const auto &init){ return !Utils::areTokensEmpty(init.second.getCodeTokens()); });
 }
 //----------------------------------------------------------------------------
-void CustomUpdateBase::initDerivedParams(double dt)
+CustomUpdateBase::CustomUpdateBase(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 
+                                   const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
+                                   const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+:   m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
+    m_VarInitialisers(varInitialisers), m_EGPReferences(egpReferences), m_VarLocation(varInitialisers.size(), defaultVarLocation),
+    m_ExtraGlobalParamLocation(customUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
+    m_Batched(false)
+{
+    // Validate names
+    Utils::validatePopName(name, "Custom update");
+    Utils::validatePopName(updateGroupName, "Custom update group name");
+
+    // Loop through all extra global parameter references
+    for (const auto &modelEGPRef : getCustomUpdateModel()->getExtraGlobalParamRefs()) {
+        const auto egpRef = egpReferences.at(modelEGPRef.name);
+
+        // Check types of extra global parameter references against those specified in model
+        // **THINK** this is rather conservative but I think not allowing "scalar" and whatever happens to be scalar type is ok
+        if (egpRef.getEGP().type != modelEGPRef.type) {
+            throw std::runtime_error("Incompatible type for extra global parameter reference '" + modelEGPRef.name + "'");
+        }
+    }
+    // Scan custom update model code string
+    m_UpdateCodeTokens = Utils::scanCode(getCustomUpdateModel()->getUpdateCode(), 
+                                         "Custom update '" + getName() + "' update code");
+}
+//----------------------------------------------------------------------------
+void CustomUpdateBase::finalise(double dt)
 {
     auto derivedParams = getCustomUpdateModel()->getDerivedParams();
 
@@ -40,7 +70,7 @@ void CustomUpdateBase::initDerivedParams(double dt)
 
     // Initialise derived parameters for variable initialisers
     for(auto &v : m_VarInitialisers) {
-        v.second.initDerivedParams(dt);
+        v.second.finalise(dt);
     }
 }
 //----------------------------------------------------------------------------
@@ -89,10 +119,10 @@ boost::uuids::detail::sha1::digest_type CustomUpdateBase::getVarLocationHashDige
 //----------------------------------------------------------------------------
 CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGroupName,
                            const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
-                           const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
-                           VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-    : CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
-    m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.begin()->second.getSize()), m_DelayNeuronGroup(nullptr)
+                           const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
+                           const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+:   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation),
+    m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.begin()->second.getSize()), m_DelayNeuronGroup(nullptr), m_PerNeuron(false)
 {
     // Validate parameters, variables and variable references
     getCustomUpdateModel()->validate(getParams(), getVarInitialisers(), getVarReferences(), "Custom update " + getName());
@@ -103,6 +133,32 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
 
     // Check variable reference types
     Models::checkVarReferences(m_VarReferences, getCustomUpdateModel()->getVarRefs());
+
+    // Update is per-neuron if any variables or variable reference targets AREN'T SHARED_NEURON
+    const auto modelVars = getCustomUpdateModel()->getVars();
+    m_PerNeuron = std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                              [](const auto& v) 
+                              {
+                                  return !(v.second.getVar().access & VarAccessDuplication::SHARED_NEURON); 
+                              });
+    m_PerNeuron |= std::any_of(modelVars.cbegin(), modelVars.cend(),
+                               [](const Models::Base::Var& v) 
+                               {
+                                   return !(v.access & VarAccessDuplication::SHARED_NEURON); 
+                               });
+
+    // Loop through all variable references
+    for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
+        const auto &varRef = m_VarReferences.at(modelVarRef.name);
+
+        // If custom update is per-neuron, check that any variable references to SHARED_NEURON variables are read-only
+        // **NOTE** if custom update isn't per-neuron, it's totally fine to write to SHARED_NEURON variables
+        if(m_PerNeuron && (varRef.getVar().access & VarAccessDuplication::SHARED_NEURON)
+            && (modelVarRef.access == VarAccessMode::READ_WRITE))
+        {
+            throw std::runtime_error("Variable references to SHARED_NEURON variables in per-neuron custom updates cannot be read-write.");
+        }
+    }
 
     // Check only one type of reduction is specified
     if (isBatchReduction() && isNeuronReduction()) {
@@ -117,8 +173,11 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     }
 }
 //----------------------------------------------------------------------------
-void CustomUpdate::finalize(unsigned int batchSize)
+void CustomUpdate::finalise(double dt, unsigned int batchSize)
 {
+    // Superclass
+    CustomUpdateBase::finalise(dt);
+
     // Check variable reference batching
     checkVarReferenceBatching(m_VarReferences, batchSize);
 
@@ -144,7 +203,8 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getHashDigest() const
     boost::uuids::detail::sha1 hash;
     CustomUpdateBase::updateHash(hash);
 
-    // Update hash with whether delay is required
+    // Update hash with whether custom update is per-neuron and if delay is required
+    Utils::updateHash(isPerNeuron(), hash);
     const bool delayed = (getDelayNeuronGroup() != nullptr);
     Utils::updateHash(delayed, hash);
 
@@ -169,17 +229,18 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getInitHashDigest() const
     // Superclass
     boost::uuids::detail::sha1 hash;
     CustomUpdateBase::updateInitHash(hash);
+    Utils::updateHash(isPerNeuron(), hash);
     return hash.get_digest();
 }
 
 //----------------------------------------------------------------------------
-// CustomUpdateWU
+// GeNN::CustomUpdateWU
 //----------------------------------------------------------------------------
 CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
                                const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
-                               const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
-                               VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-:   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
+                               const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
+                               const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+:   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation),
     m_VarReferences(varReferences), m_SynapseGroup(m_VarReferences.empty() ? nullptr : static_cast<SynapseGroupInternal*>(m_VarReferences.begin()->second.getSynapseGroup()))
 {
     // Validate parameters, variables and variable references
@@ -244,8 +305,11 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     }
 }
 //----------------------------------------------------------------------------
-void CustomUpdateWU::finalize(unsigned int batchSize)
+void CustomUpdateWU::finalise(double dt, unsigned int batchSize)
 {
+    // Superclass
+    CustomUpdateBase::finalise(dt);
+
     // Check variable reference types
     checkVarReferenceBatching(m_VarReferences, batchSize);
 }
@@ -257,6 +321,11 @@ bool CustomUpdateWU::isTransposeOperation() const
                        [](const auto &v) { return (v.second.getTransposeSynapseGroup() != nullptr); });
 }
 //----------------------------------------------------------------------------
+const std::vector<unsigned int> &CustomUpdateWU::getKernelSize() const 
+{ 
+    return getSynapseGroup()->getKernelSize(); 
+}
+//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomUpdateWU::getHashDigest() const
 {
     // Superclass
@@ -264,7 +333,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWU::getHashDigest() const
     CustomUpdateBase::updateHash(hash);
 
     Utils::updateHash(getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()), hash);
-    Utils::updateHash(getSynapseGroup()->getSparseIndType(), hash);
+    Type::updateHash(getSynapseGroup()->getSparseIndType(), hash);
 
     // Loop through variable references
     for(const auto &v : getVarReferences()) {
@@ -285,6 +354,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWU::getInitHashDigest() cons
     CustomUpdateBase::updateInitHash(hash);
 
     Utils::updateHash(getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()), hash);
-    Utils::updateHash(getSynapseGroup()->getSparseIndType(), hash);
+    Type::updateHash(getSynapseGroup()->getSparseIndType(), hash);
     return hash.get_digest();
 }
+}   // namespace GeNN

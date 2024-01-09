@@ -12,14 +12,14 @@
 #include "binomial.h"
 #include "snippet.h"
 
+// GeNN transpiler includes
+#include "transpiler/token.h"
+
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
 #define SET_ROW_BUILD_CODE(CODE) virtual std::string getRowBuildCode() const override{ return CODE; }
-#define SET_ROW_BUILD_STATE_VARS(...) virtual ParamValVec getRowBuildStateVars() const override{ return __VA_ARGS__; }
-
 #define SET_COL_BUILD_CODE(CODE) virtual std::string getColBuildCode() const override{ return CODE; }
-#define SET_COL_BUILD_STATE_VARS(...) virtual ParamValVec getColBuildStateVars() const override{ return __VA_ARGS__; }
 
 #define SET_HOST_INIT_CODE(CODE) virtual std::string getHostInitCode() const override{ return CODE; }
 
@@ -31,10 +31,10 @@
 #define SET_MAX_COL_LENGTH(MAX_COL_LENGTH) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return [](unsigned int, unsigned int, const std::unordered_map<std::string, double> &){ return MAX_COL_LENGTH; }; }
 
 //----------------------------------------------------------------------------
-// InitSparseConnectivitySnippet::Base
+// GeNN::InitSparseConnectivitySnippet::Base
 //----------------------------------------------------------------------------
 //! Base class for all sparse connectivity initialisation snippets
-namespace InitSparseConnectivitySnippet
+namespace GeNN::InitSparseConnectivitySnippet
 {
 class GENN_EXPORT Base : public Snippet::Base
 {
@@ -43,11 +43,7 @@ public:
     // Declared virtuals
     //----------------------------------------------------------------------------
     virtual std::string getRowBuildCode() const{ return ""; }
-    virtual ParamValVec getRowBuildStateVars() const{ return {}; }
-
     virtual std::string getColBuildCode() const { return ""; }
-    virtual ParamValVec getColBuildStateVars() const { return {}; }
-
     virtual std::string getHostInitCode() const{ return ""; }
 
     //! Get function to calculate the maximum row length of this connector based on the parameters and the size of the pre and postsynaptic population
@@ -72,7 +68,29 @@ public:
 //----------------------------------------------------------------------------
 // Init
 //----------------------------------------------------------------------------
-using Init = Snippet::Init<InitSparseConnectivitySnippet::Base>;
+class GENN_EXPORT Init : public Snippet::Init<Base>
+{
+public:
+    Init(const Base *snippet, const std::unordered_map<std::string, double> &params);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    bool isRNGRequired() const;
+    bool isHostRNGRequired() const;
+    
+    const std::vector<Transpiler::Token> &getRowBuildCodeTokens() const{ return m_RowBuildCodeTokens; }
+    const std::vector<Transpiler::Token> &getColBuildCodeTokens() const{ return m_ColBuildCodeTokens; }
+    const std::vector<Transpiler::Token> &getHostInitCodeTokens() const{ return m_HostInitCodeTokens; }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::vector<Transpiler::Token> m_RowBuildCodeTokens;
+    std::vector<Transpiler::Token> m_ColBuildCodeTokens;
+    std::vector<Transpiler::Token> m_HostInitCodeTokens;
+};
 
 //----------------------------------------------------------------------------
 // InitSparseConnectivitySnippet::Uninitialised
@@ -94,8 +112,7 @@ public:
     DECLARE_SNIPPET(InitSparseConnectivitySnippet::OneToOne);
 
     SET_ROW_BUILD_CODE(
-        "$(addSynapse, $(id_pre));\n"
-        "$(endRow);\n");
+        "addSynapse(id_pre);\n");
 
     SET_MAX_ROW_LENGTH(1);
     SET_MAX_COL_LENGTH(1);
@@ -110,8 +127,6 @@ class FixedProbabilityBase : public Base
 {
 public:
     virtual std::string getRowBuildCode() const override = 0;
-
-    SET_ROW_BUILD_STATE_VARS({{"prevJ", "int", -1}});
 
     SET_PARAM_NAMES({"prob"});
     SET_DERIVED_PARAMS({{"probLogRecip", [](const std::unordered_map<std::string, double> &pars, double){ return 1.0 / log(1.0 - pars.at("prob")); }}});
@@ -154,13 +169,16 @@ public:
     DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedProbability);
 
     SET_ROW_BUILD_CODE(
-        "const scalar u = $(gennrand_uniform);\n"
-        "prevJ += (1 + (int)(log(u) * $(probLogRecip)));\n"
-        "if(prevJ < $(num_post)) {\n"
-        "   $(addSynapse, prevJ + $(id_post_begin));\n"
-        "}\n"
-        "else {\n"
-        "   $(endRow);\n"
+        "int prevJ = -1;\n"
+        "while(true) {\n"
+        "   const scalar u = gennrand_uniform();\n"
+        "   prevJ += (1 + (int)(log(u) * probLogRecip));\n"
+        "   if(prevJ < num_post) {\n"
+        "       addSynapse(prevJ + id_post_begin);\n"
+        "   }\n"
+        "   else {\n"
+        "       break;\n"
+        "   }\n"
         "}\n");
 };
 
@@ -186,17 +204,20 @@ public:
     DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedProbabilityNoAutapse);
 
     SET_ROW_BUILD_CODE(
-        "int nextJ;\n"
-        "do {\n"
-        "   const scalar u = $(gennrand_uniform);\n"
-        "   nextJ = prevJ + (1 + (int)(log(u) * $(probLogRecip)));\n"
-        "} while(nextJ == $(id_pre));\n"
-        "prevJ = nextJ;\n"
-        "if(prevJ < $(num_post)) {\n"
-        "   $(addSynapse, prevJ + $(id_post_begin));\n"
-        "}\n"
-        "else {\n"
-        "   $(endRow);\n"
+        "int prevJ = -1;\n"
+        "while(true) {\n"
+        "   int nextJ;\n"
+        "   do {\n"
+        "       const scalar u = gennrand_uniform();\n"
+        "       nextJ = prevJ + (1 + (int)(log(u) * probLogRecip));\n"
+        "   } while(nextJ == id_pre);\n"
+        "   prevJ = nextJ;\n"
+        "   if(prevJ < num_post) {\n"
+        "       addSynapse(prevJ + id_post_begin);\n"
+        "   }\n"
+        "   else {\n"
+        "       break;\n"
+        "   }\n"
         "}\n");
 };
 
@@ -214,16 +235,14 @@ public:
     DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedNumberPostWithReplacement);
 
     SET_ROW_BUILD_CODE(
-        "if(c == 0) {\n"
-        "   $(endRow);\n"
-        "}\n"
-        "const scalar u = $(gennrand_uniform);\n"
-        "x += (1.0 - x) * (1.0 - pow(u, 1.0 / (scalar)c));\n"
-        "unsigned int postIdx = (unsigned int)(x * $(num_post));\n"
-        "postIdx = (postIdx < $(num_post)) ? postIdx : ($(num_post) - 1);\n"
-        "$(addSynapse, postIdx + $(id_post_begin));\n"
-        "c--;\n");
-    SET_ROW_BUILD_STATE_VARS({{"x", "scalar", 0.0},{"c", "unsigned int", "$(rowLength)"}});
+        "scalar x = 0.0;\n"
+        "for(unsigned int c = (unsigned int)rowLength; c != 0; c--) {\n"
+        "   const scalar u = gennrand_uniform();\n"
+        "   x += (1.0 - x) * (1.0 - pow(u, 1.0 / (scalar)c));\n"
+        "   unsigned int postIdx = (unsigned int)(x * num_post);\n"
+        "   postIdx = (postIdx < num_post) ? postIdx : (num_post - 1);\n"
+        "   addSynapse(postIdx + id_post_begin);\n"
+        "}\n");
 
     SET_PARAM_NAMES({"rowLength"});
 
@@ -263,50 +282,46 @@ public:
     DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedNumberTotalWithReplacement);
 
     SET_ROW_BUILD_CODE(
-        "if(c == 0) {\n"
-        "   $(endRow);\n"
-        "}\n"
-        "const scalar u = $(gennrand_uniform);\n"
-        "x += (1.0 - x) * (1.0 - pow(u, 1.0 / (scalar)c));\n"
-        "unsigned int postIdx = (unsigned int)(x * $(num_post));\n"
-        "postIdx = (postIdx < $(num_post)) ? postIdx : ($(num_post) - 1);\n"
-        "$(addSynapse, postIdx + $(id_post_begin));\n"
-        "c--;\n");
-    SET_ROW_BUILD_STATE_VARS({{"x", "scalar", 0.0},{"c", "unsigned int", "$(preCalcRowLength)[($(id_pre) * $(num_threads)) + $(id_thread)]"}});
+        "scalar x = 0.0;\n"
+        "for(unsigned int c = preCalcRowLength[(id_pre * num_threads) + id_thread]; c != 0; c--) {\n"
+        "   const scalar u = gennrand_uniform();\n"
+        "   x += (1.0 - x) * (1.0 - pow(u, 1.0 / (scalar)c));\n"
+        "   unsigned int postIdx = (unsigned int)(x * num_post);\n"
+        "   postIdx = (postIdx < num_post) ? postIdx : (num_post - 1);\n"
+        "   addSynapse(postIdx + id_post_begin);\n"
+        "}\n");
 
     SET_PARAM_NAMES({"total"});
     SET_EXTRA_GLOBAL_PARAMS({{"preCalcRowLength", "uint16_t*"}})
 
     SET_HOST_INIT_CODE(
         "// Allocate pre-calculated row length array\n"
-        "$(allocatepreCalcRowLength, $(num_pre) * $(num_threads));\n"
+        "allocatepreCalcRowLength(num_pre * num_threads);\n"
         "// Calculate row lengths\n"
-        "const size_t numPostPerThread = ($(num_post) + $(num_threads) - 1) / $(num_threads);\n"
-        "const size_t leftOverNeurons = $(num_post) % numPostPerThread;\n"
-        "size_t remainingConnections = $(total);\n"
-        "size_t matrixSize = (size_t)$(num_pre) * (size_t)$(num_post);\n"
-        "uint16_t *subRowLengths = $(preCalcRowLength);\n"
+        "const size_t numPostPerThread = (num_post + num_threads - 1) / num_threads;\n"
+        "const size_t leftOverNeurons = num_post % numPostPerThread;\n"
+        "size_t remainingConnections = total;\n"
+        "size_t matrixSize = (size_t)num_pre * (size_t)num_post;\n"
+        "uint16_t *subRowLengths = preCalcRowLength;\n"
         "// Loop through rows\n"
-        "for(size_t i = 0; i < $(num_pre); i++) {\n"
-        "    const bool lastPre = (i == ($(num_pre) - 1));\n"
+        "for(size_t i = 0; i < num_pre; i++) {\n"
+        "    const bool lastPre = (i == (num_pre - 1));\n"
         "    // Loop through subrows\n"
-        "    for(size_t j = 0; j < $(num_threads); j++) {\n"
-        "        const bool lastSubRow = (j == ($(num_threads) - 1));\n"
+        "    for(size_t j = 0; j < num_threads; j++) {\n"
+        "        const bool lastSubRow = (j == (num_threads - 1));\n"
         "        // If this isn't the last sub-row of the matrix\n"
         "        if(!lastPre || ! lastSubRow) {\n"
         "            // Get length of this subrow\n"
         "            const unsigned int numSubRowNeurons = (leftOverNeurons != 0 && lastSubRow) ? leftOverNeurons : numPostPerThread;\n"
         "            // Calculate probability\n"
         "            const double probability = (double)numSubRowNeurons / (double)matrixSize;\n"
-        "            // Create distribution to sample row length\n"
-        "            std::binomial_distribution<size_t> rowLengthDist(remainingConnections, probability);\n"
         "            // Sample row length;\n"
-        "            const size_t subRowLength = rowLengthDist($(rng));\n"
+        "            const size_t subRowLength = gennrand_binomial(remainingConnections, probability);\n"
         "            // Update counters\n"
         "            remainingConnections -= subRowLength;\n"
         "            matrixSize -= numSubRowNeurons;\n"
         "            // Add row length to array\n"
-        "            assert(subRowLength < std::numeric_limits<uint16_t>::max());\n"
+        "            assert(subRowLength < 0xFFFF);\n"
         "            *subRowLengths++ = (uint16_t)subRowLength;\n"
         "        }\n"
         "    }\n"
@@ -314,7 +329,7 @@ public:
         "// Insert remaining connections into last sub-row\n"
         "*subRowLengths = (uint16_t)remainingConnections;\n"
         "// Push populated row length array\n"
-        "$(pushpreCalcRowLength, $(num_pre) * $(num_threads));\n");
+        "pushpreCalcRowLength(num_pre * num_threads);\n");
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int numPre, unsigned int numPost, const std::unordered_map<std::string, double> &pars)
@@ -352,14 +367,11 @@ public:
     DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedNumberPreWithReplacement);
 
     SET_COL_BUILD_CODE(
-        "if(c == 0) {\n"
-        "   $(endCol);\n"
-        "}\n"
-        "const unsigned int idPre = (unsigned int)ceil($(gennrand_uniform) * $(num_pre)) - 1;\n"
-        "$(addSynapse, idPre + $(id_pre_begin));\n"
-        "c--;\n");
-    SET_COL_BUILD_STATE_VARS({{"c", "unsigned int", "$(colLength)"}});
-
+        "for(unsigned int c = colLength; c != 0; c--) {\n"
+        "   const unsigned int idPre = (unsigned int)ceil(gennrand_uniform() * num_pre) - 1;\n"
+        "   addSynapse(idPre + id_pre_begin);\n"
+        "}\n");
+ 
     SET_PARAM_NAMES({"colLength"});
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
@@ -399,31 +411,28 @@ public:
                      "conv_ih", "conv_iw", "conv_ic",
                      "conv_oh", "conv_ow", "conv_oc"});
 
-    SET_ROW_BUILD_STATE_VARS({{"inRow", "int", "($(id_pre) / (int)$(conv_ic)) / (int)$(conv_iw)"},
-                              {"inCol", "int", "($(id_pre) / (int)$(conv_ic)) % (int)$(conv_iw)"},
-                              {"inChan", "int", "$(id_pre) % (int)$(conv_ic)"},
-                              {"outRow", "int", "min((int)$(conv_oh), max(0, 1 + (int)floor((inRow + $(conv_padh) - $(conv_kh)) / $(conv_sh))))"},
-                              {"maxOutRow", "int", "min((int)$(conv_oh), max(0, 1 + ((inRow + (int)$(conv_padh)) / (int)$(conv_sh))))"},
-                              {"minOutCol", "int", "min((int)$(conv_ow), max(0, 1 + (int)floor((inCol + $(conv_padw) - $(conv_kw)) / $(conv_sw))))"},
-                              {"maxOutCol", "int", "min((int)$(conv_ow), max(0, 1 + ((inCol + (int)$(conv_padw)) / (int)$(conv_sw))))"}});
-
     SET_ROW_BUILD_CODE(
-        "if($(outRow) == $(maxOutRow)) {\n"
-        "   $(endRow);\n"
-        "}\n"
-        "const int strideRow = ($(outRow) * (int)$(conv_sh)) - (int)$(conv_padh);\n"
-        "const int kernRow = $(inRow) - strideRow;\n"
-        "for(int outCol = $(minOutCol); outCol < $(maxOutCol); outCol++) {\n"
-        "    const int strideCol = (outCol * (int)$(conv_sw)) - (int)$(conv_padw);\n"
-        "    const int kernCol = $(inCol) - strideCol;\n"
-        "    for(unsigned int outChan = 0; outChan < (unsigned int)$(conv_oc); outChan++) {\n"
-        "        const int idPost = (($(outRow) * (int)$(conv_ow) * (int)$(conv_oc)) +\n"
-        "                            (outCol * (int)$(conv_oc)) +\n"
-        "                            outChan);\n"
-        "        $(addSynapse, idPost, kernRow, kernCol, $(inChan), outChan);\n"
-        "    }\n"
-        "}\n"
-        "$(outRow)++;\n");
+        "const int inRow = (id_pre / (int)conv_ic) / (int)conv_iw;\n"
+        "const int inCol = (id_pre / (int)conv_ic) % (int)conv_iw;\n"
+        "const int inChan = id_pre % (int)conv_ic;\n"
+        "const int maxOutRow = min((int)conv_oh, max(0, 1 + ((inRow + (int)conv_padh) / (int)conv_sh)));\n"
+        "const int minOutCol = min((int)conv_ow, max(0, 1 + (int)floor((inCol + conv_padw - conv_kw) / conv_sw)));\n"
+        "const int maxOutCol = min((int)conv_ow, max(0, 1 + ((inCol + (int)conv_padw) / (int)conv_sw)));\n"
+        "int outRow = min((int)conv_oh, max(0, 1 + (int)floor((inRow + conv_padh - conv_kh) / conv_sh)));\n"
+        "for(;outRow < maxOutRow; outRow++) {\n"
+        "   const int strideRow = (outRow * (int)conv_sh) - (int)conv_padh;\n"
+        "   const int kernRow = inRow - strideRow;\n"
+        "   for(int outCol = minOutCol; outCol < maxOutCol; outCol++) {\n"
+        "       const int strideCol = (outCol * (int)conv_sw) - (int)conv_padw;\n"
+        "       const int kernCol = inCol - strideCol;\n"
+        "       for(unsigned int outChan = 0; outChan < (unsigned int)conv_oc; outChan++) {\n"
+        "           const int idPost = ((outRow * (int)conv_ow * (int)conv_oc) +\n"
+        "                                (outCol * (int)conv_oc) +\n"
+        "                                outChan);\n"
+        "            addSynapse(idPost, kernRow, kernCol, inChan, outChan);\n"
+        "       }\n"
+        "   }\n"
+        "}\n");
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int, unsigned int, const std::unordered_map<std::string, double> &pars)
@@ -440,4 +449,4 @@ public:
                     (unsigned int)pars.at("conv_ic"), (unsigned int)pars.at("conv_oc")};
         });
 };
-}   // namespace InitSparseConnectivitySnippet
+}   // namespace GeNN::InitSparseConnectivitySnippet

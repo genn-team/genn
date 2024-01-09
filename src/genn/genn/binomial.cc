@@ -35,7 +35,7 @@ double logPMFBinomial(unsigned int n, unsigned int k, double logP, double logOne
 //! Evaluates the inverse CDF of the binomial distribution directly from the definition
 //! The calculation is done mostly in the log domain except for the final
 //! accumulation of the probabilities
-unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
+unsigned int GeNN::binomialInverseCDF(double cdf, unsigned int n, double p)
 {
     // Validate cdf and p parameters
     if(cdf < 0.0 || cdf > 1.0) {

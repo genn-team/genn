@@ -5,6 +5,8 @@
 #include "modelSpec.h"
 #include "neuronModels.h"
 
+using namespace GeNN;
+
 //--------------------------------------------------------------------------
 // LIFCopy
 //--------------------------------------------------------------------------
@@ -17,7 +19,7 @@ public:
         "  $(V) = alpha - ($(ExpTC) * (alpha - $(V)));\n"
         "}\n"
         "else {\n"
-        "  $(RefracTime) -= DT;\n"
+        "  $(RefracTime) -= dt;\n"
         "}\n"
     );
 
@@ -101,10 +103,10 @@ TEST(NeuronModels, ValidateVarValues)
 {
     const std::unordered_map<std::string, double> paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     
-    const std::unordered_map<std::string, Models::VarInit> varValsCorrect{{"V", 0.0}, {"U", 0.0}};
-    const std::unordered_map<std::string, Models::VarInit> varValsMisSpelled{{"V", 0.0}, {"u", 0.0}};
-    const std::unordered_map<std::string, Models::VarInit> varValsMissing{{"V", 0.0}};
-    const std::unordered_map<std::string, Models::VarInit> varValsExtra{{"V", 0.0}, {"U", 0.0}, {"A", 0.0}};
+    const std::unordered_map<std::string, InitVarSnippet::Init> varValsCorrect{{"V", 0.0}, {"U", 0.0}};
+    const std::unordered_map<std::string, InitVarSnippet::Init> varValsMisSpelled{{"V", 0.0}, {"u", 0.0}};
+    const std::unordered_map<std::string, InitVarSnippet::Init> varValsMissing{{"V", 0.0}};
+    const std::unordered_map<std::string, InitVarSnippet::Init> varValsExtra{{"V", 0.0}, {"U", 0.0}, {"A", 0.0}};
 
     NeuronModels::Izhikevich::getInstance()->validate(paramVals, varValsCorrect, "Neuron group");
 

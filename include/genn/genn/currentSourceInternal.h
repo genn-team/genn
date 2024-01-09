@@ -4,13 +4,17 @@
 #include "currentSource.h"
 
 //------------------------------------------------------------------------
-// CurrentSourceInternal
+// GeNN::CurrentSourceInternal
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class CurrentSourceInternal : public CurrentSource
 {
 public:
+    using GroupExternal = CurrentSource;
+
     CurrentSourceInternal(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
-                          const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
+                          const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                           const NeuronGroupInternal *targetNeuronGroup, VarLocation defaultVarLocation, 
                           VarLocation defaultExtraGlobalParamLocation)
     :   CurrentSource(name, currentSourceModel, params, varInitialisers, targetNeuronGroup, 
@@ -19,14 +23,13 @@ public:
     }
 
     using CurrentSource::getTrgNeuronGroup;
-    using CurrentSource::initDerivedParams;
+    using CurrentSource::finalise;
     using CurrentSource::getDerivedParams;
-    using CurrentSource::isSimRNGRequired;
-    using CurrentSource::isInitRNGRequired;
     using CurrentSource::isZeroCopyEnabled;
     using CurrentSource::getHashDigest;
     using CurrentSource::getInitHashDigest;
     using CurrentSource::getVarLocationHashDigest;
+    using CurrentSource::getInjectionCodeTokens;
 };
 
 //----------------------------------------------------------------------------
@@ -41,11 +44,15 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getVarLocation(const std::string &varName) const{ return m_CS.getVarLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_CS.getVarLocation(varName); }
 
-    Models::Base::VarVec getVars() const{ return m_CS.getCurrentSourceModel()->getVars(); }
+    Models::Base::VarVec getDefs() const{ return m_CS.getCurrentSourceModel()->getVars(); }
 
-    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_CS.getVarInitialisers(); }
+    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CS.getVarInitialisers(); }
+
+    bool isVarDelayed(const std::string&) const{ return false; }
+
+    const std::string &getNameSuffix() const{ return m_CS.getName(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -66,9 +73,9 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getEGPLocation(const std::string &varName) const{ return m_CS.getExtraGlobalParamLocation(varName); }
+    VarLocation getLoc(const std::string &varName) const{ return m_CS.getExtraGlobalParamLocation(varName); }
 
-    Snippet::Base::EGPVec getEGPs() const{ return m_CS.getCurrentSourceModel()->getExtraGlobalParams(); }
+    Snippet::Base::EGPVec getDefs() const{ return m_CS.getCurrentSourceModel()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -76,3 +83,4 @@ private:
     //----------------------------------------------------------------------------
     const CurrentSourceInternal &m_CS;
 };
+}   // namespace GeNN

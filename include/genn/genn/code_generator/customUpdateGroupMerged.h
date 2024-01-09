@@ -2,36 +2,35 @@
 
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
+#include "code_generator/environment.h"
 #include "code_generator/groupMerged.h"
 
 //----------------------------------------------------------------------------
-// CodeGenerator::CustomUpdateGroupMerged
+// GeNN::CodeGenerator::CustomUpdateGroupMerged
 //----------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 class GENN_EXPORT CustomUpdateGroupMerged : public GroupMerged<CustomUpdateInternal>
 {
 public:
-    CustomUpdateGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
-                            const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups);
+    using GroupMerged::GroupMerged;
 
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    bool isParamHeterogeneous(const std::string &paramName) const;
-    bool isDerivedParamHeterogeneous(const std::string &paramName) const;
-
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend,
+                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
+                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
+                        CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateCustomUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env,
+                              BackendBase::GroupHandlerEnv<CustomUpdateGroupMerged> genPostamble);
 
     std::string getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const;
     std::string getVarRefIndex(bool delay, VarAccessDuplication varDuplication, const std::string &index) const;
@@ -40,14 +39,23 @@ public:
     // Static constants
     //----------------------------------------------------------------------------
     static const std::string name;
+
+private:
+    //----------------------------------------------------------------------------
+    // Private methods
+    //----------------------------------------------------------------------------
+    bool isParamHeterogeneous(const std::string &paramName) const;
+    bool isDerivedParamHeterogeneous(const std::string &paramName) const;
 };
 
 // ----------------------------------------------------------------------------
-// CodeGenerator::CustomUpdateWUGroupMergedBase
+// GeNN::CodeGenerator::CustomUpdateWUGroupMergedBase
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomUpdateWUGroupMergedBase : public GroupMerged<CustomUpdateWUInternal>
 {
 public:
+    using GroupMerged::GroupMerged;
+
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
@@ -56,62 +64,33 @@ public:
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env,
+                              BackendBase::GroupHandlerEnv<CustomUpdateWUGroupMergedBase> genPostamble);
+
     std::string getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const;
     std::string getVarRefIndex(VarAccessDuplication varDuplication, const std::string &index) const;
 
-    //! Is kernel size heterogeneous in this dimension?
-    bool isKernelSizeHeterogeneous(size_t dimensionIndex) const
-    {
-        return CodeGenerator::isKernelSizeHeterogeneous(this, dimensionIndex, getGroupKernelSize);
-    }
-
-    //! Get expression for kernel size in dimension (may be literal or group->kernelSizeXXX)
-    std::string getKernelSize(size_t dimensionIndex) const
-    {
-        return CodeGenerator::getKernelSize(this, dimensionIndex, getGroupKernelSize);
-    }
-
-    //! Generate an index into a kernel based on the id_kernel_XXX variables in subs
-    void genKernelIndex(std::ostream& os, const CodeGenerator::Substitutions& subs) const
-    {
-        return CodeGenerator::genKernelIndex(this, os, subs, getGroupKernelSize);
-    }
-
-protected:
-    CustomUpdateWUGroupMergedBase(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
-                                  const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
-
-private:
-    static const std::vector<unsigned int>& getGroupKernelSize(const CustomUpdateWUInternal& g)
-    {
-        return g.getSynapseGroup()->getKernelSize();
-    }
 };
 
 // ----------------------------------------------------------------------------
-// CodeGenerator::CustomUpdateWUGroupMerged
+// GeNN::CodeGenerator::CustomUpdateWUGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomUpdateWUGroupMerged : public CustomUpdateWUGroupMergedBase
 {
 public:
-    CustomUpdateWUGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
-                              const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-        : CustomUpdateWUGroupMergedBase(index, precision, timePrecision, backend, groups)
-    {
-    }
+    using CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase;
 
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend,
+                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
+                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
+                        CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
-
-    void generateCustomUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -120,29 +99,26 @@ public:
 };
 
 // ----------------------------------------------------------------------------
-// CodeGenerator::CustomUpdateTransposeWUGroupMerged
+// GeNN::CodeGenerator::CustomUpdateTransposeWUGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomUpdateTransposeWUGroupMerged : public CustomUpdateWUGroupMergedBase
 {
 public:
-    CustomUpdateTransposeWUGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
-                                       const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-        : CustomUpdateWUGroupMergedBase(index, precision, timePrecision, backend, groups)
-    {
-    }
+    using CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase;
 
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend,
+                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
+                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
+                        CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateCustomUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+    std::string addTransposeField(const BackendBase &backend, EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -150,54 +126,67 @@ public:
     static const std::string name;
 };
 
-
 // ----------------------------------------------------------------------------
-// CustomUpdateHostReductionGroupMergedBase
+// GeNN::CodeGenerator::CustomUpdateHostReductionGroupMergedBase
 //----------------------------------------------------------------------------
 template<typename G>
 class CustomUpdateHostReductionGroupMergedBase : public GroupMerged<G>
 {
 protected:
-     CustomUpdateHostReductionGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
-                                   const std::vector<std::reference_wrapper<const G>> &groups)
-    :   GroupMerged<G>(index, precision, groups)
+    using GroupMerged<G>::GroupMerged;
+
+    template<typename M>
+    void generateCustomUpdateBase(const BackendBase &backend, EnvironmentGroupMergedField<M> &env)
     {
         // Loop through variables and add pointers if they are reduction targets
-        const CustomUpdateModels::Base *cm = this->getArchetype().getCustomUpdateModel();
+        const auto *cm = this->getArchetype().getCustomUpdateModel();
         for(const auto &v : cm->getVars()) {
             if(v.access & VarAccessModeAttribute::REDUCE) {
-                this->addPointerField(v.type, v.name, backend.getDeviceVarPrefix() + v.name);
+                const auto fieldType = v.type.resolve(this->getTypeContext()).createPointer();
+                env.addField(fieldType, v.name, v.name,
+                             [&backend, v](const auto &g, size_t) 
+                             {
+                                 return backend.getDeviceVarPrefix() + v.name + g.getName(); 
+                             });
             }
         }
 
         // Loop through variable references and add pointers if they are reduction targets
         for(const auto &v : cm->getVarRefs()) {
             if(v.access & VarAccessModeAttribute::REDUCE) {
-                this->addPointerField(v.type, v.name, backend.getDeviceVarPrefix() + v.name);
+                const auto fieldType = v.type.resolve(this->getTypeContext()).createPointer();
+                env.addField(fieldType, v.name, v.name,
+                             [&backend, v](const auto &g, size_t) 
+                             {
+                                 const auto varRef = g.getVarReferences().at(v.name);
+                                 return backend.getDeviceVarPrefix() + v.name + varRef.getTargetName(); 
+                             });
             }
         }
     }
 };
 
 // ----------------------------------------------------------------------------
-// CustomUpdateHostReductionGroupMerged
+// GeNN::CodeGenerator::CustomUpdateHostReductionGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGroupMergedBase<CustomUpdateInternal>
 {
 public:
-    CustomUpdateHostReductionGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
-                                         const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups);
+    using CustomUpdateHostReductionGroupMergedBase::CustomUpdateHostReductionGroupMergedBase;
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend,
+                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
+                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
+                        CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name, true);
     }
+
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentGroupMergedField<CustomUpdateHostReductionGroupMerged> &env);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -206,28 +195,30 @@ public:
 };
 
 // ----------------------------------------------------------------------------
-// CustomWUUpdateHostReductionGroupMerged
+// GeNN::CodeGenerator::CustomWUUpdateHostReductionGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomWUUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGroupMergedBase<CustomUpdateWUInternal>
 {
 public:
-    CustomWUUpdateHostReductionGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
-                                           const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
+    using CustomUpdateHostReductionGroupMergedBase::CustomUpdateHostReductionGroupMergedBase;
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend,
+                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
+                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
+                        CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name, true);
     }
+
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentGroupMergedField<CustomWUUpdateHostReductionGroupMerged> &env);
 
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
     static const std::string name;
 };
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator

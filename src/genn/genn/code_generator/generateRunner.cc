@@ -15,12 +15,12 @@
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
 #include "code_generator/groupMerged.h"
-#include "code_generator/substitutions.h"
 #include "code_generator/teeStream.h"
 #include "code_generator/backendBase.h"
 #include "code_generator/modelSpecMerged.h"
 
-using namespace CodeGenerator;
+using namespace GeNN;
+using namespace GeNN::CodeGenerator;
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -86,15 +86,16 @@ void genSpikeMacros(CodeStream &os, const NeuronGroupInternal &ng, bool trueSpik
     os << std::endl << std::endl;
 }
 //--------------------------------------------------------------------------
-void genHostScalar(CodeStream &definitionsVar, CodeStream &runnerVarDecl, const std::string &type, const std::string &name, const std::string &value)
+void genHostScalar(CodeStream &definitionsVar, CodeStream &runnerVarDecl,
+                   const Type::ResolvedType &type, const std::string &name, const std::string &value)
 {
-    definitionsVar << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
-    runnerVarDecl << type << " " << name << " = " << value << ";" << std::endl;
+    definitionsVar << "EXPORT_VAR " << type.getValue().name << " " << name << ";" << std::endl;
+    runnerVarDecl << type.getValue().name << " " << name << " = " << value << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void genHostDeviceScalar(const BackendBase &backend, CodeStream &definitionsVar, CodeStream &definitionsInternalVar,
-                         CodeStream &runnerVarDecl, CodeStream &runnerVarAlloc, CodeStream &runnerVarFree,
-                         const std::string &type, const std::string &name, const std::string &hostValue, MemAlloc &mem)
+void genHostDeviceScalar(const BackendBase &backend, CodeStream &definitionsVar, 
+                         CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, CodeStream &runnerVarAlloc, CodeStream &runnerVarFree,
+                         const Type::ResolvedType &type, const std::string &name, const std::string &hostValue, MemAlloc &mem)
 {
     // Generate a host scalar
     genHostScalar(definitionsVar, runnerVarDecl, type, name, hostValue);
@@ -102,7 +103,7 @@ void genHostDeviceScalar(const BackendBase &backend, CodeStream &definitionsVar,
     // Generate a single-element array on device
     if(backend.isDeviceScalarRequired()) {
         backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                type, name, VarLocation::DEVICE, 1, mem);
+                         type, name, VarLocation::DEVICE, 1, mem);
     }
 }
 //--------------------------------------------------------------------------
@@ -151,15 +152,15 @@ void genVarPushPullScope(CodeStream &definitionsFunc, CodeStream &runnerPushFunc
 //-------------------------------------------------------------------------
 void genVarGetterScope(CodeStream &definitionsFunc, CodeStream &runnerGetterFunc,
                        VarLocation loc, const std::string &description, 
-                       const std::string &type, std::function<void()> handler)
+                       const std::string &typeName, std::function<void()> handler)
 {
     // If this variable has a location that allows pushing and pulling and hence getting a host pointer
     if(canPushPullVar(loc)) {
         // Export getter
-        definitionsFunc << "EXPORT_FUNC " << type << " get" << description << "(unsigned int batch = 0); " << std::endl;
+        definitionsFunc << "EXPORT_FUNC " << typeName << " get" << description << "(unsigned int batch = 0); " << std::endl;
 
         // Define getter
-        runnerGetterFunc << type << " get" << description << "(" << "unsigned int batch" << ")";
+        runnerGetterFunc << typeName << " get" << description << "(" << "unsigned int batch" << ")";
         {
             CodeStream::Scope a(runnerGetterFunc);
             handler();
@@ -179,7 +180,7 @@ void genSpikeGetters(CodeStream &definitionsFunc, CodeStream &runnerGetterFunc,
 
     // Generate getter for current spike counts
     genVarGetterScope(definitionsFunc, runnerGetterFunc,
-                      loc, ng.getName() +  (trueSpike ? "CurrentSpikes" : "CurrentSpikeEvents"), "unsigned int*",
+                      loc, ng.getName() +  (trueSpike ? "CurrentSpikes" : "CurrentSpikeEvents"), "uint32_t*",
                       [&]()
                       {
                           runnerGetterFunc << "return (glbSpk" << eventSuffix << ng.getName();
@@ -197,7 +198,7 @@ void genSpikeGetters(CodeStream &definitionsFunc, CodeStream &runnerGetterFunc,
 
     // Generate getter for current spikes
     genVarGetterScope(definitionsFunc, runnerGetterFunc,
-                      loc, ng.getName() + (trueSpike ? "CurrentSpikeCount" : "CurrentSpikeEventCount"), "unsigned int&",
+                      loc, ng.getName() + (trueSpike ? "CurrentSpikeCount" : "CurrentSpikeEventCount"), "uint32_t&",
                       [&]()
                       {
                           runnerGetterFunc << "return glbSpkCnt" << eventSuffix << ng.getName() << "[";
@@ -249,11 +250,11 @@ void genStatePushPull(CodeStream &definitionsFunc, CodeStream &runnerPushFunc, C
     }
 }
 //-------------------------------------------------------------------------
-void genVariable(const BackendBase &backend, CodeStream &definitionsVar, CodeStream &definitionsFunc,
-                     CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                     CodeStream &push, CodeStream &pull, const std::string &type, const std::string &name,
-                     VarLocation loc, bool autoInitialized, size_t count, MemAlloc &mem,
-                     std::vector<std::string> &statePushPullFunction)
+void genVariable(const BackendBase &backend, CodeStream &definitionsVar, CodeStream &definitionsFunc, 
+                 CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, 
+                 CodeStream &free, CodeStream &push, CodeStream &pull, const Type::ResolvedType &type, 
+                 const std::string &name, VarLocation loc, bool autoInitialized, size_t count, MemAlloc &mem,
+                 std::vector<std::string> &statePushPullFunction)
 {
     // Generate push and pull functions
     genVarPushPullScope(definitionsFunc, push, pull, loc, backend.getPreferences().automaticCopy, name, statePushPullFunction,
@@ -269,14 +270,17 @@ void genVariable(const BackendBase &backend, CodeStream &definitionsVar, CodeStr
 //-------------------------------------------------------------------------
 void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &backend, CodeStream &definitionsVar,
                          CodeStream &definitionsFunc, CodeStream &definitionsInternalVar, CodeStream &runner,
-                         CodeStream &extraGlobalParam, const std::string &type, const std::string &name, bool apiRequired, VarLocation loc)
+                         CodeStream &extraGlobalParam, const Type::UnresolvedType &type, const std::string &name, bool apiRequired, VarLocation loc)
 {
-    // Generate variables
-    backend.genExtraGlobalParamDefinition(definitionsVar, definitionsInternalVar, type, name, loc);
-    backend.genExtraGlobalParamImplementation(runner, type, name, loc);
+    // Resolved type
+    const auto resolvedType = type.resolve(modelMerged.getModel().getTypeContext());
 
-    // If type is a pointer and API is required
-    if(Utils::isTypePointer(type) && apiRequired) {
+    // Generate variables
+    backend.genVariableDefinition(definitionsVar, definitionsInternalVar, resolvedType, name, loc);
+    backend.genVariableInstantiation(runner, resolvedType, name, loc);
+
+    // If API is required
+    if(apiRequired) {
         // Write definitions for functions to allocate and free extra global param
         definitionsFunc << "EXPORT_FUNC void allocate" << name << "(unsigned int count);" << std::endl;
         definitionsFunc << "EXPORT_FUNC void free" << name << "();" << std::endl;
@@ -285,9 +289,10 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
         extraGlobalParam << "void allocate" << name << "(unsigned int count)";
         {
             CodeStream::Scope a(extraGlobalParam);
-            backend.genExtraGlobalParamAllocation(extraGlobalParam, type, name, loc);
+            backend.genVariableDynamicAllocation(extraGlobalParam, resolvedType, name, loc);
 
             // Loop through destinations in merged structures, the device EGP needs to be copied to
+            // **TODO** rename to dynamic
             if(modelMerged.anyMergedEGPDestinations(backend.getDeviceVarPrefix() + name)) {
                 const auto &mergedDestinations = modelMerged.getMergedEGPDestinations(backend.getDeviceVarPrefix() + name);
                 for (const auto &v : mergedDestinations) {
@@ -347,7 +352,7 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
             extraGlobalParam << "void push" << name << "ToDevice(unsigned int count)";
             {
                 CodeStream::Scope a(extraGlobalParam);
-                backend.genExtraGlobalParamPush(extraGlobalParam, type, name, loc);
+                backend.genVariableDynamicPush(extraGlobalParam, resolvedType, name, loc);
             }
 
             if(backend.getPreferences().generateExtraGlobalParamPull) {
@@ -358,43 +363,12 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
                 extraGlobalParam << "void pull" << name << "FromDevice(unsigned int count)";
                 {
                     CodeGenerator::CodeStream::Scope a(extraGlobalParam);
-                    backend.genExtraGlobalParamPull(extraGlobalParam, type, name, loc);
+                    backend.genVariableDynamicPull(extraGlobalParam, resolvedType, name, loc);
                 }
             }
         }
 
     }
-}
-//-------------------------------------------------------------------------
-void genGlobalHostRNG(CodeStream &definitionsVar, CodeStream &runnerVarDecl,
-                      CodeStream &runnerVarAlloc, unsigned int seed, MemAlloc &mem)
-{
-    definitionsVar << "EXPORT_VAR " << "std::mt19937 hostRNG;" << std::endl;
-    runnerVarDecl << "std::mt19937 hostRNG;" << std::endl;
-
-    // If no seed is specified, use system randomness to generate seed sequence
-    CodeStream::Scope b(runnerVarAlloc);
-    if(seed == 0) {
-        runnerVarAlloc << "uint32_t seedData[std::mt19937::state_size];" << std::endl;
-        runnerVarAlloc << "std::random_device seedSource;" << std::endl;
-        runnerVarAlloc << "for(int i = 0; i < std::mt19937::state_size; i++)";
-        {
-            CodeStream::Scope b(runnerVarAlloc);
-            runnerVarAlloc << "seedData[i] = seedSource();" << std::endl;
-        }
-        runnerVarAlloc << "std::seed_seq seeds(std::begin(seedData), std::end(seedData));" << std::endl;
-    }
-    // Otherwise, create a seed sequence from model seed
-    // **NOTE** this is a terrible idea see http://www.pcg-random.org/posts/cpp-seeding-surprises.html
-    else {
-        runnerVarAlloc << "std::seed_seq seeds{" << seed << "};" << std::endl;
-    }
-
-    // Seed RNG from seed sequence
-    runnerVarAlloc << "hostRNG.seed(seeds);" << std::endl;
-
-    // Add size of Mersenne Twister to memory tracker
-    mem += MemAlloc::host(sizeof(std::mt19937));
 }
 //-------------------------------------------------------------------------
 template<typename V, typename G, typename S>
@@ -406,15 +380,16 @@ void genRunnerVars(const ModelSpecMerged &modelMerged, const BackendBase &backen
 {
     // Loop through variables
     const V varAdaptor(group);
-    for(const auto &var : varAdaptor.getVars()) {
-        const auto *varInitSnippet = varAdaptor.getVarInitialisers().at(var.name).getSnippet();
-        const bool autoInitialized = !varInitSnippet->getCode().empty();
+    for(const auto &var : varAdaptor.getDefs()) {
+        const auto &varInit = varAdaptor.getInitialisers().at(var.name);
+        const bool autoInitialized = !Utils::areTokensEmpty(varInit.getCodeTokens());
+        const auto resolvedType = var.type.resolve(modelMerged.getModel().getTypeContext());
         genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                    runnerPushFunc, runnerPullFunc, var.type, var.name + group.getName(), varAdaptor.getVarLocation(var.name),
+                    runnerPushFunc, runnerPullFunc, resolvedType, var.name + group.getName(), varAdaptor.getLoc(var.name),
                     autoInitialized, getSizeFn(group, var), mem, statePushPullFunctions);
 
         // Loop through EGPs required to initialize variable
-        for(const auto &egp : varInitSnippet->getExtraGlobalParams()) {
+        for(const auto &egp : varInit.getSnippet()->getExtraGlobalParams()) {
             genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                                 runnerVarDecl, runnerExtraGlobalParamFunc,
                                 egp.type, egp.name + var.name + group.getName(),
@@ -431,35 +406,39 @@ void genRunnerFusedVars(const ModelSpecMerged &modelMerged, const BackendBase &b
 {
     // Loop through variables
     const V varAdaptor(group);
-    for(const auto &var : varAdaptor.getVars()) {
+    for(const auto &var : varAdaptor.getDefs()) {
+        const auto resolvedType = var.type.resolve(modelMerged.getModel().getTypeContext());
         backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                         var.type, var.name + varAdaptor.getFusedVarSuffix(), varAdaptor.getVarLocation(var.name),
+                         resolvedType, var.name + varAdaptor.getNameSuffix(), varAdaptor.getLoc(var.name),
                          getSizeFn(group, var), mem);
 
         // Loop through EGPs required to initialize variable
-        for(const auto &egp : varAdaptor.getVarInitialisers().at(var.name).getSnippet()->getExtraGlobalParams()) {
+        for(const auto &egp : varAdaptor.getInitialisers().at(var.name).getSnippet()->getExtraGlobalParams()) {
             genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                                 runnerVarDecl, runnerExtraGlobalParamFunc, 
-                                egp.type, egp.name + var.name + varAdaptor.getFusedVarSuffix(),
+                                egp.type, egp.name + var.name + varAdaptor.getNameSuffix(),
                                 true, VarLocation::HOST_DEVICE);
         }
     }
 }
 //-------------------------------------------------------------------------
 template<typename V, typename G, typename S>
-void genRunnerFusedVarPushPull(const BackendBase &backend, CodeStream &definitionsFunc, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc,
-                               const G &group, std::vector<std::string> &groupStatePushPullFunctions, S getSizeFn)
+void genRunnerFusedVarPushPull(const ModelSpecMerged &modelMerged, const BackendBase &backend, CodeStream &definitionsFunc, 
+                               CodeStream &runnerPushFunc, CodeStream &runnerPullFunc, const G &group, 
+                               std::vector<std::string> &groupStatePushPullFunctions, S getSizeFn)
 {
     // Loop through variables
     const V varAdaptor(group);
-    for(const auto &var : varAdaptor.getVars()) {
-        const bool autoInitialized = !varAdaptor.getVarInitialisers().at(var.name).getSnippet()->getCode().empty();
-        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, varAdaptor.getVarLocation(var.name),
+    for(const auto &var : varAdaptor.getDefs()) {
+        const bool autoInitialized = !varAdaptor.getInitialisers().at(var.name).getSnippet()->getCode().empty();
+        const auto resolvedType = var.type.resolve(modelMerged.getModel().getTypeContext());
+        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, varAdaptor.getLoc(var.name),
                             backend.getPreferences().automaticCopy, var.name + group.getName(), groupStatePushPullFunctions,
                             [&]()
                             {
-                                backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, var.type, var.name + group.getName(), 
-                                                            varAdaptor.getVarLocation(var.name), autoInitialized, getSizeFn(group, var));
+                                backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, 
+                                                            resolvedType, var.name + group.getName(), 
+                                                            varAdaptor.getLoc(var.name), autoInitialized, getSizeFn(group, var));
                             });
     }
 }
@@ -471,11 +450,11 @@ void genRunnerEGPs(const ModelSpecMerged &modelMerged, const BackendBase &backen
 {
     // Loop through EGPs
     const E egpAdaptor(group);
-    for(const auto &egp: egpAdaptor.getEGPs()) {
+    for(const auto &egp: egpAdaptor.getDefs()) {
         genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                             runnerVarDecl, runnerExtraGlobalParamFunc,
                             egp.type, egp.name + group.getName(),
-                            true, egpAdaptor.getEGPLocation(egp.name));
+                            true, egpAdaptor.getLoc(egp.name));
     }
 }
 //-------------------------------------------------------------------------
@@ -509,10 +488,10 @@ void genCustomUpdate(const ModelSpecMerged &modelMerged, const BackendBase &back
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
-// CodeGenerator
+// GeNN::CodeGenerator
 //--------------------------------------------------------------------------
-MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
-                                       const BackendBase &backend, const std::string &suffix)
+MemAlloc GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, 
+                                             const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, const std::string &suffix)
 {
     // Create output streams to write to file and wrap in CodeStreams
     std::ofstream definitionsStream((outputPath / ("definitions" + suffix + ".h")).str());
@@ -547,18 +526,8 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     definitionsInternal << "#include \"definitions" << suffix << ".h\"" << std::endl << std::endl;
     backend.genDefinitionsInternalPreamble(definitionsInternal, modelMerged);
     
-    // write DT macro
-    const ModelSpecInternal &model = modelMerged.getModel();
-    if (model.getTimePrecision() == "float") {
-        definitions << "#define DT " << Utils::writePreciseString(model.getDT()) << "f" << std::endl;
-    } else {
-        definitions << "#define DT " << Utils::writePreciseString(model.getDT()) << std::endl;
-    }
-
-    // Typedefine scalar type
-    definitions << "typedef " << model.getPrecision() << " scalar;" << std::endl;
-
     // Write ranges of scalar and time types
+    const ModelSpecInternal &model = modelMerged.getModel();
     genTypeRange(definitions, model.getPrecision(), "SCALAR");
     genTypeRange(definitions, model.getTimePrecision(), "TIME");
 
@@ -614,20 +583,57 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
 
     // Define and declare time variables
     definitionsVar << "EXPORT_VAR unsigned long long iT;" << std::endl;
-    definitionsVar << "EXPORT_VAR " << model.getTimePrecision() << " t;" << std::endl;
+    definitionsVar << "EXPORT_VAR " << model.getTimePrecision().getName() << " t;" << std::endl;
     runnerVarDecl << "unsigned long long iT;" << std::endl;
-    runnerVarDecl << model.getTimePrecision() << " t;" << std::endl;
+    runnerVarDecl << model.getTimePrecision().getName() << " t;" << std::endl;
 
     if(model.isRecordingInUse()) {
         runnerVarDecl << "unsigned long long numRecordingTimesteps = 0;" << std::endl;
     }
     // If backend requires a global device RNG to simulate (or initialize) this model
-    if(backend.isGlobalDeviceRNGRequired(modelMerged)) {
-        backend.genGlobalDeviceRNG(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, mem);
+    if(backend.isGlobalDeviceRNGRequired(model)) {
+        backend.genGlobalDeviceRNG(definitionsVar, definitionsInternalVar, 
+                                   runnerVarDecl, runnerVarAlloc, runnerVarFree, mem);
     }
     // If backend required a global host RNG to simulate (or initialize) this model, generate a standard Mersenne Twister
-    if(backend.isGlobalHostRNGRequired(modelMerged)) {
-        genGlobalHostRNG(definitionsVar, runnerVarDecl, runnerVarAlloc, model.getSeed(), mem);
+    if(backend.isGlobalHostRNGRequired(model)) {
+        // Define standard RNG
+        definitionsVar << "EXPORT_VAR " << "std::mt19937 hostRNG;" << std::endl;
+        runnerVarDecl << "std::mt19937 hostRNG;" << std::endl;
+
+        // Define standard host distributions as recreating them each call is slow
+        definitionsVar << "EXPORT_VAR " << "std::uniform_real_distribution<" << model.getPrecision().getName() << "> standardUniformDistribution;" << std::endl;
+        definitionsVar << "EXPORT_VAR " << "std::normal_distribution<" << model.getPrecision().getName() << "> standardNormalDistribution;" << std::endl;
+        definitionsVar << "EXPORT_VAR " << "std::exponential_distribution<" << model.getPrecision().getName() << "> standardExponentialDistribution;" << std::endl;
+        definitionsVar << std::endl;
+        runnerVarDecl << "std::uniform_real_distribution<" << model.getPrecision().getName() << "> standardUniformDistribution(" << Type::writeNumeric(0.0, model.getPrecision()) << ", " << Type::writeNumeric(1.0, model.getPrecision()) << ");" << std::endl;
+        runnerVarDecl << "std::normal_distribution<" << model.getPrecision().getName() << "> standardNormalDistribution(" << Type::writeNumeric(0.0, model.getPrecision()) << ", " << Type::writeNumeric(1.0, model.getPrecision()) << ");" << std::endl;
+        runnerVarDecl << "std::exponential_distribution<" << model.getPrecision().getName() << "> standardExponentialDistribution(" << Type::writeNumeric(1.0, model.getPrecision()) << ");" << std::endl;
+        runnerVarDecl << std::endl;
+
+        // If no seed is specified, use system randomness to generate seed sequence
+        CodeStream::Scope b(runnerVarAlloc);
+        if(model.getSeed() == 0) {
+            runnerVarAlloc << "uint32_t seedData[std::mt19937::state_size];" << std::endl;
+            runnerVarAlloc << "std::random_device seedSource;" << std::endl;
+            runnerVarAlloc << "for(int i = 0; i < std::mt19937::state_size; i++)";
+            {
+                CodeStream::Scope b(runnerVarAlloc);
+                runnerVarAlloc << "seedData[i] = seedSource();" << std::endl;
+            }
+            runnerVarAlloc << "std::seed_seq seeds(std::begin(seedData), std::end(seedData));" << std::endl;
+        }
+        // Otherwise, create a seed sequence from model seed
+        // **NOTE** this is a terrible idea see http://www.pcg-random.org/posts/cpp-seeding-surprises.html
+        else {
+            runnerVarAlloc << "std::seed_seq seeds{" << model.getSeed() << "};" << std::endl;
+        }
+
+        // Seed RNG from seed sequence
+        runnerVarAlloc << "hostRNG.seed(seeds);" << std::endl;
+
+        // Add size of Mersenne Twister to memory tracker
+        mem += MemAlloc::host(sizeof(std::mt19937));
     }
     allVarStreams << std::endl;
 
@@ -653,17 +659,17 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
 
     // Generate variables to store total elapsed time
     // **NOTE** we ALWAYS generate these so usercode doesn't require #ifdefs around timing code
-    genHostScalar(definitionsVar, runnerVarDecl, "double", "initTime", "0.0");
-    genHostScalar(definitionsVar, runnerVarDecl, "double", "initSparseTime", "0.0");
-    genHostScalar(definitionsVar, runnerVarDecl, "double", "neuronUpdateTime", "0.0");
-    genHostScalar(definitionsVar, runnerVarDecl, "double", "presynapticUpdateTime", "0.0");
-    genHostScalar(definitionsVar, runnerVarDecl, "double", "postsynapticUpdateTime", "0.0");
-    genHostScalar(definitionsVar, runnerVarDecl, "double", "synapseDynamicsTime", "0.0");
+    genHostScalar(definitionsVar, runnerVarDecl, Type::Double, "initTime", "0.0");
+    genHostScalar(definitionsVar, runnerVarDecl, Type::Double, "initSparseTime", "0.0");
+    genHostScalar(definitionsVar, runnerVarDecl, Type::Double, "neuronUpdateTime", "0.0");
+    genHostScalar(definitionsVar, runnerVarDecl, Type::Double, "presynapticUpdateTime", "0.0");
+    genHostScalar(definitionsVar, runnerVarDecl, Type::Double, "postsynapticUpdateTime", "0.0");
+    genHostScalar(definitionsVar, runnerVarDecl, Type::Double, "synapseDynamicsTime", "0.0");
 
     // Generate variables to store total elapsed time for each custom update group
     for(const auto &g : customUpdateGroups) {
-        genHostScalar(definitionsVar, runnerVarDecl, "double", "customUpdate" + g + "Time", "0.0");
-        genHostScalar(definitionsVar, runnerVarDecl, "double", "customUpdate" + g + "TransposeTime", "0.0");
+        genHostScalar(definitionsVar, runnerVarDecl, Type::Double, "customUpdate" + g + "Time", "0.0");
+        genHostScalar(definitionsVar, runnerVarDecl, Type::Double, "customUpdate" + g + "TransposeTime", "0.0");
     }
     
     // If timing is actually enabled
@@ -727,17 +733,28 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     definitionsInternalFunc << "// copying merged group structures to device" << std::endl;
     definitionsInternalFunc << "// ------------------------------------------------------------------------" << std::endl;
 
+    // Generate merged synapse connectivity host init code
+    // **NOTE** this needs to be done before generating the runner because this configures the required fields BUT
+    // needs to be done into a seperate stream because it actually needs to be RUN afterwards so valid pointers 
+    // get copied straight into subsequent structures and merged EGP system isn't required
+    std::ostringstream synapseConnectivityHostInitStream;
+    CodeStream synapseConnectivityHostInit(synapseConnectivityHostInitStream);
+    modelMerged.genMergedSynapseConnectivityHostInitGroups(
+        backend, memorySpaces,
+        [&backend, &modelMerged, &synapseConnectivityHostInit](auto &sg)
+        {
+            EnvironmentExternal env(synapseConnectivityHostInit);
+            sg.generateInit(backend, env);
+        });
+
     // Loop through merged synapse connectivity host initialisation groups
     for(const auto &m : modelMerged.getMergedSynapseConnectivityHostInitGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                          runnerVarDecl, runnerMergedStructAlloc);
     }
 
-    // Loop through merged synapse connectivity host init groups and generate host init code
-    // **NOTE** this is done here so valid pointers get copied straight into subsequent structures and merged EGP system isn't required
-    for(const auto &sg : modelMerged.getMergedSynapseConnectivityHostInitGroups()) {
-        sg.generateInit(backend, runnerMergedStructAlloc, modelMerged);
-    }
+    // Now insert host initialisation code
+    runnerMergedStructAlloc << synapseConnectivityHostInitStream.str();
 
     // Generate merged neuron initialisation groups
     for(const auto &m : modelMerged.getMergedNeuronInitGroups()) {
@@ -901,9 +918,11 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         const size_t numSpikeCounts = n.second.isTrueSpikeRequired() ? (batchSize * n.second.getNumDelaySlots()) : batchSize;
         const size_t numSpikes = n.second.isTrueSpikeRequired() ? numNeuronDelaySlots : (batchSize * n.second.getNumNeurons());
         backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                         "unsigned int", "glbSpkCnt" + n.first, n.second.getSpikeLocation(), numSpikeCounts, mem);
+                         Type::Uint32, "glbSpkCnt" + n.first, 
+                         n.second.getSpikeLocation(), numSpikeCounts, mem);
         backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                         "unsigned int", "glbSpk" + n.first, n.second.getSpikeLocation(), numSpikes, mem);
+                         Type::Uint32, "glbSpk" + n.first, 
+                         n.second.getSpikeLocation(), numSpikes, mem);
 
         // True spike push and pull functions
         genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeLocation(),
@@ -911,18 +930,11 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                             [&]()
                             {
                                 backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
-                                                            "unsigned int", "glbSpkCnt" + n.first, n.second.getSpikeLocation(), true, numSpikeCounts);
+                                                            Type::Uint32, "glbSpkCnt" + n.first, 
+                                                            n.second.getSpikeLocation(), true, numSpikeCounts);
                                 backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
-                                                            "unsigned int", "glbSpk" + n.first, n.second.getSpikeLocation(), true, numSpikes);
-                            });
-
-        // Current true spike push and pull functions
-        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeLocation(),
-                            backend.getPreferences().automaticCopy, n.first + "CurrentSpikes", currentSpikePullFunctions,
-                            [&]()
-                            {
-                                backend.genCurrentTrueSpikePush(runnerPushFunc, n.second, batchSize);
-                                backend.genCurrentTrueSpikePull(runnerPullFunc, n.second, batchSize);
+                                                            Type::Uint32, "glbSpk" + n.first, 
+                                                            n.second.getSpikeLocation(), true, numSpikes);
                             });
 
         // Current true spike getter functions
@@ -930,9 +942,14 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
 
         // If spike recording is enabled, define and declare variables and add free
         if(n.second.isSpikeRecordingEnabled()) {
-            backend.genVariableDefinition(definitionsVar, definitionsInternalVar, "uint32_t*", "recordSpk" + n.first, VarLocation::HOST_DEVICE);
-            backend.genVariableImplementation(runnerVarDecl, "uint32_t*", "recordSpk" + n.first, VarLocation::HOST_DEVICE);
-            backend.genVariableFree(runnerVarFree, "recordSpk" + n.first, VarLocation::HOST_DEVICE);
+            backend.genVariableDefinition(definitionsVar, definitionsInternalVar, 
+                                          Type::Uint32, "recordSpk" + n.first, 
+                                          VarLocation::HOST_DEVICE);
+            backend.genVariableInstantiation(runnerVarDecl, 
+                                             Type::Uint32, "recordSpk" + n.first, 
+                                             VarLocation::HOST_DEVICE);
+            backend.genVariableFree(runnerVarFree, 
+                                    "recordSpk" + n.first, VarLocation::HOST_DEVICE);
         }
 
         // If neuron group needs to emit spike-like events
@@ -944,30 +961,23 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
 
             // Spike-like event variables
             backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                             "unsigned int", "glbSpkCntEvnt" + n.first, n.second.getSpikeEventLocation(),
+                             Type::Uint32, "glbSpkCntEvnt" + n.first, n.second.getSpikeEventLocation(),
                              batchSize * n.second.getNumDelaySlots(), mem);
             backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                             "unsigned int", "glbSpkEvnt" + n.first, n.second.getSpikeEventLocation(),
-                              numNeuronDelaySlots, mem);
+                             Type::Uint32, "glbSpkEvnt" + n.first, n.second.getSpikeEventLocation(),
+                             numNeuronDelaySlots, mem);
 
             // Spike-like event push and pull functions
             genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeEventLocation(),
                                 backend.getPreferences().automaticCopy, n.first + "SpikeEvents",
                                 [&]()
                                 {
-                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, "unsigned int", "glbSpkCntEvnt" + n.first, 
+                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
+                                                                Type::Uint32, "glbSpkCntEvnt" + n.first, 
                                                                 n.second.getSpikeLocation(), true, batchSize * n.second.getNumDelaySlots());
-                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, "unsigned int", "glbSpkEvnt" + n.first, 
+                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, 
+                                                                Type::Uint32, "glbSpkEvnt" + n.first, 
                                                                 n.second.getSpikeLocation(), true, numNeuronDelaySlots);
-                                });
-
-            // Current spike-like event push and pull functions
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeEventLocation(),
-                                backend.getPreferences().automaticCopy, n.first + "CurrentSpikeEvents", currentSpikeEventPullFunctions,
-                                [&]()
-                                {
-                                    backend.genCurrentSpikeLikeEventPush(runnerPushFunc, n.second, batchSize);
-                                    backend.genCurrentSpikeLikeEventPull(runnerPullFunc, n.second, batchSize);
                                 });
 
             // Current true spike getter functions
@@ -975,83 +985,88 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
 
             // If spike recording is enabled, define and declare variables and add free
             if(n.second.isSpikeEventRecordingEnabled()) {
-                backend.genVariableDefinition(definitionsVar, definitionsInternalVar, "uint32_t*", "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE);
-                backend.genVariableImplementation(runnerVarDecl, "uint32_t*", "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE);
+                backend.genVariableDefinition(definitionsVar, definitionsInternalVar, 
+                                              Type::Uint32, "recordSpkEvent" + n.first, 
+                                              VarLocation::HOST_DEVICE);
+                backend.genVariableInstantiation(runnerVarDecl, 
+                                                 Type::Uint32, "recordSpkEvent" + n.first, 
+                                                 VarLocation::HOST_DEVICE);
                 backend.genVariableFree(runnerVarFree, "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE);
             }
         }
 
         // If neuron group has axonal delays
         if (n.second.isDelayRequired()) {
-            genHostDeviceScalar(backend, definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                "unsigned int", "spkQuePtr" + n.first, "0", mem);
+            genHostDeviceScalar(backend, definitionsVar, definitionsInternalVar, 
+                                runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                Type::Uint32, "spkQuePtr" + n.first, "0", mem);
         }
 
         // If neuron group needs to record its spike times
         if (n.second.isSpikeTimeRequired()) {
             backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                             model.getTimePrecision(), "sT" + n.first, n.second.getSpikeTimeLocation(),
-                             numNeuronDelaySlots, mem);
+                             model.getTimePrecision(), "sT" + n.first, 
+                             n.second.getSpikeTimeLocation(), numNeuronDelaySlots, mem);
 
             // Generate push and pull functions
             genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeTimeLocation(),
                                 backend.getPreferences().automaticCopy, n.first + "SpikeTimes",
                                 [&]()
                                 {
-                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getTimePrecision(),
-                                                                "sT" + n.first, n.second.getSpikeTimeLocation(), true, 
-                                                                numNeuronDelaySlots);
+                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, 
+                                                                model.getTimePrecision(), "sT" + n.first, 
+                                                                n.second.getSpikeTimeLocation(), true, numNeuronDelaySlots);
                                 });
         }
 
         // If neuron group needs to record its previous spike times
         if (n.second.isPrevSpikeTimeRequired()) {
             backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                             model.getTimePrecision(), "prevST" + n.first, n.second.getPrevSpikeTimeLocation(),
-                             numNeuronDelaySlots, mem);
+                             model.getTimePrecision(), "prevST" + n.first, 
+                             n.second.getPrevSpikeTimeLocation(), numNeuronDelaySlots, mem);
 
             // Generate push and pull functions
             genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getPrevSpikeTimeLocation(),
                                 backend.getPreferences().automaticCopy, n.first + "PreviousSpikeTimes",
                                 [&]()
                                 {
-                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getTimePrecision(),
-                                                                "prevST" + n.first, n.second.getPrevSpikeTimeLocation(), true,
-                                                                numNeuronDelaySlots);
+                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, 
+                                                                model.getTimePrecision(), "prevST" + n.first, 
+                                                                n.second.getPrevSpikeTimeLocation(), true, numNeuronDelaySlots);
                                 });
         }
 
         // If neuron group needs to record its spike-like-event times
         if (n.second.isSpikeEventTimeRequired()) {
             backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                             model.getTimePrecision(), "seT" + n.first, n.second.getSpikeEventTimeLocation(),
-                             numNeuronDelaySlots, mem);
+                             model.getTimePrecision(), "seT" + n.first, 
+                             n.second.getSpikeEventTimeLocation(), numNeuronDelaySlots, mem);
 
             // Generate push and pull functions
             genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeTimeLocation(),
                                 backend.getPreferences().automaticCopy, n.first + "SpikeEventTimes",
                                 [&]()
                                 {
-                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getTimePrecision(),
-                                                                "seT" + n.first, n.second.getSpikeEventTimeLocation(), true, 
-                                                                numNeuronDelaySlots);
+                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, 
+                                                                model.getTimePrecision(), "seT" + n.first, 
+                                                                n.second.getSpikeEventTimeLocation(), true, numNeuronDelaySlots);
                                 });
         }
 
         // If neuron group needs to record its previous spike-like-event times
         if (n.second.isPrevSpikeEventTimeRequired()) {
             backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                             model.getTimePrecision(), "prevSET" + n.first, n.second.getPrevSpikeEventTimeLocation(),
-                             numNeuronDelaySlots, mem);
+                             model.getTimePrecision(), "prevSET" + n.first, 
+                             n.second.getPrevSpikeEventTimeLocation(), numNeuronDelaySlots, mem);
 
             // Generate push and pull functions
             genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getPrevSpikeEventTimeLocation(),
                                 backend.getPreferences().automaticCopy, n.first + "PreviousSpikeEventTimes",
                                 [&]()
                                 {
-                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getTimePrecision(),
-                                                                "prevSET" + n.first, n.second.getPrevSpikeEventTimeLocation(), true, 
-                                                                numNeuronDelaySlots);
+                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, 
+                                                                model.getTimePrecision(), "prevSET" + n.first, 
+                                                                n.second.getPrevSpikeEventTimeLocation(), true, numNeuronDelaySlots);
                                 });
         }
 
@@ -1065,13 +1080,14 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         const auto neuronModel = n.second.getNeuronModel();
         std::vector<std::string> neuronStatePushPullFunctions;
         for(const auto &var : neuronModel->getVars()) {
-            const auto *varInitSnippet = n.second.getVarInitialisers().at(var.name).getSnippet();
+            const auto &varInit = n.second.getVarInitialisers().at(var.name);
             const unsigned int numCopies = getNumVarCopies(var.access, batchSize);
             const unsigned int numElements = getNumVarElements(var.access, n.second.getNumNeurons());
-            const size_t count = n.second.isVarQueueRequired(var.name) ? numCopies * numElements * n.second.getNumDelaySlots() : numCopies * n.second.getNumNeurons();
-            const bool autoInitialized = !varInitSnippet->getCode().empty();
-            genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                        runnerPushFunc, runnerPullFunc, var.type, var.name + n.first,
+            const size_t count = n.second.isVarQueueRequired(var.name) ? numCopies * numElements * n.second.getNumDelaySlots() : numCopies * numElements;
+            const bool autoInitialized = !Utils::areTokensEmpty(varInit.getCodeTokens());
+            const auto resolvedType = var.type.resolve(modelMerged.getModel().getTypeContext());
+            genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, 
+                        runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerPushFunc, runnerPullFunc, resolvedType, var.name + n.first,
                         n.second.getVarLocation(var.name), autoInitialized, count, mem, neuronStatePushPullFunctions);
 
             // Current variable push and pull functions
@@ -1079,14 +1095,15 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                                 backend.getPreferences().automaticCopy, "Current" + var.name + n.first,
                                 [&]()
                                 {
-                                    backend.genCurrentVariablePushPull(runnerPushFunc, runnerPullFunc, n.second, var.type,
-                                                                       var.name, n.second.getVarLocation(var.name), numCopies);
+                                    backend.genCurrentVariablePushPull(runnerPushFunc, runnerPullFunc, n.second, 
+                                                                       resolvedType, var.name, 
+                                                                       n.second.getVarLocation(var.name), numCopies);
                                 });
 
             // Write getter to get access to correct pointer
             const bool delayRequired = (n.second.isVarQueueRequired(var.name) &&  n.second.isDelayRequired());
             genVarGetterScope(definitionsFunc, runnerGetterFunc, n.second.getVarLocation(var.name),
-                              "Current" + var.name + n.first, var.type + "*",
+                              "Current" + var.name + n.first, resolvedType.getValue().name + "*",
                               [&]()
                               {
                                   runnerGetterFunc << "return " << var.name << n.first;
@@ -1103,7 +1120,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                               });
 
             // Loop through EGPs required to initialize neuron variable
-            for(const auto &e : varInitSnippet->getExtraGlobalParams()) {
+            for(const auto &e : varInit.getSnippet()->getExtraGlobalParams()) {
                 genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar, 
                                     runnerVarDecl, runnerExtraGlobalParamFunc, 
                                     e.type, e.name + var.name + n.first,
@@ -1216,7 +1233,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                                                           runnerVarDecl, runnerExtraGlobalParamFunc, c.second);
 
         // If custom connectivity update group needs per-row RNGs
-        if(c.second.isRowSimRNGRequired()) {
+        if(Utils::isRNGRequired(c.second.getRowUpdateCodeTokens())) {
             backend.genPopulationRNG(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                      "rowRNG" + c.first, c.second.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), mem);
         }
@@ -1238,15 +1255,15 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         // Loop through merged postsynaptic models of incoming synaptic populations
         for(const auto *sg : n.second.getFusedPSMInSyn()) {
             backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                             model.getPrecision(), "inSyn" + sg->getFusedPSVarSuffix(), sg->getInSynLocation(),
-                             sg->getTrgNeuronGroup()->getNumNeurons() * batchSize, mem);
+                             model.getPrecision(), "outPost" + sg->getFusedPSVarSuffix(), 
+                             sg->getInSynLocation(), sg->getTrgNeuronGroup()->getNumNeurons() * batchSize, mem);
 
             if (sg->isDendriticDelayRequired()) {
                 backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                 model.getPrecision(), "denDelay" + sg->getFusedPSVarSuffix(), sg->getDendriticDelayLocation(),
-                                 (size_t)sg->getMaxDendriticDelayTimesteps() * (size_t)sg->getTrgNeuronGroup()->getNumNeurons() * batchSize, mem);
+                                 model.getPrecision(), "denDelay" + sg->getFusedPSVarSuffix(), 
+                                 sg->getDendriticDelayLocation(), (size_t)sg->getMaxDendriticDelayTimesteps() * (size_t)sg->getTrgNeuronGroup()->getNumNeurons() * batchSize, mem);
                 genHostDeviceScalar(backend, definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                    "unsigned int", "denDelayPtr" + sg->getFusedPSVarSuffix(), "0", mem);
+                                    Type::Uint32, "denDelayPtr" + sg->getFusedPSVarSuffix(), "0", mem);
             }
 
             genRunnerFusedVars<SynapsePSMVarAdapter>(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
@@ -1259,8 +1276,8 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         // Loop through fused outgoing synapse populations with weightupdate models that have presynaptic output 
         for(const auto *sg : n.second.getFusedPreOutputOutSyn()) {
             backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                             model.getPrecision(), "revInSyn" + sg->getFusedPreOutputSuffix(), sg->getInSynLocation(),
-                             sg->getSrcNeuronGroup()->getNumNeurons() * batchSize, mem);
+                             model.getPrecision(), "outPre" + sg->getFusedPreOutputSuffix(), 
+                             sg->getInSynLocation(), sg->getSrcNeuronGroup()->getNumNeurons() * batchSize, mem);
         }
         
         // Loop through merged postsynaptic weight updates of incoming synaptic populations
@@ -1294,21 +1311,23 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     std::vector<std::string> connectivityPushPullFunctions;
     for(const auto &s : model.getSynapseGroups()) {
-        const auto *snippet = s.second.getConnectivityInitialiser().getSnippet();
-        const bool autoInitialized = !snippet->getRowBuildCode().empty() || !snippet->getColBuildCode().empty();
+        const auto &connectInit = s.second.getConnectivityInitialiser();
+        const bool autoInitialized = (!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens()) 
+                                      || !Utils::areTokensEmpty(connectInit.getColBuildCodeTokens()));
 
         if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
             const size_t gpSize = ceilDivide((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second), 32);
             backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                "uint32_t", "gp" + s.second.getName(), s.second.getSparseConnectivityLocation(), gpSize, mem);
+                             Type::Uint32, "gp" + s.second.getName(), 
+                             s.second.getSparseConnectivityLocation(), gpSize, mem);
 
             // Generate push and pull functions for bitmask
             genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getSparseConnectivityLocation(),
                                 backend.getPreferences().automaticCopy, s.second.getName() + "Connectivity", connectivityPushPullFunctions,
                                 [&]()
                                 {
-                                    // Row lengths
-                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, "uint32_t", "gp" + s.second.getName(),
+                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, 
+                                                                Type::Uint32, "gp" + s.second.getName(),
                                                                 s.second.getSparseConnectivityLocation(), autoInitialized, gpSize);
                                 });
         }
@@ -1322,11 +1341,13 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
 
             // Row lengths
             backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                "unsigned int", "rowLength" + s.second.getName(), varLoc, s.second.getSrcNeuronGroup()->getNumNeurons(), mem);
+                             Type::Uint32, "rowLength" + s.second.getName(), 
+                             varLoc, s.second.getSrcNeuronGroup()->getNumNeurons(), mem);
 
             // Target indices
             backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                s.second.getSparseIndType(), "ind" + s.second.getName(), varLoc, size, mem);
+                             s.second.getSparseIndType(),  "ind" + s.second.getName(), 
+                             varLoc, size, mem);
 
             // **TODO** remap is not always required
             if(backend.isPostsynapticRemapRequired() && !s.second.getWUModel()->getLearnPostCode().empty()) {
@@ -1334,11 +1355,13 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
 
                 // Allocate column lengths
                 backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                    "unsigned int", "colLength" + s.second.getName(), VarLocation::DEVICE, s.second.getTrgNeuronGroup()->getNumNeurons(), mem);
+                                 Type::Uint32, "colLength" + s.second.getName(), 
+                                 VarLocation::DEVICE, s.second.getTrgNeuronGroup()->getNumNeurons(), mem);
 
                 // Allocate remap
                 backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                    "unsigned int", "remap" + s.second.getName(), VarLocation::DEVICE, postSize, mem);
+                                 Type::Uint32, "remap" + s.second.getName(), 
+                                 VarLocation::DEVICE, postSize, mem);
             }
 
             // Generate push and pull functions for sparse connectivity
@@ -1347,11 +1370,13 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                                 [&]()
                                 {
                                     // Row lengths
-                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, "unsigned int", "rowLength" + s.second.getName(), 
+                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, 
+                                                                Type::Uint32, "rowLength" + s.second.getName(), 
                                                                 s.second.getSparseConnectivityLocation(), autoInitialized, s.second.getSrcNeuronGroup()->getNumNeurons());
 
                                     // Target indices
-                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,  s.second.getSparseIndType(), "ind" + s.second.getName(), 
+                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,  
+                                                                s.second.getSparseIndType(), "ind" + s.second.getName(), 
                                                                 s.second.getSparseConnectivityLocation(), autoInitialized, size);
                                 });
         }
@@ -1372,12 +1397,13 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         std::vector<std::string> synapseGroupStatePushPullFunctions;
         if (individualWeights || proceduralWeights || kernelWeights) {
             for(const auto &wuVar : wu->getVars()) {
-                const auto *varInitSnippet = s.second.getWUVarInitialisers().at(wuVar.name).getSnippet();
-                const bool autoInitialized = !varInitSnippet->getCode().empty();
+                const auto &varInit = s.second.getWUVarInitialisers().at(wuVar.name);
+                const bool autoInitialized = !Utils::areTokensEmpty(varInit.getCodeTokens());
+                const auto resolvedType = wuVar.type.resolve(modelMerged.getModel().getTypeContext());
                 if(individualWeights) {
                     const size_t size = (size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)backend.getSynapticMatrixRowStride(s.second);
                     genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                runnerPushFunc, runnerPullFunc, wuVar.type, wuVar.name + s.second.getName(), s.second.getWUVarLocation(wuVar.name),
+                                runnerPushFunc, runnerPullFunc, resolvedType, wuVar.name + s.second.getName(), s.second.getWUVarLocation(wuVar.name),
                                 autoInitialized, size * getNumVarCopies(wuVar.access, batchSize), mem, synapseGroupStatePushPullFunctions);
                 }
                 else if(kernelWeights) {
@@ -1386,12 +1412,12 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                      
                      // Generate variable
                      genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                 runnerPushFunc, runnerPullFunc, wuVar.type, wuVar.name + s.second.getName(), s.second.getWUVarLocation(wuVar.name),
+                                 runnerPushFunc, runnerPullFunc, resolvedType, wuVar.name + s.second.getName(), s.second.getWUVarLocation(wuVar.name),
                                  autoInitialized, size, mem, synapseGroupStatePushPullFunctions);
                 }
 
                 // Loop through EGPs required to initialize WUM 
-                for(const auto &e : varInitSnippet->getExtraGlobalParams()) {
+                for(const auto &e : varInit.getSnippet()->getExtraGlobalParams()) {
                     genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                                         runnerVarDecl, runnerExtraGlobalParamFunc, 
                                         e.type, e.name + wuVar.name + s.second.getName(),
@@ -1405,14 +1431,16 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         if(!s.second.isPSModelFused()) {
             // Add code to push and pull inSyn
             genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getInSynLocation(),
-                                backend.getPreferences().automaticCopy, "inSyn" + s.second.getName(), synapseGroupStatePushPullFunctions,
+                                backend.getPreferences().automaticCopy, "outPost" + s.second.getName(), synapseGroupStatePushPullFunctions,
                                 [&]()
                                 {
-                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getPrecision(), "inSyn" + s.second.getName(), s.second.getInSynLocation(),
-                                                                true, s.second.getTrgNeuronGroup()->getNumNeurons() * batchSize);
+                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, 
+                                                                model.getPrecision(), "outPost" + s.second.getName(), 
+                                                                s.second.getInSynLocation(), true, s.second.getTrgNeuronGroup()->getNumNeurons() * batchSize);
                                 });
 
-            genRunnerFusedVarPushPull<SynapsePSMVarAdapter>(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, s.second, synapseGroupStatePushPullFunctions,
+            genRunnerFusedVarPushPull<SynapsePSMVarAdapter>(modelMerged, backend, definitionsFunc, runnerPushFunc, runnerPullFunc, 
+                                                            s.second, synapseGroupStatePushPullFunctions,
                                                             [batchSize](const SynapseGroupInternal &sg, const Models::Base::Var &var)
                                                             { 
                                                                 return getVarSize(var.access, sg.getTrgNeuronGroup()->getNumNeurons(), batchSize);
@@ -1423,7 +1451,8 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         // **NOTE** we generated initialisation and declaration code earlier - here we just generate push and pull as we want this per-synapse group
         if(!s.second.isWUPreModelFused()) {
             const unsigned int preDelaySlots = (s.second.getDelaySteps() == NO_DELAY) ? 1 : s.second.getSrcNeuronGroup()->getNumDelaySlots();
-            genRunnerFusedVarPushPull<SynapseWUPreVarAdapter>(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, s.second, synapseGroupStatePushPullFunctions,
+            genRunnerFusedVarPushPull<SynapseWUPreVarAdapter>(modelMerged, backend, definitionsFunc, runnerPushFunc, runnerPullFunc, 
+                                                              s.second, synapseGroupStatePushPullFunctions,
                                                               [batchSize, preDelaySlots](const SynapseGroupInternal &sg, const Models::Base::Var &var)
                                                               { 
                                                                   return getVarSize(var.access, sg.getSrcNeuronGroup()->getNumNeurons(), batchSize, preDelaySlots);
@@ -1435,11 +1464,12 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         // **NOTE** we generated initialisation and declaration code earlier - here we just generate push and pull as we want this per-synapse group
         if(!s.second.isWUPostModelFused()) {
             const unsigned int postDelaySlots = (s.second.getBackPropDelaySteps() == NO_DELAY) ? 1 : s.second.getTrgNeuronGroup()->getNumDelaySlots();
-            genRunnerFusedVarPushPull<SynapseWUPostVarAdapter>(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, s.second, synapseGroupStatePushPullFunctions,
-                                                              [batchSize, postDelaySlots](const SynapseGroupInternal &sg, const Models::Base::Var &var)
-                                                              { 
-                                                                  return getVarSize(var.access, sg.getTrgNeuronGroup()->getNumNeurons(), batchSize, postDelaySlots);
-                                                              });
+            genRunnerFusedVarPushPull<SynapseWUPostVarAdapter>(modelMerged, backend, definitionsFunc, runnerPushFunc, runnerPullFunc,
+                                                               s.second, synapseGroupStatePushPullFunctions,
+                                                               [batchSize, postDelaySlots](const SynapseGroupInternal &sg, const Models::Base::Var &var)
+                                                               { 
+                                                                   return getVarSize(var.access, sg.getTrgNeuronGroup()->getNumNeurons(), batchSize, postDelaySlots);
+                                                               });
         }
         
         // Add helper function to push and pull entire synapse group state
@@ -1587,10 +1617,10 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                 }
 
                 // Allocate spike array if required
-                // **YUCK** maybe this should be renamed genDynamicArray
                 if(n.second.isSpikeRecordingEnabled()) {
                     CodeStream::Scope b(runner);
-                    backend.genExtraGlobalParamAllocation(runner, "uint32_t*", "recordSpk" + n.first, VarLocation::HOST_DEVICE, "numWords");
+                    backend.genVariableDynamicAllocation(runner, Type::Uint32, "recordSpk" + n.first, 
+                                                         VarLocation::HOST_DEVICE, "numWords");
 
                     // Get destinations in merged structures, this EGP 
                     // needs to be copied to and call push function
@@ -1602,10 +1632,10 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                 }
 
                 // Allocate spike event array if required
-                // **YUCK** maybe this should be renamed genDynamicArray
                 if(n.second.isSpikeEventRecordingEnabled()) {
                     CodeStream::Scope b(runner);
-                    backend.genExtraGlobalParamAllocation(runner, "uint32_t*", "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE, "numWords");
+                    backend.genVariableDynamicAllocation(runner, Type::Uint32, "recordSpkEvent" + n.first, 
+                                                         VarLocation::HOST_DEVICE, "numWords");
 
                     // Get destinations in merged structures, this EGP 
                     // needs to be copied to and call push function
@@ -1641,16 +1671,17 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                 }
 
                 // Pull spike array if required
-                // **YUCK** maybe this should be renamed pullDynamicArray
                 if(n.second.isSpikeRecordingEnabled()) {
                     CodeStream::Scope b(runner);
-                    backend.genExtraGlobalParamPull(runner, "uint32_t*", "recordSpk" + n.first, VarLocation::HOST_DEVICE, "numWords");
+                    backend.genVariableDynamicPull(runner, Type::Uint32, "recordSpk" + n.first, 
+                                                   VarLocation::HOST_DEVICE, "numWords");
                 }
                 // AllocaPullte spike event array if required
                 // **YUCK** maybe this should be renamed pullDynamicArray
                 if(n.second.isSpikeEventRecordingEnabled()) {
                     CodeStream::Scope b(runner);
-                    backend.genExtraGlobalParamPull(runner, "uint32_t*", "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE, "numWords");
+                    backend.genVariableDynamicPull(runner, Type::Uint32, "recordSpkEvent" + n.first, 
+                                                   VarLocation::HOST_DEVICE, "numWords");
                 }
             }
         }
@@ -1736,9 +1767,9 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         }
         // Advance time
         runner << "iT++;" << std::endl;
-        runner << "t = iT*DT;" << std::endl;
+        runner << "t = iT * " << Type::writeNumeric(model.getDT(), model.getTimePrecision()) << ";" << std::endl;
 
-        // Write step time finalize logic to runner
+        // Write step time finalise logic to runner
         runner << runnerStepTimeFinaliseStream.str();
     }
     runner << std::endl;
@@ -1770,12 +1801,12 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     definitions << "EXPORT_FUNC void stepTime();" << std::endl;
     definitions << std::endl;
     definitions << "// Functions generated by backend" << std::endl;
-    definitions << "EXPORT_FUNC void updateNeurons(" << model.getTimePrecision() << " t";
+    definitions << "EXPORT_FUNC void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
     if(model.isRecordingInUse()) {
         definitions << ", unsigned int recordingTimestep";
     }
     definitions << "); " << std::endl;
-    definitions << "EXPORT_FUNC void updateSynapses(" << model.getTimePrecision() << " t);" << std::endl;
+    definitions << "EXPORT_FUNC void updateSynapses(" << modelMerged.getModel().getTimePrecision().getName() << " t);" << std::endl;
     definitions << "EXPORT_FUNC void initialize();" << std::endl;
     definitions << "EXPORT_FUNC void initializeSparse();" << std::endl;
     

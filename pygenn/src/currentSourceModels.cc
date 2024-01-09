@@ -5,7 +5,7 @@
 // GeNN includes
 #include "currentSourceModels.h"
 
-using namespace CurrentSourceModels;
+using namespace GeNN::CurrentSourceModels;
 
 namespace
 {

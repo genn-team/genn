@@ -1,16 +1,30 @@
 #include "snippet.h"
 
+// GeNN includes
+#include "gennUtils.h"
+#include "logging.h"
+
 //----------------------------------------------------------------------------
-// Snippet::Base
+// GeNN::Snippet::Base::EGP
 //----------------------------------------------------------------------------
-void Snippet::Base::updateHash(boost::uuids::detail::sha1 &hash) const
+namespace GeNN::Snippet
+{
+Base::EGP::EGP(const std::string &n, const std::string &t) 
+: name(n), type(Utils::handleLegacyEGPType(t))
+{
+}
+
+ //----------------------------------------------------------------------------
+// GeNN::Snippet::Base
+//----------------------------------------------------------------------------
+void Base::updateHash(boost::uuids::detail::sha1 &hash) const
 {
     Utils::updateHash(getParamNames(), hash);
     Utils::updateHash(getDerivedParams(), hash);
     Utils::updateHash(getExtraGlobalParams(), hash);
 }
 //----------------------------------------------------------------------------
-void Snippet::Base::validate(const std::unordered_map<std::string, double> &paramValues, const std::string &description) const
+void Base::validate(const std::unordered_map<std::string, double> &paramValues, const std::string &description) const
 {
     const auto paramNames = getParamNames();
     Utils::validateParamNames(paramNames);
@@ -30,3 +44,25 @@ void Snippet::Base::validate(const std::unordered_map<std::string, double> &para
         }
     }
 }
+
+//----------------------------------------------------------------------------
+// Free functions
+//----------------------------------------------------------------------------
+void updateHash(const Base::EGP &e, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(e.name, hash);
+    Type::updateHash(e.type, hash);
+}
+//----------------------------------------------------------------------------
+void updateHash(const Base::ParamVal &p, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(p.name, hash);
+    Type::updateHash(p.type, hash);
+    Utils::updateHash(p.value, hash);
+}
+//----------------------------------------------------------------------------
+void updateHash(const Base::DerivedParam &d, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(d.name, hash);
+}
+}   // namespace GeNN::Snippet

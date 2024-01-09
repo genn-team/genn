@@ -24,7 +24,8 @@
 #include "optimiser.h"
 
 // Declare global GeNN preferences
-using namespace CodeGenerator::BACKEND_NAMESPACE;
+using namespace GeNN;
+using namespace GeNN::CodeGenerator::BACKEND_NAMESPACE;
 Preferences GENN_PREFERENCES;
 
 // Include model
@@ -44,17 +45,18 @@ int main(int argc,     //!< number of arguments; expected to be 3
         const filesystem::path targetPath(argv[2]);
         const bool forceRebuild = (std::stoi(argv[3]) != 0);
 
+        // Initialise logging, appending all to console
+        plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
+        Logging::init(GENN_PREFERENCES.logLevel, GENN_PREFERENCES.logLevel, GENN_PREFERENCES.logLevel, 
+                      &consoleAppender, &consoleAppender, &consoleAppender);
+
         // Create model
         // **NOTE** casting to external-facing model to hide model's internals
         ModelSpecInternal model;
         modelDefinition(static_cast<ModelSpec&>(std::ref(model)));
 
-        // Initialise logging, appending all to console
-        plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
-        Logging::init(GENN_PREFERENCES.logLevel, GENN_PREFERENCES.logLevel, &consoleAppender, &consoleAppender);
-
         // Finalize model
-        model.finalize();
+        model.finalise();
 
         // Determine code generation path
         const filesystem::path outputPath = targetPath / (model.getName() + "_CODE");

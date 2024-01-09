@@ -5,7 +5,7 @@
 // GeNN includes
 #include "initToeplitzConnectivitySnippet.h"
 
-using namespace InitToeplitzConnectivitySnippet;
+using namespace GeNN::InitToeplitzConnectivitySnippet;
 
 namespace
 {
