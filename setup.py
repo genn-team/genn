@@ -244,6 +244,7 @@ for module_stem, source_stem, kwargs in backends:
                                          [os.path.join(pygenn_src, source_stem + "Backend.cc")],
                                          **backend_extension_kwargs))
 
+    # If we should build required GeNN libraries
     if build_genn_libs:
         # If compiler is MSVC
         if WIN:
@@ -255,8 +256,8 @@ for module_stem, source_stem, kwargs in backends:
         else:
             # Define make arguments
             make_arguments = ["make", f"{module_stem}_backend", "DYNAMIC=1",
-                                f"LIBRARY_DIRECTORY={pygenn_path}",
-                                f"--jobs={cpu_count(logical=False)}"]
+                              f"LIBRARY_DIRECTORY={pygenn_path}",
+                              f"--jobs={cpu_count(logical=False)}"]
             if debug_build:
                 make_arguments.append("DEBUG=1")
 
