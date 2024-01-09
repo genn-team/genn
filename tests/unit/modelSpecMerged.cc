@@ -30,13 +30,13 @@ public:
 
     SET_CURRENT_CONVERTER_CODE("x");
 
-    SET_PARAM_NAMES({"tau"});
+    SET_PARAMS({"tau"});
 
     SET_VARS({{"x", "scalar"}});
 
     SET_DERIVED_PARAMS({
-        {"expDecay", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars.at("tau")); }},
-        {"init", [](const ParamValues &pars, double) { return (std::exp(1) / pars.at("tau")); }}});
+        {"expDecay", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars.at("tau").cast<double>()); }},
+        {"init", [](const ParamValues &pars, double) { return (std::exp(1) / pars.at("tau").cast<double>()); }}});
 };
 IMPLEMENT_SNIPPET(AlphaCurr);
 
@@ -45,7 +45,7 @@ class STDPAdditive : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(STDPAdditive);
 
-    SET_PARAM_NAMES({
+    SET_PARAMS({
       "tauPlus",  // 0 - Potentiation time constant (ms)
       "tauMinus", // 1 - Depression time constant (ms)
       "Aplus",    // 2 - Rate of potentiation
@@ -90,7 +90,7 @@ class Sum : public CustomUpdateModels::Base
     SET_UPDATE_CODE("sum = a + b;\n");
 
     SET_CUSTOM_UPDATE_VARS({{"sum", "scalar"}});
-    SET_PARAM_NAMES({"b"});
+    SET_PARAMS({"b"});
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_ONLY}});
 };
 IMPLEMENT_SNIPPET(Sum);
@@ -146,7 +146,7 @@ public:
     DECLARE_SNIPPET(RemoveSynapseParam);
     
     SET_VAR_REFS({{"g", "scalar"}});
-    SET_PARAM_NAMES({"thresh"});
+    SET_PARAMS({"thresh"});
     
     SET_ROW_UPDATE_CODE(
         "for_each_synapse {\n"
@@ -433,6 +433,32 @@ TEST(ModelSpecMerged, CompareNeuronVarInitChanges)
          });
 }
 //--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareNeuronDynamicParamChanges)
+{
+    // Make array of parameters to make dynamic and flags determining whether the hashes should match baseline
+    const std::pair<std::vector<std::string>, bool> modelModifiers[] = {
+        {{"a", "b"},  true},
+        {{"a", "b"},  true},
+        {{"a", "d"},  false},
+        {{"a"},       false},
+        {{},          false},
+        {{"c"},       false}};
+
+    test(modelModifiers, 
+         [](const std::vector<std::string> &dynamicParams, ModelSpecInternal &model)
+         {
+             // Default neuron parameters
+             VarValues varInit{{"V", 0.0}, {"U", 0.0}};
+             ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
+
+             auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
+                                                                             paramVals, varInit);
+             for(const auto &d : dynamicParams) {
+                 pop->setParamDynamic(d, true);
+             }
+         });
+}
+//--------------------------------------------------------------------------
 TEST(ModelSpecMerged, CompareNeuronVarLocationChanges)
 {
     testNeuronVarLocation([](NeuronGroup *pop, VarLocation varLocation) {pop->setVarLocation("V", varLocation); });
@@ -548,6 +574,36 @@ TEST(ModelSpecMerged, CompareCurrentSourceVarInitParamChanges)
                  VarValues varVals{{"current", initVar<InitVarSnippet::Uniform>(csVarInit[p])}};
                  model.addCurrentSource<CurrentSourceModels::PoissonExp>("CS" + std::to_string(p), "Neurons",
                                                                          paramVals, varVals);
+             }
+         });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareCurrentSourceDynamicParamChanges)
+{
+    // Make array of parameters to make dynamic and flags determining whether the hashes should match baseline
+    const std::pair<std::vector<std::string>, bool> modelModifiers[] = {
+        {{"weight", "rate"},    true},
+        {{"weight", "rate"},    true},
+        {{"weight", "tauSyn"},  false},
+        {{"weight"},            false},
+        {{},                    false},
+        {{"tauSyn"},            false}};
+    test(modelModifiers, 
+         [](const std::vector<std::string> &dynamicParams, ModelSpecInternal &model)
+         {
+             // Add population
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
+             ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
+             model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
+                                                                 neuronParamVals, neuronVarVals);
+
+             // Add desired number of current sources
+             ParamValues paramVals{{"weight", 1.0}, {"tauSyn", 20.0}, {"rate", 10.0}};
+             VarValues varVals{{"current", 0.0}};
+             auto *cs = model.addCurrentSource<CurrentSourceModels::PoissonExp>("CS", "Neurons",
+                                                                                paramVals, varVals);
+             for(const auto &d : dynamicParams) {
+                 cs->setParamDynamic(d, true);
              }
          });
 }
@@ -687,6 +743,42 @@ TEST(ModelSpecMerged, ComparePSMVarInitParamChanges)
          });
 }
 //--------------------------------------------------------------------------
+TEST(ModelSpecMerged, ComparePSMDynamicParamChanges)
+{
+    // Make array of parameters to make dynamic and flags determining whether the hashes should match baseline
+    const std::pair<std::vector<std::string>, bool> modelModifiers[] = {
+        {{"tau", "E"},  true},
+        {{"tau", "E"},  true},
+        {{"tau"},       false},
+        {{},            false},
+        {{"E"},         false}};
+
+    test(modelModifiers, 
+         [](const std::vector<std::string> &dynamicParams, ModelSpecInternal &model)
+         {
+             // Add pre population
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
+             ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
+             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
+                                                                 neuronParamVals, neuronVarVals);
+
+             // Add desired number of post populations
+             auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 100, 
+                                                                              neuronParamVals, neuronVarVals);
+
+             ParamValues psmParamVal{{"tau", 10.0}, {"E", -80.0}};
+             auto *sg = model.addSynapsePopulation(
+                "Synapse", SynapseMatrixType::DENSE, NO_DELAY,
+                "Pre", "Post",
+                initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
+                initPostsynaptic<PostsynapticModels::ExpCond>(psmParamVal, {}, {{"V", createVarRef(post, "V")}}));
+
+             for(const auto &d : dynamicParams) {
+                 sg->setPSParamDynamic(d, true);
+             }
+         });
+}
+//--------------------------------------------------------------------------
 TEST(ModelSpecMerged, ComparePSMVarLocationChanges)
 {
     testSynapseVarLocation([](SynapseGroup *pop, VarLocation varLocation) {pop->setPSVarLocation("x", varLocation); });
@@ -735,45 +827,6 @@ TEST(ModelSpecMerged, CompareWUMParamChanges)
          });
 }
 //--------------------------------------------------------------------------
-TEST(ModelSpecMerged, CompareWUMGlobalGVarChanges)
-{
-    // Weight update model variable initialisers
-    const ParamValues varVals1{{"g", 1.0}};
-    const ParamValues varVals2{{"g", 0.2}};
-    const ParamValues varVals3{{"g", 0.9}};
-
-    // Make array of population parameters to build model with and flags determining whether the hashes should match baseline
-    const std::pair<std::vector<ParamValues>, bool> modelModifiers[] = {
-        {{varVals1, varVals2},  true},
-        {{varVals1, varVals2},  true},
-        {{varVals1, varVals1},  false},
-        {{varVals2, varVals3},  false},
-        {{},                        false},
-        {{varVals1},              false}};
-
-    test(modelModifiers, 
-         [](const std::vector<ParamValues> &wumParamVals, ModelSpecInternal &model)
-         {
-             // Add pre population
-             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
-             ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
-             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
-                                                                 neuronParamVals, neuronVarVals);
-
-             // Add desired number of post populations
-             for(size_t p = 0; p < wumParamVals.size(); p++) {
-                 model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
-                                                                     neuronParamVals, neuronVarVals);
-
-                 model.addSynapsePopulation(
-                    "Synapse" + std::to_string(p), SynapseMatrixType::DENSE, NO_DELAY,
-                    "Pre", "Post" + std::to_string(p),
-                    initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>(wumParamVals[p]),
-                    initPostsynaptic<PostsynapticModels::DeltaCurr>());
-             }
-         });
-}
-//--------------------------------------------------------------------------
 TEST(ModelSpecMerged, CompareWUMVarInitParamChanges)
 {
     // Weight update model var initialisers
@@ -810,6 +863,44 @@ TEST(ModelSpecMerged, CompareWUMVarInitParamChanges)
                     "Pre", "Post" + std::to_string(p),
                     initWeightUpdate<WeightUpdateModels::StaticPulse>({}, varValues),
                     initPostsynaptic<PostsynapticModels::DeltaCurr>());
+             }
+         });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareWUMDynamicParamChanges)
+{
+    // Make array of population parameters to build model with and flags determining whether the hashes should match baseline
+    const std::pair<std::vector<std::string>, bool> modelModifiers[] = {
+        {{"tLrn", "tauShift"},      true},
+        {{"tLrn", "tauShift"},      true},
+        {{"tLrn", "tDecay"},        false},
+        {{"tPunish01", "tauShift"}, false},
+        {{},                        false},
+        {{"tDecay"},                false}};
+
+    test(modelModifiers, 
+         [](const std::vector<std::string> &dynamicParams, ModelSpecInternal &model)
+         {
+             // Add pre population
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
+             ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
+             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
+                                                                 neuronParamVals, neuronVarVals);
+
+             model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 100, 
+                                                                 neuronParamVals, neuronVarVals);
+
+             VarValues varInit{{"g", 0.0}, {"gRaw", uninitialisedVar()}};
+             ParamValues paramVals{{"tLrn", 50.0}, {"tChng", 50.0}, {"tDecay", 50000.0}, {"tPunish10", 100000.0}, {"tPunish01", 200.0}, 
+                                   {"gMax", 0.015}, {"gMid", 0.0075}, {"gSlope", 33.33}, {"tauShift", 10.0}, {"gSyn0", 0.00006}};
+             auto *sg = model.addSynapsePopulation(
+                "Synapse", SynapseMatrixType::DENSE, NO_DELAY,
+                "Pre", "Post",
+                initWeightUpdate<WeightUpdateModels::PiecewiseSTDP>(paramVals, varInit),
+                initPostsynaptic<PostsynapticModels::DeltaCurr>());
+
+             for(const auto &d : dynamicParams) {
+                 sg->setWUParamDynamic(d, true);
              }
          });
 }
@@ -1107,6 +1198,34 @@ TEST(ModelSpecMerged, CompareCustomUpdateVarInitParamChanges)
          });
 }
 //--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareCustomUpdateDynamicParamChanges)
+{
+    // Make array of population parameters to build model with and flags determining whether the hashes should match baseline
+    const std::pair<std::vector<std::string>, bool> modelModifiers[] = {
+        {{"b"},  true},
+        {{"b"},  true},
+        {{},     false}};
+
+    test(modelModifiers, 
+         [](const std::vector<std::string> &dynamicParams, ModelSpecInternal &model)
+         {
+             // Add pre population
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
+             ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
+             auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
+                                                                             neuronParamVals, neuronVarVals);
+
+             // Add desired number of custom updates
+             ParamValues paramVal1{{"b", 5.0}};
+             VarValues vals{{"sum", 0.0}};
+             VarReferences varRefs{{"a", createVarRef(pre, "V")}};
+             auto *cu =  model.addCustomUpdate<Sum>("CU", "Group", paramVal1, vals, varRefs);
+             for(const auto &d : dynamicParams) {
+                 cu->setParamDynamic(d, true);
+             }
+         });
+}
+//--------------------------------------------------------------------------
 TEST(ModelSpecMerged, CompareCustomUpdateVarLocationChanges)
 {
     // Make array of variable locations to build model with and flags determining whether the hashes should match baseline
@@ -1161,21 +1280,6 @@ TEST(ModelSpecMerged, CompareCustomUpdateVarRefTargetChanges)
                  model.addCustomUpdate<Sum>("CU" + std::to_string(c), "Group", paramVals, vals, varRefs);
              }
          });
-}
-//--------------------------------------------------------------------------
-TEST(ModelSpecMerged, CompareCustomConnectivityUpdateVarLocationChanges)
-{
-    testCustomConnectivityUpdateVarLocation([](CustomConnectivityUpdate *ccu, VarLocation varLocation) {ccu->setVarLocation("g", varLocation); });
-}
-//--------------------------------------------------------------------------
-TEST(ModelSpecMerged, CompareCustomConnectivityUpdatePreVarLocationChanges)
-{
-    testCustomConnectivityUpdateVarLocation([](CustomConnectivityUpdate *ccu, VarLocation varLocation) {ccu->setPreVarLocation("preThresh", varLocation); });
-}
-//--------------------------------------------------------------------------
-TEST(ModelSpecMerged, CompareCustomConnectivityUpdatePostVarLocationChanges)
-{
-    testCustomConnectivityUpdateVarLocation([](CustomConnectivityUpdate *ccu, VarLocation varLocation) {ccu->setPostVarLocation("postThresh", varLocation); });
 }
 //--------------------------------------------------------------------------
 TEST(ModelSpecMerged, CompareCustomConnectivityUpdateParamChanges)
@@ -1246,4 +1350,55 @@ TEST(ModelSpecMerged, CompareCustomConnectivityUpdateVarInitParamChanges)
                 {}, {{"g", params[0]}}, {{"preThresh", params[1]}}, {{"postThresh", params[2]}},
                 {}, {}, {});
          });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareCustomConnectivityUpdateDynamicParamChanges)
+{
+    // Make array of population parameters to build model with and flags determining whether the hashes should match baseline
+    const std::pair<std::vector<std::string>, bool> modelModifiers[] = {
+        {{"thresh"},    true},
+        {{"thresh"},    true},
+        {{},            false}};
+    
+    test(modelModifiers, 
+         [](const std::vector<std::string> &dynamicParams, ModelSpecInternal &model)
+         {
+            // Add two neuron group to model
+            ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+            VarValues varVals{{"V", 0.0}, {"U", 0.0}};
+            model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+            model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+
+            // Create synapse group with global weights
+            auto *syn = model.addSynapsePopulation(
+                "Synapses1", SynapseMatrixType::SPARSE, NO_DELAY,
+                "Pre", "Post",
+                initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
+                initPostsynaptic<PostsynapticModels::DeltaCurr>());
+
+           
+            WUVarReferences varRefs{{"g", createWUVarRef(syn, "g")}};
+            auto *ccu = model.addCustomConnectivityUpdate<RemoveSynapseParam>(
+                "CustomConnectivityUpdate1", "Test2", "Synapses1",
+                {{"thresh", 1.0}}, {}, {}, {},
+                varRefs, {}, {});
+            for(const auto &d : dynamicParams) {
+                 ccu->setParamDynamic(d, true);
+             }
+         });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareCustomConnectivityUpdateVarLocationChanges)
+{
+    testCustomConnectivityUpdateVarLocation([](CustomConnectivityUpdate *ccu, VarLocation varLocation) {ccu->setVarLocation("g", varLocation); });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareCustomConnectivityUpdatePreVarLocationChanges)
+{
+    testCustomConnectivityUpdateVarLocation([](CustomConnectivityUpdate *ccu, VarLocation varLocation) {ccu->setPreVarLocation("preThresh", varLocation); });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareCustomConnectivityUpdatePostVarLocationChanges)
+{
+    testCustomConnectivityUpdateVarLocation([](CustomConnectivityUpdate *ccu, VarLocation varLocation) {ccu->setPostVarLocation("postThresh", varLocation); });
 }

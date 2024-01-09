@@ -32,7 +32,7 @@ public:
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, double> &paramValues) const;
+    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues) const;
 };
 
 
@@ -45,7 +45,7 @@ public:
 class GENN_EXPORT Init : public Snippet::Init<Base>
 {
 public:
-    Init(const Base *snippet, const std::unordered_map<std::string, double> &params);
+    Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params);
     Init(double constant);
 
     //------------------------------------------------------------------------
@@ -91,7 +91,7 @@ public:
 
     SET_CODE("value = constant;");
 
-    SET_PARAM_NAMES({"constant"});
+    SET_PARAMS({"constant"});
 };
 
 //----------------------------------------------------------------------------
@@ -124,7 +124,7 @@ public:
         "const scalar scale = max - min;\n"
         "value = min + (gennrand_uniform() * scale);");
 
-    SET_PARAM_NAMES({"min", "max"});
+    SET_PARAMS({"min", "max"});
 };
 
 //----------------------------------------------------------------------------
@@ -142,7 +142,7 @@ public:
 
     SET_CODE("value = mean + (gennrand_normal() * sd);");
 
-    SET_PARAM_NAMES({"mean", "sd"});
+    SET_PARAMS({"mean", "sd"});
 };
 
 //----------------------------------------------------------------------------
@@ -169,7 +169,7 @@ public:
         "} while (normal > max || normal < min);\n"
         "value = normal;\n");
 
-    SET_PARAM_NAMES({"mean", "sd", "min", "max"});
+    SET_PARAMS({"mean", "sd", "min", "max"});
 };
 
 //----------------------------------------------------------------------------
@@ -198,12 +198,12 @@ public:
         "} while (normal > maxTimestep || normal < minTimestep);\n"
         "value = rint(normal);\n");
 
-    SET_PARAM_NAMES({"mean", "sd", "min", "max"});
+    SET_PARAMS({"mean", "sd", "min", "max"});
     SET_DERIVED_PARAMS({
-        {"meanTimestep", [](const std::unordered_map<std::string, double> &pars, double dt){ return pars.at("mean") / dt; }},
-        {"sdTimestep", [](const std::unordered_map<std::string, double> &pars, double dt){ return pars.at("sd") / dt; }},
-        {"minTimestep", [](const std::unordered_map<std::string, double> &pars, double dt){ return pars.at("min") / dt; }},
-        {"maxTimestep", [](const std::unordered_map<std::string, double> &pars, double dt){ return pars.at("max") / dt; }}});
+        {"meanTimestep", [](const ParamValues &pars, double dt){ return pars.at("mean").cast<double>() / dt; }},
+        {"sdTimestep", [](const ParamValues &pars, double dt){ return pars.at("sd").cast<double>() / dt; }},
+        {"minTimestep", [](const ParamValues &pars, double dt){ return pars.at("min").cast<double>() / dt; }},
+        {"maxTimestep", [](const ParamValues &pars, double dt){ return pars.at("max").cast<double>() / dt; }}});
 };
 
 //----------------------------------------------------------------------------
@@ -220,7 +220,7 @@ public:
 
     SET_CODE("value = lambda * gennrand_exponential();");
 
-    SET_PARAM_NAMES({"lambda"});
+    SET_PARAMS({"lambda"});
 };
 
 //----------------------------------------------------------------------------
@@ -238,7 +238,7 @@ public:
 
     SET_CODE("value = b * gennrand_gamma(a);");
 
-    SET_PARAM_NAMES({"a", "b"});
+    SET_PARAMS({"a", "b"});
 };
 
 //----------------------------------------------------------------------------
@@ -256,6 +256,6 @@ public:
 
     SET_CODE("value = gennrand_binomial((unsigned int)n, p);");
 
-    SET_PARAM_NAMES({"n", "p"});
+    SET_PARAMS({"n", "p"});
 };
 }   // namespace GeNN::InitVarSnippet

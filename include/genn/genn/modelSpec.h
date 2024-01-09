@@ -43,7 +43,6 @@ Part of the code generation and generated code sections.
 
 namespace GeNN
 {
-using ParamValues = std::unordered_map<std::string, double>;
 using VarValues = std::unordered_map<std::string, InitVarSnippet::Init>;
 using VarReferences = std::unordered_map<std::string, Models::VarReference>;
 using WUVarReferences = std::unordered_map<std::string, Models::WUVarReference>;

@@ -10,7 +10,7 @@
 // GeNN includes
 #include "currentSourceModels.h"
 #include "gennExport.h"
-#include "variableMode.h"
+#include "varLocation.h"
 
 // Forward declarations
 namespace GeNN
@@ -36,9 +36,11 @@ public:
     void setVarLocation(const std::string &varName, VarLocation loc);
 
     //! Set location of extra global parameter
-    /*! This is ignored for simulations on hardware with a single memory space
-        and only applies to extra global parameters which are pointers. */
+    /*! This is ignored for simulations on hardware with a single memory space. */
     void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
+
+    //! Set whether parameter is dynamic or not i.e. it can be changed at runtime
+    void setParamDynamic(const std::string &paramName, bool dynamic = true);
 
     //! Set name of neuron input variable current source model will inject into
     /*! This should either be 'Isyn' or the name of one of the target neuron's additional input variables. */
@@ -52,23 +54,18 @@ public:
     //! Gets the current source model used by this group
     const CurrentSourceModels::Base *getCurrentSourceModel() const{ return m_CurrentSourceModel; }
 
-    const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
+    const std::unordered_map<std::string, Type::NumericValue> &getParams() const{ return m_Params; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
     const std::unordered_map<std::string, Models::VarReference> &getNeuronVarReferences() const{ return m_NeuronVarReferences;  }
 
     //! Get variable location for current source model state variable
-    VarLocation getVarLocation(const std::string &varName) const;
-
-    //! Get variable location for current source model state variable
-    VarLocation getVarLocation(size_t index) const{ return m_VarLocation.at(index); }
+    VarLocation getVarLocation(const std::string &varName) const{ return m_VarLocation.get(varName); }
 
     //! Get location of neuron model extra global parameter by name
-    /*! This is only used by extra global parameters which are pointers*/
-    VarLocation getExtraGlobalParamLocation(const std::string &paramName) const;
+    VarLocation getExtraGlobalParamLocation(const std::string &paramName) const{ return m_ExtraGlobalParamLocation.get(paramName); }
 
-    //! Get location of neuron model extra global parameter by omdex
-    /*! This is only used by extra global parameters which are pointers*/
-    VarLocation getExtraGlobalParamLocation(size_t index) const{ return m_ExtraGlobalParamLocation.at(index); }
+    //! Is parameter dynamic i.e. it can be changed at runtime
+    bool isParamDynamic(const std::string &paramName) const{ return m_DynamicParams.get(paramName); }
 
     //! Get name of neuron input variable current source model will inject into
     /*! This will either be 'Isyn' or the name of one of the target neuron's additional input variables. */
@@ -76,7 +73,7 @@ public:
 
 protected:
     CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
-                  const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
+                  const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                   const std::unordered_map<std::string, Models::VarReference> &neuronVarReferences, const NeuronGroupInternal *trgNeuronGroup, 
                   VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
@@ -90,7 +87,7 @@ protected:
     //------------------------------------------------------------------------
     const NeuronGroupInternal *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
 
-    const std::unordered_map<std::string, double> &getDerivedParams() const{ return m_DerivedParams; }
+    const std::unordered_map<std::string, Type::NumericValue> &getDerivedParams() const{ return m_DerivedParams; }
 
     bool isZeroCopyEnabled() const;
 
@@ -116,18 +113,21 @@ private:
     std::string m_Name;
 
     const CurrentSourceModels::Base *m_CurrentSourceModel;
-    std::unordered_map<std::string, double> m_Params;
-    std::unordered_map<std::string, double> m_DerivedParams;
+    std::unordered_map<std::string, Type::NumericValue> m_Params;
+    std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
     std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
     std::unordered_map<std::string, Models::VarReference> m_NeuronVarReferences;
 
     const NeuronGroupInternal *m_TrgNeuronGroup;
 
     //! Location of individual state variables
-    std::vector<VarLocation> m_VarLocation;
+    LocationContainer m_VarLocation;
 
     //! Location of extra global parameters
-    std::vector<VarLocation> m_ExtraGlobalParamLocation;
+    LocationContainer m_ExtraGlobalParamLocation;
+
+    //! Data structure tracking whether parameters are dynamic or not
+    Snippet::DynamicParameterContainer m_DynamicParams;
 
     //! Name of neuron input variable current source will inject into
     /*! This should either be 'Isyn' or the name of one of the target neuron's additional input variables. */

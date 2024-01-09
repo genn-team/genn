@@ -45,14 +45,14 @@ public:
     //! Update hash from model
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    //! Find the index of a named variable
-    size_t getVarIndex(const std::string &varName) const
+    //! Find the named variable
+    std::optional<Var> getVar(const std::string &varName) const
     {
-        return getNamedVecIndex(varName, getVars());
+        return getNamed(varName, getVars());
     }
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, double> &paramValues, 
+    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
                   const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                   const std::unordered_map<std::string, Models::VarReference> &varRefTargets,
                   const std::string &description) const;
@@ -71,7 +71,7 @@ class DC : public Base
 
     SET_INJECTION_CODE("injectCurrent(amp);\n");
 
-    SET_PARAM_NAMES({"amp"});
+    SET_PARAMS({"amp"});
 };
 
 //----------------------------------------------------------------------------
@@ -88,7 +88,7 @@ class GaussianNoise : public Base
 
     SET_INJECTION_CODE("injectCurrent(mean + (gennrand_normal() * sd));\n");
 
-    SET_PARAM_NAMES({"mean", "sd"} );
+    SET_PARAMS({"mean", "sd"} );
 };
 
 //----------------------------------------------------------------------------
@@ -117,11 +117,11 @@ class PoissonExp : public Base
         "injectCurrent(current);\n"
         "current *= ExpDecay;\n");
 
-    SET_PARAM_NAMES({"weight", "tauSyn", "rate"});
+    SET_PARAMS({"weight", "tauSyn", "rate"});
     SET_VARS({{"current", "scalar"}});
     SET_DERIVED_PARAMS({
-        {"ExpDecay", [](const std::unordered_map<std::string, double> &pars, double dt){ return std::exp(-dt / pars.at("tauSyn")); }},
-        {"Init", [](const std::unordered_map<std::string, double> &pars, double dt){ return pars.at("weight") * (1.0 - std::exp(-dt / pars.at("tauSyn"))) * (pars.at("tauSyn") / dt); }},
-        {"ExpMinusLambda", [](const std::unordered_map<std::string, double> &pars, double dt){ return std::exp(-(pars.at("rate") / 1000.0) * dt); }}});
+        {"ExpDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauSyn").cast<double>()); }},
+        {"Init", [](const ParamValues &pars, double dt){ return pars.at("weight").cast<double>() * (1.0 - std::exp(-dt / pars.at("tauSyn").cast<double>())) * (pars.at("tauSyn").cast<double>() / dt); }},
+        {"ExpMinusLambda", [](const ParamValues &pars, double dt){ return std::exp(-(pars.at("rate").cast<double>() / 1000.0) * dt); }}});
 };
 } // GeNN::CurrentSourceModels

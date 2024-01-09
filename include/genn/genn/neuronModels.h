@@ -62,14 +62,14 @@ public:
     //! Update hash from model
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    //! Find the index of a named variable
-    size_t getVarIndex(const std::string &varName) const
+    //! Find the named variable
+    std::optional<Var> getVar(const std::string &varName) const
     {
-        return getNamedVecIndex(varName, getVars());
+        return getNamed(varName, getVars());
     }
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, double> &paramValues, 
+    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
                   const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                   const std::string &description) const;
 };
@@ -127,13 +127,13 @@ public:
 
     SET_THRESHOLD_CONDITION_CODE("$(V) >= $(ip2)");
 
-    SET_PARAM_NAMES({"Vspike", "alpha", "y", "beta"});
+    SET_PARAMS({"Vspike", "alpha", "y", "beta"});
     SET_VARS({{"V","scalar"}, {"preV", "scalar"}});
 
     SET_DERIVED_PARAMS({
-        {"ip0", [](const std::unordered_map<std::string, double> &pars, double){ return pars.at("Vspike") * pars.at("Vspike") * pars.at("alpha"); }},
-        {"ip1", [](const std::unordered_map<std::string, double> &pars, double){ return pars.at("Vspike") * pars.at("y"); }},
-        {"ip2", [](const std::unordered_map<std::string, double> &pars, double){ return (pars.at("Vspike") * pars.at("alpha")) + (pars.at("Vspike") * pars.at("y")); }}});
+        {"ip0", [](const ParamValues &pars, double){ return pars.at("Vspike").cast<double>() * pars.at("Vspike").cast<double>() * pars.at("alpha").cast<double>(); }},
+        {"ip1", [](const ParamValues &pars, double){ return pars.at("Vspike").cast<double>() * pars.at("y").cast<double>(); }},
+        {"ip2", [](const ParamValues &pars, double){ return (pars.at("Vspike").cast<double>() * pars.at("alpha").cast<double>()) + (pars.at("Vspike").cast<double>() * pars.at("y").cast<double>()); }}});
 };
 
 //----------------------------------------------------------------------------
@@ -176,7 +176,7 @@ public:
 
     SET_THRESHOLD_CONDITION_CODE("$(V) >= 29.99");
 
-    SET_PARAM_NAMES({"a", "b", "c", "d"});
+    SET_PARAMS({"a", "b", "c", "d"});
     SET_VARS({{"V","scalar"}, {"U", "scalar"}});
 
     SET_NEEDS_AUTO_REFRACTORY(false);
@@ -204,7 +204,7 @@ class IzhikevichVariable : public Izhikevich
 public:
     DECLARE_SNIPPET(NeuronModels::IzhikevichVariable);
 
-    SET_PARAM_NAMES({});
+    SET_PARAMS({});
     SET_VARS({{"V","scalar"}, {"U", "scalar"},
               {"a", "scalar", VarAccess::READ_ONLY}, {"b", "scalar", VarAccess::READ_ONLY},
               {"c", "scalar", VarAccess::READ_ONLY}, {"d", "scalar", VarAccess::READ_ONLY}});
@@ -234,7 +234,7 @@ public:
         "$(V) = $(Vreset);\n"
         "$(RefracTime) = $(TauRefrac);\n");
 
-    SET_PARAM_NAMES({
+    SET_PARAMS({
         "C",          // Membrane capacitance
         "TauM",       // Membrane time constant [ms]
         "Vrest",      // Resting membrane potential [mV]
@@ -244,8 +244,8 @@ public:
         "TauRefrac"});
 
     SET_DERIVED_PARAMS({
-        {"ExpTC", [](const std::unordered_map<std::string, double> &pars, double dt){ return std::exp(-dt / pars.at("TauM")); }},
-        {"Rmembrane", [](const std::unordered_map<std::string, double> &pars, double){ return  pars.at("TauM") / pars.at("C"); }}});
+        {"ExpTC", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("TauM").cast<double>()); }},
+        {"Rmembrane", [](const ParamValues &pars, double){ return  pars.at("TauM").cast<double>() / pars.at("C").cast<double>(); }}});
 
     SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
 
@@ -350,7 +350,7 @@ public:
         "}\n");
     SET_THRESHOLD_CONDITION_CODE("$(V) >= $(Vspike)");
 
-    SET_PARAM_NAMES({"trefract", "tspike", "Vspike", "Vrest"});
+    SET_PARAMS({"trefract", "tspike", "Vspike", "Vrest"});
     SET_VARS({{"V", "scalar"}, {"spikeTime", "scalar"}});
     SET_EXTRA_GLOBAL_PARAMS({{"firingProb", "scalar*"}, {"offset", "unsigned int"}});
 };
@@ -386,9 +386,9 @@ public:
 
     SET_THRESHOLD_CONDITION_CODE("$(timeStepToSpike) <= 0.0");
 
-    SET_PARAM_NAMES({"rate"});
+    SET_PARAMS({"rate"});
     SET_VARS({{"timeStepToSpike", "scalar"}});
-    SET_DERIVED_PARAMS({{"isi", [](const std::unordered_map<std::string, double> &pars, double dt){ return 1000.0 / (pars.at("rate") * dt); }}});
+    SET_DERIVED_PARAMS({{"isi", [](const ParamValues &pars, double dt){ return 1000.0 / (pars.at("rate").cast<double>() * dt); }}});
     SET_NEEDS_AUTO_REFRACTORY(false);
 };
 
@@ -484,7 +484,7 @@ public:
 
     SET_THRESHOLD_CONDITION_CODE("$(V) >= 0.0");
 
-    SET_PARAM_NAMES({"gNa", "ENa", "gK", "EK", "gl", "El", "C"});
+    SET_PARAMS({"gNa", "ENa", "gK", "EK", "gl", "El", "C"});
     SET_VARS({{"V", "scalar"}, {"m", "scalar"}, {"h", "scalar"}, {"n", "scalar"}});
 };
 
@@ -606,6 +606,6 @@ public:
         "   $(V)+= Imem/$(C)*mdt;\n"
         "}\n");
 
-    SET_PARAM_NAMES({"gNa", "ENa", "gK", "EK", "gl", "El", "C", "ntimes"});
+    SET_PARAMS({"gNa", "ENa", "gK", "EK", "gl", "El", "C", "ntimes"});
 };
 } // GeNN::NeuronModels

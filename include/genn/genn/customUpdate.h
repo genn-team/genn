@@ -10,7 +10,7 @@
 #include "gennExport.h"
 #include "gennUtils.h"
 #include "customUpdateModels.h"
-#include "variableMode.h"
+#include "varLocation.h"
 
 //------------------------------------------------------------------------
 // GeNN::CustomUpdateBase
@@ -30,6 +30,13 @@ public:
     /*! This is ignored for simulations on hardware with a single memory space */
     void setVarLocation(const std::string &varName, VarLocation loc);
 
+    //! Set location of extra global parameter
+    /*! This is ignored for simulations on hardware with a single memory space. */
+    void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
+
+    //! Set whether parameter is dynamic or not i.e. it can be changed at runtime
+    void setParamDynamic(const std::string &paramName, bool dynamic = true);
+
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
@@ -39,13 +46,19 @@ public:
     //! Gets the custom update model used by this group
     const CustomUpdateModels::Base *getCustomUpdateModel() const{ return m_CustomUpdateModel; }
 
-    const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
+    const std::unordered_map<std::string, Type::NumericValue> &getParams() const{ return m_Params; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     const std::unordered_map<std::string, Models::EGPReference> &getEGPReferences() const{ return m_EGPReferences;  }
 
     //! Get variable location for custom update model state variable
-    VarLocation getVarLocation(const std::string &varName) const;
+    VarLocation getVarLocation(const std::string &varName) const{ return m_VarLocation.get(varName); }
+
+    //! Get location of neuron model extra global parameter by name
+    VarLocation getExtraGlobalParamLocation(const std::string &paramName) const{ return m_ExtraGlobalParamLocation.get(paramName); }
+
+    //! Is parameter dynamic i.e. it can be changed at runtime
+    bool isParamDynamic(const std::string &paramName) const{ return m_DynamicParams.get(paramName); }
 
     //! Is var init code required for any variables in this custom update group's custom update model?
     bool isVarInitRequired() const;
@@ -55,7 +68,7 @@ public:
 
 protected:
     CustomUpdateBase(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 
-                     const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
+                     const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                      const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
@@ -66,7 +79,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
-    const std::unordered_map<std::string, double> &getDerivedParams() const{ return m_DerivedParams; }
+    const std::unordered_map<std::string, Type::NumericValue> &getDerivedParams() const{ return m_DerivedParams; }
 
     //! Does this current source group require an RNG for it's init code
     bool isInitRNGRequired() const;
@@ -133,12 +146,16 @@ protected:
         for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
             const auto varRef = varRefs.at(modelVarRef.name);
 
-            // If the shape of the references variable doesn't match the dimensionality 
-            // of the custom update, check its access mode isn't read-write
-            if((m_Dims != varRef.getVarDims())
+            // Determine what dimensions are 'missing' from this variable compared to update dimensionality
+            const auto missingDims = clearVarAccessDim(m_Dims, varRef.getVarDims());
+
+            // If any dimensions are missing (unless missing dimensions is BATCH and
+            // model isn't actually batched), check variable isn't accessed read-write
+            if(((missingDims != VarAccessDim{0}) && (missingDims != VarAccessDim::BATCH || batchSize > 1))
                && (modelVarRef.access == VarAccessMode::READ_WRITE))
             {
-                throw std::runtime_error("Variable references to lower-dimensional variables cannot be read-write.");
+                throw std::runtime_error("Variable reference '" + modelVarRef.name + "' in custom update '" + getName() + 
+                                         "' to lower-dimensional variables cannot be read-write.");
             }
         }
     }
@@ -169,17 +186,20 @@ private:
     std::string m_UpdateGroupName;
 
     const CustomUpdateModels::Base *m_CustomUpdateModel;
-    std::unordered_map<std::string, double> m_Params;
-    std::unordered_map<std::string, double> m_DerivedParams;
+    std::unordered_map<std::string, Type::NumericValue> m_Params;
+    std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
     std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
 
     std::unordered_map<std::string, Models::EGPReference> m_EGPReferences;
 
     //! Location of individual state variables
-    std::vector<VarLocation> m_VarLocation;
+    LocationContainer m_VarLocation;
 
     //! Location of extra global parameters
-    std::vector<VarLocation> m_ExtraGlobalParamLocation;
+    LocationContainer m_ExtraGlobalParamLocation;
+
+    //! Data structure tracking whether parameters are dynamic or not
+    Snippet::DynamicParameterContainer m_DynamicParams;
 
     //! Tokens produced by scanner from update code
     std::vector<Transpiler::Token> m_UpdateCodeTokens;
@@ -234,7 +254,7 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string&) const{ return VarLocation::HOST_DEVICE; }
+    VarLocation getLoc(const std::string &varName) const{ return m_CU.getExtraGlobalParamLocation(varName); }
 
     Snippet::Base::EGPVec getDefs() const{ return m_CU.getCustomUpdateModel()->getExtraGlobalParams(); }
 
@@ -259,7 +279,7 @@ public:
 
 protected:
     CustomUpdate(const std::string &name, const std::string &updateGroupName,
-                 const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
+                 const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, Type::NumericValue> &params,
                  const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
                  const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
@@ -312,7 +332,7 @@ public:
 
 protected:
     CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
-                   const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
+                   const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, Type::NumericValue> &params,
                    const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
                    const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 

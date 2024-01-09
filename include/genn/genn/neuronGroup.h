@@ -5,12 +5,13 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 // GeNN includes
 #include "gennExport.h"
 #include "neuronModels.h"
-#include "variableMode.h"
+#include "varLocation.h"
 
 // Forward declarations
 namespace GeNN
@@ -103,9 +104,11 @@ public:
     void setVarLocation(const std::string &varName, VarLocation loc);
 
     //! Set location of neuron model extra global parameter
-    /*! This is ignored for simulations on hardware with a single memory space
-        and only applies to extra global parameters which are pointers. */
+    /*! This is ignored for simulations on hardware with a single memory space. */
     void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
+
+    //! Set whether parameter is dynamic or not i.e. it can be changed at runtime
+    void setParamDynamic(const std::string &paramName, bool dynamic = true);
 
     //! Enables and disable spike recording for this population
     void setSpikeRecordingEnabled(bool enabled) { m_SpikeRecordingEnabled = enabled; }
@@ -124,7 +127,7 @@ public:
     //! Gets the neuron model used by this group
     const NeuronModels::Base *getNeuronModel() const{ return m_NeuronModel; }
 
-    const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
+    const std::unordered_map<std::string, Type::NumericValue> &getParams() const{ return m_Params; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     bool isSpikeTimeRequired() const;
@@ -157,15 +160,13 @@ public:
     VarLocation getPrevSpikeEventTimeLocation() const { return m_PrevSpikeEventTimeLocation; }
 
     //! Get location of neuron model state variable by name
-    VarLocation getVarLocation(const std::string &varName) const;
+    VarLocation getVarLocation(const std::string &varName) const { return m_VarLocation.get(varName); }
 
     //! Get location of neuron model extra global parameter by name
-    /*! This is only used by extra global parameters which are pointers*/
-    VarLocation getExtraGlobalParamLocation(const std::string &paramName) const;
+    VarLocation getExtraGlobalParamLocation(const std::string &paramName) const { return m_ExtraGlobalParamLocation.get(paramName); }
 
-    //! Get location of neuron model extra global parameter by omdex
-    /*! This is only used by extra global parameters which are pointers*/
-    VarLocation getExtraGlobalParamLocation(size_t index) const{ return m_ExtraGlobalParamLocation.at(index); }
+    //! Is parameter dynamic i.e. it can be changed at runtime
+    bool isParamDynamic(const std::string &paramName) const{ return m_DynamicParams.get(paramName); }
 
     //! Is spike recording enabled for this population?
     bool isSpikeRecordingEnabled() const { return m_SpikeRecordingEnabled; }
@@ -175,7 +176,7 @@ public:
 
 protected:
     NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
+                const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
@@ -185,7 +186,7 @@ protected:
     void checkNumDelaySlots(unsigned int requiredDelay);
     
     // Set a variable as requiring queueing
-    void setVarQueueRequired(const std::string &varName);
+    void setVarQueueRequired(const std::string &varName){ m_VarQueueRequired.insert(varName); }
     
     void addSpkEventCondition(const std::string &code, SynapseGroupInternal *synapseGroup);
 
@@ -231,7 +232,7 @@ protected:
     //! Gets pointers to all current sources which provide input to this neuron group
     const std::vector<CurrentSourceInternal*> &getCurrentSources() const { return m_CurrentSourceGroups; }
 
-    const std::unordered_map<std::string, double> &getDerivedParams() const{ return m_DerivedParams; }
+    const std::unordered_map<std::string, Type::NumericValue> &getDerivedParams() const{ return m_DerivedParams; }
 
     const std::set<SpikeEventThreshold> &getSpikeEventCondition() const{ return m_SpikeEventCondition; }
 
@@ -281,8 +282,8 @@ private:
     const unsigned int m_NumNeurons;
 
     const NeuronModels::Base *m_NeuronModel;
-    const std::unordered_map<std::string, double> m_Params;
-    std::unordered_map<std::string, double> m_DerivedParams;
+    const std::unordered_map<std::string, Type::NumericValue> m_Params;
+    std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
     std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
     std::vector<SynapseGroupInternal*> m_InSyn;
     std::vector<SynapseGroupInternal*> m_OutSyn;
@@ -294,8 +295,8 @@ private:
     unsigned int m_NumDelaySlots;
     std::vector<CurrentSourceInternal*> m_CurrentSourceGroups;
 
-    //! Vector specifying which variables require queues
-    std::vector<bool> m_VarQueueRequired;
+    //! Set of names of variable requiring queueing
+    std::unordered_set<std::string> m_VarQueueRequired;
 
     //! Location of spikes from neuron group
     VarLocation m_SpikeLocation;
@@ -314,12 +315,15 @@ private:
 
     //! Location of previous spike-like-event times
     VarLocation m_PrevSpikeEventTimeLocation;
-
+    
     //! Location of individual state variables
-    std::vector<VarLocation> m_VarLocation;
+    LocationContainer m_VarLocation;
 
     //! Location of extra global parameters
-    std::vector<VarLocation> m_ExtraGlobalParamLocation;
+    LocationContainer m_ExtraGlobalParamLocation;
+
+    //! Data structure tracking whether parameters are dynamic or not
+    Snippet::DynamicParameterContainer m_DynamicParams;
 
     //! Tokens produced by scanner from simc ode
     std::vector<Transpiler::Token> m_SimCodeTokens;

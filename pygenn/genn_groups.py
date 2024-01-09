@@ -9,7 +9,7 @@ from weakref import proxy
 import numpy as np
 
 from . import neuron_models, types
-from .genn import (CustomUpdateWU, SynapseMatrixConnectivity,
+from .genn import (CustomUpdateWU, NumericValue, SynapseMatrixConnectivity,
                    SynapseMatrixWeight, VarAccessDim, VarLocation)
 from .genn import get_var_access_dim
 from .model_preprocessor import (prepare_egps, prepare_vars, Array,
@@ -62,6 +62,16 @@ class GroupMixin(object):
         self.vars = {}
         self.extra_global_params = {}
 
+    def set_dynamic_param_value(self, name, value):
+        """Set the value of a dynamic parameter at runtime
+
+        Args:
+        name    --  string with the name of the parameter
+        value   --  numeric parameter value
+        """
+        self._model._runtime.set_dynamic_param_value(self, name,
+                                                     NumericValue(value))
+    
     @deprecated("Please call pull_from_device directly on variable")
     def pull_var_from_device(self, var_name):
         """Pull variable from the device for a given population

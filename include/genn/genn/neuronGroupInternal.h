@@ -14,7 +14,7 @@ public:
     using GroupExternal = NeuronGroup;
 
     NeuronGroupInternal(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                        const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
+                        const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                         VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   NeuronGroup(name, numNeurons, neuronModel, params, varInitialisers,
                     defaultVarLocation, defaultExtraGlobalParamLocation)

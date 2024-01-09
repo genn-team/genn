@@ -359,7 +359,7 @@ private:
                 os << "Merged" << T::name << "Group" << g.getIndex() << " group = {";
                 const auto sortedFields = g.getSortedFields(*this);
                 for(const auto &f : sortedFields) {
-                    os << std::get<1>(f) << ", ";
+                    os << f.name << ", ";
                 }
                 os << "};" << std::endl;
 

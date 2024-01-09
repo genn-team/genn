@@ -12,7 +12,7 @@
 #include "postsynapticModels.h"
 #include "weightUpdateModels.h"
 #include "synapseMatrixType.h"
-#include "variableMode.h"
+#include "varLocation.h"
 
 // Forward declarations
 namespace GeNN
@@ -59,8 +59,7 @@ public:
     void setWUPostVarLocation(const std::string &varName, VarLocation loc);
     
     //! Set location of weight update model extra global parameter
-    /*! This is ignored for simulations on hardware with a single memory space
-        and only applies to extra global parameters which are pointers. */
+    /*! This is ignored for simulations on hardware with a single memory space. */
     void setWUExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
     //! Set location of postsynaptic model state variable
@@ -68,9 +67,14 @@ public:
     void setPSVarLocation(const std::string &varName, VarLocation loc);
 
     //! Set location of postsynaptic model extra global parameter
-    /*! This is ignored for simulations on hardware with a single memory space
-        and only applies to extra global parameters which are pointers. */
+    /*! This is ignored for simulations on hardware with a single memory space. */
     void setPSExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
+
+    //! Set whether weight update model parameter is dynamic or not i.e. it can be changed at runtime
+    void setWUParamDynamic(const std::string &paramName, bool dynamic = true);
+
+    //! Set whether weight update model parameter is dynamic or not i.e. it can be changed at runtime
+    void setPSParamDynamic(const std::string &paramName, bool dynamic = true);
 
     //! Set name of neuron input variable postsynaptic model will target
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
@@ -81,8 +85,7 @@ public:
     void setPreTargetVar(const std::string &varName);
 
     //! Set location of sparse connectivity initialiser extra global parameter
-    /*! This is ignored for simulations on hardware with a single memory space
-        and only applies to extra global parameters which are pointers. */
+    /*! This is ignored for simulations on hardware with a single memory space. */
     void setSparseConnectivityExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
     //! Set location of variables used to combine input from this synapse group
@@ -91,7 +94,7 @@ public:
 
     //! Set variable mode used for sparse connectivity
     /*! This is ignored for simulations on hardware with a single memory space */
-    void setSparseConnectivityLocation(VarLocation loc);
+    void setSparseConnectivityLocation(VarLocation loc) { m_SparseConnectivityLocation = loc; }
 
     //! Set variable mode used for this synapse group's dendritic delay buffers
     void setDendriticDelayLocation(VarLocation loc) { m_DendriticDelayLocation = loc; }
@@ -130,8 +133,8 @@ public:
     unsigned int getNumThreadsPerSpike() const{ return m_NumThreadsPerSpike; }
     unsigned int getDelaySteps() const{ return m_DelaySteps; }
     unsigned int getBackPropDelaySteps() const{ return m_BackPropDelaySteps; }
-    unsigned int getMaxConnections() const;
-    unsigned int getMaxSourceConnections() const;
+    unsigned int getMaxConnections() const{ return m_MaxConnections; }
+    unsigned int getMaxSourceConnections() const{ return m_MaxSourceConnections; }
     unsigned int getMaxDendriticDelayTimesteps() const{ return m_MaxDendriticDelayTimesteps; }
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
     const std::vector<unsigned int> &getKernelSize() const { return m_KernelSize; }
@@ -141,10 +144,34 @@ public:
     VarLocation getInSynLocation() const { return m_InSynLocation; }
 
     //! Get variable mode used for sparse connectivity
-    VarLocation getSparseConnectivityLocation() const;
+    VarLocation getSparseConnectivityLocation() const{ return m_SparseConnectivityLocation; }
 
     //! Get variable mode used for this synapse group's dendritic delay buffers
     VarLocation getDendriticDelayLocation() const{ return m_DendriticDelayLocation; }
+
+    //! Get location of weight update model per-synapse state variable by name
+    VarLocation getWUVarLocation(const std::string &varName) const{ return m_WUVarLocation.get(varName); }
+
+    //! Get location of weight update model presynaptic state variable by name
+    VarLocation getWUPreVarLocation(const std::string &varName) const{ return m_WUPreVarLocation.get(varName); }
+
+    //! Get location of weight update model postsynaptic state variable by name
+    VarLocation getWUPostVarLocation(const std::string &varName) const{ return m_WUPostVarLocation.get(varName); }
+
+    //! Get location of weight update model extra global parameter by name
+    VarLocation getWUExtraGlobalParamLocation(const std::string &paramName) const{ return m_WUExtraGlobalParamLocation.get(paramName); }
+
+    //! Get location of postsynaptic model state variable
+    VarLocation getPSVarLocation(const std::string &varName) const{ return m_WUVarLocation.get(varName); }
+
+    //! Get location of postsynaptic model extra global parameter by name
+    VarLocation getPSExtraGlobalParamLocation(const std::string &paramName) const{ return m_PSExtraGlobalParamLocation.get(paramName); }
+
+    //! Is postsynaptic model parameter dynamic i.e. it can be changed at runtime
+    bool isPSParamDynamic(const std::string &paramName) const{ return m_PSDynamicParams.get(paramName); }
+
+    //! Is weight update model parameter dynamic i.e. it can be changed at runtime
+    bool isWUParamDynamic(const std::string &paramName) const{ return m_WUDynamicParams.get(paramName); }
 
     //! Does synapse group need to handle 'true' spikes/
     bool isTrueSpikeRequired() const;
@@ -178,26 +205,7 @@ public:
 
     bool isZeroCopyEnabled() const;
 
-    //! Get location of weight update model per-synapse state variable by name
-    VarLocation getWUVarLocation(const std::string &var) const;
-
-    //! Get location of weight update model presynaptic state variable by name
-    VarLocation getWUPreVarLocation(const std::string &var) const;
-
-    //! Get location of weight update model postsynaptic state variable by name
-    VarLocation getWUPostVarLocation(const std::string &var) const;
-
-    //! Get location of weight update model extra global parameter by name
-    /*! This is only used by extra global parameters which are pointers*/
-    VarLocation getWUExtraGlobalParamLocation(const std::string &paramName) const;
-
-    //! Get location of postsynaptic model state variable
-    VarLocation getPSVarLocation(const std::string &var) const;
-
-    //! Get location of postsynaptic model extra global parameter by name
-    /*! This is only used by extra global parameters which are pointers*/
-    VarLocation getPSExtraGlobalParamLocation(const std::string &paramName) const;
-
+   
     //! Get name of neuron input variable postsynaptic model will target
     /*! This will either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
     const std::string &getPostTargetVar() const{ return m_PostTargetVar; }
@@ -206,10 +214,6 @@ public:
     /*! This will either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */
     const std::string &getPreTargetVar() const{ return m_PreTargetVar; }
     
-    //! Get location of sparse connectivity initialiser extra global parameter by name
-    /*! This is only used by extra global parameters which are pointers*/
-    VarLocation getSparseConnectivityExtraGlobalParamLocation(const std::string &paramName) const;
-
 protected:
     SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
                  const WeightUpdateModels::Init &wumInitialiser, const PostsynapticModels::Init &psmInitialiser,
@@ -391,6 +395,7 @@ protected:
     boost::uuids::detail::sha1::digest_type getConnectivityHostInitHashDigest() const;
     
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
+
 private:
     //------------------------------------------------------------------------
     // Members
@@ -456,30 +461,32 @@ private:
     //! Initialiser used for creating toeplitz connectivity
     InitToeplitzConnectivitySnippet::Init m_ToeplitzConnectivityInitialiser;
 
-
     //! Location of individual per-synapse state variables
-    std::vector<VarLocation> m_WUVarLocation;
+    LocationContainer m_WUVarLocation;
 
     //! Location of individual presynaptic state variables
-    std::vector<VarLocation> m_WUPreVarLocation;
+    LocationContainer m_WUPreVarLocation;
 
     //! Location of individual postsynaptic state variables
-    std::vector<VarLocation> m_WUPostVarLocation;
+    LocationContainer m_WUPostVarLocation;
 
     //! Location of weight update model extra global parameters
-    std::vector<VarLocation> m_WUExtraGlobalParamLocation;
+    LocationContainer m_WUExtraGlobalParamLocation;
 
     //! Whether indidividual state variables of post synapse should use zero-copied memory
-    std::vector<VarLocation> m_PSVarLocation;
+    LocationContainer m_PSVarLocation;
 
     //! Location of postsynaptic model extra global parameters
-    std::vector<VarLocation> m_PSExtraGlobalParamLocation;
+    LocationContainer m_PSExtraGlobalParamLocation;
 
     //! Location of sparse connectivity
     VarLocation m_SparseConnectivityLocation;
 
-    //! Location of connectivity initialiser extra global parameters
-    std::vector<VarLocation> m_ConnectivityExtraGlobalParamLocation;
+    //! Data structure tracking whether postsynaptic model parameters are dynamic or not
+    Snippet::DynamicParameterContainer m_PSDynamicParams;
+
+    //! Data structure tracking whether weight update model parameters are dynamic or not
+    Snippet::DynamicParameterContainer m_WUDynamicParams;
 
     //! Suffix for postsynaptic model variable names
     /*! This may not be the name of this synapse group if it has been fused */

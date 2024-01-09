@@ -29,7 +29,7 @@ Base::EGPRef::EGPRef(const std::string &n, const std::string &t)
 const Type::UnresolvedType &VarReference::getVarType() const
 {
     return std::visit(
-        Utils::Overload{[](const auto &ref){ return std::cref(ref.var.type); }},
+        [](const auto &ref){ return std::cref(ref.var.type); },
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -63,7 +63,7 @@ VarAccessDim VarReference::getVarDims() const
 const std::string &VarReference::getVarName() const
 {
     return std::visit(
-        Utils::Overload{[](const auto &ref){ return std::cref(ref.var.name); }},
+        [](const auto &ref){ return std::cref(ref.var.name); },
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -143,57 +143,89 @@ bool VarReference::operator < (const VarReference &other) const
 VarReference VarReference::createVarRef(NeuronGroup *ng, const std::string &varName)
 {
     const auto *nm = ng->getNeuronModel();
-    return VarReference(NGRef{static_cast<NeuronGroupInternal*>(ng), 
-                              nm->getVars()[nm->getVarIndex(varName)]});
+    try {
+        return VarReference(NGRef{static_cast<NeuronGroupInternal*>(ng), nm->getVar(varName).value()});
+    }
+    catch(std::bad_optional_access&) {
+        throw std::runtime_error("Variable '" + varName + "' not found");
+    }
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createVarRef(CurrentSource *cs, const std::string &varName)
 {
     const auto *csm = cs->getCurrentSourceModel();
-    return VarReference(CSRef{static_cast<CurrentSourceInternal*>(cs),
-                              csm->getVars()[csm->getVarIndex(varName)]});
+    try {
+        return VarReference(CSRef{static_cast<CurrentSourceInternal*>(cs), csm->getVar(varName).value()});
+    }
+    catch(std::bad_optional_access&) {
+        throw std::runtime_error("Variable '" + varName + "' not found");
+    }
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createVarRef(CustomUpdate *cu, const std::string &varName)
 {
     const auto *cum = cu->getCustomUpdateModel();
-    return VarReference(CURef{static_cast<CustomUpdateInternal*>(cu),
-                              cum->getVars()[cum->getVarIndex(varName)]});
+    try {
+        return VarReference(CURef{static_cast<CustomUpdateInternal*>(cu), cum->getVar(varName).value()});
+    }
+    catch(std::bad_optional_access&) {
+        throw std::runtime_error("Variable '" + varName + "' not found");
+    }
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createPreVarRef(CustomConnectivityUpdate *ccu, const std::string &varName)
 {
     const auto *ccum = ccu->getCustomConnectivityUpdateModel();
-    return VarReference(CCUPreRef{static_cast<CustomConnectivityUpdateInternal*>(ccu),
-                                  ccum->getPreVars()[ccum->getPreVarIndex(varName)]});
+    try {
+        return VarReference(CCUPreRef{static_cast<CustomConnectivityUpdateInternal*>(ccu), ccum->getPreVar(varName).value()});
+    }
+    catch(std::bad_optional_access&) {
+        throw std::runtime_error("Variable '" + varName + "' not found");
+    }
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createPostVarRef(CustomConnectivityUpdate *ccu, const std::string &varName)
 {
     const auto *ccum = ccu->getCustomConnectivityUpdateModel();
-    return VarReference(CCUPostRef{static_cast<CustomConnectivityUpdateInternal*>(ccu),
-                                   ccum->getPostVars()[ccum->getPostVarIndex(varName)]});
+    try {
+        return VarReference(CCUPostRef{static_cast<CustomConnectivityUpdateInternal*>(ccu), ccum->getPostVar(varName).value()});
+    }
+    catch(std::bad_optional_access&) {
+        throw std::runtime_error("Variable '" + varName + "' not found");
+    }
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createPSMVarRef(SynapseGroup *sg, const std::string &varName)
 {
     const auto *psm = sg->getPSInitialiser().getSnippet();
-    return VarReference(PSMRef{static_cast<SynapseGroupInternal*>(sg),
-                               psm->getVars()[psm->getVarIndex(varName)]});
+    try {
+        return VarReference(PSMRef{static_cast<SynapseGroupInternal*>(sg), psm->getVar(varName).value()});
+    }
+    catch(std::bad_optional_access&) {
+        throw std::runtime_error("Variable '" + varName + "' not found");
+    }
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createWUPreVarRef(SynapseGroup *sg, const std::string &varName)
 {
     const auto *wum = sg->getWUInitialiser().getSnippet();
-    return VarReference(WUPreRef{static_cast<SynapseGroupInternal*>(sg),
-                                 wum->getPreVars()[wum->getPreVarIndex(varName)]});
+    try {
+        return VarReference(WUPreRef{static_cast<SynapseGroupInternal*>(sg), wum->getPreVar(varName).value()});
+    }
+    catch(std::bad_optional_access&) {
+        throw std::runtime_error("Variable '" + varName + "' not found");
+    }
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createWUPostVarRef(SynapseGroup *sg, const std::string &varName)
 {
     const auto *wum = sg->getWUInitialiser().getSnippet();
-    return VarReference(WUPostRef{static_cast<SynapseGroupInternal*>(sg),
-                                  wum->getPostVars()[wum->getPostVarIndex(varName)]});
+    try {
+        return VarReference(WUPostRef{static_cast<SynapseGroupInternal*>(sg), wum->getPostVar(varName).value()});
+    }
+    catch(std::bad_optional_access&) {
+        throw std::runtime_error("Variable '" + varName + "' not found");
+    }
 }
 //----------------------------------------------------------------------------
 const std::string &VarReference::getTargetName() const 
@@ -213,7 +245,7 @@ const std::string &VarReference::getTargetName() const
 const Type::UnresolvedType &WUVarReference::getVarType() const
 {
     return std::visit(
-        Utils::Overload{[](const auto &ref){ return std::cref(ref.var.type); }},
+        [](const auto &ref){ return std::cref(ref.var.type); },
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -241,8 +273,7 @@ VarAccessDim WUVarReference::getVarDims() const
 const Runtime::ArrayBase *WUVarReference::getTargetArray(const Runtime::Runtime &runtime) const
 {
     return std::visit(
-        Utils::Overload{
-            [&runtime](const auto &ref) { return runtime.getArray(*ref.group, ref.var.name); }},
+        [&runtime](const auto &ref) { return runtime.getArray(*ref.group, ref.var.name); },
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -349,30 +380,48 @@ WUVarReference WUVarReference::createWUVarReference(SynapseGroup *sg, const std:
 {
     const auto *wum = sg->getWUInitialiser().getSnippet();
     auto *sgInternal = static_cast<SynapseGroupInternal*>(sg);
-    const auto var = wum->getVars()[wum->getVarIndex(varName)];
-    if(transposeSG) {
-        const auto *transposeWUM = transposeSG->getWUInitialiser().getSnippet();
-        return WUVarReference(WURef{sgInternal, static_cast<SynapseGroupInternal*>(transposeSG),
-                                    var, transposeWUM->getVars()[transposeWUM->getVarIndex(transposeVarName)]});
+    
+    const auto var = wum->getVar(varName);
+    if(var) {
+        if(transposeSG) {
+            const auto *transposeWUM = transposeSG->getWUInitialiser().getSnippet();
+            try {
+                return WUVarReference(WURef{sgInternal, static_cast<SynapseGroupInternal*>(transposeSG),
+                                            var.value(), transposeWUM->getVar(transposeVarName).value()});
+            }
+            catch(std::bad_optional_access&) {
+                throw std::runtime_error("Transpose variable '" + transposeVarName + "' not found");
+            }
+        }
+        else {
+            return WUVarReference(WURef{static_cast<SynapseGroupInternal*>(sg), nullptr, var.value(), std::nullopt});
+        }
     }
     else {
-        return WUVarReference(WURef{static_cast<SynapseGroupInternal*>(sg), nullptr,
-                                    var, std::nullopt});
+        throw std::runtime_error("Variable '" + varName + "' not found");
     }
 }
 //------------------------------------------------------------------------
 WUVarReference WUVarReference::createWUVarReference(CustomUpdateWU *cu, const std::string &varName)
 {
     const auto *cum = cu->getCustomUpdateModel();
-    return WUVarReference(CURef{static_cast<CustomUpdateWUInternal*>(cu),
-                                cum->getVars()[cum->getVarIndex(varName)]});
+    try {
+        return WUVarReference(CURef{static_cast<CustomUpdateWUInternal*>(cu), cum->getVar(varName).value()});
+    }
+    catch(std::bad_optional_access&) {
+        throw std::runtime_error("Transpose variable '" + varName + "' not found");
+    }
 }
 //------------------------------------------------------------------------
 WUVarReference WUVarReference::createWUVarReference(CustomConnectivityUpdate *ccu, const std::string &varName)
 {
     const auto *ccum = ccu->getCustomConnectivityUpdateModel();
-    return WUVarReference(CCURef{static_cast<CustomConnectivityUpdateInternal*>(ccu),
-                                 ccum->getVars()[ccum->getVarIndex(varName)]});
+    try {
+        return WUVarReference(CCURef{static_cast<CustomConnectivityUpdateInternal*>(ccu), ccum->getVar(varName).value()});
+    }
+    catch(std::bad_optional_access&) {
+        throw std::runtime_error("Variable '" + varName + "' not found");
+    }
 }
 //------------------------------------------------------------------------
 WUVarReference::WUVarReference(const DetailType &detail)
@@ -439,14 +488,14 @@ SynapseGroupInternal *WUVarReference::getTransposeSynapseGroupInternal() const
 const std::string &WUVarReference::getVarName() const
 {
     return std::visit(
-        Utils::Overload{[](const auto &ref){ return std::cref(ref.var.name); }},
+        [](const auto &ref){ return std::cref(ref.var.name); },
         m_Detail);
 }
 //----------------------------------------------------------------------------
 const std::string &WUVarReference::getTargetName() const
 {
     return std::visit(
-        Utils::Overload{[](const auto &ref) { return std::cref(ref.group->getName()); }},
+        [](const auto &ref) { return std::cref(ref.group->getName()); },
         m_Detail);
 }
 //------------------------------------------------------------------------
@@ -484,66 +533,94 @@ std::optional<std::string> WUVarReference::getTransposeTargetName() const
 const Models::Base::EGP &EGPReference::getEGP() const
 {
     return std::visit(
-        Utils::Overload{[](const auto &ref) { return std::cref(ref.egp); }},
+        [](const auto &ref) { return std::cref(ref.egp); },
         m_Detail);
 }
  //----------------------------------------------------------------------------
 const Runtime::ArrayBase *EGPReference::getTargetArray(const Runtime::Runtime &runtime) const
 {
     return std::visit(
-        Utils::Overload{
-            [&runtime](const auto &ref) { return runtime.getArray(*ref.group, ref.egp.name); }},
+        [&runtime](const auto &ref) { return runtime.getArray(*ref.group, ref.egp.name); },
         m_Detail);
 }
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createEGPRef(NeuronGroup *ng, const std::string &egpName)
 {
     const auto *nm = ng->getNeuronModel();
-    return EGPReference(NGRef{ng, nm->getExtraGlobalParams()[nm->getExtraGlobalParamIndex(egpName)]});
+    try {
+        return EGPReference(NGRef{ng, nm->getExtraGlobalParam(egpName).value()});
+    }
+    catch(std::bad_optional_access&) {
+        throw std::runtime_error("Extra global parameter '" + egpName + "' not found");
+    }
 }
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createEGPRef(CurrentSource *cs, const std::string &egpName)
 {
     const auto *cm = cs->getCurrentSourceModel();
-    return EGPReference(CSRef{cs, cm->getExtraGlobalParams()[cm->getExtraGlobalParamIndex(egpName)]});
+    try {
+        return EGPReference(CSRef{cs, cm->getExtraGlobalParam(egpName).value()});
+    }
+    catch(std::bad_optional_access&) {
+        throw std::runtime_error("Extra global parameter '" + egpName + "' not found");
+    }
 }
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createEGPRef(CustomUpdate *cu, const std::string &egpName)
 {
     const auto *cm = cu->getCustomUpdateModel();
-    return EGPReference(CURef{cu, cm->getExtraGlobalParams()[cm->getExtraGlobalParamIndex(egpName)]});
+    try {
+        return EGPReference(CURef{cu, cm->getExtraGlobalParam(egpName).value()});
+    }
+    catch(std::bad_optional_access&) {
+        throw std::runtime_error("Extra global parameter '" + egpName + "' not found");
+    }
 }
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createEGPRef(CustomUpdateWU *cu, const std::string &egpName)
 {
     const auto *cm = cu->getCustomUpdateModel();
-    return EGPReference(CUWURef{cu, cm->getExtraGlobalParams()[cm->getExtraGlobalParamIndex(egpName)]});
+    try {
+        return EGPReference(CUWURef{cu, cm->getExtraGlobalParam(egpName).value()});
+    }
+    catch(std::bad_optional_access&) {
+        throw std::runtime_error("Extra global parameter '" + egpName + "' not found");
+    }
 }
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createPSMEGPRef(SynapseGroup *sg, const std::string &egpName)
 {
     const auto *psm = sg->getPSInitialiser().getSnippet();
-    return EGPReference(PSMRef{sg, psm->getExtraGlobalParams()[psm->getExtraGlobalParamIndex(egpName)]});
+    try {
+        return EGPReference(PSMRef{sg, psm->getExtraGlobalParam(egpName).value()});
+    }
+    catch(std::bad_optional_access&) {
+        throw std::runtime_error("Extra global parameter '" + egpName + "' not found");
+    }
 }
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createWUEGPRef(SynapseGroup *sg, const std::string &egpName)
 {
     const auto *wum = sg->getWUInitialiser().getSnippet();
-    return EGPReference(WURef{sg, wum->getExtraGlobalParams()[wum->getExtraGlobalParamIndex(egpName)]});
+    try {
+        return EGPReference(WURef{sg, wum->getExtraGlobalParam(egpName).value()});
+    }
+    catch(std::bad_optional_access&) {
+        throw std::runtime_error("Extra global parameter '" + egpName + "' not found");
+    }
 }
 //----------------------------------------------------------------------------
 const std::string &EGPReference::getEGPName() const
 {
     return std::visit(
-        Utils::Overload{[](const auto &ref){ return std::cref(ref.egp.name); }},
+        [](const auto &ref){ return std::cref(ref.egp.name); },
         m_Detail);
 }
 //----------------------------------------------------------------------------
 const std::string &EGPReference::getTargetName() const
 {
     return std::visit(
-        Utils::Overload{
-            [](const auto &ref) { return std::cref(ref.group->getName()); }},
+        [](const auto &ref) { return std::cref(ref.group->getName()); },
         m_Detail);
 }
 

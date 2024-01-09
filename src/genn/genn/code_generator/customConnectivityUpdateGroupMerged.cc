@@ -102,8 +102,9 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
 
     // Substitute parameter and derived parameter names
     const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
-    updateEnv.addParams(cm->getParamNames(), "", &CustomConnectivityUpdateInternal::getParams, 
-                        &CustomConnectivityUpdateGroupMerged::isParamHeterogeneous);
+    updateEnv.addParams(cm->getParams(), "", &CustomConnectivityUpdateInternal::getParams, 
+                        &CustomConnectivityUpdateGroupMerged::isParamHeterogeneous,
+                        &CustomConnectivityUpdateInternal::isParamDynamic);
     updateEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomConnectivityUpdateInternal::getDerivedParams, 
                                &CustomConnectivityUpdateGroupMerged::isDerivedParamHeterogeneous);
     updateEnv.addExtraGlobalParams(cm->getExtraGlobalParams());
@@ -136,8 +137,8 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
 
     // Add fields and private $(_XXX) substitutions for postsyanptic and synaptic variables and variables references as, 
     // while these can only be accessed by user code inside loop, they can be used directly by add/remove synapse functions
-    updateEnv.addVarPointers<CustomConnectivityUpdateVarAdapter>(true);
-    updateEnv.addVarPointers<CustomConnectivityUpdatePostVarAdapter>(true);
+    updateEnv.addVarPointers<CustomConnectivityUpdateVarAdapter>("", true);
+    updateEnv.addVarPointers<CustomConnectivityUpdatePostVarAdapter>("", true);
     updateEnv.addVarRefPointers<CustomConnectivityUpdateVarRefAdapter>(true);
     updateEnv.addVarRefPointers<CustomConnectivityUpdatePostVarRefAdapter>(true);
 
@@ -400,15 +401,16 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
 
         // Substitute parameter and derived parameter names
         const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
-        groupEnv.addParams(cm->getParamNames(), "", &CustomConnectivityUpdateInternal::getParams, 
-                           &CustomConnectivityHostUpdateGroupMerged::isParamHeterogeneous);
+        groupEnv.addParams(cm->getParams(), "", &CustomConnectivityUpdateInternal::getParams, 
+                           &CustomConnectivityHostUpdateGroupMerged::isParamHeterogeneous,
+                           &CustomConnectivityUpdateInternal::isParamDynamic);
         groupEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomConnectivityUpdateInternal::getDerivedParams, 
                                   &CustomConnectivityHostUpdateGroupMerged::isDerivedParamHeterogeneous);
 
         // Loop through EGPs
         for(const auto &egp : cm->getExtraGlobalParams()) {
             // If EGP is located on the host
-            const auto loc = VarLocation::HOST_DEVICE;//getArchetype().getExtraGlobalParamLocation(egp.name);
+            const auto loc = getArchetype().getExtraGlobalParamLocation(egp.name);
             if(loc & VarLocation::HOST) {
                 // Add pointer field to allow user code to access
                 const auto resolvedType = egp.type.resolve(getTypeContext());

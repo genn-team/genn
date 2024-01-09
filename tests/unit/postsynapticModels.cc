@@ -17,11 +17,11 @@ public:
 
     SET_CURRENT_CONVERTER_CODE("$(init) * $(inSyn)");
 
-    SET_PARAM_NAMES({"tau"});
+    SET_PARAMS({"tau"});
 
     SET_DERIVED_PARAMS({
-        {"expDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tau")); }},
-        {"init", [](const ParamValues &pars, double dt){ return (pars.at("tau") * (1.0 - std::exp(-dt / pars.at("tau")))) * (1.0 / dt); }}});
+        {"expDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tau").cast<double>()); }},
+        {"init", [](const ParamValues &pars, double dt){ return (pars.at("tau").cast<double>() * (1.0 - std::exp(-dt / pars.at("tau").cast<double>()))) * (1.0 / dt); }}});
 };
 //--------------------------------------------------------------------------
 // Tests

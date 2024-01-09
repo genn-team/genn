@@ -52,14 +52,16 @@ void CustomUpdateGroupMerged::generateCustomUpdate(EnvironmentExternalBase &env,
 
     // Substitute parameter and derived parameter names
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
-    cuEnv.addParams(cm->getParamNames(), "", &CustomUpdateInternal::getParams, &CustomUpdateGroupMerged::isParamHeterogeneous);
+    cuEnv.addParams(cm->getParams(), "", &CustomUpdateInternal::getParams, 
+                    &CustomUpdateGroupMerged::isParamHeterogeneous,
+                    &CustomUpdateInternal::isParamDynamic);
     cuEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomUpdateInternal::getDerivedParams, &CustomUpdateGroupMerged::isDerivedParamHeterogeneous);
     cuEnv.addExtraGlobalParams(cm->getExtraGlobalParams());
     cuEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs());
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateGroupMerged> varEnv(
-        *this, *this, getTypeContext(), cuEnv, "", "l", false,
+        *this, *this, getTypeContext(), cuEnv, "", "l", false, false,
         [this, batchSize, &cuEnv](const std::string&, CustomUpdateVarAccess d)
         {
             return getVarIndex(batchSize, getVarAccessDim(d, getArchetype().getDims()), "$(id)");
@@ -67,7 +69,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(EnvironmentExternalBase &env,
     
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarRefCache<CustomUpdateVarRefAdapter, CustomUpdateGroupMerged> varRefEnv(
-        *this, *this, getTypeContext(), varEnv, "", "l", false,
+        *this, *this, getTypeContext(), varEnv, "", "l", false, false,
         [this, batchSize, &varEnv](const std::string&, const Models::VarReference &v)
         { 
             return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, batchSize,
@@ -179,14 +181,16 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(EnvironmentExternalBase
 
     // Substitute parameter and derived parameter names
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
-    cuEnv.addParams(cm->getParamNames(), "", &CustomUpdateInternal::getParams, &CustomUpdateWUGroupMergedBase::isParamHeterogeneous);
-    cuEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomUpdateInternal::getDerivedParams, &CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous);
+    cuEnv.addParams(cm->getParams(), "", &CustomUpdateWUInternal::getParams, 
+                    &CustomUpdateWUGroupMergedBase::isParamHeterogeneous,
+                    &CustomUpdateWUInternal::isParamDynamic);
+    cuEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomUpdateWUInternal::getDerivedParams, &CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous);
     cuEnv.addExtraGlobalParams(cm->getExtraGlobalParams());
     cuEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs());
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateWUGroupMergedBase> varEnv(
-        *this, *this, getTypeContext(), cuEnv, "", "l", false,
+        *this, *this, getTypeContext(), cuEnv, "", "l", false, false,
         [this, batchSize, &cuEnv](const std::string&, CustomUpdateVarAccess d)
         {
             return getVarIndex(batchSize, getVarAccessDim(d, getArchetype().getDims()), "$(id_syn)");
@@ -194,7 +198,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(EnvironmentExternalBase
     
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarRefCache<CustomUpdateWUVarRefAdapter, CustomUpdateWUGroupMergedBase> varRefEnv(
-        *this, *this, getTypeContext(), varEnv, "", "l", false,
+        *this, *this, getTypeContext(), varEnv, "", "l", false, false,
         [this, batchSize, &varEnv](const std::string&, const Models::WUVarReference &v)
         {
             return getVarRefIndex(batchSize, v.getVarDims(), "$(id_syn)");

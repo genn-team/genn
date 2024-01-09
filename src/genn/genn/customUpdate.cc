@@ -16,16 +16,31 @@
 //------------------------------------------------------------------------
 namespace GeNN
 {
-void CustomUpdateBase::setVarLocation(const std::string &varName, VarLocation loc)
-{
-    m_VarLocation[getCustomUpdateModel()->getVarIndex(varName)] = loc;
+//------------------------------------------------------------------------
+void CustomUpdateBase::setVarLocation(const std::string &varName, VarLocation loc) 
+{ 
+    if(!getCustomUpdateModel()->getVar(varName)) {
+        throw std::runtime_error("Unknown custom update model variable '" + varName + "'");
+    }
+    m_VarLocation.set(varName, loc); 
 }
 //----------------------------------------------------------------------------
-VarLocation CustomUpdateBase::getVarLocation(const std::string &varName) const
-{
-    return m_VarLocation[getCustomUpdateModel()->getVarIndex(varName)];
+void CustomUpdateBase::setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc) 
+{ 
+    if(!getCustomUpdateModel()->getExtraGlobalParam(paramName)) {
+        throw std::runtime_error("Unknown custom update model extra global parameter '" + paramName + "'");
+    }
+    m_ExtraGlobalParamLocation.set(paramName, loc); 
 }
 //----------------------------------------------------------------------------
+void CustomUpdateBase::setParamDynamic(const std::string &paramName, bool dynamic) 
+{ 
+    if(!getCustomUpdateModel()->getParam(paramName)) {
+        throw std::runtime_error("Unknown custom update model parameter '" + paramName + "'");
+    }
+    m_DynamicParams.set(paramName, dynamic); 
+}
+//------------------------------------------------------------------------
 bool CustomUpdateBase::isVarInitRequired() const
 {
     return std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),
@@ -33,12 +48,11 @@ bool CustomUpdateBase::isVarInitRequired() const
 }
 //----------------------------------------------------------------------------
 CustomUpdateBase::CustomUpdateBase(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 
-                                   const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
+                                   const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                                    const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
-    m_VarInitialisers(varInitialisers), m_EGPReferences(egpReferences), m_VarLocation(varInitialisers.size(), defaultVarLocation),
-    m_ExtraGlobalParamLocation(customUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
-    m_Dims{0}
+    m_VarInitialisers(varInitialisers), m_EGPReferences(egpReferences), m_VarLocation(defaultVarLocation),
+    m_ExtraGlobalParamLocation(defaultExtraGlobalParamLocation), m_Dims{0}
 {
     // Validate names
     Utils::validatePopName(name, "Custom update");
@@ -82,9 +96,7 @@ bool CustomUpdateBase::isInitRNGRequired() const
 //----------------------------------------------------------------------------
 bool CustomUpdateBase::isZeroCopyEnabled() const
 {
-    // If there are any variables implemented in zero-copy mode return true
-    return std::any_of(m_VarLocation.begin(), m_VarLocation.end(),
-                       [](VarLocation loc) { return (loc & VarLocation::ZERO_COPY); });
+    return (m_VarLocation.anyZeroCopy() || m_ExtraGlobalParamLocation.anyZeroCopy());
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateBase::isModelReduction() const
@@ -113,6 +125,7 @@ void CustomUpdateBase::updateHash(boost::uuids::detail::sha1 &hash) const
     Utils::updateHash(getCustomUpdateModel()->getHashDigest(), hash);
     Utils::updateHash(getUpdateGroupName(), hash);
     Utils::updateHash(getDims(), hash);
+    m_DynamicParams.updateHash(hash);
 }
 //----------------------------------------------------------------------------
 void CustomUpdateBase::updateInitHash(boost::uuids::detail::sha1 &hash) const
@@ -130,8 +143,8 @@ void CustomUpdateBase::updateInitHash(boost::uuids::detail::sha1 &hash) const
 boost::uuids::detail::sha1::digest_type CustomUpdateBase::getVarLocationHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(m_VarLocation, hash);
-    Utils::updateHash(m_ExtraGlobalParamLocation, hash);
+    m_VarLocation.updateHash(hash);
+    m_ExtraGlobalParamLocation.updateHash(hash);
     return hash.get_digest();
 }
 
@@ -139,7 +152,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateBase::getVarLocationHashDige
 // CustomUpdate
 //----------------------------------------------------------------------------
 CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGroupName,
-                           const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
+                           const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, Type::NumericValue> &params,
                            const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
                            const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation),
@@ -236,7 +249,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getInitHashDigest() const
 // GeNN::CustomUpdateWU
 //----------------------------------------------------------------------------
 CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
-                               const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
+                               const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, Type::NumericValue> &params,
                                const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
                                const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation),

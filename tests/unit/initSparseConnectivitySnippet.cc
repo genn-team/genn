@@ -38,7 +38,7 @@ public:
         "   postIdx = (postIdx < num_post) ? postIdx : (num_post - 1);\n"
         "   addSynapse(postIdx + id_post_begin);\n"
         "}\n");
-    SET_PARAM_NAMES({"total"});
+    SET_PARAMS({"total"});
     SET_EXTRA_GLOBAL_PARAMS({{"preCalcRowLength", "unsigned int*"}})
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
@@ -50,7 +50,7 @@ public:
             // There are numConnections connections amongst the numPre*numPost possible connections.
             // Each of the numConnections connections has an independent p=float(numPost)/(numPre*numPost)
             // probability of being selected, and the number of synapses in the sub-row is binomially distributed
-            return binomialInverseCDF(quantile, (unsigned int)pars.at("total"), (double)numPost / ((double)numPre * (double)numPost));
+            return binomialInverseCDF(quantile, pars.at("total").cast<unsigned int>(), (double)numPost / ((double)numPre * (double)numPost));
         });
 
     SET_CALC_MAX_COL_LENGTH_FUNC(
@@ -62,7 +62,7 @@ public:
             // There are numConnections connections amongst the numPre*numPost possible connections.
             // Each of the numConnections connections has an independent p=float(numPost)/(numPre*numPost)
             // probability of being selected, and the number of synapses in the sub-row is binomially distributed
-            return binomialInverseCDF(quantile, (unsigned int)pars.at("total"), (double)numPre / ((double)numPre * (double)numPost));
+            return binomialInverseCDF(quantile, pars.at("total").cast<unsigned int>(), (double)numPre / ((double)numPre * (double)numPost));
         });
 };
 IMPLEMENT_SNIPPET(FixedNumberTotalWithReplacement);
@@ -119,10 +119,10 @@ TEST(InitSparseConnectivitySnippet, CompareUnusedParameters)
 //--------------------------------------------------------------------------
 TEST(InitSparseConnectivitySnippet, ValidateParamValues) 
 {
-    const std::unordered_map<std::string, double> paramValsCorrect{{"prob", 0.1}};
-    const std::unordered_map<std::string, double> paramValsMisSpelled{{"probs", 0.1}};
-    const std::unordered_map<std::string, double> paramValsMissing{};
-    const std::unordered_map<std::string, double> paramValsExtra{{"prob", 0.1}, {"sd", 1.0}};
+    const ParamValues paramValsCorrect{{"prob", 0.1}};
+    const ParamValues paramValsMisSpelled{{"probs", 0.1}};
+    const ParamValues paramValsMissing{};
+    const ParamValues paramValsExtra{{"prob", 0.1}, {"sd", 1.0}};
 
     InitSparseConnectivitySnippet::FixedProbability::getInstance()->validate(paramValsCorrect);
 

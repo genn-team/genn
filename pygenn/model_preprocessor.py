@@ -9,7 +9,7 @@ from numbers import Number
 from weakref import proxy, ref, ProxyTypes
 import numpy as np
 from six import iteritems, iterkeys, itervalues, string_types
-from .genn import (ResolvedType, SynapseMatrixConnectivity,
+from .genn import (NumericValue, ResolvedType, SynapseMatrixConnectivity,
                    SynapseMatrixWeight, VarInit)
 from .init_var_snippets import Uninitialised
 
@@ -299,6 +299,9 @@ class ExtraGlobalParameter(Array):
     @values.setter
     def values(self, vals):
         self._view[:] = vals
+
+def prepare_param_vals(params):
+    return {n: NumericValue(v) for n, v in params.items()}
 
 def prepare_vars(vars, var_space, group, var_type=Variable):
     return {v.name: var_type(v.name, v.type, var_space[v.name], group)

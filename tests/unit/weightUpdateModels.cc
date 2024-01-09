@@ -15,7 +15,7 @@ namespace
 class PiecewiseSTDPCopy : public WeightUpdateModels::Base
 {
 public:
-    SET_PARAM_NAMES({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
+    SET_PARAMS({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
                      "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
     SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
 
@@ -46,13 +46,13 @@ public:
         "$(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");
 
     SET_DERIVED_PARAMS({
-        {"lim0", [](const ParamValues &pars, double) { return (1 / pars.at("tPunish01") + 1 / pars.at("tChng")) * pars.at("tLrn") / (2 / pars.at("tChng")); }},
-        {"lim1", [](const ParamValues &pars, double) { return  -((1 / pars.at("tPunish10") + 1 / pars.at("tChng")) * pars.at("tLrn") / (2 / pars.at("tChng"))); }},
-        {"slope0", [](const ParamValues &pars, double) { return  -2 * pars.at("gMax") / (pars.at("tChng") * pars.at("tLrn")); }},
-        {"slope1", [](const ParamValues &pars, double) { return  2 * pars.at("gMax") / (pars.at("tChng") * pars.at("tLrn")); }},
-        {"off0", [](const ParamValues &pars, double) { return  pars.at("gMax") / pars.at("tPunish01"); }},
-        {"off1", [](const ParamValues &pars, double) { return  pars.at("gMax") / pars.at("tChng"); }},
-        {"off2", [](const ParamValues &pars, double) { return  pars.at("gMax") / pars.at("tPunish10"); }}});
+        {"lim0", [](const ParamValues &pars, double){ return (1/pars.at("tPunish01").cast<double>() + 1 / pars.at("tChng").cast<double>()) * pars.at("tLrn").cast<double>() / (2/pars.at("tChng").cast<double>()); }},
+        {"lim1", [](const ParamValues &pars, double){ return  -((1/pars.at("tPunish10").cast<double>() + 1 / pars.at("tChng").cast<double>()) * pars.at("tLrn").cast<double>() / (2/pars.at("tChng").cast<double>())); }},
+        {"slope0", [](const ParamValues &pars, double){ return  -2*pars.at("gMax").cast<double>() /(pars.at("tChng").cast<double>()*pars.at("tLrn").cast<double>()); }},
+        {"slope1", [](const ParamValues &pars, double){ return  2*pars.at("gMax").cast<double>() / (pars.at("tChng").cast<double>() * pars.at("tLrn").cast<double>()); }},
+        {"off0", [](const ParamValues &pars, double){ return  pars.at("gMax").cast<double>() / pars.at("tPunish01").cast<double>(); }},
+        {"off1", [](const ParamValues &pars, double){ return  pars.at("gMax").cast<double>() / pars.at("tChng").cast<double>(); }},
+        {"off2", [](const ParamValues &pars, double){ return  pars.at("gMax").cast<double>() / pars.at("tPunish10").cast<double>(); }}});
 
 };
 
@@ -60,11 +60,11 @@ class STDPAdditive : public WeightUpdateModels::Base
 {
 public:
     DECLARE_SNIPPET(STDPAdditive);
-    SET_PARAM_NAMES({"tauPlus", "tauMinus", "Aplus", "Aminus",
+    SET_PARAMS({"tauPlus", "tauMinus", "Aplus", "Aminus",
                      "Wmin", "Wmax"});
     SET_DERIVED_PARAMS({
-        {"tauPlusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauPlus")); }},
-        {"tauMinusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauMinus")); }}});
+        {"tauPlusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauPlus").cast<double>()); }},
+        {"tauMinusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauMinus").cast<double>()); }}});
     SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});
@@ -118,10 +118,10 @@ TEST(WeightUpdateModels, ValidateParamValues)
     const VarReferences preNeuronVarRefs{};
     const VarReferences postNeuronVarRefs{};
 
-    const std::unordered_map<std::string, double> paramValsCorrect{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
-    const std::unordered_map<std::string, double> paramValsMisSpelled{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"APlus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
-    const std::unordered_map<std::string, double> paramValsMissing{{"tauPlus", 10.0}, {"tauMinus", 10.0},{"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
-    const std::unordered_map<std::string, double> paramValsExtra{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Bminus", 0.01},{"Wmin", 0.0}, {"Wmax", 1.0}};
+    const ParamValues paramValsCorrect{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
+    const ParamValues paramValsMisSpelled{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"APlus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
+    const ParamValues paramValsMissing{{"tauPlus", 10.0}, {"tauMinus", 10.0},{"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
+    const ParamValues paramValsExtra{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Bminus", 0.01},{"Wmin", 0.0}, {"Wmax", 1.0}};
 
     STDPAdditive::getInstance()->validate(paramValsCorrect, varVals, preVarVals, postVarVals, 
                                           preNeuronVarRefs, postNeuronVarRefs);
@@ -155,7 +155,7 @@ TEST(WeightUpdateModels, ValidateVarValues)
 {
     const VarValues preVarVals{{"preTrace", 0.0}};
     const VarValues postVarVals{{"postTrace", 0.0}};
-    const std::unordered_map<std::string, double> paramVals{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
+    const ParamValues paramVals{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
     const VarReferences preNeuronVarRefs{};
     const VarReferences postNeuronVarRefs{};
     
@@ -196,7 +196,7 @@ TEST(WeightUpdateModels, ValidatePreVarValues)
 {
     const VarValues postVarVals{{"postTrace", 0.0}};
     const std::unordered_map<std::string, InitVarSnippet::Init> varVals{{"g", uninitialisedVar()}};
-    const std::unordered_map<std::string, double> paramVals{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
+    const ParamValues paramVals{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
     const VarReferences preNeuronVarRefs{};
     const VarReferences postNeuronVarRefs{};
     
@@ -237,7 +237,7 @@ TEST(WeightUpdateModels, ValidatePostVarValues)
 {
     const VarValues preVarVals{{"preTrace", 0.0}};
     const std::unordered_map<std::string, InitVarSnippet::Init> varVals{{"g", uninitialisedVar()}};
-    const std::unordered_map<std::string, double> paramVals{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
+    const ParamValues paramVals{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
     const VarReferences preNeuronVarRefs{};
     const VarReferences postNeuronVarRefs{};
     

@@ -29,7 +29,8 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(EnvironmentExternalBase &e
     csEnv.getStream() << "// current source " << getIndex() << std::endl;
 
     // Substitute parameter and derived parameter names
-    csEnv.addParams(cm->getParamNames(), fieldSuffix, &CurrentSourceInternal::getParams, &CurrentSource::isParamHeterogeneous);
+    csEnv.addParams(cm->getParams(), fieldSuffix, &CurrentSourceInternal::getParams, 
+                    &CurrentSource::isParamHeterogeneous, &CurrentSourceInternal::isParamDynamic);
     csEnv.addDerivedParams(cm->getDerivedParams(), fieldSuffix, &CurrentSourceInternal::getDerivedParams, &CurrentSource::isDerivedParamHeterogeneous);
     csEnv.addExtraGlobalParams(cm->getExtraGlobalParams(), "", fieldSuffix);
 
@@ -42,7 +43,7 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(EnvironmentExternalBase &e
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CurrentSourceVarAdapter, CurrentSource, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, getTypeContext(), csEnv, fieldSuffix, "l", false,
+        *this, ng, getTypeContext(), csEnv, fieldSuffix, "l", false, false,
         [batchSize, &ng](const std::string&, VarAccess d)
         {
             return ng.getVarIndex(batchSize, getVarAccessDim(d), "$(id)");
@@ -109,7 +110,8 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     }
 
     // Add parameters, derived parameters and extra global parameters to environment
-    psmEnv.addInitialiserParams(fieldSuffix, &SynapseGroupInternal::getPSInitialiser, &InSynPSM::isParamHeterogeneous);
+    psmEnv.addInitialiserParams(fieldSuffix, &SynapseGroupInternal::getPSInitialiser, 
+                                &InSynPSM::isParamHeterogeneous, &SynapseGroupInternal::isPSParamDynamic);
     psmEnv.addInitialiserDerivedParams(fieldSuffix, &SynapseGroupInternal::getPSInitialiser, &InSynPSM::isDerivedParamHeterogeneous);
     psmEnv.addExtraGlobalParams(psm->getExtraGlobalParams(), "", fieldSuffix);
     
@@ -124,7 +126,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<SynapsePSMVarAdapter, InSynPSM, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, getTypeContext(), psmEnv, fieldSuffix, "l", false,
+        *this, ng, getTypeContext(), psmEnv, fieldSuffix, "l", false, false,
         [batchSize, &ng](const std::string&, VarAccess d)
         {
             return ng.getVarIndex(batchSize, getVarAccessDim(d), "$(id)");
@@ -173,7 +175,7 @@ void NeuronUpdateGroupMerged::OutSynPreOutput::generate(EnvironmentExternalBase 
 
     // Add reverse insyn variable to 
     const std::string idx = ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
-    outSynEnv.printLine(getArchetype().getPreTargetVar() + " += $(_out_pre)[" + idx + "];");
+    outSynEnv.printLine("$(_" + getArchetype().getPreTargetVar() + ") += $(_out_pre)[" + idx + "];");
 
     // Zero it again
     outSynEnv.printLine("$(_out_pre)[" + idx + "] = " + Type::writeNumeric(0.0, getScalarType()) + ";");
@@ -197,7 +199,8 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase
         synEnv.getStream() << "// postsynaptic weight update " << getIndex() << std::endl;
         
         // Add parameters, derived parameters and extra global parameters to environment
-        synEnv.addInitialiserParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser, &InSynWUMPostCode::isParamHeterogeneous);
+        synEnv.addInitialiserParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser, 
+                                    &InSynWUMPostCode::isParamHeterogeneous, &SynapseGroupInternal::isWUParamDynamic);
         synEnv.addInitialiserDerivedParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser, &InSynWUMPostCode::isDerivedParamHeterogeneous);
         synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), "", fieldSuffix);
 
@@ -206,9 +209,10 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase
   
         // Create an environment which caches variables in local variables if they are accessed
         // **NOTE** always copy variables if synapse group is delayed
+        // **NOTE** duplicates are allowed here as dynamics and spike might add same field
         const bool delayed = (getArchetype().getBackPropDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPostVarAdapter, InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
+            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false, true,
             [batchSize, delayed, &synEnv, &ng](const std::string&, VarAccess d)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -228,19 +232,21 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase
     }
 }
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
+void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                                                                    unsigned int batchSize)
 {
     // If this group has a delay and no postsynaptic dynamics (which will already perform this copying)
-    const std::string suffix =  "InSynWUMPost" + std::to_string(getIndex());
     if(getArchetype().getBackPropDelaySteps() != NO_DELAY && Utils::areTokensEmpty(getArchetype().getWUInitialiser().getPostDynamicsCodeTokens())) {
+         // Create environment and add fields for variable 
+        EnvironmentGroupMergedField<InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(env, *this, ng);
+        varEnv.addVarPointers<SynapseWUPostVarAdapter>("InSynWUMPost" + std::to_string(getIndex()), false, true);
+        
         // Loop through variables and copy between read and write delay slots
-        // **YUCK** this a bit sketchy as fields may not have been added - could add fields here but need to guarantee uniqueness
         for(const auto &v : getArchetype().getWUInitialiser().getSnippet()->getPostVars()) {
             if(getVarAccessMode(v.access) == VarAccessMode::READ_WRITE) {
                 const VarAccessDim varDims = getVarAccessDim(v.access);
-                env.print("group->" + v.name + suffix + "[" + ng.getWriteVarIndex(true, batchSize, varDims, "$(id)") + "] = ");
-                env.printLine("group->" + v.name + suffix + "[" + ng.getReadVarIndex(true, batchSize, varDims, "$(id)") + "];");
+                varEnv.print("$(" + v.name + ")[" + ng.getWriteVarIndex(true, batchSize, varDims, "$(id)") + "] = ");
+                varEnv.printLine("$(" + v.name + ")[" + ng.getReadVarIndex(true, batchSize, varDims, "$(id)") + "];");
             }
         }
     }
@@ -280,7 +286,8 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase
         synEnv.getStream() << "// presynaptic weight update " << getIndex() << std::endl;
         
         // Add parameters, derived parameters and extra global parameters to environment
-        synEnv.addInitialiserParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser, &OutSynWUMPreCode::isParamHeterogeneous);
+        synEnv.addInitialiserParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser, 
+                                    &OutSynWUMPreCode::isParamHeterogeneous, &SynapseGroupInternal::isWUParamDynamic);
         synEnv.addInitialiserDerivedParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser, &OutSynWUMPreCode::isDerivedParamHeterogeneous);
         synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), "", fieldSuffix);
 
@@ -289,9 +296,10 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase
 
         // Create an environment which caches variables in local variables if they are accessed
         // **NOTE** always copy variables if synapse group is delayed
+        // **NOTE** duplicates are allowed here as dynamics and spike might add same field
         const bool delayed = (getArchetype().getDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPreVarAdapter, OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
+            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false, true,
             [batchSize, delayed, &ng](const std::string&, VarAccess d)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -311,19 +319,21 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase
     }
 }
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::OutSynWUMPreCode::genCopyDelayedVars(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
+void NeuronUpdateGroupMerged::OutSynWUMPreCode::genCopyDelayedVars(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                                                                    unsigned int batchSize)
 {
     // If this group has a delay and no presynaptic dynamics (which will already perform this copying)
-    const std::string suffix =  "OutSynWUMPre" + std::to_string(getIndex());
     if(getArchetype().getDelaySteps() != NO_DELAY && Utils::areTokensEmpty(getArchetype().getWUInitialiser().getPreDynamicsCodeTokens())) {
+        // Create environment and add fields for variable 
+        EnvironmentGroupMergedField<OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(env, *this, ng);
+        varEnv.addVarPointers<SynapseWUPreVarAdapter>("OutSynWUMPre" + std::to_string(getIndex()), false, true);
+
         // Loop through variables and copy between read and write delay slots
-        // **YUCK** this a bit sketchy as fields may not have been added - could add fields here but need to guarantee uniqueness
         for(const auto &v : getArchetype().getWUInitialiser().getSnippet()->getPreVars()) {
             if(getVarAccessMode(v.access) == VarAccessMode::READ_WRITE) {
                 const VarAccessDim varDims = getVarAccessDim(v.access);
-                env.print("group->" + v.name + suffix + "[" + ng.getWriteVarIndex(true, batchSize, varDims, "$(id)") + "] = ");
-                env.printLine("group->" + v.name + suffix + "[" + ng.getReadVarIndex(true, batchSize, varDims, "$(id)") + "];");
+                varEnv.print("$(" + v.name + ")[" + ng.getWriteVarIndex(true, batchSize, varDims, "$(id)") + "] = ");
+                varEnv.printLine("$(" + v.name + ")[" + ng.getReadVarIndex(true, batchSize, varDims, "$(id)") + "];");
             }
         }
     }
@@ -479,8 +489,8 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // Create an environment which caches neuron variable fields in local variables if they are accessed
     // **NOTE** we do this right at the top so that local copies can be used by child groups
     // **NOTE** always copy variables if variable is delayed
-    EnvironmentLocalFieldVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronChildVarEnv(
-        *this, getTypeContext(), neuronChildEnv, "l", true,
+    EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronChildVarEnv(
+        *this, *this, getTypeContext(), neuronChildEnv, "", "l", true, true,
         [batchSize, this](const std::string &varName, VarAccess d)
         {
             const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
@@ -530,7 +540,8 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     neuronEnv.addVarExposeAliases<NeuronVarAdapter>();
 
     // Substitute parameter and derived parameter names
-    neuronEnv.addParams(nm->getParamNames(), "", &NeuronGroupInternal::getParams, &NeuronUpdateGroupMerged::isParamHeterogeneous);
+    neuronEnv.addParams(nm->getParams(), "", &NeuronGroupInternal::getParams,
+                        &NeuronUpdateGroupMerged::isParamHeterogeneous, &NeuronGroupInternal::isParamDynamic);
     neuronEnv.addDerivedParams(nm->getDerivedParams(), "", &NeuronGroupInternal::getDerivedParams, &NeuronUpdateGroupMerged::isDerivedParamHeterogeneous);
     neuronEnv.addExtraGlobalParams(nm->getExtraGlobalParams());
     

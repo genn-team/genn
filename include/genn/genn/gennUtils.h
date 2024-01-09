@@ -9,6 +9,7 @@
 #include <string>
 #include <type_traits>
 #include <unordered_map>
+#include <unordered_set>
 #include <variant>
 #include <vector>
 
@@ -56,9 +57,6 @@ GENN_EXPORT void validateVarName(const std::string &name, const std::string &des
 
 //! Checks whether population name is valid? GeNN population names obey C variable naming rules but can start with a number
 GENN_EXPORT void validatePopName(const std::string &name, const std::string &description);
-
-//! Checks that all the parameter names in vector valid? GeNN variables and population names must obey C variable naming rules
-GENN_EXPORT void validateParamNames(const std::vector<std::string> &paramNames);
 
 //! Extra global parameters used to support both pointer and non-pointer types. Now only the behaviour that used to
 //! be provided by pointer types is provided but, internally, non-pointer types are used. This handles pointer types specified by string.
@@ -158,6 +156,15 @@ inline void updateHash(const std::unordered_map<K, V> &map, boost::uuids::detail
     }
 }
 
+//! Hash unordered sets of types which can, themselves, be hashed
+template<typename V>
+inline void updateHash(const std::unordered_set<V> set, boost::uuids::detail::sha1 &hash)
+{
+    for(const auto &v : set) {
+        updateHash(v, hash);
+    }
+}
+
 //! Hash optional types which can, themeselves, be hashed
 template<typename T>
 inline void updateHash(const std::optional<T> &optional, boost::uuids::detail::sha1 &hash)
@@ -174,11 +181,10 @@ inline void updateHash(const std::variant<T...> &variant, boost::uuids::detail::
 {
     updateHash(variant.index(), hash);
     std::visit(
-         Utils::Overload{
-             [&hash](const auto &v)
-             {
-                 updateHash(v, hash);
-             }},
+        [&hash](const auto &v)
+        {
+            updateHash(v, hash);
+        },
         variant);
 }
 

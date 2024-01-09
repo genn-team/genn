@@ -191,13 +191,6 @@ void validatePopName(const std::string &name, const std::string &description)
     }
 }
 //--------------------------------------------------------------------------
-void validateParamNames(const std::vector<std::string> &paramNames)
-{
-    for(const std::string &p : paramNames) {
-        validateVarName(p, "Parameter");
-    }
-}
-//--------------------------------------------------------------------------
 std::string handleLegacyEGPType(const std::string &type)
 {
     // If type string ends in *

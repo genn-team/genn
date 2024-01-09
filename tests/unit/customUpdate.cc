@@ -22,7 +22,7 @@ class IzhikevichVariableShared : public NeuronModels::Izhikevich
 public:
     DECLARE_SNIPPET(IzhikevichVariableShared);
 
-    SET_PARAM_NAMES({});
+    SET_PARAMS({});
     SET_VARS({{"V","scalar"}, {"U", "scalar"},
                      {"a", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}, {"b", "scalar", VarAccess::READ_ONLY_SHARED_NEURON},
                      {"c", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}, {"d", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});

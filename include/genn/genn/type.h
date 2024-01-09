@@ -67,7 +67,15 @@ public:
     // Public API
     //----------------------------------------------------------------------------
     template<typename T>
-    T get() const{ return std::get<T>(m_Value); }
+    T cast() const
+    { 
+        return std::visit(
+            [](auto x)->T
+            {
+                return static_cast<T>(x);
+            },
+            m_Value);
+    }
     const std::variant<double, uint64_t, int64_t> &get() const{ return m_Value; }
 
     //----------------------------------------------------------------------------

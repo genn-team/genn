@@ -16,7 +16,7 @@ public:
         "const scalar scale = max - min;\n"
         "value = min + (gennrand_uniform() * scale);");
 
-    SET_PARAM_NAMES({"min", "max"});
+    SET_PARAMS({"min", "max"});
 };
 
 //--------------------------------------------------------------------------
@@ -54,10 +54,10 @@ TEST(InitVarSnippet, CompareVarInitParameters)
 //--------------------------------------------------------------------------
 TEST(InitVarSnippet, ValidateParamValues) 
 {
-    const std::unordered_map<std::string, double> paramValsCorrect{{"min", 0.0}, {"max", 1.0}};
-    const std::unordered_map<std::string, double> paramValsMisSpelled{{"miny", 0.0}, {"max", 1.0}};
-    const std::unordered_map<std::string, double> paramValsMissing{{"max", 1.0}};
-    const std::unordered_map<std::string, double> paramValsExtra{{"min", 0.0}, {"max", 1.0}, {"mean", 0.5}};
+    const ParamValues paramValsCorrect{{"min", 0.0}, {"max", 1.0}};
+    const ParamValues paramValsMisSpelled{{"miny", 0.0}, {"max", 1.0}};
+    const ParamValues paramValsMissing{{"max", 1.0}};
+    const ParamValues paramValsExtra{{"min", 0.0}, {"max", 1.0}, {"mean", 0.5}};
 
     InitVarSnippet::Uniform::getInstance()->validate(paramValsCorrect);
 

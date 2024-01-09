@@ -32,7 +32,7 @@ class StaticPulseBackConstantWeight : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(StaticPulseBackConstantWeight);
 
-    SET_PARAM_NAMES({"g"});
+    SET_PARAMS({"g"});
 
     SET_SIM_CODE(
         "$(addToInSyn, $(g));\n"
@@ -45,7 +45,7 @@ class WeightUpdateModelPost : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(WeightUpdateModelPost);
 
-    SET_PARAM_NAMES({"w", "p"});
+    SET_PARAMS({"w", "p"});
     SET_POST_VARS({{"s", "scalar"}});
 
     SET_SIM_CODE("$(w)= $(s);\n");
@@ -58,7 +58,7 @@ class WeightUpdateModelPre : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(WeightUpdateModelPre);
 
-    SET_PARAM_NAMES({"w", "p"});
+    SET_PARAMS({"w", "p"});
     SET_PRE_VARS({{"s", "scalar"}});
 
     SET_SIM_CODE("$(w)= $(s);\n");
@@ -77,13 +77,13 @@ public:
 
     SET_CURRENT_CONVERTER_CODE("$(x)");
 
-    SET_PARAM_NAMES({"tau"});
+    SET_PARAMS({"tau"});
 
     SET_VARS({{"x", "scalar"}});
 
     SET_DERIVED_PARAMS({
-        {"expDecay", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars.at("tau")); }},
-        {"init", [](const ParamValues &pars, double) { return (std::exp(1) / pars.at("tau")); }}});
+        {"expDecay", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars.at("tau").cast<double>()); }},
+        {"init", [](const ParamValues &pars, double) { return (std::exp(1) / pars.at("tau").cast<double>()); }}});
 };
 IMPLEMENT_SNIPPET(AlphaCurr);
 
@@ -109,7 +109,7 @@ public:
         "$(V) = $(Vreset);\n"
         "$(RefracTime) = $(TauRefrac);\n");
 
-    SET_PARAM_NAMES({
+    SET_PARAMS({
         "C",          // Membrane capacitance
         "TauM",       // Membrane time constant [ms]
         "Vrest",      // Resting membrane potential [mV]
@@ -119,8 +119,8 @@ public:
         "TauRefrac"});
 
     SET_DERIVED_PARAMS({
-        {"ExpTC", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars.at("TauM")); }},
-        {"Rmembrane", [](const ParamValues &pars, double) { return  pars.at("TauM") / pars.at("C"); }}});
+        {"ExpTC", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars.at("TauM").cast<double>()); }},
+        {"Rmembrane", [](const ParamValues &pars, double) { return  pars.at("TauM").cast<double>() / pars.at("C").cast<double>(); }}});
 
     SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
 };
@@ -150,7 +150,7 @@ public:
         "$(V) = $(Vreset);\n"
         "$(RefracTime) = $(TauRefrac);\n");
 
-    SET_PARAM_NAMES({
+    SET_PARAMS({
         "C",          // Membrane capacitance
         "TauM",       // Membrane time constant [ms]
         "Vrest",      // Resting membrane potential [mV]
@@ -160,8 +160,8 @@ public:
         "TauRefrac"});
 
     SET_DERIVED_PARAMS({
-        {"ExpTC", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("TauM")); }},
-        {"Rmembrane", [](const ParamValues &pars, double){ return  pars.at("TauM") / pars.at("C"); }}});
+        {"ExpTC", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("TauM").cast<double>()); }},
+        {"Rmembrane", [](const ParamValues &pars, double){ return  pars.at("TauM").cast<double>() / pars.at("C").cast<double>(); }}});
 
     SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
 };
@@ -171,11 +171,11 @@ class STDPAdditive : public WeightUpdateModels::Base
 {
 public:
     DECLARE_SNIPPET(STDPAdditive);
-    SET_PARAM_NAMES({"tauPlus", "tauMinus", "Aplus", "Aminus",
+    SET_PARAMS({"tauPlus", "tauMinus", "Aplus", "Aminus",
                      "Wmin", "Wmax"});
     SET_DERIVED_PARAMS({
-        {"tauPlusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauPlus")); }},
-        {"tauMinusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauMinus")); }}});
+        {"tauPlusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauPlus").cast<double>()); }},
+        {"tauMinusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauMinus").cast<double>()); }}});
     SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});

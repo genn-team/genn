@@ -2,7 +2,7 @@
 #include "gtest/gtest.h"
 
 // GeNN includes
-#include "currentSourceModels.h"
+#include "modelSpec.h"
 
 using namespace GeNN;
 
@@ -13,7 +13,7 @@ class GaussianNoiseCopy : public CurrentSourceModels::Base
 {
     SET_INJECTION_CODE("injectCurrent(mean + (gennrand_normal() * sd));\n");
 
-    SET_PARAM_NAMES({"mean", "sd"} );
+    SET_PARAMS({"mean", "sd"} );
 };
 
 //--------------------------------------------------------------------------
@@ -33,10 +33,10 @@ TEST(CurrentSourceModels, CompareCopyPasted)
 //--------------------------------------------------------------------------
 TEST(CurrentSourceModels, ValidateParamValues) 
 {
-    const std::unordered_map<std::string, double> paramValsCorrect{{"mean", 0.0}, {"sd", 1.0}};
-    const std::unordered_map<std::string, double> paramValsMisSpelled{{"means", 0.0}, {"sd", 1.0}};
-    const std::unordered_map<std::string, double> paramValsMissing{{"mean", 0.0}};
-    const std::unordered_map<std::string, double> paramValsExtra{{"mean", 0.0}, {"sd", 1.0}, {"var", 1.0}};
+    const ParamValues paramValsCorrect{{"mean", 0.0}, {"sd", 1.0}};
+    const ParamValues paramValsMisSpelled{{"means", 0.0}, {"sd", 1.0}};
+    const ParamValues paramValsMissing{{"mean", 0.0}};
+    const ParamValues paramValsExtra{{"mean", 0.0}, {"sd", 1.0}, {"var", 1.0}};
 
     CurrentSourceModels::GaussianNoise::getInstance()->validate(paramValsCorrect, {}, {}, "Current source");
 
@@ -64,12 +64,12 @@ TEST(CurrentSourceModels, ValidateParamValues)
 //--------------------------------------------------------------------------
 TEST(CurrentSourceModels, ValidateVarValues) 
 {
-    const std::unordered_map<std::string, double> paramVals{{"weight", 1.0}, {"tauSyn", 5.0}, {"rate", 10.0}};
+    const ParamValues paramVals{{"weight", 1.0}, {"tauSyn", 5.0}, {"rate", 10.0}};
     
-    const std::unordered_map<std::string, InitVarSnippet::Init> varValsCorrect{{"current", 0.0}};
-    const std::unordered_map<std::string, InitVarSnippet::Init> varValsMisSpelled{{"currents", 0.0}};
-    const std::unordered_map<std::string, InitVarSnippet::Init> varValsMissing{};
-    const std::unordered_map<std::string, InitVarSnippet::Init> varValsExtra{{"current", 0.0}, {"power", 1.0}};
+    const VarValues varValsCorrect{{"current", 0.0}};
+    const VarValues varValsMisSpelled{{"currents", 0.0}};
+    const VarValues varValsMissing{};
+    const VarValues varValsExtra{{"current", 0.0}, {"power", 1.0}};
 
     CurrentSourceModels::PoissonExp::getInstance()->validate(paramVals, varValsCorrect, {}, "Current source");
 

@@ -22,13 +22,13 @@ public:
 
     SET_CURRENT_CONVERTER_CODE("$(x)");
 
-    SET_PARAM_NAMES({"tau"});
+    SET_PARAMS({"tau"});
 
     SET_VARS({{"x", "scalar"}});
 
     SET_DERIVED_PARAMS({
-        {"expDecay", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars.at("tau")); }},
-        {"init", [](const ParamValues &pars, double) { return (std::exp(1) / pars.at("tau")); }}});
+        {"expDecay", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars.at("tau").cast<double>()); }},
+        {"init", [](const ParamValues &pars, double) { return (std::exp(1) / pars.at("tau").cast<double>()); }}});
 };
 IMPLEMENT_SNIPPET(AlphaCurr);
 

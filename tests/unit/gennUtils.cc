@@ -61,19 +61,6 @@ TEST(GeNNUtils, ValidateVarPopName)
     validatePopNameDeathTest("test-test");
 }
 //--------------------------------------------------------------------------
-TEST(GeNNUtils, ValidateParamNames)
-{
-    Utils::validateParamNames({"test", "Test", "test123"});
-
-    try {
-        Utils::validateParamNames({"test", "test.test"});
-        FAIL();
-    }
-
-    catch(const std::runtime_error &) {
-    }
-}
-//--------------------------------------------------------------------------
 TEST(GeNNUtils, ValidateVecNames)
 {
     const Snippet::Base::ParamValVec good{{"test", "scalar", 1.0}, {"Test", "scalar", 0.0}};

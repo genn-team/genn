@@ -62,20 +62,22 @@ from .genn import (generate_code, init_logging, CurrentSource,
                    CurrentSourceModelBase, CustomConnectivityUpdate,
                    CustomConnectivityUpdateModelBase, CustomUpdate,
                    CustomUpdateModelBase, CustomUpdateVar, CustomUpdateWU,
-                   DerivedParam, EGP, EGPRef, 
-                   InitSparseConnectivitySnippetBase, 
+                   DerivedParam, EGP, EGPRef,
+                   InitSparseConnectivitySnippetBase,
                    InitToeplitzConnectivitySnippetBase, InitVarSnippetBase,
-                   ModelSpecInternal, NeuronGroup, NeuronModelBase, ParamVal,
-                   PlogSeverity, PostsynapticInit, PostsynapticModelBase,
+                   ModelSpecInternal, NeuronGroup, NeuronModelBase,
+                   NumericValue, Param, ParamVal, PlogSeverity,
+                   PostsynapticInit, PostsynapticModelBase,
                    SparseConnectivityInit, SynapseGroup, SynapseMatrixType,
-                   ToeplitzConnectivityInit, UnresolvedType, Var,
-                   VarInit, VarLocation, VarRef, WeightUpdateInit, 
+                   ToeplitzConnectivityInit, UnresolvedType, Var, VarInit,
+                   VarLocation, VarRef, WeightUpdateInit,
                    WeightUpdateModelBase)
+
 from .runtime import Runtime
 from .genn_groups import (CurrentSourceMixin, CustomConnectivityUpdateMixin,
                           CustomUpdateMixin, CustomUpdateWUMixin,
                           NeuronGroupMixin, SynapseGroupMixin)
-from .model_preprocessor import get_snippet, get_var_init
+from .model_preprocessor import get_snippet, get_var_init, prepare_param_vals
 from . import (current_source_models, custom_connectivity_update_models,
                custom_update_models, init_sparse_connectivity_snippets, 
                init_toeplitz_connectivity_snippets, init_var_snippets,
@@ -316,7 +318,8 @@ class GeNNModel(ModelSpecInternal):
         
         # Use superclass to add population
         n_group = super(GeNNModel, self).add_neuron_population(
-            pop_name, int(num_neurons), neuron, params, var_init)
+            pop_name, int(num_neurons), neuron, 
+            prepare_param_vals(params), var_init)
         
         # Initialise group, store group in dictionary and return
         n_group._init_group(self, vars)
@@ -406,8 +409,8 @@ class GeNNModel(ModelSpecInternal):
         
         # Use superclass to add population
         c_source = super(GeNNModel, self).add_current_source(
-            cs_name, current_source_model, pop.name, params,
-            var_init, var_refs)
+            cs_name, current_source_model, pop.name, 
+            prepare_param_vals(params), var_init, var_refs)
         
         # Initialise group, store group in dictionary and return
         c_source._init_group(self, vars, pop)
@@ -449,7 +452,7 @@ class GeNNModel(ModelSpecInternal):
         # Use superclass to add population
         c_update = super(GeNNModel, self).add_custom_update(
             cu_name, group_name, custom_update_model,
-            params, var_init, var_refs, egp_refs)
+            prepare_param_vals(params), var_init, var_refs, egp_refs)
 
         # Setup back-reference, store group in dictionary and return
         c_update._init_group(self, vars)
@@ -512,7 +515,7 @@ class GeNNModel(ModelSpecInternal):
         syn_group = self._validate_synapse_group(syn_group, "syn_group")
         c_update = super(GeNNModel, self).add_custom_connectivity_update(
             cu_name, group_name, syn_group.name, custom_connectivity_update_model,
-            params, var_init, pre_var_init, post_var_init,
+            prepare_param_vals(params), var_init, pre_var_init, post_var_init,
             var_refs, pre_var_refs, post_var_refs)
 
         # Setup back-reference, store group in dictionary and return
@@ -738,7 +741,7 @@ def init_var(snippet, params={}):
     snippet = get_snippet(snippet, InitVarSnippetBase, init_var_snippets)
 
     # Use add function to create suitable VarInit
-    return VarInit(snippet, params)
+    return VarInit(snippet, prepare_param_vals(params))
 
 def init_sparse_connectivity(snippet, params={}):
     """This helper function creates a InitSparseConnectivitySnippet::Init
@@ -755,7 +758,7 @@ def init_sparse_connectivity(snippet, params={}):
     # Get snippet and wrap in SparseConnectivityInit object
     snippet = get_snippet(snippet, InitSparseConnectivitySnippetBase,
                           init_sparse_connectivity_snippets)
-    return SparseConnectivityInit(snippet, params)
+    return SparseConnectivityInit(snippet, prepare_param_vals(params))
 
                                               
 
@@ -767,7 +770,8 @@ def init_postsynaptic(snippet, params={}, vars={}, var_refs={}):
     # Extract parts of var spaces which should be initialised by GeNN
     var_init = get_var_init(vars)
     
-    return (PostsynapticInit(snippet, params, var_init, var_refs),
+    return (PostsynapticInit(snippet, prepare_param_vals(params), 
+                             var_init, var_refs), 
             vars)
 
 def init_weight_update(snippet, params={}, vars={}, pre_vars={},
@@ -780,7 +784,7 @@ def init_weight_update(snippet, params={}, vars={}, pre_vars={},
     pre_var_init = get_var_init(pre_vars)
     post_var_init = get_var_init(post_vars)
     
-    return (WeightUpdateInit(snippet, params, var_init, 
+    return (WeightUpdateInit(snippet, prepare_param_vals(params), var_init, 
                              pre_var_init, post_var_init,
                              pre_var_refs, post_var_refs),
             vars, pre_vars, post_vars)
@@ -816,10 +820,11 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, params={}):
     init_toeplitz_connect_snippet = get_snippet(init_toeplitz_connect_snippet,
                                                 InitToeplitzConnectivitySnippetBase,
                                                 init_toeplitz_connectivity_snippets)
-    return ToeplitzConnectivityInit(init_toeplitz_connect_snippet, params)
+    return ToeplitzConnectivityInit(init_toeplitz_connect_snippet, 
+                                    prepare_param_vals(params))
 
 
-def create_model(class_name, base, param_names, derived_params, 
+def create_model(class_name, base, params, param_names, derived_params,
                  extra_global_params, custom_body):
     """This helper function completes a custom model class creation.
 
@@ -836,8 +841,8 @@ def create_model(class_name, base, param_names, derived_params,
     Args:
     class_name      --  name of the new class
     base            --  base class
-    param_names     --  list of strings with param names of the model
-    derived_params  --  list of pairs, where the first member is string with
+    params          --  list of tuples with param names and types of the model
+    derived_params  --  list of tuples, where the first member is string with
                         name of the derived parameter and the second should 
                         be a functor returned by create_dpf_class
     extra_global_params --  list of pairs of strings with names and types of
@@ -853,24 +858,38 @@ def create_model(class_name, base, param_names, derived_params,
     }
 
     if param_names is not None:
-        body["get_param_names"] = lambda self: param_names
+        warn("The 'param_names' parameter has been renamed to 'params' "
+             "and will be removed in future", DeprecationWarning)
+        params = param_names
+
+    if params is not None:
+        body["get_params"] =\
+            lambda self: [Param(p) if isinstance(p, str) else Param(*p)
+                          for p in params]
 
     if derived_params is not None:
+        # Helper to wrap lambda function so as to extract underlying value from NumericValue
+        # parameters and wrap the resulting derived parameter value in a NumericValue!
+        # **NOTE** seperate function is required to ensure f is bound correctly
+        def wrap_lambda(f):
+            return lambda pars, dt: NumericValue(f({n: p.value 
+                                                    for n, p in pars.items()},
+                                                   dt))
+
         body["get_derived_params"] = \
-            lambda self: [DerivedParam(dp[0], dp[1]) 
+            lambda self: [DerivedParam(dp[0], wrap_lambda(dp[1]), *dp[2:])
                           for dp in derived_params]
 
     if extra_global_params is not None:
         body["get_extra_global_params"] = \
-            lambda self: [EGP(egp[0], egp[1])
-                          for egp in extra_global_params]
+            lambda self: [EGP(*egp) for egp in extra_global_params]
 
     if custom_body is not None:
         body.update(custom_body)
 
     return type(class_name, (base,), body)()
 
-def create_neuron_model(class_name, param_names=None,
+def create_neuron_model(class_name, params=None, param_names=None,
                         var_name_types=None, derived_params=None,
                         sim_code=None, threshold_condition_code=None,
                         reset_code=None, extra_global_params=None,
@@ -921,8 +940,8 @@ def create_neuron_model(class_name, param_names=None,
 
     if additional_input_vars:
         body["get_additional_input_vars"] = \
-            lambda self: [ParamVal(a[0], a[1], a[2])
-                                   for a in additional_input_vars]
+            lambda self: [ParamVal(a[0], a[1], NumericValue(a[2]))
+                          for a in additional_input_vars]
 
     if var_name_types is not None:
         body["get_vars"] = \
@@ -932,14 +951,15 @@ def create_neuron_model(class_name, param_names=None,
         body["is_auto_refractory_required"] = \
             lambda self: is_auto_refractory_required
 
-    return create_model(class_name, NeuronModelBase, param_names, 
+    return create_model(class_name, NeuronModelBase, params, param_names,
                         derived_params, extra_global_params, body)
 
 
-def create_postsynaptic_model(class_name, param_names=None,
+def create_postsynaptic_model(class_name, params=None, param_names=None,
                               var_name_types=None, neuron_var_refs=None,
                               derived_params=None, decay_code=None,
-                              apply_input_code=None, extra_global_params=None):
+                              apply_input_code=None, 
+                              extra_global_params=None):
     """This helper function creates a custom PostsynapticModel class.
     See also:
     create_neuron_model
@@ -979,25 +999,23 @@ def create_postsynaptic_model(class_name, param_names=None,
     if neuron_var_refs is not None:
         body["get_neuron_var_refs"] =\
             lambda self: [VarRef(*v) for v in var_refs]
+    
+    return create_model(class_name, PostsynapticModelBase, params, 
+                        param_names, derived_params, 
+                        extra_global_params, body)
 
-    return create_model(class_name, PostsynapticModelBase, param_names,
-                        derived_params, extra_global_params, body)
 
-
-def create_weight_update_model(class_name, param_names=None,
-                               var_name_types=None,
-                               pre_var_name_types=None,
-                               post_var_name_types=None,
+def create_weight_update_model(class_name, params=None, param_names=None,
+                               var_name_types=None, pre_var_name_types=None,
+                               post_var_name_types=None, 
                                pre_neuron_var_refs=None,
                                post_neuron_var_refs=None,
                                derived_params=None, sim_code=None,
                                event_code=None, learn_post_code=None,
                                synapse_dynamics_code=None,
                                event_threshold_condition_code=None,
-                               pre_spike_code=None,
-                               post_spike_code=None,
-                               pre_dynamics_code=None,
-                               post_dynamics_code=None,
+                               pre_spike_code=None, post_spike_code=None,
+                               pre_dynamics_code=None, post_dynamics_code=None,
                                extra_global_params=None):
     """This helper function creates a custom WeightUpdateModel class.
     See also:
@@ -1094,16 +1112,15 @@ def create_weight_update_model(class_name, param_names=None,
     if post_neuron_var_refs is not None:
         body["get_post_neuron_var_refs"] =\
             lambda self: [VarRef(*v) for v in post_neuron_var_refs]
+    
+    return create_model(class_name, WeightUpdateModelBase, params, 
+                        param_names, derived_params, 
+                        extra_global_params, body)
 
-    return create_model(class_name, WeightUpdateModelBase, param_names,
-                        derived_params, extra_global_params, body)
 
-
-def create_current_source_model(class_name, param_names=None,
-                                var_name_types=None,
-                                neuron_var_refs=None,
-                                derived_params=None,
-                                injection_code=None,
+def create_current_source_model(class_name, params=None, param_names=None,
+                                var_name_types=None, neuron_var_refs=None,
+                                derived_params=None, injection_code=None,
                                 extra_global_params=None):
     """This helper function creates a custom NeuronModel class.
     See also:
@@ -1141,15 +1158,14 @@ def create_current_source_model(class_name, param_names=None,
         body["get_neuron_var_refs"] =\
             lambda self: [VarRef(*v) for v in var_refs]
 
-    return create_model(class_name, CurrentSourceModelBase, param_names,
-                        derived_params, extra_global_params, body)
+    return create_model(class_name, CurrentSourceModelBase, params,
+                        param_names, derived_params,
+                        extra_global_params, body)
 
 
-def create_custom_update_model(class_name, param_names=None,
-                               var_name_types=None,
-                               derived_params=None,
-                               var_refs=None,
-                               update_code=None,
+def create_custom_update_model(class_name, params=None, param_names=None, 
+                               var_name_types=None, derived_params=None, 
+                               var_refs=None, update_code=None, 
                                extra_global_params=None,
                                extra_global_param_refs=None):
     """This helper function creates a custom CustomUpdate class.
@@ -1195,10 +1211,11 @@ def create_custom_update_model(class_name, param_names=None,
         body["get_extra_global_param_refs"] =\
             lambda self: [EGPRef(*e) for e in extra_global_param_refs]
 
-    return create_model(class_name, CustomUpdateModelBase, param_names,
-                        derived_params, extra_global_params, body)
+    return create_model(class_name, CustomUpdateModelBase, params,
+                        param_names, derived_params,
+                        extra_global_params, body)
 
-def create_custom_connectivity_update_model(class_name, 
+def create_custom_connectivity_update_model(class_name, params=None, 
                                             param_names=None,
                                             var_name_types=None,
                                             pre_var_name_types=None,
@@ -1270,12 +1287,12 @@ def create_custom_connectivity_update_model(class_name,
             lambda self: [VarRef(*v) for v in post_var_refs]
 
     return create_model(class_name, CustomConnectivityUpdateModelBase,
-                        param_names, derived_params, extra_global_params, body)
+                        params, param_names, derived_params, 
+                        extra_global_params, body)
 
 
-def create_var_init_snippet(class_name, param_names=None,
-                            derived_params=None,
-                            var_init_code=None, 
+def create_var_init_snippet(class_name, params=None, param_names=None,
+                            derived_params=None, var_init_code=None, 
                             extra_global_params=None):
     """This helper function creates a custom InitVarSnippet class.
     See also:
@@ -1304,13 +1321,12 @@ def create_var_init_snippet(class_name, param_names=None,
         body["get_code"] = lambda self: dedent(var_init_code)
 
     return create_model(class_name, InitVarSnippetBase, 
-                        param_names, derived_params, 
+                        params, param_names, derived_params, 
                         extra_global_params, body)
 
 
-def create_sparse_connect_init_snippet(class_name,
-                                       param_names=None,
-                                       derived_params=None,
+def create_sparse_connect_init_snippet(class_name, params=None, 
+                                       param_names=None, derived_params=None,
                                        row_build_code=None,
                                        col_build_code=None,
                                        calc_max_row_len_func=None,
@@ -1370,10 +1386,11 @@ def create_sparse_connect_init_snippet(class_name,
         body["get_calc_kernel_size_func"] = \
             lambda self: calc_kernel_size_func
 
-    return create_model(class_name, InitSparseConnectivitySnippetBase, param_names,
-                        derived_params, extra_global_params, body)
+    return create_model(class_name, InitSparseConnectivitySnippetBase, params,
+                        param_names, derived_params, 
+                        extra_global_params, body)
 
-def create_toeplitz_connect_init_snippet(class_name,
+def create_toeplitz_connect_init_snippet(class_name, params=None,
                                          param_names=None,
                                          derived_params=None,
                                          diagonal_build_code=None,
@@ -1425,8 +1442,9 @@ def create_toeplitz_connect_init_snippet(class_name,
         body["get_calc_kernel_size_func"] = \
             lambda self: make_cksf(calc_kernel_size_func)
 
-    return create_model(class_name, InitToeplitzConnectivitySnippetBase, param_names,
-                        derived_params, extra_global_params, body)
+    return create_model(class_name, InitToeplitzConnectivitySnippetBase,
+                        params, param_names, derived_params,
+                        extra_global_params, body)
 
 @deprecated("this wrapper is now unnecessary - use callables directly")
 def create_dpf_class(dp_func):

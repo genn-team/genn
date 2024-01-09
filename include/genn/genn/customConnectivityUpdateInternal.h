@@ -16,7 +16,7 @@ public:
 
     CustomConnectivityUpdateInternal(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup, 
                                      const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel, 
-                                     const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
+                                     const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                                      const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
                                      const std::unordered_map<std::string, Models::WUVarReference> &varReferences, const std::unordered_map<std::string, Models::VarReference> &preVarReferences,
                                      const std::unordered_map<std::string, Models::VarReference> &postVarReferences, VarLocation defaultVarLocation,
@@ -62,7 +62,7 @@ public:
     const CustomConnectivityUpdate &getTarget() const{ return m_CU; }
 
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
-
+     
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -145,7 +145,7 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string&) const{ return VarLocation::HOST_DEVICE; }
+    VarLocation getLoc(const std::string &varName) const{ return m_CU.getExtraGlobalParamLocation(varName); }
 
     Snippet::Base::EGPVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getExtraGlobalParams(); }
 

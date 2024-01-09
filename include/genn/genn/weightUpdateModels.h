@@ -94,22 +94,22 @@ public:
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
-    //! Find the index of a named variable
-    size_t getVarIndex(const std::string &varName) const
+    //! Find the named variable
+    std::optional<Var> getVar(const std::string &varName) const
     {
-        return getNamedVecIndex(varName, getVars());
+        return getNamed(varName, getVars());
     }
 
-    //! Find the index of a named presynaptic variable
-    size_t getPreVarIndex(const std::string &varName) const
+    //! Find the named presynaptic variable
+    std::optional<Var> getPreVar(const std::string &varName) const
     {
-        return getNamedVecIndex(varName, getPreVars());
+        return getNamed(varName, getPreVars());
     }
 
-    //! Find the index of a named postsynaptic variable
-    size_t getPostVarIndex(const std::string &varName) const
+    //! Find the named postsynaptic variable
+    std::optional<Var> getPostVar(const std::string &varName) const
     {
-        return getNamedVecIndex(varName, getPostVars());
+        return getNamed(varName, getPostVars());
     }
 
     //! Update hash from model
@@ -122,7 +122,7 @@ public:
     boost::uuids::detail::sha1::digest_type getPostHashDigest() const;
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, double> &paramValues, 
+    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
                   const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                   const std::unordered_map<std::string, InitVarSnippet::Init> &preVarValues,
                   const std::unordered_map<std::string, InitVarSnippet::Init> &postVarValues,
@@ -137,7 +137,7 @@ public:
 class GENN_EXPORT Init : public Snippet::Init<Base>
 {
 public:
-    Init(const Base *snippet, const std::unordered_map<std::string, double> &params, 
+    Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params, 
          const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, 
          const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, 
          const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
@@ -233,7 +233,7 @@ class StaticPulseConstantWeight : public Base
 public:
     DECLARE_SNIPPET(StaticPulseConstantWeight);
 
-    SET_PARAM_NAMES({"g"});
+    SET_PARAMS({"g"});
 
     SET_SIM_CODE("addToPost(g);\n");
 };
@@ -295,7 +295,7 @@ class StaticGraded : public Base
 public:
     DECLARE_SNIPPET(StaticGraded);
 
-    SET_PARAM_NAMES({"Epre", "Vslope"});
+    SET_PARAMS({"Epre", "Vslope"});
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
     SET_EVENT_CODE("addToPost(fmax(0.0, g * tanh((V_pre - Epre) / Vslope) * DT));\n");
@@ -365,7 +365,7 @@ class PiecewiseSTDP : public Base
 public:
     DECLARE_SNIPPET(PiecewiseSTDP);
 
-    SET_PARAM_NAMES({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
+    SET_PARAMS({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
                      "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
     SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
 
@@ -396,12 +396,12 @@ public:
         "$(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");
 
     SET_DERIVED_PARAMS({
-        {"lim0", [](const std::unordered_map<std::string, double> &pars, double){ return (1/pars.at("tPunish01") + 1/pars.at("tChng")) * pars.at("tLrn") / (2/pars.at("tChng")); }},
-        {"lim1", [](const std::unordered_map<std::string, double> &pars, double){ return  -((1/pars.at("tPunish10") + 1/pars.at("tChng")) * pars.at("tLrn") / (2/pars.at("tChng"))); }},
-        {"slope0", [](const std::unordered_map<std::string, double> &pars, double){ return  -2*pars.at("gMax")/(pars.at("tChng")*pars.at("tLrn")); }},
-        {"slope1", [](const std::unordered_map<std::string, double> &pars, double){ return  2*pars.at("gMax")/(pars.at("tChng")*pars.at("tLrn")); }},
-        {"off0", [](const std::unordered_map<std::string, double> &pars, double){ return  pars.at("gMax") / pars.at("tPunish01"); }},
-        {"off1", [](const std::unordered_map<std::string, double> &pars, double){ return  pars.at("gMax") / pars.at("tChng"); }},
-        {"off2", [](const std::unordered_map<std::string, double> &pars, double){ return  pars.at("gMax") / pars.at("tPunish10"); }}});
+        {"lim0", [](const ParamValues &pars, double){ return (1/pars.at("tPunish01").cast<double>() + 1 / pars.at("tChng").cast<double>()) * pars.at("tLrn").cast<double>() / (2/pars.at("tChng").cast<double>()); }},
+        {"lim1", [](const ParamValues &pars, double){ return  -((1/pars.at("tPunish10").cast<double>() + 1 / pars.at("tChng").cast<double>()) * pars.at("tLrn").cast<double>() / (2/pars.at("tChng").cast<double>())); }},
+        {"slope0", [](const ParamValues &pars, double){ return  -2*pars.at("gMax").cast<double>() /(pars.at("tChng").cast<double>()*pars.at("tLrn").cast<double>()); }},
+        {"slope1", [](const ParamValues &pars, double){ return  2*pars.at("gMax").cast<double>() / (pars.at("tChng").cast<double>() * pars.at("tLrn").cast<double>()); }},
+        {"off0", [](const ParamValues &pars, double){ return  pars.at("gMax").cast<double>() / pars.at("tPunish01").cast<double>(); }},
+        {"off1", [](const ParamValues &pars, double){ return  pars.at("gMax").cast<double>() / pars.at("tChng").cast<double>(); }},
+        {"off2", [](const ParamValues &pars, double){ return  pars.at("gMax").cast<double>() / pars.at("tPunish10").cast<double>(); }}});
 };
 }   //namespace GeNN::WeightUpdateModels

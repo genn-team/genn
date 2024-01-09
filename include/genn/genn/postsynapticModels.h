@@ -41,14 +41,14 @@ public:
     //! Update hash from model
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    //! Find the index of a named variable
-    size_t getVarIndex(const std::string &varName) const
+    //! Find the named variable
+    std::optional<Var> getVar(const std::string &varName) const
     {
-        return getNamedVecIndex(varName, getVars());
+        return getNamed(varName, getVars());
     }
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, double> &paramValues, 
+    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
                   const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
                   const std::unordered_map<std::string, Models::VarReference> &varRefTargets) const;
 };
@@ -59,7 +59,7 @@ public:
 class GENN_EXPORT Init : public Snippet::Init<Base>
 {
 public:
-    Init(const Base *snippet, const std::unordered_map<std::string, double> &params, 
+    Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params, 
          const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, 
          const std::unordered_map<std::string, Models::VarReference> &neuronVarReferences);
 
@@ -103,11 +103,11 @@ public:
 
     SET_CURRENT_CONVERTER_CODE("$(init) * $(inSyn)");
 
-    SET_PARAM_NAMES({"tau"});
+    SET_PARAMS({"tau"});
 
     SET_DERIVED_PARAMS({
-        {"expDecay", [](const std::unordered_map<std::string, double> &pars, double dt){ return std::exp(-dt / pars.at("tau")); }},
-        {"init", [](const std::unordered_map<std::string, double> &pars, double dt){ return (pars.at("tau") * (1.0 - std::exp(-dt / pars.at("tau")))) * (1.0 / dt); }}});
+        {"expDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tau").cast<double>()); }},
+        {"init", [](const ParamValues &pars, double dt){ return (pars.at("tau").cast<double>() * (1.0 - std::exp(-dt / pars.at("tau").cast<double>()))) * (1.0 / dt); }}});
 };
 
 //----------------------------------------------------------------------------
@@ -128,11 +128,11 @@ public:
 
     SET_CURRENT_CONVERTER_CODE("$(inSyn) * ($(E) - $(V))");
 
-    SET_PARAM_NAMES({"tau", "E"});
+    SET_PARAMS({"tau", "E"});
 
     SET_NEURON_VAR_REFS({{"V", "scalar", VarAccessMode::READ_ONLY}});
 
-    SET_DERIVED_PARAMS({{"expDecay", [](const std::unordered_map<std::string, double> &pars, double dt){ return std::exp(-dt / pars.at("tau")); }}});
+    SET_DERIVED_PARAMS({{"expDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tau").cast<double>()); }}});
 };
 
 //----------------------------------------------------------------------------

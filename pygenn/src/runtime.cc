@@ -12,6 +12,12 @@
 using namespace GeNN::Runtime;
 using namespace pybind11::literals;
 
+#define WRAP_RUNTIME_OVERLOADS(GROUP)                                                                                                                                       \
+    .def("get_array", pybind11::overload_cast<const GeNN::GROUP&, const std::string&>(&Runtime::getArray, pybind11::const_), pybind11::return_value_policy::reference)      \
+    .def("allocate_array", pybind11::overload_cast<const GeNN::GROUP&, const std::string&, size_t>(&Runtime::allocateArray))                                                \
+    .def("set_dynamic_param_value", pybind11::overload_cast<const GeNN::GROUP&, const std::string&, const GeNN::Type::NumericValue&>(&Runtime::setDynamicParamValue))
+        
+
 //----------------------------------------------------------------------------
 // runtime
 //----------------------------------------------------------------------------
@@ -38,7 +44,8 @@ PYBIND11_MODULE(runtime, m)
         .def("pull_from_device", &ArrayBase::pullFromDevice)
         .def("push_slice_1d_to_device", &ArrayBase::pushSlice1DToDevice)
         .def("pull_slice_1d_from_device", &ArrayBase::pullSlice1DFromDevice);
-        
+    
+
     //------------------------------------------------------------------------
     // runtime.Runtime
     //------------------------------------------------------------------------
@@ -62,7 +69,6 @@ PYBIND11_MODULE(runtime, m)
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
-        //.def("open", &SharedLibraryModel<T>::open)
         .def("allocate", &Runtime::allocate)
         //.def("nccl_init_communicator", &SharedLibraryModel<T>::ncclInitCommunicator)
         .def("initialize", &Runtime::initialize)
@@ -72,19 +78,12 @@ PYBIND11_MODULE(runtime, m)
 
         .def("get_delay_pointer", &Runtime::getDelayPointer)
 
-        .def("get_array", pybind11::overload_cast<const GeNN::CurrentSource&, const std::string&>(&Runtime::getArray, pybind11::const_), pybind11::return_value_policy::reference)
-        .def("get_array", pybind11::overload_cast<const GeNN::NeuronGroup&, const std::string&>(&Runtime::getArray, pybind11::const_), pybind11::return_value_policy::reference)
-        .def("get_array", pybind11::overload_cast<const GeNN::SynapseGroup&, const std::string&>(&Runtime::getArray, pybind11::const_), pybind11::return_value_policy::reference)
-        .def("get_array", pybind11::overload_cast<const GeNN::CustomUpdateBase&, const std::string&>(&Runtime::getArray, pybind11::const_), pybind11::return_value_policy::reference)
-        .def("get_array", pybind11::overload_cast<const GeNN::CustomConnectivityUpdate&, const std::string&>(&Runtime::getArray, pybind11::const_), pybind11::return_value_policy::reference)
-        
-        .def("allocate_array", pybind11::overload_cast<const GeNN::CurrentSource&, const std::string&, size_t>(&Runtime::allocateArray))
-        .def("allocate_array", pybind11::overload_cast<const GeNN::NeuronGroup&, const std::string&, size_t>(&Runtime::allocateArray))
-        .def("allocate_array", pybind11::overload_cast<const GeNN::SynapseGroup&, const std::string&, size_t>(&Runtime::allocateArray))
-        .def("allocate_array", pybind11::overload_cast<const GeNN::CustomUpdateBase&, const std::string&, size_t>(&Runtime::allocateArray))
-        .def("allocate_array", pybind11::overload_cast<const GeNN::CustomConnectivityUpdate&, const std::string&, size_t>(&Runtime::allocateArray))
-        
-        
+        WRAP_RUNTIME_OVERLOADS(CurrentSource)
+        WRAP_RUNTIME_OVERLOADS(NeuronGroup)
+        WRAP_RUNTIME_OVERLOADS(SynapseGroup)
+        WRAP_RUNTIME_OVERLOADS(CustomUpdateBase)
+        WRAP_RUNTIME_OVERLOADS(CustomConnectivityUpdate)
+
         .def("pull_recording_buffers_from_device", &Runtime::pullRecordingBuffersFromDevice)
 
         .def("get_custom_update_time", &Runtime::getCustomUpdateTime)
