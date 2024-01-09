@@ -71,8 +71,11 @@ genn_share = os.path.join(genn_path, "share", "genn")
 pygenn_share = os.path.join(pygenn_path, "share")
 
 # Always package LibGeNN
-package_data = ["genn" + genn_lib_suffix + ".*" if WIN 
-                else "libgenn" + genn_lib_suffix + ".*"]
+if WIN:
+    package_data = ["genn" + genn_lib_suffix + ".dll",
+                    "libffi" + genn_lib_suffix + ".dll"]
+else:
+    package_data = ["libgenn" + genn_lib_suffix + ".so"]
 
 
 # Copy GeNN 'share' tree into pygenn and add all files to package
@@ -227,12 +230,12 @@ for module_stem, source_stem, kwargs in backends:
         backend_extension_kwargs["depends"].append(
             os.path.join(pygenn_path, "genn_" + module_stem + "_backend" + genn_lib_suffix + ".dll"))
 
-        package_data.append("genn_" + module_stem + "_backend" + genn_lib_suffix + ".*")
+        package_data.append("genn_" + module_stem + "_backend" + genn_lib_suffix + ".dll")
     else:
         backend_extension_kwargs["depends"].append(
             os.path.join(pygenn_path, "libgenn_" + module_stem + "_backend" + genn_lib_suffix + ".so"))
 
-        package_data.append("libgenn_" + module_stem + "_backend" + genn_lib_suffix + ".*")
+        package_data.append("libgenn_" + module_stem + "_backend" + genn_lib_suffix + ".so")
 
     # Add backend include directory to both SWIG and C++ compiler options
     backend_include_dir = os.path.join(genn_path, "include", "genn", "backends", module_stem)
@@ -248,6 +251,8 @@ for module_stem, source_stem, kwargs in backends:
     if build_genn_libs:
         # If compiler is MSVC
         if WIN:
+            # **NOTE** ensure pygenn_path has trailing slash to make MSVC happy
+            out_dir = os.path.join(pygenn_path, "")
             check_call(["msbuild", "genn.sln", f"/t:{module_stem}_backend",
                         f"/p:Configuration={genn_lib_suffix[1:]}",
                         "/m", "/verbosity:quiet",
