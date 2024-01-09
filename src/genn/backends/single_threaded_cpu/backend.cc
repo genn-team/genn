@@ -54,54 +54,6 @@ private:
     const bool m_TimingEnabled;
 };
 
-//-----------------------------------------------------------------------
-template<typename G>
-void genKernelIteration(EnvironmentExternalBase &env, G &g, size_t numKernelDims, BackendBase::HandlerEnv handler)
-{
-    // Define recursive function to generate nested kernel initialisation loops
-    // **NOTE** this is a std::function as type of auto lambda couldn't be determined inside for recursive call
-    std::function<void(EnvironmentExternalBase &env, size_t)> generateRecursive =
-        [&handler, &g, &generateRecursive, numKernelDims]
-        (EnvironmentExternalBase &env, size_t depth)
-        {
-            // Loop through this kernel dimensions
-            const std::string idxVar = "k" + std::to_string(depth);
-            env.print("for(unsigned int " + idxVar + " = 0; " + idxVar + " < " + getKernelSize(g, depth) + "; " + idxVar + "++)");
-            {
-                CodeStream::Scope b(env.getStream());
-                EnvironmentGroupMergedField<G> loopEnv(env, g);
-
-                // Add substitution for this kernel index
-                loopEnv.add(Type::Uint32.addConst(), "id_kernel_" + std::to_string(depth), idxVar);
-
-                // If we've recursed through all dimensions
-                if (depth == (numKernelDims - 1)) {
-                    // Generate kernel index and use as "synapse" index
-                    // **TODO** rename
-                    loopEnv.add(Type::Uint32.addConst(), "id_syn", "kernelInd", 
-                                {loopEnv.addInitialiser("const unsigned int kernelInd = " + getKernelIndex(g) + ";")});
-
-                    // Call handler
-                    handler(loopEnv);
-                }
-                // Otherwise, recurse
-                else {
-                    generateRecursive(loopEnv, depth + 1);
-                }
-            }
-        };
-
-    // Generate loops through kernel indices recursively
-    generateRecursive(env, 0);
-}
-}
-
-//--------------------------------------------------------------------------
-// CodeGenerator::SingleThreadedCPU::Array
-//--------------------------------------------------------------------------
-namespace GeNN::CodeGenerator::SingleThreadedCPU
-{
-
 //--------------------------------------------------------------------------
 // CodeGenerator::SingleThreadedCPU::Array
 //--------------------------------------------------------------------------
@@ -187,9 +139,53 @@ public:
     }
 };
 
+//-----------------------------------------------------------------------
+template<typename G>
+void genKernelIteration(EnvironmentExternalBase &env, G &g, size_t numKernelDims, BackendBase::HandlerEnv handler)
+{
+    // Define recursive function to generate nested kernel initialisation loops
+    // **NOTE** this is a std::function as type of auto lambda couldn't be determined inside for recursive call
+    std::function<void(EnvironmentExternalBase &env, size_t)> generateRecursive =
+        [&handler, &g, &generateRecursive, numKernelDims]
+        (EnvironmentExternalBase &env, size_t depth)
+        {
+            // Loop through this kernel dimensions
+            const std::string idxVar = "k" + std::to_string(depth);
+            env.print("for(unsigned int " + idxVar + " = 0; " + idxVar + " < " + getKernelSize(g, depth) + "; " + idxVar + "++)");
+            {
+                CodeStream::Scope b(env.getStream());
+                EnvironmentGroupMergedField<G> loopEnv(env, g);
+
+                // Add substitution for this kernel index
+                loopEnv.add(Type::Uint32.addConst(), "id_kernel_" + std::to_string(depth), idxVar);
+
+                // If we've recursed through all dimensions
+                if (depth == (numKernelDims - 1)) {
+                    // Generate kernel index and use as "synapse" index
+                    // **TODO** rename
+                    loopEnv.add(Type::Uint32.addConst(), "id_syn", "kernelInd", 
+                                {loopEnv.addInitialiser("const unsigned int kernelInd = " + getKernelIndex(g) + ";")});
+
+                    // Call handler
+                    handler(loopEnv);
+                }
+                // Otherwise, recurse
+                else {
+                    generateRecursive(loopEnv, depth + 1);
+                }
+            }
+        };
+
+    // Generate loops through kernel indices recursively
+    generateRecursive(env, 0);
+}
+}
+
 //--------------------------------------------------------------------------
-// GeNN::CodeGenerator::SingleThreadedCPU::Backend
+// CodeGenerator::SingleThreadedCPU::Backend
 //--------------------------------------------------------------------------
+namespace GeNN::CodeGenerator::SingleThreadedCPU
+{
 void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
                               HostHandler preambleHandler) const
 {
