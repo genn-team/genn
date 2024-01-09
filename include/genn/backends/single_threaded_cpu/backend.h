@@ -33,68 +33,6 @@ struct Preferences : public PreferencesBase
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::SingleThreadedCPU::Array
-//--------------------------------------------------------------------------
-class BACKEND_EXPORT Array : public Runtime::ArrayBase
-{
-public:
-    Array(const Type::ResolvedType &type, size_t count, 
-          VarLocation location, bool uninitialized);
-    virtual ~Array();
-    
-    //------------------------------------------------------------------------
-    // ArrayBase virtuals
-    //------------------------------------------------------------------------
-    //! Allocate array
-    virtual void allocate(size_t count) final;
-
-    //! Free array
-    virtual void free() final;
-
-    //! Copy entire array to device
-    virtual void pushToDevice() final
-    {
-    }
-
-    //! Copy entire array from device
-    virtual void pullFromDevice() final
-    {
-    }
-
-    //! Copy a 1D slice of elements to device 
-    /*! \param offset   Offset in elements to start copying from
-        \param count    Number of elements to copy*/
-    virtual void pushSlice1DToDevice(size_t, size_t) final
-    {
-    }
-
-    //! Copy a 1D slice of elements from device 
-    /*! \param offset   Offset in elements to start copying from
-        \param count    Number of elements to copy*/
-    virtual void pullSlice1DFromDevice(size_t, size_t) final
-    {
-    }
-    
-    //! Memset the host pointer
-    virtual void memsetDeviceObject(int) final
-    {
-        throw std::runtime_error("Single-threaded CPU arrays have no device objects");
-    }
-
-    //! Serialise backend-specific device object to bytes
-    virtual void serialiseDeviceObject(std::vector<std::byte>&, bool) const final
-    {
-        throw std::runtime_error("Single-threaded CPU arrays have no device objects");
-    }
-
-    //! Serialise backend-specific host object to bytes
-    virtual void serialiseHostObject(std::vector<std::byte>&, bool) const
-    {
-        throw std::runtime_error("Single-threaded CPU arrays have no host objects");
-    }
-};
-
-//--------------------------------------------------------------------------
 // CodeGenerator::SingleThreadedCPU::Backend
 //--------------------------------------------------------------------------
 class BACKEND_EXPORT Backend : public BackendBase

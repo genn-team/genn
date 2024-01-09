@@ -101,36 +101,91 @@ void genKernelIteration(EnvironmentExternalBase &env, G &g, size_t numKernelDims
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator::SingleThreadedCPU
 {
+
 //--------------------------------------------------------------------------
-Array::Array(const Type::ResolvedType &type, size_t count, 
-             VarLocation location, bool uninitialized)
-:   ArrayBase(type, count, location, uninitialized)
+// CodeGenerator::SingleThreadedCPU::Array
+//--------------------------------------------------------------------------
+class Array : public Runtime::ArrayBase
 {
-    if(count > 0) {
-        allocate(count);
+public:
+    Array(const Type::ResolvedType &type, size_t count, 
+          VarLocation location, bool uninitialized)
+    :   ArrayBase(type, count, location, uninitialized)
+    {
+        if(count > 0) {
+            allocate(count);
+        }
     }
-}
-//--------------------------------------------------------------------------
-Array::~Array()
-{
-    if(getCount() > 0) {
-        free();
+    
+    virtual ~Array()
+    {
+        if(getCount() > 0) {
+            free();
+        }
     }
-}
-//--------------------------------------------------------------------------
-void Array::allocate(size_t count)
-{
-    // Malloc host pointer
-    setCount(count);
-    setHostPointer(new std::byte[getSizeBytes()]);
-}
-//--------------------------------------------------------------------------
-void Array::free()
-{
-    delete [] getHostPointer();
-    setHostPointer(nullptr);
-    setCount(0);
-}
+    
+    //------------------------------------------------------------------------
+    // ArrayBase virtuals
+    //------------------------------------------------------------------------
+    //! Allocate array
+    virtual void allocate(size_t count) final
+    {
+        // Malloc host pointer
+        setCount(count);
+        setHostPointer(new std::byte[getSizeBytes()]);
+    }
+
+    //! Free array
+    virtual void free() final
+    {
+        delete [] getHostPointer();
+        setHostPointer(nullptr);
+        setCount(0);
+    }
+
+
+    //! Copy entire array to device
+    virtual void pushToDevice() final
+    {
+    }
+
+    //! Copy entire array from device
+    virtual void pullFromDevice() final
+    {
+    }
+
+    //! Copy a 1D slice of elements to device 
+    /*! \param offset   Offset in elements to start copying from
+        \param count    Number of elements to copy*/
+    virtual void pushSlice1DToDevice(size_t, size_t) final
+    {
+    }
+
+    //! Copy a 1D slice of elements from device 
+    /*! \param offset   Offset in elements to start copying from
+        \param count    Number of elements to copy*/
+    virtual void pullSlice1DFromDevice(size_t, size_t) final
+    {
+    }
+    
+    //! Memset the host pointer
+    virtual void memsetDeviceObject(int) final
+    {
+        throw std::runtime_error("Single-threaded CPU arrays have no device objects");
+    }
+
+    //! Serialise backend-specific device object to bytes
+    virtual void serialiseDeviceObject(std::vector<std::byte>&, bool) const final
+    {
+        throw std::runtime_error("Single-threaded CPU arrays have no device objects");
+    }
+
+    //! Serialise backend-specific host object to bytes
+    virtual void serialiseHostObject(std::vector<std::byte>&, bool) const
+    {
+        throw std::runtime_error("Single-threaded CPU arrays have no host objects");
+    }
+};
 
 //--------------------------------------------------------------------------
 // GeNN::CodeGenerator::SingleThreadedCPU::Backend

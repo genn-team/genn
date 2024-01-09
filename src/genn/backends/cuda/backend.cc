@@ -222,147 +222,182 @@ const EnvironmentLibrary::Library &getRNGFunctions(const Type::ResolvedType &pre
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator::CUDA
 {
-Array::Array(const Type::ResolvedType &type, size_t count, 
-             VarLocation location, bool uninitialized)
-:   ArrayBase(type, count, location, uninitialized), m_DevicePointer(nullptr)
+class Array : public Runtime::ArrayBase
 {
-    // Allocate if count is specified
-    if(count > 0) {
-        allocate(count);
-    }
-}
-//--------------------------------------------------------------------------
-Array::~Array()
-{
-    if(getCount() > 0) {
-        free();
-    }
-}
-//--------------------------------------------------------------------------
-void Array::allocate(size_t count)
-{
-    // Set count
-    setCount(count);
-
-    // Malloc host pointer
-    if(getLocation() & VarLocation::HOST) {
-        const unsigned int flags = (getLocation() & VarLocation::ZERO_COPY) ? cudaHostAllocMapped : cudaHostAllocPortable;
-
-        std::byte *hostPointer = nullptr;
-        CHECK_CUDA_ERRORS(cudaHostAlloc(&hostPointer, getSizeBytes(), flags));
-        setHostPointer(hostPointer);
+public:
+    Array::Array(const Type::ResolvedType &type, size_t count, 
+                 VarLocation location, bool uninitialized)
+    :   ArrayBase(type, count, location, uninitialized), m_DevicePointer(nullptr)
+    {
+        // Allocate if count is specified
+        if(count > 0) {
+            allocate(count);
+        }
     }
 
-    // If variable is present on device at all
-    if(getLocation() & VarLocation::DEVICE) {
-        // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
-        if(getLocation() & VarLocation::ZERO_COPY) {
-            CHECK_CUDA_ERRORS(cudaHostGetDevicePointer(&m_DevicePointer, getHostPointer(), 0));
+    virtual Array::~Array()
+    {
+        if(getCount() > 0) {
+            free();
+        }
+    }
+    
+    //------------------------------------------------------------------------
+    // ArrayBase virtuals
+    //------------------------------------------------------------------------
+    //! Allocate array
+    virtual void Array::allocate(size_t count) final
+    {
+        // Set count
+        setCount(count);
+
+        // Malloc host pointer
+        if(getLocation() & VarLocation::HOST) {
+            const unsigned int flags = (getLocation() & VarLocation::ZERO_COPY) ? cudaHostAllocMapped : cudaHostAllocPortable;
+
+            std::byte *hostPointer = nullptr;
+            CHECK_CUDA_ERRORS(cudaHostAlloc(&hostPointer, getSizeBytes(), flags));
+            setHostPointer(hostPointer);
+        }
+
+        // If variable is present on device at all
+        if(getLocation() & VarLocation::DEVICE) {
+            // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
+            if(getLocation() & VarLocation::ZERO_COPY) {
+                CHECK_CUDA_ERRORS(cudaHostGetDevicePointer(&m_DevicePointer, getHostPointer(), 0));
+            }
+            else {
+                CHECK_CUDA_ERRORS(cudaMalloc(&m_DevicePointer, getSizeBytes()));
+            }
+        }
+    }
+
+    //! Free array
+    virtual void Array::free() final
+    {
+        // **NOTE** because we pinned the variable we need to free it with cudaFreeHost rather than use free
+        if(getLocation() & VarLocation::HOST) {
+            CHECK_CUDA_ERRORS(cudaFreeHost(getHostPointer()));
+            setHostPointer(nullptr);
+        }
+
+        // If this variable wasn't allocated in zero-copy mode, free it
+        if((getLocation() & VarLocation::DEVICE) && !(getLocation() & VarLocation::ZERO_COPY)) {
+            CHECK_CUDA_ERRORS(cudaFree(getDevicePointer()));
+            m_DevicePointer = nullptr;
+        }
+
+        // Zero count
+        setCount(0);
+    }
+    //! Copy entire array to device
+    virtual void Array::pushToDevice() final
+    {
+        if(!(getLocation() & VarLocation::DEVICE) || !(getLocation() & VarLocation::HOST)) {
+            throw std::runtime_error("Cannot push array that isn't present on host and device");
+        }
+
+        if(!(getLocation() & VarLocation::ZERO_COPY)) {
+            CHECK_CUDA_ERRORS(cudaMemcpy(getDevicePointer(), getHostPointer(), getSizeBytes(), cudaMemcpyHostToDevice));
+        }
+    }
+
+    //! Copy entire array from device
+    virtual void Array::pullFromDevice() final
+    {
+        if(!(getLocation() & VarLocation::DEVICE) || !(getLocation() & VarLocation::HOST)) {
+            throw std::runtime_error("Cannot pull array that isn't present on host and device");
+        }
+
+        if(!(getLocation() & VarLocation::ZERO_COPY)) {
+            CHECK_CUDA_ERRORS(cudaMemcpy(getHostPointer(), getDevicePointer(), getSizeBytes(), cudaMemcpyDeviceToHost));
+        }
+    }
+
+    //! Copy a 1D slice of elements to device 
+    /*! \param offset   Offset in elements to start copying from
+        \param count    Number of elements to copy*/
+    virtual void Array::pushSlice1DToDevice(size_t offset, size_t count) final
+    {
+        if(!(getLocation() & VarLocation::DEVICE) || !(getLocation() & VarLocation::HOST)) {
+            throw std::runtime_error("Cannot push array that isn't present on host and device");
+        }
+
+        if(!(getLocation() & VarLocation::ZERO_COPY)) {
+            // If end of slice overflows array, give error
+            if((offset + count) > getCount()) {
+                throw std::runtime_error("Cannot pull slice that overflows array");
+            }
+
+            // Convert offset and count to bytes and copy
+            const size_t offsetBytes = offset * getType().getValue().size;
+            const size_t countBytes = count * getType().getValue().size;
+            CHECK_CUDA_ERRORS(cudaMemcpy(getDevicePointer() + offsetBytes, getHostPointer() + offsetBytes, 
+                                         countBytes, cudaMemcpyHostToDevice));
+        }
+    }
+
+    //! Copy a 1D slice of elements from device 
+    /*! \param offset   Offset in elements to start copying from
+        \param count    Number of elements to copy*/
+    virtual void Array::pullSlice1DFromDevice(size_t offset, size_t count) final
+    {
+        if(!(getLocation() & VarLocation::DEVICE) || !(getLocation() & VarLocation::HOST)) {
+            throw std::runtime_error("Cannot pull array that isn't present on host and device");
+        }
+
+        if(!(getLocation() & VarLocation::ZERO_COPY)) {
+            // If end of slice overflows array, give error
+            if((offset + count) > getCount()) {
+                throw std::runtime_error("Cannot pull slice that overflows array");
+            }
+
+            // Convert offset and count to bytes and copy
+            const size_t offsetBytes = offset * getType().getValue().size;
+            const size_t countBytes = count * getType().getValue().size;
+            CHECK_CUDA_ERRORS(cudaMemcpy(getHostPointer() + offsetBytes, getDevicePointer() + offsetBytes, 
+                                         countBytes, cudaMemcpyDeviceToHost));
+        }
+
+    }
+
+    //! Memset the host pointer
+    virtual void Array::memsetDeviceObject(int value) final
+    {
+        CHECK_CUDA_ERRORS(cudaMemset(m_DevicePointer, value, getSizeBytes()));
+    }
+
+    //! Serialise backend-specific device object to bytes
+    virtual void Array::serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToPointer) const final
+    {
+        std::byte vBytes[sizeof(void*)];
+        if(pointerToPointer) {
+            std::byte* const *devicePointerPointer = &m_DevicePointer;
+            std::memcpy(vBytes, &devicePointerPointer, sizeof(void*));
         }
         else {
-            CHECK_CUDA_ERRORS(cudaMalloc(&m_DevicePointer, getSizeBytes()));
+            std::memcpy(vBytes, &m_DevicePointer, sizeof(void*));
         }
-    }
-}
-//--------------------------------------------------------------------------
-void Array::free()
-{
-    // **NOTE** because we pinned the variable we need to free it with cudaFreeHost rather than use free
-    if(getLocation() & VarLocation::HOST) {
-        CHECK_CUDA_ERRORS(cudaFreeHost(getHostPointer()));
-        setHostPointer(nullptr);
+        std::copy(std::begin(vBytes), std::end(vBytes), std::back_inserter(bytes));
     }
 
-    // If this variable wasn't allocated in zero-copy mode, free it
-    if((getLocation() & VarLocation::DEVICE) && !(getLocation() & VarLocation::ZERO_COPY)) {
-        CHECK_CUDA_ERRORS(cudaFree(getDevicePointer()));
-        m_DevicePointer = nullptr;
+    //! Serialise backend-specific host object to bytes
+    virtual void Array::serialiseHostObject(std::vector<std::byte>&, bool) const
+    {
+        throw std::runtime_error("CUDA arrays have no host objects");
     }
 
-    // Zero count
-    setCount(0);
-}
-//--------------------------------------------------------------------------
-void Array::pushToDevice()
-{
-    if(!(getLocation() & VarLocation::DEVICE) || !(getLocation() & VarLocation::HOST)) {
-        throw std::runtime_error("Cannot push array that isn't present on host and device");
-    }
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    std::byte *getDevicePointer() const{ return m_DevicePointer; }
 
-    if(!(getLocation() & VarLocation::ZERO_COPY)) {
-        CHECK_CUDA_ERRORS(cudaMemcpy(getDevicePointer(), getHostPointer(), getSizeBytes(), cudaMemcpyHostToDevice));
-    }
-}
-//--------------------------------------------------------------------------
-void Array::pullFromDevice()
-{
-    if(!(getLocation() & VarLocation::DEVICE) || !(getLocation() & VarLocation::HOST)) {
-        throw std::runtime_error("Cannot pull array that isn't present on host and device");
-    }
-
-    if(!(getLocation() & VarLocation::ZERO_COPY)) {
-        CHECK_CUDA_ERRORS(cudaMemcpy(getHostPointer(), getDevicePointer(), getSizeBytes(), cudaMemcpyDeviceToHost));
-    }
-}
-//--------------------------------------------------------------------------
-void Array::pushSlice1DToDevice(size_t offset, size_t count)
-{
-    if(!(getLocation() & VarLocation::DEVICE) || !(getLocation() & VarLocation::HOST)) {
-        throw std::runtime_error("Cannot push array that isn't present on host and device");
-    }
-
-    if(!(getLocation() & VarLocation::ZERO_COPY)) {
-        // If end of slice overflows array, give error
-        if((offset + count) > getCount()) {
-            throw std::runtime_error("Cannot pull slice that overflows array");
-        }
-
-        // Convert offset and count to bytes and copy
-        const size_t offsetBytes = offset * getType().getValue().size;
-        const size_t countBytes = count * getType().getValue().size;
-        CHECK_CUDA_ERRORS(cudaMemcpy(getDevicePointer() + offsetBytes, getHostPointer() + offsetBytes, 
-                                     countBytes, cudaMemcpyHostToDevice));
-    }
-}
-//--------------------------------------------------------------------------
-void Array::pullSlice1DFromDevice(size_t offset, size_t count)
-{
-    if(!(getLocation() & VarLocation::DEVICE) || !(getLocation() & VarLocation::HOST)) {
-        throw std::runtime_error("Cannot pull array that isn't present on host and device");
-    }
-
-    if(!(getLocation() & VarLocation::ZERO_COPY)) {
-        // If end of slice overflows array, give error
-        if((offset + count) > getCount()) {
-            throw std::runtime_error("Cannot pull slice that overflows array");
-        }
-
-        // Convert offset and count to bytes and copy
-        const size_t offsetBytes = offset * getType().getValue().size;
-        const size_t countBytes = count * getType().getValue().size;
-        CHECK_CUDA_ERRORS(cudaMemcpy(getHostPointer() + offsetBytes, getDevicePointer() + offsetBytes, 
-                                     countBytes, cudaMemcpyDeviceToHost));
-    }
-
-}
-//--------------------------------------------------------------------------
-void Array::memsetDeviceObject(int value)
-{
-    CHECK_CUDA_ERRORS(cudaMemset(m_DevicePointer, value, getSizeBytes()));
-}
-//--------------------------------------------------------------------------
-void Array::serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToPointer) const
-{
-    std::byte vBytes[sizeof(void*)];
-    if(pointerToPointer) {
-        std::byte* const *devicePointerPointer = &m_DevicePointer;
-        std::memcpy(vBytes, &devicePointerPointer, sizeof(void*));
-    }
-    else {
-        std::memcpy(vBytes, &m_DevicePointer, sizeof(void*));
-    }
-    std::copy(std::begin(vBytes), std::end(vBytes), std::back_inserter(bytes));
-}
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::byte *m_DevicePointer;
+};
 
 //--------------------------------------------------------------------------
 // GeNN::CodeGenerator::CUDA::Backend
