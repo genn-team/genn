@@ -205,6 +205,12 @@ public:
     
     void pullRecordingBuffersFromDevice() const;
 
+    //! Get delay pointer associated with neuron group
+    unsigned int getDelayPointer(const NeuronGroup &group) const
+    {
+        return m_DelayQueuePointer.at(&group);
+    }
+
     //! Get array associated with current source variable
     ArrayBase *getArray(const CurrentSource &group, const std::string &varName) const
     {
@@ -600,7 +606,7 @@ private:
     std::reference_wrapper<const CodeGenerator::BackendBase> m_Backend;
 
     //! Delay queue pointers associated with neuron group names
-    std::unordered_map<std::string, unsigned int> m_DelayQueuePointer;
+    std::unordered_map<const NeuronGroup*, unsigned int> m_DelayQueuePointer;
 
     //! Functions to perform custom updates
     std::unordered_map<std::string, CustomUpdateFunction> m_CustomUpdateFunctions;

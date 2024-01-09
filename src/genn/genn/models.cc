@@ -60,6 +60,13 @@ VarAccessDim VarReference::getVarDims() const
         m_Detail);
 }
 //----------------------------------------------------------------------------
+const std::string &VarReference::getVarName() const
+{
+    return std::visit(
+        Utils::Overload{[](const auto &ref){ return std::cref(ref.var.name); }},
+        m_Detail);
+}
+//----------------------------------------------------------------------------
 unsigned int VarReference::getSize() const
 {
     return std::visit(
@@ -72,6 +79,15 @@ unsigned int VarReference::getSize() const
             [](const CURef &ref) { return ref.group->getSize(); },
             [](const CCUPreRef &ref) { return ref.group->getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); },
             [](const CCUPostRef &ref) { return ref.group->getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); }},
+        m_Detail);
+}
+//----------------------------------------------------------------------------
+bool VarReference::isTargetNeuronGroup(const NeuronGroupInternal *ng) const
+{
+    return std::visit(
+        Utils::Overload{
+            [ng](const NGRef &ref){ return (ref.group == ng); },
+            [](const auto&) { return false; }},
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -161,30 +177,23 @@ VarReference VarReference::createPostVarRef(CustomConnectivityUpdate *ccu, const
 //----------------------------------------------------------------------------
 VarReference VarReference::createPSMVarRef(SynapseGroup *sg, const std::string &varName)
 {
-    const auto *psm = sg->getPSModel();
+    const auto *psm = sg->getPSInitialiser().getSnippet();
     return VarReference(PSMRef{static_cast<SynapseGroupInternal*>(sg),
                                psm->getVars()[psm->getVarIndex(varName)]});
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createWUPreVarRef(SynapseGroup *sg, const std::string &varName)
 {
-    const auto *wum = sg->getWUModel();
+    const auto *wum = sg->getWUInitialiser().getSnippet();
     return VarReference(WUPreRef{static_cast<SynapseGroupInternal*>(sg),
                                  wum->getPreVars()[wum->getPreVarIndex(varName)]});
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createWUPostVarRef(SynapseGroup *sg, const std::string &varName)
 {
-    const auto *wum = sg->getWUModel();
+    const auto *wum = sg->getWUInitialiser().getSnippet();
     return VarReference(WUPostRef{static_cast<SynapseGroupInternal*>(sg),
                                   wum->getPostVars()[wum->getPostVarIndex(varName)]});
-}
-//----------------------------------------------------------------------------
-const std::string &VarReference::getVarName() const
-{
-    return std::visit(
-        Utils::Overload{[](const auto &ref){ return std::cref(ref.var.name); }},
-        m_Detail);
 }
 //----------------------------------------------------------------------------
 const std::string &VarReference::getTargetName() const 
@@ -338,11 +347,11 @@ bool WUVarReference::operator < (const WUVarReference &other) const
 WUVarReference WUVarReference::createWUVarReference(SynapseGroup *sg, const std::string &varName, 
                                                     SynapseGroup *transposeSG, const std::string &transposeVarName)
 {
-    const auto *wum = sg->getWUModel();
+    const auto *wum = sg->getWUInitialiser().getSnippet();
     auto *sgInternal = static_cast<SynapseGroupInternal*>(sg);
     const auto var = wum->getVars()[wum->getVarIndex(varName)];
     if(transposeSG) {
-        const auto *transposeWUM = transposeSG->getWUModel();
+        const auto *transposeWUM = transposeSG->getWUInitialiser().getSnippet();
         return WUVarReference(WURef{sgInternal, static_cast<SynapseGroupInternal*>(transposeSG),
                                     var, transposeWUM->getVars()[transposeWUM->getVarIndex(transposeVarName)]});
     }
@@ -513,13 +522,13 @@ EGPReference EGPReference::createEGPRef(CustomUpdateWU *cu, const std::string &e
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createPSMEGPRef(SynapseGroup *sg, const std::string &egpName)
 {
-    const auto *psm = sg->getPSModel();
+    const auto *psm = sg->getPSInitialiser().getSnippet();
     return EGPReference(PSMRef{sg, psm->getExtraGlobalParams()[psm->getExtraGlobalParamIndex(egpName)]});
 }
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createWUEGPRef(SynapseGroup *sg, const std::string &egpName)
 {
-    const auto *wum = sg->getWUModel();
+    const auto *wum = sg->getWUInitialiser().getSnippet();
     return EGPReference(WURef{sg, wum->getExtraGlobalParams()[wum->getExtraGlobalParamIndex(egpName)]});
 }
 //----------------------------------------------------------------------------
@@ -566,5 +575,28 @@ void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(e.name, hash);
     Type::updateHash(e.type, hash);
+}
+//----------------------------------------------------------------------------
+void checkLocalVarReferences(const std::unordered_map<std::string, VarReference> &varRefs, const Base::VarRefVec &modelVarRefs,
+                             const NeuronGroupInternal *ng, const std::string &targetErrorDescription)
+{
+    // Loop through all variable references
+    for(const auto &modelVarRef : modelVarRefs) {
+        const auto &varRef = varRefs.at(modelVarRef.name);
+
+        // If (neuron) variable being targetted doesn't have BATCH or ELEMENT axis,
+        // check it's only accessed read-only
+        const auto varDims = varRef.getVarDims();
+        if((!(varDims & VarAccessDim::BATCH) || !(varDims & VarAccessDim::ELEMENT))
+            && (modelVarRef.access != VarAccessMode::READ_ONLY))
+        {
+            throw std::runtime_error("Variable references to SHARED_NEURON or SHARED neuron variables cannot be read-write.");
+        }
+
+        // If variable reference target doesn't belong to neuron group, give error
+        if(!varRef.isTargetNeuronGroup(ng)) {
+            throw std::runtime_error(targetErrorDescription);
+        }
+    }
 }
 }   // namespace GeNN::Models

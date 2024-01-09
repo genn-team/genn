@@ -37,6 +37,9 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues) 
 Init::Init(const Base *snippet, const std::unordered_map<std::string, double> &params)
 :   Snippet::Init<Base>(snippet, params)
 {
+    // Validate
+    getSnippet()->validate(getParams());
+
     // Scan code tokens
     m_DiagonalBuildCodeTokens = Utils::scanCode(getSnippet()->getDiagonalBuildCode(), "Toeplitz connectivity diagonal build code");
 }

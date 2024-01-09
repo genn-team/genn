@@ -136,10 +136,10 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
 
     // Add fields and private $(_XXX) substitutions for postsyanptic and synaptic variables and variables references as, 
     // while these can only be accessed by user code inside loop, they can be used directly by add/remove synapse functions
-    addPrivateVarPointerFields<CustomConnectivityUpdateVarAdapter>(updateEnv);
-    addPrivateVarPointerFields<CustomConnectivityUpdatePostVarAdapter>(updateEnv);
-    addPrivateVarRefPointerFields<CustomConnectivityUpdateVarRefAdapter>(updateEnv);
-    addPrivateVarRefPointerFields<CustomConnectivityUpdatePostVarRefAdapter>(updateEnv);
+    updateEnv.addVarPointers<CustomConnectivityUpdateVarAdapter>(true);
+    updateEnv.addVarPointers<CustomConnectivityUpdatePostVarAdapter>(true);
+    updateEnv.addVarRefPointers<CustomConnectivityUpdateVarRefAdapter>(true);
+    updateEnv.addVarRefPointers<CustomConnectivityUpdatePostVarRefAdapter>(true);
 
     // Add private fields for dependent variables
     for(size_t i = 0; i < getSortedArchetypeDependentVars().size(); i++) {

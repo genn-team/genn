@@ -13,8 +13,9 @@ from pygenn import (create_current_source_model,
                     create_var_init_snippet,
                     create_var_ref,
                     create_weight_update_model,
+                    init_postsynaptic,
                     init_sparse_connectivity,
-                    init_var)
+                    init_weight_update, init_var)
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
@@ -71,31 +72,31 @@ def test_egp_var_init(backend, precision):
     # Create populations with randomly-initialised variables
     correct = np.arange(10.0)
     n_pop = model.add_neuron_population("Neurons", 20, nop_neuron_model, {}, {"repeat": init_var(repeat_var_init_snippet)})
-    n_pop.vars["repeat"].extra_global_params["values"].set_values(correct)
+    n_pop.vars["repeat"].extra_global_params["values"].set_init_values(correct)
     
     cs = model.add_current_source("CurrentSource", nop_current_source_model, n_pop,
                                   {}, {"repeat": init_var(repeat_var_init_snippet)})
-    cs.vars["repeat"].extra_global_params["values"].set_values(correct)
+    cs.vars["repeat"].extra_global_params["values"].set_init_values(correct)
     
     dense_s_pop = model.add_synapse_population(
         "DenseSynapses", "DENSE", 0,
         ss_pop, n_pop,
-        nop_weight_update_model, {}, {"repeat": init_var(pre_repeat_var_init_snippet)}, {"pre_repeat": init_var(repeat_var_init_snippet)}, {"post_repeat": init_var(repeat_var_init_snippet)},
-        nop_postsynaptic_update_model, {}, {"psm_repeat": init_var(repeat_var_init_snippet)})
-    dense_s_pop.vars["repeat"].extra_global_params["values"].set_values(correct)
-    dense_s_pop.pre_vars["pre_repeat"].extra_global_params["values"].set_values(correct)
-    dense_s_pop.post_vars["post_repeat"].extra_global_params["values"].set_values(correct)
-    dense_s_pop.psm_vars["psm_repeat"].extra_global_params["values"].set_values(correct)
+        init_weight_update(nop_weight_update_model, {}, {"repeat": init_var(pre_repeat_var_init_snippet)}, {"pre_repeat": init_var(repeat_var_init_snippet)}, {"post_repeat": init_var(repeat_var_init_snippet)}),
+        init_postsynaptic(nop_postsynaptic_update_model, {}, {"psm_repeat": init_var(repeat_var_init_snippet)}))
+    dense_s_pop.vars["repeat"].extra_global_params["values"].set_init_values(correct)
+    dense_s_pop.pre_vars["pre_repeat"].extra_global_params["values"].set_init_values(correct)
+    dense_s_pop.post_vars["post_repeat"].extra_global_params["values"].set_init_values(correct)
+    dense_s_pop.psm_vars["psm_repeat"].extra_global_params["values"].set_init_values(correct)
     
     sparse_s_pop = model.add_synapse_population(
         "SparseSynapses", "SPARSE", 0,
         ss_pop, n_pop,
-        nop_weight_update_model, {}, {"repeat": init_var(post_repeat_var_init_snippet)}, {"pre_repeat": init_var(repeat_var_init_snippet)}, {"post_repeat": init_var(repeat_var_init_snippet)},
-        "DeltaCurr", {}, {},
+        init_weight_update(nop_weight_update_model, {}, {"repeat": init_var(post_repeat_var_init_snippet)}, {"pre_repeat": init_var(repeat_var_init_snippet)}, {"post_repeat": init_var(repeat_var_init_snippet)}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
-    sparse_s_pop.vars["repeat"].extra_global_params["values"].set_values(correct)
-    sparse_s_pop.pre_vars["pre_repeat"].extra_global_params["values"].set_values(correct)
-    sparse_s_pop.post_vars["post_repeat"].extra_global_params["values"].set_values(correct)
+    sparse_s_pop.vars["repeat"].extra_global_params["values"].set_init_values(correct)
+    sparse_s_pop.pre_vars["pre_repeat"].extra_global_params["values"].set_init_values(correct)
+    sparse_s_pop.post_vars["post_repeat"].extra_global_params["values"].set_init_values(correct)
 
     # Build model and load
     model.build()
@@ -121,16 +122,16 @@ def test_egp_var_init(backend, precision):
             assert False, f"'{pop.name}' initialisation incorrect"
     
     # Check dense
-    dense_s_pop.pull_var_from_device("repeat")
-    if not np.allclose(dense_s_pop.get_var_values("repeat"), np.repeat(tiled_correct, 20)):
+    dense_s_pop.vars["repeat"].pull_from_device()
+    if not np.allclose(dense_s_pop.vars["repeat"].values, np.repeat(tiled_correct, 20)):
         assert False, f"'{dense_s_pop.name}' initialisation incorrect"
     
     # Download sparse connectivity
     sparse_s_pop.pull_connectivity_from_device()
 
     # Check sparse
-    sparse_s_pop.pull_var_from_device("repeat")
-    if not np.allclose(sparse_s_pop.get_var_values("repeat"), tiled_correct):
+    sparse_s_pop.vars["repeat"].pull_from_device()
+    if not np.allclose(sparse_s_pop.vars["repeat"].values, tiled_correct):
         assert False, f"'{sparse_s_pop.name}' initialisation incorrect"
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
@@ -163,7 +164,7 @@ def test_egp_ref(backend, precision):
     model.dt = 1.0
     
     n_pop = model.add_neuron_population("Neurons", 10, neuron_model, {}, {"x": 10.0});
-    n_pop.extra_global_params["e"].set_values(np.empty(10))
+    n_pop.extra_global_params["e"].set_init_values(np.empty(10))
 
     cu = model.add_custom_update("CU", "CustomUpdate", custom_update_model,
                                  {}, {}, {"v": create_var_ref(n_pop, "x")}, {"e": create_egp_ref(n_pop, "e")})

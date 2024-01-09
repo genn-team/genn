@@ -16,8 +16,9 @@ from .genn_model import (GeNNModel, create_neuron_model,
                          create_var_init_snippet,
                          create_sparse_connect_init_snippet,
                          create_toeplitz_connect_init_snippet,
-                         init_sparse_connectivity, 
-                         init_toeplitz_connectivity, init_var)
+                         init_postsynaptic, init_sparse_connectivity,
+                         init_toeplitz_connectivity, init_var,
+                         init_weight_update)
 
 if sys.version_info >= (3, 8):
     from importlib import metadata

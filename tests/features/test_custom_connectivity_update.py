@@ -16,19 +16,9 @@ from pygenn import (create_custom_connectivity_update_model,
                     create_wu_var_ref,
                     create_wu_pre_var_ref,
                     create_wu_post_var_ref,
+                    init_postsynaptic,
                     init_sparse_connectivity,
-                    init_var)
-
-
-neuron_model = create_neuron_model(
-    "neuron",
-    var_name_types=[("V", "scalar")])
-
-weight_update_model = create_weight_update_model(
-    "weight_update",
-    var_name_types=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE),
-                    ("d", "unsigned int", VarAccess.READ_ONLY)])
-
+                    init_var, init_weight_update)
 
 # Snippet to initialise variable to hold its column-major index
 weight_init_snippet = create_var_init_snippet(
@@ -38,100 +28,10 @@ weight_init_snippet = create_var_init_snippet(
     value = (id_pre * 64) + id_post;
     """)
 
-# Snippet to initialise variable to hold its row-major index
-delay_init_snippet = create_var_init_snippet(
-    "delay_init",
-    var_init_code=
-    """
-    value = (id_post * 64) + id_pre;
-    """)
-
-# Snippet to configure 'triangle' sparse connectivity where presynaptic neurons
-# are connected to all postsynaptic neurons with the same or higher ID
-triangle_connect_init_snippet = create_sparse_connect_init_snippet(
-    "triangle_connect_init",
-    row_build_code=
-    """
-    for(unsigned int j = id_pre; j < num_post; j++) {
-        addSynapse(j);
-    }
-    """)
-
-# Custom connectivity update which removes synapses on diagonal
-remove_synapse_model = create_custom_connectivity_update_model(
-    "remove_synapse",
-    var_name_types=[("a", "scalar")],
-    row_update_code=
-    """
-    for_each_synapse {
-        if(id_post == id_pre) {
-            remove_synapse();
-            break;
-        }
-    }
-    """)
-
-# Custom connectivity update which removes synapses 
-# based on bitset EGP configured in host code
-remove_synapse_host_egp_model = create_custom_connectivity_update_model(
-    "remove_synapse_host_egp",
-    extra_global_params=[("d", "uint32_t*")],
-    row_update_code=
-    """
-    const unsigned int wordsPerRow = (num_post + 31) / 32;
-    for_each_synapse {
-        if(d[(wordsPerRow * id_pre) + (id_post / 32)] & (1 << (id_post % 32))) {
-            remove_synapse();
-            break;
-        }
-    }
-    """,
-    host_update_code=
-    """
-    const unsigned int wordsPerRow = (num_post + 31) / 32;
-    for(unsigned int i = 0; i < wordsPerRow * num_pre; i++) {
-        d[i] = 0;
-    }
-    
-    for(unsigned int i = 0; i < num_pre; i++) {
-        uint32_t *dRow = d + (wordsPerRow * i);
-        dRow[i / 32] |= (1 << (i % 32));
-    }
-    pushdToDevice(wordsPerRow * num_pre);
-    """)
-
-# Custom connectivity update which removes one synapse per row 
-# based on presynaptic variable set in host code
-remove_synapse_host_pre_var_model = create_custom_connectivity_update_model(
-    "remove_synapse_host_pre_var",
-    pre_var_name_types=[("postInd", "unsigned int")],
-    row_update_code=
-    """
-    for_each_synapse {
-        if(id_post == postInd) {
-            remove_synapse();
-            break;
-        }
-    }
-    """,
-    host_update_code=
-    """
-    for(unsigned int i = 0; i < num_pre; i++) {
-        postInd[i] = i;
-    }
-    pushpostIndToDevice();
-    """)
-
-# Custom connectivity update which adds a synapse on diagonal to each row
-add_synapse_model = create_custom_connectivity_update_model(
-    "add_synapse",
-    var_refs=[("g", "scalar"), ("d", "unsigned int"), ("a", "scalar")],
-    row_update_code=
-    """
-    const scalar weight = (id_pre * 64) + id_pre;
-    const unsigned int delay = (id_pre * 64) + id_pre;
-    add_synapse(id_pre, weight, delay, weight);
-    """)
+def _clear_bit(ba, bit):
+    ba_copy = ba.copy()
+    ba_copy[bit] = False
+    return ba_copy
 
 def _check_connectivity(sg, get_row_length_fn, get_connectivity_fn, var_checks=[]):
     sg.pull_connectivity_from_device()
@@ -139,8 +39,8 @@ def _check_connectivity(sg, get_row_length_fn, get_connectivity_fn, var_checks=[
     # Pull all variables from device and get numpy array of values
     var_values = []
     for pop, var_name, _ in var_checks:
-        pop.pull_var_from_device(var_name)
-        var_values.append(pop.get_var_values(var_name))
+        pop.vars[var_name].pull_from_device()
+        var_values.append(pop.vars[var_name].values)
 
     pre_inds = sg.get_sparse_pre_inds()
     post_inds = sg.get_sparse_post_inds()
@@ -179,6 +79,110 @@ def _check_connectivity(sg, get_row_length_fn, get_connectivity_fn, var_checks=[
                                                  ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_connectivity_update(backend, precision, batch_size):
+    neuron_model = create_neuron_model(
+        "neuron",
+        var_name_types=[("V", "scalar")])
+
+    weight_update_model = create_weight_update_model(
+        "weight_update",
+        var_name_types=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE),
+                        ("d", "unsigned int", VarAccess.READ_ONLY)])
+
+    # Snippet to initialise variable to hold its row-major index
+    delay_init_snippet = create_var_init_snippet(
+        "delay_init",
+        var_init_code=
+        """
+        value = (id_post * 64) + id_pre;
+        """)
+
+    # Snippet to configure 'triangle' sparse connectivity where presynaptic neurons
+    # are connected to all postsynaptic neurons with the same or higher ID
+    triangle_connect_init_snippet = create_sparse_connect_init_snippet(
+        "triangle_connect_init",
+        row_build_code=
+        """
+        for(unsigned int j = id_pre; j < num_post; j++) {
+            addSynapse(j);
+        }
+        """)
+
+    # Custom connectivity update which removes synapses on diagonal
+    remove_synapse_model = create_custom_connectivity_update_model(
+        "remove_synapse",
+        var_name_types=[("a", "scalar")],
+        row_update_code=
+        """
+        for_each_synapse {
+            if(id_post == id_pre) {
+                remove_synapse();
+                break;
+            }
+        }
+        """)
+
+    # Custom connectivity update which removes synapses 
+    # based on bitset EGP configured in host code
+    remove_synapse_host_egp_model = create_custom_connectivity_update_model(
+        "remove_synapse_host_egp",
+        extra_global_params=[("d", "uint32_t*")],
+        row_update_code=
+        """
+        const unsigned int wordsPerRow = (num_post + 31) / 32;
+        for_each_synapse {
+            if(d[(wordsPerRow * id_pre) + (id_post / 32)] & (1 << (id_post % 32))) {
+                remove_synapse();
+                break;
+            }
+        }
+        """,
+        host_update_code=
+        """
+        const unsigned int wordsPerRow = (num_post + 31) / 32;
+        for(unsigned int i = 0; i < wordsPerRow * num_pre; i++) {
+            d[i] = 0;
+        }
+        
+        for(unsigned int i = 0; i < num_pre; i++) {
+            uint32_t *dRow = d + (wordsPerRow * i);
+            dRow[i / 32] |= (1 << (i % 32));
+        }
+        pushdToDevice(wordsPerRow * num_pre);
+        """)
+
+    # Custom connectivity update which removes one synapse per row 
+    # based on presynaptic variable set in host code
+    remove_synapse_host_pre_var_model = create_custom_connectivity_update_model(
+        "remove_synapse_host_pre_var",
+        pre_var_name_types=[("postInd", "unsigned int")],
+        row_update_code=
+        """
+        for_each_synapse {
+            if(id_post == postInd) {
+                remove_synapse();
+                break;
+            }
+        }
+        """,
+        host_update_code=
+        """
+        for(unsigned int i = 0; i < num_pre; i++) {
+            postInd[i] = i;
+        }
+        pushpostIndToDevice();
+        """)
+
+    # Custom connectivity update which adds a synapse on diagonal to each row
+    add_synapse_model = create_custom_connectivity_update_model(
+        "add_synapse",
+        var_refs=[("g", "scalar"), ("d", "unsigned int"), ("a", "scalar")],
+        row_update_code=
+        """
+        const scalar weight = (id_pre * 64) + id_pre;
+        const unsigned int delay = (id_pre * 64) + id_pre;
+        add_synapse(id_pre, weight, delay, weight);
+        """)
+        
     model = GeNNModel(precision, "test_custom_connectivity_update", backend=backend)
     model.batch_size = batch_size
     model.dt = 1.0
@@ -191,22 +195,22 @@ def test_custom_connectivity_update(backend, precision, batch_size):
     s_pop_1 = model.add_synapse_population(
         "Syn1", "SPARSE", 0,
         pre_n_pop, post_n_pop,
-        weight_update_model, {}, {"g": init_var(weight_init_snippet), "d": init_var(delay_init_snippet)}, {}, {},
-        "DeltaCurr", {}, {},
+        init_weight_update(weight_update_model, {}, {"g": init_var(weight_init_snippet), "d": init_var(delay_init_snippet)}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity(triangle_connect_init_snippet))
 
     s_pop_2 = model.add_synapse_population(
         "Syn2", "SPARSE", 0,
         pre_n_pop, post_n_pop,
-        weight_update_model, {}, {"g": init_var(weight_init_snippet), "d": init_var(delay_init_snippet)}, {}, {},
-        "DeltaCurr", {}, {},
+        init_weight_update(weight_update_model, {}, {"g": init_var(weight_init_snippet), "d": init_var(delay_init_snippet)}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity(triangle_connect_init_snippet))
     
     s_pop_3 = model.add_synapse_population(
         "Syn3", "SPARSE", 0,
         pre_n_pop, post_n_pop,
-        weight_update_model, {}, {"g": init_var(weight_init_snippet), "d": init_var(delay_init_snippet)}, {}, {},
-        "DeltaCurr", {}, {},
+        init_weight_update(weight_update_model, {}, {"g": init_var(weight_init_snippet), "d": init_var(delay_init_snippet)}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity(triangle_connect_init_snippet))
 
     # Create custom connectivity updates
@@ -222,7 +226,7 @@ def test_custom_connectivity_update(backend, precision, batch_size):
         {}, {}, {}, {}, 
         {}, {}, {})
     num_words = post_n_pop.size * ((pre_n_pop.size + 31) // 32)
-    remove_synapse_host_egp_ccu.extra_global_params["d"].set_values(
+    remove_synapse_host_egp_ccu.extra_global_params["d"].set_init_values(
         np.empty(num_words, dtype=np.uint32))
     
     remove_synapse_host_pre_var_ccu = model.add_custom_connectivity_update(
@@ -271,5 +275,145 @@ def test_custom_connectivity_update(backend, precision, batch_size):
                         [(s_pop_1, "g", False), 
                          (s_pop_1, "d", True)])
 
+@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_custom_connectivity_update_delay(backend, precision):
+    pre_neuron_model = create_neuron_model(
+        "pre_neuron",
+        sim_code=
+        """
+        removeIdx = (id + (int)round(t / dt)) % 64;
+        """,
+        var_name_types=[("removeIdx", "int")])
+
+    post_neuron_model = create_neuron_model(
+        "post_neuron",
+        sim_code=
+        """
+        remove = ((id + (int)round(t / dt)) % 64) == 0;
+        """,
+        var_name_types=[("remove", "bool")])
+
+    # Weight update model that does something arbitrary stuff with 
+    # presynaptic variable reference to make sure it gets delayed
+    pre_weight_update_model = create_weight_update_model(
+        "pre_weight_update",
+        pre_neuron_var_refs=[("removeIdx", "int", VarAccessMode.READ_ONLY)],
+        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)],
+        sim_code=
+        """
+        addToPost(g * (float)removeIdx);
+        """)
+
+    # Weight update model that does something arbitrary stuff with 
+    # postsynaptic variable reference to make sure it gets delayed
+    post_weight_update_model = create_weight_update_model(
+        "post_weight_update",
+        post_neuron_var_refs=[("remove", "bool", VarAccessMode.READ_ONLY)],
+        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)],
+        sim_code=
+        """
+        addToPost(g * (float)remove);
+        """)
+
+    # Snippet to configure a dense matrix of sparse connectivity
+    dense_connect_init_snippet = create_sparse_connect_init_snippet(
+        "dense_connect_init",
+        row_build_code=
+        """
+        for(unsigned int j = 0; j < num_post; j++) {
+            addSynapse(j);
+        }
+        """)
+
+    remove_synapse_pre_model = create_custom_connectivity_update_model(
+        "remove_synapse_pre",
+        pre_var_refs=[("removeIdx", "int")],
+        row_update_code=
+        """
+        for_each_synapse {
+            if(id_post == removeIdx) {
+                remove_synapse();
+                break;
+            }
+        }
+        """)
+    remove_synapse_post_model = create_custom_connectivity_update_model(
+        "remove_synapse_post",
+        post_var_refs=[("remove", "bool")],
+        row_update_code=
+        """
+        for_each_synapse {
+            if(remove) {
+                remove_synapse();
+                break;
+            }
+        }
+        """)
+
+    model = GeNNModel(precision, "test_custom_connectivity_update_delay", backend=backend)
+    model.dt = 1.0
+    
+    # Create pre and postsynaptic populations
+    pre_n_pop = model.add_neuron_population("PreNeurons", 64, pre_neuron_model, 
+                                            {}, {"removeIdx": 0}); 
+    post_n_pop = model.add_neuron_population("PostNeurons", 64, post_neuron_model, 
+                                             {}, {"remove": False}); 
+
+    # Create synapse groups
+    s_pop_1 = model.add_synapse_population(
+        "Syn1", "SPARSE", 5,
+        pre_n_pop, post_n_pop,
+        init_weight_update(pre_weight_update_model, {}, {"g": init_var(weight_init_snippet)},
+                           pre_var_refs={"removeIdx": create_var_ref(pre_n_pop, "removeIdx")}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity(dense_connect_init_snippet))
+
+    s_pop_2 = model.add_synapse_population(
+        "Syn2", "SPARSE", 0,
+        pre_n_pop, post_n_pop,
+        init_weight_update(post_weight_update_model, {}, {"g": init_var(weight_init_snippet)},
+                           post_var_refs={"remove": create_var_ref(post_n_pop, "remove")}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity(dense_connect_init_snippet))
+    s_pop_2.back_prop_delay_steps = 5
+
+    model.add_custom_connectivity_update(
+        "RemoveSynapsePre", "RemoveSynapse", s_pop_1,
+        remove_synapse_pre_model,
+        pre_var_refs={"removeIdx": create_var_ref(pre_n_pop, "removeIdx")})
+    
+    model.add_custom_connectivity_update(
+        "RemoveSynapsePost", "RemoveSynapse", s_pop_2,
+        remove_synapse_post_model,
+        post_var_refs={"remove": create_var_ref(post_n_pop, "remove")})
+    
+    # Build model and load
+    model.build()
+    model.load()
+        
+    # Check initial connectivity
+    dense_bitarray = hex2ba("FFFFFFFFFFFFFFFF")
+    _check_connectivity(s_pop_1, lambda i: 64, lambda i: dense_bitarray,
+                        [(s_pop_1, "g", False)])
+    _check_connectivity(s_pop_2, lambda i: 64, lambda i: dense_bitarray,
+                        [(s_pop_2, "g", False)])
+
+    # Run for 5 timesteps
+    while model.timestep < 5:
+        model.step_time()
+    
+
+    # Run update to remove synapses
+    model.custom_update("RemoveSynapse")
+
+    # Check updated connectivity
+    _check_connectivity(s_pop_1, lambda i: 63,
+                        lambda i: _clear_bit(dense_bitarray, (i + 4) % 64),
+                        [(s_pop_1, "g", False)])
+    _check_connectivity(s_pop_2, lambda i: 63,
+                        lambda i: _clear_bit(dense_bitarray, 60),
+                        [(s_pop_2, "g", False)])
+
 if __name__ == '__main__':
-    test_custom_connectivity_update("cuda", types.Float, 5)
+    test_custom_connectivity_update_delay("cuda", types.Float)

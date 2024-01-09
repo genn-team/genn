@@ -183,13 +183,10 @@ protected:
     //------------------------------------------------------------------------
     //! Checks delay slots currently provided by the neuron group against a required delay and extends if required
     void checkNumDelaySlots(unsigned int requiredDelay);
-
-    //! Update which presynaptic variables require queues based on piece of code
-    void updatePreVarQueues(const std::vector<Transpiler::Token> &tokens);
-
-    //! Update which postsynaptic variables  require queues based on piece of code
-    void updatePostVarQueues(const std::vector<Transpiler::Token> &tokens);
-
+    
+    // Set a variable as requiring queueing
+    void setVarQueueRequired(const std::string &varName);
+    
     void addSpkEventCondition(const std::string &code, SynapseGroupInternal *synapseGroup);
 
     void addInSyn(SynapseGroupInternal *synapseGroup){ m_InSyn.push_back(synapseGroup); }
@@ -276,12 +273,6 @@ protected:
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
 
 private:
-    //------------------------------------------------------------------------
-    // Private methods
-    //------------------------------------------------------------------------
-    //! Update which variables require queues based on piece of code
-    void updateVarQueues(const std::vector<Transpiler::Token> &tokens, const std::string &suffix);
-
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------

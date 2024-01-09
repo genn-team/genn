@@ -495,6 +495,11 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             EnvironmentGroupMergedField<NeuronUpdateGroupMerged> groupEnv(popEnv, ng);
             buildStandardEnvironment(groupEnv, batchSize);
             
+            // Add fields for neuron variables to environment
+            // **NOTE** these are hidden and not indexed as SIMT backend
+            // will index these differently in time-driven and spike-driven code
+            groupEnv.addVarPointers<NeuronVarAdapter>(true);
+
             // Call handler to generate generic neuron code
             groupEnv.print("if($(id) < $(num_neurons))");
             {
@@ -596,6 +601,22 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                     // Create new substition stack and explicitly replace id with 'n' and perform WU var update
                     EnvironmentExternal wuEnv(groupEnv);
                     wuEnv.add(Type::Uint32.addConst(), "id", "n");
+
+                    // Create an environment which caches neuron variable fields in local variables if they are accessed
+                    // **NOTE** we do this right at the top so that local copies can be used by child groups
+                    // **NOTE** always copy variables if variable is delayed
+                    EnvironmentLocalFieldVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> wuVarEnv(
+                        ng, ng.getTypeContext(), wuEnv, "l", true,
+                        [batchSize, &ng](const std::string &varName, VarAccess d)
+                        {
+                            const bool delayed = (ng.getArchetype().isVarQueueRequired(varName) && ng.getArchetype().isDelayRequired());
+                            return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
+                        },
+                        [batchSize, &ng](const std::string &varName, VarAccess d)
+                        {
+                            const bool delayed = (ng.getArchetype().isVarQueueRequired(varName) && ng.getArchetype().isDelayRequired());
+                            return ng.getWriteVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
+                        });
                     ng.generateWUVarUpdate(wuEnv, batchSize);
 
                     groupEnv.printLine("$(_spk)[" + queueOffsetTrueSpk + "$(_sh_spk_pos) + " + getThreadID() + "] = n;");
@@ -875,7 +896,7 @@ void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSp
                 groupEnv.print("if ($(id) < ($(num_pre) * $(_row_stride)))");
             }
             else {
-                groupEnv.print("if ($(id( < ($(num_pre) * $(num_post)))");
+                groupEnv.print("if ($(id) < ($(num_pre) * $(num_post)))");
             }
             {
                 CodeStream::Scope b(groupEnv.getStream());
@@ -895,9 +916,9 @@ void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSp
                 else {
                     // **OPTIMIZE** we can do a fast constant divide optimization here and use the result to calculate the remainder
                     synEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
-                               {synEnv.addInitialiser("const unsigned int idPre = ($(id) / $(_row_stride))")});
+                               {synEnv.addInitialiser("const unsigned int idPre = ($(id) / $(_row_stride));")});
                     synEnv.add(Type::Uint32.addConst(), "id_post", "idPost",
-                               {synEnv.addInitialiser("const unsigned int idPost = ($(id) % $(_row_stride)")});    
+                               {synEnv.addInitialiser("const unsigned int idPost = ($(id) % $(_row_stride));")});    
                 }
 
                 synEnv.add(Type::Uint32.addConst(), "id_syn", "$(id)");
@@ -1721,7 +1742,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
                 [this](EnvironmentExternalBase &env, SynapseSparseInitGroupMerged &sg)
                 {
                     // If postsynaptic learning is required
-                    if(!Utils::areTokensEmpty(sg.getArchetype().getWUPostLearnCodeTokens())) {
+                    if(!Utils::areTokensEmpty(sg.getArchetype().getWUInitialiser().getPostLearnCodeTokens())) {
                         CodeStream::Scope b(env.getStream());
 
                         // Extract index of synapse's postsynaptic target

@@ -132,9 +132,10 @@ public:
     DECLARE_SNIPPET(Cont);
 
     SET_VARS({{"g", "scalar"}});
+    SET_PRE_NEURON_VAR_REFS({{"V", "scalar", VarAccessMode::READ_ONLY}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
-        "addToPost(g * V_pre);\n");
+        "addToPost(g * V);\n");
 };
 IMPLEMENT_SNIPPET(Cont);
 
@@ -144,9 +145,10 @@ public:
     DECLARE_SNIPPET(Cont2);
 
     SET_VARS({{"g", "scalar"}, {"x", "scalar"}});
+    SET_PRE_NEURON_VAR_REFS({{"V", "scalar", VarAccessMode::READ_ONLY}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
-        "addToPost((g + x) * V_pre);\n");
+        "addToPost((g + x) * V);\n");
 };
 IMPLEMENT_SNIPPET(Cont2);
 
@@ -291,11 +293,11 @@ TEST(CustomUpdates, VarReferenceTypeChecks)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
-    auto *sg1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
+    auto *sg1 = model.addSynapsePopulation(
         "Synapses", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
-        {}, {{"g", 1.0}, {"d", 4}},
-        {}, {});
+        initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, {{"g", 1.0}, {"d", 4}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     VarValues sumVarValues{{"sum", 0.0}};
     WUVarReferences sumVarReferences1{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg1, "g")}};
@@ -393,10 +395,11 @@ TEST(CustomUpdates, VarDelayChecks)
     auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
     // Add synapse groups to force pre1's v to be delayed by 10 timesteps and pre2's v to be delayed by 5 timesteps
-    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn1", SynapseMatrixType::DENSE,
-                                                                    10, "Pre1", "Post",
-                                                                    {}, {{"g", 0.1}}, 
-                                                                    {}, {});
+    model.addSynapsePopulation(
+        "Syn1", SynapseMatrixType::DENSE, 10,
+        "Pre1", "Post",
+        initWeightUpdate<Cont>({}, {{"g", 0.1}}, {}, {}, {{"V", createVarRef(pre1, "V")}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     VarValues sumVarValues{{"sum", 0.0}};
     VarReferences sumVarReferences1{{"a", createVarRef(pre1, "V")}, {"b", createVarRef(post, "V")}};
@@ -419,14 +422,16 @@ TEST(CustomUpdates, VarMixedDelayChecks)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
     // Add synapse groups to force pre1's v to be delayed by 10 timesteps and pre2's v to be delayed by 5 timesteps
-    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn1", SynapseMatrixType::DENSE,
-                                                                    10, "Pre1", "Post",
-                                                                    {}, {{"g", 0.1}}, 
-                                                                    {}, {});
-    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn2", SynapseMatrixType::DENSE,
-                                                                    5, "Pre2", "Post",
-                                                                    {}, {{"g", 0.1}}, 
-                                                                    {}, {});
+    model.addSynapsePopulation(
+        "Syn1", SynapseMatrixType::DENSE, 10,
+        "Pre1", "Post",
+        initWeightUpdate<Cont>({}, {{"g", 0.1}}, {}, {}, {{"V", createVarRef(pre1, "V")}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    model.addSynapsePopulation(
+        "Syn2", SynapseMatrixType::DENSE, 5,
+        "Pre2", "Post",
+        initWeightUpdate<Cont>({}, {{"g", 0.1}}, {}, {}, {{"V", createVarRef(pre2, "V")}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     VarValues sumVarValues{{"sum", 0.0}};
     VarReferences sumVarReferences2{{"a", createVarRef(pre1, "V")}, {"b", createVarRef(pre2, "V")}};
@@ -451,16 +456,16 @@ TEST(CustomUpdates, WUVarSynapseGroupChecks)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
-    auto *sg1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
+    auto *sg1 = model.addSynapsePopulation(
         "Synapses1", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
-        {}, {{"g", 1.0}, {"d", 4}},
-        {}, {});
-    auto *sg2 = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
+        initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, {{"g", 1.0}, {"d", 4}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    auto *sg2 = model.addSynapsePopulation(
         "Synapses2", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
-        {}, {{"g", 1.0}, {"d", 4}},
-        {}, {});
+        initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, {{"g", 1.0}, {"d", 4}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
 
     VarValues sumVarValues{{"sum", 0.0}};
@@ -725,11 +730,11 @@ TEST(CustomUpdates, NeuronSharedCustomUpdateWU)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
-    auto *sg1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+    auto *sg1 = model.addSynapsePopulation(
         "Synapses", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
-        {}, {{"g", 1.0}},
-        {}, {});
+        initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     VarValues sumVarValues{{"sum", 0.0}, {"scale", 1.0}};
     WUVarReferences sumVarReferences{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg1, "g")}};
@@ -862,18 +867,26 @@ TEST(CustomUpdates, CompareDifferentDelay)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
     // Add synapse groups to force pre1's v to be delayed by 0 timesteps, pre2 and pre3's v to be delayed by 5 timesteps and pre4's to be delayed by 10 timesteps
-    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn1", SynapseMatrixType::DENSE,
-                                                                    NO_DELAY, "Pre1", "Post",
-                                                                    {}, {{"g", 0.1}}, {}, {});
-    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn2", SynapseMatrixType::DENSE,
-                                                                    5, "Pre2", "Post",
-                                                                    {}, {{"g", 0.1}}, {}, {});
-    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn3", SynapseMatrixType::DENSE,
-                                                                    5, "Pre3", "Post",
-                                                                    {}, {{"g", 0.1}}, {}, {});
-    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn4", SynapseMatrixType::DENSE,
-                                                                    10, "Pre4", "Post",
-                                                                    {}, {{"g", 0.1}}, {}, {});
+    model.addSynapsePopulation(
+        "Syn1", SynapseMatrixType::DENSE, NO_DELAY,
+        "Pre1", "Post",
+        initWeightUpdate<Cont>({}, {{"g", 0.1}}, {}, {}, {{"V", createVarRef(pre1, "V")}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    model.addSynapsePopulation(
+        "Syn2", SynapseMatrixType::DENSE, 5,
+        "Pre2", "Post",
+        initWeightUpdate<Cont>({}, {{"g", 0.1}}, {}, {}, {{"V", createVarRef(pre2, "V")}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    model.addSynapsePopulation(
+        "Syn3", SynapseMatrixType::DENSE, 5,
+        "Pre3", "Post",
+        initWeightUpdate<Cont>({}, {{"g", 0.1}}, {}, {}, {{"V", createVarRef(pre3, "V")}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    model.addSynapsePopulation(
+        "Syn4", SynapseMatrixType::DENSE, 10,
+        "Pre4", "Post",
+        initWeightUpdate<Cont>({}, {{"g", 0.1}}, {}, {}, {{"V", createVarRef(pre4, "V")}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
     
 
     // Add three custom updates in two different update groups
@@ -969,16 +982,20 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
 
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
     // Add synapse groups to force pre1's v to be delayed by 0 timesteps, pre2 and pre3's v to be delayed by 5 timesteps and pre4's to be delayed by 10 timesteps
-    auto *fwdSyn = model.addSynapsePopulation<Cont2, PostsynapticModels::DeltaCurr>("fwdSyn", SynapseMatrixType::DENSE,
-                                                                                    NO_DELAY, "Pre", "Post",
-                                                                                    {}, {{"g", 0.0}, {"x", 0.0}}, {}, {});
-    auto *backSyn = model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("backSyn", SynapseMatrixType::DENSE,
-                                                                                     NO_DELAY, "Post", "Pre",
-                                                                                     {}, {{"g", 0.0}}, {}, {});
+    auto *fwdSyn = model.addSynapsePopulation(
+        "fwdSyn", SynapseMatrixType::DENSE, NO_DELAY,
+        "Pre", "Post",
+        initWeightUpdate<Cont2>({}, {{"g", 0.0}, {"x", 0.0}}, {}, {}, {{"V", createVarRef(pre, "V")}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    auto *backSyn = model.addSynapsePopulation(
+        "backSyn", SynapseMatrixType::DENSE, NO_DELAY,
+        "Post", "Pre",
+        initWeightUpdate<Cont>({}, {{"g", 0.0}}, {}, {}, {{"V", createVarRef(post, "V")}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     // Add two custom updates which transpose different forward variables into backward population
     WUVarReferences sumVarReferences1{{"a", createWUVarRef(fwdSyn, "g", backSyn, "g")}, {"b", createWUVarRef(fwdSyn, "x")}};
@@ -1020,18 +1037,20 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
 
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
     // Add a sparse and a dense synapse group
-    auto *syn1 = model.addSynapsePopulation<Cont2, PostsynapticModels::DeltaCurr>(
-        "Syn1", SynapseMatrixType::DENSE,
-        NO_DELAY, "Pre", "Post",
-        {}, {{"g", 0.0}, {"x", 0.0}}, {}, {});
-    auto *syn2 = model.addSynapsePopulation<Cont2, PostsynapticModels::DeltaCurr>(
-        "Syn2", SynapseMatrixType::SPARSE,
-        NO_DELAY, "Pre", "Post",
-        {}, {{"g", 0.0}, {"x", 0.0}}, {}, {},
+    auto *syn1 = model.addSynapsePopulation(
+        "Syn1", SynapseMatrixType::DENSE, NO_DELAY,
+        "Pre", "Post",
+        initWeightUpdate<Cont2>({}, {{"g", 0.0}, {"x", 0.0}}, {}, {}, {{"V", createVarRef(pre, "V")}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    auto *syn2 = model.addSynapsePopulation(
+        "Syn2", SynapseMatrixType::SPARSE, NO_DELAY,
+        "Pre", "Post",
+        initWeightUpdate<Cont2>({}, {{"g", 0.0}, {"x", 0.0}}, {}, {}, {{"V", createVarRef(pre, "V")}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>(),
         initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({{"prob", 0.1}}));
 
     // Add two custom updates which transpose different forward variables into backward population
@@ -1078,11 +1097,11 @@ TEST(CustomUpdates, CompareDifferentWUBatched)
 
     // Add synapse group 
     VarValues synVarInit{{"gCommon", 1.0}, {"g", 1.0}, {"dCommon",1.0}, {"d", 1.0}};
-    auto *sg1 = model.addSynapsePopulation<StaticPulseDendriticDelaySplit, PostsynapticModels::DeltaCurr>(
+    auto *sg1 = model.addSynapsePopulation(
         "Synapses", SynapseMatrixType::DENSE, NO_DELAY,
         "Pre", "Post",
-        {}, synVarInit,
-        {}, {});
+        initWeightUpdate<StaticPulseDendriticDelaySplit>({}, synVarInit),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     // Add one custom update which sums duplicated variables (g and d), another which sums shared variables (gCommon and dCommon) and another which sums one of each
     WUVarReferences sumVarReferences1{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg1, "d")}};

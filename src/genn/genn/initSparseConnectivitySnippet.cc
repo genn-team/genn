@@ -44,6 +44,9 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues) 
 Init::Init(const Base *snippet, const std::unordered_map<std::string, double> &params)
 :   Snippet::Init<Base>(snippet, params)
 {
+    // Validate
+    getSnippet()->validate(getParams());
+
     // Scan code tokens
     m_RowBuildCodeTokens = Utils::scanCode(getSnippet()->getRowBuildCode(), "Sparse connectivity row build code");
     m_ColBuildCodeTokens = Utils::scanCode(getSnippet()->getColBuildCode(), "Sparse connectivity col build code");

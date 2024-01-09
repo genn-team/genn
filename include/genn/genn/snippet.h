@@ -176,8 +176,6 @@ public:
     Init(const SnippetBase *snippet, const std::unordered_map<std::string, double> &params)
         : m_Snippet(snippet), m_Params(params)
     {
-        // Validate names
-        getSnippet()->validate(params);
     }
 
     //----------------------------------------------------------------------------
@@ -186,7 +184,6 @@ public:
     const SnippetBase *getSnippet() const{ return m_Snippet; }
     const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
     const std::unordered_map<std::string, double> &getDerivedParams() const{ return m_DerivedParams; }
-
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const
     {
@@ -202,6 +199,7 @@ public:
             m_DerivedParams.emplace(d.name, d.func(m_Params, dt));
         }
     }
+
 private:
     //----------------------------------------------------------------------------
     // Members

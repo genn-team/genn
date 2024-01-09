@@ -50,7 +50,7 @@ def test_spike_recording(backend, precision, batch_size):
 
     ss = model.add_neuron_population("SpikeSource", 100, "SpikeSourceArray",
                                      {}, {"startSpike": ss_start_spikes, "endSpike": ss_end_spikes})
-    ss.extra_global_params["spikeTimes"].set_values(np.concatenate(spike_times))
+    ss.extra_global_params["spikeTimes"].set_init_values(np.concatenate(spike_times))
     ss.spike_recording_enabled = True
     
     # Build model and load

@@ -74,7 +74,7 @@ public:
 
     //! Set name of neuron input variable postsynaptic model will target
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
-    void setPSTargetVar(const std::string &varName);
+    void setPostTargetVar(const std::string &varName);
     
     //! Set name of neuron input variable $(addToPre, . ) commands will target
     /*! This should either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */
@@ -170,19 +170,9 @@ public:
     //! Are PREVIOUS postsynaptic spike times needed?
     bool isPrevPostSpikeTimeRequired() const;
 
-    const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
-
-    const std::unordered_map<std::string, double> &getWUParams() const{ return m_WUParams; }
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getWUVarInitialisers() const{ return m_WUVarInitialisers; }
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getWUPreVarInitialisers() const{ return m_WUPreVarInitialisers; }
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getWUPostVarInitialisers() const{ return m_WUPostVarInitialisers; }
-    const std::unordered_map<std::string, double> getWUConstInitVals() const;
-
-    const PostsynapticModels::Base *getPSModel() const{ return m_PSModel; }
-
-    const std::unordered_map<std::string, double> &getPSParams() const{ return m_PSParams; }
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
-
+    const PostsynapticModels::Init &getPSInitialiser() const{ return m_PSInitialiser; }
+    const WeightUpdateModels::Init &getWUInitialiser() const{ return m_WUInitialiser; }
+      
     const InitSparseConnectivitySnippet::Init &getConnectivityInitialiser() const{ return m_SparseConnectivityInitialiser; }
     const InitToeplitzConnectivitySnippet::Init &getToeplitzConnectivityInitialiser() const { return m_ToeplitzConnectivityInitialiser; }
 
@@ -210,7 +200,7 @@ public:
 
     //! Get name of neuron input variable postsynaptic model will target
     /*! This will either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
-    const std::string &getPSTargetVar() const{ return m_PSTargetVar; }
+    const std::string &getPostTargetVar() const{ return m_PostTargetVar; }
 
     //! Get name of neuron input variable which a presynaptic output specified with $(addToPre) will target
     /*! This will either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */
@@ -222,8 +212,7 @@ public:
 
 protected:
     SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                 const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, InitVarSnippet::Init> &wuVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPreVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &wuPostVarInitialisers,
-                 const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, InitVarSnippet::Init> &psVarInitialisers,
+                 const WeightUpdateModels::Init &wumInitialiser, const PostsynapticModels::Init &psmInitialiser,
                  NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                  const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                  const InitToeplitzConnectivitySnippet::Init &toeplitzInitialiser,
@@ -256,21 +245,6 @@ protected:
     //------------------------------------------------------------------------
     const NeuronGroupInternal *getSrcNeuronGroup() const{ return m_SrcNeuronGroup; }
     const NeuronGroupInternal *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
-
-    const std::unordered_map<std::string, double> &getWUDerivedParams() const{ return m_WUDerivedParams; }
-    const std::unordered_map<std::string, double> &getPSDerivedParams() const{ return m_PSDerivedParams; }
-
-    const std::vector<Transpiler::Token> &getWUSimCodeTokens() const{ return m_WUSimCodeTokens; }
-    const std::vector<Transpiler::Token> &getWUEventCodeTokens() const{ return m_WUEventCodeTokens; }
-    const std::vector<Transpiler::Token> &getWUPostLearnCodeTokens() const{ return m_WUPostLearnCodeTokens; }
-    const std::vector<Transpiler::Token> &getWUSynapseDynamicsCodeTokens() const{ return m_WUSynapseDynamicsCodeTokens; }
-    const std::vector<Transpiler::Token> &getWUEventThresholdCodeTokens() const{ return m_WUEventThresholdCodeTokens; }
-    const std::vector<Transpiler::Token> &getWUPreSpikeCodeTokens() const{ return m_WUPreSpikeCodeTokens; }
-    const std::vector<Transpiler::Token> &getWUPostSpikeCodeTokens() const{ return m_WUPostSpikeCodeTokens; }
-    const std::vector<Transpiler::Token> &getWUPreDynamicsCodeTokens() const{ return m_WUPreDynamicsCodeTokens; }
-    const std::vector<Transpiler::Token> &getWUPostDynamicsCodeTokens() const{ return m_WUPostDynamicsCodeTokens; }
-    const std::vector<Transpiler::Token> &getPSApplyInputCodeTokens() const{ return m_PSApplyInputCodeTokens; }
-    const std::vector<Transpiler::Token> &getPSDecayCodeTokens() const{ return m_PSDecayCodeTokens; }
 
     //!< Does the event threshold needs to be retested in the synapse kernel?
     /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
@@ -470,35 +444,18 @@ private:
     //! Variable mode used for this synapse group's dendritic delay buffers
     VarLocation m_DendriticDelayLocation;
 
-    //! Weight update model type
-    const WeightUpdateModels::Base *m_WUModel;
+    //! Initialiser used for creating weight update model
+    WeightUpdateModels::Init m_WUInitialiser;
 
-    //! Parameters of weight update model
-    const std::unordered_map<std::string, double> m_WUParams;
+    //! Initialiser used for creating postsynaptic update model
+    PostsynapticModels::Init m_PSInitialiser;
 
-    //! Derived parameters for weight update model
-    std::unordered_map<std::string, double> m_WUDerivedParams;
+    //! Initialiser used for creating sparse connectivity
+    InitSparseConnectivitySnippet::Init m_SparseConnectivityInitialiser;
 
-    //! Initialisers for weight update model per-synapse variables
-    std::unordered_map<std::string, InitVarSnippet::Init> m_WUVarInitialisers;
+    //! Initialiser used for creating toeplitz connectivity
+    InitToeplitzConnectivitySnippet::Init m_ToeplitzConnectivityInitialiser;
 
-    //! Initialisers for weight update model per-presynaptic neuron variables
-    std::unordered_map<std::string, InitVarSnippet::Init> m_WUPreVarInitialisers;
-
-    //! Initialisers for weight update model post-presynaptic neuron variables
-    std::unordered_map<std::string, InitVarSnippet::Init> m_WUPostVarInitialisers;
-    
-    //! Post synapse update model type
-    const PostsynapticModels::Base *m_PSModel;
-
-    //! Parameters of post synapse model
-    const std::unordered_map<std::string, double> m_PSParams;
-
-    //! Derived parameters for post synapse model
-    std::unordered_map<std::string, double> m_PSDerivedParams;
-
-    //! Initialisers for post synapse model variables
-    std::unordered_map<std::string, InitVarSnippet::Init> m_PSVarInitialisers;
 
     //! Location of individual per-synapse state variables
     std::vector<VarLocation> m_WUVarLocation;
@@ -517,12 +474,6 @@ private:
 
     //! Location of postsynaptic model extra global parameters
     std::vector<VarLocation> m_PSExtraGlobalParamLocation;
-
-    //! Initialiser used for creating sparse connectivity
-    InitSparseConnectivitySnippet::Init m_SparseConnectivityInitialiser;
-
-    //! Initialiser used for creating toeplitz connectivity
-    InitToeplitzConnectivitySnippet::Init m_ToeplitzConnectivityInitialiser;
 
     //! Location of sparse connectivity
     VarLocation m_SparseConnectivityLocation;
@@ -548,7 +499,7 @@ private:
 
     //! Name of neuron input variable postsynaptic model will target
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
-    std::string m_PSTargetVar;
+    std::string m_PostTargetVar;
 
     //! Name of neuron input variable a presynaptic output specified with $(addToPre) will target
     /*! This will either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */
@@ -561,32 +512,6 @@ private:
     //! Custom updates which reference this synapse group
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
     std::vector<CustomUpdateWUInternal*> m_CustomUpdateReferences;
-
-    //! Tokens produced by scanner from threshold condition code
-    std::vector<Transpiler::Token> m_WUSimCodeTokens;
-
-    std::vector<Transpiler::Token> m_WUEventCodeTokens;
-
-    std::vector<Transpiler::Token> m_WUPostLearnCodeTokens;
-
-    std::vector<Transpiler::Token> m_WUSynapseDynamicsCodeTokens;
-
-    std::vector<Transpiler::Token> m_WUEventThresholdCodeTokens;
-
-    std::vector<Transpiler::Token> m_WUPreSpikeCodeTokens;
-
-    std::vector<Transpiler::Token> m_WUPostSpikeCodeTokens;
-
-    std::vector<Transpiler::Token> m_WUPreDynamicsCodeTokens;
-
-    std::vector<Transpiler::Token> m_WUPostDynamicsCodeTokens;
-
-    std::vector<Transpiler::Token> m_PSApplyInputCodeTokens;
-
-    std::vector<Transpiler::Token> m_PSDecayCodeTokens;
-
-    //! Tokens produced by scanner from reset code
-    std::vector<Transpiler::Token> m_ResetCodeTokens;
     
 };
 }   // namespace GeNN

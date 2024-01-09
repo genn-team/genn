@@ -26,11 +26,11 @@ using namespace GeNN::CodeGenerator;
                        &SynapseGroupInternal::getWUHashDigest);
 
     createMergedGroups(getModel().getSynapseGroups(), m_MergedPostsynapticUpdateGroups,
-                       [](const SynapseGroupInternal &sg){ return !Utils::areTokensEmpty(sg.getWUPostLearnCodeTokens()); },
+                       [](const SynapseGroupInternal &sg){ return !Utils::areTokensEmpty(sg.getWUInitialiser().getPostLearnCodeTokens()); },
                        &SynapseGroupInternal::getWUHashDigest);
 
     createMergedGroups(getModel().getSynapseGroups(), m_MergedSynapseDynamicsGroups,
-                       [](const SynapseGroupInternal &sg){ return !Utils::areTokensEmpty(sg.getWUSynapseDynamicsCodeTokens()); },
+                       [](const SynapseGroupInternal &sg){ return !Utils::areTokensEmpty(sg.getWUInitialiser().getSynapseDynamicsCodeTokens()); },
                        &SynapseGroupInternal::getWUHashDigest);
 
     createMergedGroups(getModel().getCustomUpdates(), m_MergedCustomUpdateGroups,
@@ -123,7 +123,7 @@ using namespace GeNN::CodeGenerator;
                        {
                            return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && 
                                    (sg.isWUVarInitRequired()
-                                   || (backend.isPostsynapticRemapRequired() && !Utils::areTokensEmpty(sg.getWUPostLearnCodeTokens()))));
+                                   || (backend.isPostsynapticRemapRequired() && !Utils::areTokensEmpty(sg.getWUInitialiser().getPostLearnCodeTokens()))));
                        },
                        &SynapseGroupInternal::getWUInitHashDigest);
 

@@ -16,9 +16,10 @@ from pygenn import (create_current_source_model,
                     create_wu_var_ref,
                     create_wu_pre_var_ref,
                     create_wu_post_var_ref,
+                    init_postsynaptic,
                     init_sparse_connectivity,
                     init_toeplitz_connectivity,
-                    init_var)
+                    init_weight_update, init_var)
 
 
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
@@ -85,13 +86,13 @@ def test_custom_update(backend, precision, batch_size):
     dense_s_pop = model.add_synapse_population(
         "DenseSynapses", "DENSE", 0,
         ss_pop, n_pop,
-        weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0},
-        postsynaptic_update_model, {}, {"psmX": 0.0, "psmXShared": 0.0})
+        init_weight_update(weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0}),
+        init_postsynaptic(postsynaptic_update_model, {}, {"psmX": 0.0, "psmXShared": 0.0}))
     sparse_s_pop = model.add_synapse_population(
         "SparseSynapses", "SPARSE", 0,
         ss_pop, n_pop,
-        weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0},
-        "DeltaCurr", {}, {},
+        init_weight_update(weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("FixedNumberPostWithReplacement", {"rowLength": 10}))
     
     conv_params = {"conv_kh": 3, "conv_kw": 3,
@@ -100,8 +101,8 @@ def test_custom_update(backend, precision, batch_size):
     kernel_s_pop = model.add_synapse_population(
         "ToeplitzSynapses", "TOEPLITZ", 0,
         ss_pop, n_pop,
-        weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0},
-        "DeltaCurr", {}, {},
+        init_weight_update(weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0}),
+        init_postsynaptic("DeltaCurr"),
         init_toeplitz_connectivity("Conv2D", conv_params))
     
     cu = model.add_custom_update(
@@ -153,7 +154,10 @@ def test_custom_update(backend, precision, batch_size):
     # Build model and load
     model.build()
     model.load()
-    
+
+    # Pull sparse connectivity from device    
+    sparse_s_pop.pull_connectivity_from_device()
+
     # Simulate 20 timesteps
     samples = [
         (n_pop, n_pop.vars["X"], (100,)),
@@ -201,13 +205,109 @@ def test_custom_update(backend, precision, batch_size):
             if batch_size != 1:
                 shape = (batch_size,) + shape
 
-            # If shape of view doesn't match, give error
-            view = var.view
-            if view.shape != shape:
-                assert False, f"{pop.name} var {var.name} has wrong shape ({view.shape} rather than {shape})"
+            # If shape of values doesn't match, give error
+            values = var.values
+            if values.shape != shape:
+                assert False, f"{pop.name} var {var.name} has wrong shape ({values.shape} rather than {shape})"
             # If values don't match, give error
-            elif not np.allclose(view, correct):
-                assert False, f"{pop.name} var {var.name} has wrong value ({view} rather than {correct})"
+            elif not np.allclose(values, correct):
+                assert False, f"{pop.name} var {var.name} has wrong value ({values} rather than {correct})"
+
+@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
+                                                 ("cuda", 1), ("cuda", 5)])
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_custom_update_delay(backend, precision, batch_size):
+    neuron_model = create_neuron_model(
+        "neuron",
+        var_name_types=[("V", "scalar", VarAccess.READ_ONLY_DUPLICATE),
+                        ("U", "scalar", VarAccess.READ_ONLY_DUPLICATE)])
+
+    weight_update_model = create_weight_update_model(
+        "weight_update",
+        var_name_types=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
+        pre_neuron_var_refs=[("V", "scalar", VarAccessMode.READ_ONLY)],
+        synapse_dynamics_code=
+        """
+        addToPost(V * g);
+        """)
+    pre_weight_update_model = create_weight_update_model(
+        "pre_weight_update",
+        pre_var_name_types=[("pre", "scalar")],
+        var_name_types=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
+        pre_neuron_var_refs=[("V", "scalar", VarAccessMode.READ_ONLY)],
+        synapse_dynamics_code=
+        """
+        addToPost(pre * g);
+        """,
+        pre_dynamics_code=
+        """
+        pre = V;
+        """)
+
+    set_time_custom_update_model = create_custom_update_model(
+        "set_time_custom_update",
+         update_code=
+         """
+         R = (batch * 1000.0) + t;
+         """,
+         var_refs=[("R", "scalar", VarAccessMode.READ_WRITE)])
+
+    model = GeNNModel(precision, "test_custom_update_delay", backend=backend)
+    model.dt = 1.0
+    model.batch_size = batch_size
+    
+    # Create a variety of models to attach custom updates to
+    pre_pop = model.add_neuron_population("Pre", 10, neuron_model,
+                                          {}, {"V": 0.0, "U": 0.0});
+    post_pop = model.add_neuron_population("Post", 10, neuron_model, 
+                                           {}, {"V": 0.0, "U": 0.0})
+    model.add_synapse_population(
+        "Syn1", "DENSE", 5,
+        pre_pop, post_pop,
+        init_weight_update(weight_update_model, {}, {"g": 0.0},
+                           pre_var_refs={"V": create_var_ref(pre_pop, "V")}),
+        init_postsynaptic("DeltaCurr"))
+    syn2_pop = model.add_synapse_population(
+        "Syn2", "DENSE", 5,
+        pre_pop, post_pop,
+        init_weight_update(pre_weight_update_model, {}, {"g": 0.0}, {"pre": 0.0},
+                           pre_var_refs={"V": create_var_ref(pre_pop, "V")}),
+        init_postsynaptic("DeltaCurr"))
+    
+    model.add_custom_update("NeuronDelaySetTime", "Test", set_time_custom_update_model,
+                            {}, {}, {"R": create_var_ref(pre_pop, "V")})
+    model.add_custom_update("WUPreDelaySetTime", "Test", set_time_custom_update_model,
+                            {}, {}, {"R": create_wu_pre_var_ref(syn2_pop, "pre")})
+    model.add_custom_update("NeuronNoDelaySetTime", "Test", set_time_custom_update_model,
+                            {}, {}, {"R": create_var_ref(pre_pop, "U")})
+    
+    # Build model and load
+    model.build()
+    model.load()
+
+    # Simulate 20 timesteps
+    vars = [(pre_pop, pre_pop.vars["V"]),
+            (pre_pop, pre_pop.vars["U"]),
+            (syn2_pop, syn2_pop.pre_vars["pre"])]
+    while model.timestep < 20:
+        model.step_time()
+
+        # Every 10 timesteps, trigger custom update
+        if (model.timestep % 10) == 0:
+            model.custom_update("Test")
+
+            # Loop through variables
+            correct = [(1000 * b) + ((model.timestep // 10) * 10) 
+                       for b in range(batch_size)]
+            correct = np.reshape(correct, (batch_size, 1))
+            for pop, var in vars:
+                # Pull
+                var.pull_from_device()
+
+                # Compare to correct value
+                if not np.allclose(var.current_view, correct):
+                    assert False, f"{pop.name} var {var.name} has wrong value ({var.current_view} rather than {correct})"
+
 
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
@@ -236,13 +336,13 @@ def test_custom_update_transpose(backend, precision, batch_size):
     forward_s_pop = model.add_synapse_population(
         "ForwardSynapses", "DENSE", 0,
         pre_n_pop, post_n_pop,
-        static_pulse_duplicate_model, {}, {"g": g}, {}, {},
-        "DeltaCurr", {}, {})
+        init_weight_update(static_pulse_duplicate_model, {}, {"g": g}),
+        init_postsynaptic("DeltaCurr"))
     transpose_s_pop = model.add_synapse_population(
         "TransposeSynapses", "DENSE", 0,
         post_n_pop, pre_n_pop,
-        static_pulse_duplicate_model, {}, {"g": 0.0}, {}, {},
-        "DeltaCurr", {}, {})
+        init_weight_update(static_pulse_duplicate_model, {}, {"g": 0.0}),
+        init_postsynaptic("DeltaCurr"))
     
     # Create custom update to calculate transpose
     transpose_cu = model.add_custom_update(
@@ -389,8 +489,8 @@ def test_custom_update_batch_reduction(backend, precision, batch_size):
     dense_s_pop = model.add_synapse_population(
         "DenseSynapses", "DENSE", 0,
         ss_pop, n_pop,
-        weight_update_model, {}, {"X": x_dense_s, "SumX": 0.0}, {}, {},
-        "DeltaCurr", {}, {})
+        init_weight_update(weight_update_model, {}, {"X": x_dense_s, "SumX": 0.0}),
+        init_postsynaptic("DeltaCurr"))
 
     x_sparse_s = (np.random.uniform(high=100.0, size=(batch_size, 100)) if batch_size > 1
                  else np.random.uniform(high=100.0, size=100))
@@ -399,8 +499,8 @@ def test_custom_update_batch_reduction(backend, precision, batch_size):
     sparse_s_pop = model.add_synapse_population(
         "SparseSynapses", "SPARSE", 0,
         ss_pop, n_pop,
-        weight_update_model, {}, {"X": x_sparse_s, "SumX": 0.0}, {}, {},
-        "DeltaCurr", {}, {})
+        init_weight_update(weight_update_model, {}, {"X": x_sparse_s, "SumX": 0.0}, {}, {}),
+        init_postsynaptic("DeltaCurr", {}, {}))
     sparse_s_pop.set_sparse_connections(pre_ind_sparse, post_ind_sparse)
     
     x_kern_s = (np.random.uniform(high=100.0, size=(batch_size, 9)) if batch_size > 1
@@ -411,8 +511,8 @@ def test_custom_update_batch_reduction(backend, precision, batch_size):
     kern_s_pop = model.add_synapse_population(
         "ToeplitzSynapses", "TOEPLITZ", 0,
         ss_pop, n_pop,
-        weight_update_model, {}, {"X": x_kern_s, "SumX": 0.0}, {}, {},
-        "DeltaCurr", {}, {},
+        init_weight_update(weight_update_model, {}, {"X": x_kern_s, "SumX": 0.0}),
+        init_postsynaptic("DeltaCurr"),
         init_toeplitz_connectivity("Conv2D", conv_params))
 
     # Create reduction custom updates
@@ -449,19 +549,20 @@ def test_custom_update_batch_reduction(backend, precision, batch_size):
         (x_kern_s, kern_s_pop, reduce_s_kernel)]
     for data, sum_pop, max_pop in samples:
         # Check sum
-        sum_pop.pull_var_from_device("SumX")
+        sum_pop.vars["SumX"].pull_from_device()
         sum_correct = np.sum(data, axis=0) if batch_size > 1 else data
-        sum_value = sum_pop.get_var_values("SumX") if batch_size > 1 else data
+        sum_value = sum_pop.vars["SumX"].values
         if not np.allclose(sum_correct, sum_value):
             assert False, f"{sum_pop.name} var SumX has wrong value ({sum_value} rather than {sum_correct})"
 
         # Check max
-        max_pop.pull_var_from_device("MaxX")
+        max_pop.vars["MaxX"].pull_from_device()
         max_correct = np.max(data, axis=0) if batch_size > 1 else data
-        max_value = max_pop.get_var_values("MaxX")
+        max_value = max_pop.vars["MaxX"].values
         if not np.allclose(max_correct, max_value):
             assert False, f"{max_pop.name} var MaxX has wrong value ({max_value} rather than {max_correct})"
 
+
 if __name__ == '__main__':
-    test_custom_update("cuda", types.Float, 5)
+    test_custom_update("cuda", types.Float, 1)
     

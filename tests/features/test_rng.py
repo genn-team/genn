@@ -12,10 +12,12 @@ from pygenn import (create_current_source_model,
                     create_postsynaptic_model,
                     create_weight_update_model,
                     create_neuron_model,
+                    init_postsynaptic,
                     init_sparse_connectivity,
-                    init_var)
+                    init_weight_update, init_var)
 
 
+@pytest.mark.flaky
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
@@ -72,11 +74,12 @@ def test_sim(backend, precision, batch_size):
     # Add second neuron and synapse population to hang custom connectivity update off
     post_n_pop = model.add_neuron_population("PostNeurons", 1000, "SpikeSource", 
                                              {}, {})
-    s_pop = model.add_synapse_population("Synapses", "SPARSE", 0,
-                                         n_pop, post_n_pop,
-                                         "StaticPulseConstantWeight", {"g": 1.0}, {}, {}, {},
-                                         "DeltaCurr", {}, {},
-                                         init_sparse_connectivity("FixedProbability", {"prob": 0.1}))
+    s_pop = model.add_synapse_population(
+        "Synapses", "SPARSE", 0,
+        n_pop, post_n_pop,
+        init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity("FixedProbability", {"prob": 0.1}))
 
     # Add custom connectivity update
     ccu = model.add_custom_connectivity_update(
@@ -128,6 +131,7 @@ def test_sim(backend, precision, batch_size):
         if p < confidence_interval:
             assert False, f"'{pop.name}' '{var_name}' initialisation fails KS test (p={p})"
 
+@pytest.mark.flaky
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_init(backend, precision):
@@ -175,14 +179,14 @@ def test_init(backend, precision):
     dense_s_pop = model.add_synapse_population(
         "DenseSynapses", "DENSE", 0,
         ss1_pop, n_pop,
-        nop_weight_update_model, {}, init_vars(), init_vars("pre_"), init_vars("post_"),
-        nop_postsynaptic_update_model, {}, init_vars("psm_"))
+        init_weight_update(nop_weight_update_model, {}, init_vars(), init_vars("pre_"), init_vars("post_")),
+        init_postsynaptic(nop_postsynaptic_update_model, {}, init_vars("psm_")))
         
     sparse_s_pop = model.add_synapse_population(
         "SparseSynapses", "SPARSE", 0,
         ss2_pop, n_pop,
-        nop_weight_update_model, {}, init_vars(), init_vars("pre_"), init_vars("post_"),
-        "DeltaCurr", {}, {},
+        init_weight_update(nop_weight_update_model, {}, init_vars(), init_vars("pre_"), init_vars("post_")),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     
     # Build model and load
@@ -202,7 +206,6 @@ def test_init(backend, precision):
     confidence_interval = 0.00034
     
     # Loop through populations
-    # **TODO** use get_var_values to get synapse variables
     pops = [(n_pop, "", n_pop.vars), (cs, "", cs.vars), (dense_s_pop, "", dense_s_pop.vars),
             (dense_s_pop, "pre_", dense_s_pop.pre_vars), (dense_s_pop, "post_", dense_s_pop.post_vars),
             (dense_s_pop, "psm_", dense_s_pop.psm_vars)]
@@ -213,7 +216,7 @@ def test_init(backend, precision):
             vars[prefix + var_name].pull_from_device()
 
             # If distribution is discrete
-            view = vars[prefix + var_name].view
+            view = vars[prefix + var_name].values
             if isinstance(dist, stats.rv_discrete):
                 # Determine frequencies of observations
                 f_obs = np.bincount(view)

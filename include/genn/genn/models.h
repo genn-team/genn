@@ -178,9 +178,15 @@ public:
     // Get dimensions of variable
     VarAccessDim getVarDims() const;
 
+    //! Get name of targetted variable
+    const std::string &getVarName() const;
+
     //! Get size of variable
     unsigned int getSize() const;
-
+    
+    //! Does this variable reference's target belong to neuron group
+    bool isTargetNeuronGroup(const NeuronGroupInternal *ng) const;
+    
     //! If variable is delayed, get neuron group which manages its delay
     NeuronGroup *getDelayNeuronGroup() const;
     
@@ -207,7 +213,7 @@ public:
     static VarReference createPSMVarRef(SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPreVarRef(SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPostVarRef(SynapseGroup *sg, const std::string &varName);
-    
+
 private:
     //------------------------------------------------------------------------
     // Typedefines
@@ -231,7 +237,6 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    const std::string &getVarName() const;
     const std::string &getTargetName() const;
 
     //------------------------------------------------------------------------
@@ -437,6 +442,12 @@ GENN_EXPORT void updateHash(const Base::CustomUpdateVar &v, boost::uuids::detail
 GENN_EXPORT void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash);
 
+//----------------------------------------------------------------------------
+// Free functions
+//----------------------------------------------------------------------------
+//! Helper function to check if local variable references are configured correctly
+GENN_EXPORT void checkLocalVarReferences(const std::unordered_map<std::string, VarReference> &varRefs, const Base::VarRefVec &modelVarRefs,
+                                         const NeuronGroupInternal *ng, const std::string &targetErrorDescription);
 //! Helper function to check if variable reference types match those specified in model
 template<typename V>
 void checkVarReferenceTypes(const std::unordered_map<std::string, V> &varRefs, const Base::VarRefVec &modelVarRefs)
@@ -452,4 +463,5 @@ void checkVarReferenceTypes(const std::unordered_map<std::string, V> &varRefs, c
         }
     }
 }
+
 } // GeNN::Models

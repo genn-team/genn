@@ -8,9 +8,10 @@ from pygenn import (create_neuron_model,
                     create_sparse_connect_init_snippet,
                     create_var_init_snippet,
                     create_weight_update_model,
+                    init_postsynaptic,
                     init_sparse_connectivity, 
                     init_toeplitz_connectivity,
-                    init_var)
+                    init_weight_update, init_var)
 
 # Neuron model which fires every timestep
 # **NOTE** this is just so sim_code fires every timestep
@@ -69,15 +70,15 @@ def test_spike_times(backend, precision):
     s_pre_pop = model.add_synapse_population(
         "PreSynapses", "SPARSE", 20,
         pre_n_pop, post_n_pop,
-        pre_weight_update_model, {}, {"a": float_min, "b": float_min}, {}, {},
-        "DeltaCurr", {}, {},
+        init_weight_update(pre_weight_update_model, {}, {"a": float_min, "b": float_min}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     
     s_post_pop = model.add_synapse_population(
         "PostSynapses", "SPARSE", 0,
         post_n_pop, pre_n_pop,
-        post_weight_update_model, {}, {"a": float_min, "b": float_min}, {}, {},
-        "DeltaCurr", {}, {},
+        init_weight_update(post_weight_update_model, {}, {"a": float_min, "b": float_min}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     s_post_pop.back_prop_delay_steps = 20
 
@@ -105,8 +106,8 @@ def test_spike_times(backend, precision):
             delayed_time = np.arange(10) + offset + (10.0 * np.floor((model.t - 22.0 - np.arange(10)) / 10.0))
             delayed_time[delayed_time < 21.0] = float_min
 
-            pop.pull_var_from_device(var_name)
-            var_value = pop.get_var_values(var_name)
+            pop.vars[var_name].pull_from_device()
+            var_value = pop.vars[var_name].values
             if not np.allclose(delayed_time, var_value):
                 assert False, f"{pop.name} var '{var_name}' has wrong value ({var_value} rather than {delayed_time})"
 

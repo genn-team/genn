@@ -40,6 +40,10 @@ public:
         and only applies to extra global parameters which are pointers. */
     void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
+    //! Set name of neuron input variable current source model will inject into
+    /*! This should either be 'Isyn' or the name of one of the target neuron's additional input variables. */
+    void setTargetVar(const std::string &varName);
+
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
@@ -50,6 +54,7 @@ public:
 
     const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
+    const std::unordered_map<std::string, Models::VarReference> &getNeuronVarReferences() const{ return m_NeuronVarReferences;  }
 
     //! Get variable location for current source model state variable
     VarLocation getVarLocation(const std::string &varName) const;
@@ -65,11 +70,15 @@ public:
     /*! This is only used by extra global parameters which are pointers*/
     VarLocation getExtraGlobalParamLocation(size_t index) const{ return m_ExtraGlobalParamLocation.at(index); }
 
+    //! Get name of neuron input variable current source model will inject into
+    /*! This will either be 'Isyn' or the name of one of the target neuron's additional input variables. */
+    const std::string &getTargetVar() const { return m_TargetVar; }
+
 protected:
     CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
                   const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
-                  const NeuronGroupInternal *trgNeuronGroup, VarLocation defaultVarLocation,
-                  VarLocation defaultExtraGlobalParamLocation);
+                  const std::unordered_map<std::string, Models::VarReference> &neuronVarReferences, const NeuronGroupInternal *trgNeuronGroup, 
+                  VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
     // Protected methods
@@ -110,6 +119,7 @@ private:
     std::unordered_map<std::string, double> m_Params;
     std::unordered_map<std::string, double> m_DerivedParams;
     std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
+    std::unordered_map<std::string, Models::VarReference> m_NeuronVarReferences;
 
     const NeuronGroupInternal *m_TrgNeuronGroup;
 
@@ -118,6 +128,10 @@ private:
 
     //! Location of extra global parameters
     std::vector<VarLocation> m_ExtraGlobalParamLocation;
+
+    //! Name of neuron input variable current source will inject into
+    /*! This should either be 'Isyn' or the name of one of the target neuron's additional input variables. */
+    std::string m_TargetVar;
 
     //! Tokens produced by scanner from injection code
     std::vector<Transpiler::Token> m_InjectionCodeTokens;

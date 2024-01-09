@@ -197,7 +197,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         // If neuron group has axonal or back-propagation delays, add delay queue pointer
         if (n.second.isDelayRequired()) {
             createArray(&n.second, "spkQuePtr", Type::Uint32, 1, VarLocation::DEVICE);
-            m_DelayQueuePointer.try_emplace(n.first, 0);
+            m_DelayQueuePointer.try_emplace(&n.second, 0);
         }
         
         // If neuron group needs to record its spike times
@@ -347,7 +347,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             }
 
             // **TODO** remap is not always required
-            if(m_Backend.get().isPostsynapticRemapRequired() && !Utils::areTokensEmpty(s.second.getWUPostLearnCodeTokens())) {
+            if(m_Backend.get().isPostsynapticRemapRequired() && !Utils::areTokensEmpty(s.second.getWUInitialiser().getPostLearnCodeTokens())) {
                 // Create column lengths array
                 const size_t numPost = s.second.getTrgNeuronGroup()->getNumNeurons();
                 const size_t colStride = s.second.getMaxSourceConnections();
@@ -630,21 +630,10 @@ void Runtime::stepTime()
 {
    m_StepTime(m_Timestep, m_NumRecordingTimesteps.value_or(0));
     
-    // Generate code to advance host-side spike queues    
-    /*for(const auto &n : model.getNeuronGroups()) {
-        if (n.second.isDelayRequired()) {
-            runner << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
-        }
-    }*/
-    // Generate code to advance host side dendritic delay buffers
-    /*for(const auto &n : model.getNeuronGroups()) {
-        // Loop through incoming synaptic populations
-        for(const auto *sg : n.second.getFusedPSMInSyn()) {
-            if(sg->isDendriticDelayRequired()) {
-                runner << "denDelayPtr" << sg->getFusedPSVarSuffix() << " = (denDelayPtr" << sg->getFusedPSVarSuffix() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
-            }
-        }
-    }*/
+   // Loop through delay queue pointers and update
+   for(auto &d : m_DelayQueuePointer) {
+       d.second = (d.second + 1) % d.first->getNumDelaySlots();
+   }
 
     // Advance time
     m_Timestep++;

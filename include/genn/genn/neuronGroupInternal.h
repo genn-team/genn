@@ -22,8 +22,7 @@ public:
     }
     
     using NeuronGroup::checkNumDelaySlots;
-    using NeuronGroup::updatePreVarQueues;
-    using NeuronGroup::updatePostVarQueues;
+    using NeuronGroup::setVarQueueRequired;
     using NeuronGroup::addSpkEventCondition;
     using NeuronGroup::addInSyn;
     using NeuronGroup::addOutSyn;
@@ -75,7 +74,7 @@ public:
 
     const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_NG.getVarInitialisers(); }
 
-    bool isVarDelayed(const std::string &varName) const{ return m_NG.isVarQueueRequired(varName); }
+    bool isVarDelayed(const std::string &varName) const{ return m_NG.isDelayRequired() && m_NG.isVarQueueRequired(varName); }
 
     const NeuronGroup &getTarget() const{ return m_NG; }
 

@@ -15,10 +15,10 @@ public:
 
     CurrentSourceInternal(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
                           const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
-                          const NeuronGroupInternal *targetNeuronGroup, VarLocation defaultVarLocation, 
-                          VarLocation defaultExtraGlobalParamLocation)
-    :   CurrentSource(name, currentSourceModel, params, varInitialisers, targetNeuronGroup, 
-                      defaultVarLocation, defaultExtraGlobalParamLocation)
+                          const std::unordered_map<std::string, Models::VarReference> &neuronVarReferences, const NeuronGroupInternal *targetNeuronGroup, 
+                          VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+    :   CurrentSource(name, currentSourceModel, params, varInitialisers, neuronVarReferences, 
+                      targetNeuronGroup, defaultVarLocation, defaultExtraGlobalParamLocation)
     {
     }
 
@@ -56,6 +56,31 @@ public:
     const CurrentSource &getTarget() const{ return m_CS; }
 
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CurrentSourceInternal &m_CS;
+};
+
+//----------------------------------------------------------------------------
+// CurrentSourceNeuronVarRefAdapter
+//----------------------------------------------------------------------------
+class CurrentSourceNeuronVarRefAdapter
+{
+public:
+    CurrentSourceNeuronVarRefAdapter(const CurrentSourceInternal &cs) : m_CS(cs)
+    {}
+
+    using RefType = Models::VarReference;
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    Models::Base::VarRefVec getDefs() const{ return m_CS.getCurrentSourceModel()->getNeuronVarRefs(); }
+
+    const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_CS.getNeuronVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------

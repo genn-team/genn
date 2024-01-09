@@ -5,8 +5,10 @@ from scipy import stats
 
 from pygenn import GeNNModel
 
-from pygenn import init_sparse_connectivity
+from pygenn import (init_postsynaptic, init_sparse_connectivity,
+                    init_weight_update)
 
+@pytest.mark.flaky
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_connect_init(backend, precision):
@@ -21,22 +23,22 @@ def test_connect_init(backend, precision):
     fixed_number_total_s_pop = model.add_synapse_population(
         "FixedNumberTotal", "SPARSE", 0,
         pre_pop, post_pop,
-        "StaticPulseConstantWeight", {"g": 1.0}, {}, {}, {},
-        "DeltaCurr", {}, {},
+        init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("FixedNumberTotalWithReplacement", {"total": 1000}))
 
     fixed_number_pre_s_pop = model.add_synapse_population(
         "FixedNumberPre", "SPARSE", 0,
         pre_pop, post_pop,
-        "StaticPulseConstantWeight", {"g": 1.0}, {}, {}, {},
-        "DeltaCurr", {}, {},
+        init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("FixedNumberPreWithReplacement", {"colLength": 10}))
     
     fixed_number_post_s_pop = model.add_synapse_population(
         "FixedNumberPost", "SPARSE", 0,
         pre_pop, post_pop,
-        "StaticPulseConstantWeight", {"g": 1.0}, {}, {}, {},
-        "DeltaCurr", {}, {},
+        init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
+        init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("FixedNumberPostWithReplacement", {"rowLength": 10}))
 
     # Build and load model

@@ -45,6 +45,9 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues) 
 Init::Init(const Base *snippet, const std::unordered_map<std::string, double> &params)
 :   Snippet::Init<Base>(snippet, params)
 {
+    // Validate
+    getSnippet()->validate(getParams());
+
     // Scan code tokens
     m_CodeTokens = Utils::scanCode(getSnippet()->getCode(), "Variable initialisation code");
 }
@@ -52,6 +55,9 @@ Init::Init(const Base *snippet, const std::unordered_map<std::string, double> &p
 Init::Init(double constant)
 :   Snippet::Init<Base>(Constant::getInstance(), {{"constant", constant}})
 {
+    // Validate
+    getSnippet()->validate(getParams());
+
     // Scan code tokens
     m_CodeTokens = Utils::scanCode(getSnippet()->getCode(), "Variable initialisation code");
 }

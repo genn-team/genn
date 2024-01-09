@@ -51,36 +51,6 @@ private:
     bool isDerivedParamHeterogeneous(const std::string &name) const;
 
     template<typename A>
-    void addPrivateVarPointerFields(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env)
-    {
-        // Loop through variables and add private pointer field 
-        const A archetypeAdaptor(getArchetype());
-        for(const auto &v : archetypeAdaptor.getDefs()) {
-            const auto resolvedType = v.type.resolve(getTypeContext());
-            env.addField(resolvedType.createPointer(), "_" + v.name, v.name,
-                         [v](const auto &runtime, const auto &g, size_t) 
-                         { 
-                             return runtime.getArray(g, v.name);
-                         });
-        }
-    }
-
-    template<typename A>
-    void addPrivateVarRefPointerFields(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env)
-    {
-        // Loop through variable references and add private pointer field 
-        const A archetypeAdaptor(getArchetype());
-        for(const auto &v : archetypeAdaptor.getDefs()) {
-            const auto resolvedType = v.type.resolve(getTypeContext());
-            env.addField(resolvedType.createPointer(), "_" + v.name, v.name,
-                         [v](const auto &runtime, const auto &g, size_t) 
-                         { 
-                             return A(g).getInitialisers().at(v.name).getTargetArray(runtime);
-                         });
-        }
-    }
-    
-    template<typename A>
     void addPrivateVarRefAccess(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env, unsigned int batchSize, 
                                 std::function<std::string(VarAccessMode, const typename A::RefType&)> getIndexFn)
     {

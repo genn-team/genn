@@ -147,7 +147,7 @@ void buildStandardNeuronEnvironment(EnvironmentGroupMergedField<G> &env, unsigne
 
         // And we should WRITE to delay slot pointed to be spkQuePtr
         env.add(Uint32.addConst(), "_write_delay_slot", "writeDelaySlot",
-                {env.addInitialiser("const unsigned int writeDelaySlot = * $(_spk_que_ptr);")});
+                {env.addInitialiser("const unsigned int writeDelaySlot = *$(_spk_que_ptr);")});
         env.add(Uint32.addConst(), "_write_delay_offset", "writeDelayOffset",
                 {env.addInitialiser("const unsigned int writeDelayOffset = $(_write_delay_slot) * $(num_neurons);")});
 
@@ -167,7 +167,7 @@ void buildStandardNeuronEnvironment(EnvironmentGroupMergedField<G> &env, unsigne
             env.add(Uint32.addConst(), "_read_batch_delay_offset", "readBatchDelayOffset",
                     {env.addInitialiser("const unsigned int readBatchDelayOffset = $(_read_delay_offset) + $(_batch_delay_offset);")});
             env.add(Uint32.addConst(), "_write_batch_delay_offset", "writeBatchDelayOffset",
-                    {env.addInitialiser("const unsigned int writeBatchDelayOffset = $(_write_delay_offset)+ $(_batch_delay_offset);")});
+                    {env.addInitialiser("const unsigned int writeBatchDelayOffset = $(_write_delay_offset) + $(_batch_delay_offset);")});
         }
     }
 }
@@ -407,7 +407,7 @@ void buildStandardCustomUpdateEnvironment(EnvironmentGroupMergedField<G> &env, u
 
             // Calculate current batch offset
             env.add(Type::Uint32.addConst(), "_batch_delay_offset", "batchDelayOffset",
-                    {env.addInitialiser("const unsigned int batchDelayOffset = $(_batch_offset) * " + numDelaySlotsStr + ";")});
+                    {env.addInitialiser("const unsigned int batchDelayOffset = $(_delay_offset) + ($(_batch_offset) * " + numDelaySlotsStr + ");")});
         }
     }
 }
@@ -454,12 +454,18 @@ void buildStandardCustomConnectivityUpdateEnvironment(const BackendBase &backend
 
     // If there are delays on presynaptic variable references
     if(env.getGroup().getArchetype().getPreDelayNeuronGroup() != nullptr) {
+        env.addField(Type::Uint32.createPointer(), "_pre_spk_que_ptr", "preSpkQuePtr",
+                     [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getPreDelayNeuronGroup(), "spkQuePtr"); });
+    
         env.add(Type::Uint32.addConst(), "_pre_delay_offset", "preDelayOffset",
                 {env.addInitialiser("const unsigned int preDelayOffset = (*$(_pre_spk_que_ptr) * $(num_pre));")});
     }
     
     // If there are delays on postsynaptic variable references
     if(env.getGroup().getArchetype().getPostDelayNeuronGroup() != nullptr) {
+        env.addField(Type::Uint32.createPointer(), "_post_spk_que_ptr", "postSpkQuePtr",
+                     [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getPostDelayNeuronGroup(), "spkQuePtr"); });
+
         env.add(Type::Uint32.addConst(), "_post_delay_offset", "postDelayOffset",
                 {env.addInitialiser("const unsigned int postDelayOffset = (*$(_post_spk_que_ptr) * $(num_post));")});
     }

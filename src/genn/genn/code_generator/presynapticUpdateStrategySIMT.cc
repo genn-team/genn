@@ -414,7 +414,7 @@ bool PreSpanProcedural::isCompatible(const SynapseGroupInternal &sg, const Prefe
     // procedural connectivity and there are either no variables or variables are PROCEDURAL or KERNEL
     const auto matrixType = sg.getMatrixType();
     return ((matrixType & SynapseMatrixConnectivity::PROCEDURAL)
-            && (sg.getWUModel()->getVars().empty() || (matrixType & SynapseMatrixWeight::PROCEDURAL)
+            && (sg.getWUInitialiser().getSnippet()->getVars().empty() || (matrixType & SynapseMatrixWeight::PROCEDURAL)
                 || (matrixType & SynapseMatrixWeight::KERNEL)));
 }
 //----------------------------------------------------------------------------
@@ -467,7 +467,7 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
         // If this connectivity requires an RNG for initialisation, make copy of connect Phillox RNG
         // and skip ahead to id that would have been used to initialize any variables associated with it
         if(Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getRowBuildCodeTokens())
-           || ((sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) && Utils::isRNGRequired(sg.getArchetype().getWUVarInitialisers())))
+           || ((sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) && Utils::isRNGRequired(sg.getArchetype().getWUInitialiser().getVarInitialisers())))
         {
             std::ostringstream skipAhead;
             if(numThreadsPerSpike > 1) {

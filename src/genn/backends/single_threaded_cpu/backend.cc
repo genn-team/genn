@@ -259,6 +259,11 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                     EnvironmentGroupMergedField<NeuronUpdateGroupMerged> groupEnv(funcEnv, n);
                     buildStandardEnvironment(groupEnv, 1);
 
+                    // Add fields for neuron variables to environment
+                    // **NOTE** these are hidden and not indexed as SIMT backend
+                    // will index these differently in time-driven and spike-driven code
+                    groupEnv.addVarPointers<NeuronVarAdapter>(true);
+                    
                     // If spike or spike-like event recording is in use
                     if(n.getArchetype().isSpikeRecordingEnabled() || n.getArchetype().isSpikeEventRecordingEnabled()) {
                         // Calculate number of words which will be used to record this population's spikes
@@ -1221,14 +1226,14 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                         }
 
                         // If postsynaptic learning is required
-                        if(!Utils::areTokensEmpty(s.getArchetype().getWUPostLearnCodeTokens())) {
+                        if(!Utils::areTokensEmpty(s.getArchetype().getWUInitialiser().getPostLearnCodeTokens())) {
                             groupEnv.printLine("// Loop through synapses in corresponding matrix row");
                             groupEnv.print("for(unsigned int j = 0; j < $(_row_length)[i]; j++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
 
                                 // If postsynaptic learning is required, calculate column length and remapping
-                                if(!s.getArchetype().getWUModel()->getLearnPostCode().empty()) {
+                                if(!s.getArchetype().getWUInitialiser().getSnippet()->getLearnPostCode().empty()) {
                                     groupEnv.printLine("// Calculate index of this synapse in the row-major matrix");
                                     groupEnv.printLine("const unsigned int rowMajorIndex = (i * $(_row_stride)) + j;");
                                     groupEnv.printLine("// Using this, lookup postsynaptic target");
