@@ -39,7 +39,6 @@ enum class DeviceSelect
     OPTIMAL,        //!< Pick optimal device based on how well kernels can be simultaneously simulated and occupancy
     MOST_MEMORY,    //!< Pick device with most global memory
     MANUAL,         //!< Use device specified by user
-    MANUAL_RUNTIME, //!< Use device specified by user at runtime with allocateMem parameter. Optimisation will be performed on device specified with manualDeviceID.
 };
 
 //--------------------------------------------------------------------------
@@ -69,17 +68,8 @@ struct Preferences : public PreferencesBase
     //! Should line info be included in resultant executable for debugging/profiling purposes?
     bool generateLineInfo = false;
 
-    //! GeNN normally identifies devices by PCI bus ID to ensure that the model is run on the same device
-    //! it was optimized for. However if, for example, you are running on a cluser with NVML this is not desired behaviour.
-    bool selectGPUByDeviceID = false;
-
     //! Generate corresponding NCCL batch reductions
     bool enableNCCLReductions = false;
-    
-    //! By default, GeNN generates CUDA error-handling code that generates exceptions with line numbers etc.
-    //! This can make compilation of large models very slow and require a large amount of memory.
-    //! Turning on this option generates much simpler error-handling code that simply raises an abort signal.
-    bool generateSimpleErrorHandling = false;
     
     //! How to select GPU device
     DeviceSelect deviceSelectMethod = DeviceSelect::OPTIMAL;
@@ -112,12 +102,70 @@ struct Preferences : public PreferencesBase
         // **NOTE** while device selection is also not relevant as the chosen device is hashed in the backend, DeviceSelect::MANUAL_OVERRIDE is used in the backend
 
         //! Update hash with preferences
-        Utils::updateHash(selectGPUByDeviceID, hash);
         Utils::updateHash(deviceSelectMethod, hash);
         Utils::updateHash(constantCacheOverhead, hash);
         Utils::updateHash(enableNCCLReductions, hash);
-        Utils::updateHash(generateSimpleErrorHandling, hash);
     }
+};
+
+
+//--------------------------------------------------------------------------
+// CodeGenerator::CUDA::Pointer
+//--------------------------------------------------------------------------
+class BACKEND_EXPORT Array : public Runtime::ArrayBase
+{
+public:
+    Array(const Type::ResolvedType &type, size_t count, 
+          VarLocation location, bool uninitialized);
+    virtual ~Array();
+    
+    //------------------------------------------------------------------------
+    // ArrayBase virtuals
+    //------------------------------------------------------------------------
+    //! Allocate array
+    virtual void allocate(size_t count) final;
+
+    //! Free array
+    virtual void free() final;
+
+    //! Copy entire array to device
+    virtual void pushToDevice() final;
+
+    //! Copy entire array from device
+    virtual void pullFromDevice() final;
+
+    //! Copy a 1D slice of elements to device 
+    /*! \param offset   Offset in elements to start copying from
+        \param count    Number of elements to copy*/
+    virtual void pushSlice1DToDevice(size_t offset, size_t count) final;
+
+    //! Copy a 1D slice of elements from device 
+    /*! \param offset   Offset in elements to start copying from
+        \param count    Number of elements to copy*/
+    virtual void pullSlice1DFromDevice(size_t offset, size_t count) final;
+
+    //! Memset the host pointer
+    virtual void memsetDeviceObject(int value) final;
+
+    //! Serialise backend-specific device object to bytes
+    virtual void serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToPointer) const final;
+
+    //! Serialise backend-specific host object to bytes
+    virtual void serialiseHostObject(std::vector<std::byte>&, bool) const
+    {
+        throw std::runtime_error("CUDA arrays have no host objects");
+    }
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    std::byte *getDevicePointer() const{ return m_DevicePointer; }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::byte *m_DevicePointer;
 };
 
 //--------------------------------------------------------------------------
@@ -126,7 +174,8 @@ struct Preferences : public PreferencesBase
 class BACKEND_EXPORT Backend : public BackendSIMT
 {
 public:
-    Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, int device);
+    Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, 
+            int device, bool zeroCopy);
 
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendSIMT virtuals
@@ -186,72 +235,31 @@ public:
                          HostHandler preambleHandler) const final;
 
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
-    virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
-    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const final;
-    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const final;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
 
-    //! Generate code to define a variable in the appropriate header file
-    virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, 
-                                       const Type::ResolvedType &type, const std::string &name, VarLocation loc) const final;
-    
-    //! Generate code to instantiate a variable in the provided stream
-    virtual void genVariableInstantiation(CodeStream &os, 
-                                          const Type::ResolvedType &type, const std::string &name, VarLocation loc) const final;
+    //! Create backend-specific array object
+    /*! \param type         data type of array
+        \param count        number of elements in array, if non-zero will allocate
+        \param location     location of array e.g. device-only*/
+    virtual std::unique_ptr<Runtime::ArrayBase> createArray(const Type::ResolvedType &type, size_t count, 
+                                                            VarLocation location, bool uninitialized) const final;
 
-    //! Generate code to allocate variable with a size known at compile-time
-    virtual void genVariableAllocation(CodeStream &os, 
-                                       const Type::ResolvedType &type, const std::string &name, 
-                                       VarLocation loc, size_t count, MemAlloc &memAlloc) const final;
-    
-    //! Generate code to allocate variable with a size known at runtime
-    virtual void genVariableDynamicAllocation(CodeStream &os, 
-                                              const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                              const std::string &countVarName = "count", const std::string &prefix = "") const final;
+    //! Create array of backend-specific population RNGs (if they are initialised on host this will occur here)
+    /*! \param count        number of RNGs required*/
+    virtual std::unique_ptr<Runtime::ArrayBase> createPopulationRNG(size_t count) const final;
 
     //! Generate code to allocate variable with a size known at runtime
     virtual void genLazyVariableDynamicAllocation(CodeStream &os, 
                                                   const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
                                                   const std::string &countVarName) const final;
 
-    //! Generate code to free a variable
-    virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const final;
-
-    //! Generate code for pushing a variable with a size known at compile-time to the 'device'
-    virtual void genVariablePush(CodeStream &os, 
-                                 const Type::ResolvedType &type, const std::string &name, 
-                                 VarLocation loc, bool autoInitialized, size_t count) const final;
-    
-    //! Generate code for pulling a variable with a size known at compile-time from the 'device'
-    virtual void genVariablePull(CodeStream &os, 
-                                 const Type::ResolvedType &type, const std::string &name, 
-                                 VarLocation loc, size_t count) const final;
-
-    //! Generate code for pushing a variable's value in the current timestep to the 'device'
-    virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, 
-                                        const Type::ResolvedType &type, const std::string &name, 
-                                        VarLocation loc, unsigned int batchSize) const final;
-
-    //! Generate code for pulling a variable's value in the current timestep from the 'device'
-    virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, 
-                                        const Type::ResolvedType &type, const std::string &name, 
-                                        VarLocation loc, unsigned int batchSize) const final;
-
-    //! Generate code for pushing a variable with a size known at runtime to the 'device'
-    virtual void genVariableDynamicPush(CodeStream &os, 
-                                        const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                        const std::string &countVarName = "count", const std::string &prefix = "") const final;
-
     //! Generate code for pushing a variable with a size known at runtime to the 'device'
     virtual void genLazyVariableDynamicPush(CodeStream &os, 
                                             const Type::ResolvedType &type, const std::string &name,
                                             VarLocation loc, const std::string &countVarName) const final;
-
-    //! Generate code for pulling a variable with a size known at runtime from the 'device'
-    virtual void genVariableDynamicPull(CodeStream &os, 
-                                        const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                        const std::string &countVarName = "count", const std::string &prefix = "") const final;
 
     //! Generate code for pulling a variable with a size known at runtime from the 'device'
     virtual void genLazyVariableDynamicPull(CodeStream &os, 
@@ -268,17 +276,10 @@ public:
 
     //! Generate a single RNG instance
     /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
-    virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                                    CodeStream &allocations, CodeStream &free, MemAlloc &memAlloc) const final;
+    virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free) const final;
 
-    //! Generate an RNG with a state per population member
-    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
-                                  CodeStream &allocations, CodeStream &free, 
-                                  const std::string &name, size_t count, MemAlloc &memAlloc) const final;
-
-    virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                          CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise,
-                          const std::string &name, bool updateInStepTime) const final;
+    virtual void genTimer(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, 
+                          CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const final;
 
     //! Generate code to return amount of free 'device' memory in bytes
     virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const final;
@@ -296,8 +297,11 @@ public:
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const final;
     virtual void genMSBuildImportTarget(std::ostream &os) const final;
 
-    //! Get backend-specific allocate memory parameters
-    virtual std::string getAllocateMemParams(const ModelSpecMerged &) const final;
+    //! As well as host pointers, are device objects required?
+    virtual bool isArrayDeviceObjectRequired() const final{ return true; }
+
+    //! As well as host pointers, are additional host objects required e.g. for buffers in OpenCL?
+    virtual bool isArrayHostObjectRequired() const final{ return false; }
 
     //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
     virtual bool isPopulationRNGInitialisedOnDevice() const final { return true; }
@@ -387,9 +391,9 @@ private:
                     // Add pointer field
                     const auto resolvedType = v.type.resolve(cg.getTypeContext());
                     groupEnv.addField(resolvedType.createPointer(), "_" + v.name, v.name,
-                                      [this, v](const auto &g, size_t) 
+                                      [v](const auto &runtime, const auto &g, size_t) 
                                       { 
-                                          return getDeviceVarPrefix() + v.name + g.getName();
+                                          return runtime.getArray(g, v.name);
                                       });
                     
                     // Add NCCL reduction
@@ -405,10 +409,10 @@ private:
                     // Add pointer field
                     const auto resolvedType = v.type.resolve(cg.getTypeContext());
                     groupEnv.addField(resolvedType.createPointer(), "_" + v.name, v.name,
-                                      [this, v](const auto &g, size_t) 
+                                      [v](const auto &runtime, const auto &g, size_t) 
                                       { 
                                           const auto varRef = g.getVarReferences().at(v.name);
-                                          return getDeviceVarPrefix() + varRef.getVarName() + varRef.getTargetName(); ;
+                                          return varRef.getTargetArray(runtime);
                                       });
 
                     // Add NCCL reduction

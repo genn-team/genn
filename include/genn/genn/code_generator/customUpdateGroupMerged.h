@@ -20,16 +20,12 @@ public:
     //----------------------------------------------------------------------------
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend,
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, CodeStream &definitions) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+        generateRunnerBase(backend, definitions, name);
     }
 
-    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize,
+    void generateCustomUpdate(EnvironmentExternalBase &env, unsigned int batchSize,
                               BackendBase::GroupHandlerEnv<CustomUpdateGroupMerged> genPostamble);
 
     std::string getVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
@@ -64,7 +60,7 @@ public:
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize,
+    void generateCustomUpdate(EnvironmentExternalBase &env, unsigned int batchSize,
                               BackendBase::GroupHandlerEnv<CustomUpdateWUGroupMergedBase> genPostamble);
 
     std::string getVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
@@ -83,13 +79,9 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend,
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, CodeStream &definitions) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+        generateRunnerBase(backend, definitions, name);
     }
 
     //----------------------------------------------------------------------------
@@ -109,16 +101,12 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend,
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, CodeStream &definitions) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+        generateRunnerBase(backend, definitions, name);
     }
 
-    std::string addTransposeField(const BackendBase &backend, EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env);
+    std::string addTransposeField(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -136,7 +124,7 @@ protected:
     using GroupMerged<G>::GroupMerged;
 
     template<typename M>
-    void generateCustomUpdateBase(const BackendBase &backend, EnvironmentGroupMergedField<M> &env)
+    void generateCustomUpdateBase(EnvironmentGroupMergedField<M> &env)
     {
         // Loop through variables and add pointers if they are reduction targets
         const auto *cm = this->getArchetype().getCustomUpdateModel();
@@ -144,9 +132,9 @@ protected:
             if(v.access & VarAccessModeAttribute::REDUCE) {
                 const auto fieldType = v.type.resolve(this->getTypeContext()).createPointer();
                 env.addField(fieldType, v.name, v.name,
-                             [&backend, v](const auto &g, size_t) 
+                             [v](const auto &runtime, const auto &g, size_t) 
                              {
-                                 return backend.getDeviceVarPrefix() + v.name + g.getName(); 
+                                 return runtime.getArray(g, v.name); 
                              });
             }
         }
@@ -156,10 +144,9 @@ protected:
             if(v.access & VarAccessModeAttribute::REDUCE) {
                 const auto fieldType = v.type.resolve(this->getTypeContext()).createPointer();
                 env.addField(fieldType, v.name, v.name,
-                             [&backend, v](const auto &g, size_t) 
+                             [v](const auto &runtime, const auto &g, size_t) 
                              {
-                                 const auto varRef = g.getVarReferences().at(v.name);
-                                 return backend.getDeviceVarPrefix() + v.name + varRef.getTargetName(); 
+                                 return g.getVarReferences().at(v.name).getTargetArray(runtime);
                              });
             }
         }
@@ -177,16 +164,12 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend,
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, CodeStream &definitions) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name, true);
+        generateRunnerBase(backend, definitions, name, true);
     }
 
-    void generateCustomUpdate(const BackendBase &backend, EnvironmentGroupMergedField<CustomUpdateHostReductionGroupMerged> &env);
+    void generateCustomUpdate(EnvironmentGroupMergedField<CustomUpdateHostReductionGroupMerged> &env);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -205,16 +188,12 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend,
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, CodeStream &definitions) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name, true);
+        generateRunnerBase(backend, definitions, name, true);
     }
 
-    void generateCustomUpdate(const BackendBase &backend, EnvironmentGroupMergedField<CustomWUUpdateHostReductionGroupMerged> &env);
+    void generateCustomUpdate(EnvironmentGroupMergedField<CustomWUUpdateHostReductionGroupMerged> &env);
 
     //----------------------------------------------------------------------------
     // Static constants

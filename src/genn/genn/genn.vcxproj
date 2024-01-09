@@ -54,6 +54,7 @@
     <ClCompile Include="neuronModels.cc" />
     <ClCompile Include="postsynapticModels.cc" />
     <ClCompile Include="gennUtils.cc" />
+    <ClCompile Include="runtime\runtime.cc" />
     <ClCompile Include="snippet.cc" />
     <ClCompile Include="transpiler\errorHandler.cc" />
     <ClCompile Include="transpiler\parser.cc" />
@@ -112,6 +113,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\neuronGroupInternal.h" />
     <ClInclude Include="..\..\..\include\genn\genn\neuronModels.h" />
     <ClInclude Include="..\..\..\include\genn\genn\postsynapticModels.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\runtime\runtime.h" />
     <ClInclude Include="..\..\..\include\genn\genn\snippet.h" />
     <ClInclude Include="..\..\..\include\genn\genn\synapseGroup.h" />
     <ClInclude Include="..\..\..\include\genn\genn\synapseGroupInternal.h" />
@@ -163,8 +165,8 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\..\include\genn\genn;..\..\..\include\genn\third_party</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions Condition=" !$(Configuration.Contains('DLL')) ">WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\..\include\genn\genn;..\..\..\include\genn\third_party;..\..\..\include\genn\third_party\libffi</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions Condition=" !$(Configuration.Contains('DLL')) ">WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition=" $(Configuration.Contains('DLL')) ">WIN32_LEAN_AND_MEAN;NOMINMAX;BUILDING_GENN_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings Condition=" $(Configuration.Contains('DLL')) ">4251</DisableSpecificWarnings>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -175,6 +177,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding Condition=" $(Configuration.Contains('Debug')) ">true</EnableCOMDATFolding>
       <OptimizeReferences Condition=" $(Configuration.Contains('Debug')) ">true</OptimizeReferences>
+      <AdditionalDependencies Condition=" '$(Configuration)'=='Release_DLL' ">libffi_Release_DLL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition=" '$(Configuration)'=='Debug_DLL' ">libffi_Debug_DLL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories Condition=" $(Configuration.Contains('DLL')) ">..\..\..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

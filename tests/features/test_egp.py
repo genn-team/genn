@@ -103,7 +103,8 @@ def test_egp_var_init(backend, precision):
 
     # Loop through populations
     tiled_correct = np.tile(correct, 2)
-    vars = [(n_pop, "", n_pop.vars), (cs, "", cs.vars),
+    vars = [(n_pop, "", n_pop.vars), 
+            (cs, "", cs.vars),
             (dense_s_pop, "pre_", dense_s_pop.pre_vars), 
             (dense_s_pop, "post_", dense_s_pop.post_vars),
             (dense_s_pop, "psm_", dense_s_pop.psm_vars,),
@@ -111,7 +112,7 @@ def test_egp_var_init(backend, precision):
             (sparse_s_pop, "post_", dense_s_pop.post_vars)]
     for pop, prefix, var_dict in vars:
         # Pull var from devices
-        pop.pull_var_from_device(prefix + "repeat")
+        var_dict[prefix + "repeat"].pull_from_device()
 
         # If distribution is discrete
         view = var_dict[prefix +  "repeat"].view
@@ -178,8 +179,8 @@ def test_egp_ref(backend, precision):
         correct = np.zeros(10)
         correct[model.timestep - 1] = 1.0
         
-        n_pop.pull_var_from_device("x")
+        n_pop.vars["x"].pull_from_device()
         assert np.allclose(n_pop.vars["x"].view, correct)
 
 if __name__ == '__main__':
-    test_egp_ref("cuda", types.Float)
+    test_egp_var_init("cuda", types.Float)

@@ -2,10 +2,11 @@
 include ../MakefileCommon
 
 # Find source files
-FRONTEND_SOURCES		:=$(wildcard *.cc)
+FRONTEND_SOURCES	:=$(wildcard *.cc)
 CODE_GENERATOR_SOURCES	:=$(wildcard code_generator/*.cc)
-TRANSPILER_SOURCES		:=$(wildcard transpiler/*.cc)
-SOURCES					:=$(FRONTEND_SOURCES) $(CODE_GENERATOR_SOURCES) $(TRANSPILER_SOURCES)
+TRANSPILER_SOURCES	:=$(wildcard transpiler/*.cc)
+RUNTIME_SOURCES		:=$(wildcard runtime/*.cc)
+SOURCES			:=$(FRONTEND_SOURCES) $(CODE_GENERATOR_SOURCES) $(TRANSPILER_SOURCES) $(RUNTIME_SOURCES)
 
 # Build objecs in sub-directory
 OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/genn/genn
@@ -16,7 +17,7 @@ DEPS			:=$(OBJECTS:.o=.d)
 
 # Read GeNN version and git hash
 GENN_VERSION		:= $(shell cat "$(GENN_DIR)/version.txt")
-GIT_HASH			:= $(shell git -C "$(GENN_DIR)" rev-parse HEAD 2>/dev/null)
+GIT_HASH		:= $(shell git -C "$(GENN_DIR)" rev-parse HEAD 2>/dev/null)
 
 # Add version and hash to compiler flags
 CXXFLAGS		+= -DGENN_VERSION=\"$(GENN_VERSION)\" -DGIT_HASH=\"$(GIT_HASH)\"

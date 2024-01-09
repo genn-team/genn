@@ -156,33 +156,33 @@ def test_custom_update(backend, precision, batch_size):
     
     # Simulate 20 timesteps
     samples = [
-        (n_pop, "X", n_pop.vars, (100,)),
-        (set_time_n, "V", set_time_n.vars, (100,)),
-        (n_pop, "XShared", n_pop.vars, (1,)),
-        (cs, "X", cs.vars, (100,)),
-        (set_time_cs, "V", set_time_cs.vars, (100,)),
-        (cs, "XShared", cs.vars, (1,)),
-        (dense_s_pop, "psmX", dense_s_pop.psm_vars, (100,)),
-        (set_time_psm_dense, "V", set_time_psm_dense.vars, (100,)),
-        (dense_s_pop, "psmXShared", dense_s_pop.psm_vars, (1,)),
-        (dense_s_pop, "preX", dense_s_pop.pre_vars, (10,)),
-        (set_time_wu_pre_dense, "V", set_time_wu_pre_dense.vars, (10,)),
-        (dense_s_pop, "preXShared", dense_s_pop.pre_vars, (1,)),
-        (dense_s_pop, "postX", dense_s_pop.post_vars, (100,)),
-        (set_time_wu_post_dense, "V", set_time_wu_post_dense.vars, (100,)),
-        (dense_s_pop, "postXShared", dense_s_pop.post_vars, (1,)),
-        (cu, "X", cu.vars, (100,)),
-        (set_time_cu, "V", set_time_cu.vars, (100,)),
-        (dense_s_pop, "X", dense_s_pop.vars, (10 * 100,)),
-        (set_time_wu_dense, "V", set_time_wu_dense.vars, (10 * 100,)),
-        (sparse_s_pop, "X", sparse_s_pop.vars, (10 * 10,)),
-        (set_time_wu_sparse, "V", set_time_wu_sparse.vars, (10 * 10,)),
-        (kernel_s_pop, "X", kernel_s_pop.vars, (3 * 3,)),
-        (set_time_wu_kernel, "V", set_time_wu_kernel.vars, (3 * 3,)),
-        (dense_cu, "X", dense_cu.vars, (10 * 100,)),
-        (set_time_cu_dense, "V", set_time_cu_dense.vars, (10 * 100,)),
-        (sparse_cu, "X", sparse_cu.vars, (10 * 10,)),
-        (set_time_cu_sparse, "V", set_time_cu_sparse.vars, (10 * 10,))]
+        (n_pop, n_pop.vars["X"], (100,)),
+        (set_time_n, set_time_n.vars["V"], (100,)),
+        (n_pop, n_pop.vars["XShared"], (1,)),
+        (cs, cs.vars["X"], (100,)),
+        (set_time_cs, set_time_cs.vars["V"], (100,)),
+        (cs, cs.vars["XShared"], (1,)),
+        (dense_s_pop, dense_s_pop.psm_vars["psmX"], (100,)),
+        (set_time_psm_dense, set_time_psm_dense.vars["V"], (100,)),
+        (dense_s_pop, dense_s_pop.psm_vars["psmXShared"], (1,)),
+        (dense_s_pop, dense_s_pop.pre_vars["preX"], (10,)),
+        (set_time_wu_pre_dense, set_time_wu_pre_dense.vars["V"], (10,)),
+        (dense_s_pop, dense_s_pop.pre_vars["preXShared"], (1,)),
+        (dense_s_pop, dense_s_pop.post_vars["postX"], (100,)),
+        (set_time_wu_post_dense, set_time_wu_post_dense.vars["V"], (100,)),
+        (dense_s_pop, dense_s_pop.post_vars["postXShared"], (1,)),
+        (cu, cu.vars["X"], (100,)),
+        (set_time_cu, set_time_cu.vars["V"], (100,)),
+        (dense_s_pop, dense_s_pop.vars["X"], (10 * 100,)),
+        (set_time_wu_dense, set_time_wu_dense.vars["V"], (10 * 100,)),
+        (sparse_s_pop, sparse_s_pop.vars["X"], (10 * 10,)),
+        (set_time_wu_sparse, set_time_wu_sparse.vars["V"], (10 * 10,)),
+        (kernel_s_pop, kernel_s_pop.vars["X"], (3 * 3,)),
+        (set_time_wu_kernel, set_time_wu_kernel.vars["V"], (3 * 3,)),
+        (dense_cu, dense_cu.vars["X"], (10 * 100,)),
+        (set_time_cu_dense, set_time_cu_dense.vars["V"], (10 * 100,)),
+        (sparse_cu, sparse_cu.vars["X"], (10 * 10,)),
+        (set_time_cu_sparse, set_time_cu_sparse.vars["V"], (10 * 10,))]
     while model.timestep < 20:
         # Every 10 timesteps, trigger custom update
         if (model.timestep % 10) == 0:
@@ -193,21 +193,21 @@ def test_custom_update(backend, precision, batch_size):
         correct = [(1000 * b)  + (10 * ((model.timestep - 1) // 10)) 
                    for b in range(batch_size)]
         correct = np.reshape(correct, (batch_size, 1))
-        for pop, var_name, vars, shape in samples:
+        for pop, var, shape in samples:
             # Pull variable from device
-            pop.pull_var_from_device(var_name)
+            var.pull_from_device()
             
             # Add batch size axis to shape
             if batch_size != 1:
                 shape = (batch_size,) + shape
 
             # If shape of view doesn't match, give error
-            view = vars[var_name].view
+            view = var.view
             if view.shape != shape:
-                assert False, f"{pop.name} var {var_name} has wrong shape ({view.shape} rather than {shape})"
+                assert False, f"{pop.name} var {var.name} has wrong shape ({view.shape} rather than {shape})"
             # If values don't match, give error
             elif not np.allclose(view, correct):
-                assert False, f"{pop.name} var {var_name} has wrong value ({view} rather than {correct})"
+                assert False, f"{pop.name} var {var.name} has wrong value ({view} rather than {correct})"
 
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
@@ -257,8 +257,8 @@ def test_custom_update_transpose(backend, precision, batch_size):
     model.custom_update("Transpose")
     
     # Pull forward and transpose weights from device
-    forward_s_pop.pull_var_from_device("g")
-    transpose_s_pop.pull_var_from_device("g")
+    forward_s_pop.vars["g"].pull_from_device()
+    transpose_s_pop.vars["g"].pull_from_device()
     
     # Reshape matrices to square and check transpose
     forward_g = np.reshape(forward_s_pop.vars["g"].view, (batch_size, 100, 100))
@@ -336,7 +336,7 @@ def test_custom_update_neuron_reduce(backend, precision, batch_size):
     model.custom_update("Softmax3")
 
     # Download X and Y 
-    n_pop.pull_var_from_device("Y")
+    n_pop.vars["Y"].pull_from_device()
 
     # Compare Y to softmax calculated with SciPy
     if batch_size == 1:
@@ -433,8 +433,8 @@ def test_custom_update_batch_reduction(backend, precision, batch_size):
     model.custom_update("Test")
 
     # Check neuron reduction
-    n_pop.pull_var_from_device("SumX")
-    reduce_n.pull_var_from_device("MaxX")
+    n_pop.vars["SumX"].pull_from_device()
+    reduce_n.vars["MaxX"].pull_from_device()
     assert np.allclose(np.sum(x_n, axis=0) if batch_size > 1 else x_n,
                        n_pop.vars["SumX"].view)
     assert np.allclose(np.max(x_n, axis=0) if batch_size > 1 else x_n,
@@ -463,5 +463,5 @@ def test_custom_update_batch_reduction(backend, precision, batch_size):
             assert False, f"{max_pop.name} var MaxX has wrong value ({max_value} rather than {max_correct})"
 
 if __name__ == '__main__':
-    test_custom_update_batch_reduction("cuda", types.Float, 5)
+    test_custom_update("cuda", types.Float, 5)
     

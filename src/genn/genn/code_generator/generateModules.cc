@@ -48,7 +48,7 @@ void copyFile(const filesystem::path &file, const filesystem::path &sharePath, c
     outputFileStream << inputFileStream.rdbuf();
 }
 //--------------------------------------------------------------------------
-bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::detail::sha1::digest_type &hashDigest, MemAlloc &mem)
+bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::detail::sha1::digest_type &hashDigest)
 {
     try
     {
@@ -64,10 +64,6 @@ bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::
         for(auto &d : previousHashDigest) {
             is >> d;
         }
-        
-        // Read memory usage as decimal
-        is >> std::dec;
-        is >> mem;
 
         // If hash matches
         if(previousHashDigest == hashDigest) {
@@ -92,21 +88,16 @@ bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator
 {
-std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInternal &model, const BackendBase &backend,
-                                                          const filesystem::path &sharePath, const filesystem::path &outputPath,
-                                                          bool forceRebuild)
+std::vector<std::string> generateAll(ModelSpecMerged &modelMerged, const BackendBase &backend,
+                                     const filesystem::path &sharePath, const filesystem::path &outputPath,
+                                     bool forceRebuild)
 {
     // Create directory for generated code
     filesystem::create_directory(outputPath);
 
-    // Create merged model
-    ModelSpecMerged modelMerged(backend, model);
-    
-
     // If force rebuild flag is set or model should be rebuilt
     const auto hashDigest = modelMerged.getHashDigest(backend);
-    MemAlloc mem = MemAlloc::zero();
-    if(forceRebuild || shouldRebuildModel(outputPath, hashDigest, mem)) {
+    if(true/*forceRebuild || shouldRebuildModel(outputPath, hashDigest)*/) {
         // Get memory spaces available to this backend
         // **NOTE** Memory spaces are given out on a first-come, first-serve basis so subsequent groups are in preferential order
         auto memorySpaces = backend.getMergedGroupMemorySpaces(modelMerged);
@@ -117,7 +108,7 @@ std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInterna
         generateNeuronUpdate(outputPath, modelMerged, backend, memorySpaces);
         generateCustomUpdate(outputPath, modelMerged, backend, memorySpaces);
         generateInit(outputPath, modelMerged, backend, memorySpaces);
-        mem = generateRunner(outputPath, modelMerged, backend, memorySpaces);
+        generateRunner(outputPath, modelMerged, backend);
 
         // Get list of files to copy into generated code
         const auto backendSharePath = sharePath / "backends";
@@ -136,24 +127,10 @@ std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInterna
             os << d << " ";
         }
         os << std::endl;
-
-        // Write model memory usage estimates so it can be reloaded if code doesn't need re-generating
-        os << std::dec;
-        os << mem << std::endl;
-    }
-
-    // Show memory usage
-    LOGI_CODE_GEN << "Host memory required for model: " << mem.getHostMBytes() << " MB";
-    LOGI_CODE_GEN << "Device memory required for model: " << mem.getDeviceMBytes() << " MB";
-    LOGI_CODE_GEN << "Zero-copy memory required for model: " << mem.getZeroCopyMBytes() << " MB";
-
-    // Give warning of model requires more memory than device has
-    if(mem.getDeviceBytes() > backend.getDeviceMemoryBytes()) {
-        LOGW_CODE_GEN << "Model requires " << mem.getDeviceMBytes() << " MB of device memory but device only has " << backend.getDeviceMemoryBytes() / (1024 * 1024) << " MB";
     }
 
     // Output summary to log
-    LOGI_CODE_GEN << "Merging model with " << model.getNeuronGroups().size() << " neuron groups and " << model.getSynapseGroups().size() << " synapse groups results in:";
+    LOGI_CODE_GEN << "Merging model with " << modelMerged.getModel().getNeuronGroups().size() << " neuron groups and " << modelMerged.getModel().getSynapseGroups().size() << " synapse groups results in:";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedNeuronUpdateGroups().size() << " merged neuron update groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedPresynapticUpdateGroups().size() << " merged presynaptic update groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedPostsynapticUpdateGroups().size() << " merged postsynaptic update groups";
@@ -178,8 +155,7 @@ std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInterna
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseConnectivityHostInitGroups().size() << " merged synapse connectivity host init groups";
 
     // Return list of modules and memory usage
-    const std::vector<std::string> modules = {"customUpdate", "neuronUpdate", "synapseUpdate", "init", "runner"};
-    return std::make_pair(modules, mem);
+    return std::vector<std::string>{"customUpdate", "neuronUpdate", "synapseUpdate", "init", "runner"};
 }
 //--------------------------------------------------------------------------
 void generateNeuronUpdate(const filesystem::path &outputPath, ModelSpecMerged &modelMerged, const BackendBase &backend, 
@@ -189,7 +165,7 @@ void generateNeuronUpdate(const filesystem::path &outputPath, ModelSpecMerged &m
     std::ofstream neuronUpdateStream((outputPath / ("neuronUpdate" + suffix + ".cc")).str());
     CodeStream neuronUpdate(neuronUpdateStream);
 
-    neuronUpdate << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
+    neuronUpdate << "#include \"definitions" << suffix << ".h\"" << std::endl;
     neuronUpdate << std::endl;
 
     // Neuron update kernel
@@ -198,8 +174,8 @@ void generateNeuronUpdate(const filesystem::path &outputPath, ModelSpecMerged &m
         [&modelMerged, &backend](CodeStream &os)
         {
             // Generate functions to push merged neuron group structures
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedNeuronUpdateGroups(), backend);
         });
 }
 //--------------------------------------------------------------------------
@@ -210,7 +186,7 @@ void generateCustomUpdate(const filesystem::path &outputPath, ModelSpecMerged &m
     std::ofstream customUpdateStream((outputPath / ("customUpdate" + suffix + ".cc")).str());
     CodeStream customUpdate(customUpdateStream);
 
-    customUpdate << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
+    customUpdate << "#include \"definitions" << suffix << ".h\"" << std::endl;
     customUpdate << std::endl;
 
     // Neuron update kernel
@@ -219,10 +195,11 @@ void generateCustomUpdate(const filesystem::path &outputPath, ModelSpecMerged &m
         [&modelMerged, &backend](CodeStream &os)
         {
             // Generate functions to push merged neuron group structures
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateWUGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdateGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomUpdateGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomUpdateWUGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomConnectivityUpdateGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomConnectivityHostUpdateGroups(), backend, true);
         });
 }
 //--------------------------------------------------------------------------
@@ -233,7 +210,7 @@ void generateSynapseUpdate(const filesystem::path &outputPath, ModelSpecMerged &
     std::ofstream synapseUpdateStream((outputPath / ("synapseUpdate" + suffix + ".cc")).str());
     CodeStream synapseUpdate(synapseUpdateStream);
 
-    synapseUpdate << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
+    synapseUpdate << "#include \"definitions" << suffix << ".h\"" << std::endl;
     synapseUpdate << std::endl;
 
     // Synaptic update kernels
@@ -241,10 +218,10 @@ void generateSynapseUpdate(const filesystem::path &outputPath, ModelSpecMerged &
         // Preamble handler
         [&modelMerged, &backend](CodeStream &os)
         {
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedPresynapticUpdateGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseDynamicsGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedPresynapticUpdateGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedSynapseDynamicsGroups(), backend);
         });
 }
 //--------------------------------------------------------------------------
@@ -255,25 +232,53 @@ void generateInit(const filesystem::path &outputPath, ModelSpecMerged &modelMerg
     std::ofstream initStream((outputPath / ("init" + suffix + ".cc")).str());
     CodeStream init(initStream);
 
-    init << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
+    init << "#include \"definitions" << suffix << ".h\"" << std::endl;
 
     backend.genInit(init, modelMerged, memorySpaces,
         // Preamble handler
-        [&modelMerged, &backend](CodeStream &os)
+        [&modelMerged, &memorySpaces, &backend](CodeStream &os)
         {
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronInitGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateInitGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdatePreInitGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdatePostInitGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedNeuronInitGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomUpdateInitGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomConnectivityUpdatePreInitGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomConnectivityUpdatePostInitGroups(), backend);
 
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomWUUpdateInitGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseInitGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomWUUpdateInitGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedSynapseInitGroups(), backend);
 
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), backend);
             
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedSynapseSparseInitGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups(), backend);
+
+            // Generate merged synapse connectivity host init code
+            // **NOTE** this needs to be done before generating the runner because this configures the required fields BUT
+            // needs to be done into a seperate stream because it actually needs to be RUN afterwards so valid pointers 
+            // get copied straight into subsequent structures and merged EGP system isn't required
+            // Generate stream with neuron update code
+            std::ostringstream initStream;
+            CodeStream init(initStream);
+            init << "void initializeHost()";
+            {
+                CodeStream::Scope b(init);
+                modelMerged.genMergedSynapseConnectivityHostInitGroups(
+                    backend, memorySpaces,
+                    [&backend, &modelMerged, &init](auto &sg)
+                    {
+                        EnvironmentExternal env(init);
+                        sg.generateInit(backend, env);
+                    });
+            }
+
+            // Generate host connectivity init structures and write function afterwards
+            modelMerged.genMergedSynapseConnectivityHostInitStructs(os, backend);
+
+            // Generate arrays
+            modelMerged.genMergedSynapseConnectivityHostInitStructArrayPush(os, backend);
+
+            // Insert generated initialisation function
+            os << initStream.str();
         });
 }
 }   // namespace GeNN::CodeGenerator

@@ -1,5 +1,8 @@
 #include "backend.h"
 
+// Standard C includes
+#include <cstdlib>
+
 // GeNN includes
 #include "gennUtils.h"
 
@@ -94,10 +97,44 @@ void genKernelIteration(EnvironmentExternalBase &env, G &g, size_t numKernelDims
 }
 
 //--------------------------------------------------------------------------
-// GeNN::CodeGenerator::SingleThreadedCPU::Backend
+// CodeGenerator::SingleThreadedCPU::Array
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator::SingleThreadedCPU
 {
+//--------------------------------------------------------------------------
+Array::Array(const Type::ResolvedType &type, size_t count, 
+             VarLocation location, bool uninitialized)
+:   ArrayBase(type, count, location, uninitialized)
+{
+    if(count > 0) {
+        allocate(count);
+    }
+}
+//--------------------------------------------------------------------------
+Array::~Array()
+{
+    if(getCount() > 0) {
+        free();
+    }
+}
+//--------------------------------------------------------------------------
+void Array::allocate(size_t count)
+{
+    // Malloc host pointer
+    setCount(count);
+    setHostPointer(new std::byte[getSizeBytes()]);
+}
+//--------------------------------------------------------------------------
+void Array::free()
+{
+    delete [] getHostPointer();
+    setHostPointer(nullptr);
+    setCount(0);
+}
+
+//--------------------------------------------------------------------------
+// GeNN::CodeGenerator::SingleThreadedCPU::Backend
+//--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
                               HostHandler preambleHandler) const
 {
@@ -145,20 +182,22 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                     buildStandardEnvironment(groupEnv, 1);
 
                     if(n.getArchetype().isDelayRequired()) {
+                        groupEnv.printLine("const unsigned int lastTimestepDelaySlot = *$(_spk_que_ptr);");
+                        groupEnv.printLine("const unsigned int lastTimestepDelayOffset = lastTimestepDelaySlot * $(num_neurons);");
                         if(n.getArchetype().isPrevSpikeTimeRequired()) {
                             // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt)[$(_read_delay_slot)]; i++)");
+                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt)[lastTimestepDelaySlot]; i++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.printLine("$(_prev_st)[$(_read_delay_offset) + $(_spk)[$(_read_delay_offset) + i]] = $(t) - $(dt);");
+                                groupEnv.printLine("$(_prev_st)[lastTimestepDelayOffset + $(_spk)[lastTimestepDelayOffset + i]] = $(t) - $(dt);");
                             }
                         }
                         if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
                             // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt_envt)[$(_read_delay_slot)]; i++)");
+                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt_envt)[lastTimestepDelaySlot]; i++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.printLine("$(_prev_set)[$(_read_delay_offset) + $(_spk_evnt)[$(_read_delay_offset) + i]] = $(t) - $(dt);");
+                                groupEnv.printLine("$(_prev_set)[lastTimestepDelayOffset + $(_spk_evnt)[lastTimestepDelayOffset + i]] = $(t) - $(dt);");
                             }
                         }
                     }
@@ -200,7 +239,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                     buildStandardEnvironment(groupEnv, 1);
 
                     // Generate spike count reset
-                    n.genMergedGroupSpikeCountReset(groupEnv, 1);
+                    n.genSpikeQueueUpdate(groupEnv, 1);
                 }
             });
 
@@ -253,7 +292,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                                [this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng)
                                                {
                                                    // Insert code to update WU vars
-                                                   ng.generateWUVarUpdate(*this, env, 1);
+                                                   ng.generateWUVarUpdate(env, 1);
 
                                                    // Insert code to emit true spikes
                                                    genEmitSpike(env, ng, true, ng.getArchetype().isSpikeRecordingEnabled());
@@ -275,9 +314,9 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
-    genMergedStructArrayPush(os, modelMerged.getMergedNeuronUpdateGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups());
+    modelMerged.genMergedNeuronUpdateGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedNeuronSpikeQueueUpdateHostStructArrayPush(os, *this);
+    modelMerged.genMergedNeuronPrevSpikeTimeUpdateHostStructArrayPush(os, *this);
 
     // Generate preamble
     preambleHandler(os);
@@ -308,6 +347,25 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
         funcEnv.add(Type::Uint32.addConst(), "batch", "0");
         funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
                     Type::writeNumeric(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
+
+        // Dendritic delay update
+        modelMerged.genMergedSynapseDendriticDelayUpdateGroups(
+            *this, memorySpaces,
+            [&funcEnv, &modelMerged, this](auto &sg)
+            {
+                // Loop through groups
+                funcEnv.getStream() << "// merged synapse dendritic delay update group " << sg.getIndex() << std::endl;
+                funcEnv.getStream() << "for(unsigned int g = 0; g < " << sg.getGroups().size() << "; g++)";
+                {
+                    CodeStream::Scope b(funcEnv.getStream());
+
+                    // Use this to get reference to merged group structure
+                    funcEnv.getStream() << "const auto *group = &mergedSynapseDendriticDelayUpdateGroup" << sg.getIndex() << "[g]; " << std::endl;
+                    EnvironmentGroupMergedField<SynapseDendriticDelayUpdateGroupMerged> groupEnv(funcEnv, sg);
+                    buildStandardEnvironment(groupEnv, 1);
+                    sg.generateSynapseUpdate(groupEnv);
+                }
+            });
 
         // Synapse dynamics
         {
@@ -376,7 +434,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                                 synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + s.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
                                 
                                 // Call synapse dynamics handler
-                                s.generateSynapseUpdate(*this, synEnv, 1, modelMerged.getModel().getDT());
+                                s.generateSynapseUpdate(synEnv, 1, modelMerged.getModel().getDT());
                             }
                         }
                     }
@@ -487,7 +545,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                                 synEnv.add(Type::Uint32.addConst(), "id_post", "spike");
                                 synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + s.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
             
-                                s.generateSynapseUpdate(*this, synEnv, 1, modelMerged.getModel().getDT());
+                                s.generateSynapseUpdate(synEnv, 1, modelMerged.getModel().getDT());
                             }
                         }
                         groupEnv.getStream() << std::endl;
@@ -497,14 +555,16 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
     }
 
     // Generate struct definitions
+    modelMerged.genMergedSynapseDendriticDelayUpdateStructs(os, *this);
     modelMerged.genMergedPresynapticUpdateGroupStructs(os, *this);
     modelMerged.genMergedPostsynapticUpdateGroupStructs(os, *this);
     modelMerged.genMergedSynapseDynamicsGroupStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
-    genMergedStructArrayPush(os, modelMerged.getMergedPresynapticUpdateGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedPostsynapticUpdateGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDynamicsGroups());
+    modelMerged.genMergedSynapseDendriticDelayUpdateHostStructArrayPush(os, *this);
+    modelMerged.genMergedPresynapticUpdateGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedPostsynapticUpdateGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedSynapseDynamicsGroupHostStructArrayPush(os, *this);
 
     // Generate preamble
     preambleHandler(os);
@@ -538,12 +598,13 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
     // Loop through custom update groups
     for(const auto &g : customUpdateGroups) {
-        customUpdateEnv.getStream() << "void update" << g << "()";
+        customUpdateEnv.getStream() << "void update" << g << "(unsigned long long timestep)";
         {
             CodeStream::Scope b(customUpdateEnv.getStream());
 
              EnvironmentExternal funcEnv(customUpdateEnv);
-             funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t");
+             funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t",
+                         {funcEnv.addInitialiser("const " + model.getTimePrecision().getName() + " t = timestep * " + Type::writeNumeric(model.getDT(), model.getTimePrecision()) + ";")});
              funcEnv.add(Type::Uint32.addConst(), "batch", "0");
              funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
                     Type::writeNumeric(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
@@ -592,7 +653,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                 }
                                 {
                                     CodeStream::Scope b(memberEnv.getStream());
-                                    c.generateCustomUpdate(*this, memberEnv, 1,
+                                    c.generateCustomUpdate(memberEnv, 1,
                                                            [&reductionTargets, this](auto &env, auto&)
                                                            {        
                                                                // Loop through reduction targets and generate reduction
@@ -622,7 +683,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                     CodeStream::Scope b(memberEnv.getStream());
 
                                     // Generate custom update
-                                    c.generateCustomUpdate(*this, memberEnv, 1,
+                                    c.generateCustomUpdate(memberEnv, 1,
                                                            [this](auto &env, auto &c)
                                                            {        
                                                                // Write back reductions
@@ -660,7 +721,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                                    [&c, this](EnvironmentExternalBase &env)
                                                    {
                                                        // Call custom update handler
-                                                       c.generateCustomUpdate(*this, env, 1,
+                                                       c.generateCustomUpdate(env, 1,
                                                                               [this](auto &env, CustomUpdateWUGroupMergedBase &c)
                                                                               {        
                                                                                   // Write back reductions
@@ -710,7 +771,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                         }
 
                                         // Generate custom update
-                                        c.generateCustomUpdate(*this, synEnv, 1,
+                                        c.generateCustomUpdate(synEnv, 1,
                                                                [this](auto &env, auto &c)
                                                                {        
                                                                    // Write back reductions
@@ -781,7 +842,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                             buildStandardEnvironment(groupEnv, 1);
 
                             // Add field for transpose field and get its name
-                            const std::string transposeVarName = c.addTransposeField(*this, groupEnv);
+                            const std::string transposeVarName = c.addTransposeField(groupEnv);
 
                             // Loop through presynaptic neurons
                             groupEnv.print("for(unsigned int i = 0; i < $(num_pre); i++)");
@@ -804,8 +865,8 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                 
                                     // Generate custom update
                                     c.generateCustomUpdate(
-                                        *this, synEnv, 1,
-                                        [&transposeVarName, this](auto &env, const auto&)
+                                        synEnv, 1,
+                                        [&transposeVarName](auto &env, const auto&)
                                         {        
                                             // Update transpose variable
                                             env.printLine("$(" + transposeVarName + "_transpose)[(j * $(num_pre)) + i] = $(" + transposeVarName + ");");
@@ -824,12 +885,14 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     modelMerged.genMergedCustomUpdateWUStructs(os, *this);
     modelMerged.genMergedCustomUpdateTransposeWUStructs(os, *this);
     modelMerged.genMergedCustomConnectivityUpdateStructs(os, *this);
+    modelMerged.genMergedCustomConnectivityHostUpdateStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateWUGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomConnectivityUpdateGroups());
+    modelMerged.genMergedCustomUpdateHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomUpdateWUHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomUpdateTransposeWUHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomConnectivityUpdateHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomConnectivityHostUpdateStructArrayPush(os, *this);
 
     // Generate preamble
     preambleHandler(os);
@@ -1006,16 +1069,10 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> groupEnv(funcEnv, s);
                     buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
 
-                    // If matrix connectivity is ragged
-                    if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                        // Zero row lengths
-                        groupEnv.printLine("std::fill_n($(_row_length), $(num_pre), 0);");
-                    }
-                    else if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                        groupEnv.printLine("const size_t gpSize = ((((size_t)$(num_pre) * (size_t)$(_row_stride)) + 32 - 1) / 32);");
-                        groupEnv.printLine("std::fill($(_gp), gpSize, 0);");
-                    }
-                    else {
+                    // If matrix connectivity is neither sparse or bitmask, give error
+                    if(!(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE)
+                       && !(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK)) 
+                    {
                         throw std::runtime_error("Only BITMASK and SPARSE format connectivity can be generated using a connectivity initialiser");
                     }
 
@@ -1085,7 +1142,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                                     }
 
                                     // Call handler to initialize variables
-                                    s.generateKernelInit(*this, kernelInitEnv, 1);
+                                    s.generateKernelInit(kernelInitEnv, 1);
                                 }
 
                                 // Add synapse to data structure
@@ -1117,10 +1174,10 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
                         // Call appropriate connectivity handler
                         if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
-                            s.generateSparseRowInit(*this, groupEnv);
+                            s.generateSparseRowInit(groupEnv);
                         }
                         else {
-                            s.generateSparseColumnInit(*this, groupEnv);
+                            s.generateSparseColumnInit(groupEnv);
                         }
                     }
                 }
@@ -1150,12 +1207,6 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     funcEnv.getStream() << "const auto *group = &mergedSynapseSparseInitGroup" << s.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> groupEnv(funcEnv, s);
                     buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
-
-                    // If postsynaptic learning is required, initially zero column lengths
-                    if (!Utils::areTokensEmpty(s.getArchetype().getWUPostLearnCodeTokens())) {
-                        groupEnv.getStream() << "// Zero column lengths" << std::endl;
-                        groupEnv.printLine("std::fill_n($(_col_length), $(num_post), 0);");
-                    }
 
                     groupEnv.printLine("// Loop through presynaptic neurons");
                     groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
@@ -1270,16 +1321,16 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
     modelMerged.genMergedCustomConnectivityUpdateSparseInitStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
-    genMergedStructArrayPush(os, modelMerged.getMergedNeuronInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseConnectivityInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseSparseInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomConnectivityUpdatePreInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomConnectivityUpdatePostInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups());
+    modelMerged.genMergedNeuronInitGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedSynapseInitGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomUpdateInitGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomWUUpdateInitGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedSynapseConnectivityInitGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedSynapseSparseInitGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomWUUpdateSparseInitGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomConnectivityUpdatePreInitHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomConnectivityUpdatePostInitHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomConnectivityUpdateSparseInitHostStructArrayPush(os, *this);
     
     // Generate preamble
     preambleHandler(os);
@@ -1319,17 +1370,8 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &mode
     os << "#include <cmath>" << std::endl;
     os << "#include <cstdint>" << std::endl;
     os << "#include <cstring>" << std::endl;
-}
-//--------------------------------------------------------------------------
-void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &) const
-{
-    os << "#define SUPPORT_CODE_FUNC inline" << std::endl;
 
-    // CUDA and OpenCL both provide generic min and max functions 
-    // to match this, bring std::min and std::max into global namespace
-    os << "using std::min;" << std::endl;
-    os << "using std::max;" << std::endl;
-
+    
     // On windows, define an inline function, matching the signature of __builtin_clz which counts leading zeros
 #ifdef _WIN32
     os << "#include <intrin.h>" << std::endl;
@@ -1354,13 +1396,18 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     os << "#define gennCLZ __builtin_clz" << std::endl;
 #endif
     os << std::endl;
+
+    // CUDA and OpenCL both provide generic min and max functions 
+    // to match this, bring std::min and std::max into global namespace
+    os << "using std::min;" << std::endl;
+    os << "using std::max;" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream &, const ModelSpecMerged &, const MemAlloc&) const
+void Backend::genRunnerPreamble(CodeStream &, const ModelSpecMerged &) const
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPreamble(CodeStream&, const ModelSpecMerged&, const MemAlloc&) const
+void Backend::genAllocateMemPreamble(CodeStream&, const ModelSpecMerged&) const
 {
 }
 //--------------------------------------------------------------------------
@@ -1372,36 +1419,10 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &, const ModelSpecMerged &)
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &, 
-                                    const Type::ResolvedType &type, const std::string &name, VarLocation) const
+std::unique_ptr<Runtime::ArrayBase> Backend::createArray(const Type::ResolvedType &type, size_t count, 
+                                                         VarLocation location, bool uninitialized) const
 {
-    definitions << "EXPORT_VAR " << type.getValue().name << "* " << name << ";" << std::endl;
-}
-//--------------------------------------------------------------------------
-void Backend::genVariableInstantiation(CodeStream &os, 
-                                       const Type::ResolvedType &type, const std::string &name, VarLocation) const
-{
-    os << type.getValue().name << "* " << name << ";" << std::endl;
-}
-//--------------------------------------------------------------------------
-void Backend::genVariableAllocation(CodeStream &os, const Type::ResolvedType &type, const std::string &name, 
-                                    VarLocation, size_t count, MemAlloc &memAlloc) const
-{
-    os << name << " = new " << type.getValue().name << "[" << count << "];" << std::endl;
-
-    memAlloc += MemAlloc::host(count * type.getValue().size);
-}
-//--------------------------------------------------------------------------
-void Backend::genVariableDynamicAllocation(CodeStream &os, 
-                                           const Type::ResolvedType &type, const std::string &name, VarLocation, 
-                                           const std::string &countVarName, const std::string &prefix) const
-{
-    if (type.isPointer()) {
-        os << "*" << prefix << name <<  " = new " << type.getPointer().valueType->getValue().name << "[" << countVarName << "];" << std::endl;
-    }
-    else {
-        os << prefix << name << " = new " << type.getValue().name << "[" << countVarName << "];" << std::endl;
-    }
+    return std::make_unique<Array>(type, count, location, uninitialized);
 }
 //--------------------------------------------------------------------------
 void Backend::genLazyVariableDynamicAllocation(CodeStream &os, 
@@ -1416,61 +1437,16 @@ void Backend::genLazyVariableDynamicAllocation(CodeStream &os,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation) const
-{
-    os << "delete[] " << name << ";" << std::endl;
-}
-//--------------------------------------------------------------------------
-void Backend::genVariablePush(CodeStream&, const Type::ResolvedType&, const std::string&, VarLocation, bool, size_t) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genVariablePull(CodeStream&, const Type::ResolvedType&, const std::string&, VarLocation, size_t) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genCurrentVariablePush(CodeStream&, const NeuronGroupInternal&, 
-                                     const Type::ResolvedType&, const std::string&, 
-                                     VarLocation, unsigned int) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genCurrentVariablePull(CodeStream&, const NeuronGroupInternal&, 
-                                     const Type::ResolvedType&, const std::string&, 
-                                     VarLocation, unsigned int) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genVariableDynamicPush(CodeStream&, 
-                                     const Type::ResolvedType&, const std::string&,
-                                     VarLocation, const std::string&, const std::string&) const
-{
-     assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
 void Backend::genLazyVariableDynamicPush(CodeStream&, 
                                          const Type::ResolvedType&, const std::string&,
                                          VarLocation, const std::string&) const
 {
-     assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genVariableDynamicPull(CodeStream&, 
-                                     const Type::ResolvedType&, const std::string&,
-                                      VarLocation, const std::string&, const std::string&) const
-{
-    assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genLazyVariableDynamicPull(CodeStream&, 
                                          const Type::ResolvedType&, const std::string&,
                                          VarLocation, const std::string&) const
 {
-    assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genMergedDynamicVariablePush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
@@ -1545,17 +1521,12 @@ void Backend::genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, Cu
     genKernelIteration(env, cu, cu.getArchetype().getSynapseGroup()->getKernelSize().size(), handler);
 }
 //--------------------------------------------------------------------------
-void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&, MemAlloc&) const
+void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&) const
 {
     assert(false);
 }
 //--------------------------------------------------------------------------
-void Backend::genPopulationRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&,
-                               const std::string&, size_t, MemAlloc&) const
-{
-}
-//--------------------------------------------------------------------------
-void Backend::genTimer(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &, const std::string &, bool) const
+void Backend::genTimer(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &, const std::string &, bool) const
 {
     // Timing single-threaded CPU backends don't require any additional state
 }
@@ -1765,10 +1736,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
 
             // Generate spike update
             if(trueSpike) {
-                sg.generateSpikeUpdate(*this, preUpdateEnv, 1, dt);
+                sg.generateSpikeUpdate(preUpdateEnv, 1, dt);
             }
             else {
-                sg.generateSpikeEventUpdate(*this, preUpdateEnv, 1, dt);
+                sg.generateSpikeEventUpdate(preUpdateEnv, 1, dt);
             }
         }
 
@@ -1787,7 +1758,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
 
             // Generate toeplitz connectivity generation code using custom for_each_synapse loop
             sg.generateToeplitzConnectivity(
-                *this, toeplitzEnv,
+                toeplitzEnv,
                 // Within for_each_synapse loops, define addSynapse function and id_pre
                 [addSynapseType](auto &env, auto &errorHandler)
                 {
@@ -1846,7 +1817,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                 groupEnv.getStream() << "if(";
 
                 // Generate weight update threshold condition
-                sg.generateSpikeEventThreshold(*this, groupEnv, 1);
+                sg.generateSpikeEventThreshold(groupEnv, 1);
 
                 groupEnv.getStream() << ")";
                 groupEnv.getStream() << CodeStream::OB(10);
@@ -1873,10 +1844,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
 
                     if(trueSpike) {
-                        sg.generateSpikeUpdate(*this, synEnv, 1, dt);
+                        sg.generateSpikeUpdate(synEnv, 1, dt);
                     }
                     else {
-                        sg.generateSpikeEventUpdate(*this, synEnv, 1, dt);
+                        sg.generateSpikeEventUpdate(synEnv, 1, dt);
                     }
                 }
             }
@@ -1923,10 +1894,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                         {
                             CodeStream::Scope b(env.getStream());
                             if(trueSpike) {
-                                sg.generateSpikeUpdate(*this, groupEnv, 1, dt);
+                                sg.generateSpikeUpdate(groupEnv, 1, dt);
                             }
                             else {
-                                sg.generateSpikeEventUpdate(*this, groupEnv, 1, dt);
+                                sg.generateSpikeEventUpdate(groupEnv, 1, dt);
                             }
                         }
 
@@ -1961,10 +1932,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     }
 
                     if(trueSpike) {
-                        sg.generateSpikeUpdate(*this, synEnv, 1, dt);
+                        sg.generateSpikeUpdate(synEnv, 1, dt);
                     }
                     else {
-                        sg.generateSpikeEventUpdate(*this, synEnv, 1, dt);
+                        sg.generateSpikeEventUpdate(synEnv, 1, dt);
                     }
 
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
@@ -1982,22 +1953,22 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
 //--------------------------------------------------------------------------
 void Backend::genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike, bool recordingEnabled) const
 {
-    // Determine if delay is required and thus, at what offset we should write into the spike queue
-    const bool spikeDelayRequired = trueSpike ? (ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) : ng.getArchetype().isDelayRequired();
-    const std::string spikeQueueOffset = spikeDelayRequired ? "$(_write_delay_offset) + " : "";
+    // Determine at what offset we should write into the spike queue
+    const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
 
     const std::string suffix = trueSpike ? "" : "_evnt";
-    env.print("$(_spk" + suffix + ")[" + spikeQueueOffset + "$(_spk_cnt" + suffix + ")");
-    if(spikeDelayRequired) { // WITH DELAY
-        env.print("[*$(_spk_que_ptr)]++]");
+    if(trueSpike ? ng.getArchetype().isTrueSpikeRequired() : ng.getArchetype().isSpikeEventRequired()) {
+        env.print("$(_spk" + suffix + ")[" + queueOffset + "$(_spk_cnt" + suffix + ")");
+        if(ng.getArchetype().isDelayRequired()) { // WITH DELAY
+            env.print("[*$(_spk_que_ptr)]++]");
+        }
+        else { // NO DELAY
+            env.getStream() << "[0]++]";
+        }
+        env.printLine(" = $(id);");
     }
-    else { // NO DELAY
-        env.getStream() << "[0]++]";
-    }
-    env.printLine(" = $(id);");
 
     // Reset spike and spike-like-event times
-    const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
     if(trueSpike && ng.getArchetype().isSpikeTimeRequired()) {
         env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
     }

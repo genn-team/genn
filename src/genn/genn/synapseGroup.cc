@@ -354,7 +354,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_PSVarLocation(psVarInitialisers.size(), defaultVarLocation), m_PSExtraGlobalParamLocation(ps->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
         m_SparseConnectivityInitialiser(connectivityInitialiser), m_ToeplitzConnectivityInitialiser(toeplitzInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation), 
         m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), 
-        m_FusedPSVarSuffix(name), m_FusedWUPreVarSuffix(name), m_FusedWUPostVarSuffix(name), m_FusedPreOutputSuffix(name), m_PSTargetVar("Isyn"), m_PreTargetVar("Isyn")
+        m_FusedPSTarget(nullptr), m_FusedWUPreTarget(nullptr), m_FusedWUPostTarget(nullptr), m_FusedPreOutputTarget(nullptr), m_PSTargetVar("Isyn"), m_PreTargetVar("Isyn")
 {
     // Validate names
     Utils::validatePopName(name, "Synapse group");
@@ -768,6 +768,15 @@ bool SynapseGroup::isWUInitRNGRequired() const
             && m_SparseConnectivityInitialiser.isRNGRequired());
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::isPSVarInitRequired() const
+{
+    return std::any_of(m_PSVarInitialisers.cbegin(), m_PSVarInitialisers.cend(),
+                       [](const auto &init)
+                       { 
+                           return !Utils::areTokensEmpty(init.second.getCodeTokens());
+                       });
+}
+//----------------------------------------------------------------------------
 bool SynapseGroup::isWUVarInitRequired() const
 {
     // If this synapse group has per-synapse or kernel state variables, 
@@ -782,6 +791,24 @@ bool SynapseGroup::isWUVarInitRequired() const
     else {
         return false;
     }
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::isWUPreVarInitRequired() const
+{
+    return std::any_of(m_WUPreVarInitialisers.cbegin(), m_WUPreVarInitialisers.cend(),
+                       [](const auto &init)
+                       { 
+                           return !Utils::areTokensEmpty(init.second.getCodeTokens());
+                       });
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::isWUPostVarInitRequired() const
+{
+    return std::any_of(m_WUPostVarInitialisers.cbegin(), m_WUPostVarInitialisers.cend(),
+                       [](const auto &init)
+                       { 
+                           return !Utils::areTokensEmpty(init.second.getCodeTokens());
+                       });
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isSparseConnectivityInitRequired() const

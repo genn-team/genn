@@ -65,7 +65,7 @@ package_data = ["genn" + genn_lib_suffix + ".*" if WIN
                 else "libgenn" + genn_lib_suffix + ".*"]
 
 
-# Copy GeNN 'share' tree into pygenn and add all files to pacakge
+# Copy GeNN 'share' tree into pygenn and add all files to package
 # **THINK** this could be done on a per-backend basis
 rmtree(pygenn_share, ignore_errors=True)
 copytree(genn_share, pygenn_share)
@@ -76,35 +76,40 @@ for root, _, filenames in os.walk(pygenn_share):
             package_data.append(f_path)
 
 # Define standard kwargs for building all extensions
-extension_kwargs = {
-    "include_dirs": [pygenn_include],
+genn_extension_kwargs = {
+    "include_dirs": [pygenn_include, genn_include, genn_third_party_include],
     "library_dirs": [pygenn_path],
+    "libraries": ["genn" + genn_lib_suffix],
     "cxx_std": 17,
     "extra_compile_args": [],
-    "extra_link_args": []}
+    "extra_link_args": [],
+    "define_macros": [("LINKING_GENN_DLL", 1), ("LINKING_BACKEND_DLL", 1)]}
 
-# If this is Windows, turn off warnings about dll-interface being required 
-# for stuff to be used by clients and prevent windows.h exporting TOO many awful macros
+# If this is Windows
 if WIN:
-    extension_kwargs["extra_compile_args"].extend(["/wd4251", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX"])
+    # Turn off warnings about dll-interface being required for stuff to be 
+    # used by clients and prevent windows.h exporting TOO many awful macros
+    genn_extension_kwargs["extra_compile_args"].extend(["/wd4251", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX"])
+
+    # Add include directory for FFI as it's built from source
+    genn_extension_kwargs["include_dirs"].append(os.path.join(genn_third_party_include, "libffi"))
+
+    # Add FFI library with correct suffix
+    # **TODO** just call this ffi
+    genn_extension_kwargs["libraries"].append("libffi" + genn_lib_suffix)
+# Otherwise, if this is Linux, we want to add extension directory i.e. $ORIGIN to runtime
+# directories so libGeNN and backends can be found wherever package is installed
+elif LINUX:
+    genn_extension_kwargs["runtime_library_dirs"] = ["$ORIGIN"]
+    genn_extension_kwargs["libraries"].append("ffi")
 
 if coverage_build:
     if LINUX:
-        extension_kwargs["extra_compile_args"].extend(["--coverage"])
-        extension_kwargs["extra_link_args"].extend(["--coverage"])
+        genn_extension_kwargs["extra_compile_args"].append("--coverage")
+        genn_extension_kwargs["extra_link_args"].append("--coverage")
     elif MAC:
-        extension_kwargs["extra_compile_args"].extend(["-fprofile-instr-generate", "-fcoverage-mapping"])
-
-# Extend these kwargs for extensions which link against GeNN
-genn_extension_kwargs = deepcopy(extension_kwargs)
-genn_extension_kwargs["include_dirs"].extend([genn_include, genn_third_party_include])
-genn_extension_kwargs["libraries"] = ["genn" + genn_lib_suffix]
-genn_extension_kwargs["define_macros"] = [("LINKING_GENN_DLL", "1"), ("LINKING_BACKEND_DLL", "1")]
-
-# On Linux, we want to add extension directory i.e. $ORIGIN to runtime
-# directories so libGeNN and backends can be found wherever package is installed
-if LINUX:
-    genn_extension_kwargs["runtime_library_dirs"] = ["$ORIGIN"]
+        genn_extension_kwargs["extra_compile_args"].extend(["-fprofile-instr-generate", "-fcoverage-mapping"])
+    
 
 # By default build single-threaded CPU backend
 backends = [("single_threaded_cpu", "singleThreadedCPU", {})]
@@ -152,9 +157,9 @@ if opencl_installed:
                       "extra_compile_args": ["-DCL_HPP_TARGET_OPENCL_VERSION=120", "-DCL_HPP_MINIMUM_OPENCL_VERSION=120"]}))
 
 ext_modules = [
-    Pybind11Extension("shared_library_model",
-                      [os.path.join(pygenn_src, "sharedLibraryModel.cc")],
-                      **extension_kwargs),
+    Pybind11Extension("runtime",
+                      [os.path.join(pygenn_src, "runtime.cc")],
+                      **genn_extension_kwargs),
     Pybind11Extension("genn",
                       [os.path.join(pygenn_src, "genn.cc")],
                       **genn_extension_kwargs),

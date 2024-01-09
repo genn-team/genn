@@ -421,18 +421,7 @@ void BackendSIMT::genNeuronSpikeQueueUpdateKernel(EnvironmentExternalBase &env, 
                 // Create matching environment
                 EnvironmentGroupMergedField<NeuronSpikeQueueUpdateGroupMerged> neuronEnv(env, n);
                 buildStandardEnvironment(neuronEnv, batchSize);
-
-                if(n.getArchetype().isDelayRequired()) { // with delay
-                    neuronEnv.printLine("*$(_spk_que_ptr) = (*$(_spk_que_ptr) + 1) % " + std::to_string(n.getArchetype().getNumDelaySlots()) + ";");
-                }
-
-                if(batchSize > 1) {
-                    neuronEnv.getStream() << "for(unsigned int batch = 0; batch < " << batchSize << "; batch++)" << CodeStream::OB(1);
-                }
-                n.genMergedGroupSpikeCountReset(neuronEnv, batchSize);
-                if(batchSize > 1) {
-                    neuronEnv.getStream() << CodeStream::CB(1);
-                }
+                n.genSpikeQueueUpdate(neuronEnv, batchSize);
             }
             idStart += n.getGroups().size();
         });
@@ -513,7 +502,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
 
                 // Add population RNG field
                 groupEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
-                                  [this](const auto &g, size_t) { return getDeviceVarPrefix() + "rng" + g.getName(); },
+                                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rng"); },
                                   ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)"));
                 // **TODO** for OCL do genPopulationRNGPreamble(os, popSubs, "group->rng[" + ng.getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "$(id)") + "]") in initialiser
 
@@ -521,12 +510,14 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                                         // Emit true spikes
                                         [this](EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng)
                                         {
-                                            genEmitSpike(env, "", ng.getArchetype().isSpikeRecordingEnabled());
+                                            genEmitSpike(env, "", ng.getArchetype().isTrueSpikeRequired(),
+                                                         ng.getArchetype().isSpikeRecordingEnabled());
                                         },
                                         // Emit spike-like events
                                         [this](EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng)
                                         {
-                                            genEmitSpike(env, "_evnt", ng.getArchetype().isSpikeEventRecordingEnabled());
+                                            genEmitSpike(env, "_evnt", ng.getArchetype().isSpikeEventRequired(),
+                                                         ng.getArchetype().isSpikeEventRecordingEnabled());
                                         });
 
                 // Copy local stream back to local
@@ -539,7 +530,9 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             genSharedMemBarrier(groupEnv.getStream());
 
             // Use first thread to 'allocate' block of $(_spk) array for this block's spikes
-            if(!Utils::areTokensEmpty(ng.getArchetype().getThresholdConditionCodeTokens())) {
+            if(ng.getArchetype().isTrueSpikeRequired() &&
+               !Utils::areTokensEmpty(ng.getArchetype().getThresholdConditionCodeTokens())) 
+            {
                 groupEnv.getStream() << "if(" << getThreadID() << " == 0)";
                 {
                     CodeStream::Scope b(groupEnv.getStream());
@@ -589,7 +582,9 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             // Copy spikes into block of $(_spk)
             const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
                                                                 VarAccessDim::BATCH | VarAccessDim::ELEMENT, "");
-            if(!Utils::areTokensEmpty(ng.getArchetype().getThresholdConditionCodeTokens())) {
+            if(ng.getArchetype().isTrueSpikeRequired() &&
+               !Utils::areTokensEmpty(ng.getArchetype().getThresholdConditionCodeTokens())) 
+            {
                 const std::string queueOffsetTrueSpk = ng.getWriteVarIndex(ng.getArchetype().isTrueSpikeRequired() && ng.getArchetype().isDelayRequired(), 
                                                                            batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "");
                 groupEnv.print("if(" + getThreadID() + " < $(_sh_spk_count))");
@@ -601,7 +596,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                     // Create new substition stack and explicitly replace id with 'n' and perform WU var update
                     EnvironmentExternal wuEnv(groupEnv);
                     wuEnv.add(Type::Uint32.addConst(), "id", "n");
-                    ng.generateWUVarUpdate(*this, wuEnv, batchSize);
+                    ng.generateWUVarUpdate(wuEnv, batchSize);
 
                     groupEnv.printLine("$(_spk)[" + queueOffsetTrueSpk + "$(_sh_spk_pos) + " + getThreadID() + "] = n;");
                     if(ng.getArchetype().isSpikeTimeRequired()) {
@@ -689,7 +684,7 @@ void BackendSIMT::genSynapseDendriticDelayUpdateKernel(EnvironmentExternalBase &
                 env.getStream() << getPointerPrefix() << "struct MergedSynapseDendriticDelayUpdateGroup" << sg.getIndex() << " *group = &d_mergedSynapseDendriticDelayUpdateGroup" << sg.getIndex() << "[id - " << idStart << "]; " << std::endl;
                 EnvironmentGroupMergedField<SynapseDendriticDelayUpdateGroupMerged> groupEnv(env, sg);
                 buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
-                groupEnv.printLine("*$(_den_delay_ptr) = (*$(_den_delay_ptr) + 1) % " + std::to_string(sg.getArchetype().getMaxDendriticDelayTimesteps()) + ";");
+                sg.generateSynapseUpdate(groupEnv);
             }
             idStart += sg.getGroups().size();
         });
@@ -848,7 +843,7 @@ void BackendSIMT::genPostsynapticUpdateKernel(EnvironmentExternalBase &env, Mode
 
                         synEnv.add(Type::AddToPre, "addToPre", getAtomic(modelMerged.getModel().getPrecision()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
 
-                        sg.generateSynapseUpdate(*this, synEnv, batchSize, modelMerged.getModel().getDT());
+                        sg.generateSynapseUpdate(synEnv, batchSize, modelMerged.getModel().getDT());
 
                         if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                             synEnv.getStream() << CodeStream::CB(1540);
@@ -914,7 +909,7 @@ void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSp
                 synEnv.add(Type::AddToPre, "addToPre",
                             getAtomic(modelMerged.getModel().getPrecision()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
                 
-                sg.generateSynapseUpdate(*this, synEnv, batchSize, modelMerged.getModel().getDT());
+                sg.generateSynapseUpdate(synEnv, batchSize, modelMerged.getModel().getDT());
 
                 if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     synEnv.getStream() << CodeStream::CB(1);
@@ -965,7 +960,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
 
                         // **THINK** it would be great to 'lift' reads of SHARED variables out of this loop
                         cg.generateCustomUpdate(
-                            *this, batchEnv, batchSize,
+                            batchEnv, batchSize,
                             [&reductionTargets, this](auto &env, const auto&)
                             {
                                 // Loop through reduction targets and generate reduction
@@ -1013,7 +1008,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
 
                         // **THINK** it would be great to 'lift' reads of NEURON_SHARED variables out of this loop
                         cg.generateCustomUpdate(
-                            *this, batchEnv, batchSize,
+                            batchEnv, batchSize,
                             [&reductionTargets, this](auto &env, const auto&)
                             {
                                 // Loop through reduction targets and generate reduction
@@ -1068,8 +1063,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                 batchEnv.print("if($(id) < $(size))");
                 {
                     CodeStream::Scope b(batchEnv.getStream());
-                    cg.generateCustomUpdate(*this, batchEnv, batchSize,
-                                            [](auto&, auto&){});
+                    cg.generateCustomUpdate(batchEnv, batchSize, [](auto&, auto&){});
                 }
             }
             // Otherwise
@@ -1085,8 +1079,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                     EnvironmentGroupMergedField<CustomUpdateGroupMerged> batchEnv(groupEnv, cg);
                     buildStandardEnvironment(batchEnv, batchSize);
 
-                    cg.generateCustomUpdate(*this, batchEnv, batchSize,
-                                            [](auto&, auto&){});
+                    cg.generateCustomUpdate(batchEnv, batchSize, [](auto&, auto&){});
                 }
             }
         });
@@ -1185,10 +1178,10 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
                     buildStandardEnvironment(batchEnv, batchSize);
 
                     cg.generateCustomUpdate(
-                        *this, batchEnv, batchSize,
+                        batchEnv, batchSize,
                         [&reductionTargets, this](auto &env, auto &cg)
                         {
-                                // If this is a reduction
+                            // If this is a reduction
                             if(cg.getArchetype().isBatchReduction()) {
                                 // Loop through reduction targets and generate reduction
                                 for(const auto &r : reductionTargets) {
@@ -1260,7 +1253,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, Mod
             buildStandardEnvironment(batchEnv, batchSize);
 
             // Add field for transpose field and get its name
-            const std::string transposeVarName = cg.addTransposeField(*this, batchEnv);
+            const std::string transposeVarName = cg.addTransposeField(batchEnv);
 
             // Divide block index into x and y
             // **TODO** fast-divide style optimisations here
@@ -1292,7 +1285,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, Mod
                             synEnv.add(Type::Uint32.addConst(), "id_syn", "idx",
                                        {synEnv.addInitialiser("const unsigned int idx = ((y + j) * $(num_post)) + x;")});
                             cg.generateCustomUpdate(
-                                *this, synEnv, batchSize,
+                                synEnv, batchSize,
                                 [&transposeVarName, this](auto &env, const auto&)
                                 {        
                                     // Write forward weight to shared memory
@@ -1355,7 +1348,7 @@ void BackendSIMT::genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env
                 
                 // Add population RNG field
                 groupEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
-                                  [this](const auto &g, size_t) { return getDeviceVarPrefix() + "rowRNG" + g.getName(); },
+                                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rowRNG"); },
                                   "$(id)");
                 // **TODO** for OCL do genPopulationRNGPreamble(os, popSubs, "$(id)") in initialiser
 
@@ -1395,7 +1388,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                     // Add field for RNG
                     EnvironmentGroupMergedField<NeuronInitGroupMerged> rngInitEnv(groupEnv, ng);
                     rngInitEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
-                                        [this](const auto &g, size_t) { return getDeviceVarPrefix() + "rng" + g.getName(); });
+                                        [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rng"); });
 
                     // If batch size is 1, initialise single RNG using GLOBAL thread id for sequence
                     if(batchSize == 1) {
@@ -1505,7 +1498,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                     // Add field for RNG
                     EnvironmentGroupMergedField<CustomConnectivityUpdatePreInitGroupMerged> rngInitEnv(groupEnv, cg);
                     rngInitEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
-                                        [this](const auto &g, size_t) { return getDeviceVarPrefix() + "rowRNG" + g.getName(); });
+                                        [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rowRNG"); });
 
                     genPopulationRNGInit(rngInitEnv.getStream(), printSubs("$(_rng)[$(id)]", rngInitEnv), 
                                          "deviceRNGSeed", "id");
@@ -1644,7 +1637,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                             }
 
                             // Call handler to initialize variables
-                            sg.generateKernelInit(*this, kernelInitEnv, 1);
+                            sg.generateKernelInit(kernelInitEnv, 1);
                         }
                     }
                     // Otherwise, if it's bitmask
@@ -1655,13 +1648,13 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                         // If there is row-building code in this snippet
                         const auto indexTypeName = getSynapseIndexType(sg).getName();
                         if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
-                            addSynapse << "const " << indexTypeName << " rowStartGID = $(id) * (" << indexTypeName << ")($_row_stride);" << std::endl;
-                            addSynapse << getAtomic(Type::Uint32, AtomicOperation::OR) << "(&$(_gp)[(rowStartGID + ($(0))) / 32], 0x80000000 >> ((rowStartGID + ($(0))) & 31));" << std::endl;
+                            addSynapseEnv.getStream() << "const " << indexTypeName << " rowStartGID = $(id) * (" << indexTypeName << ")($_row_stride);" << std::endl;
+                            addSynapseEnv.getStream() << getAtomic(Type::Uint32, AtomicOperation::OR) << "(&$(_gp)[(rowStartGID + ($(0))) / 32], 0x80000000 >> ((rowStartGID + ($(0))) & 31));" << std::endl;
                         }
                         // Otherwise
                         else {
-                            addSynapse << "const " << indexTypeName << " colStartGID = $(id);" << std::endl;
-                            addSynapse << getAtomic(Type::Uint32, AtomicOperation::OR) << "(&$(_gp)[(colStartGID + (($(0)) * $(_row_stride))) / 32], 0x80000000 >> ((colStartGID + (($(0)) * $(_row_stride))) & 31));" << std::endl;
+                            addSynapseEnv.getStream() << "const " << indexTypeName << " colStartGID = $(id);" << std::endl;
+                            addSynapseEnv.getStream() << getAtomic(Type::Uint32, AtomicOperation::OR) << "(&$(_gp)[(colStartGID + (($(0)) * $(_row_stride))) / 32], 0x80000000 >> ((colStartGID + (($(0)) * $(_row_stride))) & 31));" << std::endl;
                         }
                     }
                 }
@@ -1685,12 +1678,12 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                     }
 
                     // Call row-based connectivity handler
-                    sg.generateSparseRowInit(*this, groupEnv);
+                    sg.generateSparseRowInit(groupEnv);
                 }
                 // Otherwise, call column-based connectivity handler
                 // **NOTE** in this case, row length gets zeroed by a memset call in backend
                 else {
-                    sg.generateSparseColumnInit(*this, groupEnv);
+                    sg.generateSparseColumnInit(groupEnv);
                 }
             }
         });
@@ -1799,11 +1792,13 @@ size_t BackendSIMT::padKernelSize(size_t size, Kernel kernel) const
     return padSize(size, getKernelBlockSize(kernel)); 
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genEmitSpike(EnvironmentExternalBase &env, const std::string &suffix, bool recordingEnabled) const
+void BackendSIMT::genEmitSpike(EnvironmentExternalBase &env, const std::string &suffix, 
+                               bool spikeRequired, bool recordingEnabled) const
 {
-    env.printLine("const unsigned int spk" + suffix + "_idx = " + getAtomic(Type::Uint32, AtomicOperation::ADD, AtomicMemSpace::SHARED) + "(&$(_sh_spk" + suffix + "_count), 1);");
-    env.printLine("$(_sh_spk" + suffix + ")[spk" + suffix + "_idx] = $(id);");
-    
+    if(spikeRequired) {
+        env.printLine("const unsigned int spk" + suffix + "_idx = " + getAtomic(Type::Uint32, AtomicOperation::ADD, AtomicMemSpace::SHARED) + "(&$(_sh_spk" + suffix + "_count), 1);");
+        env.printLine("$(_sh_spk" + suffix + ")[spk" + suffix + "_idx] = $(id);");
+    }
     // If recording is enabled, set bit in recording word
     if(recordingEnabled) {
         if(m_KernelBlockSizes[KernelNeuronUpdate] == 32) {

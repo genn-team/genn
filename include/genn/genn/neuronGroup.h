@@ -225,8 +225,14 @@ protected:
     //! Does this neuron group require any sort of recording?
     bool isRecordingEnabled() const;
 
+    //! Does this neuron group require any variables initializing?
+    /*! Because it occurs in the same kernel, this includes current source variables;
+        postsynaptic model variables and postsynaptic weight update variables 
+        from incoming synapse groups; and presynaptic weight update variables from outgoing synapse groups */
+    bool isVarInitRequired() const;
+
     //! Gets pointers to all current sources which provide input to this neuron group
-    const std::vector<CurrentSourceInternal*> &getCurrentSources() const { return m_MergedCurrentSourceGroups; }
+    const std::vector<CurrentSourceInternal*> &getCurrentSources() const { return m_CurrentSourceGroups; }
 
     const std::unordered_map<std::string, double> &getDerivedParams() const{ return m_DerivedParams; }
 
@@ -254,7 +260,6 @@ protected:
     const std::vector<Transpiler::Token> &getResetCodeTokens() const { return m_ResetCodeTokens; }
 
     bool isVarQueueRequired(const std::string &var) const;
-    bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
 
     //! Updates hash with neuron group
     /*! NOTE: this can only be called after model is finalized */
@@ -291,12 +296,12 @@ private:
     std::vector<SynapseGroupInternal*> m_InSyn;
     std::vector<SynapseGroupInternal*> m_OutSyn;
     std::vector<SynapseGroupInternal*> m_FusedPSMInSyn;
-    std::vector<SynapseGroupInternal *> m_FusedWUPostInSyn;
-    std::vector<SynapseGroupInternal *> m_FusedWUPreOutSyn;
-    std::vector<SynapseGroupInternal *> m_FusedPreOutputOutSyn;
+    std::vector<SynapseGroupInternal*> m_FusedWUPostInSyn;
+    std::vector<SynapseGroupInternal*> m_FusedWUPreOutSyn;
+    std::vector<SynapseGroupInternal*> m_FusedPreOutputOutSyn;
     std::set<SpikeEventThreshold> m_SpikeEventCondition;
     unsigned int m_NumDelaySlots;
-    std::vector<CurrentSourceInternal*> m_MergedCurrentSourceGroups;
+    std::vector<CurrentSourceInternal*> m_CurrentSourceGroups;
 
     //! Vector specifying which variables require queues
     std::vector<bool> m_VarQueueRequired;

@@ -196,11 +196,6 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
                  const std::string &scalarType, unsigned int platformIndex, unsigned int deviceIndex)
 :   BackendSIMT(kernelBlockSizes, preferences, scalarType), m_ChosenPlatformIndex(platformIndex), m_ChosenDeviceIndex(deviceIndex)
 {
-    // Throw exceptions if unsupported preferences are selected
-    if(preferences.automaticCopy) {
-        throw std::runtime_error("OpenCL backend does not currently support automatic copy mode.");
-    }
-
     // Get platforms
     std::vector<cl::Platform> platforms;
     cl::Platform::get(&platforms);
@@ -1353,29 +1348,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHa
     {
         CodeStream::Scope b(os);
 
-        // Loop through all synapse groups
-        // **TODO** this logic belongs in BackendSIMT
-        // **TODO** apply merging to this process - large models could generate thousands of lines of code here
-        for(const auto &s : model.getSynapseGroups()) {
-            // If this synapse population has BITMASK connectivity and is intialised on device, enqueue a buffer fill operation to zero the whole bitmask
-            if(s.second.isSparseConnectivityInitRequired() && s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                const size_t gpSize = ceilDivide((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * getSynapticMatrixRowStride(s.second), 32);
-                os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer<uint32_t>(d_gp" << s.first << ", 0, 0, " << gpSize << " * sizeof(uint32_t)));" << std::endl;
-            }
-            
-            // If this synapse population has SPARSE connectivity and column-based on device connectivity, enqueue a buffer fill operation to zero row lengths
-            // **NOTE** we could also use this code path for row-based connectivity but, leaving this in the kernel is much better as it gets merged
-            if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE && !s.second.getConnectivityInitialiser().getSnippet()->getColBuildCode().empty()) {
-                os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer<unsigned int>(d_rowLength" << s.first << ", 0, 0, " << s.second.getSrcNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
-            }
-
-            // If this synapse population has SPARSE connectivity and has postsynaptic learning, enqueue a buffer fill operation to zero column lengths
-            if((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getLearnPostCode().empty()) {
-                os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer<unsigned int>(d_colLength" << s.first << ", 0, 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
-            }
-        }
-        os << std::endl;
-
         // If there are any initialisation work-items
         if (idInitStart > 0) {
             CodeStream::Scope b(os);
@@ -1408,10 +1380,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHa
     os << "void initializeSparse()";
     {
         CodeStream::Scope b(os);
-
-        // Copy all uninitialised state variables to device
-        os << "copyStateToDevice(true);" << std::endl;
-        os << "copyConnectivityToDevice(true);" << std::endl;
 
         // If there are any sparse initialisation work-items
         if (idSparseInitStart > 0) {
@@ -2022,8 +1990,6 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
 void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name,
                                       VarLocation loc, const std::string &countVarName, const std::string &prefix) const
 {
-    assert(!getPreferences().automaticCopy);
-
     // Get underlying type
     const std::string underlyingType = GeNN::Utils::getUnderlyingType(type);
     const bool pointerToPointer = GeNN::Utils::isTypePointerToPointer(type);
@@ -2043,8 +2009,6 @@ void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, c
 void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name,
                                       VarLocation loc, const std::string &countVarName, const std::string &prefix) const
 {
-    assert(!getPreferences().automaticCopy);
-
     // Get underlying type
     const std::string underlyingType = GeNN::Utils::getUnderlyingType(type);
     const bool pointerToPointer = GeNN::Utils::isTypePointerToPointer(type);
@@ -2123,8 +2087,6 @@ void Backend::genVariablePull(CodeStream &os, const std::string &type, const std
 void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
                                      const std::string &name, VarLocation loc, unsigned int batchSize) const
 {
-    assert(!getPreferences().automaticCopy);
-
     // If this variable requires queuing and isn't zero-copy
     if (ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
         // If batch size is one, generate 1D memcpy to copy current timestep's data
@@ -2157,8 +2119,6 @@ void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &
 void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
                                      const std::string &name, VarLocation loc, unsigned int batchSize) const
 {
-    assert(!getPreferences().automaticCopy);
-
     // If this variable requires queuing and isn't zero-copy
     if (ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
         // If batch size is one, generate 1D memcpy to copy current timestep's data
@@ -2440,8 +2400,6 @@ boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
 //--------------------------------------------------------------------------
 void Backend::genCurrentSpikePushPull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent, bool push) const
 {
-    assert(!getPreferences().automaticCopy);
-
     if (!(ng.getSpikeLocation() & VarLocation::ZERO_COPY)) {
         // Is delay required
         const bool delayRequired = spikeEvent ?
@@ -2449,8 +2407,8 @@ void Backend::genCurrentSpikePushPull(CodeStream &os, const NeuronGroupInternal 
             (ng.isTrueSpikeRequired() && ng.isDelayRequired());
 
         const char *function = push ? "Write" : "Read";
-        const char* spikeCntPrefix = spikeEvent ? "glbSpkCntEvnt" : "glbSpkCnt";
-        const char* spikePrefix = spikeEvent ? "glbSpkEvnt" : "glbSpk";
+        const char* spikeCntPrefix = spikeEvent ? "spkCntEvnt" : "spkCnt";
+        const char* spikePrefix = spikeEvent ? "spkEvnt" : "spk";
 
         if (delayRequired) {
             // If there's only a single batch

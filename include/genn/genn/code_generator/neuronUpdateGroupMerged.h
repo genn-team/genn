@@ -23,8 +23,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
-                      NeuronUpdateGroupMerged &ng, unsigned int batchSize);
+        void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, 
+                      unsigned int batchSize);
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -87,8 +87,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
-                      NeuronUpdateGroupMerged &ng, unsigned int batchSize);
+        void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+                      unsigned int batchSize);
     };
 
     //----------------------------------------------------------------------------
@@ -103,7 +103,7 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+        void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                       unsigned int batchSize, bool dynamicsNotSpike);
 
         void genCopyDelayedVars(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
@@ -138,7 +138,7 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+        void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                       unsigned int batchSize, bool dynamicsNotSpike);
 
         void genCopyDelayedVars(EnvironmentExternalBase &env, const NeuronUpdateGroupMerged &ng,
@@ -170,20 +170,16 @@ public:
     //! Get hash digest used for detecting changes
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend, 
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, CodeStream &definitions) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+        generateRunnerBase(backend, definitions, name);
     }
     
     void generateNeuronUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize,
                               BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitTrueSpike,
                               BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent);
     
-    void generateWUVarUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
+    void generateWUVarUpdate(EnvironmentExternalBase &env, unsigned int batchSize);
     
     std::string getVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
     std::string getReadVarIndex(bool delay, unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
@@ -229,16 +225,12 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend,
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, CodeStream &definitions) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+        generateRunnerBase(backend, definitions, name);
     }
 
-    void genMergedGroupSpikeCountReset(EnvironmentExternalBase &env, unsigned int batchSize) const;
+    void genSpikeQueueUpdate(EnvironmentExternalBase &env, unsigned int batchSize) const;
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -257,13 +249,9 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend,
-                        CodeStream &definitionsInternal, CodeStream &definitionsInternalFunc, 
-                        CodeStream &definitionsInternalVar, CodeStream &runnerVarDecl, 
-                        CodeStream &runnerMergedStructAlloc) const
+    void generateRunner(const BackendBase &backend, CodeStream &definitions) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+        generateRunnerBase(backend, definitions, name);
     }
 
     //----------------------------------------------------------------------------

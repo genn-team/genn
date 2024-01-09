@@ -146,10 +146,10 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
             synEnv.add(Type::AddToPre, "addToPre", "lOutPre += $(0)");
             
             if(trueSpike) {
-                sg.generateSpikeUpdate(backend, synEnv, batchSize, dt);
+                sg.generateSpikeUpdate(synEnv, batchSize, dt);
             }
             else {
-                sg.generateSpikeEventUpdate(backend, synEnv, batchSize, dt);
+                sg.generateSpikeEventUpdate(synEnv, batchSize, dt);
             }
             
         }
@@ -334,10 +334,10 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
                             backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
                 
                 if(trueSpike) {
-                    sg.generateSpikeUpdate(backend, synEnv, batchSize, dt);
+                    sg.generateSpikeUpdate(synEnv, batchSize, dt);
                 }
                 else {
-                    sg.generateSpikeEventUpdate(backend, synEnv, batchSize, dt);
+                    sg.generateSpikeEventUpdate(synEnv, batchSize, dt);
                 }
 
                 if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -514,10 +514,10 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
 
             // Generate spike update
             if(trueSpike) {
-                sg.generateSpikeUpdate(backend, preUpdateEnv, batchSize, dt);
+                sg.generateSpikeUpdate(preUpdateEnv, batchSize, dt);
             }
             else {
-                sg.generateSpikeEventUpdate(backend, preUpdateEnv, batchSize, dt);
+                sg.generateSpikeEventUpdate(preUpdateEnv, batchSize, dt);
             }
         }
 
@@ -553,7 +553,7 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
             connEnv.add(addSynapseType, "addSynapse", preUpdateStream.str());
 
             // Generate procedural connectivity code
-            sg.generateProceduralConnectivity(backend, connEnv);
+            sg.generateProceduralConnectivity(connEnv);
 
         }
 
@@ -698,10 +698,10 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
                                backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
 
                     if(trueSpike) {
-                        sg.generateSpikeUpdate(backend, synEnv, batchSize, dt);
+                        sg.generateSpikeUpdate(synEnv, batchSize, dt);
                     }
                     else {
-                        sg.generateSpikeEventUpdate(backend, synEnv, batchSize, dt);
+                        sg.generateSpikeEventUpdate(synEnv, batchSize, dt);
                     }
 
                     synEnv.getStream() << "ibit++;" << std::endl;
@@ -830,10 +830,10 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
 
         // Generate spike update
         if(trueSpike) {
-            sg.generateSpikeUpdate(backend, preUpdateEnv, 1, dt);
+            sg.generateSpikeUpdate(preUpdateEnv, 1, dt);
         }
         else {
-            sg.generateSpikeEventUpdate(backend, preUpdateEnv, 1, dt);
+            sg.generateSpikeEventUpdate(preUpdateEnv, 1, dt);
         }
     }
 
@@ -847,7 +847,7 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
 
     // Generate toeplitz connectivity generation code using custom for_each_synapse loop
     sg.generateToeplitzConnectivity(
-        backend, toeplitzEnv,
+        toeplitzEnv,
         // Within for_each_synapse loops, define addSynapse function and id_pre
         [addSynapseType](auto &env, auto &errorHandler)
         {

@@ -3,8 +3,10 @@
 //----------------------------------------------------------------------------
 // GeNN::Logging
 //----------------------------------------------------------------------------
-void GeNN::Logging::init(plog::Severity gennLevel, plog::Severity codeGeneratorLevel, plog::Severity transpilerLevel,
-                         plog::IAppender *gennAppender, plog::IAppender *codeGeneratorAppender, plog::IAppender *transpilerAppender)
+void GeNN::Logging::init(plog::Severity gennLevel, plog::Severity codeGeneratorLevel, 
+                         plog::Severity transpilerLevel, plog::Severity runtimeLevel,
+                         plog::IAppender *gennAppender, plog::IAppender *codeGeneratorAppender, 
+                         plog::IAppender *transpilerAppender, plog::IAppender *runtimeAppender)
 {
     // If there isn't already a plog instance, initialise one
     if(plog::get<CHANNEL_GENN>() == nullptr) {
@@ -31,5 +33,14 @@ void GeNN::Logging::init(plog::Severity gennLevel, plog::Severity codeGeneratorL
     // Otherwise, set it's max severity from GeNN preferences
     else {
         plog::get<CHANNEL_TRANSPILER>()->setMaxSeverity(transpilerLevel);
+    }
+
+    // If there isn't already a plog instance, initialise one
+    if(plog::get<CHANNEL_RUNTIME>() == nullptr) {
+        plog::init<CHANNEL_RUNTIME>(runtimeLevel, runtimeAppender);
+    }
+    // Otherwise, set it's max severity from GeNN preferences
+    else {
+        plog::get<CHANNEL_RUNTIME>()->setMaxSeverity(runtimeLevel);
     }
 }

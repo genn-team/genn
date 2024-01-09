@@ -59,7 +59,7 @@ public:
 
     const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getVarInitialisers(); }
 
-    const std::string &getNameSuffix() const{ return m_CU.getName(); }
+    const CustomConnectivityUpdate &getTarget() const{ return m_CU; }
 
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 
@@ -90,7 +90,7 @@ public:
 
     bool isVarDelayed(const std::string &) const { return false; }
 
-    const std::string &getNameSuffix() const{ return m_CU.getName(); }
+    const CustomConnectivityUpdate &getTarget() const{ return m_CU; }
 
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 
@@ -121,7 +121,7 @@ public:
 
     bool isVarDelayed(const std::string &) const { return false; }
 
-    const std::string &getNameSuffix() const{ return m_CU.getName(); }
+    const CustomConnectivityUpdate &getTarget() const{ return m_CU; }
 
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
     

@@ -50,8 +50,8 @@ const EnvironmentLibrary::Library doubleRandomFunctions = {
 //--------------------------------------------------------------------------
 // CUDADeviceType
 //--------------------------------------------------------------------------
-const Type::ResolvedType CURandState = Type::ResolvedType::createValue<curandState>("curandState", Type::Qualifier{0}, true);
-const Type::ResolvedType CURandStatePhilox43210 = Type::ResolvedType::createValue<curandStatePhilox4_32_10_t>("curandStatePhilox4_32_10_t", Type::Qualifier{0}, true);
+const Type::ResolvedType CURandState = Type::ResolvedType::createValue<curandState>("curandState", Type::Qualifier{0}, nullptr, true);
+const Type::ResolvedType CURandStatePhilox43210 = Type::ResolvedType::createValue<curandStatePhilox4_32_10_t>("curandStatePhilox4_32_10_t", Type::Qualifier{0}, nullptr, true);
 
 //--------------------------------------------------------------------------
 // Timer
@@ -187,12 +187,159 @@ const EnvironmentLibrary::Library &getRNGFunctions(const Type::ResolvedType &pre
 }
 }   // Anonymous namespace
 
+
 //--------------------------------------------------------------------------
-// GeNN::CodeGenerator::CUDA::Backend
+// GeNN::CodeGenerator::CUDA::Array
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator::CUDA
 {
-Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, int device)
+Array::Array(const Type::ResolvedType &type, size_t count, 
+             VarLocation location, bool uninitialized)
+:   ArrayBase(type, count, location, uninitialized), m_DevicePointer(nullptr)
+{
+    // Allocate if count is specified
+    if(count > 0) {
+        allocate(count);
+    }
+}
+//--------------------------------------------------------------------------
+Array::~Array()
+{
+    if(getCount() > 0) {
+        free();
+    }
+}
+//--------------------------------------------------------------------------
+void Array::allocate(size_t count)
+{
+    // Set count
+    setCount(count);
+
+    // Malloc host pointer
+    if(getLocation() & VarLocation::HOST) {
+        const unsigned int flags = (getLocation() & VarLocation::ZERO_COPY) ? cudaHostAllocMapped : cudaHostAllocPortable;
+
+        std::byte *hostPointer = nullptr;
+        CHECK_CUDA_ERRORS(cudaHostAlloc(&hostPointer, getSizeBytes(), flags));
+        setHostPointer(hostPointer);
+    }
+
+    // If variable is present on device at all
+    if(getLocation() & VarLocation::DEVICE) {
+        // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
+        if(getLocation() & VarLocation::ZERO_COPY) {
+            CHECK_CUDA_ERRORS(cudaHostGetDevicePointer(&m_DevicePointer, getHostPointer(), 0));
+        }
+        else {
+            CHECK_CUDA_ERRORS(cudaMalloc(&m_DevicePointer, getSizeBytes()));
+        }
+    }
+}
+//--------------------------------------------------------------------------
+void Array::free()
+{
+    // **NOTE** because we pinned the variable we need to free it with cudaFreeHost rather than use free
+    if(getLocation() & VarLocation::HOST) {
+        CHECK_CUDA_ERRORS(cudaFreeHost(getHostPointer()));
+        setHostPointer(nullptr);
+    }
+
+    // If this variable wasn't allocated in zero-copy mode, free it
+    if((getLocation() & VarLocation::DEVICE) && !(getLocation() & VarLocation::ZERO_COPY)) {
+        CHECK_CUDA_ERRORS(cudaFree(getDevicePointer()));
+        m_DevicePointer = nullptr;
+    }
+
+    // Zero count
+    setCount(0);
+}
+//--------------------------------------------------------------------------
+void Array::pushToDevice()
+{
+    if(!(getLocation() & VarLocation::DEVICE) || !(getLocation() & VarLocation::HOST)) {
+        throw std::runtime_error("Cannot push array that isn't present on host and device");
+    }
+
+    if(!(getLocation() & VarLocation::ZERO_COPY)) {
+        CHECK_CUDA_ERRORS(cudaMemcpy(getDevicePointer(), getHostPointer(), getSizeBytes(), cudaMemcpyHostToDevice));
+    }
+}
+//--------------------------------------------------------------------------
+void Array::pullFromDevice()
+{
+    if(!(getLocation() & VarLocation::DEVICE) || !(getLocation() & VarLocation::HOST)) {
+        throw std::runtime_error("Cannot pull array that isn't present on host and device");
+    }
+
+    if(!(getLocation() & VarLocation::ZERO_COPY)) {
+        CHECK_CUDA_ERRORS(cudaMemcpy(getHostPointer(), getDevicePointer(), getSizeBytes(), cudaMemcpyDeviceToHost));
+    }
+}
+//--------------------------------------------------------------------------
+void Array::pushSlice1DToDevice(size_t offset, size_t count)
+{
+    if(!(getLocation() & VarLocation::DEVICE) || !(getLocation() & VarLocation::HOST)) {
+        throw std::runtime_error("Cannot push array that isn't present on host and device");
+    }
+
+    if(!(getLocation() & VarLocation::ZERO_COPY)) {
+        // If end of slice overflows array, give error
+        if((offset + count) > getCount()) {
+            throw std::runtime_error("Cannot pull slice that overflows array");
+        }
+
+        // Convert offset and count to bytes and copy
+        const size_t offsetBytes = offset * getType().getValue().size;
+        const size_t countBytes = count * getType().getValue().size;
+        CHECK_CUDA_ERRORS(cudaMemcpy(getDevicePointer() + offsetBytes, getHostPointer() + offsetBytes, 
+                                     countBytes, cudaMemcpyHostToDevice));
+    }
+}
+//--------------------------------------------------------------------------
+void Array::pullSlice1DFromDevice(size_t offset, size_t count)
+{
+    if(!(getLocation() & VarLocation::DEVICE) || !(getLocation() & VarLocation::HOST)) {
+        throw std::runtime_error("Cannot pull array that isn't present on host and device");
+    }
+
+    if(!(getLocation() & VarLocation::ZERO_COPY)) {
+        // If end of slice overflows array, give error
+        if((offset + count) > getCount()) {
+            throw std::runtime_error("Cannot pull slice that overflows array");
+        }
+
+        // Convert offset and count to bytes and copy
+        const size_t offsetBytes = offset * getType().getValue().size;
+        const size_t countBytes = count * getType().getValue().size;
+        CHECK_CUDA_ERRORS(cudaMemcpy(getHostPointer() + offsetBytes, getDevicePointer() + offsetBytes, 
+                                     countBytes, cudaMemcpyDeviceToHost));
+    }
+
+}
+//--------------------------------------------------------------------------
+void Array::memsetDeviceObject(int value)
+{
+    CHECK_CUDA_ERRORS(cudaMemset(m_DevicePointer, value, getSizeBytes()));
+}
+//--------------------------------------------------------------------------
+void Array::serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToPointer) const
+{
+    std::byte vBytes[sizeof(void*)];
+    if(pointerToPointer) {
+        std::byte* const *devicePointerPointer = &m_DevicePointer;
+        std::memcpy(vBytes, &devicePointerPointer, sizeof(void*));
+    }
+    else {
+        std::memcpy(vBytes, &m_DevicePointer, sizeof(void*));
+    }
+    std::copy(std::begin(vBytes), std::end(vBytes), std::back_inserter(bytes));
+}
+
+//--------------------------------------------------------------------------
+// GeNN::CodeGenerator::CUDA::Backend
+//--------------------------------------------------------------------------
+Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, 
+                 int device, bool zeroCopy)
 :   BackendSIMT(kernelBlockSizes, preferences), m_ChosenDeviceID(device)
 {
     // Set device
@@ -204,11 +351,6 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     // Get CUDA runtime version
     cudaRuntimeGetVersion(&m_RuntimeVersion);
 
-    // Give a warning if automatic copy is used on pre-Pascal devices
-    if(getPreferences().automaticCopy && m_ChosenDevice.major < 6) {
-        LOGW << "Using automatic copy on pre-Pascal devices is supported but likely to be very slow - we recommend copying manually on these devices";
-    }
-
 #ifdef _WIN32
     // If we're on Windows and NCCL is enabled, give error
     // **NOTE** There are several NCCL Windows ports e.g. https://github.com/MyCaffe/NCCL but we don't have access to any suitable systems to test
@@ -217,9 +359,16 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     }
 #endif
 
-    // Add CUDA-specific types, additionally marking them as 'device types' innaccesible to host code
-    
-    //addDeviceType("half", 2);
+    // If the model requires zero-copy
+    if(zeroCopy) {
+        // If device doesn't support mapping host memory error
+        if(!getChosenCUDADevice().canMapHostMemory) {
+            throw std::runtime_error("Device does not support mapping CPU host memory!");
+        }
+
+        // Set map host device flag
+        CHECK_CUDA_ERRORS(cudaSetDeviceFlags(cudaDeviceMapHost));
+    }
 }
 //--------------------------------------------------------------------------
 bool Backend::areSharedMemAtomicsSlow() const
@@ -349,15 +498,17 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
     // Generate reset kernel to be run before the neuron kernel
     size_t idNeuronSpikeQueueUpdate = 0;
-    neuronUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelNeuronSpikeQueueUpdate] << "()";
-    {
-        CodeStream::Scope b(neuronUpdateEnv.getStream());
+    if(!modelMerged.getMergedNeuronSpikeQueueUpdateGroups().empty()) {
+        neuronUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelNeuronSpikeQueueUpdate] << "()";
+        {
+            CodeStream::Scope b(neuronUpdateEnv.getStream());
 
-        neuronUpdateEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelNeuronSpikeQueueUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
+            neuronUpdateEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelNeuronSpikeQueueUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
 
-        genNeuronSpikeQueueUpdateKernel(neuronUpdateEnv, modelMerged, memorySpaces, idNeuronSpikeQueueUpdate);
+            genNeuronSpikeQueueUpdateKernel(neuronUpdateEnv, modelMerged, memorySpaces, idNeuronSpikeQueueUpdate);
+        }
+        neuronUpdateEnv.getStream() << std::endl;
     }
-    neuronUpdateEnv.getStream() << std::endl;
 
     size_t idStart = 0;
     neuronUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelNeuronUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t";
@@ -702,9 +853,10 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                 genCustomTransposeUpdateWUKernel(funcEnv, modelMerged, memorySpaces, g, idCustomTransposeUpdateStart);
             }
         }
-        customUpdateEnv.getStream() << "void update" << g << "()";
+        customUpdateEnv.getStream() << "void update" << g << "(unsigned long long timestep)";
         {
             CodeStream::Scope b(customUpdateEnv.getStream());
+            customUpdateEnv.getStream() << "const " << model.getTimePrecision().getName() << " t = timestep * " << Type::writeNumeric(model.getDT(), model.getTimePrecision()) << ";" << std::endl;
 
             // Loop through host update groups and generate code for those in this custom update group
             modelMerged.genMergedCustomConnectivityHostUpdateGroups(
@@ -784,12 +936,14 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     modelMerged.genMergedCustomUpdateWUStructs(os, *this);
     modelMerged.genMergedCustomUpdateTransposeWUStructs(os, *this);
     modelMerged.genMergedCustomConnectivityUpdateStructs(os, *this);
+    modelMerged.genMergedCustomConnectivityHostUpdateStructs(os, *this);
 
     // Generate arrays of merged structs and functions to push them
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateWUGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomConnectivityUpdateGroups());
+    modelMerged.genMergedCustomConnectivityHostUpdateStructArrayPush(os, *this);
     
     // Generate preamble
     preambleHandler(os);
@@ -914,28 +1068,6 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
             }
         }
 
-        // Loop through all synapse groups
-        // **TODO** this logic belongs in BackendSIMT
-        // **TODO** apply merging to this process - large models could generate thousands of lines of code here
-        for(const auto &s : model.getSynapseGroups()) {
-            // If this synapse population has BITMASK connectivity and is intialised on device, insert a call to cudaMemset to zero the whole bitmask
-            if(s.second.isSparseConnectivityInitRequired() && s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                const size_t gpSize = ceilDivide((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * getSynapticMatrixRowStride(s.second), 32);
-                initEnv.getStream() << "CHECK_CUDA_ERRORS(cudaMemset(d_gp" << s.first << ", 0, " << gpSize << " * sizeof(uint32_t)));" << std::endl;
-            }
-            
-            // If this synapse population has SPARSE connectivity and column-based on device connectivity, insert a call to cudaMemset to zero row lengths
-            // **NOTE** we could also use this code path for row-based connectivity but, leaving this in the kernel is much better as it gets merged
-            if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE && !Utils::areTokensEmpty(s.second.getConnectivityInitialiser().getColBuildCodeTokens())) {
-                initEnv.getStream() << "CHECK_CUDA_ERRORS(cudaMemset(d_rowLength" << s.first << ", 0, " << s.second.getSrcNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
-            }
-
-            // If this synapse population has SPARSE connectivity and has postsynaptic learning, insert a call to cudaMemset to zero column lengths
-            if((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !Utils::areTokensEmpty(s.second.getWUPostLearnCodeTokens())) {
-                initEnv.getStream() << "CHECK_CUDA_ERRORS(cudaMemset(d_colLength" << s.first << ", 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
-            }
-        }
-
         // If there are any initialisation threads
         if(idInitStart > 0) {
             CodeStream::Scope b(initEnv.getStream());
@@ -952,12 +1084,6 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
     initEnv.getStream() << "void initializeSparse()";
     {
         CodeStream::Scope b(initEnv.getStream());
-
-        // Copy all uninitialised state variables to device
-        if(!getPreferences().automaticCopy) {
-            initEnv.getStream() << "copyStateToDevice(true);" << std::endl;
-            initEnv.getStream() << "copyConnectivityToDevice(true);" << std::endl << std::endl;
-        }
 
         // If there are any sparse initialisation threads
         if(idSparseInitStart > 0) {
@@ -1039,19 +1165,6 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &) co
     os << "#include <cassert>" << std::endl;
     os << "#include <cstdint>" << std::endl;
 
-    // If NCCL is enabled, export ncclGetUniqueId function
-    if(getPreferences<Preferences>().enableNCCLReductions) {
-        os << "extern \"C\" {" << std::endl;
-        os << "EXPORT_VAR const unsigned int ncclUniqueIDBytes;" << std::endl;
-        os << "EXPORT_FUNC void ncclGenerateUniqueID();" << std::endl;
-        os << "EXPORT_FUNC void ncclInitCommunicator(int rank, int numRanks);" << std::endl;
-        os << "EXPORT_FUNC unsigned char *ncclGetUniqueID();" << std::endl;
-        os << "}" << std::endl;
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &) const
-{
     os << "// CUDA includes" << std::endl;
     os << "#include <curand_kernel.h>" << std::endl;
     if(getRuntimeVersion() >= 9000) {
@@ -1063,9 +1176,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
         // Include NCCL header
         os << "#include <nccl.h>" << std::endl;
         os << std::endl;
-        // Define NCCL ID and communicator
-        os << "EXPORT_VAR ncclUniqueId ncclID;" << std::endl;
-        os << "EXPORT_VAR ncclComm_t ncclCommunicator;" << std::endl;
+
         os << std::endl;
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Helper macro for error-checking NCCL calls" << std::endl;
@@ -1075,6 +1186,18 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
         os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": nccl error \" + std::to_string(error) + \": \" + ncclGetErrorString(error));\\" << std::endl;
         os << "    }\\" << std::endl;
         os << "}" << std::endl;
+
+        // Define NCCL ID and communicator
+        os << "extern ncclUniqueId ncclID;" << std::endl;
+        os << "extern ncclComm_t ncclCommunicator;" << std::endl;
+
+        // Export ncclGetUniqueId function
+        os << "extern \"C\" {" << std::endl;
+        os << "EXPORT_VAR const unsigned int ncclUniqueIDBytes;" << std::endl;
+        os << "EXPORT_FUNC void ncclGenerateUniqueID();" << std::endl;
+        os << "EXPORT_FUNC void ncclInitCommunicator(int rank, int numRanks);" << std::endl;
+        os << "EXPORT_FUNC unsigned char *ncclGetUniqueID();" << std::endl;
+        os << "}" << std::endl;
     }
 
     os << std::endl;
@@ -1083,17 +1206,11 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     os << "#define CHECK_CUDA_ERRORS(call) {\\" << std::endl;
     os << "    cudaError_t error = call;\\" << std::endl;
     os << "    if (error != cudaSuccess) {\\" << std::endl;
-    if(getPreferences<Preferences>().generateSimpleErrorHandling) {
-        os << "        std::abort();\\" << std::endl;
-    }
-    else {
-        os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": cuda error \" + std::to_string(error) + \": \" + cudaGetErrorString(error));\\" << std::endl;
-    }
+    os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": cuda error \" + std::to_string(error) + \": \" + cudaGetErrorString(error));\\" << std::endl;
     os << "    }\\" << std::endl;
     os << "}" << std::endl;
     os << std::endl;
-    os << "#define SUPPORT_CODE_FUNC __device__ __host__ inline" << std::endl;
-    os << std::endl;
+
 
     // If device is older than SM 6 or we're using a version of CUDA older than 8
     if ((getChosenCUDADevice().major < 6) || (getRuntimeVersion() < 8000)){
@@ -1384,7 +1501,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&, const MemAlloc&) const
+void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&) const
 {
 #ifdef _WIN32
     // **YUCK** on Windows, disable "function assumed not to throw an exception but does" warning
@@ -1424,50 +1541,8 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&, const Me
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc&) const
+void Backend::genAllocateMemPreamble(CodeStream&, const ModelSpecMerged&) const
 {
-    // If the model requires zero-copy
-    if(modelMerged.getModel().zeroCopyInUse()) {
-        // If device doesn't support mapping host memory error
-        if(!getChosenCUDADevice().canMapHostMemory) {
-            throw std::runtime_error("Device does not support mapping CPU host memory!");
-        }
-
-        // set appropriate device flags
-        os << "CHECK_CUDA_ERRORS(cudaSetDeviceFlags(cudaDeviceMapHost));" << std::endl;
-        os << std::endl;
-    }
-
-    // If we should select GPU by device ID, do so
-    const bool runtimeDeviceSelect = (getPreferences<Preferences>().deviceSelectMethod == DeviceSelect::MANUAL_RUNTIME);
-    if(getPreferences<Preferences>().selectGPUByDeviceID) {
-        os << "CHECK_CUDA_ERRORS(cudaSetDevice(";
-        if(runtimeDeviceSelect) {
-            os << "deviceID";
-        }
-        else {
-            os << m_ChosenDeviceID;
-        }
-        os << "));" << std::endl;
-    }
-    // Otherwise, write code to get device by PCI bus ID
-    // **NOTE** this is required because device IDs are not guaranteed to remain the same and we want the code to be run on the same GPU it was optimise for
-    else {
-        os << "int deviceID;" << std::endl;
-        os << "CHECK_CUDA_ERRORS(cudaDeviceGetByPCIBusId(&deviceID, ";
-        if(runtimeDeviceSelect) {
-            os << "pciBusID";
-        }
-        else {
-            // Get chosen device's PCI bus ID and write into code
-            char pciBusID[32];
-            CHECK_CUDA_ERRORS(cudaDeviceGetPCIBusId(pciBusID, 32, m_ChosenDeviceID));
-            os << "\"" << pciBusID << "\"";
-        }
-        os << "));" << std::endl;
-        os << "CHECK_CUDA_ERRORS(cudaSetDevice(deviceID));" << std::endl;
-    }
-    os << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genFreeMemPreamble(CodeStream &os, const ModelSpecMerged&) const
@@ -1480,9 +1555,8 @@ void Backend::genFreeMemPreamble(CodeStream &os, const ModelSpecMerged&) const
 //--------------------------------------------------------------------------
 void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
-    // Synchronise if automatic copying or zero-copy are in use
-    // **THINK** Is this only required with automatic copy on older SM, CUDA and on non-Linux?
-    if(getPreferences().automaticCopy || modelMerged.getModel().zeroCopyInUse()) {
+    // Synchronise if zero-copy are in use
+    if(modelMerged.getModel().zeroCopyInUse()) {
         os << "CHECK_CUDA_ERRORS(cudaDeviceSynchronize());" << std::endl;
     }
 
@@ -1492,104 +1566,15 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged 
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, 
-                                    const Type::ResolvedType &type, const std::string &name, VarLocation loc) const
+std::unique_ptr<Runtime::ArrayBase> Backend::createArray(const Type::ResolvedType &type, size_t count, 
+                                                         VarLocation location, bool uninitialized) const
 {
-    CodeStream &d = type.getValue().device ? definitionsInternal : definitions;
-    if(getPreferences().automaticCopy) {
-        // Export pointer, either in definitionsInternal if variable has a device type
-        // or to definitions if it should be accessable on host
-        d << "EXPORT_VAR " << type.getValue().name << "* " << name << ";" << std::endl;
-    }
-    else {
-        if(loc & VarLocation::HOST) {
-            if(type.getValue().device) {
-                throw std::runtime_error("Variable '" + name + "' is of device-only type '" + type.getValue().name + "' but is located on the host");
-            }
-
-            definitions << "EXPORT_VAR " << type.getValue().name << "* " << name << ";" << std::endl;
-        }
-        if(loc & VarLocation::DEVICE) {
-            // Write host definition to internal definitions stream if type is device only
-            d << "EXPORT_VAR " << type.getValue().name << "* d_" << name << ";" << std::endl;
-        
-        }
-    }
+    return std::make_unique<Array>(type, count, location, uninitialized);
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableInstantiation(CodeStream &os, 
-                                       const Type::ResolvedType &type, const std::string &name, VarLocation loc) const
+std::unique_ptr<Runtime::ArrayBase> Backend::createPopulationRNG(size_t count) const
 {
-    if(getPreferences().automaticCopy) {
-        os << type.getValue().name << "* " << name << ";" << std::endl;
-    }
-    else {
-        if(loc & VarLocation::HOST) {
-            os << type.getValue().name << "* " << name << ";" << std::endl;
-        }
-        if(loc & VarLocation::DEVICE) {
-            os << type.getValue().name << "* d_" << name << ";" << std::endl; 
-        }
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genVariableAllocation(CodeStream &os, 
-                                    const Type::ResolvedType &type, const std::string &name, 
-                                    VarLocation loc, size_t count, MemAlloc &memAlloc) const
-{
-    if(getPreferences().automaticCopy) {
-        os << "CHECK_CUDA_ERRORS(cudaMallocManaged(&" << name << ", " << count << " * sizeof(" << type.getName() << ")));" << std::endl;
-        memAlloc += MemAlloc::device(count * type.getSize(getPointerBytes()));
-    }
-    else {
-        if(loc & VarLocation::HOST) {
-            const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
-            os << "CHECK_CUDA_ERRORS(cudaHostAlloc(&" << name << ", " << count << " * sizeof(" << type.getName() << "), " << flags << "));" << std::endl;
-            memAlloc += MemAlloc::host(count * type.getSize(getPointerBytes()));
-        }
-
-        // If variable is present on device at all
-        if(loc & VarLocation::DEVICE) {
-            // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
-            if(loc & VarLocation::ZERO_COPY) {
-                os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void **)&d_" << name << ", (void *)" << name << ", 0));" << std::endl;
-                memAlloc += MemAlloc::zeroCopy(count * type.getSize(getPointerBytes()));
-            }
-            else {
-                os << "CHECK_CUDA_ERRORS(cudaMalloc(&d_" << name << ", " << count << " * sizeof(" << type.getName() << ")));" << std::endl;
-                memAlloc += MemAlloc::device(count * type.getSize(getPointerBytes()));
-            }
-        }
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genVariableDynamicAllocation(CodeStream &os, 
-                                           const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                           const std::string &countVarName, const std::string &prefix) const
-{
-    const auto &underlyingType = type.isPointer() ? *type.getPointer().valueType : type;
-    const std::string hostPointer = type.isPointer() ? ("*" + prefix + name) : (prefix + name);
-    const std::string hostPointerToPointer = type.isPointer() ? (prefix + name) : ("&" + prefix + name);
-    const std::string devicePointerToPointer = type.isPointer() ? (prefix + "d_" + name) : ("&" + prefix + "d_" + name);
-    if(getPreferences().automaticCopy) {
-        os << "CHECK_CUDA_ERRORS(cudaMallocManaged(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << ")));" << std::endl;
-    }
-    else {
-        if(loc & VarLocation::HOST) {
-            const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
-            os << "CHECK_CUDA_ERRORS(cudaHostAlloc(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << "), " << flags << "));" << std::endl;
-        }
-
-        // If variable is present on device at all
-        if(loc & VarLocation::DEVICE) {
-            if(loc & VarLocation::ZERO_COPY) {
-                os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void**)" << devicePointerToPointer << ", (void*)" << hostPointer << ", 0));" << std::endl;
-            }
-            else {
-                os << "CHECK_CUDA_ERRORS(cudaMalloc(" << devicePointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << ")));" << std::endl;
-            }
-        }
-    }
+    return createArray(CURandState, count, VarLocation::DEVICE, false);
 }
 //--------------------------------------------------------------------------
 void Backend::genLazyVariableDynamicAllocation(CodeStream &os, 
@@ -1600,155 +1585,19 @@ void Backend::genLazyVariableDynamicAllocation(CodeStream &os,
     const std::string hostPointer = type.isPointer() ? ("*$(_" + name + ")") : ("$(_" + name + ")");
     const std::string hostPointerToPointer = type.isPointer() ? ("$(_" + name + ")") : ("&$(_" + name + ")");
     const std::string devicePointerToPointer = type.isPointer() ? ("$(_d_" + name + ")") : ("&$(_d_" + name + ")");
-    if(getPreferences().automaticCopy) {
-        os << "CHECK_CUDA_ERRORS(cudaMallocManaged(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << ")));" << std::endl;
+   
+    if(loc & VarLocation::HOST) {
+        const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
+        os << "CHECK_CUDA_ERRORS(cudaHostAlloc(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << "), " << flags << "));" << std::endl;
     }
-    else {
-        if(loc & VarLocation::HOST) {
-            const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
-            os << "CHECK_CUDA_ERRORS(cudaHostAlloc(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << "), " << flags << "));" << std::endl;
-        }
 
-        // If variable is present on device at all
-        if(loc & VarLocation::DEVICE) {
-            if(loc & VarLocation::ZERO_COPY) {
-                os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void**)" << devicePointerToPointer << ", (void*)" << hostPointer << ", 0));" << std::endl;
-            }
-            else {
-                os << "CHECK_CUDA_ERRORS(cudaMalloc(" << devicePointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << ")));" << std::endl;
-            }
-        }
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const
-{
-    if(getPreferences().automaticCopy) {
-        os << "CHECK_CUDA_ERRORS(cudaFree(" << name << "));" << std::endl;
-    }
-    else {
-        // **NOTE** because we pinned the variable we need to free it with cudaFreeHost rather than use the host code generator
-        if(loc & VarLocation::HOST) {
-            os << "CHECK_CUDA_ERRORS(cudaFreeHost(" << name << "));" << std::endl;
-        }
-
-        // If this variable wasn't allocated in zero-copy mode, free it
-        if((loc & VarLocation::DEVICE) && !(loc & VarLocation::ZERO_COPY)) {
-            os << "CHECK_CUDA_ERRORS(cudaFree(d_" << name << "));" << std::endl;
-        }
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genVariablePush(CodeStream &os, 
-                              const Type::ResolvedType &type, const std::string &name, 
-                              VarLocation loc, bool autoInitialized, size_t count) const
-{
-    assert(!getPreferences().automaticCopy);
-
-    if(!(loc & VarLocation::ZERO_COPY)) {
-        // Only copy if uninitialisedOnly isn't set
-        if(autoInitialized) {
-            os << "if(!uninitialisedOnly)" << CodeStream::OB(1101);
-        }
-
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name;
-        os << ", " << name;
-        os << ", " << count << " * sizeof(" << type.getName() << "), cudaMemcpyHostToDevice));" << std::endl;
-
-        if(autoInitialized) {
-            os << CodeStream::CB(1101);
-        }
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genVariablePull(CodeStream &os, 
-                              const Type::ResolvedType &type, const std::string &name, 
-                              VarLocation loc, size_t count) const
-{
-    assert(!getPreferences().automaticCopy);
-
-    if(!(loc & VarLocation::ZERO_COPY)) {
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name;
-        os << ", d_"  << name;
-        os << ", " << count << " * sizeof(" << type.getName() << "), cudaMemcpyDeviceToHost));" << std::endl;
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, 
-                                     const Type::ResolvedType &type, const std::string &name, 
-                                     VarLocation loc, unsigned int batchSize) const
-{
-    assert(!getPreferences().automaticCopy);
-
-    // If this variable requires queuing and isn't zero-copy
-    if(ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
-        // If batch size is one, generate 1D memcpy to copy current timestep's data
-        if(batchSize == 1) {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            os << ", " << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            os << ", " << ng.getNumNeurons() << " * sizeof(" << type.getName() << "), cudaMemcpyHostToDevice));" << std::endl;
-        }
-        // Otherwise, perform a 2D memcpy to copy current timestep's data from each batch
-        else {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy2D(d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            os << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << type.getName() << ")";
-            os << ", " << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            os << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << type.getName() << ")";
-            os << ", " << ng.getNumNeurons() << " * sizeof(" << type.getName() << ")";
-            os << ", " << batchSize << ", cudaMemcpyHostToDevice));" << std::endl;
-        }
-    }
-    // Otherwise, generate standard push
-    else {
-        genVariablePush(os, type, name + ng.getName(), loc, false, ng.getNumNeurons() * batchSize);
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, 
-                                     const Type::ResolvedType &type, const std::string &name, 
-                                     VarLocation loc, unsigned int batchSize) const
-{
-    assert(!getPreferences().automaticCopy);
-
-    // If this variable requires queuing and isn't zero-copy
-    if(ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
-        // If batch size is one, generate 1D memcpy to copy current timestep's data
-        if(batchSize == 1) {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            os << ", d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            os << ", " << ng.getNumNeurons() << " * sizeof(" << type.getName() << "), cudaMemcpyDeviceToHost));" << std::endl;
+    // If variable is present on device at all
+    if(loc & VarLocation::DEVICE) {
+        if(loc & VarLocation::ZERO_COPY) {
+            os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void**)" << devicePointerToPointer << ", (void*)" << hostPointer << ", 0));" << std::endl;
         }
         else {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy2D(" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            os << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << type.getName() << ")";
-            os << ", d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            os << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << type.getName() << ")";
-            os << ", " << ng.getNumNeurons() << " * sizeof(" << type.getName() << ")";
-            os << ", " << batchSize << ", cudaMemcpyDeviceToHost));" << std::endl;
-        }
-    }
-    // Otherwise, generate standard pull
-    else {
-        genVariablePull(os, type, name + ng.getName(), loc, ng.getNumNeurons() * batchSize);
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genVariableDynamicPush(CodeStream &os, 
-                                     const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                     const std::string &countVarName, const std::string &prefix) const
-{
-    assert(!getPreferences().automaticCopy);
-    
-    if(!(loc & VarLocation::ZERO_COPY)) {
-        if (type.isPointer()) {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(*" <<  prefix << "d_" << name;
-            os << ", *" << prefix << name;
-            os << ", " << countVarName << " * sizeof(" << type.getPointer().valueType->getName() << "), cudaMemcpyHostToDevice));" << std::endl;
-        }
-        else {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << prefix << "d_" << name;
-            os << ", " << prefix << name;
-            os << ", " << countVarName << " * sizeof(" << type.getName() << "), cudaMemcpyHostToDevice));" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaMalloc(" << devicePointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << ")));" << std::endl;
         }
     }
 }
@@ -1766,27 +1615,6 @@ void Backend::genLazyVariableDynamicPush(CodeStream &os,
             os << "CHECK_CUDA_ERRORS(cudaMemcpy($(_d_" << name << "), $(_" << name << "), ";
             os << countVarName << " * sizeof(" << type.getName() << "), cudaMemcpyHostToDevice));" << std::endl;
         }
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genVariableDynamicPull(CodeStream &os, 
-                                     const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                     const std::string &countVarName, const std::string &prefix) const
-{
-    assert(!getPreferences().automaticCopy);
-
-    if(!(loc & VarLocation::ZERO_COPY)) {
-        if (type.isPointer()) {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(*" << prefix << name;
-            os << ", *" <<  prefix << "d_" << name;
-            os << ", " << countVarName << " * sizeof(" << type.getPointer().valueType->getName() << "), cudaMemcpyDeviceToHost));" << std::endl;
-        }
-        else {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << prefix << name;
-            os << ", " << prefix << "d_" << name;
-            os << ", " << countVarName << " * sizeof(" << type.getName() << "), cudaMemcpyDeviceToHost));" << std::endl;
-        }
-        
     }
 }
 //--------------------------------------------------------------------------
@@ -1822,32 +1650,23 @@ std::string Backend::getMergedGroupFieldHostTypeName(const Type::ResolvedType &t
     return type.getName();
 }
 //--------------------------------------------------------------------------
-void Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &, CodeStream &, 
-                                 MemAlloc &memAlloc) const
+void Backend::genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner,
+                                 CodeStream &, CodeStream &) const
 {
     // Define global Phillox RNG
     // **NOTE** this is actually accessed as a global so, unlike other variables, needs device global
-    definitionsInternal << "EXPORT_VAR __device__ curandStatePhilox4_32_10_t d_rng;" << std::endl;
+    definitions << "extern __device__ curandStatePhilox4_32_10_t d_rng;" << std::endl;
 
     // Implement global Phillox RNG
     runner << "__device__ curandStatePhilox4_32_10_t d_rng;" << std::endl;
-
-    memAlloc += MemAlloc::device(CURandStatePhilox43210.getSize(getPointerBytes()));
 }
 //--------------------------------------------------------------------------
-void Backend::genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                               const std::string &name, size_t count, MemAlloc &memAlloc) const
-{
-    // Create an array or XORWOW RNGs
-    genArray(definitions, definitionsInternal, runner, allocations, free, CURandState, name, VarLocation::DEVICE, count, memAlloc);
-}
-//--------------------------------------------------------------------------
-void Backend::genTimer(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+void Backend::genTimer(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                        CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const
 {
     // Define CUDA start and stop events in internal defintions (as they use CUDA-specific types)
-    definitionsInternal << "EXPORT_VAR cudaEvent_t " << name << "Start;" << std::endl;
-    definitionsInternal << "EXPORT_VAR cudaEvent_t " << name << "Stop;" << std::endl;
+    definitions << "extern cudaEvent_t " << name << "Start;" << std::endl;
+    definitions << "extern cudaEvent_t " << name << "Stop;" << std::endl;
 
     // Implement start and stop event variables
     runner << "cudaEvent_t " << name << "Start;" << std::endl;
@@ -1984,25 +1803,6 @@ void Backend::genMSBuildImportTarget(std::ostream &os) const
     os << "\t</ImportGroup>" << std::endl;
 }
 //--------------------------------------------------------------------------
-std::string Backend::getAllocateMemParams(const ModelSpecMerged &) const
-{
-    // If device should be selected at runtime
-    if(getPreferences<Preferences>().deviceSelectMethod == DeviceSelect::MANUAL_RUNTIME) {
-        // If devices should be delected by ID, add an integer parameter
-        if(getPreferences<Preferences>().selectGPUByDeviceID) {
-            return "int deviceID";
-        }
-        // Otherwise, add a pci bus ID parameter
-        else {
-            return "const char *pciBusID";
-        }
-    }
-    // Othewise, no parameters are required
-    else {
-        return "";
-    }
-}
-//--------------------------------------------------------------------------
 Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const
 {
     // Get size of update group start ids (constant cache is precious so don't use for init groups
@@ -2065,10 +1865,7 @@ std::string Backend::getNVCCFlags() const
     if(getPreferences<Preferences>().generateLineInfo) {
         nvccFlags += " --generate-line-info";
     }
-#ifdef MPI_ENABLE
-    // If MPI is enabled, add MPI include path
-    nvccFlags +=" -I\"$(MPI_PATH)/include\"";
-#endif
+
     return nvccFlags;
 }
 //-----------------------------------------------------------------------

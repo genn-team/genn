@@ -33,6 +33,68 @@ struct Preferences : public PreferencesBase
 };
 
 //--------------------------------------------------------------------------
+// CodeGenerator::SingleThreadedCPU::Array
+//--------------------------------------------------------------------------
+class BACKEND_EXPORT Array : public Runtime::ArrayBase
+{
+public:
+    Array(const Type::ResolvedType &type, size_t count, 
+          VarLocation location, bool uninitialized);
+    virtual ~Array();
+    
+    //------------------------------------------------------------------------
+    // ArrayBase virtuals
+    //------------------------------------------------------------------------
+    //! Allocate array
+    virtual void allocate(size_t count) final;
+
+    //! Free array
+    virtual void free() final;
+
+    //! Copy entire array to device
+    virtual void pushToDevice() final
+    {
+    }
+
+    //! Copy entire array from device
+    virtual void pullFromDevice() final
+    {
+    }
+
+    //! Copy a 1D slice of elements to device 
+    /*! \param offset   Offset in elements to start copying from
+        \param count    Number of elements to copy*/
+    virtual void pushSlice1DToDevice(size_t, size_t) final
+    {
+    }
+
+    //! Copy a 1D slice of elements from device 
+    /*! \param offset   Offset in elements to start copying from
+        \param count    Number of elements to copy*/
+    virtual void pullSlice1DFromDevice(size_t, size_t) final
+    {
+    }
+    
+    //! Memset the host pointer
+    virtual void memsetDeviceObject(int) final
+    {
+        throw std::runtime_error("Single-threaded CPU arrays have no device objects");
+    }
+
+    //! Serialise backend-specific device object to bytes
+    virtual void serialiseDeviceObject(std::vector<std::byte>&, bool) const final
+    {
+        throw std::runtime_error("Single-threaded CPU arrays have no device objects");
+    }
+
+    //! Serialise backend-specific host object to bytes
+    virtual void serialiseHostObject(std::vector<std::byte>&, bool) const
+    {
+        throw std::runtime_error("Single-threaded CPU arrays have no host objects");
+    }
+};
+
+//--------------------------------------------------------------------------
 // CodeGenerator::SingleThreadedCPU::Backend
 //--------------------------------------------------------------------------
 class BACKEND_EXPORT Backend : public BackendBase
@@ -61,77 +123,36 @@ public:
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const final;
 
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
-    virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
-    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const final;
-    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const final;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
 
-    //! Generate code to define a variable in the appropriate header file
-    virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, 
-                                       const Type::ResolvedType &type, const std::string &name, VarLocation loc) const final;
-    
-    //! Generate code to instantiate a variable in the provided stream
-    virtual void genVariableInstantiation(CodeStream &os, 
-                                          const Type::ResolvedType &type, const std::string &name, VarLocation loc) const final;
+    //! Create backend-specific array object
+    /*! \param type         data type of array
+        \param count        number of elements in array, if non-zero will allocate
+        \param location     location of array e.g. device-only*/
+    virtual std::unique_ptr<Runtime::ArrayBase> createArray(const Type::ResolvedType &type, size_t count, 
+                                                            VarLocation location, bool uninitialized) const final;
 
-    //! Generate code to allocate variable with a size known at compile-time
-    virtual void genVariableAllocation(CodeStream &os, 
-                                       const Type::ResolvedType &type, const std::string &name, 
-                                       VarLocation loc, size_t count, MemAlloc &memAlloc) const final;
-    
-    //! Generate code to allocate variable with a size known at runtime
-    virtual void genVariableDynamicAllocation(CodeStream &os, 
-                                              const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                              const std::string &countVarName = "count", const std::string &prefix = "") const final;
+    //! Create array of backend-specific population RNGs (if they are initialised on host this will occur here)
+    /*! \param count        number of RNGs required*/
+    virtual std::unique_ptr<Runtime::ArrayBase> createPopulationRNG(size_t) const final{ return std::unique_ptr<Runtime::ArrayBase>(); }
 
     //! Generate code to allocate variable with a size known at runtime
     virtual void genLazyVariableDynamicAllocation(CodeStream &os, 
                                                   const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
                                                   const std::string &countVarName) const final;
 
-    //! Generate code to free a variable
-    virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const final;
-
-    //! Generate code for pushing a variable with a size known at compile-time to the 'device'
-    virtual void genVariablePush(CodeStream &os, 
-                                 const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                 bool autoInitialized, size_t count) const final;
-    
-    //! Generate code for pulling a variable with a size known at compile-time from the 'device'
-    virtual void genVariablePull(CodeStream &os, 
-                                 const Type::ResolvedType &type, const std::string &name, 
-                                 VarLocation loc, size_t count) const final;
-
-    //! Generate code for pushing a variable's value in the current timestep to the 'device'
-    virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, 
-                                        const Type::ResolvedType &type, const std::string &name, 
-                                        VarLocation loc, unsigned int batchSize) const final;
-
-    //! Generate code for pulling a variable's value in the current timestep from the 'device'
-    virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, 
-                                        const Type::ResolvedType &type, const std::string &name,
-                                        VarLocation loc, unsigned int batchSize) const final;
-
-    //! Generate code for pushing a variable with a size known at runtime to the 'device'
-    virtual void genVariableDynamicPush(CodeStream &os, 
-                                        const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                        const std::string &countVarName = "count", const std::string &prefix = "") const final;
-
     //! Generate code for pushing a variable with a size known at runtime to the 'device'
     virtual void genLazyVariableDynamicPush(CodeStream &os, 
-                                            const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                            const std::string &countVarName) const final;
-
-    //! Generate code for pulling a variable with a size known at runtime from the 'device'
-    virtual void genVariableDynamicPull(CodeStream &os, 
-                                        const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                        const std::string &countVarName = "count", const std::string &prefix = "") const final;
+                                            const Type::ResolvedType &type, const std::string &name,
+                                            VarLocation loc, const std::string &countVarName) const final;
 
     //! Generate code for pulling a variable with a size known at runtime from the 'device'
     virtual void genLazyVariableDynamicPull(CodeStream &os, 
-                                            const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                            const std::string &countVarName) const final;
+                                            const Type::ResolvedType &type, const std::string &name,
+                                            VarLocation loc, const std::string &countVarName) const final;
 
     //! Generate code for pushing a new pointer to a dynamic variable into the merged group structure on 'device'
     virtual void genMergedDynamicVariablePush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
@@ -148,13 +169,9 @@ public:
     virtual void genKernelSynapseVariableInit(EnvironmentExternalBase &env, SynapseInitGroupMerged &sg, HandlerEnv handler) const final;
     virtual void genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const final;
 
-    virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
-                                    CodeStream &allocations, CodeStream &free, MemAlloc &memAlloc) const final;
-    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
-                                  CodeStream &allocations, CodeStream &free,
-                                  const std::string &name, size_t count, MemAlloc &memAlloc) const final;
-    virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                          CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const final;
+    virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free) const final;
+    virtual void genTimer(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise, 
+                          const std::string &name, bool updateInStepTime) const final;
 
     //! Generate code to return amount of free 'device' memory in bytes
     virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const final;
@@ -172,10 +189,11 @@ public:
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const final;
     virtual void genMSBuildImportTarget(std::ostream &os) const final;
 
-    virtual std::string getDeviceVarPrefix() const final{ return ""; }
+    //! As well as host pointers, are device objects required?
+    virtual bool isArrayDeviceObjectRequired() const final{ return false; }
 
-    //! Should 'scalar' variables be implemented on device or can host variables be used directly?
-    virtual bool isDeviceScalarRequired() const final { return false; }
+    //! As well as host pointers, are additional host objects required e.g. for buffers in OpenCL?
+    virtual bool isArrayHostObjectRequired() const final{ return false; }
 
     virtual bool isGlobalHostRNGRequired(const ModelSpecInternal &model) const final;
     virtual bool isGlobalDeviceRNGRequired(const ModelSpecInternal &model) const final;
@@ -187,9 +205,6 @@ public:
 
     //! Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels
     virtual bool isHostReductionRequired() const final { return false; }
-
-    //! Is a dendritic delay update beside from the host one in stepTime required?
-    virtual bool isDendriticDelayUpdateRequired() const final { return false; }
 
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const final{ return 0; }
@@ -210,33 +225,6 @@ private:
                               double dt, bool trueSpike) const;
 
     void genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike, bool recordingEnabled) const;
-
-    template<typename T>
-    void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups) const
-    {
-        // Loop through groups
-        for(const auto &g : groups) {
-            // Check there's no memory space assigned as single-threaded CPU backend doesn't support them
-            assert(g.getMemorySpace().empty());
-
-            // Implement merged group
-            os << "static Merged" << T::name << "Group" << g.getIndex() << " merged" << T::name << "Group" << g.getIndex() << "[" << g.getGroups().size() << "];" << std::endl;
-
-            // Write function to update
-            os << "void pushMerged" << T::name << "Group" << g.getIndex() << "ToDevice(unsigned int idx, ";
-            g.generateStructFieldArgumentDefinitions(os, *this);
-            os << ")";
-            {
-                CodeStream::Scope b(os);
-
-                // Loop through sorted fields and set array entry
-                const auto sortedFields = g.getSortedFields(*this);
-                for(const auto &f : sortedFields) {
-                    os << "merged" << T::name << "Group" << g.getIndex() << "[idx]." << std::get<1>(f) << " = " << std::get<1>(f) << ";" << std::endl;
-                }
-            }
-        }
-    }
 
     //! Helper to generate code to copy reduced custom update group variables back to memory
     /*! Because reduction operations are unnecessary in unbatched single-threaded CPU models so there's no need to actually reduce */

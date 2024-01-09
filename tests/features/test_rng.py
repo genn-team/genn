@@ -117,7 +117,7 @@ def test_sim(backend, precision, batch_size):
 
         # Loop through samples
         for pop, var_name, vars, _, data in samples:
-            pop.pull_var_from_device(var_name)
+            vars[var_name].pull_from_device()
             
             # Copy data into array
             data[model.timestep - 1,:] = vars[var_name].view[:].flatten()
@@ -210,7 +210,7 @@ def test_init(backend, precision):
         # Loop through variables
         for var_name, (_, _, dist, args) in var_init.items():
             # Pull var from devices
-            pop.pull_var_from_device(prefix + var_name)
+            vars[prefix + var_name].pull_from_device()
 
             # If distribution is discrete
             view = vars[prefix + var_name].view
@@ -238,4 +238,4 @@ def test_init(backend, precision):
 
 
 if __name__ == '__main__':
-    test_init("cuda", types.Float, 5)
+    test_init("cuda", types.Float)

@@ -238,10 +238,10 @@ protected:
 
     void setEventThresholdReTestRequired(bool req){ m_EventThresholdReTestRequired = req; }
 
-    void setFusedPSVarSuffix(const std::string &suffix){ m_FusedPSVarSuffix = suffix; }
-    void setFusedWUPreVarSuffix(const std::string &suffix){ m_FusedWUPreVarSuffix = suffix; }
-    void setFusedWUPostVarSuffix(const std::string &suffix){ m_FusedWUPostVarSuffix = suffix; }
-    void setFusedPreOutputSuffix(const std::string &suffix){ m_FusedPreOutputSuffix = suffix; }
+    void setFusedPSTarget(const SynapseGroup &target){ m_FusedPSTarget = &target; }
+    void setFusedWUPreTarget(const SynapseGroup &target){ m_FusedWUPreTarget = &target; }
+    void setFusedWUPostTarget(const SynapseGroup &target){ m_FusedWUPostTarget = &target; }
+    void setFusedPreOutputTarget(const SynapseGroup &target){ m_FusedPreOutputTarget = &target; }
     
     void finalise(double dt);
 
@@ -276,10 +276,10 @@ protected:
     /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
     bool isEventThresholdReTestRequired() const{ return m_EventThresholdReTestRequired; }
 
-    const std::string &getFusedPSVarSuffix() const{ return m_FusedPSVarSuffix; }
-    const std::string &getFusedWUPreVarSuffix() const { return m_FusedWUPreVarSuffix; }
-    const std::string &getFusedWUPostVarSuffix() const { return m_FusedWUPostVarSuffix; }
-    const std::string &getFusedPreOutputSuffix() const { return m_FusedPreOutputSuffix; }
+    const SynapseGroup &getFusedPSTarget() const{ return m_FusedPSTarget ? *m_FusedPSTarget : *this; }
+    const SynapseGroup &getFusedWUPreTarget() const { return m_FusedWUPreTarget ? *m_FusedPSTarget : *this; }
+    const SynapseGroup &getFusedWUPostTarget() const { return m_FusedWUPostTarget ? *m_FusedWUPostTarget : *this; }
+    const SynapseGroup &getFusedPreOutputTarget() const { return m_FusedPreOutputTarget ? *m_FusedPreOutputTarget : *this; }
 
     //! Gets custom connectivity updates which reference this synapse group
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
@@ -302,15 +302,15 @@ protected:
     bool canWUMPostUpdateBeFused() const;
     
     //! Has this synapse group's postsynaptic model been fused with those from other synapse groups?
-    bool isPSModelFused() const{ return m_FusedPSVarSuffix != getName(); }
+    bool isPSModelFused() const{ return m_FusedPSTarget != nullptr; }
     
     //! Has the presynaptic component of this synapse group's weight update
     //! model been fused with those from other synapse groups?
-    bool isWUPreModelFused() const { return m_FusedWUPreVarSuffix != getName(); }
+    bool isWUPreModelFused() const { return m_FusedWUPreTarget != nullptr; }
 
     //! Has the postsynaptic component of this synapse group's weight update
     //! model been fused with those from other synapse groups?
-    bool isWUPostModelFused() const { return m_FusedWUPostVarSuffix != getName(); }
+    bool isWUPostModelFused() const { return m_FusedWUPostTarget != nullptr; }
 
     //! Does this synapse group require dendritic delay?
     bool isDendriticDelayRequired() const;
@@ -327,8 +327,17 @@ protected:
     //! Does this synapse group require an RNG for it's weight update init code?
     bool isWUInitRNGRequired() const;
 
+    //! Is var init code required for any variables in this synapse group's postsynaptic update model?
+    bool isPSVarInitRequired() const;
+
     //! Is var init code required for any variables in this synapse group's weight update model?
     bool isWUVarInitRequired() const;
+
+    //! Is var init code required for any presynaptic variables in this synapse group's weight update model?
+    bool isWUPreVarInitRequired() const;
+
+    //! Is var init code required for any presynaptic variables in this synapse group's weight update model?
+    bool isWUPostVarInitRequired() const;
 
     //! Is sparse connectivity initialisation code required for this synapse group?
     bool isSparseConnectivityInitRequired() const;
@@ -523,19 +532,19 @@ private:
 
     //! Suffix for postsynaptic model variable names
     /*! This may not be the name of this synapse group if it has been fused */
-    std::string m_FusedPSVarSuffix;
+    const SynapseGroup *m_FusedPSTarget;
 
     //! Suffix for weight update model presynaptic variable names
     /*! This may not be the name of this synapse group if it has been fused */
-    std::string m_FusedWUPreVarSuffix;
+    const SynapseGroup *m_FusedWUPreTarget;
     
     //! Suffix for weight update model postsynaptic variable names
     /*! This may not be the name of this synapse group if it has been fused */
-    std::string m_FusedWUPostVarSuffix;
+    const SynapseGroup *m_FusedWUPostTarget;
 
     //! Suffix for weight update model presynaptic output variable
     /*! This may not be the name of this synapse group if it has been fused */
-    std::string m_FusedPreOutputSuffix;
+    const SynapseGroup *m_FusedPreOutputTarget;
 
     //! Name of neuron input variable postsynaptic model will target
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */

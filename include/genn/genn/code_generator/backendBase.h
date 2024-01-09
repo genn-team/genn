@@ -66,6 +66,11 @@ class CustomConnectivityUpdateSparseInitGroupMerged;
 class SynapseInitGroupMerged;
 class SynapseSparseInitGroupMerged;
 }
+
+namespace Runtime
+{
+class ArrayBase;
+}
 }
 
 //--------------------------------------------------------------------------
@@ -86,23 +91,26 @@ struct PreferencesBase
     //! Improve performance but break backward compatibility due to word-padding each row
     bool enableBitmaskOptimisations = false;
 
-    //! If backend/device supports it, copy data automatically when required rather than requiring push and pull
-    bool automaticCopy = false;
-
-    //! Should GeNN generate empty state push and pull functions
-    bool generateEmptyStatePushPull = true;
-
-    //! Should GeNN generate pull functions for extra global parameters? These are very rarely used
-    bool generateExtraGlobalParamPull = true;
-
     //! C++ compiler options to be used for building all host side code (used for unix based platforms)
     std::string userCxxFlagsGNU = "";
 
     //! NVCC compiler options they may want to use for all GPU code (used for unix based platforms)
     std::string userNvccFlagsGNU = "";
 
+    //! Logging level to use for model description
+    plog::Severity gennLogLevel = plog::info;
+
     //! Logging level to use for code generation
-    plog::Severity logLevel = plog::info;
+    plog::Severity codeGeneratorLogLevel = plog::info;
+
+    //! Logging level to use for transpiler
+    plog::Severity transpilerLogLevel = plog::info;
+
+    //! Logging level to use for runtime
+    plog::Severity runtimeLogLevel = plog::info;
+
+    //! Logging level to use for backend
+    plog::Severity backendLogLevel = plog::info;
 
     void updateHash(boost::uuids::detail::sha1 &hash) const
     {
@@ -110,11 +118,9 @@ struct PreferencesBase
 
         //! Update hash with preferences
         Utils::updateHash(enableBitmaskOptimisations, hash);
-        Utils::updateHash(automaticCopy, hash);
-        Utils::updateHash(generateEmptyStatePushPull, hash);
-        Utils::updateHash(generateExtraGlobalParamPull, hash);
     }
 };
+
 
 //--------------------------------------------------------------------------
 // GeNN::CodeGenerator::MemAlloc
@@ -245,15 +251,11 @@ public:
     /*! This will be included from a standard C++ compiler so shouldn't include any platform-specific types or headers*/
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
-    //! Definitions internal is the internal header file for the generated code. This function generates a 'preamble' to this header file.
-    /*! This will only be included by the platform-specific compiler used to build this backend so can include platform-specific types or headers*/
-    virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
-
-    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const = 0;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
     //! Allocate memory is the first function in GeNN generated code called by usercode and it should only ever be called once.
     //! Therefore it's a good place for any global initialisation. This function generates a 'preamble' to this function.
-    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const = 0;
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
     //! Free memory is called by usercode to free all memory allocatd by GeNN and should only ever be called once.
     //! This function generates a 'preamble' to this function, for example to free backend-specific objects
@@ -262,66 +264,26 @@ public:
     //! After all timestep logic is complete
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
-    //! Generate code to define a variable in the appropriate header file
-    virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, 
-                                       const Type::ResolvedType &type, const std::string &name, VarLocation loc) const = 0;
-    
-    //! Generate code to instantiate a variable in the provided stream
-    virtual void genVariableInstantiation(CodeStream &os, 
-                                          const Type::ResolvedType &type, const std::string &name, VarLocation loc) const = 0;
+    //! Create backend-specific array object
+    /*! \param type         data type of array
+        \param count        number of elements in array, if non-zero will allocate
+        \param location     location of array e.g. device-only*/
+    virtual std::unique_ptr<GeNN::Runtime::ArrayBase> createArray(const Type::ResolvedType &type, size_t count, 
+                                                                  VarLocation location, bool uninitializedn) const = 0;
 
-    //! Generate code to allocate variable with a size known at compile-time
-    virtual void genVariableAllocation(CodeStream &os, 
-                                       const Type::ResolvedType &type, const std::string &name, 
-                                       VarLocation loc, size_t count, MemAlloc &memAlloc) const = 0;
-    
-    //! Generate code to allocate variable with a size known at runtime
-    virtual void genVariableDynamicAllocation(CodeStream &os, 
-                                              const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                              const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
-    
+    //! Create array of backend-specific population RNGs (if they are initialised on host this will occur here)
+    /*! \param count        number of RNGs required*/
+    virtual std::unique_ptr<GeNN::Runtime::ArrayBase> createPopulationRNG(size_t count) const = 0;
+
     //! Generate code to allocate variable with a size known at runtime
     virtual void genLazyVariableDynamicAllocation(CodeStream &os, 
                                                   const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
                                                   const std::string &countVarName) const = 0;
 
-    //! Generate code to free a variable
-    virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const = 0;
-
-    //! Generate code for pushing a variable with a size known at compile-time to the 'device'
-    virtual void genVariablePush(CodeStream &os, 
-                                 const Type::ResolvedType &type, const std::string &name, 
-                                 VarLocation loc, bool autoInitialized, size_t count) const = 0;
-    
-    //! Generate code for pulling a variable with a size known at compile-time from the 'device'
-    virtual void genVariablePull(CodeStream &os, 
-                                 const Type::ResolvedType &type, const std::string &name, 
-                                 VarLocation loc, size_t count) const = 0;
-
-    //! Generate code for pushing a variable's value in the current timestep to the 'device'
-    virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, 
-                                        const Type::ResolvedType &type, const std::string &name, 
-                                        VarLocation loc, unsigned int batchSize) const = 0;
-
-    //! Generate code for pulling a variable's value in the current timestep from the 'device'
-    virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, 
-                                        const Type::ResolvedType &type, const std::string &name, 
-                                        VarLocation loc, unsigned int batchSize) const = 0;
-
-    //! Generate code for pushing a variable with a size known at runtime to the 'device'
-    virtual void genVariableDynamicPush(CodeStream &os, 
-                                        const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                        const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
-
     //! Generate code for pushing a variable with a size known at runtime to the 'device'
     virtual void genLazyVariableDynamicPush(CodeStream &os, 
                                             const Type::ResolvedType &type, const std::string &name,
                                             VarLocation loc, const std::string &countVarName) const = 0;
-
-    //! Generate code for pulling a variable with a size known at runtime from the 'device'
-    virtual void genVariableDynamicPull(CodeStream &os, 
-                                        const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                        const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
 
     //! Generate code for pulling a variable with a size known at runtime from the 'device'
     virtual void genLazyVariableDynamicPull(CodeStream &os, 
@@ -345,15 +307,9 @@ public:
 
     //! Generate a single RNG instance
     /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
-    virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                                    CodeStream &allocations, CodeStream &free, MemAlloc &memAlloc) const = 0;
+    virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free) const = 0;
 
-    //! Generate an RNG with a state per population member
-    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
-                                  CodeStream &allocations, CodeStream &free, 
-                                  const std::string &name, size_t count, MemAlloc &memAlloc) const = 0;
-
-    virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+    virtual void genTimer(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                           CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const = 0;
 
     //! Generate code to return amount of free 'device' memory in bytes
@@ -385,27 +341,18 @@ public:
     virtual void genMSBuildItemDefinitions(std::ostream &os) const = 0;
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const = 0;
     virtual void genMSBuildImportTarget(std::ostream &os) const = 0;
-
-    //! Get backend-specific allocate memory parameters
-    virtual std::string getAllocateMemParams(const ModelSpecMerged &) const { return ""; }
-
     //! Get list of files to copy into generated code
     /*! Paths should be relative to share/genn/backends/ */
     virtual std::vector<filesystem::path> getFilesToCopy(const ModelSpecMerged&) const{ return {}; }
 
-    //! When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix.
-    //! This function returns the device prefix so it can be used in otherwise platform-independent code.
-    virtual std::string getDeviceVarPrefix() const{ return ""; }
-
-    //! When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix.
-    //! This function returns the host prefix so it can be used in otherwise platform-independent code.
-    virtual std::string getHostVarPrefix() const { return ""; }
-
     //! Different backends may have different or no pointer prefix (e.g. __global for OpenCL)
     virtual std::string getPointerPrefix() const { return ""; }
 
-    //! Should 'scalar' variables be implemented on device or can host variables be used directly?
-    virtual bool isDeviceScalarRequired() const = 0;
+    //! As well as host pointers, are device objects required?
+    virtual bool isArrayDeviceObjectRequired() const = 0;
+
+    //! As well as host pointers, are additional host objects required e.g. for buffers in OpenCL?
+    virtual bool isArrayHostObjectRequired() const = 0;
 
     //! Different backends use different RNGs for different things. Does this one require a global host RNG for the specified model?
     virtual bool isGlobalHostRNGRequired(const ModelSpecInternal &model) const = 0;
@@ -422,9 +369,6 @@ public:
     //! Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels
     virtual bool isHostReductionRequired() const = 0;
 
-    //! Is a dendritic delay update beside from the host one in stepTime required?
-    virtual bool isDendriticDelayUpdateRequired() const = 0;
-
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const = 0;
 
@@ -439,42 +383,6 @@ public:
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
-    //! Helper function to generate matching push and pull functions for a variable
-    void genVariablePushPull(CodeStream &push, CodeStream &pull,
-                             const Type::ResolvedType &type, const std::string &name, 
-                             VarLocation loc, bool autoInitialized, size_t count) const
-    {
-        genVariablePush(push, type, name, loc, autoInitialized, count);
-        genVariablePull(pull, type, name, loc, count);
-    }
-
-    //! Helper function to generate matching push and pull functions for the current state of a variable
-    void genCurrentVariablePushPull(CodeStream &push, CodeStream &pull, const NeuronGroupInternal &ng, 
-                                    const Type::ResolvedType &type, const std::string &name, 
-                                    VarLocation loc, unsigned int batchSize) const
-    {
-        genCurrentVariablePush(push, ng, type, name, loc, batchSize);
-        genCurrentVariablePull(pull, ng, type, name, loc, batchSize);
-    }
-
-
-    //! Helper function to generate matching definition, declaration, allocation and free code for a statically-sized array
-    void genArray(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                  const Type::ResolvedType &type, const std::string &name, 
-                  VarLocation loc, size_t count, MemAlloc &memAlloc) const
-    {
-        genVariableDefinition(definitions, definitionsInternal, type, name, loc);
-        genVariableInstantiation(runner, type, name, loc);
-        genVariableFree(free, name, loc);
-        genVariableAllocation(allocations, type, name, loc, count, memAlloc);
-    }
-
-    //! Get the prefix for accessing the address of 'scalar' variables
-    std::string getScalarAddressPrefix() const
-    {
-        return isDeviceScalarRequired() ? getDeviceVarPrefix() : ("&" + getDeviceVarPrefix());
-    }
-
     //! Get the type to use for synaptic indices within a merged synapse group
     Type::ResolvedType getSynapseIndexType(const GroupMerged<SynapseGroupInternal> &sg) const;
 

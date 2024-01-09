@@ -38,12 +38,11 @@ void updateHashList(const std::vector<T*> &objects, boost::uuids::detail::sha1 &
 }
 // ------------------------------------------------------------------------
 template<typename M, typename H, typename T>
-void fuseSynapseGroups(const std::vector<SynapseGroupInternal*> &unmergedSyn, bool merge, std::vector<SynapseGroupInternal*> &mergedSyn,
-                        const std::string &mergedTargetPrefix, const std::string &mergedTargetSuffix, const std::string &logDescription,
-                        M isSynMergableFunc, H getSynMergeHashFunc, T setSynMergeTargetFunc)
+void fuseSynapseGroups(const std::vector<SynapseGroupInternal*> &unfusedSyn, bool fuse, std::vector<SynapseGroupInternal*> &fusedSyn,
+                       const std::string &logDescription, M isSynFusableFunc, H getSynFusedHashFunc, T setSynFuseTargetFunc)
 {
     // Create a copy of list of synapse groups
-    std::vector<SynapseGroupInternal*> syn = unmergedSyn;
+    std::vector<SynapseGroupInternal*> syn = unfusedSyn;
 
     // Loop through un-merged synapse groups
     for(unsigned int i = 0; !syn.empty(); i++) {
@@ -51,34 +50,31 @@ void fuseSynapseGroups(const std::vector<SynapseGroupInternal*> &unmergedSyn, bo
         auto *a = syn.back();
         syn.pop_back();
 
-        // Add A to vector of merged groups
-        mergedSyn.push_back(a);
+        // Add A to vector of fused groups
+        fusedSyn.push_back(a);
 
-        // Continue if merging is disabled
-        if(!merge) {
+        // Continue if fusing is disabled
+        if(!fuse) {
             continue;
         }
 
-        // If this synapse group can be merged at all
-        if(!std::invoke(isSynMergableFunc, a)) {
+        // If this synapse group can be fused at all
+        if(!std::invoke(isSynFusableFunc, a)) {
             continue;
         }
 
         // Get hash digest used for checking compatibility
-        const auto aHashDigest = std::invoke(getSynMergeHashFunc, a);
-
-        // Create a name for merged groups
-        const std::string mergedTargetName = mergedTargetPrefix + std::to_string(i) + "_" + mergedTargetSuffix;
+        const auto aHashDigest = std::invoke(getSynFusedHashFunc, a);
 
         // Loop through remainder of synapse groups
         bool anyMerged = false;
         for(auto b = syn.begin(); b != syn.end();) {
-            // If synapse group b can be merged with others and it's compatible with a
-            if(std::invoke(isSynMergableFunc, *b) && (aHashDigest == std::invoke(getSynMergeHashFunc, *b))) {
-                LOGD_GENN << "Merging " << logDescription << " of '" << (*b)->getName() << "' with '" << a->getName() << "' into '" << mergedTargetName << "'";
+            // If synapse group b can be fused with others and it's compatible with a
+            if(std::invoke(isSynFusableFunc, *b) && (aHashDigest == std::invoke(getSynFusedHashFunc, *b))) {
+                LOGD_GENN << "Fusing " << logDescription << " of '" << (*b)->getName() << "' with '" << a->getName() << "'";
 
-                // Set b's merge target to our unique name
-                std::invoke(setSynMergeTargetFunc, *b, mergedTargetName);
+                // Set b's merge target to ourselves
+                std::invoke(setSynFuseTargetFunc, *b, *a);
 
                 // Remove from temporary vector
                 b = syn.erase(b);
@@ -95,7 +91,7 @@ void fuseSynapseGroups(const std::vector<SynapseGroupInternal*> &unmergedSyn, bo
 
         // If synapse group A was successfully merged with anything, set it's merge target to the unique name
         if(anyMerged) {
-            std::invoke(setSynMergeTargetFunc, a, mergedTargetName);
+            std::invoke(setSynFuseTargetFunc, a, *a);
         }
     }
 }
@@ -260,9 +256,57 @@ bool NeuronGroup::isRecordingEnabled() const
     }
 }
 //----------------------------------------------------------------------------
+bool NeuronGroup::isVarInitRequired() const
+{
+    // Returns true if any neuron variables require initialisation
+    if(std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),
+                   [](const auto &init)
+                   { 
+                       return !Utils::areTokensEmpty(init.second.getCodeTokens());
+                   }))
+    {
+        return true;
+    }
+
+    // Return true if any current sources variables require initialisation
+    if(std::any_of(getCurrentSources().cbegin(), getCurrentSources().cend(),
+                   [](const auto *cs){ return cs->isVarInitRequired(); }))
+    {
+        return true;
+    }
+    
+    // Return true if any incoming synapse groups have 
+    // postsynaptic model variables which require initialisation
+    if(std::any_of(getFusedPSMInSyn().cbegin(), getFusedPSMInSyn().cend(),
+                   [](const auto *sg){ return sg->isPSVarInitRequired(); }))
+    {
+        return true;
+    }
+
+    // Return true if any incoming synapse groups have postsynaptic
+    // weight update model variables which require initialisation
+    const auto fusedInSynWithPostVars = getFusedInSynWithPostVars();
+    if(std::any_of(fusedInSynWithPostVars.cbegin(), fusedInSynWithPostVars.cend(),
+                   [](const auto *sg){ return sg->isWUPostVarInitRequired(); }))
+    {
+        return true;
+    }
+
+    // Return true if any outgoing synapse groups have presynaptic
+    // weight update model variables which require initialisation
+    const auto fusedOutSynWithPreVars = getFusedOutSynWithPreVars();
+    if(std::any_of(fusedOutSynWithPreVars.cbegin(), fusedOutSynWithPreVars.cend(),
+                   [](const auto *sg){ return sg->isWUPreVarInitRequired(); }))
+    {
+        return true;
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
 void NeuronGroup::injectCurrent(CurrentSourceInternal *src)
 {
-    m_MergedCurrentSourceGroups.push_back(src);
+    m_CurrentSourceGroups.push_back(src);
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isSimRNGRequired() const
@@ -276,7 +320,7 @@ bool NeuronGroup::isSimRNGRequired() const
     }
 
     // Return true if any current sources require an RNG for simulation
-    if(std::any_of(m_MergedCurrentSourceGroups.cbegin(), m_MergedCurrentSourceGroups.cend(),
+    if(std::any_of(m_CurrentSourceGroups.cbegin(), m_CurrentSourceGroups.cend(),
         [](const CurrentSourceInternal *cs){ return Utils::isRNGRequired(cs->getInjectionCodeTokens()); }))
     {
         return true;
@@ -300,7 +344,7 @@ bool NeuronGroup::isInitRNGRequired() const
     }
 
     // Return true if any current sources require an RNG for initialisation
-    if(std::any_of(m_MergedCurrentSourceGroups.cbegin(), m_MergedCurrentSourceGroups.cend(),
+    if(std::any_of(m_CurrentSourceGroups.cbegin(), m_CurrentSourceGroups.cend(),
         [](const CurrentSourceInternal *cs){ return Utils::isRNGRequired(cs->getVarInitialisers()); }))
     {
         return true;
@@ -385,9 +429,9 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
     // If there are any incoming synapse groups
     if(!getInSyn().empty()) {
         // All incoming synapse groups will have postsynaptic models so attempt to merge these directly
-        fuseSynapseGroups(getInSyn(), fusePSM, m_FusedPSMInSyn, "FusedPSM", getName(), "postsynaptic update",
+        fuseSynapseGroups(getInSyn(), fusePSM, m_FusedPSMInSyn, "postsynaptic update",
                           &SynapseGroupInternal::canPSBeFused, &SynapseGroupInternal::getPSFuseHashDigest,
-                          &SynapseGroupInternal::setFusedPSVarSuffix);
+                          &SynapseGroupInternal::setFusedPSTarget);
 
         // Copy groups with some form of postsynaptic update into new vector
         std::vector<SynapseGroupInternal *> inSynWithPostUpdate;
@@ -401,9 +445,9 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
 
         // If there are any, merge
         if(!inSynWithPostUpdate.empty()) {
-            fuseSynapseGroups(inSynWithPostUpdate, fusePrePostWUM, m_FusedWUPostInSyn, "FusedWUPost", getName(), "postsynaptic weight update",
+            fuseSynapseGroups(inSynWithPostUpdate, fusePrePostWUM, m_FusedWUPostInSyn, "postsynaptic weight update",
                               &SynapseGroupInternal::canWUMPostUpdateBeFused, &SynapseGroupInternal::getWUPostFuseHashDigest,
-                              &SynapseGroupInternal::setFusedWUPostVarSuffix);
+                              &SynapseGroupInternal::setFusedWUPostTarget);
         }
     }
 
@@ -419,9 +463,9 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
 
      // If there are any
     if(!outSynWithPreUpdate.empty()) {
-        fuseSynapseGroups(outSynWithPreUpdate, fusePrePostWUM, m_FusedWUPreOutSyn, "FusedWUPre", getName(), "presynaptic weight update",
+        fuseSynapseGroups(outSynWithPreUpdate, fusePrePostWUM, m_FusedWUPreOutSyn, "presynaptic weight update",
                           &SynapseGroupInternal::canWUMPreUpdateBeFused, &SynapseGroupInternal::getWUPreFuseHashDigest,
-                          &SynapseGroupInternal::setFusedWUPreVarSuffix);
+                          &SynapseGroupInternal::setFusedWUPreTarget);
     }
 
     // Copy groups with output onto the presynaptic neuron into new vector
@@ -434,9 +478,9 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
 
     // If there are any
     if(!outSynWithPreOutput.empty()) {
-        fuseSynapseGroups(outSynWithPreOutput, fusePSM, m_FusedPreOutputOutSyn, "FusedPreOut", getName(), "presynaptic synapse output",
+        fuseSynapseGroups(outSynWithPreOutput, fusePSM, m_FusedPreOutputOutSyn, "presynaptic synapse output",
                           &SynapseGroupInternal::canPreOutputBeFused, &SynapseGroupInternal::getPreOutputHashDigest,
-                          &SynapseGroupInternal::setFusedPreOutputSuffix);
+                          &SynapseGroupInternal::setFusedPreOutputTarget);
     }
    
 }

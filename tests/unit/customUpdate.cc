@@ -73,7 +73,7 @@ class Sum3 : public CustomUpdateModels::Base
 
     SET_UPDATE_CODE("$(sum) = $(scale) * ($(a) + $(b));\n");
 
-    SET_CUSTOM_UPDATE_VARS({{"sum", "scalar"}, {"scale", "scalar", CustomUpdateVarAccess::READ_ONLY_SHARED_ELEMENT}});
+    SET_CUSTOM_UPDATE_VARS({{"sum", "scalar"}, {"scale", "scalar", CustomUpdateVarAccess::READ_ONLY_SHARED_NEURON}});
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE},
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
@@ -170,7 +170,7 @@ class ReduceDouble : public CustomUpdateModels::Base
         "reduction2 = var2;\n");
 
     SET_CUSTOM_UPDATE_VARS({{"reduction1", "scalar", CustomUpdateVarAccess::REDUCE_BATCH_SUM},
-                            {"reduction2", "scalar", CustomUpdateVarAccess::REDUCE_ELEMENT_SUM}});
+                            {"reduction2", "scalar", CustomUpdateVarAccess::REDUCE_NEURON_SUM}});
 
     SET_VAR_REFS({{"var1", "scalar", VarAccessMode::READ_ONLY},
                   {"var2", "scalar", VarAccessMode::READ_ONLY}});
@@ -195,7 +195,7 @@ class ReduceNeuronSharedVar : public CustomUpdateModels::Base
 
     SET_UPDATE_CODE("reduction = var;\n");
 
-    SET_CUSTOM_UPDATE_VARS({{"reduction", "scalar", CustomUpdateVarAccess::REDUCE_ELEMENT_SUM}})
+    SET_CUSTOM_UPDATE_VARS({{"reduction", "scalar", CustomUpdateVarAccess::REDUCE_NEURON_SUM}})
     SET_VAR_REFS({{"var", "scalar", VarAccessMode::READ_ONLY}});
 };
 IMPLEMENT_SNIPPET(ReduceNeuronSharedVar);

@@ -16,6 +16,9 @@
 #include "code_generator/groupMerged.h"
 #include "code_generator/lazyString.h"
 
+// GeNN runtime includes
+#include "runtime/runtime.h"
+
 // GeNN transpiler includes
 #include "transpiler/prettyPrinter.h"
 #include "transpiler/token.h"
@@ -205,9 +208,9 @@ protected:
             // Add to field group using lambda function to potentially map from group to field
             // **NOTE** this will have been destroyed by the point this is called so need careful capturing!
             m_FieldGroup.get().addField(std::get<0>(field), std::get<1>(field),
-                                        [field, &group](const typename F::GroupInternal &, size_t i)
+                                        [field, &group](const auto &runtime, const typename F::GroupInternal &, size_t i)
                                         {
-                                            return std::get<2>(field)(group.getGroups().at(i), i);
+                                            return std::get<2>(field)(runtime, group.getGroups().at(i), i);
                                         },
                                         std::get<3>(field));
 
@@ -456,9 +459,9 @@ public:
         const auto &scalarType = this->getGroup().getScalarType();
         addField(scalarType.addConst(), name,
                  scalarType, name + fieldSuffix,
-                 [getFieldValue, scalarType](const auto &g, size_t i)
+                 [getFieldValue](const Runtime::Runtime&, const auto &g, size_t i)
                  {
-                     return Type::writeNumeric(getFieldValue(g, i), scalarType);
+                    return getFieldValue(g, i);
                  });
     }
 
@@ -506,8 +509,7 @@ public:
         }
     }
 
-    void addExtraGlobalParams(const Snippet::Base::EGPVec &egps, const std::string &arrayPrefix, 
-                              const std::string &varName = "", const std::string &fieldSuffix = "")
+    void addExtraGlobalParams(const Snippet::Base::EGPVec &egps, const std::string &arraySuffix = "", const std::string &fieldSuffix = "")
     {
         // Loop through EGPs
         for(const auto &e : egps) {
@@ -515,17 +517,16 @@ public:
             assert(!resolvedType.isPointer());
             const auto pointerType = resolvedType.createPointer();
             addField(pointerType, e.name,
-                     pointerType, e.name + varName + fieldSuffix,
-                     [arrayPrefix, e, varName](const auto &g, size_t) 
+                     pointerType, e.name + arraySuffix + fieldSuffix,
+                     [e, arraySuffix](const auto &runtime, const auto &g, size_t) 
                      {
-                         return arrayPrefix + e.name + varName + g.getName(); 
+                         return runtime.getArray(g, e.name + arraySuffix); 
                      },
                      "", GroupMergedFieldType::DYNAMIC);
         }
     }
 
-    void addExtraGlobalParamRefs(const Models::Base::EGPRefVec &egpRefs, const std::string &arrayPrefix, 
-                                 const std::string &fieldSuffix = "")
+    void addExtraGlobalParamRefs(const Models::Base::EGPRefVec &egpRefs, const std::string &fieldSuffix = "")
     {
         // Loop through EGP references
         for(const auto &e : egpRefs) {
@@ -534,10 +535,9 @@ public:
             const auto pointerType = resolvedType.createPointer();
             addField(pointerType, e.name,
                      pointerType, e.name + fieldSuffix,
-                     [arrayPrefix, e](const auto &g, size_t) 
+                     [e](const auto &runtime, const auto &g, size_t) 
                      {
-                         const auto egpRef = g.getEGPReferences().at(e.name);
-                         return arrayPrefix + egpRef.getEGP().name + egpRef.getTargetName(); 
+                         return g.getEGPReferences().at(e.name).getTargetArray(runtime);
                      },
                      "", GroupMergedFieldType::DYNAMIC);
         }
@@ -600,10 +600,10 @@ public:
             // If parameter is heterogeneous, add scalar field
             if(std::invoke(isHeterogeneous, this->getGroup(), varName, p.first)) {
                 addScalar(p.first, varName + fieldSuffix,
-                            [p, varName](const auto &g, size_t)
-                            {
-                                return  A(g).getInitialisers().at(varName).getParams().at(p.first);
-                            });
+                          [p, varName](const auto &g, size_t)
+                          {
+                              return  A(g).getInitialisers().at(varName).getParams().at(p.first);
+                          });
             }
             // Otherwise, just add a const-qualified scalar to the type environment with archetype value
             else {
@@ -622,10 +622,10 @@ public:
             // If derived parameter is heterogeneous, add scalar field
             if(std::invoke(isHeterogeneous, this->getGroup(), varName, p.first)) {
                 addScalar(p.first, varName + fieldSuffix,
-                            [p, varName](const auto &g, size_t)
-                            {
-                                return A(g).getInitialisers().at(varName).getDerivedParams().at(p.first);
-                            });
+                          [p, varName](const auto &g, size_t)
+                          {
+                              return A(g).getInitialisers().at(varName).getDerivedParams().at(p.first);
+                          });
             }
             // Otherwise, just add a const-qualified scalar to the type environment with archetype value
             else {
@@ -636,8 +636,7 @@ public:
     }
 
     template<typename A>
-    void addVars(const std::string &arrayPrefix, GetVarIndexFn<A> getIndexFn, 
-                 const std::string &fieldSuffix = "", bool readOnly = false)
+    void addVars(GetVarIndexFn<A> getIndexFn, const std::string &fieldSuffix = "", bool readOnly = false)
     {
         // Loop through variables
         // **TODO** get default access from adaptor
@@ -647,25 +646,23 @@ public:
             const auto qualifiedType = (readOnly || (v.access & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
             addField(qualifiedType, v.name,
                      resolvedType.createPointer(), v.name + fieldSuffix, 
-                     [arrayPrefix, v](const auto &g, size_t) 
+                     [v](const auto &runtime, const auto &g, size_t) 
                      { 
-                         return arrayPrefix + v.name + A(g).getNameSuffix();
+                         return runtime.getArray(A(g).getTarget(), v.name);
                      },
                      getIndexFn(v.access, v.name));
         }
     }
 
     template<typename A>
-    void addVars(const std::string &arrayPrefix, const std::string &indexSuffix, 
-                 const std::string &fieldSuffix = "", bool readOnly = false)
+    void addVars(const std::string &indexSuffix, const std::string &fieldSuffix = "", bool readOnly = false)
     {
-        addVars<A>(arrayPrefix, [&indexSuffix](typename AdapterDef<A>::AccessType, const std::string &) { return indexSuffix; }, 
+        addVars<A>([&indexSuffix](typename AdapterDef<A>::AccessType, const std::string &) { return indexSuffix; }, 
                    fieldSuffix, readOnly);
     }
 
     template<typename A>
-    void addVarRefs(const std::string &arrayPrefix, GetVarRefIndexFn<A> getIndexFn, 
-                    const std::string &fieldSuffix = "", bool readOnly = false)
+    void addVarRefs(GetVarRefIndexFn<A> getIndexFn,  const std::string &fieldSuffix = "", bool readOnly = false)
     {
         // Loop through variable references
         const A archetypeAdaptor(this->getGroup().getArchetype());
@@ -675,20 +672,18 @@ public:
             const auto qualifiedType = (readOnly || (v.access & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
             addField(qualifiedType, v.name,
                      resolvedType.createPointer(), v.name + fieldSuffix,
-                     [arrayPrefix, v](const auto &g, size_t) 
+                     [v](const auto &runtime, const auto &g, size_t) 
                      { 
-                         const auto varRef = A(g).getInitialisers().at(v.name);
-                         return arrayPrefix + varRef.getVar().name + varRef.getTargetName(); 
+                         return A(g).getInitialisers().at(v.name).getTargetArray(runtime); 
                      },
                      getIndexFn(v.access, archetypeAdaptor.getInitialisers().at(v.name)));
         }
     }
 
     template<typename A>
-    void addVarRefs(const std::string &arrayPrefix, const std::string &indexSuffix, 
-                    const std::string &fieldSuffix = "", bool readOnly = false)
+    void addVarRefs(const std::string &indexSuffix, const std::string &fieldSuffix = "", bool readOnly = false)
     {
-        addVarRefs<A>(arrayPrefix, [&indexSuffix](std::optional<unsigned int>, auto &) { return indexSuffix; }, 
+        addVarRefs<A>([&indexSuffix](std::optional<unsigned int>, auto &) { return indexSuffix; }, 
                       fieldSuffix);
     }
 
@@ -749,9 +744,9 @@ public:
         return m_GetWriteIndex(var.name, var.access);
     }
 
-    std::string getTargetName(const GroupInternal &g, const AdapterDef &var) const
+    const Runtime::ArrayBase *getArray(const Runtime::Runtime &runtime, const GroupInternal &g, const AdapterDef &var) const
     {
-        return var.name + A(g).getNameSuffix();
+        return runtime.getArray(A(g).getTarget(), var.name);
     }
 
 private:
@@ -803,10 +798,9 @@ protected:
         return m_GetWriteIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
     }
 
-    std::string getTargetName(const GroupInternal &g, const AdapterDef &var) const
+    const Runtime::ArrayBase *getArray(const Runtime::Runtime &runtime, const GroupInternal &g, const AdapterDef &var) const
     {
-        const auto &initialiser = A(g).getInitialisers().at(var.name);
-        return initialiser.getVarName() + initialiser.getTargetName();
+        return A(g).getInitialisers().at(var.name).getTargetArray(runtime);
     }
 
 private:
@@ -829,10 +823,10 @@ public:
 
     template<typename... PolicyArgs>
     EnvironmentLocalCacheBase(G &group, F &fieldGroup, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
-                              const std::string &arrayPrefix, const std::string &fieldSuffix, const std::string &localPrefix,
+                              const std::string &fieldSuffix, const std::string &localPrefix,
                               PolicyArgs&&... policyArgs)
     :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...), m_Group(group), m_FieldGroup(fieldGroup), 
-        m_Context(context), m_Contents(m_ContentsStream), m_ArrayPrefix(arrayPrefix), 
+        m_Context(context), m_Contents(m_ContentsStream),
         m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix)
     {
         // Copy variables into variables referenced, alongside boolean
@@ -863,11 +857,10 @@ public:
 
             // Add field to underlying field group
             const auto &group = m_Group.get();
-            const auto &arrayPrefix = m_ArrayPrefix;
             m_FieldGroup.get().addField(resolvedType.createPointer(), v.name + m_FieldSuffix,
-                                        [arrayPrefix, v, &group, this](const typename F::GroupInternal &, size_t i)
+                                        [v, &group, this](const auto &runtime, const typename F::GroupInternal &, size_t i)
                                         {
-                                            return arrayPrefix + this->getTargetName(group.getGroups().at(i), v);
+                                            return this->getArray(runtime, group.getGroups().at(i), v);
                                         });
 
             if(getVarAccessMode(v.access) == VarAccessMode::READ_ONLY) {
@@ -953,7 +946,6 @@ private:
     std::reference_wrapper<const Type::TypeContext> m_Context;
     std::ostringstream m_ContentsStream;
     CodeStream m_Contents;
-    std::string m_ArrayPrefix;
     std::string m_FieldSuffix;
     std::string m_LocalPrefix;
     std::unordered_map<std::string, std::pair<bool, AdapterDef>> m_VariablesReferenced;

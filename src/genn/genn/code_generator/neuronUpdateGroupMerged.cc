@@ -17,8 +17,8 @@ using namespace GeNN::Transpiler;
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::CurrentSource
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::CurrentSource::generate(const BackendBase &backend, EnvironmentExternalBase &env,
-                                                      NeuronUpdateGroupMerged &ng, unsigned int batchSize)
+void NeuronUpdateGroupMerged::CurrentSource::generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+                                                      unsigned int batchSize)
 {
     const std::string fieldSuffix =  "CS" + std::to_string(getIndex());
     const auto *cm = getArchetype().getCurrentSourceModel();
@@ -31,7 +31,7 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(const BackendBase &backend
     // Substitute parameter and derived parameter names
     csEnv.addParams(cm->getParamNames(), fieldSuffix, &CurrentSourceInternal::getParams, &CurrentSource::isParamHeterogeneous);
     csEnv.addDerivedParams(cm->getDerivedParams(), fieldSuffix, &CurrentSourceInternal::getDerivedParams, &CurrentSource::isDerivedParamHeterogeneous);
-    csEnv.addExtraGlobalParams(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix(), "", fieldSuffix);
+    csEnv.addExtraGlobalParams(cm->getExtraGlobalParams(), "", fieldSuffix);
 
     // Define inject current function
     csEnv.add(Type::ResolvedType::createFunction(Type::Void, {getScalarType()}), 
@@ -39,7 +39,7 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(const BackendBase &backend
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CurrentSourceVarAdapter, CurrentSource, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, getTypeContext(), csEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
+        *this, ng, getTypeContext(), csEnv, fieldSuffix, "l",
         [batchSize, &ng](const std::string&, VarAccess d)
         {
             return ng.getVarIndex(batchSize, getVarAccessDim(d), "$(id)");
@@ -80,7 +80,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
 
     // Add inSyn
     psmEnv.addField(getScalarType().createPointer(), "_out_post", "outPost" + fieldSuffix,
-                    [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPost" + g.getFusedPSVarSuffix(); });
+                    [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g.getFusedPSTarget(), "outPost"); });
 
     // Read into local variable
     const std::string idx = ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
@@ -91,9 +91,9 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     if (getArchetype().isDendriticDelayRequired()) {
         // Add dendritic delay buffer and pointer into it
         psmEnv.addField(getScalarType().createPointer(), "_den_delay", "denDelay" + fieldSuffix,
-                        [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "denDelay" + g.getFusedPSVarSuffix();});
+                        [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "denDelay");});
         psmEnv.addField(Type::Uint32.createPointer(), "_den_delay_ptr", "denDelayPtr" + fieldSuffix,
-                        [&backend](const auto &g, size_t) { return backend.getScalarAddressPrefix() + "denDelayPtr" + g.getFusedPSVarSuffix();});
+                        [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "denDelayPtr");});
 
         // Get reference to dendritic delay buffer input for this timestep
         psmEnv.printLine(backend.getPointerPrefix() + getScalarType().getName() + " *denDelayFront = &$(_den_delay)[(*$(_den_delay_ptr) * $(num_neurons)) + " + idx + "];");
@@ -108,7 +108,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     // Add parameters, derived parameters and extra global parameters to environment
     psmEnv.addParams(psm->getParamNames(), fieldSuffix, &SynapseGroupInternal::getPSParams, &InSynPSM::isParamHeterogeneous);
     psmEnv.addDerivedParams(psm->getDerivedParams(), fieldSuffix, &SynapseGroupInternal::getPSDerivedParams, &InSynPSM::isDerivedParamHeterogeneous);
-    psmEnv.addExtraGlobalParams(psm->getExtraGlobalParams(), backend.getDeviceVarPrefix(), "", fieldSuffix);
+    psmEnv.addExtraGlobalParams(psm->getExtraGlobalParams(), "", fieldSuffix);
     
     // **TODO** naming convention
     psmEnv.add(getScalarType(), "inSyn", "linSyn");
@@ -120,7 +120,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<SynapsePSMVarAdapter, InSynPSM, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, getTypeContext(), psmEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
+        *this, ng, getTypeContext(), psmEnv, fieldSuffix, "l",
         [batchSize, &ng](const std::string&, VarAccess d)
         {
             return ng.getVarIndex(batchSize, getVarAccessDim(d), "$(id)");
@@ -156,8 +156,8 @@ bool NeuronUpdateGroupMerged::InSynPSM::isDerivedParamHeterogeneous( const std::
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::OutSynPreOutput
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::OutSynPreOutput::generate(const BackendBase &backend, EnvironmentExternalBase &env, 
-                                                        NeuronUpdateGroupMerged &ng, unsigned int batchSize)
+void NeuronUpdateGroupMerged::OutSynPreOutput::generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+                                                        unsigned int batchSize)
 {
     const std::string fieldSuffix =  "OutSyn" + std::to_string(getIndex());
     
@@ -165,7 +165,7 @@ void NeuronUpdateGroupMerged::OutSynPreOutput::generate(const BackendBase &backe
     EnvironmentGroupMergedField<OutSynPreOutput, NeuronUpdateGroupMerged> outSynEnv(env, *this, ng);
     
     outSynEnv.addField(getScalarType().createPointer(), "_out_pre", "outPre" + fieldSuffix,
-                       [&backend](const auto &g, size_t) { return backend.getDeviceVarPrefix() + "outPre" + g.getFusedPreOutputSuffix(); });
+                       [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPreOutputTarget(), "outPre"); });
 
     // Add reverse insyn variable to 
     const std::string idx = ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
@@ -178,7 +178,7 @@ void NeuronUpdateGroupMerged::OutSynPreOutput::generate(const BackendBase &backe
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::InSynWUMPostCode
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &backend, EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                                                          unsigned int batchSize, bool dynamicsNotSpike)
 {
     const std::string fieldSuffix =  "InSynWUMPost" + std::to_string(getIndex());
@@ -195,13 +195,13 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &back
         // Add parameters, derived parameters and extra global parameters to environment
         synEnv.addParams(wum->getParamNames(), fieldSuffix, &SynapseGroupInternal::getWUParams, &InSynWUMPostCode::isParamHeterogeneous);
         synEnv.addDerivedParams(wum->getDerivedParams(), fieldSuffix, &SynapseGroupInternal::getWUDerivedParams, &InSynWUMPostCode::isDerivedParamHeterogeneous);
-        synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), backend.getDeviceVarPrefix(), "", fieldSuffix);
+        synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), "", fieldSuffix);
 
         // Create an environment which caches variables in local variables if they are accessed
         // **NOTE** always copy variables if synapse group is delayed
         const bool delayed = (getArchetype().getBackPropDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPostVarAdapter, InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
+            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l",
             [batchSize, delayed, &synEnv, &ng](const std::string&, VarAccess d)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -270,7 +270,7 @@ bool NeuronUpdateGroupMerged::InSynWUMPostCode::isDerivedParamHeterogeneous( con
  //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::OutSynWUMPreCode
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &backend, EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                                                          unsigned int batchSize, bool dynamicsNotSpike)
 {
     const std::string fieldSuffix =  "OutSynWUMPre" + std::to_string(getIndex());
@@ -287,13 +287,13 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &back
         // Add parameters, derived parameters and extra global parameters to environment
         synEnv.addParams(wum->getParamNames(), fieldSuffix, &SynapseGroupInternal::getWUParams, &OutSynWUMPreCode::isParamHeterogeneous);
         synEnv.addDerivedParams(wum->getDerivedParams(), fieldSuffix, &SynapseGroupInternal::getWUDerivedParams, &OutSynWUMPreCode::isDerivedParamHeterogeneous);
-        synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), backend.getDeviceVarPrefix(), "", fieldSuffix);
+        synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), "", fieldSuffix);
 
         // Create an environment which caches variables in local variables if they are accessed
         // **NOTE** always copy variables if synapse group is delayed
         const bool delayed = (getArchetype().getDelaySteps() != NO_DELAY);
         EnvironmentLocalVarCache<SynapseWUPreVarAdapter, OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, backend.getDeviceVarPrefix(), fieldSuffix, "l",
+            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l",
             [batchSize, delayed, &ng](const std::string&, VarAccess d)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -492,7 +492,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // Substitute parameter and derived parameter names
     neuronEnv.addParams(nm->getParamNames(), "", &NeuronGroupInternal::getParams, &NeuronUpdateGroupMerged::isParamHeterogeneous);
     neuronEnv.addDerivedParams(nm->getDerivedParams(), "", &NeuronGroupInternal::getDerivedParams, &NeuronUpdateGroupMerged::isDerivedParamHeterogeneous);
-    neuronEnv.addExtraGlobalParams(nm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+    neuronEnv.addExtraGlobalParams(nm->getExtraGlobalParams());
     
     // Substitute spike times
     const std::string timePrecision = getTimeType().getName();
@@ -511,7 +511,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // **NOTE** we do this right at the top so that local copies can be used by child groups
     // **NOTE** always copy variables if variable is delayed
     EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronVarEnv(
-        *this, *this, getTypeContext(), neuronEnv, backend.getDeviceVarPrefix(), "", "l",
+        *this, *this, getTypeContext(), neuronEnv, "", "l",
         [batchSize, &neuronEnv, this](const std::string &varName, VarAccess d)
         {
             const bool delayed = (getArchetype().isVarQueueRequired(varName) && getArchetype().isDelayRequired());
@@ -537,13 +537,13 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // Loop through outgoing synapse groups with presynaptic output
     for (auto &sg : m_MergedOutSynPreOutputGroups) {
         CodeStream::Scope b(neuronVarEnv.getStream());
-        sg.generate(backend, neuronVarEnv, *this, batchSize);
+        sg.generate(neuronVarEnv, *this, batchSize);
     }
  
     // Loop through all of neuron group's current sources
     for (auto &cs : m_MergedCurrentSourceGroups) {
         CodeStream::Scope b(neuronVarEnv.getStream());
-        cs.generate(backend, neuronVarEnv, *this, batchSize);
+        cs.generate(neuronVarEnv, *this, batchSize);
     }
 
 
@@ -575,13 +575,13 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // Generate var update for outgoing synaptic populations with presynaptic update code
     for (auto &sg : m_MergedOutSynWUMPreCodeGroups) {
         CodeStream::Scope b(neuronVarEnv.getStream());
-        sg.generate(backend, neuronVarEnv, *this, batchSize, true);
+        sg.generate(neuronVarEnv, *this, batchSize, true);
     }
 
     // Generate var update for incoming synaptic populations with postsynaptic code
     for (auto &sg : m_MergedInSynWUMPostCodeGroups) {
         CodeStream::Scope b(neuronVarEnv.getStream());
-        sg.generate(backend, neuronVarEnv, *this, batchSize, true);
+        sg.generate(neuronVarEnv, *this, batchSize, true);
     }
 
     // look for spike type events first.
@@ -726,18 +726,18 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     }
 }
 //--------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::generateWUVarUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
+void NeuronUpdateGroupMerged::generateWUVarUpdate(EnvironmentExternalBase &env, unsigned int batchSize)
 {
     // Generate var update for outgoing synaptic populations with presynaptic update code
     for (auto &sg : m_MergedOutSynWUMPreCodeGroups) {
         CodeStream::Scope b(env.getStream());
-        sg.generate(backend, env, *this, batchSize, false);
+        sg.generate(env, *this, batchSize, false);
     }
 
     // Generate var update for incoming synaptic populations with postsynaptic code
     for (auto &sg : m_MergedInSynWUMPostCodeGroups) {
         CodeStream::Scope b(env.getStream());
-        sg.generate(backend, env, *this, batchSize, false);
+        sg.generate(env, *this, batchSize, false);
     }
 }
 //--------------------------------------------------------------------------
@@ -813,8 +813,16 @@ bool NeuronUpdateGroupMerged::isDerivedParamHeterogeneous(const std::string &par
 //----------------------------------------------------------------------------
 const std::string NeuronSpikeQueueUpdateGroupMerged::name = "NeuronSpikeQueueUpdate";
 //----------------------------------------------------------------------------
-void NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountReset(EnvironmentExternalBase &env, unsigned int batchSize) const
+void NeuronSpikeQueueUpdateGroupMerged::genSpikeQueueUpdate(EnvironmentExternalBase &env, unsigned int batchSize) const
 {
+    // Update spike queue
+    if(getArchetype().isDelayRequired()) {
+        env.printLine("*$(_spk_que_ptr) = (*$(_spk_que_ptr) + 1) % " + std::to_string(getArchetype().getNumDelaySlots()) + ";");
+    }
+
+    if(batchSize > 1) {
+        env.getStream() << "for(unsigned int batch = 0; batch < " << batchSize << "; batch++)" << CodeStream::OB(1);
+    }
     if(getArchetype().isSpikeEventRequired()) {
         if(getArchetype().isDelayRequired()) {
             env.getStream() << env["_spk_cnt_evnt"] << "[*" << env["_spk_que_ptr"];
@@ -828,15 +836,21 @@ void NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountReset(Environmen
         }
     }
 
-    if(getArchetype().isTrueSpikeRequired() && getArchetype().isDelayRequired()) {
-        env.getStream() << env["_spk_cnt"] << "[*" << env["_spk_que_ptr"];
-        if(batchSize > 1) {
-            env.getStream() << " + (batch * " << getArchetype().getNumDelaySlots() << ")";
+    if(getArchetype().isTrueSpikeRequired()) {
+        if(getArchetype().isDelayRequired()) {
+            env.getStream() << env["_spk_cnt"] << "[*" << env["_spk_que_ptr"];
+            if(batchSize > 1) {
+                env.getStream() << " + (batch * " << getArchetype().getNumDelaySlots() << ")";
+            }
+            env.getStream() << "] = 0; " << std::endl;
         }
-        env.getStream() << "] = 0; " << std::endl;
+        else {
+            env.getStream() << env["_spk_cnt"] << "[" << ((batchSize > 1) ? "batch" : "0") << "] = 0;" << std::endl;
+        }
     }
-    else {
-        env.getStream() << env["_spk_cnt"] << "[" << ((batchSize > 1) ? "batch" : "0") << "] = 0;" << std::endl;
+
+    if(batchSize > 1) {
+        env.getStream() << CodeStream::CB(1);
     }
 }
 

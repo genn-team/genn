@@ -70,9 +70,7 @@ from .genn import (generate_code, init_logging, CurrentSource,
                    SparseConnectivityInit, SynapseGroup, SynapseMatrixType,
                    ToeplitzConnectivityInit, UnresolvedType, Var,
                    VarInit, VarLocation, VarRef, WeightUpdateModelBase)
-from .shared_library_model import (SharedLibraryModelDouble, 
-                                   SharedLibraryModelFloat)
-                                   
+from .runtime import Runtime
 from .genn_groups import (CurrentSourceMixin, CustomConnectivityUpdateMixin,
                           CustomUpdateMixin, CustomUpdateWUMixin,
                           NeuronGroupMixin, SynapseGroupMixin)
@@ -142,6 +140,7 @@ class GeNNModel(ModelSpecInternal):
                  genn_log_level=PlogSeverity.WARNING,
                  code_gen_log_level=PlogSeverity.WARNING,
                  transpiler_log_level=PlogSeverity.WARNING,
+                 runtime_log_level=PlogSeverity.WARNING,
                  backend_log_level=PlogSeverity.WARNING,
                  **preference_kwargs):
         """Init GeNNModel
@@ -154,6 +153,7 @@ class GeNNModel(ModelSpecInternal):
         genn_log_level          -- Log level for GeNN
         code_gen_log_level      -- Log level for GeNN code-generator
         transpiler_log_level    -- Log level for GeNN transpiler
+        runtime_log_level       -- Log level for GeNN runtime
         backend_log_level       -- Log level for backend
         preference_kwargs       -- Additional keyword arguments to set in backend preferences structure
         """
@@ -169,22 +169,19 @@ class GeNNModel(ModelSpecInternal):
         self.time_precision = UnresolvedType(self.precision 
                                              if time_precision is None
                                              else time_precision)
-        if self.time_precision == types.Float:
-            self._slm = SharedLibraryModelFloat()
-        elif self.time_precision == types.Double:
-            self._slm = SharedLibraryModelDouble()
-        else:
-            raise ValueError(
-                "Supported time precisions are float and double, "
-                "but '{1}' was given".format(self._time_precision))
 
         # Initialise GeNN logging
-        init_logging(genn_log_level, code_gen_log_level, transpiler_log_level)
+        init_logging(genn_log_level, code_gen_log_level, 
+                     transpiler_log_level, runtime_log_level)
         
         self._built = False
         self._loaded = False
+        self._runtime = None
+        self._preferences = None
+        self._model_merged = None
+        self._backend = None
         self.backend_name = backend
-        self._preferences = preference_kwargs
+        self._preference_kwargs = preference_kwargs
         self.backend_log_level = backend_log_level
 
         # Set model properties
@@ -247,54 +244,50 @@ class GeNNModel(ModelSpecInternal):
     @property
     def t(self):
         """Simulation time in ms"""
-        return self._slm.time
-
-    @t.setter
-    def t(self, t):
-        self._slm.time = t
+        return self._runtime.time
 
     @property
     def timestep(self):
         """Simulation time step"""
-        return self._slm.timestep
+        return self._runtime.timestep
 
     @timestep.setter
     def timestep(self, timestep):
-        self._slm.timestep = timestep
+        self._runtime.timestep = timestep
 
     @property
     def free_device_mem_bytes(self):
-        return self._slm.free_device_mem_bytes;
+        return self._runtime.free_device_mem_bytes;
 
     @property
     def neuron_update_time(self):
-        return self._slm.neuron_update_time
+        return self._runtime.neuron_update_time
 
     @property
     def init_time(self):
-        return self._slm.init_time
+        return self._runtime.init_time
 
     @property
     def presynaptic_update_time(self):
-        return self._slm.presynaptic_update_time
+        return self._runtime.presynaptic_update_time
 
     @property
     def postsynaptic_update_time(self):
-        return self._slm.postsynaptic_update_time
+        return self._runtime.postsynaptic_update_time
 
     @property
     def synapse_dynamics_time(self):
-        return self._slm.synapse_dynamics_time
+        return self._runtime.synapse_dynamics_time
 
     @property
     def init_sparse_time(self):
-        return self._slm.init_sparse_time
+        return self._runtime.init_sparse_time
 
     def get_custom_update_time(self, name):
-        return self._slm.get_custom_update_time(name)
+        return self._runtime.get_custom_update_time(name)
 
     def get_custom_update_transpose_time(self, name):
-        return self._slm.get_custom_update_transpose_time(name)
+        return self._runtime.get_custom_update_transpose_time(name)
 
     def add_neuron_population(self, pop_name, num_neurons, neuron,
                               param_space, var_space):
@@ -582,51 +575,47 @@ class GeNNModel(ModelSpecInternal):
         self.finalise()
 
         # Create suitable preferences object for backend
-        preferences = self._backend_module.Preferences()
+        self._preferences = self._backend_module.Preferences()
 
-        # Set attributes on preferences object
-        for k, v in iteritems(self._preferences):
-            if hasattr(preferences, k):
-                setattr(preferences, k, v)
+        # Set attributes on preferences object from kwargs
+        for k, v in iteritems(self._preference_kwargs):
+            if hasattr(self._preferences, k):
+                setattr(self._preferences, k, v)
         
         # Create backend
-        backend = self._backend_module.create_backend(self, output_path,
-                                                      self.backend_log_level,
-                                                      preferences)
+        self._backend = self._backend_module.create_backend(
+            self, output_path, self.backend_log_level, self._preferences)
 
         # Generate code
-        mem_alloc = generate_code(self, backend, share_path,
-                                  output_path, force_rebuild)
+        self._model_merged = generate_code(self, self._backend, share_path,
+                                           output_path, force_rebuild)
 
         # Build code
         if system() == "Windows":
-            check_call([_msbuild, "/p:Configuration=Release", "/m", "/verbosity:minimal",
+            check_call([_msbuild, "/p:Configuration=Release", "/m", "/verbosity:quiet",
                         path.join(output_path, "runner.vcxproj")])
         else:
             check_call(["make", "-j", str(cpu_count(logical=False)), "-C", output_path])
 
         self._built = True
-        return mem_alloc
 
     def load(self, path_to_model="./", num_recording_timesteps=None):
         """import the model as shared library and initialize it"""
         if self._loaded:
             raise Exception("GeNN model already loaded")
         self._path_to_model = path_to_model
+        
+        # Create runtime
+        self._runtime = Runtime(self._path_to_model, self._model_merged,
+                                self._backend)
+        
+        # If model uses recording system and recording timesteps is not set
+        if self.recording_in_use and num_recording_timesteps is None:
+            raise Exception("Cannot use recording system without passing "
+                            "number of recording timesteps to GeNNModel.load")
 
-        self._slm.open(self._path_to_model, self.name)
-
-        self._slm.allocate_mem()
-
-        # If model uses recording system
-        if self.recording_in_use:
-            # Raise exception if recording timesteps is not set
-            if num_recording_timesteps is None:
-                raise Exception("Cannot use recording system without passing "
-                                "number of recording timesteps to GeNNModel.load")
-
-            # Allocate recording buffers
-            self._slm.allocate_recording_buffers(num_recording_timesteps)
+        # Allocate memory
+        self._runtime.allocate(num_recording_timesteps)
 
         # Loop through neuron populations and load any
         # extra global parameters required for initialization
@@ -651,7 +640,7 @@ class GeNNModel(ModelSpecInternal):
             cu_data.load_init_egps()
 
         # Initialize model
-        self._slm.initialize()
+        self._runtime.initialize()
 
         # Loop through neuron populations
         for pop_data in itervalues(self.neuron_populations):
@@ -674,7 +663,7 @@ class GeNNModel(ModelSpecInternal):
             cu_data.load()
 
         # Now everything is set up call the sparse initialisation function
-        self._slm.initialize_sparse()
+        self._runtime.initialize_sparse()
 
         # Set loaded flag and built flag
         self._loaded = True
@@ -702,8 +691,8 @@ class GeNNModel(ModelSpecInternal):
         for pop_data in itervalues(self.neuron_populations):
             pop_data.unload()
 
-        # Close shared library model
-        self._slm.close()
+        # Close runtime
+        self._runtime = None
 
         # Clear loaded flag
         self._loaded = False
@@ -713,14 +702,14 @@ class GeNNModel(ModelSpecInternal):
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before stepping")
 
-        self._slm.step_time()
+        self._runtime.step_time()
     
     def custom_update(self, name):
         """Perform custom update"""
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before performing custom update")
             
-        self._slm.custom_update(name)
+        self._runtime.custom_update(name)
    
 
     def pull_recording_buffers_from_device(self):
@@ -732,20 +721,7 @@ class GeNNModel(ModelSpecInternal):
             raise Exception("Cannot pull recording buffer if recording system is not in use")
 
         # Pull recording buffers from device
-        self._slm.pull_recording_buffers_from_device()
-
-    def end(self):
-        """Free memory"""
-        for group in [self.neuron_populations, self.synapse_populations,
-                      self.current_sources, self.custom_connectivity_updates, 
-                      self.custom_updates]:
-            for g_name, g_dat in iteritems(group):
-                for egp_name, egp_dat in iteritems(g_dat.extra_global_params):
-                    # if auto allocation is not enabled, let the user care
-                    # about freeing of the EGP
-                    if egp_dat.needsAllocation:
-                        self._slm.free_extra_global_param(g_name, egp_name)
-        # "normal" variables are freed when SharedLibraryModel is destoyed
+        self._runtime.pull_recording_buffers_from_device()
 
     def _validate_neuron_group(self, group, context):
         # If group is a string

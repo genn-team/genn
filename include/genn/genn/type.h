@@ -2,6 +2,7 @@
 
 // Standard C includes
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 
 // Standard C++ includes
@@ -13,6 +14,9 @@
 #include <variant>
 #include <vector>
 
+// FFI includes
+#include <ffi.h>
+
 // Boost includes
 #include <sha1.hpp>
 
@@ -22,7 +26,7 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define CREATE_NUMERIC(TYPE, RANK, L_SUFFIX) ResolvedType::createNumeric<TYPE>(#TYPE, RANK, L_SUFFIX)
+#define CREATE_NUMERIC(TYPE, RANK, FFI_TYPE, L_SUFFIX) ResolvedType::createNumeric<TYPE>(#TYPE, RANK, FFI_TYPE, L_SUFFIX)
 
 //----------------------------------------------------------------------------
 // GeNN::Type::Qualifier
@@ -65,7 +69,7 @@ public:
     template<typename T>
     T get() const{ return std::get<T>(m_Value); }
     const std::variant<double, uint64_t, int64_t> &get() const{ return m_Value; }
-    
+
     //----------------------------------------------------------------------------
     // Operators
     //----------------------------------------------------------------------------
@@ -134,6 +138,7 @@ struct GENN_EXPORT ResolvedType
     {
         std::string name;
         size_t size;
+        ffi_type *ffiType;
         bool device;
         std::optional<Numeric> numeric;
         
@@ -278,6 +283,8 @@ struct GENN_EXPORT ResolvedType
     std::string getName() const;
     size_t getSize(size_t pointerBytes) const;
 
+    ffi_type *getFFIType() const;
+
     ResolvedType createPointer(Qualifier qualifiers = Qualifier{0}) const
     {
         return ResolvedType(Pointer{*this}, qualifiers);
@@ -305,18 +312,20 @@ struct GENN_EXPORT ResolvedType
     // Static API
     //------------------------------------------------------------------------
     template<typename T>
-    static ResolvedType createNumeric(const std::string &name, int rank, const std::string &literalSuffix = "", Qualifier qualifiers = Qualifier{0}, bool device = false)
+    static ResolvedType createNumeric(const std::string &name, int rank, ffi_type *ffiType, 
+                                      const std::string &literalSuffix = "", Qualifier qualifiers = Qualifier{0}, bool device = false)
     {
-        return ResolvedType{Value{name, sizeof(T), device, Numeric{rank, std::numeric_limits<T>::min(), std::numeric_limits<T>::max(),
-                                                                   std::numeric_limits<T>::lowest(), std::numeric_limits<T>::max_digits10,
-                                                                   std::is_signed<T>::value, std::is_integral<T>::value, literalSuffix}},
+        return ResolvedType{Value{name, sizeof(T), ffiType, device, Numeric{rank, std::numeric_limits<T>::min(), std::numeric_limits<T>::max(),
+                                                                            std::numeric_limits<T>::lowest(), std::numeric_limits<T>::max_digits10,
+                                                                            std::is_signed<T>::value, std::is_integral<T>::value, literalSuffix}},
                             qualifiers};
     }
 
     template<typename T>
-    static ResolvedType createValue(const std::string &name, Qualifier qualifiers = Qualifier{0}, bool device = false)
+    static ResolvedType createValue(const std::string &name, Qualifier qualifiers = Qualifier{0}, 
+                                    ffi_type *ffiType = nullptr, bool device = false)
     {
-        return ResolvedType{Value{name, sizeof(T), device, std::nullopt}, qualifiers};
+        return ResolvedType{Value{name, sizeof(T), ffiType, device, std::nullopt}, qualifiers};
     }
 
     static ResolvedType createFunction(const ResolvedType &returnType, const std::vector<ResolvedType> &argTypes, bool variadic=false)
@@ -372,19 +381,19 @@ struct GENN_EXPORT UnresolvedType
 //----------------------------------------------------------------------------
 // Declare numeric types
 //----------------------------------------------------------------------------
-inline static const ResolvedType Bool = CREATE_NUMERIC(bool, 0, "");
-inline static const ResolvedType Int8 = CREATE_NUMERIC(int8_t, 10, "");
-inline static const ResolvedType Int16 = CREATE_NUMERIC(int16_t, 20, "");
-inline static const ResolvedType Int32 = CREATE_NUMERIC(int32_t, 30, "");
-inline static const ResolvedType Int64 = CREATE_NUMERIC(int64_t, 40, "");
+inline static const ResolvedType Bool = CREATE_NUMERIC(bool, 0, nullptr, "");
+inline static const ResolvedType Int8 = CREATE_NUMERIC(int8_t, 10, &ffi_type_sint8, "");
+inline static const ResolvedType Int16 = CREATE_NUMERIC(int16_t, 20, &ffi_type_sint16, "");
+inline static const ResolvedType Int32 = CREATE_NUMERIC(int32_t, 30, &ffi_type_sint32, "");
+inline static const ResolvedType Int64 = CREATE_NUMERIC(int64_t, 40, &ffi_type_sint32, "");
 
-inline static const ResolvedType Uint8 = CREATE_NUMERIC(uint8_t, 10, "u");
-inline static const ResolvedType Uint16 = CREATE_NUMERIC(uint16_t, 20, "u");
-inline static const ResolvedType Uint32 = CREATE_NUMERIC(uint32_t, 30, "u");
-inline static const ResolvedType Uint64 = CREATE_NUMERIC(uint64_t, 40, "u");
+inline static const ResolvedType Uint8 = CREATE_NUMERIC(uint8_t, 10, &ffi_type_uint8, "u");
+inline static const ResolvedType Uint16 = CREATE_NUMERIC(uint16_t, 20, &ffi_type_uint16, "u");
+inline static const ResolvedType Uint32 = CREATE_NUMERIC(uint32_t, 30, &ffi_type_uint32, "u");
+inline static const ResolvedType Uint64 = CREATE_NUMERIC(uint64_t, 40, &ffi_type_uint64, "u");
 
-inline static const ResolvedType Float = CREATE_NUMERIC(float, 50, "f");
-inline static const ResolvedType Double = CREATE_NUMERIC(double, 60, "");
+inline static const ResolvedType Float = CREATE_NUMERIC(float, 50, &ffi_type_float, "f");
+inline static const ResolvedType Double = CREATE_NUMERIC(double, 60, &ffi_type_double, "");
 
 // Void
 inline static const ResolvedType Void = ResolvedType();
@@ -409,6 +418,9 @@ GENN_EXPORT ResolvedType getCommonType(const ResolvedType &a, const ResolvedType
 
 //! Write numeric value to string, formatting correctly for type
 GENN_EXPORT std::string writeNumeric(const NumericValue &value, const ResolvedType &type);
+
+//! Serialise numeric value to bytes
+GENN_EXPORT void serialiseNumeric(const NumericValue &value, const ResolvedType &type, std::vector<std::byte> &bytes);
 
 //----------------------------------------------------------------------------
 // updateHash overrides

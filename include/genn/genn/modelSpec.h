@@ -191,37 +191,37 @@ inline Models::WUVarReference createWUVarRef(CustomConnectivityUpdate *cu, const
 }
 
 //! Creates a reference to a neuron group extra global parameter
-inline Models::EGPReference createEGPRef(const NeuronGroup *ng, const std::string &egpName)
+inline Models::EGPReference createEGPRef(NeuronGroup *ng, const std::string &egpName)
 {
     return Models::EGPReference::createEGPRef(ng, egpName);
 }
 
 //! Creates a reference to a current source extra global parameter
-inline Models::EGPReference createEGPRef(const CurrentSource *cs, const std::string &egpName)
+inline Models::EGPReference createEGPRef(CurrentSource *cs, const std::string &egpName)
 {
     return Models::EGPReference::createEGPRef(cs, egpName);
 }
 
 //! Creates a reference to a custom update extra global parameter
-inline Models::EGPReference createEGPRef(const CustomUpdate *cu, const std::string &egpName)
+inline Models::EGPReference createEGPRef(CustomUpdate *cu, const std::string &egpName)
 {
     return Models::EGPReference::createEGPRef(cu, egpName);
 }
 
 //! Creates a reference to a custom weight update extra global parameter
-inline Models::EGPReference createEGPRef(const CustomUpdateWU *cu, const std::string &egpName)
+inline Models::EGPReference createEGPRef(CustomUpdateWU *cu, const std::string &egpName)
 {
     return Models::EGPReference::createEGPRef(cu, egpName);
 }
 
 //! Creates a reference to a postsynaptic model extra global parameter
-inline Models::EGPReference createPSMEGPRef(const SynapseGroup *sg, const std::string &egpName)
+inline Models::EGPReference createPSMEGPRef(SynapseGroup *sg, const std::string &egpName)
 {
     return Models::EGPReference::createPSMEGPRef(sg, egpName);
 }
 
 //! Creates a reference to a weight update model extra global parameter
-inline Models::EGPReference createWUEGPRef(const SynapseGroup *sg, const std::string &egpName)
+inline Models::EGPReference createWUEGPRef(SynapseGroup *sg, const std::string &egpName)
 {
     return Models::EGPReference::createWUEGPRef(sg, egpName);
 }
@@ -324,6 +324,9 @@ public:
     //! Find a neuron group by name
     NeuronGroup *findNeuronGroup(const std::string &name){ return static_cast<NeuronGroup*>(findNeuronGroupInternal(name)); }
 
+    //! Find a neuron group by name
+    const NeuronGroup *findNeuronGroup(const std::string &name) const{ return static_cast<const NeuronGroup*>(findNeuronGroupInternal(name)); }
+
     //! Adds a new neuron group to the model using a neuron model managed by the user
     /*! \param name string containing unique name of neuron population.
         \param size integer specifying how many neurons are in the population.
@@ -352,7 +355,10 @@ public:
     // PUBLIC SYNAPSE FUNCTIONS
     //=========================
     //! Find a synapse group by name
-    SynapseGroup *findSynapseGroup(const std::string &name);    
+    SynapseGroup *findSynapseGroup(const std::string &name){ return static_cast<SynapseGroup*>(findSynapseGroupInternal(name)); }
+    
+    //! Find a synapse group by name
+    const SynapseGroup *findSynapseGroup(const std::string &name) const{ return static_cast<const SynapseGroup*>(findSynapseGroupInternal(name)); }
 
     //! Adds a synapse population to the model using weight update and postsynaptic models managed by the user
     /*! \param name                         string containing unique name of synapse population.
@@ -721,8 +727,14 @@ private:
     //! Find a neuron group by name
     NeuronGroupInternal *findNeuronGroupInternal(const std::string &name);
     
+    //! Find a neuron group by name
+    const NeuronGroupInternal *findNeuronGroupInternal(const std::string &name) const;
+
     //! Find a synapse group by name
     SynapseGroupInternal *findSynapseGroupInternal(const std::string &name);
+
+    //! Find a synapse group by name
+    const SynapseGroupInternal *findSynapseGroupInternal(const std::string &name) const;
 
     SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string &src, const std::string &trg,
                                        const WeightUpdateModels::Base *wum, const ParamValues &weightParamValues, const VarValues &weightVarInitialisers, const VarValues &weightPreVarInitialisers, const VarValues &weightPostVarInitialisers,

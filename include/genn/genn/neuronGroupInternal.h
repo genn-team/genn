@@ -48,6 +48,7 @@ public:
     using NeuronGroup::isSimRNGRequired;
     using NeuronGroup::isInitRNGRequired;
     using NeuronGroup::isRecordingEnabled;
+    using NeuronGroup::isVarInitRequired;
     using NeuronGroup::isVarQueueRequired;
     using NeuronGroup::getHashDigest;
     using NeuronGroup::getInitHashDigest;
@@ -76,7 +77,7 @@ public:
 
     bool isVarDelayed(const std::string &varName) const{ return m_NG.isVarQueueRequired(varName); }
 
-    const std::string &getNameSuffix() const{ return m_NG.getName(); }
+    const NeuronGroup &getTarget() const{ return m_NG; }
 
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
     

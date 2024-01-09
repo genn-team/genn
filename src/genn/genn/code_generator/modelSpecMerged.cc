@@ -64,28 +64,32 @@ using namespace GeNN::CodeGenerator;
                        &CustomConnectivityUpdateInternal::getHashDigest);
 
     createMergedGroups(getModel().getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
-                       [](const NeuronGroupInternal&){ return true; },
+                       [](const NeuronGroupInternal &g){ return (g.isDelayRequired() || g.isTrueSpikeRequired() || g.isSpikeEventRequired()); },
                        &NeuronGroupInternal::getSpikeQueueUpdateHashDigest);
 
     createMergedGroups(getModel().getNeuronGroups(), m_MergedNeuronPrevSpikeTimeUpdateGroups,
                        [](const NeuronGroupInternal &ng){ return (ng.isPrevSpikeTimeRequired() || ng.isPrevSpikeEventTimeRequired()); },
                        &NeuronGroupInternal::getPrevSpikeTimeUpdateHashDigest);
 
-    if(backend.isDendriticDelayUpdateRequired()) {
-        std::vector<std::reference_wrapper<const SynapseGroupInternal>> synapseGroupsWithDendriticDelay;
-        for(const auto &n : getModel().getNeuronGroups()) {
-            for(const auto *sg : n.second.getFusedPSMInSyn()) {
-                if(sg->isDendriticDelayRequired()) {
-                    synapseGroupsWithDendriticDelay.push_back(std::cref(*sg));
-                }
+    std::vector<std::reference_wrapper<const SynapseGroupInternal>> synapseGroupsWithDendriticDelay;
+    for(const auto &n : getModel().getNeuronGroups()) {
+        for(const auto *sg : n.second.getFusedPSMInSyn()) {
+            if(sg->isDendriticDelayRequired()) {
+                synapseGroupsWithDendriticDelay.push_back(std::cref(*sg));
             }
         }
-        createMergedGroups(synapseGroupsWithDendriticDelay, m_MergedSynapseDendriticDelayUpdateGroups,
-                           &SynapseGroupInternal::getDendriticDelayUpdateHashDigest);
     }
+    createMergedGroups(synapseGroupsWithDendriticDelay, m_MergedSynapseDendriticDelayUpdateGroups,
+                        &SynapseGroupInternal::getDendriticDelayUpdateHashDigest);
 
     createMergedGroups(getModel().getNeuronGroups(), m_MergedNeuronInitGroups,
-                       [](const NeuronGroupInternal&){ return true; },
+                       [](const NeuronGroupInternal &ng)
+                       { 
+                           return (ng.isSpikeEventRequired() || ng.isTrueSpikeRequired()
+                                   || ng.isSpikeTimeRequired() || ng.isPrevSpikeTimeRequired()
+                                   || ng.isSpikeEventTimeRequired() || ng.isPrevSpikeEventTimeRequired()
+                                   || ng.isVarInitRequired());
+                       },
                        &NeuronGroupInternal::getInitHashDigest);
 
     createMergedGroups(getModel().getCustomUpdates(), m_MergedCustomUpdateInitGroups,
@@ -225,7 +229,7 @@ void ModelSpecMerged::genMergedCustomConnectivityHostUpdateGroups(const BackendB
                                                                   const std::string &updateGroupName, GenMergedGroupFn<CustomConnectivityHostUpdateGroupMerged> generateGroup)
 {
     genMergedCustomUpdateGroups(backend, memorySpaces, m_MergedCustomConnectivityHostUpdateGroups, 
-                                updateGroupName, generateGroup, true);
+                                updateGroupName, generateGroup);
 }
 //----------------------------------------------------------------------------
 void ModelSpecMerged::genMergedNeuronSpikeQueueUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
@@ -309,7 +313,7 @@ void ModelSpecMerged::genMergedCustomConnectivityUpdateSparseInitGroups(const Ba
 void ModelSpecMerged::genMergedSynapseConnectivityHostInitGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
                                                                  GenMergedGroupFn<SynapseConnectivityHostInitGroupMerged> generateGroup)
 {
-    genMergedGroups(backend, memorySpaces, m_MergedSynapseConnectivityHostInitGroups, generateGroup, true);
+    genMergedGroups(backend, memorySpaces, m_MergedSynapseConnectivityHostInitGroups, generateGroup);
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type ModelSpecMerged::getHashDigest(const BackendBase &backend) const
@@ -620,7 +624,7 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getInitArchetypeHashDig
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-bool ModelSpecMerged::anyPointerEGPs() const
+/*bool ModelSpecMerged::anyPointerEGPs() const
 {
     // Loop through grouped merged EGPs
     for(const auto &e : m_MergedEGPs) {
@@ -634,4 +638,4 @@ bool ModelSpecMerged::anyPointerEGPs() const
     }
 
     return false;
-}
+}*/
