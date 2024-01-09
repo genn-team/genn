@@ -1,5 +1,12 @@
 #pragma once
 
+// Standard C++ includes
+#include <variant>
+
+// GeNN includes
+#include "gennExport.h"
+#include "gennUtils.h"
+
 //----------------------------------------------------------------------------
 // Enumerations
 //----------------------------------------------------------------------------
@@ -25,66 +32,101 @@ enum class VarAccessMode : unsigned int
     REDUCE_MAX  = static_cast<unsigned int>(VarAccessModeAttribute::REDUCE) | static_cast<unsigned int>(VarAccessModeAttribute::MAX),
 };
 
-//! Flags defining how variables should be duplicated across multiple batches
-enum class VarAccessDuplication : unsigned int
+//! Flags defining dimensions this variables has
+enum class VarAccessDim : unsigned int
 {
-    DUPLICATE       = (1 << 5), //! This variable should be duplicated in each batch
-    SHARED          = (1 << 6), //! This variable should be shared between batches
-    SHARED_NEURON   = (1 << 7)  //! This variable should be shared between neurons
+    ELEMENT     = (1 << 5),
+    BATCH       = (1 << 6),
 };
 
-//! Supported combinations of VarAccessMode and VarAccessDuplication
+//! Supported combinations of access mode and dimension for neuron and synapse variables
 enum class VarAccess : unsigned int
 {
-    READ_WRITE              = static_cast<unsigned int>(VarAccessMode::READ_WRITE) | static_cast<unsigned int>(VarAccessDuplication::DUPLICATE),
-    READ_ONLY               = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDuplication::SHARED),
-    READ_ONLY_SHARED_NEURON = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDuplication::SHARED_NEURON),
-    READ_ONLY_DUPLICATE     = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDuplication::DUPLICATE),
-    REDUCE_BATCH_SUM        = static_cast<unsigned int>(VarAccessMode::REDUCE_SUM) | static_cast<unsigned int>(VarAccessDuplication::SHARED),
-    REDUCE_BATCH_MAX        = static_cast<unsigned int>(VarAccessMode::REDUCE_MAX) | static_cast<unsigned int>(VarAccessDuplication::SHARED),
-    REDUCE_NEURON_SUM       = static_cast<unsigned int>(VarAccessMode::REDUCE_SUM) | static_cast<unsigned int>(VarAccessDuplication::SHARED_NEURON),
-    REDUCE_NEURON_MAX       = static_cast<unsigned int>(VarAccessMode::REDUCE_MAX) | static_cast<unsigned int>(VarAccessDuplication::SHARED_NEURON),
+    READ_WRITE              = static_cast<unsigned int>(VarAccessMode::READ_WRITE) | static_cast<unsigned int>(VarAccessDim::ELEMENT) | static_cast<unsigned int>(VarAccessDim::BATCH),
+    READ_ONLY               = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::ELEMENT),
+    READ_ONLY_DUPLICATE     = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::ELEMENT) | static_cast<unsigned int>(VarAccessDim::BATCH),
+    READ_ONLY_SHARED_NEURON = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::BATCH),
+};
+
+//! Supported combinations of access mode and dimension for custom update variables
+/*! The axes are defined 'subtractively' ie VarAccessDim::BATCH indicates that this axis should be removed */
+enum class CustomUpdateVarAccess : unsigned int
+{
+    // Variables with same shape as groups custom update is attached to
+    READ_WRITE                  = static_cast<unsigned int>(VarAccessMode::READ_WRITE),
+    READ_ONLY                   = static_cast<unsigned int>(VarAccessMode::READ_ONLY),
+
+    // Variables which will be shared across batches if custom update is batched
+    READ_ONLY_SHARED            = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::BATCH),
+
+    // Variables which will be shared across neurons if per-element
+    READ_ONLY_SHARED_NEURON    = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::ELEMENT),
+
+    // Reduction variables
+    REDUCE_BATCH_SUM            = static_cast<unsigned int>(VarAccessMode::REDUCE_SUM) | static_cast<unsigned int>(VarAccessDim::BATCH),
+    REDUCE_BATCH_MAX            = static_cast<unsigned int>(VarAccessMode::REDUCE_MAX) | static_cast<unsigned int>(VarAccessDim::BATCH),
+    REDUCE_NEURON_SUM          = static_cast<unsigned int>(VarAccessMode::REDUCE_SUM) | static_cast<unsigned int>(VarAccessDim::ELEMENT),
+    REDUCE_NEURON_MAX          = static_cast<unsigned int>(VarAccessMode::REDUCE_MAX) | static_cast<unsigned int>(VarAccessDim::ELEMENT),
 };
 
 //----------------------------------------------------------------------------
 // Operators
 //----------------------------------------------------------------------------
-inline bool operator & (VarAccess type, VarAccessMode mode)
-{
-    return (static_cast<unsigned int>(type) & static_cast<unsigned int>(mode)) != 0;
-}
-
-inline bool operator & (VarAccess type, VarAccessDuplication duplication)
-{
-    return (static_cast<unsigned int>(type) & static_cast<unsigned int>(duplication)) != 0;
-}
-
-inline bool operator & (VarAccess type, VarAccessModeAttribute modeAttribute)
-{
-    return (static_cast<unsigned int>(type) & static_cast<unsigned int>(modeAttribute)) != 0;
-}
-
 inline bool operator & (VarAccessMode mode, VarAccessModeAttribute modeAttribute)
 {
     return (static_cast<unsigned int>(mode) & static_cast<unsigned int>(modeAttribute)) != 0;
 }
 
-inline bool operator & (VarAccessMode a, VarAccessMode b)
+inline bool operator & (VarAccess mode, VarAccessModeAttribute modeAttribute)
+{
+    return (static_cast<unsigned int>(mode) & static_cast<unsigned int>(modeAttribute)) != 0;
+}
+
+inline bool operator & (CustomUpdateVarAccess mode, VarAccessModeAttribute modeAttribute)
+{
+    return (static_cast<unsigned int>(mode) & static_cast<unsigned int>(modeAttribute)) != 0;
+}
+
+inline bool operator & (VarAccessDim a, VarAccessDim b)
 {
     return (static_cast<unsigned int>(a) & static_cast<unsigned int>(b)) != 0;
 }
 
-
-//----------------------------------------------------------------------------
-// Helpers
-//----------------------------------------------------------------------------
-inline VarAccessMode getVarAccessMode(VarAccess type)
+inline VarAccessDim operator | (VarAccessDim a, VarAccessDim b)
 {
-    return static_cast<VarAccessMode>(static_cast<unsigned int>(type) & 0x1F);
+    return static_cast<VarAccessDim>(static_cast<unsigned int>(a) | static_cast<unsigned int>(b));
 }
 
-inline VarAccessDuplication getVarAccessDuplication(VarAccess type)
+//----------------------------------------------------------------------------
+// Free functions
+//----------------------------------------------------------------------------
+inline VarAccessDim clearVarAccessDim(VarAccessDim a, VarAccessDim b)
 {
-    return static_cast<VarAccessDuplication>(static_cast<unsigned int>(type) & ~0x1F);
+    return static_cast<VarAccessDim>(static_cast<unsigned int>(a) & ~static_cast<unsigned int>(b));
+}
+
+inline VarAccessDim getVarAccessDim(VarAccess v)
+{
+    return static_cast<VarAccessDim>(static_cast<unsigned int>(v) & ~0x1F);
+}
+
+inline VarAccessDim getVarAccessDim(CustomUpdateVarAccess v, VarAccessDim popDims)
+{
+    return clearVarAccessDim(popDims, static_cast<VarAccessDim>(static_cast<unsigned int>(v) & ~0x1F));
+}
+
+inline VarAccessMode getVarAccessMode(VarAccessMode v)
+{
+    return v;
+}
+
+inline VarAccessMode getVarAccessMode(VarAccess v)
+{
+    return static_cast<VarAccessMode>(static_cast<unsigned int>(v) & 0x1F);
+}
+
+inline VarAccessMode getVarAccessMode(CustomUpdateVarAccess v)
+{
+    return static_cast<VarAccessMode>(static_cast<unsigned int>(v) & 0x1F);
 }
 }   // namespace GeNN

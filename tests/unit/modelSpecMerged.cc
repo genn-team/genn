@@ -89,7 +89,7 @@ class Sum : public CustomUpdateModels::Base
 
     SET_UPDATE_CODE("sum = a + b;\n");
 
-    SET_VARS({{"sum", "scalar"}});
+    SET_CUSTOM_UPDATE_VARS({{"sum", "scalar"}});
     SET_PARAM_NAMES({"b"});
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_ONLY}});
 };

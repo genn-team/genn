@@ -70,7 +70,7 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_NG.getVarLocation(varName); }
     
-    Models::Base::VarVec getDefs() const{ return m_NG.getNeuronModel()->getVars(); }
+    std::vector<Models::Base::Var> getDefs() const{ return m_NG.getNeuronModel()->getVars(); }
 
     const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_NG.getVarInitialisers(); }
 
@@ -78,6 +78,8 @@ public:
 
     const std::string &getNameSuffix() const{ return m_NG.getName(); }
 
+    VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
+    
 private:
     //----------------------------------------------------------------------------
     // Members

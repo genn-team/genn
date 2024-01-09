@@ -50,6 +50,9 @@ public:
     //! Is var init code required for any variables in this custom update group's custom update model?
     bool isVarInitRequired() const;
 
+    //! Get dimensions of this custom update
+    VarAccessDim getDims() const{ return m_Dims; }
+
 protected:
     CustomUpdateBase(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 
                      const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
@@ -70,8 +73,7 @@ protected:
 
     bool isZeroCopyEnabled() const;
 
-    //! Is this custom update batched i.e. run in parallel across model batches
-    bool isBatched() const { return m_Batched; }
+    bool isModelReduction() const;
 
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
@@ -86,14 +88,17 @@ protected:
     const std::vector<Transpiler::Token> getUpdateCodeTokens() const{ return m_UpdateCodeTokens; }
 
     template<typename V>
-    bool isReduction(const std::unordered_map<std::string, V> &varRefs, VarAccessDuplication duplication) const
+    bool isReduction(const std::unordered_map<std::string, V> &varRefs, 
+                     VarAccessDim reduceDim) const
     {
-        // Return true if any variables have REDUCE flag in their access mode and have correct duplication flag
+        // Return true if any variables have REDUCE flag in their access mode and have reduction dimension 
+        // **NOTE** this is correct because custom update variable access types are defined subtractively
         const auto vars = getCustomUpdateModel()->getVars();
         if(std::any_of(vars.cbegin(), vars.cend(),
-                       [duplication](const Models::Base::Var &v)
+                       [reduceDim](const Models::Base::CustomUpdateVar &v)
                        { 
-                           return (v.access & VarAccessModeAttribute::REDUCE) && (v.access & duplication);
+                           return ((v.access & VarAccessModeAttribute::REDUCE) 
+                                   && (static_cast<unsigned int>(v.access) & static_cast<unsigned int>(reduceDim)));
                        }))
         {
             return true;
@@ -101,9 +106,12 @@ protected:
 
         // Loop through all variable references
         for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
+            // If custom update model reduces into this variable reference 
+            // and the variable it targets doesn't have reduction dimension
             const auto &varRef = varRefs.at(modelVarRef.name);
-            // If custom update model reduces into this variable reference and the variable it targets has correct duplication flag
-            if ((modelVarRef.access & VarAccessModeAttribute::REDUCE) & (varRef.getVar().access & duplication)) {
+            if ((modelVarRef.access & VarAccessModeAttribute::REDUCE) 
+                && !(varRef.getVarDims() & reduceDim)) 
+            {
                 return true;
             }
         }
@@ -113,27 +121,24 @@ protected:
 
     //! Helper function to check if variable reference types match those specified in model
     template<typename V>
-    void checkVarReferenceBatching(const std::unordered_map<std::string, V>& varRefs, unsigned int batchSize)
+    void checkVarReferenceDims(const std::unordered_map<std::string, V>& varRefs, unsigned int batchSize)
     {
-        // If target of any variable references is duplicated, custom update should be batched
-        if(batchSize > 1) {
-            m_Batched = std::any_of(varRefs.cbegin(), varRefs.cend(),
-                                    [](const auto &v) { return v.second.isDuplicated(); });
-        }
-        else {
-            m_Batched = false;
+        // Loop through variable references and or together their dimensions to get dimensionality of update
+        m_Dims = VarAccessDim{0};
+        for(const auto &v : varRefs) {
+            m_Dims = m_Dims | v.second.getVarDims();
         }
 
         // Loop through all variable references
         for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
             const auto varRef = varRefs.at(modelVarRef.name);
 
-            // If custom update is batched, check that any variable references to shared variables are read-only
-            // **NOTE** if custom update isn't batched, it's totally fine to write to shared variables
-            if(m_Batched && (varRef.getVar().access & VarAccessDuplication::SHARED)
+            // If the shape of the references variable doesn't match the dimensionality 
+            // of the custom update, check its access mode isn't read-write
+            if((m_Dims != varRef.getVarDims())
                && (modelVarRef.access == VarAccessMode::READ_WRITE))
             {
-                throw std::runtime_error("Variable references to SHARED variables in batched custom updates cannot be read-write.");
+                throw std::runtime_error("Variable references to lower-dimensional variables cannot be read-write.");
             }
         }
     }
@@ -160,11 +165,11 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const std::string m_Name;
-    const std::string m_UpdateGroupName;
+    std::string m_Name;
+    std::string m_UpdateGroupName;
 
     const CustomUpdateModels::Base *m_CustomUpdateModel;
-    const std::unordered_map<std::string, double> m_Params;
+    std::unordered_map<std::string, double> m_Params;
     std::unordered_map<std::string, double> m_DerivedParams;
     std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
 
@@ -179,8 +184,8 @@ private:
     //! Tokens produced by scanner from update code
     std::vector<Transpiler::Token> m_UpdateCodeTokens;
 
-    //! Is this custom update batched i.e. run in parallel across model batches
-    bool m_Batched;
+    //! Dimensions of this custom update
+    VarAccessDim m_Dims;
 };
 
 //----------------------------------------------------------------------------
@@ -197,13 +202,18 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
 
-    Models::Base::VarVec getDefs() const{ return m_CU.getCustomUpdateModel()->getVars(); }
+    std::vector<Models::Base::CustomUpdateVar> getDefs() const{ return m_CU.getCustomUpdateModel()->getVars(); }
 
     const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getVarInitialisers(); }
 
     bool isVarDelayed(const std::string &) const { return false; }
 
     const std::string &getNameSuffix() const{ return m_CU.getName(); }
+
+    VarAccessDim getVarDims(const Models::Base::CustomUpdateVar &var) const
+    { 
+        return getVarAccessDim(var.access, m_CU.getDims());
+    }
 
 private:
     //----------------------------------------------------------------------------
@@ -261,9 +271,8 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
-    bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED); }
-    bool isNeuronReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED_NEURON); }
-    bool isPerNeuron() const{ return m_PerNeuron; }
+    bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDim::BATCH); }
+    bool isNeuronReduction() const { return isReduction(getVarReferences(), VarAccessDim::ELEMENT); }
 
     const NeuronGroup *getDelayNeuronGroup() const { return m_DelayNeuronGroup; }
 
@@ -288,9 +297,6 @@ private:
     const std::unordered_map<std::string, Models::VarReference> m_VarReferences;
     const unsigned int m_Size;
     const NeuronGroup *m_DelayNeuronGroup;
-
-    //! Is this custom update per-neuron i.e. run in parallel across all neurons
-    bool m_PerNeuron;
 };
 
 //------------------------------------------------------------------------
@@ -318,7 +324,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
-    bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED); }
+    bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDim::BATCH); }
     bool isTransposeOperation() const;
 
     SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }

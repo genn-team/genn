@@ -17,8 +17,8 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 {
     // Superclass
     boost::uuids::detail::sha1 hash;
-    Models::Base::updateHash(hash);
-
+    Snippet::Base::updateHash(hash);
+    Utils::updateHash(getVars(), hash);
     Utils::updateHash(getUpdateCode(), hash);
     Utils::updateHash(getVarRefs(), hash);
     Utils::updateHash(getExtraGlobalParamRefs(), hash);
@@ -31,7 +31,14 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
                     const std::string &description) const
 {
      // Superclass
-    Models::Base::validate(paramValues, varValues, description);
+    Snippet::Base::validate(paramValues, description);
+
+    // Validate variable names
+    const auto vars = getVars();
+    Utils::validateVecNames(vars, "Variable");
+
+    // Validate variable initialisers
+    Utils::validateInitialisers(vars, varValues, "variable", description);
 
     const auto varRefs = getVarRefs();
     Utils::validateVecNames(varRefs, "Variable reference");
@@ -47,7 +54,14 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
                     const std::string &description) const
 {
      // Superclass
-    Models::Base::validate(paramValues, varValues, description);
+    Snippet::Base::validate(paramValues, description);
+
+    // Validate variable names
+    const auto vars = getVars();
+    Utils::validateVecNames(vars, "Variable");
+
+    // Validate variable initialisers
+    Utils::validateInitialisers(vars, varValues, "variable", description);
 
     const auto varRefs = getVarRefs();
     Utils::validateVecNames(getVarRefs(), "Variable reference");

@@ -4,7 +4,6 @@ from pygenn import types
 
 from pygenn import GeNNModel
 
-from pygenn.genn import SpanType, VarAccess
 from pygenn import (create_neuron_model,
                     create_sparse_connect_init_snippet,
                     create_var_init_snippet,

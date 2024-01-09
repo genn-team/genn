@@ -408,7 +408,7 @@ private:
                                       [this, v](const auto &g, size_t) 
                                       { 
                                           const auto varRef = g.getVarReferences().at(v.name);
-                                          return getDeviceVarPrefix() + varRef.getVar().name + varRef.getTargetName(); ;
+                                          return getDeviceVarPrefix() + varRef.getVarName() + varRef.getTargetName(); ;
                                       });
 
                     // Add NCCL reduction

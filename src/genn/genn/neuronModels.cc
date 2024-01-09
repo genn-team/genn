@@ -28,8 +28,8 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 {
     // Superclass
     boost::uuids::detail::sha1 hash;
-    Models::Base::updateHash(hash);
-
+    Snippet::Base::updateHash(hash);
+    Utils::updateHash(getVars(), hash);
     Utils::updateHash(getSimCode(), hash);
     Utils::updateHash(getThresholdConditionCode(), hash);
     Utils::updateHash(getResetCode(), hash);
@@ -43,16 +43,15 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
                     const std::string &description) const
 {
     // Superclass
-    Models::Base::validate(paramValues, varValues, description);
+    Models::Base::validate(paramValues, description);
 
     Utils::validateVecNames(getAdditionalInputVars(), "Additional input variable");
 
-    // If any variables have a reduction access mode, give an error
+    // Validate variable names
     const auto vars = getVars();
-    if(std::any_of(vars.cbegin(), vars.cend(),
-                   [](const Models::Base::Var &v){ return (v.access & VarAccessModeAttribute::REDUCE); }))
-    {
-        throw std::runtime_error("Neuron models cannot include variables with REDUCE access modes - they are only supported by custom update models");
-    }
+    Utils::validateVecNames(vars, "Variable");
+
+    // Validate variable initialisers
+    Utils::validateInitialisers(vars, varValues, "variable", description);
 }
 }   // namespace GeNN::NeuronModels

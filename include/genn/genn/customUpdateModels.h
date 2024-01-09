@@ -7,6 +7,7 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
+#define SET_CUSTOM_UPDATE_VARS(...) virtual std::vector<CustomUpdateVar> getVars() const override{ return __VA_ARGS__; }
 #define SET_VAR_REFS(...) virtual VarRefVec getVarRefs() const override{ return __VA_ARGS__; }
 #define SET_EXTRA_GLOBAL_PARAM_REFS(...) virtual EGPRefVec getExtraGlobalParamRefs() const override{ return __VA_ARGS__; }
 #define SET_UPDATE_CODE(UPDATE_CODE) virtual std::string getUpdateCode() const override{ return UPDATE_CODE; }
@@ -24,6 +25,9 @@ public:
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
+    //! Gets model variables
+    virtual std::vector<CustomUpdateVar> getVars() const{ return {}; }
+
     //! Gets names and typesn of model variable references
     virtual VarRefVec getVarRefs() const{ return {}; }
 
@@ -38,6 +42,12 @@ public:
     //----------------------------------------------------------------------------
     //! Update hash from model
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
+    //! Find the index of a named variable
+    size_t getVarIndex(const std::string &varName) const
+    {
+        return getNamedVecIndex(varName, getVars());
+    }
 
     //! Validate names of parameters etc
     void validate(const std::unordered_map<std::string, double> &paramValues,

@@ -34,6 +34,9 @@ public:
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
+    //! Gets model variables
+    virtual std::vector<Var> getVars() const{ return {}; }
+
     //! Gets the code that defines the execution of one timestep of integration of the neuron model.
     /*! The code will refer to $(NN) for the value of the variable with name "NN".
         It needs to refer to the predefined variable "ISYN", i.e. contain $(ISYN), if it is to receive input. */
@@ -58,6 +61,12 @@ public:
     //----------------------------------------------------------------------------
     //! Update hash from model
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
+    //! Find the index of a named variable
+    size_t getVarIndex(const std::string &varName) const
+    {
+        return getNamedVecIndex(varName, getVars());
+    }
 
     //! Validate names of parameters etc
     void validate(const std::unordered_map<std::string, double> &paramValues, 
@@ -282,7 +291,7 @@ public:
         "$(startSpike) != $(endSpike) && "
         "$(t) >= $(spikeTimes)[$(startSpike)]" );
     SET_RESET_CODE( "$(startSpike)++;\n" );
-    SET_VARS( {{"startSpike", "unsigned int"}, {"endSpike", "unsigned int", VarAccess::READ_ONLY_DUPLICATE}} );
+    SET_VARS({{"startSpike", "unsigned int"}, {"endSpike", "unsigned int", VarAccess::READ_ONLY_DUPLICATE}});
     SET_EXTRA_GLOBAL_PARAMS( {{"spikeTimes", "scalar*"}} );
     SET_NEEDS_AUTO_REFRACTORY(false);
 };

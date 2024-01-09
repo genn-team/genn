@@ -21,10 +21,10 @@ using namespace GeNN::Transpiler;
 namespace
 {
 void genVariableFill(EnvironmentExternalBase &env, const std::string &target, const std::string &value, const std::string &idx, const std::string &stride,
-                     VarAccessDuplication varDuplication, unsigned int batchSize, bool delay = false, unsigned int numDelaySlots = 1)
+                     VarAccessDim varDims, unsigned int batchSize, bool delay = false, unsigned int numDelaySlots = 1)
 {
     // Determine number of values to fill in each thread
-    const unsigned int numValues = ((varDuplication == VarAccessDuplication::SHARED) ? 1 : batchSize) * ((delay ? numDelaySlots : 1));
+    const unsigned int numValues = ((varDims & VarAccessDim::BATCH) ? batchSize : 1) * ((delay ? numDelaySlots : 1));
 
     // If there's only one, don't generate a loop
     if(numValues == 1) {
@@ -41,10 +41,10 @@ void genVariableFill(EnvironmentExternalBase &env, const std::string &target, co
 }
 //--------------------------------------------------------------------------
 void genScalarFill(EnvironmentExternalBase &env, const std::string &target, const std::string &value,
-                   VarAccessDuplication varDuplication, unsigned int batchSize, bool delay = false, unsigned int numDelaySlots = 1)
+                   VarAccessDim varDims, unsigned int batchSize, bool delay = false, unsigned int numDelaySlots = 1)
 {
     // Determine number of values to fill in each thread
-    const unsigned int numValues = ((varDuplication == VarAccessDuplication::SHARED) ? 1 : batchSize) * ((delay ? numDelaySlots : 1));
+    const unsigned int numValues = ((varDims & VarAccessDim::BATCH) ? batchSize : 1) * ((delay ? numDelaySlots : 1));
 
     // If there's only one, don't generate a loop
     if(numValues == 1) {
@@ -86,32 +86,12 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
                                 return backend.getDeviceVarPrefix() + var.name + A(g).getNameSuffix(); 
                             });
 
-            // If variable is shared between neurons
-            if (getVarAccessDuplication(var.access) == VarAccessDuplication::SHARED_NEURON) {
-                backend.genPopVariableInit(
-                    varEnv,
-                    [&adaptor, &fieldGroup, &fieldSuffix, &group, &resolvedType, &var, &varInit, batchSize, numDelaySlots]
-                    (EnvironmentExternalBase &env)
-                    {
-                        // Generate initial value into temporary variable
-                        EnvironmentGroupMergedField<G, F> varInitEnv(env, group, fieldGroup);
-                        varInitEnv.getStream() << resolvedType.getName() << " initVal;" << std::endl;
-                        varInitEnv.add(resolvedType, "value", "initVal");
-                        
-                        // Pretty print variable initialisation code
-                        Transpiler::ErrorHandler errorHandler("Group '" + group.getArchetype().getName() + "' variable '" + var.name + "' init code");
-                        prettyPrintStatements(varInit.getCodeTokens(), group.getTypeContext(), varInitEnv, errorHandler);
-                        
-                        // Fill value across all delay slots and batches
-                        genScalarFill(varInitEnv, "_value", "$(value)", getVarAccessDuplication(var.access),
-                                      batchSize, adaptor.isVarDelayed(var.name), numDelaySlots);
-                    });
-            }
-            // Otherwise
-            else {
+            // If variable has NEURON axis
+            const VarAccessDim varDims = adaptor.getVarDims(var);
+            if (varDims & VarAccessDim::ELEMENT) {
                 backend.genVariableInit(
                     varEnv, count, "id",
-                    [&adaptor, &fieldGroup, &fieldSuffix, &group, &var, &resolvedType, &varInit, batchSize, count, numDelaySlots]
+                    [&adaptor, &fieldGroup, &fieldSuffix, &group, &var, &resolvedType, &varInit, batchSize, count, numDelaySlots, varDims]
                     (EnvironmentExternalBase &env)
                     {
                         // Generate initial value into temporary variable
@@ -125,7 +105,28 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
 
                         // Fill value across all delay slots and batches
                         genVariableFill(varInitEnv, "_value", "$(value)", "id", "$(" + count + ")",
-                                        getVarAccessDuplication(var.access), batchSize, adaptor.isVarDelayed(var.name), numDelaySlots);
+                                        varDims, batchSize, adaptor.isVarDelayed(var.name), numDelaySlots);
+                    });
+            }
+            // Otherwise
+            else {
+                backend.genPopVariableInit(
+                    varEnv,
+                    [&adaptor, &fieldGroup, &fieldSuffix, &group, &resolvedType, &var, &varInit, batchSize, numDelaySlots, varDims]
+                    (EnvironmentExternalBase &env)
+                    {
+                        // Generate initial value into temporary variable
+                        EnvironmentGroupMergedField<G, F> varInitEnv(env, group, fieldGroup);
+                        varInitEnv.getStream() << resolvedType.getName() << " initVal;" << std::endl;
+                        varInitEnv.add(resolvedType, "value", "initVal");
+                        
+                        // Pretty print variable initialisation code
+                        Transpiler::ErrorHandler errorHandler("Group '" + group.getArchetype().getName() + "' variable '" + var.name + "' init code");
+                        prettyPrintStatements(varInit.getCodeTokens(), group.getTypeContext(), varInitEnv, errorHandler);
+                        
+                        // Fill value across all delay slots and batches
+                        genScalarFill(varInitEnv, "_value", "$(value)", varDims,
+                                      batchSize, adaptor.isVarDelayed(var.name), numDelaySlots);
                     });
             }
         }
@@ -170,21 +171,21 @@ void genInitWUVarCode(const BackendBase &backend, EnvironmentExternalBase &env, 
 
             // Generate target-specific code to initialise variable
             genSynapseVariableRowInitFn(varEnv,
-                [&group, &resolvedType, &stride, &var, &varInit, batchSize]
+                [&adaptor, &group, &resolvedType, &stride, &var, &varInit, batchSize]
                 (EnvironmentExternalBase &env)
-                { 
+                {
                     // Generate initial value into temporary variable
                     EnvironmentGroupMergedField<G> varInitEnv(env, group);
                     varInitEnv.getStream() << resolvedType.getName() << " initVal;" << std::endl;
                     varInitEnv.add(resolvedType, "value", "initVal");
-                        
+
                     // Pretty print variable initialisation code
                     Transpiler::ErrorHandler errorHandler("Variable '" + var.name + "' init code" + std::to_string(group.getIndex()));
                     prettyPrintStatements(varInit.getCodeTokens(), group.getTypeContext(), varInitEnv, errorHandler);
 
                     // Fill value across all batches
                     genVariableFill(varInitEnv, "_value", "$(value)", "id_syn", stride,
-                                    getVarAccessDuplication(var.access), batchSize);
+                                    adaptor.getVarDims(var), batchSize);
                 });
         }
     }
@@ -221,7 +222,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
         [batchSize, this] (EnvironmentExternalBase &varEnv)
         {
             genVariableFill(varEnv, "_out_post", Type::writeNumeric(0.0, getScalarType()), 
-                            "id", "$(num_neurons)", VarAccessDuplication::DUPLICATE, batchSize);
+                            "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT, batchSize);
 
         });
 
@@ -234,7 +235,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
             [batchSize, this](EnvironmentExternalBase &varEnv)
             {
                 genVariableFill(varEnv, "_den_delay", Type::writeNumeric(0.0, getScalarType()),
-                                "id", "$(num_neurons)", VarAccessDuplication::DUPLICATE, 
+                                "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT, 
                                 batchSize, true, getArchetype().getMaxDendriticDelayTimesteps());
             });
 
@@ -268,7 +269,7 @@ void NeuronInitGroupMerged::OutSynPreOutput::generate(const BackendBase &backend
                             [batchSize, this] (EnvironmentExternalBase &varEnv)
                             {
                                 genVariableFill(varEnv, "_out_pre", Type::writeNumeric(0.0, getScalarType()),
-                                                "id", "$(num_neurons)", VarAccessDuplication::DUPLICATE, batchSize);
+                                                "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT, batchSize);
                             });
 }
 
@@ -449,7 +450,8 @@ void NeuronInitGroupMerged::genInitSpikeCount(const BackendBase &backend, Enviro
                     (getArchetype().isTrueSpikeRequired() && getArchetype().isDelayRequired());
 
                 // Zero across all delay slots and batches
-                genScalarFill(spikeCountEnv, "_spk_cnt", "0", VarAccessDuplication::DUPLICATE, batchSize, delayRequired, getArchetype().getNumDelaySlots());
+                genScalarFill(spikeCountEnv, "_spk_cnt", "0", VarAccessDim::BATCH | VarAccessDim::ELEMENT, 
+                              batchSize, delayRequired, getArchetype().getNumDelaySlots());
             });
     }
 
@@ -479,8 +481,8 @@ void NeuronInitGroupMerged::genInitSpikes(const BackendBase &backend, Environmen
                     (getArchetype().isTrueSpikeRequired() && getArchetype().isDelayRequired());
 
                 // Zero across all delay slots and batches
-                genVariableFill(varEnv, "_spk", "0", "id", "$(num_neurons)", 
-                                VarAccessDuplication::DUPLICATE, batchSize, delayRequired, getArchetype().getNumDelaySlots());
+                genVariableFill(varEnv, "_spk", "0", "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT,
+                                batchSize, delayRequired, getArchetype().getNumDelaySlots());
             });
     }
 }
@@ -498,7 +500,7 @@ void NeuronInitGroupMerged::genInitSpikeTime(const BackendBase &backend, Environ
     backend.genVariableInit(env, "num_neurons", "id",
         [batchSize, varName, this] (EnvironmentExternalBase &varEnv)
         {
-            genVariableFill(varEnv, varName, "-TIME_MAX", "id", "$(num_neurons)", VarAccessDuplication::DUPLICATE, 
+            genVariableFill(varEnv, varName, "-TIME_MAX", "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT, 
                             batchSize, getArchetype().isDelayRequired(), getArchetype().getNumDelaySlots());
         });
 }
@@ -851,7 +853,7 @@ void CustomUpdateInitGroupMerged::generateInit(const BackendBase &backend, Envir
 {
     // Initialise custom update variables
     genInitNeuronVarCode<CustomUpdateVarAdapter>(backend, env, *this, "", "size", 1, 
-                                                 getArchetype().isBatched() ? batchSize : 1);        
+                                                 (getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1);        
 }
 
 // ----------------------------------------------------------------------------
@@ -909,7 +911,7 @@ void CustomWUUpdateInitGroupMerged::generateInit(const BackendBase &backend, Env
     // Loop through rows
     const std::string stride = kernel ? "$(_kernel_size)" : "$(num_pre) * $(_row_stride)";
     genInitWUVarCode<CustomUpdateVarAdapter>(
-        backend, groupEnv, *this, stride, getArchetype().isBatched() ? batchSize : 1, false,
+        backend, groupEnv, *this, stride, (getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1, false,
         [&backend, kernel, this](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
         {
             if (kernel) {
@@ -964,7 +966,7 @@ void CustomWUUpdateSparseInitGroupMerged::generateInit(const BackendBase &backen
 {
     genInitWUVarCode<CustomUpdateVarAdapter>(
         backend, env, *this, "$(num_pre) * $(_row_stride)",
-        getArchetype().isBatched() ? batchSize : 1, false,
+        (getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1, false,
         [&backend](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
         {
             return backend.genSparseSynapseVariableRowInit(varInitEnv, handler); 
@@ -995,7 +997,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdatePreInitGroupMerg
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomConnectivityUpdatePreInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
+void CustomConnectivityUpdatePreInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int)
 {
     genInitNeuronVarCode<CustomConnectivityUpdatePreVarAdapter>(backend, env, *this, "", "size", 0, 1);
 }
@@ -1024,7 +1026,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdatePostInitGroupMer
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomConnectivityUpdatePostInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
+void CustomConnectivityUpdatePostInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int)
 {
     // Initialise presynaptic custom connectivity update variables
     genInitNeuronVarCode<CustomConnectivityUpdatePostVarAdapter>(backend, env, *this, "", "size", 0, 1);

@@ -46,13 +46,15 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CS.getVarLocation(varName); }
 
-    Models::Base::VarVec getDefs() const{ return m_CS.getCurrentSourceModel()->getVars(); }
+    std::vector<Models::Base::Var> getDefs() const{ return m_CS.getCurrentSourceModel()->getVars(); }
 
     const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CS.getVarInitialisers(); }
 
     bool isVarDelayed(const std::string&) const{ return false; }
 
     const std::string &getNameSuffix() const{ return m_CS.getName(); }
+
+    VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 
 private:
     //----------------------------------------------------------------------------

@@ -24,8 +24,8 @@ public:
 
     SET_PARAM_NAMES({});
     SET_VARS({{"V","scalar"}, {"U", "scalar"},
-              {"a", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}, {"b", "scalar", VarAccess::READ_ONLY_SHARED_NEURON},
-              {"c", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}, {"d", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});
+                     {"a", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}, {"b", "scalar", VarAccess::READ_ONLY_SHARED_NEURON},
+                     {"c", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}, {"d", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});
 };
 IMPLEMENT_SNIPPET(IzhikevichVariableShared);
 
@@ -35,9 +35,9 @@ public:
     DECLARE_SNIPPET(StaticPulseDendriticDelaySplit);
 
     SET_VARS({{"gCommon", "scalar", VarAccess::READ_ONLY}, 
-              {"g", "scalar", VarAccess::READ_ONLY_DUPLICATE}, 
-              {"dCommon", "scalar", VarAccess::READ_ONLY},
-              {"d", "scalar", VarAccess::READ_ONLY_DUPLICATE}});
+                      {"g", "scalar", VarAccess::READ_ONLY_DUPLICATE}, 
+                      {"dCommon", "scalar", VarAccess::READ_ONLY},
+                      {"d", "scalar", VarAccess::READ_ONLY_DUPLICATE}});
 
     SET_SIM_CODE("$(addToInSynDelay, $(gCommon) + $(g), $(dCommon) + $(d));\n");
 };
@@ -49,7 +49,7 @@ class Sum : public CustomUpdateModels::Base
 
     SET_UPDATE_CODE("$(sum) = $(a) + $(b);\n");
 
-    SET_VARS({{"sum", "scalar"}});
+    SET_CUSTOM_UPDATE_VARS({{"sum", "scalar"}});
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_ONLY}, 
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
@@ -61,7 +61,7 @@ class Sum2 : public CustomUpdateModels::Base
 
     SET_UPDATE_CODE("$(a) = $(mult) * ($(a) + $(b));\n");
 
-    SET_VARS({{"mult", "scalar", VarAccess::READ_ONLY}});
+    SET_CUSTOM_UPDATE_VARS({{"mult", "scalar", CustomUpdateVarAccess::READ_ONLY}});
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE}, 
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
@@ -73,7 +73,7 @@ class Sum3 : public CustomUpdateModels::Base
 
     SET_UPDATE_CODE("$(sum) = $(scale) * ($(a) + $(b));\n");
 
-    SET_VARS({{"sum", "scalar"}, {"scale", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});
+    SET_CUSTOM_UPDATE_VARS({{"sum", "scalar"}, {"scale", "scalar", CustomUpdateVarAccess::READ_ONLY_SHARED_ELEMENT}});
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE},
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
@@ -169,8 +169,8 @@ class ReduceDouble : public CustomUpdateModels::Base
         "reduction1 = var1;\n"
         "reduction2 = var2;\n");
 
-    SET_VARS({{"reduction1", "scalar", VarAccess::REDUCE_BATCH_SUM},
-              {"reduction2", "scalar", VarAccess::REDUCE_NEURON_SUM}});
+    SET_CUSTOM_UPDATE_VARS({{"reduction1", "scalar", CustomUpdateVarAccess::REDUCE_BATCH_SUM},
+                            {"reduction2", "scalar", CustomUpdateVarAccess::REDUCE_ELEMENT_SUM}});
 
     SET_VAR_REFS({{"var1", "scalar", VarAccessMode::READ_ONLY},
                   {"var2", "scalar", VarAccessMode::READ_ONLY}});
@@ -183,7 +183,7 @@ class ReduceSharedVar : public CustomUpdateModels::Base
 
     SET_UPDATE_CODE("reduction = var;\n");
 
-    SET_VARS({{"reduction", "scalar", VarAccess::REDUCE_BATCH_SUM}})
+    SET_CUSTOM_UPDATE_VARS({{"reduction", "scalar", CustomUpdateVarAccess::REDUCE_BATCH_SUM}})
     SET_VAR_REFS({{"var", "scalar", VarAccessMode::READ_ONLY}});
 };
 IMPLEMENT_SNIPPET(ReduceSharedVar);
@@ -195,7 +195,7 @@ class ReduceNeuronSharedVar : public CustomUpdateModels::Base
 
     SET_UPDATE_CODE("reduction = var;\n");
 
-    SET_VARS({{"reduction", "scalar", VarAccess::REDUCE_NEURON_SUM}})
+    SET_CUSTOM_UPDATE_VARS({{"reduction", "scalar", CustomUpdateVarAccess::REDUCE_ELEMENT_SUM}})
     SET_VAR_REFS({{"var", "scalar", VarAccessMode::READ_ONLY}});
 };
 IMPLEMENT_SNIPPET(ReduceNeuronSharedVar);
@@ -465,7 +465,7 @@ TEST(CustomUpdates, WUVarSynapseGroupChecks)
 
     VarValues sumVarValues{{"sum", 0.0}};
     WUVarReferences sumVarReferences1{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg1, "g")}};
-    WUVarReferences sumVarReferences2{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg2, "d")}};
+    WUVarReferences sumVarReferences2{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg2, "g")}};
     model.addCustomUpdate<Sum>("SumWeight1", "CustomUpdate",
                                {}, sumVarValues, sumVarReferences1);
 
@@ -489,7 +489,7 @@ TEST(CustomUpdates, BatchingVars)
     VarValues izkVarVals{{"V", 0.0}, {"U", 0.0}, {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
 
-    // Create updates where variable is shared and references vary
+    // Create updates where variable has same dimensionality as references but dimensionality varies
     VarValues sumVarValues{{"sum", 1.0}};
     VarReferences sumVarReferences1{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "U")}};
     VarReferences sumVarReferences2{{"a", createVarRef(pop, "a")}, {"b", createVarRef(pop, "b")}};
@@ -509,14 +509,14 @@ TEST(CustomUpdates, BatchingVars)
     
     model.finalise();
 
-    EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum1)->isBatched());
-    EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum1)->isPerNeuron());
-    EXPECT_FALSE(static_cast<CustomUpdateInternal*>(sum2)->isBatched());
-    EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum2)->isPerNeuron());
-    EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum3)->isBatched());
-    EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum3)->isPerNeuron());
-    EXPECT_FALSE(static_cast<CustomUpdateInternal*>(sum4)->isBatched());
-    EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum4)->isPerNeuron());
+    EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum1)->getDims() & VarAccessDim::BATCH);
+    EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum1)->getDims() & VarAccessDim::ELEMENT);
+    EXPECT_FALSE(static_cast<CustomUpdateInternal*>(sum2)->getDims() & VarAccessDim::BATCH);
+    EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum2)->getDims() & VarAccessDim::ELEMENT);
+    EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum3)->getDims() & VarAccessDim::BATCH);
+    EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum3)->getDims() & VarAccessDim::ELEMENT);
+    EXPECT_FALSE(static_cast<CustomUpdateInternal*>(sum4)->getDims() & VarAccessDim::BATCH);
+    EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum4)->getDims() & VarAccessDim::ELEMENT);
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, NeuronSharedVars)
@@ -534,8 +534,8 @@ TEST(CustomUpdates, NeuronSharedVars)
     model.finalise();
 
     auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
-    EXPECT_TRUE(cuInternal->isBatched());
-    EXPECT_FALSE(cuInternal->isPerNeuron());
+    EXPECT_TRUE(cuInternal->getDims() & VarAccessDim::BATCH);
+    EXPECT_FALSE(cuInternal->getDims() & VarAccessDim::ELEMENT);
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, BatchingWriteShared)
@@ -547,7 +547,7 @@ TEST(CustomUpdates, BatchingWriteShared)
     VarValues izkVarVals{{"V", 0.0}, {"U", 0.0}, {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
     
-    // Create custom update which tries to create a read-write refernece to a (which isn't batched)
+    // Create custom update which tries to create a read-write reference to a (which isn't batched)
     VarReferences reduceVarReferences{{"var", createVarRef(pop, "V")}, {"reduction", createVarRef(pop, "U")}};
     try {
         model.addCustomUpdate<Reduce>("Sum1", "CustomUpdate",
@@ -570,9 +570,10 @@ TEST(CustomUpdates, WriteNeuronShared)
     // Create custom update which tries to create a read-write reference to a (which isn't per-neuron)
     VarValues sum2VarValues{{"mult", 1.0}};
     VarReferences sum2VarReferences{{"a", createVarRef(pop, "a")}, {"b", createVarRef(pop, "V")}};
+    model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
+                                {}, sum2VarValues, sum2VarReferences);
     try {
-        model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
-                                    {}, sum2VarValues, sum2VarReferences);
+        model.finalise();
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -617,10 +618,10 @@ TEST(CustomUpdates, ReductionTypeDuplicateNeuron)
                                              {}, {}, reduceVarReferences);
     model.finalise();
     auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
-    ASSERT_TRUE(cuInternal->isBatched());
+    ASSERT_TRUE(cuInternal->getDims() & VarAccessDim::BATCH);
     ASSERT_FALSE(cuInternal->isBatchReduction());
     ASSERT_TRUE(cuInternal->isNeuronReduction());
-    ASSERT_TRUE(cuInternal->isPerNeuron());
+    ASSERT_TRUE(cuInternal->getDims() & VarAccessDim::ELEMENT);
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, ReductionTypeDuplicateNeuronInternal)
@@ -640,10 +641,10 @@ TEST(CustomUpdates, ReductionTypeDuplicateNeuronInternal)
                                                             {}, reduceVars, reduceVarReferences);
     model.finalise();
     auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
-    ASSERT_TRUE(cuInternal->isBatched());
+    ASSERT_TRUE(cuInternal->getDims() & VarAccessDim::BATCH);
     ASSERT_FALSE(cuInternal->isBatchReduction());
     ASSERT_TRUE(cuInternal->isNeuronReduction());
-    ASSERT_TRUE(cuInternal->isPerNeuron());
+    ASSERT_TRUE(cuInternal->getDims() & VarAccessDim::ELEMENT);
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, ReductionTypeSharedNeuronInternal)
@@ -663,10 +664,10 @@ TEST(CustomUpdates, ReductionTypeSharedNeuronInternal)
                                                             {}, reduceVars, reduceVarReferences);
     model.finalise();
     auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
-    ASSERT_FALSE(cuInternal->isBatched());
+    ASSERT_FALSE(cuInternal->getDims() & VarAccessDim::BATCH);
     ASSERT_FALSE(cuInternal->isBatchReduction());
     ASSERT_TRUE(cuInternal->isNeuronReduction());
-    ASSERT_TRUE(cuInternal->isPerNeuron());
+    ASSERT_TRUE(cuInternal->getDims() & VarAccessDim::ELEMENT);
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, ReductionTypeDuplicateBatch)
@@ -685,10 +686,10 @@ TEST(CustomUpdates, ReductionTypeDuplicateBatch)
                                              {}, {}, reduceVarReferences);
     model.finalise();
     auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
-    ASSERT_TRUE(cuInternal->isBatched());
+    ASSERT_TRUE(cuInternal->getDims() & VarAccessDim::BATCH);
     ASSERT_TRUE(cuInternal->isBatchReduction());
     ASSERT_FALSE(cuInternal->isNeuronReduction());
-    ASSERT_TRUE(cuInternal->isPerNeuron());
+    ASSERT_TRUE(cuInternal->getDims() & VarAccessDim::ELEMENT);
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, ReductionTypeDuplicateBatchInternal)
@@ -708,10 +709,10 @@ TEST(CustomUpdates, ReductionTypeDuplicateBatchInternal)
                                                       {}, reduceVars, reduceVarReferences);
     model.finalise();
     auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
-    ASSERT_TRUE(cuInternal->isBatched());
+    ASSERT_TRUE(cuInternal->getDims() & VarAccessDim::BATCH);
     ASSERT_TRUE(cuInternal->isBatchReduction());
     ASSERT_FALSE(cuInternal->isNeuronReduction());
-    ASSERT_TRUE(cuInternal->isPerNeuron());
+    ASSERT_TRUE(cuInternal->getDims() & VarAccessDim::ELEMENT);
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, NeuronSharedCustomUpdateWU)
@@ -949,9 +950,9 @@ TEST(CustomUpdates, CompareDifferentBatched)
     CustomUpdateInternal *sum1Internal = static_cast<CustomUpdateInternal*>(sum1);
     CustomUpdateInternal *sum2Internal = static_cast<CustomUpdateInternal*>(sum2);
     CustomUpdateInternal *sum3Internal = static_cast<CustomUpdateInternal*>(sum3);
-    ASSERT_TRUE(sum1Internal->isBatched());
-    ASSERT_FALSE(sum2Internal->isBatched());
-    ASSERT_TRUE(sum3Internal->isBatched());
+    ASSERT_TRUE(sum1Internal->getDims() & VarAccessDim::BATCH);
+    ASSERT_FALSE(sum2Internal->getDims() & VarAccessDim::BATCH);
+    ASSERT_TRUE(sum3Internal->getDims() & VarAccessDim::BATCH);
 
     // Check that neither initialisation nor update of batched and unbatched can be merged
     ASSERT_NE(sum1Internal->getHashDigest(), sum2Internal->getHashDigest());
@@ -1099,9 +1100,9 @@ TEST(CustomUpdates, CompareDifferentWUBatched)
     CustomUpdateWUInternal *sum1Internal = static_cast<CustomUpdateWUInternal*>(sum1);
     CustomUpdateWUInternal *sum2Internal = static_cast<CustomUpdateWUInternal*>(sum2);
     CustomUpdateWUInternal *sum3Internal = static_cast<CustomUpdateWUInternal*>(sum3);
-    ASSERT_TRUE(sum1Internal->isBatched());
-    ASSERT_FALSE(sum2Internal->isBatched());
-    ASSERT_TRUE(sum3Internal->isBatched());
+    ASSERT_TRUE(sum1Internal->getDims() & VarAccessDim::BATCH);
+    ASSERT_FALSE(sum2Internal->getDims() & VarAccessDim::BATCH);
+    ASSERT_TRUE(sum3Internal->getDims() & VarAccessDim::BATCH);
 
     // Check that neither initialisation nor update of batched and unbatched can be merged
     ASSERT_NE(sum1Internal->getHashDigest(), sum2Internal->getHashDigest());

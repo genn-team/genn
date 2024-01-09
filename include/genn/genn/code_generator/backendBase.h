@@ -495,16 +495,16 @@ public:
     void buildStandardEnvironment(EnvironmentGroupMergedField<PostsynapticUpdateGroupMerged> &env, unsigned int batchSize) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<SynapseDynamicsGroupMerged> &env, unsigned int batchSize) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<SynapseDendriticDelayUpdateGroupMerged> &env, unsigned int batchSize) const;
-    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env) const;
-    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env) const;
-    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env, unsigned int batchSize) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env, unsigned int batchSize) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env, unsigned int batchSize) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const;
 
     void buildStandardEnvironment(EnvironmentGroupMergedField<NeuronInitGroupMerged> &env, unsigned int batchSize) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<SynapseInitGroupMerged> &env, unsigned int batchSize) const;
-    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> &env) const;
-    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomWUUpdateInitGroupMerged> &env) const;
-    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomWUUpdateSparseInitGroupMerged> &env) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> &env, unsigned int batchSize) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomWUUpdateInitGroupMerged> &env, unsigned int batchSize) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomWUUpdateSparseInitGroupMerged> &env, unsigned int batchSize) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdatePreInitGroupMerged> &env) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdatePostInitGroupMerged> &env) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> &env, unsigned int batchSize) const;
@@ -550,18 +550,21 @@ protected:
 
     //! Helper function to generate initialisation code for any reduction operations carried out be custom update group.
     //! Returns vector of ReductionTarget structs, providing all information to write back reduction results to memory
-    std::vector<ReductionTarget> genInitReductionTargets(CodeStream &os, const CustomUpdateGroupMerged &cg, const std::string &idx = "") const;
+    std::vector<ReductionTarget> genInitReductionTargets(CodeStream &os, const CustomUpdateGroupMerged &cg, 
+                                                         unsigned int batchSize, const std::string &idx = "") const;
 
     //! Helper function to generate initialisation code for any reduction operations carried out be custom weight update group.
     //! //! Returns vector of ReductionTarget structs, providing all information to write back reduction results to memory
-    std::vector<ReductionTarget> genInitReductionTargets(CodeStream &os, const CustomUpdateWUGroupMerged &cg, const std::string &idx = "") const;
+    std::vector<ReductionTarget> genInitReductionTargets(CodeStream &os, const CustomUpdateWUGroupMerged &cg, 
+                                                         unsigned int batchSize, const std::string &idx = "") const;
 
 private:
     //--------------------------------------------------------------------------
     // Private API
     //--------------------------------------------------------------------------
-    template<typename G, typename R>
-    std::vector<ReductionTarget> genInitReductionTargets(CodeStream &os, const G &cg, const std::string &idx, R getVarRefIndexFn) const
+    template<typename A, typename G, typename R>
+    std::vector<ReductionTarget> genInitReductionTargets(CodeStream &os, const G &cg, unsigned int batchSize, 
+                                                         const std::string &idx, R getVarRefIndexFn) const
     {
         // Loop through variables
         std::vector<ReductionTarget> reductionTargets;
@@ -571,8 +574,9 @@ private:
             if (v.access & VarAccessModeAttribute::REDUCE) {
                 const auto resolvedType = v.type.resolve(cg.getTypeContext());
                 os << resolvedType.getName() << " _lr" << v.name << " = " << getReductionInitialValue(getVarAccessMode(v.access), resolvedType) << ";" << std::endl;
+                const VarAccessDim varAccessDim = getVarAccessDim(v.access, cg.getArchetype().getDims());
                 reductionTargets.push_back({v.name, resolvedType, getVarAccessMode(v.access),
-                                            cg.getVarIndex(getVarAccessDuplication(v.access), idx)});
+                                            cg.getVarIndex(batchSize, varAccessDim, idx)});
             }
         }
 

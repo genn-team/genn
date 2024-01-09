@@ -3,7 +3,7 @@ import pytest
 from pygenn import types
 
 from pygenn import GeNNModel
-from pygenn.genn import VarAccess, VarAccessMode
+from pygenn.genn import VarAccessMode, VarAccess
 
 from bitarray import bitarray
 from bitarray.util import hex2ba

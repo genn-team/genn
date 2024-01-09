@@ -7,8 +7,8 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define SET_PRE_VARS(...) virtual VarVec getPreVars() const override{ return __VA_ARGS__; }
-#define SET_POST_VARS(...) virtual VarVec getPostVars() const override{ return __VA_ARGS__; }
+#define SET_PRE_VARS(...) virtual std::vector<Var> getPreVars() const override{ return __VA_ARGS__; }
+#define SET_POST_VARS(...) virtual std::vector<Var> getPostVars() const override{ return __VA_ARGS__; }
 
 #define SET_VAR_REFS(...) virtual VarRefVec getVarRefs() const override{ return __VA_ARGS__; }
 #define SET_PRE_VAR_REFS(...) virtual VarRefVec getPreVarRefs() const override{ return __VA_ARGS__; }
@@ -31,11 +31,14 @@ public:
     //----------------------------------------------------------------------------
     //! Gets names and types (as strings) of state variables that are common
     //! across all synapses coming from the same presynaptic neuron
-    virtual VarVec getPreVars() const { return {}; }
+    virtual std::vector<Var> getPreVars() const { return {}; }
 
     //! Gets names and types (as strings) of state variables that are common
     //! across all synapses going to the same postsynaptic neuron
-    virtual VarVec getPostVars() const { return {}; }
+    virtual std::vector<Var> getPostVars() const { return {}; }
+
+    //! Gets model variables
+    virtual std::vector<Var> getVars() const{ return {}; }
 
     //! Gets names and types (as strings) of synapse variable references
     virtual VarRefVec getVarRefs() const { return {}; }
@@ -55,6 +58,12 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
+    //! Find the index of a named presynaptic variable
+    size_t getVarIndex(const std::string &varName) const
+    {
+        return getNamedVecIndex(varName, getVars());
+
+    }
     //! Find the index of a named presynaptic variable
     size_t getPreVarIndex(const std::string &varName) const
     {

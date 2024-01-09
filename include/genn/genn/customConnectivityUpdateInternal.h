@@ -55,11 +55,13 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
 
-    Models::Base::VarVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getVars(); }
+    std::vector<Models::Base::Var> getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getVars(); }
 
     const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getVarInitialisers(); }
 
     const std::string &getNameSuffix() const{ return m_CU.getName(); }
+
+    VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 
 private:
     //----------------------------------------------------------------------------
@@ -82,13 +84,15 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CU.getPreVarLocation(varName); }
 
-    Models::Base::VarVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPreVars(); }
+    std::vector<Models::Base::Var> getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPreVars(); }
 
     const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getPreVarInitialisers(); }
 
     bool isVarDelayed(const std::string &) const { return false; }
 
     const std::string &getNameSuffix() const{ return m_CU.getName(); }
+
+    VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 
 private:
     //----------------------------------------------------------------------------
@@ -111,7 +115,7 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CU.getPostVarLocation(varName); }
 
-    Models::Base::VarVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPostVars(); }
+    std::vector<Models::Base::Var> getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPostVars(); }
 
     const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getPostVarInitialisers(); }
 
@@ -119,6 +123,8 @@ public:
 
     const std::string &getNameSuffix() const{ return m_CU.getName(); }
 
+    VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
+    
 private:
     //----------------------------------------------------------------------------
     // Members

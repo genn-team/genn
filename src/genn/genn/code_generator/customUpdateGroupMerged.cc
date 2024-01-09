@@ -44,7 +44,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env,
+void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize,
                                                    BackendBase::GroupHandlerEnv<CustomUpdateGroupMerged> genPostamble)
 {
     // Add parameters, derived parameters and EGPs to environment
@@ -60,19 +60,18 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateGroupMerged> varEnv(
         *this, *this, getTypeContext(), cuEnv, backend.getDeviceVarPrefix(), "", "l",
-        [this, &cuEnv](const std::string&, VarAccessDuplication d)
+        [this, batchSize, &cuEnv](const std::string&, CustomUpdateVarAccess d)
         {
-            return getVarIndex(d, "$(id)");
+            return getVarIndex(batchSize, getVarAccessDim(d, getArchetype().getDims()), "$(id)");
         });
     
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarRefCache<CustomUpdateVarRefAdapter, CustomUpdateGroupMerged> varRefEnv(
         *this, *this, getTypeContext(), varEnv, backend.getDeviceVarPrefix(), "", "l",
-        [this, &varEnv](const std::string&, const Models::VarReference &v)
+        [this, batchSize, &varEnv](const std::string&, const Models::VarReference &v)
         { 
-            return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, 
-                                  getVarAccessDuplication(v.getVar().access), 
-                                  "$(id)");
+            return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, batchSize,
+                                  v.getVarDims(), "$(id)");
         });
 
     Transpiler::ErrorHandler errorHandler("Custom update '" + getArchetype().getName() + "' update code");
@@ -82,40 +81,43 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
     genPostamble(varRefEnv, *this);
 }
 //----------------------------------------------------------------------------
-std::string CustomUpdateGroupMerged::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const
+std::string CustomUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
 {
     // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
-    if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
-        return getArchetype().isBatched() ? "$(batch)" : "0";
+    const bool batched = ((varDims & VarAccessDim::BATCH) && batchSize > 1);
+    if (!(varDims & VarAccessDim::ELEMENT)) {
+        return batched ? "$(batch)" : "0";
     }
-    else if (varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) {
-        assert(!index.empty());
-        return index;
-    }
-    else {
+    else if (batched) {
         assert(!index.empty());
         return "$(_batch_offset) + " + index;
     }
+    else {
+        assert(!index.empty());
+        return index;
+    }
 }
 //----------------------------------------------------------------------------
-std::string CustomUpdateGroupMerged::getVarRefIndex(bool delay, VarAccessDuplication varDuplication, const std::string &index) const
+std::string CustomUpdateGroupMerged::getVarRefIndex(bool delay, unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
 {
     // If delayed, variable is shared, the batch size is one or this custom update isn't batched, batch delay offset isn't required
     if(delay) {
-        if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
-            return getArchetype().isBatched() ? "$(_batch_delay_slot)" : "$(_delay_slot)";
+        const bool batched = ((varDims & VarAccessDim::BATCH) && batchSize > 1);
+        if (!(varDims & VarAccessDim::ELEMENT)) {
+            return batched ? "$(_batch_delay_slot)" : "$(_delay_slot)";
         }
-        else if (varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) {
-            assert(!index.empty());
-            return "$(_delay_offset) + " + index;
-        }
-        else {
+        else if (batched) {
             assert(!index.empty());
             return "$(_batch_delay_offset) + " + index;
         }
+        
+        else {
+            assert(!index.empty());
+            return "$(_delay_offset) + " + index;
+        }
     }
     else {
-        return getVarIndex(varDuplication, index);
+        return getVarIndex(batchSize, varDims, index);
     }    
 }
 //----------------------------------------------------------------------------
@@ -169,7 +171,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWUGroupMergedBase::getHashDi
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env,
+void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize,
                                                          BackendBase::GroupHandlerEnv<CustomUpdateWUGroupMergedBase> genPostamble)
 {
     // Add parameters, derived parameters and EGPs to environment
@@ -185,18 +187,17 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &back
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateWUGroupMergedBase> varEnv(
         *this, *this, getTypeContext(), cuEnv, backend.getDeviceVarPrefix(), "", "l",
-        [this, &cuEnv](const std::string&, VarAccessDuplication d)
+        [this, batchSize, &cuEnv](const std::string&, CustomUpdateVarAccess d)
         {
-            return getVarIndex(d, "$(id_syn)");
+            return getVarIndex(batchSize, getVarAccessDim(d, getArchetype().getDims()), "$(id_syn)");
         });
     
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarRefCache<CustomUpdateWUVarRefAdapter, CustomUpdateWUGroupMergedBase> varRefEnv(
         *this, *this, getTypeContext(), varEnv, backend.getDeviceVarPrefix(), "", "l",
-        [this, &varEnv](const std::string&, const Models::WUVarReference &v)
+        [this, batchSize, &varEnv](const std::string&, const Models::WUVarReference &v)
         { 
-            return getVarRefIndex(getVarAccessDuplication(v.getVar().access), 
-                                  varEnv["id_syn"]);
+            return getVarRefIndex(batchSize, v.getVarDims(), "$(id_syn)");
         });
 
     Transpiler::ErrorHandler errorHandler("Custom update '" + getArchetype().getName() + "' update code");
@@ -206,16 +207,17 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &back
     genPostamble(varRefEnv, *this);
 }
 //----------------------------------------------------------------------------
-std::string CustomUpdateWUGroupMergedBase::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const
+std::string CustomUpdateWUGroupMergedBase::getVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
 {
     // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
-    return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "$(_batch_offset) + ") + index;
+    return (((varDims & VarAccessDim::BATCH) && batchSize > 1) ? "$(_batch_offset) + " : "") + index;
 }
 //----------------------------------------------------------------------------
-std::string CustomUpdateWUGroupMergedBase::getVarRefIndex(VarAccessDuplication varDuplication, const std::string &index) const
+std::string CustomUpdateWUGroupMergedBase::getVarRefIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
 {
     // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
-    return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "$(_batch_offset) + ") + index;
+    
+    return (((varDims & VarAccessDim::BATCH) && batchSize > 1) ? "$(_batch_offset) + " : "") + index;
 }
 
 // ----------------------------------------------------------------------------
@@ -240,7 +242,7 @@ std::string CustomUpdateTransposeWUGroupMerged::addTransposeField(const BackendB
                            [&backend, v](const auto &g, size_t)
                            {
                                const auto varRef = g.getVarReferences().at(v.name);
-                               return backend.getDeviceVarPrefix() + varRef.getTransposeVar().name + varRef.getTransposeTargetName();
+                               return backend.getDeviceVarPrefix() + *varRef.getTransposeVarName() + *varRef.getTransposeTargetName();
                            });
 
             // Return name of transpose variable

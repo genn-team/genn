@@ -36,12 +36,12 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
         dependentVarsList.sort([](const auto &a, const auto &b)
                                {  
                                    boost::uuids::detail::sha1 hashA;  
-                                   Type::updateHash(a.getVar().type, hashA);
-                                   Utils::updateHash(getVarAccessDuplication(a.getVar().access), hashA);
+                                   Type::updateHash(a.getVarType(), hashA);
+                                   Utils::updateHash(a.getVarDims(), hashA);
 
                                    boost::uuids::detail::sha1 hashB;
-                                   Type::updateHash(b.getVar().type, hashB);
-                                   Utils::updateHash(getVarAccessDuplication(b.getVar().access), hashB);
+                                   Type::updateHash(b.getVarType(), hashB);
+                                   Utils::updateHash(b.getVarDims(), hashB);
 
                                    return (hashA.get_digest() < hashB.get_digest());
                                 });
@@ -56,61 +56,6 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
                        {
                            return (vars.size() == m_SortedDependentVars.front().size());
                        }));
-    
-    
-    /*addField(Uint32, "rowStride",
-            [&backend](const auto &cg, size_t) 
-            { 
-                const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                return std::to_string(backend.getSynapticMatrixRowStride(*sgInternal)); 
-            });
-    
-    
-    assert(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE);
-    addField(getArchetype().getSynapseGroup()->getSparseIndType().createPointer(), "ind", 
-             [&backend](const auto &cg, size_t) 
-             { 
-                 return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
-             });
-
-    addField(Uint32.createPointer(), "rowLength",
-             [&backend](const auto &cg, size_t) 
-             { 
-                 return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
-             });
-
-    // If some presynaptic variables are delayed, add delay pointer
-    if (getArchetype().getPreDelayNeuronGroup() != nullptr) {
-        addField(Uint32.createPointer(), "preSpkQuePtr", 
-                 [&backend](const auto &cg, size_t) 
-                 { 
-                     return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getPreDelayNeuronGroup()->getName(); 
-                 });
-    }
-
-    // If some postsynaptic variables are delayed, add delay pointer
-    if (getArchetype().getPostDelayNeuronGroup() != nullptr) {
-        addField(Uint32.createPointer(), "postSpkQuePtr", 
-                 [&backend](const auto &cg, size_t) 
-                 { 
-                     return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getPostDelayNeuronGroup()->getName(); 
-                 });
-    }
-    
-
-    // Add variables to struct
-
-    
-    // Loop through sorted dependent variables
-    for(size_t i = 0; i < getSortedArchetypeDependentVars().size(); i++) {
-        auto resolvedType = getSortedArchetypeDependentVars().at(i).getVar().type.resolve(getTypeContext());
-        addField(resolvedType.createPointer(), "_dependentVar" + std::to_string(i), 
-                 [i, &backend, this](const auto&, size_t g) 
-                 { 
-                     const auto &varRef = m_SortedDependentVars[g][i];
-                     return backend.getDeviceVarPrefix() + varRef.getVar().name + varRef.getTargetName(); 
-                 });
-    }*/
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateGroupMerged::getHashDigest() const
@@ -170,7 +115,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     for(const auto &v : getArchetype().getCustomConnectivityUpdateModel()->getPreVarRefs()) {
         // If model isn't batched or variable isn't duplicated
         const auto &varRef = getArchetype().getPreVarReferences().at(v.name);
-        if(batchSize == 1 || !varRef.isDuplicated()) {
+        if(batchSize == 1 || !(varRef.getVarDims() & VarAccessDim::BATCH)) {
             // Determine index
             const std::string index = (varRef.getDelayNeuronGroup() != nullptr) ? "$(_pre_delay_offset) + $(id_pre)" : "$(id_pre)";
             
@@ -184,7 +129,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                        [&backend, v](const auto &g, size_t) 
                        { 
                            const auto varRef = g.getPreVarReferences().at(v.name);
-                           return backend.getDeviceVarPrefix() + varRef.getVar().name + varRef.getTargetName(); 
+                           return backend.getDeviceVarPrefix() + varRef.getVarName() + varRef.getTargetName(); 
                        },
                        index);
         }
@@ -199,12 +144,12 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
 
     // Add private fields for dependent variables
     for(size_t i = 0; i < getSortedArchetypeDependentVars().size(); i++) {
-        auto resolvedType = getSortedArchetypeDependentVars().at(i).getVar().type.resolve(getTypeContext());
+        auto resolvedType = getSortedArchetypeDependentVars().at(i).getVarType().resolve(getTypeContext());
         updateEnv.addField(resolvedType.createPointer(), "_dependent_var_" + std::to_string(i), "dependentVar" + std::to_string(i),
                            [i, &backend, this](const auto&, size_t g) 
                            { 
                                const auto &varRef = m_SortedDependentVars[g][i];
-                               return backend.getDeviceVarPrefix() + varRef.getVar().name + varRef.getTargetName(); 
+                               return backend.getDeviceVarPrefix() + varRef.getVarName() + varRef.getTargetName(); 
                            });
     }
 
@@ -240,8 +185,8 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         // Use subsequent parameters to initialise new synapse's variables referenced via the custom connectivity update
         for (size_t i = 0; i < ccuVarRefs.size(); i++) {
             // If model is batched and this variable is duplicated
-            if (batchSize > 1 && getArchetype().getVarReferences().at(ccuVarRefs[i].name).isDuplicated()) 
-            {
+            const auto &varRef = getArchetype().getVarReferences().at(ccuVarRefs[i].name);
+            if (batchSize > 1 && (varRef.getVarDims() & VarAccessDim::BATCH)) {
                 // Copy parameter into a register (just incase it's e.g. a RNG call) and copy into all batches
                 addSynapse << "const " << ccuVarRefs[i].type.resolve(getTypeContext()).getName() << " _" << ccuVarRefs[i].name << "Val = $(" << (1 + ccuVars.size() + i) << ");" << std::endl;
                 addSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
@@ -261,8 +206,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         // Loop through any other dependent variables
         for (size_t i = 0; i < dependentVars.size(); i++) {
             // If model is batched and this dependent variable is duplicated
-            if (batchSize > 1 && dependentVars.at(i).isDuplicated())
-            {
+            if (batchSize > 1 && (dependentVars.at(i).getVarDims() & VarAccessDim::BATCH)) {
                 // Loop through all batches and zero
                 addSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
                 {
@@ -275,7 +219,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                 addSynapse << "$(_dependent_var_" << i << ")[newIdx] = 0;" << std::endl;
             }
 
-            addSynapseTypes.push_back(dependentVars.at(i).getVar().type.resolve(getTypeContext()));
+            addSynapseTypes.push_back(dependentVars.at(i).getVarType().resolve(getTypeContext()));
         }
 
         // Increment row length
@@ -306,8 +250,8 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         // Loop through variable references
         for (size_t i = 0; i < ccuVarRefs.size(); i++) {
             // If model is batched and this variable is duplicated
-            if (batchSize > 1 && getArchetype().getVarReferences().at(ccuVarRefs[i].name).isDuplicated())
-            {
+            const auto &varRef = getArchetype().getVarReferences().at(ccuVarRefs[i].name);
+            if (batchSize > 1 && (varRef.getVarDims() & VarAccessDim::BATCH)) {
                 // Loop through all batches and copy custom connectivity update variable references from end of row over synapse to be deleted
                 removeSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
                 {
@@ -325,7 +269,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
         // Loop through any other dependent variables
         for (size_t i = 0; i < dependentVars.size(); i++) {
             // If model is batched and this dependent variable is duplicated
-            if (batchSize > 1 && dependentVars.at(i).isDuplicated()) {
+            if (batchSize > 1 && (dependentVars.at(i).getVarDims() & VarAccessDim::BATCH)) {
                 // Loop through all batches and copy dependent variable from end of row over synapse to be deleted
                 removeSynapse << "for(int b = 0; b < " << batchSize << "; b++)";
                 {

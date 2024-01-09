@@ -33,8 +33,8 @@ class CustomConnectivityUpdateInternal;
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define SET_VARS(...) virtual VarVec getVars() const override{ return __VA_ARGS__; }
-#define DEFINE_REF_DETAIL_STRUCT(NAME, GROUP_TYPE) using NAME = Detail<GROUP_TYPE, struct _##NAME>
+#define SET_VARS(...) virtual std::vector<Var> getVars() const override{ return __VA_ARGS__; }
+#define DEFINE_REF_DETAIL_STRUCT(NAME, GROUP_TYPE, VAR_TYPE) using NAME = Detail<GROUP_TYPE, VAR_TYPE, struct _##NAME>
 
 //----------------------------------------------------------------------------
 // GeNN::Models::Base
@@ -52,21 +52,50 @@ public:
     /*! Explicit constructors required as although, through the wonders of C++
         aggregate initialization, access would default to VarAccess::READ_WRITE
         if not specified, this results in a -Wmissing-field-initializers warning on GCC and Clang*/
-    struct GENN_EXPORT Var
+    template<typename A>
+    struct VarBase
     {
-        Var(const std::string &n, const Type::ResolvedType &t, VarAccess a = VarAccess::READ_WRITE) : name(n), type(t), access(a)
+        VarBase(const std::string &n, const Type::ResolvedType &t, A a)
+        :   name(n), type(t), access(a)
         {}
-        Var(const std::string &n, const std::string &t, VarAccess a = VarAccess::READ_WRITE) : name(n), type(t), access(a)
+        VarBase(const std::string &n, const std::string &t, A a)
+        :   name(n), type(t), access(a)
         {}
+
+        using AccessType = A;
         
-        bool operator == (const Var &other) const
+        bool operator == (const VarBase &other) const
         {
             return (std::tie(name, type, access) == std::tie(other.name, other.type, other.access));
         }
 
         std::string name;
         Type::UnresolvedType type;
-        VarAccess access;
+        A access;
+    };
+
+    struct Var : public VarBase<VarAccess>
+    {
+        using VarBase<VarAccess>::VarBase;
+
+        Var(const std::string &n, const Type::ResolvedType &t) 
+        :   VarBase(n, t, VarAccess::READ_WRITE)
+        {}
+        Var(const std::string &n, const std::string &t) 
+        :   VarBase(n, t, VarAccess::READ_WRITE)
+        {}
+    };
+
+    struct CustomUpdateVar : public VarBase<CustomUpdateVarAccess>
+    {
+        using VarBase<CustomUpdateVarAccess>::VarBase;
+
+        CustomUpdateVar(const std::string &n, const Type::ResolvedType &t) 
+        :   VarBase(n, t, CustomUpdateVarAccess::READ_WRITE)
+        {}
+        CustomUpdateVar(const std::string &n, const std::string &t) 
+        :   VarBase(n, t, CustomUpdateVarAccess::READ_WRITE)
+        {}
     };
 
     struct GENN_EXPORT VarRef
@@ -104,36 +133,8 @@ public:
     //----------------------------------------------------------------------------
     // Typedefines
     //----------------------------------------------------------------------------
-    typedef std::vector<Var> VarVec;
     typedef std::vector<VarRef> VarRefVec;
     typedef std::vector<EGPRef> EGPRefVec;
-
-    //----------------------------------------------------------------------------
-    // Declared virtuals
-    //------------------------------------------------------------------------
-    //! Gets model variables
-    virtual VarVec getVars() const{ return {}; }
-
-    //------------------------------------------------------------------------
-    // Public methods
-    //------------------------------------------------------------------------
-    //! Find the index of a named variable
-    size_t getVarIndex(const std::string &varName) const
-    {
-        return getNamedVecIndex(varName, getVars());
-    }
-
-protected:
-    //------------------------------------------------------------------------
-    // Protected methods
-    //------------------------------------------------------------------------
-    void updateHash(boost::uuids::detail::sha1 &hash) const;
-
-    //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, double> &paramValues, 
-                  const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
-                  const std::string &description) const;
-   
 };
 
 //----------------------------------------------------------------------------
@@ -141,36 +142,18 @@ protected:
 //----------------------------------------------------------------------------
 class GENN_EXPORT VarReferenceBase
 {
-public:
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    const Models::Base::Var &getVar() const { return m_Var; }
-    size_t getVarIndex() const { return m_VarIndex; }
-    
-
 protected:
     //------------------------------------------------------------------------
     // Detail
     //------------------------------------------------------------------------
     //! Minimal helper class for definining unique struct 
     //! wrappers around group pointers for use with std::variant
-    template<typename G, typename Tag>
+    template<typename G, typename V, typename Tag>
     struct Detail
     {
         G *group;
+        V var;
     };
-    
-    VarReferenceBase(size_t varIndex, const Models::Base::VarVec &varVec)
-    : m_VarIndex(varIndex), m_Var(varVec.at(varIndex))
-    {}
-
-private:
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    size_t m_VarIndex;
-    Models::Base::Var m_Var;
 };
 
 //----------------------------------------------------------------------------
@@ -182,18 +165,24 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
+    //! Get name of variable
+    const std::string &getVarName() const;
+
+    // Get type of variable
+    const Type::UnresolvedType &getVarType() const;
+
+    // Get dimensions of variable
+    VarAccessDim getVarDims() const;
+
     //! Get size of variable
-    unsigned int getSize() const { return m_Size; }
+    unsigned int getSize() const;
 
     //! If variable is delayed, get neuron group which manages its delay
     NeuronGroup *getDelayNeuronGroup() const;
     
     //! Get suffix to use when accessing target variable names
     // **TODO** rename to getNameSuffix
-    std::string getTargetName() const;
-    
-    //! If model is batched, will the variable this is referencing be duplicated?
-    bool isDuplicated() const;
+    const std::string &getTargetName() const;
 
     //! If this reference points to another custom update, return pointer to it
     /*! This is used to detect circular dependencies */
@@ -220,28 +209,25 @@ private:
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
-    DEFINE_REF_DETAIL_STRUCT(NGRef, NeuronGroupInternal);
-    DEFINE_REF_DETAIL_STRUCT(PSMRef, SynapseGroupInternal);
-    DEFINE_REF_DETAIL_STRUCT(WUPreRef, SynapseGroupInternal);
-    DEFINE_REF_DETAIL_STRUCT(WUPostRef, SynapseGroupInternal);
-    DEFINE_REF_DETAIL_STRUCT(CSRef, CurrentSourceInternal);
-    DEFINE_REF_DETAIL_STRUCT(CURef, CustomUpdateInternal);
-    DEFINE_REF_DETAIL_STRUCT(CCUPreRef, CustomConnectivityUpdateInternal);
-    DEFINE_REF_DETAIL_STRUCT(CCUPostRef, CustomConnectivityUpdateInternal);
+    DEFINE_REF_DETAIL_STRUCT(NGRef, NeuronGroupInternal, Base::Var);
+    DEFINE_REF_DETAIL_STRUCT(PSMRef, SynapseGroupInternal, Base::Var);
+    DEFINE_REF_DETAIL_STRUCT(WUPreRef, SynapseGroupInternal, Base::Var);
+    DEFINE_REF_DETAIL_STRUCT(WUPostRef, SynapseGroupInternal, Base::Var);
+    DEFINE_REF_DETAIL_STRUCT(CSRef, CurrentSourceInternal, Base::Var);
+    DEFINE_REF_DETAIL_STRUCT(CURef, CustomUpdateInternal, Base::CustomUpdateVar);
+    DEFINE_REF_DETAIL_STRUCT(CCUPreRef, CustomConnectivityUpdateInternal, Base::Var);
+    DEFINE_REF_DETAIL_STRUCT(CCUPostRef, CustomConnectivityUpdateInternal, Base::Var);
 
     //! Variant type used to store 'detail'
     using DetailType = std::variant<NGRef, PSMRef, WUPreRef, WUPostRef, CSRef, 
                                     CURef, CCUPreRef, CCUPostRef>;
 
-    VarReference(size_t varIndex, const Models::Base::VarVec &varVec, unsigned int size,
-                 const DetailType &detail)
-    :   VarReferenceBase(varIndex, varVec), m_Size(size), m_Detail(detail)
+    VarReference(const DetailType &detail) : m_Detail(detail)
     {}
 
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    unsigned int m_Size;
     DetailType m_Detail;
 };
 
@@ -254,20 +240,33 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    const Models::Base::Var &getTransposeVar() const { return *m_TransposeVar; }
-    size_t getTransposeVarIndex() const { return *m_TransposeVarIndex; }
+    //! Get name of variable
+    const std::string &getVarName() const;
+
+    // Get type of variable
+    const Type::UnresolvedType &getVarType() const;
+
+    // Get dimensions of variable
+    VarAccessDim getVarDims() const;
     
     //! Get suffix to use when accessing target variable names
     // **TODO** rename to getNameSuffix
-    std::string getTargetName() const;
+    const std::string &getTargetName() const;
     
-    //! If model is batched, will the variable this is referencing be duplicated?
-    bool isDuplicated() const;
-
     SynapseGroup *getSynapseGroup() const;
+    
+    //! Get name of tranpose variable
+    std::optional<std::string> getTransposeVarName() const;
+
+    // Get type of transpose variable
+    std::optional<Type::UnresolvedType> getTransposeVarType() const;
+
+    //! Get dimensions of transpose variable being referenced
+    std::optional<VarAccessDim> getTransposeVarDims() const;
+
+    std::optional<std::string> getTransposeTargetName() const;
 
     SynapseGroup *getTransposeSynapseGroup() const;
-    std::string getTransposeTargetName() const;
 
     //! If this reference points to another custom update, return pointer to it
     /*! This is used to detect circular dependencies */
@@ -296,13 +295,16 @@ private:
     {
         SynapseGroupInternal *group;
         SynapseGroupInternal *transposeGroup;
+
+        Base::Var var;
+        std::optional<Base::Var> transposeVar;
     };
 
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
-    DEFINE_REF_DETAIL_STRUCT(CURef, CustomUpdateWUInternal);
-    DEFINE_REF_DETAIL_STRUCT(CCURef, CustomConnectivityUpdateInternal);
+    DEFINE_REF_DETAIL_STRUCT(CURef, CustomUpdateWUInternal, Base::CustomUpdateVar);
+    DEFINE_REF_DETAIL_STRUCT(CCURef, CustomConnectivityUpdateInternal, Base::Var);
 
      //! Variant type used to store 'detail'
     using DetailType = std::variant<WURef, CURef, CCURef>;
@@ -313,18 +315,11 @@ private:
     SynapseGroupInternal *getSynapseGroupInternal() const;
     SynapseGroupInternal *getTransposeSynapseGroupInternal() const;
 
-    WUVarReference(size_t varIndex, const Models::Base::VarVec &varVec,
-                   const DetailType &detail);
-    WUVarReference(size_t varIndex, const Models::Base::VarVec &varVec,
-                   size_t transposeVarIndex, const Models::Base::VarVec &transposeVarVec,
-                   const DetailType &detail);
-    
+    WUVarReference(const DetailType &detail);
+
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::optional<size_t> m_TransposeVarIndex;
-    std::optional<Models::Base::Var> m_TransposeVar;
-    
     DetailType m_Detail;
 };
 
@@ -368,6 +363,7 @@ private:
 // updateHash overrides
 //----------------------------------------------------------------------------
 GENN_EXPORT void updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const Base::CustomUpdateVar &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash);
@@ -376,7 +372,7 @@ GENN_EXPORT void updateHash(const EGPReference &v, boost::uuids::detail::sha1 &h
 
 //! Helper function to check if variable reference types match those specified in model
 template<typename V>
-void checkVarReferences(const std::unordered_map<std::string, V> &varRefs, const Base::VarRefVec &modelVarRefs)
+void checkVarReferenceTypes(const std::unordered_map<std::string, V> &varRefs, const Base::VarRefVec &modelVarRefs)
 {
     // Loop through all variable references
     for(const auto &modelVarRef : modelVarRefs) {
@@ -384,15 +380,8 @@ void checkVarReferences(const std::unordered_map<std::string, V> &varRefs, const
 
         // Check types of variable references against those specified in model
         // **THINK** this is rather conservative but I think not allowing "scalar" and whatever happens to be scalar type is ok
-        if(varRef.getVar().type != modelVarRef.type) {
+        if(varRef.getVarType() != modelVarRef.type) {
             throw std::runtime_error("Incompatible type for variable reference '" + modelVarRef.name + "'");
-        }
-
-        // Check that no reduction targets reference duplicated variables
-        if((varRef.getVar().access & VarAccessDuplication::DUPLICATE) 
-            && (modelVarRef.access & VarAccessModeAttribute::REDUCE))
-        {
-            throw std::runtime_error("Reduction target variable reference must be to SHARED or SHARED_NEURON variables.");
         }
     }
 }

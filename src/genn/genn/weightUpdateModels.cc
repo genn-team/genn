@@ -20,8 +20,8 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 {
     // Superclass
     boost::uuids::detail::sha1 hash;
-    Models::Base::updateHash(hash);
-
+    Snippet::Base::updateHash(hash);
+    Utils::updateHash(getVars(), hash);
     Utils::updateHash(getSimCode(), hash);
     Utils::updateHash(getEventCode(), hash);
     Utils::updateHash(getLearnPostCode(), hash);
@@ -41,7 +41,6 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 boost::uuids::detail::sha1::digest_type Base::getPreHashDigest() const
 {
     // Superclass
-    // **NOTE** we skip over Models::Base::updateHash to avoid hashing synaptic variables
     boost::uuids::detail::sha1 hash;
     Snippet::Base::updateHash(hash);
 
@@ -56,10 +55,8 @@ boost::uuids::detail::sha1::digest_type Base::getPreHashDigest() const
 boost::uuids::detail::sha1::digest_type Base::getPostHashDigest() const
 {
     // Superclass
-    // **NOTE** we skip over Models::Base::updateHash to avoid hashing synaptic variables
     boost::uuids::detail::sha1 hash;
     Snippet::Base::updateHash(hash);
-
     Utils::updateHash(getPostSpikeCode(), hash);
     Utils::updateHash(getPostDynamicsCode(), hash);
     Utils::updateHash(getPostVars(), hash);
@@ -75,36 +72,18 @@ void Base::validate(const std::unordered_map<std::string, double> &paramValues,
                     const std::string &description) const
 {
     // Superclass
-    Models::Base::validate(paramValues, varValues, description);
+    Snippet::Base::validate(paramValues, description);
 
-    Utils::validateVecNames(getPreVars(), "Presynaptic variable");
-    Utils::validateVecNames(getPostVars(), "Presynaptic variable");
-
-    // If any variables have a reduction access mode, give an error
     const auto vars = getVars();
     const auto preVars = getPreVars();
     const auto postVars = getPostVars();
-    if(std::any_of(vars.cbegin(), vars.cend(),
-                   [](const Models::Base::Var &v){ return (v.access & VarAccessModeAttribute::REDUCE); })
-       || std::any_of(preVars.cbegin(), preVars.cend(),
-                      [](const Models::Base::Var &v){ return (v.access & VarAccessModeAttribute::REDUCE); })
-       || std::any_of(postVars.cbegin(), postVars.cend(),
-                      [](const Models::Base::Var &v){ return (v.access & VarAccessModeAttribute::REDUCE); }))
-    {
-        throw std::runtime_error("Weight update models cannot include variables with REDUCE access modes - they are only supported by custom update models");
-    }
+    Utils::validateVecNames(getVars(), "Variable");
+    Utils::validateVecNames(getPreVars(), "Presynaptic variable");
+    Utils::validateVecNames(getPostVars(), "Presynaptic variable");
 
-    // Validate variable reference initialisers
+    // Validate variable initialisers
+    Utils::validateInitialisers(vars, varValues, "variable", description);
     Utils::validateInitialisers(preVars, preVarValues, "presynaptic variable", description);
-
-    // Validate variable reference initialisers
     Utils::validateInitialisers(postVars, postVarValues, "postsynaptic variable", description);
-
-    // If any variables have shared neuron duplication mode, give an error
-    if (std::any_of(vars.cbegin(), vars.cend(),
-                    [](const Models::Base::Var &v) { return (v.access & VarAccessDuplication::SHARED_NEURON); }))
-    {
-        throw std::runtime_error("Weight update models cannot include variables with SHARED_NEURON access modes - they are only supported on pre, postsynaptic or neuron variables");
-    }
 }
 }   // namespace WeightUpdateModels

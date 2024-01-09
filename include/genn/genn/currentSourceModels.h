@@ -32,11 +32,20 @@ public:
     //! Gets the code that defines current injected each timestep 
     virtual std::string getInjectionCode() const{ return ""; }
 
+    //! Gets model variables
+    virtual std::vector<Var> getVars() const{ return {}; }
+
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
     //! Update hash from model
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
+    //! Find the index of a named variable
+    size_t getVarIndex(const std::string &varName) const
+    {
+        return getNamedVecIndex(varName, getVars());
+    }
 
     //! Validate names of parameters etc
     void validate(const std::unordered_map<std::string, double> &paramValues, 

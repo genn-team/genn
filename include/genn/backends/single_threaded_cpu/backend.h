@@ -254,7 +254,8 @@ private:
             // If variable is a reduction target, copy value from register straight back into global memory
             if(v.access & VarAccessModeAttribute::REDUCE) {
                 const std::string idx = env.getName(idxName);
-                env.getStream() << "group->" << v.name << "[" << cg.getVarIndex(getVarAccessDuplication(v.access), idx) << "] = " << env[v.name] << ";" << std::endl;
+                const VarAccessDim varAccessDim = getVarAccessDim(v.access, cg.getArchetype().getDims());
+                env.getStream() << "group->" << v.name << "[" << cg.getVarIndex(1, varAccessDim, idx) << "] = " << env[v.name] << ";" << std::endl;
             }
         }
 

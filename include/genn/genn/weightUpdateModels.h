@@ -17,8 +17,8 @@
 #define SET_PRE_DYNAMICS_CODE(PRE_DYNAMICS_CODE) virtual std::string getPreDynamicsCode() const override{ return PRE_DYNAMICS_CODE; }
 #define SET_POST_DYNAMICS_CODE(POST_DYNAMICS_CODE) virtual std::string getPostDynamicsCode() const override{ return POST_DYNAMICS_CODE; }
 
-#define SET_PRE_VARS(...) virtual VarVec getPreVars() const override{ return __VA_ARGS__; }
-#define SET_POST_VARS(...) virtual VarVec getPostVars() const override{ return __VA_ARGS__; }
+#define SET_PRE_VARS(...) virtual std::vector<Var> getPreVars() const override{ return __VA_ARGS__; }
+#define SET_POST_VARS(...) virtual std::vector<Var> getPostVars() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // GeNN::WeightUpdateModels::Base
@@ -71,17 +71,26 @@ public:
         and synapse variables are not accesible from within this code */
     virtual std::string getPostDynamicsCode() const{ return ""; }
 
+    //! Gets model variables
+    virtual std::vector<Var> getVars() const{ return {}; }
+
     //! Gets names and types (as strings) of state variables that are common
     //! across all synapses coming from the same presynaptic neuron
-    virtual VarVec getPreVars() const{ return {}; }
+    virtual std::vector<Var> getPreVars() const{ return {}; }
 
     //! Gets names and types (as strings) of state variables that are common
     //! across all synapses going to the same postsynaptic neuron
-    virtual VarVec getPostVars() const{ return {}; }
+    virtual std::vector<Var> getPostVars() const{ return {}; }
 
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
+    //! Find the index of a named variable
+    size_t getVarIndex(const std::string &varName) const
+    {
+        return getNamedVecIndex(varName, getVars());
+    }
+
     //! Find the index of a named presynaptic variable
     size_t getPreVarIndex(const std::string &varName) const
     {

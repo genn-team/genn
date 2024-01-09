@@ -124,9 +124,9 @@ CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, cons
     }
 
     // Check variable reference types
-    Models::checkVarReferences(m_VarReferences, getCustomConnectivityUpdateModel()->getVarRefs());
-    Models::checkVarReferences(m_PreVarReferences, getCustomConnectivityUpdateModel()->getPreVarRefs());
-    Models::checkVarReferences(m_PostVarReferences, getCustomConnectivityUpdateModel()->getPostVarRefs());
+    Models::checkVarReferenceTypes(m_VarReferences, getCustomConnectivityUpdateModel()->getVarRefs());
+    Models::checkVarReferenceTypes(m_PreVarReferences, getCustomConnectivityUpdateModel()->getPreVarRefs());
+    Models::checkVarReferenceTypes(m_PostVarReferences, getCustomConnectivityUpdateModel()->getPostVarRefs());
 
     // Give error if any WU var references aren't pointing to synapse group
     if (std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
@@ -176,16 +176,22 @@ void CustomConnectivityUpdate::finalise(double dt, unsigned int batchSize)
     // If model is batched we need to check all variable references 
     // are SHARED as, connectivity itself is always SHARED
     if (batchSize > 1) {
-        // If any referenced presynaptic variables aren't shared, give error
+        // If any referenced presynaptic variables are batched, give error
         if (std::any_of(getPreVarReferences().cbegin(), getPreVarReferences().cend(),
-                        [](const auto &v) { return (getVarAccessDuplication(v.second.getVar().access) != VarAccessDuplication::SHARED); }))
+                        [](const auto &v) 
+                        { 
+                            return (v.second.getVarDims() & VarAccessDim::BATCH); 
+                        }))
         {
             throw std::runtime_error("Presynaptic variables referenced by CustomConnectivityUpdate must be SHARED across batches");
         }
 
         // If any referenced presynaptic variables aren't shared, give error
         if (std::any_of(getPostVarReferences().cbegin(), getPostVarReferences().cend(),
-                        [](const auto &v) { return (getVarAccessDuplication(v.second.getVar().access) != VarAccessDuplication::SHARED); }))
+                        [](const auto &v) 
+                        { 
+                            return (v.second.getVarDims() & VarAccessDim::BATCH); 
+                        }))
         {
             throw std::runtime_error("Postsynaptic variables referenced by CustomConnectivityUpdate must be SHARED across batches");
         }
@@ -306,8 +312,8 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
                    [](const Models::WUVarReference &v)
                    {
                        boost::uuids::detail::sha1 hash;  
-                       Type::updateHash(v.getVar().type, hash);
-                       Utils::updateHash(v.isDuplicated(), hash);
+                       Type::updateHash(v.getVarType(), hash);
+                       Utils::updateHash(v.getVarDims(), hash);
                        return hash.get_digest();
                    });
     
@@ -323,7 +329,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
 
     // Update hash with duplication mode of synaptic variable references
     for(const auto &v : getVarReferences()) {
-        Utils::updateHash(v.second.isDuplicated(), hash);
+        Utils::updateHash(v.second.getVarDims(), hash);
     }
 
     return hash.get_digest();
