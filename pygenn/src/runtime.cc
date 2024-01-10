@@ -36,12 +36,7 @@ PYBIND11_MODULE(runtime, m)
                return pybind11::memoryview::from_memory(a.getHostPointer(), 
                                                         a.getSizeBytes());
             })
-        .def_property_readonly("state",
-            [](ArrayBase &a)
-            {
-               return pybind11::memoryview::from_memory(a.getHostPointer(),
-                                                        a.getSizeBytes());
-            })
+
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
@@ -72,6 +67,7 @@ PYBIND11_MODULE(runtime, m)
         .def_property_readonly("postsynaptic_update_time", &Runtime::getPostsynapticUpdateTime)
         .def_property_readonly("synapse_dynamics_time", &Runtime::getSynapseDynamicsTime)
         //.def_property_readonly("free_device_mem_bytes", &Runtime::getFreeDeviceMemBytes)
+        .def_property_readonly("state", &Runtime::getState)
         .def_property_readonly("time", &Runtime::getTime)
         .def_property("timestep", &Runtime::getTimestep, &Runtime::setTimestep)
 
@@ -79,7 +75,6 @@ PYBIND11_MODULE(runtime, m)
         // Methods
         //--------------------------------------------------------------------
         .def("allocate", &Runtime::allocate)
-        //.def("nccl_init_communicator", &SharedLibraryModel<T>::ncclInitCommunicator)
         .def("initialize", &Runtime::initialize)
         .def("initialize_sparse", &Runtime::initializeSparse)
         .def("step_time", &Runtime::stepTime)
@@ -140,12 +135,6 @@ PYBIND11_MODULE(runtime, m)
                                     return std::make_pair(times, ids);
                                 });
                  return npSpikes;
-             });;
-        /*.def("get_nccl_unique_id", 
-            [](SharedLibraryModel<T> &s) 
-            { 
-               return pybind11::memoryview::from_memory(s.ncclGetUniqueID(), 
-                                                        s.ncclGetUniqueIDBytes(), true);
-            })*/
+             });
 
 }

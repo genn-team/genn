@@ -68,7 +68,7 @@ PYBIND11_MODULE(cuda_backend, m)
     //------------------------------------------------------------------------
     pybind11::class_<State, Runtime::StateBase>(m, "Runtime")
         .def("nccl_generate_unique_id", &State::ncclGenerateUniqueID)
-        .def("nccl_init_communicator", &State::ncclGenerateUniqueID)
+        .def("nccl_init_communicator", &State::ncclInitCommunicator)
 
         .def_property_readonly("nccl_unique_id",
             [](State &a)
