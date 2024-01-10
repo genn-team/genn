@@ -258,64 +258,61 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
     synEnv.addInitialiserDerivedParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser, &SynSpikeEvent::isDerivedParamHeterogeneous);
     synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), "", fieldSuffix);
 
-    // Add local neuron variable references
-    synEnv.addLocalVarRefs<SynapseWUPreNeuronVarRefAdapter>(true);
-
-    // Create an environment which caches variables in local variables if they are accessed
-    // **NOTE** always copy variables if synapse group is delayed
-    const bool delayed = (getArchetype().getAxonalDelaySteps() != 0);
-    EnvironmentLocalVarCache<SynapseWUPreVarAdapter, SynSpikeEvent, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
-        [batchSize, delayed, &ng](const std::string&, VarAccess d)
-        {
-            return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
-        },
-        [batchSize, delayed, &ng](const std::string&, VarAccess d)
-        {
-            return ng.getWriteVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
-        },
-        [delayed](const std::string&, VarAccess)
-        {
-            return delayed;
-        });     
-
-    // Generate event condition
     // **NOTE** for an incoming and outgoing synapse group to be merged together, the getPreEventHashDigest and getPostEventHashDigest 
     // of their weight update model must match which means the pre and post event threshold condition must be the 
-    // same so we just need to pick the right one on the archetype and it'll be fine
-    varEnv.print("if((");
+    // same and they must refernece the same variables so we just need to pick the right one on the archetype and it'll be fine
     if(getArchetype().getSrcNeuronGroup() == &ng.getArchetype()) {
-        Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' presynaptic event threshold condition");
-        prettyPrintExpression(getArchetype().getWUInitialiser().getPreEventThresholdCodeTokens(), getTypeContext(), varEnv, errorHandler);
+        // Add local neuron variable references
+        synEnv.addLocalVarRefs<SynapseWUPreNeuronVarRefAdapter>(true);
+
+        // Create an environment which caches variables in local variables if they are accessed
+        // **NOTE** always copy variables if synapse group is delayed
+        const bool delayed = (getArchetype().getAxonalDelaySteps() != 0);
+        EnvironmentLocalVarCache<SynapseWUPreVarAdapter, SynSpikeEvent, NeuronUpdateGroupMerged> varEnv(
+            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
+            [batchSize, delayed, &ng](const std::string&, VarAccess d)
+            {
+                return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
+            },
+            [batchSize, delayed, &ng](const std::string&, VarAccess d)
+            {
+                return ng.getWriteVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
+            },
+            [delayed](const std::string&, VarAccess)
+            {
+                return delayed;
+            });
+
+        generateEventConditionInternal(varEnv, ng, batchSize, genEmitSpikeLikeEvent,
+                                       getArchetype().getWUInitialiser().getPreEventThresholdCodeTokens(),
+                                       "Synapse group '" + getArchetype().getName() + "' presynaptic event threshold condition");
+
     }
     else {
-        Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' postsynaptic event threshold condition");
-        prettyPrintExpression(getArchetype().getWUInitialiser().getPostEventThresholdCodeTokens(), getTypeContext(), varEnv, errorHandler);
-    }
+        // Add local neuron variable references
+        synEnv.addLocalVarRefs<SynapseWUPostNeuronVarRefAdapter>(true);
 
-    varEnv.print("))");
-    {
-        CodeStream::Scope b(varEnv.getStream());
-        genEmitSpikeLikeEvent(varEnv, *this);
-    }
-    // If delays are required and event times are required
-    if(ng.getArchetype().isDelayRequired() 
-       && (ng.getArchetype().isSpikeEventTimeRequired() || ng.getArchetype().isPrevSpikeTimeRequired())) 
-    {
-        varEnv.print("else");
-        {
-            CodeStream::Scope b(varEnv.getStream());
+        // Create an environment which caches variables in local variables if they are accessed
+        // **NOTE** always copy variables if synapse group is delayed
+        const bool delayed = (getArchetype().getBackPropDelaySteps() != 0);
+        EnvironmentLocalVarCache<SynapseWUPostVarAdapter, SynSpikeEvent, NeuronUpdateGroupMerged> varEnv(
+            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
+            [batchSize, delayed, &ng](const std::string&, VarAccess d)
+            {
+                return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
+            },
+            [batchSize, delayed, &ng](const std::string&, VarAccess d)
+            {
+                return ng.getWriteVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
+            },
+            [delayed](const std::string&, VarAccess)
+            {
+                return delayed;
+            }); 
 
-            // If spike times are required, copy times from register
-            if(ng.getArchetype().isSpikeEventTimeRequired()) {
-                varEnv.printLine("$(_set)[" + ng.getWriteVarIndex(true, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)") + "] = $(set);");
-            }
-
-            // If previous spike times are required, copy times from register
-            if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
-                varEnv.printLine("$(_prev_set)[" + ng.getWriteVarIndex(true, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)") + "] = $(prev_set);");
-            }
-        }
+        generateEventConditionInternal(varEnv, ng, batchSize, genEmitSpikeLikeEvent,
+                                       getArchetype().getWUInitialiser().getPostEventThresholdCodeTokens(),
+                                       "Synapse group '" + getArchetype().getName() + "' postsynaptic event threshold condition");
     }
 }
 //----------------------------------------------------------------------------
@@ -334,7 +331,39 @@ bool NeuronUpdateGroupMerged::SynSpikeEvent::isDerivedParamHeterogeneous( const 
 {
     return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getWUInitialiser().getDerivedParams(); });
 }
+//----------------------------------------------------------------------------
+void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventConditionInternal(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+                                                                            unsigned int batchSize, BackendBase::GroupHandlerEnv<SynSpikeEvent> genEmitSpikeLikeEvent,
+                                                                            const std::vector<Transpiler::Token> &conditionTokens, const std::string &errorContext)
+{
+    Transpiler::ErrorHandler errorHandler(errorContext);
+    env.print("if((");    
+    prettyPrintExpression(conditionTokens, getTypeContext(), env, errorHandler);
+    env.print("))");
+    {
+        CodeStream::Scope b(env.getStream());
+        genEmitSpikeLikeEvent(env, *this);
+    }
+    // If delays are required and event times are required
+    if(ng.getArchetype().isDelayRequired() 
+       && (ng.getArchetype().isSpikeEventTimeRequired() || ng.getArchetype().isPrevSpikeEventTimeRequired())) 
+    {
+        env.print("else");
+        {
+            CodeStream::Scope b(env.getStream());
 
+            // If spike times are required, copy times from register
+            if(ng.getArchetype().isSpikeEventTimeRequired()) {
+                env.printLine("$(_set)[" + ng.getWriteVarIndex(true, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)") + "] = $(set);");
+            }
+
+            // If previous spike times are required, copy times from register
+            if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
+                env.printLine("$(_prev_set)[" + ng.getWriteVarIndex(true, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)") + "] = $(prev_set);");
+            }
+        }
+    }
+}
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::InSynWUMPostCode
 //----------------------------------------------------------------------------
