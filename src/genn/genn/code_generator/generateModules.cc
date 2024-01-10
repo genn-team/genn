@@ -96,7 +96,7 @@ namespace GeNN::CodeGenerator
 {
 std::vector<std::string> generateAll(ModelSpecMerged &modelMerged, const BackendBase &backend,
                                      const filesystem::path &sharePath, const filesystem::path &outputPath,
-                                     bool forceRebuild)
+                                     bool alwaysRebuild, bool neverRebuild)
 {
     // Create directory for generated code
     filesystem::create_directory(outputPath);
@@ -119,8 +119,7 @@ std::vector<std::string> generateAll(ModelSpecMerged &modelMerged, const Backend
 
     // If force rebuild flag is set or model should be rebuilt
     const auto hashDigest = modelMerged.getHashDigest(backend);
-    if(forceRebuild || shouldRebuildModel(outputPath, hashDigest)) {
-        
+    if(!neverRebuild && (alwaysRebuild || shouldRebuildModel(outputPath, hashDigest))) {
         // Generate runner
         generateRunner(outputPath, modelMerged, backend);
 

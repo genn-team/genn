@@ -550,14 +550,17 @@ class GeNNModel(ModelSpecInternal):
         self.custom_connectivity_updates[cu_name] = c_update
         return c_update
         
-    def build(self, path_to_model="./", force_rebuild=False):
+    def build(self, path_to_model="./", always_rebuild=False, never_rebuild=False):
         """Finalize and build a GeNN model
 
         Keyword args:
         path_to_model   --  path where to place the generated model code.
                             Defaults to the local directory.
-        force_rebuild   --  should model be rebuilt even if 
+        always_rebuild   -- should model be rebuilt even if
                             it doesn't appear to be required
+        never_rebuild   --  should model never be rebuilt even it appears to
+                            need it. This should only ever be used to prevent
+                            file overwriting when performing parallel runs
         """
 
         if self._built:
@@ -585,14 +588,15 @@ class GeNNModel(ModelSpecInternal):
 
         # Generate code
         self._model_merged = generate_code(self, self._backend, share_path,
-                                           output_path, force_rebuild)
+                                           output_path, always_rebuild, never_rebuild)
 
         # Build code
-        if system() == "Windows":
-            check_call([_msbuild, "/p:Configuration=Release", "/m", "/verbosity:quiet",
-                        path.join(output_path, "runner.vcxproj")])
-        else:
-            check_call(["make", "-j", str(cpu_count(logical=False)), "-C", output_path])
+        if not never_rebuild:
+            if system() == "Windows":
+                check_call([_msbuild, "/p:Configuration=Release", "/m", "/verbosity:quiet",
+                            path.join(output_path, "runner.vcxproj")])
+            else:
+                check_call(["make", "-j", str(cpu_count(logical=False)), "-C", output_path])
 
         self._built = True
 

@@ -205,7 +205,8 @@ public:
 };
 
 const CodeGenerator::ModelSpecMerged *generateCode(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, 
-                                                   const std::string &sharePathStr, const std::string &outputPathStr, bool forceRebuild)
+                                                   const std::string &sharePathStr, const std::string &outputPathStr,
+                                                   bool forceRebuild, bool neverRebuild)
 {
     const filesystem::path outputPath(outputPathStr);
 
@@ -214,7 +215,7 @@ const CodeGenerator::ModelSpecMerged *generateCode(ModelSpecInternal &model, Cod
     const auto output = CodeGenerator::generateAll(
         *modelMerged, backend, 
         filesystem::path(sharePathStr), outputPath, 
-        forceRebuild);
+        forceRebuild, neverRebuild);
 
 #ifdef _WIN32
     // Create MSBuild project to compile and link all generated modules
