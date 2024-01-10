@@ -1075,6 +1075,8 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     modelMerged.genMergedCustomUpdateStructs(os, *this);
     modelMerged.genMergedCustomUpdateWUStructs(os, *this);
     modelMerged.genMergedCustomUpdateTransposeWUStructs(os, *this);
+    modelMerged.genMergedCustomUpdateHostReductionStructs(os, *this);
+    modelMerged.genMergedCustomWUUpdateHostReductionStructs(os, *this);
     modelMerged.genMergedCustomConnectivityUpdateStructs(os, *this);
     modelMerged.genMergedCustomConnectivityHostUpdateStructs(os, *this);
 
@@ -1084,7 +1086,9 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomConnectivityUpdateGroups());
     modelMerged.genMergedCustomConnectivityHostUpdateStructArrayPush(os, *this);
-    
+    modelMerged.genMergedCustomUpdateHostReductionHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomWUUpdateHostReductionHostStructArrayPush(os, *this);
+
     // Generate preamble
     preambleHandler(os);
 
