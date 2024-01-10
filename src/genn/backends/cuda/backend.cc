@@ -419,7 +419,7 @@ void State::ncclGenerateUniqueID()
     m_NCCLGenerateUniqueID();
 }
 //--------------------------------------------------------------------------
-std::byte *State::ncclGetUniqueID()
+unsigned char *State::ncclGetUniqueID()
 { 
     if(m_NCCLGetUniqueID == nullptr) {
         throw std::runtime_error("Cannot get NCCL unique ID - model may not have been built with NCCL support");
@@ -1319,7 +1319,7 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &) co
         os << "EXPORT_VAR const size_t ncclUniqueIDSize;" << std::endl;
         os << "EXPORT_FUNC void ncclGenerateUniqueID();" << std::endl;
         os << "EXPORT_FUNC void ncclInitCommunicator(int rank, int numRanks);" << std::endl;
-        os << "EXPORT_FUNC std::byte *ncclGetUniqueID();" << std::endl;
+        os << "EXPORT_FUNC unsigned char *ncclGetUniqueID();" << std::endl;
         os << "}" << std::endl;
     }
 
@@ -1649,10 +1649,10 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&) const
             os << "CHECK_NCCL_ERRORS(ncclGetUniqueId(&ncclID));" << std::endl;
         }
         os << std::endl;
-        os << "std::byte *ncclGetUniqueID()";
+        os << "unsigned char *ncclGetUniqueID()";
         {
             CodeStream::Scope b(os);
-            os << "return reinterpret_cast<std::byte*>(&ncclID);" << std::endl;
+            os << "return reinterpret_cast<unsigned char*>(&ncclID);" << std::endl;
         }
         os << std::endl;
         os << "void ncclInitCommunicator(int rank, int numRanks)";

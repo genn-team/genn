@@ -129,7 +129,7 @@ public:
     void ncclGenerateUniqueID();
     
     //! Get pointer to unique ID
-    std::byte *ncclGetUniqueID();
+    unsigned char *ncclGetUniqueID();
     
     //! Get size of unique ID in bytes
     size_t ncclGetUniqueIDSize() const;
@@ -142,7 +142,7 @@ private:
     // Type defines
     //----------------------------------------------------------------------------
     typedef void (*VoidFunction)(void);
-    typedef std::byte* (*BytePtrFunction)(void);
+    typedef unsigned char* (*BytePtrFunction)(void);
     typedef void (*NCCLInitCommunicatorFunction)(int, int);
 
     //------------------------------------------------------------------------
@@ -373,7 +373,8 @@ private:
             // Get reference to group
             env.getStream() << "const auto *group = &merged" << G::name << "Group" << cg.getIndex() << "[g]; " << std::endl;
             EnvironmentGroupMergedField<G> groupEnv(env, cg);
-
+            buildSizeEnvironment(groupEnv);
+        
             // Loop through variables
             const auto *cm = cg.getArchetype().getCustomUpdateModel();
             for(const auto &v : cm->getVars()) {

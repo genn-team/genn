@@ -55,6 +55,8 @@ class CustomConnectivityUpdateGroupMerged;
 class CustomUpdateGroupMerged;
 class CustomUpdateWUGroupMerged;
 class CustomUpdateTransposeWUGroupMerged;
+class CustomUpdateHostReductionGroupMerged;
+class CustomWUUpdateHostReductionGroupMerged;
 class NeuronInitGroupMerged;
 class CustomUpdateInitGroupMerged;
 class CustomWUUpdateInitGroupMerged;
@@ -399,9 +401,11 @@ public:
     Type::ResolvedType getSynapseIndexType(const GroupMerged<CustomConnectivityUpdateInternal> &cg) const;
 
     void buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env) const;
+    void buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateHostReductionGroupMerged> &env) const;
     void buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env) const;
     void buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env) const;
-    
+    void buildSizeEnvironment(EnvironmentGroupMergedField<CustomWUUpdateHostReductionGroupMerged> &env) const;
+
     void buildStandardEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env, unsigned int batchSize) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<NeuronPrevSpikeTimeUpdateGroupMerged> &env, unsigned int batchSize) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<NeuronSpikeQueueUpdateGroupMerged> &env, unsigned int batchSize) const;

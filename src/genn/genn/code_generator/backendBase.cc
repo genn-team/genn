@@ -524,12 +524,22 @@ void BackendBase::buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateG
     buildCustomUpdateSizeEnvironment(env);
 }
 //-----------------------------------------------------------------------
+void BackendBase::buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateHostReductionGroupMerged> &env) const
+{
+    buildCustomUpdateSizeEnvironment(env);
+}
+//-----------------------------------------------------------------------
 void BackendBase::buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env) const
 {
     buildCustomUpdateWUSizeEnvironment(*this, env);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env) const
+{
+    buildCustomUpdateWUSizeEnvironment(*this, env);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildSizeEnvironment(EnvironmentGroupMergedField<CustomWUUpdateHostReductionGroupMerged> &env) const
 {
     buildCustomUpdateWUSizeEnvironment(*this, env);
 }
