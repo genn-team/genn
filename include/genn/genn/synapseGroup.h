@@ -84,13 +84,9 @@ public:
     /*! This should either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */
     void setPreTargetVar(const std::string &varName);
 
-    //! Set location of sparse connectivity initialiser extra global parameter
-    /*! This is ignored for simulations on hardware with a single memory space. */
-    void setSparseConnectivityExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
-
-    //! Set location of variables used to combine input from this synapse group
+    //! Set location of variables used for outputs from this synapse group e.g. outPre and outPost
     /*! This is ignored for simulations on hardware with a single memory space */
-    void setInSynVarLocation(VarLocation loc) { m_InSynLocation = loc; }
+    void setOutputLocation(VarLocation loc) { m_OutputLocation = loc; }
 
     //! Set variable mode used for sparse connectivity
     /*! This is ignored for simulations on hardware with a single memory space */
@@ -143,8 +139,8 @@ public:
     const std::vector<unsigned int> &getKernelSize() const { return m_KernelSize; }
     size_t getKernelSizeFlattened() const;
     
-    //! Get variable mode used for variables used to combine input from this synapse group
-    VarLocation getInSynLocation() const { return m_InSynLocation; }
+    //! Get variable mode used for outputs from this synapse group e.g. outPre and outPost
+    VarLocation getOutputLocation() const { return m_OutputLocation; }
 
     //! Get variable mode used for sparse connectivity
     VarLocation getSparseConnectivityLocation() const{ return m_SparseConnectivityLocation; }
@@ -470,8 +466,8 @@ private:
     //! Should narrow i.e. less than 32-bit types be used for sparse matrix indices
     bool m_NarrowSparseIndEnabled;
 
-    //! Variable mode used for variables used to combine input from this synapse group
-    VarLocation m_InSynLocation;
+    //! Variable mode used for outputs from this synapse group e.g. outPre and outPost
+    VarLocation m_OutputLocation;
 
     //! Variable mode used for this synapse group's dendritic delay buffers
     VarLocation m_DendriticDelayLocation;

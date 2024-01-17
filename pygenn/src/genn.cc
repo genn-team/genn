@@ -600,7 +600,7 @@ PYBIND11_MODULE(genn, m)
     
         .def_property("post_target_var", &SynapseGroup::getPostTargetVar, &SynapseGroup::setPostTargetVar)
         .def_property("pre_target_var", &SynapseGroup::getPreTargetVar, &SynapseGroup::setPreTargetVar)
-        .def_property("in_syn_location", &SynapseGroup::getInSynLocation, &SynapseGroup::setInSynVarLocation)
+        .def_property("output_location", &SynapseGroup::getOutputLocation, &SynapseGroup::setOutputLocation)
         .def_property("sparse_connectivity_location", &SynapseGroup::getSparseConnectivityLocation, &SynapseGroup::setSparseConnectivityLocation)
         .def_property("dendritic_delay_location",&SynapseGroup::getDendriticDelayLocation, &SynapseGroup::setDendriticDelayLocation)
         .def_property("max_connections",&SynapseGroup::getMaxConnections, &SynapseGroup::setMaxConnections)

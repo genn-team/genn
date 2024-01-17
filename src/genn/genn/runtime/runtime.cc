@@ -228,7 +228,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             LOGD_RUNTIME << "\tFused PSM incoming synapse group '" << sg->getName() << "'";
             createArray(sg, "outPost", getModel().getPrecision(), 
                         sg->getTrgNeuronGroup()->getNumNeurons() * batchSize,
-                        sg->getInSynLocation(), false, 2);
+                        sg->getOutputLocation(), false, 2);
             
             if (sg->isDendriticDelayRequired()) {
                 createArray(sg, "denDelay", getModel().getPrecision(), 
@@ -246,7 +246,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             LOGD_RUNTIME << "\tFused pre-output outgoing synapse group '" << sg->getName() << "'";
             createArray(sg, "outPre", getModel().getPrecision(), 
                         sg->getSrcNeuronGroup()->getNumNeurons() * batchSize,
-                        sg->getInSynLocation(), false, 2);
+                        sg->getOutputLocation(), false, 2);
         }
         
         // Create arrays for variables from fused incoming synaptic populations
