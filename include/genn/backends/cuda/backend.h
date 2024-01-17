@@ -376,7 +376,7 @@ private:
             buildSizeEnvironment(groupEnv);
         
             // Loop through variables
-            const auto *cm = cg.getArchetype().getCustomUpdateModel();
+            const auto *cm = cg.getArchetype().getModel();
             for(const auto &v : cm->getVars()) {
                 // If variable is reduction target
                 if(v.access & VarAccessModeAttribute::REDUCE) {
