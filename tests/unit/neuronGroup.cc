@@ -901,7 +901,7 @@ TEST(NeuronGroup, CompareCurrentSources)
     ASSERT_TRUE(dcDCMergedGroup.getGroups().size() == 1);
     
     // Find which child in the DC + poisson merged group is the poisson current source
-    const size_t poissonIndex = (dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(0).getArchetype().getCurrentSourceModel() == CurrentSourceModels::PoissonExp::getInstance()) ? 0 : 1;
+    const size_t poissonIndex = (dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(0).getArchetype().getModel() == CurrentSourceModels::PoissonExp::getInstance()) ? 0 : 1;
     
     // Check that only the ExpDecay and Init derived parameters of the poisson exp current sources are heterogeneous
     ASSERT_FALSE(dcDCMergedGroup.getMergedCurrentSourceGroups().at(0).isParamHeterogeneous("amp"));

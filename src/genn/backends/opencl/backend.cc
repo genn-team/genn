@@ -1408,7 +1408,7 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &mode
 {
     // If any neuron groups require support code, raise error
     if(std::any_of(modelMerged.getModel().getNeuronGroups().cbegin(), modelMerged.getModel().getNeuronGroups().cbegin(),
-                   [](const ModelSpec::NeuronGroupValueType &ng){ return !ng.second.getNeuronModel()->getSupportCode().empty(); }))
+                   [](const ModelSpec::NeuronGroupValueType &ng){ return !ng.second.getModel()->getSupportCode().empty(); }))
     {
         throw std::runtime_error("OpenCL backend does not currently support models which use support code.");
     }

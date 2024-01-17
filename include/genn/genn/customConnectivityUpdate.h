@@ -50,7 +50,7 @@ public:
     const std::string &getUpdateGroupName() const { return m_UpdateGroupName; }
 
     //! Gets the custom connectivity update model used by this group
-    const CustomConnectivityUpdateModels::Base *getCustomConnectivityUpdateModel() const { return m_CustomConnectivityUpdateModel; }
+    const CustomConnectivityUpdateModels::Base *getModel() const { return m_Model; }
 
     const std::unordered_map<std::string, Type::NumericValue> &getParams() const { return m_Params; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const { return m_VarInitialisers; }
@@ -145,7 +145,7 @@ private:
     const std::string m_UpdateGroupName;
     SynapseGroupInternal *m_SynapseGroup;
 
-    const CustomConnectivityUpdateModels::Base *m_CustomConnectivityUpdateModel;
+    const CustomConnectivityUpdateModels::Base *m_Model;
     const std::unordered_map<std::string, Type::NumericValue> m_Params;
     std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
     std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;

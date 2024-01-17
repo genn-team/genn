@@ -127,7 +127,7 @@ protected:
     void generateCustomUpdateBase(EnvironmentGroupMergedField<M> &env)
     {
         // Loop through variables and add pointers if they are reduction targets
-        const auto *cm = this->getArchetype().getCustomUpdateModel();
+        const auto *cm = this->getArchetype().getModel();
         for(const auto &v : cm->getVars()) {
             if(v.access & VarAccessModeAttribute::REDUCE) {
                 const auto fieldType = v.type.resolve(this->getTypeContext()).createPointer();

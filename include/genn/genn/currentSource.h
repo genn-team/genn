@@ -52,7 +52,7 @@ public:
     const std::string &getName() const{ return m_Name; }
 
     //! Gets the current source model used by this group
-    const CurrentSourceModels::Base *getCurrentSourceModel() const{ return m_CurrentSourceModel; }
+    const CurrentSourceModels::Base *getModel() const{ return m_Model; }
 
     const std::unordered_map<std::string, Type::NumericValue> &getParams() const{ return m_Params; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
@@ -72,7 +72,7 @@ public:
     const std::string &getTargetVar() const { return m_TargetVar; }
 
 protected:
-    CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
+    CurrentSource(const std::string &name, const CurrentSourceModels::Base *model,
                   const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                   const std::unordered_map<std::string, Models::VarReference> &neuronVarReferences, const NeuronGroupInternal *trgNeuronGroup, 
                   VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
@@ -112,7 +112,7 @@ private:
     //------------------------------------------------------------------------
     std::string m_Name;
 
-    const CurrentSourceModels::Base *m_CurrentSourceModel;
+    const CurrentSourceModels::Base *m_Model;
     std::unordered_map<std::string, Type::NumericValue> m_Params;
     std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
     std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;

@@ -47,7 +47,7 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CS.getVarLocation(varName); }
 
-    std::vector<Models::Base::Var> getDefs() const{ return m_CS.getCurrentSourceModel()->getVars(); }
+    std::vector<Models::Base::Var> getDefs() const{ return m_CS.getModel()->getVars(); }
 
     const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CS.getVarInitialisers(); }
 
@@ -78,7 +78,7 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    Models::Base::VarRefVec getDefs() const{ return m_CS.getCurrentSourceModel()->getNeuronVarRefs(); }
+    Models::Base::VarRefVec getDefs() const{ return m_CS.getModel()->getNeuronVarRefs(); }
 
     const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_CS.getNeuronVarReferences(); }
 
@@ -103,7 +103,7 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CS.getExtraGlobalParamLocation(varName); }
 
-    Snippet::Base::EGPVec getDefs() const{ return m_CS.getCurrentSourceModel()->getExtraGlobalParams(); }
+    Snippet::Base::EGPVec getDefs() const{ return m_CS.getModel()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------

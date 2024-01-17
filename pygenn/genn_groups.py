@@ -226,17 +226,17 @@ class NeuronGroupMixin(GroupMixin):
         """
         super(NeuronGroupMixin, self)._init_group(model)
 
-        self.vars = prepare_vars(self.neuron_model.get_vars(),
+        self.vars = prepare_vars(self.model.get_vars(),
                                  var_space, self)
         self.extra_global_params = prepare_egps(
-            self.neuron_model.get_extra_global_params(), self)
+            self.model.get_extra_global_params(), self)
 
         self.spike_times = None
         self.prev_spike_times = None
 
         # **YUCK** in order to ensure model stays in scope
         # as long as the group, keep Python reference
-        self._neuron_model = self.neuron_model
+        self._neuron_model = self.model
 
     @property
     def spike_recording_data(self):
@@ -267,7 +267,7 @@ class NeuronGroupMixin(GroupMixin):
                     
         # Load neuron state variables
         self._load_vars(
-            self.neuron_model.get_vars(),
+            self.model.get_vars(),
             lambda v, d: _get_neuron_var_shape(
                 get_var_access_dim(v.access), self.num_neurons,
                 self._model.batch_size, d),
@@ -640,23 +640,22 @@ class CurrentSourceMixin(GroupMixin):
         """
         super(CurrentSourceMixin, self)._init_group(model)
         self.target_pop = target_pop
-        self.vars = prepare_vars(self.current_source_model.get_vars(),
+        self.vars = prepare_vars(self.model.get_vars(),
                                  var_space, self)
         self.extra_global_params = prepare_egps(
-            self.current_source_model.get_extra_global_params(), self)
+            self.model.get_extra_global_params(), self)
         
         # **YUCK** in order to ensure model stays in scope
         # as long as the group, keep Python reference
-        self._current_source_model = self.current_source_model
+        self._current_source_model = self.model
 
     def load(self):
         # Load current source variables
-        self._load_vars(
-            self.current_source_model.get_vars(),
-            lambda v, d: _get_neuron_var_shape(
-                get_var_access_dim(v.access),
-                self.target_pop.num_neurons,
-                self._model.batch_size))
+        self._load_vars(self.model.get_vars(),
+                        lambda v, d: _get_neuron_var_shape(
+                            get_var_access_dim(v.access),
+                            self.target_pop.num_neurons,
+                            self._model.batch_size))
 
         # Load current source extra global parameters
         self._load_egp()
@@ -680,24 +679,23 @@ class CustomUpdateMixin(GroupMixin):
         model   -- pygenn.genn_model.GeNNModel this neuron group is part of
         """
         super(CustomUpdateMixin, self)._init_group(model)
-        self.vars = prepare_vars(self.custom_update_model.get_vars(),
+        self.vars = prepare_vars(self.model.get_vars(),
                                  var_space, self)
         self.extra_global_params = prepare_egps(
-            self.custom_update_model.get_extra_global_params(), self)
+            self.model.get_extra_global_params(), self)
         
         # **YUCK** in order to ensure model stays in scope
         # as long as the group, keep Python reference
-        self._custom_update_model = self.custom_update_model
+        self._custom_update_model = self.model
 
     def load(self):
         batch_size = (self._model.batch_size
                       if self._dims & VarAccessDim.BATCH
                       else 1)
-        self._load_vars(
-            self.custom_update_model.get_vars(),
-            lambda v, d: _get_neuron_var_shape(
-                get_var_access_dim(v.access, self._dims),
-                self.num_neurons, batch_size))
+        self._load_vars(self.model.get_vars(),
+                        lambda v, d: _get_neuron_var_shape(
+                            get_var_access_dim(v.access, self._dims),
+                            self.num_neurons, batch_size))
         self._load_egp()
  
     def load_init_egps(self):
@@ -719,14 +717,14 @@ class CustomUpdateWUMixin(GroupMixin):
         model   -- pygenn.genn_model.GeNNModel this neuron group is part of
         """
         super(CustomUpdateWUMixin, self)._init_group(model)
-        self.vars = prepare_vars(self.custom_update_model.get_vars(),
+        self.vars = prepare_vars(self.model.get_vars(),
                                  var_space, self, SynapseVariable)
         self.extra_global_params = prepare_egps(
-            self.custom_update_model.get_extra_global_params(), self)
+            self.model.get_extra_global_params(), self)
         
         # **YUCK** in order to ensure model stays in scope
         # as long as the group, keep Python reference
-        self._custom_update_model = self.custom_update_model
+        self._custom_update_model = self.model
 
     def load(self):
         # Assert that population doesn't have procedural connectivity
@@ -738,7 +736,7 @@ class CustomUpdateWUMixin(GroupMixin):
                       if self._dims & VarAccessDim.BATCH
                       else 1)
         self._load_vars(
-            self.custom_update_model.get_vars(),
+            self.model.get_vars(),
             lambda v, d: _get_synapse_var_shape(
                 get_var_access_dim(v.access, self._dims),
                 self.synapse_group, batch_size),

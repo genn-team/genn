@@ -142,7 +142,7 @@ bool VarReference::operator < (const VarReference &other) const
 //----------------------------------------------------------------------------
 VarReference VarReference::createVarRef(NeuronGroup *ng, const std::string &varName)
 {
-    const auto *nm = ng->getNeuronModel();
+    const auto *nm = ng->getModel();
     try {
         return VarReference(NGRef{static_cast<NeuronGroupInternal*>(ng), nm->getVar(varName).value()});
     }
@@ -153,7 +153,7 @@ VarReference VarReference::createVarRef(NeuronGroup *ng, const std::string &varN
 //----------------------------------------------------------------------------
 VarReference VarReference::createVarRef(CurrentSource *cs, const std::string &varName)
 {
-    const auto *csm = cs->getCurrentSourceModel();
+    const auto *csm = cs->getModel();
     try {
         return VarReference(CSRef{static_cast<CurrentSourceInternal*>(cs), csm->getVar(varName).value()});
     }
@@ -164,7 +164,7 @@ VarReference VarReference::createVarRef(CurrentSource *cs, const std::string &va
 //----------------------------------------------------------------------------
 VarReference VarReference::createVarRef(CustomUpdate *cu, const std::string &varName)
 {
-    const auto *cum = cu->getCustomUpdateModel();
+    const auto *cum = cu->getModel();
     try {
         return VarReference(CURef{static_cast<CustomUpdateInternal*>(cu), cum->getVar(varName).value()});
     }
@@ -175,7 +175,7 @@ VarReference VarReference::createVarRef(CustomUpdate *cu, const std::string &var
 //----------------------------------------------------------------------------
 VarReference VarReference::createPreVarRef(CustomConnectivityUpdate *ccu, const std::string &varName)
 {
-    const auto *ccum = ccu->getCustomConnectivityUpdateModel();
+    const auto *ccum = ccu->getModel();
     try {
         return VarReference(CCUPreRef{static_cast<CustomConnectivityUpdateInternal*>(ccu), ccum->getPreVar(varName).value()});
     }
@@ -186,7 +186,7 @@ VarReference VarReference::createPreVarRef(CustomConnectivityUpdate *ccu, const 
 //----------------------------------------------------------------------------
 VarReference VarReference::createPostVarRef(CustomConnectivityUpdate *ccu, const std::string &varName)
 {
-    const auto *ccum = ccu->getCustomConnectivityUpdateModel();
+    const auto *ccum = ccu->getModel();
     try {
         return VarReference(CCUPostRef{static_cast<CustomConnectivityUpdateInternal*>(ccu), ccum->getPostVar(varName).value()});
     }
@@ -404,7 +404,7 @@ WUVarReference WUVarReference::createWUVarReference(SynapseGroup *sg, const std:
 //------------------------------------------------------------------------
 WUVarReference WUVarReference::createWUVarReference(CustomUpdateWU *cu, const std::string &varName)
 {
-    const auto *cum = cu->getCustomUpdateModel();
+    const auto *cum = cu->getModel();
     try {
         return WUVarReference(CURef{static_cast<CustomUpdateWUInternal*>(cu), cum->getVar(varName).value()});
     }
@@ -415,7 +415,7 @@ WUVarReference WUVarReference::createWUVarReference(CustomUpdateWU *cu, const st
 //------------------------------------------------------------------------
 WUVarReference WUVarReference::createWUVarReference(CustomConnectivityUpdate *ccu, const std::string &varName)
 {
-    const auto *ccum = ccu->getCustomConnectivityUpdateModel();
+    const auto *ccum = ccu->getModel();
     try {
         return WUVarReference(CCURef{static_cast<CustomConnectivityUpdateInternal*>(ccu), ccum->getVar(varName).value()});
     }
@@ -546,7 +546,7 @@ const Runtime::ArrayBase *EGPReference::getTargetArray(const Runtime::Runtime &r
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createEGPRef(NeuronGroup *ng, const std::string &egpName)
 {
-    const auto *nm = ng->getNeuronModel();
+    const auto *nm = ng->getModel();
     try {
         return EGPReference(NGRef{ng, nm->getExtraGlobalParam(egpName).value()});
     }
@@ -557,7 +557,7 @@ EGPReference EGPReference::createEGPRef(NeuronGroup *ng, const std::string &egpN
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createEGPRef(CurrentSource *cs, const std::string &egpName)
 {
-    const auto *cm = cs->getCurrentSourceModel();
+    const auto *cm = cs->getModel();
     try {
         return EGPReference(CSRef{cs, cm->getExtraGlobalParam(egpName).value()});
     }
@@ -568,7 +568,7 @@ EGPReference EGPReference::createEGPRef(CurrentSource *cs, const std::string &eg
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createEGPRef(CustomUpdate *cu, const std::string &egpName)
 {
-    const auto *cm = cu->getCustomUpdateModel();
+    const auto *cm = cu->getModel();
     try {
         return EGPReference(CURef{cu, cm->getExtraGlobalParam(egpName).value()});
     }
@@ -579,7 +579,7 @@ EGPReference EGPReference::createEGPRef(CustomUpdate *cu, const std::string &egp
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createEGPRef(CustomUpdateWU *cu, const std::string &egpName)
 {
-    const auto *cm = cu->getCustomUpdateModel();
+    const auto *cm = cu->getModel();
     try {
         return EGPReference(CUWURef{cu, cm->getExtraGlobalParam(egpName).value()});
     }

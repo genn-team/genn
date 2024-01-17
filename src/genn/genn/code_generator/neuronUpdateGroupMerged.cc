@@ -21,7 +21,7 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(EnvironmentExternalBase &e
                                                       unsigned int batchSize)
 {
     const std::string fieldSuffix =  "CS" + std::to_string(getIndex());
-    const auto *cm = getArchetype().getCurrentSourceModel();
+    const auto *cm = getArchetype().getModel();
 
     // Create new environment to add current source fields to neuron update group
     EnvironmentGroupMergedField<CurrentSource, NeuronUpdateGroupMerged> csEnv(env, *this, ng);
@@ -619,7 +619,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
                                                    BackendBase::HandlerEnv genEmitTrueSpike,
                                                    BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged::SynSpikeEvent> genEmitSpikeLikeEvent)
 {
-    const NeuronModels::Base *nm = getArchetype().getNeuronModel();
+    const NeuronModels::Base *nm = getArchetype().getModel();
  
     // Add default input variable
     // **NOTE** this is hidden as only their chosen target gets exposed to PSM and current source

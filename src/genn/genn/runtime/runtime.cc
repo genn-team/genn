@@ -204,7 +204,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         }
 
         // Create destinations for any dynamic parameters
-        createDynamicParamDestinations<NeuronGroupInternal>(n.second, n.second.getNeuronModel()->getParams(),
+        createDynamicParamDestinations<NeuronGroupInternal>(n.second, n.second.getModel()->getParams(),
                                                             &NeuronGroup::isParamDynamic);
 
         // Create arrays for neuron state variables
@@ -219,7 +219,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             LOGD_RUNTIME << "\tChild current source '" << cs->getName() << "'";
             createNeuronVarArrays<CurrentSourceVarAdapter>(cs, n.second.getNumNeurons(), batchSize, 1, true);
             createEGPArrays<CurrentSourceEGPAdapter>(cs);
-            createDynamicParamDestinations<CurrentSourceInternal>(*cs, cs->getCurrentSourceModel()->getParams(),
+            createDynamicParamDestinations<CurrentSourceInternal>(*cs, cs->getModel()->getParams(),
                                                                   &CurrentSourceInternal::isParamDynamic, 2);
         }
 
@@ -426,7 +426,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         // Create arrays for custom update extra global parameters
         createEGPArrays<CustomUpdateEGPAdapter>(&c.second);
 
-        createDynamicParamDestinations<CustomUpdateInternal>(c.second, c.second.getCustomUpdateModel()->getParams(),
+        createDynamicParamDestinations<CustomUpdateInternal>(c.second, c.second.getModel()->getParams(),
                                                             &CustomUpdateInternal::isParamDynamic);
     }
 
@@ -444,7 +444,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         // Create arrays for custom update extra global parameters
         createEGPArrays<CustomUpdateEGPAdapter>(&c.second);
 
-        createDynamicParamDestinations<CustomUpdateWUInternal>(c.second, c.second.getCustomUpdateModel()->getParams(),
+        createDynamicParamDestinations<CustomUpdateWUInternal>(c.second, c.second.getModel()->getParams(),
                                                                &CustomUpdateWUInternal::isParamDynamic);
     }
 
@@ -474,7 +474,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         createEGPArrays<CustomConnectivityUpdateEGPAdapter>(&c.second);
 
         createDynamicParamDestinations<CustomConnectivityUpdateInternal>(
-            c.second, c.second.getCustomConnectivityUpdateModel()->getParams(),
+            c.second, c.second.getModel()->getParams(),
             &CustomConnectivityUpdateInternal::isParamDynamic);
 
         // If custom connectivity update group needs per-row RNGs

@@ -15,7 +15,7 @@ namespace GeNN
 {
 void CurrentSource::setVarLocation(const std::string &varName, VarLocation loc) 
 { 
-    if(!getCurrentSourceModel()->getVar(varName)) {
+    if(!getModel()->getVar(varName)) {
         throw std::runtime_error("Unknown current source model variable '" + varName + "'");
     }
     m_VarLocation.set(varName, loc); 
@@ -23,7 +23,7 @@ void CurrentSource::setVarLocation(const std::string &varName, VarLocation loc)
 //----------------------------------------------------------------------------
 void CurrentSource::setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc) 
 { 
-    if(!getCurrentSourceModel()->getExtraGlobalParam(paramName)) {
+    if(!getModel()->getExtraGlobalParam(paramName)) {
         throw std::runtime_error("Unknown current source model extra global parameter '" + paramName + "'");
     }
     m_ExtraGlobalParamLocation.set(paramName, loc); 
@@ -31,7 +31,7 @@ void CurrentSource::setExtraGlobalParamLocation(const std::string &paramName, Va
 //----------------------------------------------------------------------------
 void CurrentSource::setParamDynamic(const std::string &paramName, bool dynamic) 
 { 
-    if(!getCurrentSourceModel()->getParam(paramName)) {
+    if(!getModel()->getParam(paramName)) {
         throw std::runtime_error("Unknown current source model parameter '" + paramName + "'");
     }
     m_DynamicParams.set(paramName, dynamic); 
@@ -40,7 +40,7 @@ void CurrentSource::setParamDynamic(const std::string &paramName, bool dynamic)
 void CurrentSource::setTargetVar(const std::string &varName)
 {
     // If varname is either 'ISyn' or name of target neuron group additional input variable, store
-    const auto additionalInputVars = getTrgNeuronGroup()->getNeuronModel()->getAdditionalInputVars();
+    const auto additionalInputVars = getTrgNeuronGroup()->getModel()->getAdditionalInputVars();
     if(varName == "Isyn" || 
        std::find_if(additionalInputVars.cbegin(), additionalInputVars.cend(), 
                     [&varName](const Models::Base::ParamVal &v){ return (v.name == varName); }) != additionalInputVars.cend())
@@ -52,33 +52,33 @@ void CurrentSource::setTargetVar(const std::string &varName)
     }
 }
 //----------------------------------------------------------------------------
-CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
+CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels::Base *model,
                              const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                              const std::unordered_map<std::string, Models::VarReference> &neuronVarReferences, const NeuronGroupInternal *trgNeuronGroup, 
                              VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-:   m_Name(name), m_CurrentSourceModel(currentSourceModel), m_Params(params), m_VarInitialisers(varInitialisers),
+:   m_Name(name), m_Model(model), m_Params(params), m_VarInitialisers(varInitialisers),
     m_NeuronVarReferences(neuronVarReferences), m_TrgNeuronGroup(trgNeuronGroup), m_VarLocation(defaultVarLocation), 
     m_ExtraGlobalParamLocation(defaultExtraGlobalParamLocation), m_TargetVar("Isyn")
 {
     // Validate names
     Utils::validatePopName(name, "Current source");
-    getCurrentSourceModel()->validate(getParams(), getVarInitialisers(), getNeuronVarReferences(), "Current source " + getName());
+    getModel()->validate(getParams(), getVarInitialisers(), getNeuronVarReferences(), "Current source " + getName());
 
     // Check variable reference types
-    Models::checkVarReferenceTypes(getNeuronVarReferences(), getCurrentSourceModel()->getNeuronVarRefs());
+    Models::checkVarReferenceTypes(getNeuronVarReferences(), getModel()->getNeuronVarRefs());
 
     // Check additional local variable reference constraints
-    Models::checkLocalVarReferences(getNeuronVarReferences(), getCurrentSourceModel()->getNeuronVarRefs(),
+    Models::checkLocalVarReferences(getNeuronVarReferences(), getModel()->getNeuronVarRefs(),
                                     getTrgNeuronGroup(), "Variable references to in current source can only point to target neuron group.");
     
     // Scan current source model code string
-    m_InjectionCodeTokens = Utils::scanCode(getCurrentSourceModel()->getInjectionCode(), 
+    m_InjectionCodeTokens = Utils::scanCode(getModel()->getInjectionCode(), 
                                             "Current source '" + getName() + "' injection code");
 }
 //----------------------------------------------------------------------------
 void CurrentSource::finalise(double dt)
 {
-    auto derivedParams = getCurrentSourceModel()->getDerivedParams();
+    auto derivedParams = getModel()->getDerivedParams();
 
     // Loop through derived parameters
     for(const auto &d : derivedParams) {
@@ -111,7 +111,7 @@ boost::uuids::detail::sha1::digest_type CurrentSource::getHashDigest(const Neuro
     assert(ng == getTrgNeuronGroup());
 
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getCurrentSourceModel()->getHashDigest(), hash);
+    Utils::updateHash(getModel()->getHashDigest(), hash);
     Utils::updateHash(getTargetVar(), hash);
     m_DynamicParams.updateHash(hash);
 
@@ -129,7 +129,7 @@ boost::uuids::detail::sha1::digest_type CurrentSource::getInitHashDigest(const N
     assert(ng == getTrgNeuronGroup());
 
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getCurrentSourceModel()->getVars(), hash);
+    Utils::updateHash(getModel()->getVars(), hash);
 
     // Include variable initialiser hashes
     for(const auto &w : getVarInitialisers()) {

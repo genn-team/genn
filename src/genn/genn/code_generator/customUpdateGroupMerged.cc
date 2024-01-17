@@ -51,7 +51,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(EnvironmentExternalBase &env,
     EnvironmentGroupMergedField<CustomUpdateGroupMerged> cuEnv(env, *this);
 
     // Substitute parameter and derived parameter names
-    const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
+    const CustomUpdateModels::Base *cm = getArchetype().getModel();
     cuEnv.addParams(cm->getParams(), "", &CustomUpdateInternal::getParams, 
                     &CustomUpdateGroupMerged::isParamHeterogeneous,
                     &CustomUpdateInternal::isParamDynamic);
@@ -184,7 +184,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(EnvironmentExternalBase
     EnvironmentGroupMergedField<CustomUpdateWUGroupMergedBase> cuEnv(env, *this);
 
     // Substitute parameter and derived parameter names
-    const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
+    const CustomUpdateModels::Base *cm = getArchetype().getModel();
     cuEnv.addParams(cm->getParams(), "", &CustomUpdateWUInternal::getParams, 
                     &CustomUpdateWUGroupMergedBase::isParamHeterogeneous,
                     &CustomUpdateWUInternal::isParamDynamic);
@@ -245,7 +245,7 @@ const std::string CustomUpdateTransposeWUGroupMerged::name = "CustomUpdateTransp
 std::string CustomUpdateTransposeWUGroupMerged::addTransposeField(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env)
 {
     // Loop through variable references
-    const auto varRefs = getArchetype().getCustomUpdateModel()->getVarRefs();
+    const auto varRefs = getArchetype().getModel()->getVarRefs();
     for(const auto &v : varRefs) {
         // If variable has a transpose, add field with transpose suffix, pointing to transpose var
         if(getArchetype().getVarReferences().at(v.name).getTransposeSynapseGroup() != nullptr) {

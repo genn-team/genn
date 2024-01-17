@@ -44,7 +44,7 @@ public:
     const std::string &getUpdateGroupName() const { return m_UpdateGroupName; }
 
     //! Gets the custom update model used by this group
-    const CustomUpdateModels::Base *getCustomUpdateModel() const{ return m_CustomUpdateModel; }
+    const CustomUpdateModels::Base *getModel() const{ return m_Model; }
 
     const std::unordered_map<std::string, Type::NumericValue> &getParams() const{ return m_Params; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
@@ -106,7 +106,7 @@ protected:
     {
         // Return true if any variables have REDUCE flag in their access mode and have reduction dimension 
         // **NOTE** this is correct because custom update variable access types are defined subtractively
-        const auto vars = getCustomUpdateModel()->getVars();
+        const auto vars = getModel()->getVars();
         if(std::any_of(vars.cbegin(), vars.cend(),
                        [reduceDim](const Models::Base::CustomUpdateVar &v)
                        { 
@@ -118,7 +118,7 @@ protected:
         }
 
         // Loop through all variable references
-        for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
+        for(const auto &modelVarRef : getModel()->getVarRefs()) {
             // If custom update model reduces into this variable reference 
             // and the variable it targets doesn't have reduction dimension
             const auto &varRef = varRefs.at(modelVarRef.name);
@@ -143,7 +143,7 @@ protected:
         }
 
         // Loop through all variable references
-        for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
+        for(const auto &modelVarRef : getModel()->getVarRefs()) {
             const auto varRef = varRefs.at(modelVarRef.name);
 
             // Determine what dimensions are 'missing' from this variable compared to update dimensionality
@@ -185,7 +185,7 @@ private:
     std::string m_Name;
     std::string m_UpdateGroupName;
 
-    const CustomUpdateModels::Base *m_CustomUpdateModel;
+    const CustomUpdateModels::Base *m_Model;
     std::unordered_map<std::string, Type::NumericValue> m_Params;
     std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
     std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
@@ -222,7 +222,7 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
 
-    std::vector<Models::Base::CustomUpdateVar> getDefs() const{ return m_CU.getCustomUpdateModel()->getVars(); }
+    std::vector<Models::Base::CustomUpdateVar> getDefs() const{ return m_CU.getModel()->getVars(); }
 
     const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getVarInitialisers(); }
 
@@ -256,7 +256,7 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CU.getExtraGlobalParamLocation(varName); }
 
-    Snippet::Base::EGPVec getDefs() const{ return m_CU.getCustomUpdateModel()->getExtraGlobalParams(); }
+    Snippet::Base::EGPVec getDefs() const{ return m_CU.getModel()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------

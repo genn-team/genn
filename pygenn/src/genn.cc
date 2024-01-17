@@ -453,7 +453,7 @@ PYBIND11_MODULE(genn, m)
         // Properties
         //--------------------------------------------------------------------
         .def_property_readonly("name", &CurrentSource::getName)
-        .def_property_readonly("current_source_model", &CurrentSource::getCurrentSourceModel, pybind11::return_value_policy::reference)
+        .def_property_readonly("model", &CurrentSource::getModel, pybind11::return_value_policy::reference)
         .def_property_readonly("params", &CurrentSource::getParams)
         .def_property_readonly("var_initialisers", &CurrentSource::getVarInitialisers)
 
@@ -474,7 +474,7 @@ PYBIND11_MODULE(genn, m)
         //--------------------------------------------------------------------
         .def_property_readonly("name", &CustomConnectivityUpdate::getName)
         .def_property_readonly("update_group_name", &CustomConnectivityUpdate::getUpdateGroupName)
-        .def_property_readonly("model", &CustomConnectivityUpdate::getCustomConnectivityUpdateModel, pybind11::return_value_policy::reference)
+        .def_property_readonly("model", &CustomConnectivityUpdate::getModel, pybind11::return_value_policy::reference)
         .def_property_readonly("params", &CustomConnectivityUpdate::getParams)
         
         .def_property_readonly("var_initialisers", &CustomConnectivityUpdate::getVarInitialisers)
@@ -514,7 +514,7 @@ PYBIND11_MODULE(genn, m)
         //--------------------------------------------------------------------
         .def_property_readonly("name", &CustomUpdateBase::getName)
         .def_property_readonly("update_group_name", &CustomUpdateBase::getUpdateGroupName)
-        .def_property_readonly("custom_update_model", &CustomUpdateBase::getCustomUpdateModel, pybind11::return_value_policy::reference)
+        .def_property_readonly("model", &CustomUpdateBase::getModel, pybind11::return_value_policy::reference)
         .def_property_readonly("params", &CustomUpdateBase::getParams)
         .def_property_readonly("var_initialisers", &CustomUpdateBase::getVarInitialisers)
 
@@ -560,7 +560,7 @@ PYBIND11_MODULE(genn, m)
         //--------------------------------------------------------------------
         .def_property_readonly("name", &NeuronGroup::getName)
         .def_property_readonly("num_neurons", &NeuronGroup::getNumNeurons)
-        .def_property_readonly("neuron_model", &NeuronGroup::getNeuronModel, pybind11::return_value_policy::reference)
+        .def_property_readonly("model", &NeuronGroup::getModel, pybind11::return_value_policy::reference)
         .def_property_readonly("params", &NeuronGroup::getParams)
         .def_property_readonly("var_initialisers", &NeuronGroup::getVarInitialisers)
         .def_property_readonly("num_delay_slots", &NeuronGroup::getNumDelaySlots)

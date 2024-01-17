@@ -84,7 +84,7 @@ public:
     unsigned int getNumNeurons() const{ return m_NumNeurons; }
 
     //! Gets the neuron model used by this group
-    const NeuronModels::Base *getNeuronModel() const{ return m_NeuronModel; }
+    const NeuronModels::Base *getModel() const{ return m_Model; }
 
     const std::unordered_map<std::string, Type::NumericValue> &getParams() const{ return m_Params; }
     const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
@@ -239,7 +239,7 @@ private:
 
     const unsigned int m_NumNeurons;
 
-    const NeuronModels::Base *m_NeuronModel;
+    const NeuronModels::Base *m_Model;
     const std::unordered_map<std::string, Type::NumericValue> m_Params;
     std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
     std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;

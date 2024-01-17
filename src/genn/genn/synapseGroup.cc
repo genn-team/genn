@@ -84,7 +84,7 @@ void SynapseGroup::setWUParamDynamic(const std::string &paramName, bool dynamic)
 void SynapseGroup::setPostTargetVar(const std::string &varName)
 {
     // If varname is either 'ISyn' or name of target neuron group additional input variable, store
-    const auto additionalInputVars = getTrgNeuronGroup()->getNeuronModel()->getAdditionalInputVars();
+    const auto additionalInputVars = getTrgNeuronGroup()->getModel()->getAdditionalInputVars();
     if(varName == "Isyn" || 
        std::find_if(additionalInputVars.cbegin(), additionalInputVars.cend(), 
                     [&varName](const Models::Base::ParamVal &v){ return (v.name == varName); }) != additionalInputVars.cend())
@@ -99,7 +99,7 @@ void SynapseGroup::setPostTargetVar(const std::string &varName)
 void SynapseGroup::setPreTargetVar(const std::string &varName)
 {
     // If varname is either 'ISyn' or name of a presynaptic neuron group additional input variable, store
-    const auto additionalInputVars = getSrcNeuronGroup()->getNeuronModel()->getAdditionalInputVars();
+    const auto additionalInputVars = getSrcNeuronGroup()->getModel()->getAdditionalInputVars();
     if(varName == "Isyn" || 
        std::find_if(additionalInputVars.cbegin(), additionalInputVars.cend(), 
                     [&varName](const Models::Base::ParamVal &v){ return (v.name == varName); }) != additionalInputVars.cend())

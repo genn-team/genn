@@ -53,7 +53,7 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    Models::Base::VarRefVec getDefs() const{ return m_CU.getCustomUpdateModel()->getVarRefs(); }
+    Models::Base::VarRefVec getDefs() const{ return m_CU.getModel()->getVarRefs(); }
 
     const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_CU.getVarReferences(); }
 
@@ -114,7 +114,7 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    Models::Base::VarRefVec getDefs() const{ return m_CU.getCustomUpdateModel()->getVarRefs(); }
+    Models::Base::VarRefVec getDefs() const{ return m_CU.getModel()->getVarRefs(); }
 
     const std::unordered_map<std::string, Models::WUVarReference> &getInitialisers() const{ return m_CU.getVarReferences(); }
 

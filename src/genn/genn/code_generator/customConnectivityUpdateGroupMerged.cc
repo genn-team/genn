@@ -101,7 +101,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                   {updateEnv.addInitialiser("const " + indexTypeName + " synStride = (" + indexTypeName + ")$(num_pre) * $(_row_stride);")});
 
     // Substitute parameter and derived parameter names
-    const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
+    const auto *cm = getArchetype().getModel();
     updateEnv.addParams(cm->getParams(), "", &CustomConnectivityUpdateInternal::getParams, 
                         &CustomConnectivityUpdateGroupMerged::isParamHeterogeneous,
                         &CustomConnectivityUpdateInternal::isParamDynamic);
@@ -113,7 +113,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     updateEnv.addVars<CustomConnectivityUpdatePreVarAdapter>("$(id_pre)");
 
     // Loop through presynaptic variable references
-    for(const auto &v : getArchetype().getCustomConnectivityUpdateModel()->getPreVarRefs()) {
+    for(const auto &v : getArchetype().getModel()->getPreVarRefs()) {
         // If model isn't batched or variable isn't duplicated
         const auto &varRef = getArchetype().getPreVarReferences().at(v.name);
         if(batchSize == 1 || !(varRef.getVarDims() & VarAccessDim::BATCH)) {
@@ -306,10 +306,10 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
 
                               // Add types for variables and variable references accessible within loop
                               // **NOTE** postsynaptic variables and variable references are read-only as many rows will access simultaneously
-                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getVars(), errorHandler);
-                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getPostVars(), errorHandler, true);
-                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getVarRefs(), errorHandler);
-                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getPostVarRefs(), errorHandler, true);
+                              addTypes(env, getArchetype().getModel()->getVars(), errorHandler);
+                              addTypes(env, getArchetype().getModel()->getPostVars(), errorHandler, true);
+                              addTypes(env, getArchetype().getModel()->getVarRefs(), errorHandler);
+                              addTypes(env, getArchetype().getModel()->getPostVarRefs(), errorHandler, true);
                           },
                           [batchSize, &backend, &indexType, &indexTypeName, &removeSynapseStream, this](auto &env, auto generateBody)
                           {
@@ -400,7 +400,7 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
 
 
         // Substitute parameter and derived parameter names
-        const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
+        const auto *cm = getArchetype().getModel();
         groupEnv.addParams(cm->getParams(), "", &CustomConnectivityUpdateInternal::getParams, 
                            &CustomConnectivityHostUpdateGroupMerged::isParamHeterogeneous,
                            &CustomConnectivityUpdateInternal::isParamDynamic);
