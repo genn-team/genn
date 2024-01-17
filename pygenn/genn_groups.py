@@ -578,7 +578,7 @@ class SynapseGroupMixin(GroupMixin):
                 self.psm_vars, self.get_ps_var_location)
                 
             # If it's inSyn is accessible on the host
-            if self.in_syn_location & VarLocation.HOST:
+            if self.output_location & VarLocation.HOST:
                 # Get array
                 self.out_post = self._get_array(
                     "outPost", self._model.precision,
