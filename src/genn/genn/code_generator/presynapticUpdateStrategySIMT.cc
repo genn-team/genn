@@ -12,7 +12,6 @@
 #include "code_generator/codeStream.h"
 #include "code_generator/synapseUpdateGroupMerged.h"
 
-using namespace GeNN;
 using namespace GeNN::CodeGenerator;
 
 //----------------------------------------------------------------------------
@@ -20,7 +19,7 @@ using namespace GeNN::CodeGenerator;
 //----------------------------------------------------------------------------
 namespace
 {
-bool isSmallSharedMemoryPop(const SynapseGroupInternal &sg,
+bool isSmallSharedMemoryPop(const PresynapticUpdateGroupMerged &sg,
                             const BackendSIMT &backend)
 {
     // If shared memory atomics are slow
@@ -29,13 +28,17 @@ bool isSmallSharedMemoryPop(const SynapseGroupInternal &sg,
         return false;
     }
     // Otherwise, if dendritic delays are required, shared memory approach cannot be used so return false
-    else if(sg.isDendriticDelayRequired()) {
+    else if(sg.getArchetype().isDendriticDelayRequired()) {
         return false;
     }
     // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if all neuron groups targetted
     // by synapse groups within merged group are small enough that input to then can be stored in a shared memory array
     else {
-        return (sg.getTrgNeuronGroup()->getNumNeurons() <= blockSize);
+        return std::all_of(sg.getGroups().cbegin(), sg.getGroups().cend(),
+                           [blockSize](const auto &sg)
+                           {
+                               return (sg.get().getTrgNeuronGroup()->getNumNeurons() <= blockSize);
+                           });
     }
 }
 }   // Anonymous namespace
@@ -63,7 +66,7 @@ bool PreSpan::isCompatible(const SynapseGroupInternal &sg, const PreferencesBase
             && (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE));
 }
 //----------------------------------------------------------------------------
-size_t PreSpan::getSharedMemoryPerThread(const SynapseGroupInternal&, const BackendSIMT&) const
+size_t PreSpan::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged&, const BackendSIMT&) const
 {
     return 0;
 }
@@ -192,7 +195,7 @@ void PostSpan::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupM
         if(shouldAccumulateInRegister(sg)) {
             env.getStream() << sg.getScalarType().getName() << " linSyn = 0;" << std::endl;
         }
-        else if(isSmallSharedMemoryPop(sg.getArchetype(), backend)) {
+        else if(isSmallSharedMemoryPop(sg, backend)) {
             env.print("if(" + backend.getThreadID() + " < $(num_post))");
             {
                 CodeGenerator::CodeStream::Scope b(env.getStream());
@@ -203,7 +206,7 @@ void PostSpan::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupM
     }
 }
 //----------------------------------------------------------------------------
-size_t PostSpan::getSharedMemoryPerThread(const SynapseGroupInternal &sg, const BackendSIMT &backend) const
+size_t PostSpan::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const
 {
     // One element is required per thread if small shared memory optimization should be used for sg
     return isSmallSharedMemoryPop(sg, backend) ? 1 : 0;
@@ -283,7 +286,7 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
                 }
                 // Otherwise, if we should use shared memory, add to shared memory
                 // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
-                else if(isSmallSharedMemoryPop(sg.getArchetype(), backend)) {
+                else if(isSmallSharedMemoryPop(sg, backend)) {
                     synEnv.add(Type::AddToPost, "addToPost", "$(_sh_out_post)[$(id_post)] += $(0)");
                 }
                 // Otherwise, use global memory atomic
@@ -336,7 +339,7 @@ void PostSpan::genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroup
             }
         }
         // Otherwise, if we should accumulate into shared memory and synapse group provides any postsynaptic output
-        else if(isSmallSharedMemoryPop(sg.getArchetype(), backend) && sg.getArchetype().isPostsynapticOutputRequired()) {
+        else if(isSmallSharedMemoryPop(sg, backend) && sg.getArchetype().isPostsynapticOutputRequired()) {
             backend.genSharedMemBarrier(env.getStream());
             env.print("if(" + backend.getThreadID() + " < $(num_post))");
             {
@@ -379,7 +382,7 @@ bool PreSpanProcedural::isCompatible(const SynapseGroupInternal &sg, const Prefe
                 || (matrixType & SynapseMatrixWeight::KERNEL)));
 }
 //----------------------------------------------------------------------------
-size_t PreSpanProcedural::getSharedMemoryPerThread(const SynapseGroupInternal&, const BackendSIMT&) const
+size_t PreSpanProcedural::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged&, const BackendSIMT&) const
 {
     return 0;
 }
@@ -570,7 +573,7 @@ void PostSpanBitmask::genPreamble(EnvironmentExternalBase &env, PresynapticUpdat
     }
 }
 //----------------------------------------------------------------------------
-size_t PostSpanBitmask::getSharedMemoryPerThread(const SynapseGroupInternal&, const BackendSIMT&) const
+size_t PostSpanBitmask::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged&, const BackendSIMT&) const
 {
     // Each thread sums up the input to 32 postsynaptic neurons
     return 32;
@@ -710,7 +713,7 @@ bool PostSpanToeplitz::isCompatible(const SynapseGroupInternal &sg, const Prefer
 void PostSpanToeplitz::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
                                    const BackendSIMT &backend) const
 {
-    if(isSmallSharedMemoryPop(sg.getArchetype(), backend) && sg.getArchetype().isPostsynapticOutputRequired()) {
+    if(isSmallSharedMemoryPop(sg, backend) && sg.getArchetype().isPostsynapticOutputRequired()) {
         env.print("if(" + backend.getThreadID() + " < $(num_post))");
         {
             CodeGenerator::CodeStream::Scope b(env.getStream());
@@ -720,7 +723,7 @@ void PostSpanToeplitz::genPreamble(EnvironmentExternalBase &env, PresynapticUpda
     }
 }
 //----------------------------------------------------------------------------
-size_t PostSpanToeplitz::getSharedMemoryPerThread(const SynapseGroupInternal &sg, const BackendSIMT &backend) const
+size_t PostSpanToeplitz::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const
 {
     // One element is required per thread if small shared memory optimization should be used for sg
     return isSmallSharedMemoryPop(sg, backend) ? 1 : 0;
@@ -757,7 +760,7 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
                 
         // If we should use shared memory, add to shared memory
         // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
-        if(isSmallSharedMemoryPop(sg.getArchetype(), backend)) {
+        if(isSmallSharedMemoryPop(sg, backend)) {
             preUpdateEnv.add(Type::AddToPost, "addToPost", "$(_sh_out_post)[$(id_post)] += $(0)");
         }
         // Otherwise, use global memory atomic
@@ -849,7 +852,7 @@ void PostSpanToeplitz::genPostamble(EnvironmentExternalBase &env, PresynapticUpd
                                     const BackendSIMT &backend, unsigned int batchSize) const
 {
     // If we should accumulate into shared memory and synapse group provides postsynaptic output
-    if(isSmallSharedMemoryPop(sg.getArchetype(), backend) && sg.getArchetype().isPostsynapticOutputRequired()) {
+    if(isSmallSharedMemoryPop(sg, backend) && sg.getArchetype().isPostsynapticOutputRequired()) {
         backend.genSharedMemBarrier(env.getStream());
         env.print("if(" + backend.getThreadID() + " < $(num_post))");
         {

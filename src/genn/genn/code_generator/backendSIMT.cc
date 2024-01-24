@@ -671,11 +671,9 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
     // We need shOutPost if any synapse groups accumulate into shared memory
     // Determine the maximum shared memory outputs 
     size_t maxSharedMemPerThread = 0;
-    for(const auto &s : modelMerged.getModel().getSynapseGroups()) {
-        if(s.second.isPreSpikeEventRequired() || s.second.isPreSpikeRequired()) {
-            maxSharedMemPerThread = std::max(maxSharedMemPerThread,
-                                             getPresynapticUpdateStrategy(s.second)->getSharedMemoryPerThread(s.second, *this));
-        }
+    for(const auto &s : modelMerged.getMergedPresynapticUpdateGroups()) {
+        maxSharedMemPerThread = std::max(maxSharedMemPerThread,
+                                         getPresynapticUpdateStrategy(s.getArchetype())->getSharedMemoryPerThread(s, *this));
     }
 
     // If any shared memory is required, declare array
