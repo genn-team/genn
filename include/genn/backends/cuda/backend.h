@@ -78,7 +78,7 @@ struct Preferences : public PreferencesBase
     bool enableNCCLReductions = false;
     
     //! How to select GPU device
-    DeviceSelect deviceSelectMethod = DeviceSelect::OPTIMAL;
+    DeviceSelect deviceSelectMethod = DeviceSelect::MANUAL;
 
     //! If device select method is set to DeviceSelect::MANUAL, id of device to use
     unsigned int manualDeviceID = 0;
