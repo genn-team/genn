@@ -1,0 +1,13 @@
+diff --git i/userproject/include/generateRun.h w/userproject/include/generateRun.h
+index 84fd3525a..14994563c 100644
+--- i/userproject/include/generateRun.h
++++ w/userproject/include/generateRun.h
+@@ -17,7 +17,7 @@
+ #endif
+ 
+ // CLI11 includes
+-#include "../../include/genn/third_party/CLI11.hpp"
++#include "genn/third_party/CLI11.hpp"
+ 
+ //------------------------------------------------------------------------
+ // GenerateRunBase
