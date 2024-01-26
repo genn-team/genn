@@ -893,7 +893,7 @@ class GeNNModel(object):
     def end(self):
         """Free memory"""
         for group in [self.neuron_populations, self.synapse_populations,
-                      self.current_sources, custom_updates]:
+                      self.current_sources, self.custom_updates]:
             for g_name, g_dat in iteritems(group):
                 for egp_name, egp_dat in iteritems(g_dat.extra_global_params):
                     # if auto allocation is not enabled, let the user care
