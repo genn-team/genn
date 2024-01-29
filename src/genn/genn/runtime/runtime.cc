@@ -169,7 +169,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             if(n.second.isSpikeRecordingEnabled()) {
                 const size_t numRecordingWords = (ceilDivide(n.second.getNumNeurons(), 32) * batchSize) * numRecordingTimesteps.value();
                 createArray(&n.second, "recordSpk", Type::Uint32, numRecordingWords,
-                            VarLocation::HOST_DEVICE);
+                            n.second.isRecordingZeroCopyEnabled() ? VarLocation::HOST_DEVICE_ZERO_COPY : VarLocation::HOST_DEVICE);
             }
         }
 
@@ -303,7 +303,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             if(n.second.isSpikeEventRecordingEnabled()) {
                 const size_t numRecordingWords = (ceilDivide(n.second.getNumNeurons(), 32) * batchSize) * numRecordingTimesteps.value();
                 createArray(sg, prefix + "RecordSpkEvent", Type::Uint32, numRecordingWords, 
-                            VarLocation::HOST_DEVICE, false, 2);
+                            n.second.isRecordingZeroCopyEnabled() ? VarLocation::HOST_DEVICE_ZERO_COPY : VarLocation::HOST_DEVICE, false, 2);
             }
         }
     }

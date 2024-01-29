@@ -233,9 +233,10 @@ bool NeuronGroup::isSpikeEventRequired() const
 bool NeuronGroup::isZeroCopyEnabled() const
 {
     // If any bits of spikes require zero-copy return true
-    if((m_SpikeLocation & VarLocation::ZERO_COPY) || (m_SpikeEventLocation & VarLocation::ZERO_COPY) 
-       || (m_SpikeTimeLocation & VarLocation::ZERO_COPY) || (m_PrevSpikeTimeLocation & VarLocation::ZERO_COPY)
-       || (m_SpikeEventTimeLocation& VarLocation::ZERO_COPY) || (m_PrevSpikeEventTimeLocation& VarLocation::ZERO_COPY)) 
+    if(m_RecordingZeroCopyEnabled || (m_SpikeLocation & VarLocation::ZERO_COPY) 
+       || (m_SpikeEventLocation & VarLocation::ZERO_COPY) || (m_SpikeTimeLocation & VarLocation::ZERO_COPY) 
+       || (m_PrevSpikeTimeLocation & VarLocation::ZERO_COPY) || (m_SpikeEventTimeLocation& VarLocation::ZERO_COPY) 
+       || (m_PrevSpikeEventTimeLocation& VarLocation::ZERO_COPY)) 
     {
         return true;
     }
@@ -378,7 +379,7 @@ NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronMo
                          const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                          VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_NumNeurons(numNeurons), m_Model(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
-    m_NumDelaySlots(1), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
+    m_NumDelaySlots(1), m_RecordingZeroCopyEnabled(false), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
     m_SpikeTimeLocation(defaultVarLocation), m_PrevSpikeTimeLocation(defaultVarLocation), m_SpikeEventTimeLocation(defaultVarLocation), 
     m_PrevSpikeEventTimeLocation(defaultVarLocation), m_VarLocation(defaultVarLocation), m_ExtraGlobalParamLocation(defaultExtraGlobalParamLocation),
     m_SpikeRecordingEnabled(false), m_SpikeEventRecordingEnabled(false)

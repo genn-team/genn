@@ -34,6 +34,10 @@ public:
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
+    //! Set whether zero-copy memory (if available) should be used for spike-recording
+    /*! This is ignored for simulations on hardware with a single memory space */
+    void setRecordingZeroCopyEnabled(bool enabled) { m_RecordingZeroCopyEnabled = enabled; }
+    
     //! Set location of this neuron group's output spikes
     /*! This is ignored for simulations on hardware with a single memory space */
     void setSpikeLocation(VarLocation loc) { m_SpikeLocation = loc; }
@@ -99,7 +103,10 @@ public:
     unsigned int getNumDelaySlots() const{ return m_NumDelaySlots; }
     bool isDelayRequired() const{ return (m_NumDelaySlots > 1); }
     bool isZeroCopyEnabled() const;
-
+    
+    // Get whether zero-copy memory (if available) should be used for spike-recording
+    bool isRecordingZeroCopyEnabled() const { return m_RecordingZeroCopyEnabled; }
+    
     //! Get location of this neuron group's output spikes
     VarLocation getSpikeLocation() const{ return m_SpikeLocation; }
 
@@ -256,7 +263,10 @@ private:
 
     //! Set of names of variable requiring queueing
     std::unordered_set<std::string> m_VarQueueRequired;
-
+    
+    //! Should zero-copy memory (if available) be used for spike-recording?
+    bool m_RecordingZeroCopyEnabled;
+    
     //! Location of spikes from neuron group
     VarLocation m_SpikeLocation;
 
