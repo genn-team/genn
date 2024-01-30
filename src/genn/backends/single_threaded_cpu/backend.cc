@@ -1372,7 +1372,7 @@ size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
     if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) || (sg.getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ)) {
         return sg.getMaxConnections();
     }
-    else if((sg.getParallelismHint() == SynapseGroup::ParallelismHint::WORD_PACKED_BITMASK) && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
+    else if(sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
         return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
     }
     else {
@@ -1880,7 +1880,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     && (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK))
             {
                 // Determine the number of words in each row
-                groupEnv.printLine("const unsigned int rowWords = (($(num_post) + 32 - 1) / 32);");
+                groupEnv.printLine("const unsigned int rowWords = $(_row_stride) / 32;");
                 groupEnv.getStream() << "for(unsigned int w = 0; w < rowWords; w++)";
                 {
                     CodeStream::Scope b(groupEnv.getStream());
@@ -1946,7 +1946,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     const auto indexType = getSynapseIndexType(sg);
                     const auto indexTypeName = indexType.getName();
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                        synEnv.printLine("const " + indexTypeName + " gid = ((" + indexTypeName + ")$(id_pre) * $(num_post)) + $(id_post);");
+                        synEnv.printLine("const " + indexTypeName + " gid = ((" + indexTypeName + ")$(id_pre) * $(_row_stride)) + $(id_post);");
 
                         synEnv.print("if($(_gp)[gid / 32] & (0x80000000 >> (gid & 31)))");
                         synEnv.getStream() << CodeStream::OB(20);

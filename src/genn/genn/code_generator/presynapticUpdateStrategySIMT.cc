@@ -173,6 +173,9 @@ size_t PostSpan::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) cons
     if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         return sg.getMaxConnections();
     }
+    else if(sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+        return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
+    }
     else {
         return sg.getTrgNeuronGroup()->getNumNeurons();
     }
@@ -594,7 +597,7 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
     env.getStream() << "const unsigned int numSpikeBlocks = (numSpikes + " << blockSize << " - 1) / " << blockSize << ";" << std::endl;
 
 
-    env.printLine("const unsigned int rowWords =  ($(num_post) + 32 - 1) / 32;");
+    env.printLine("const unsigned int rowWords =  $(_row_stride) / 32;");
     env.getStream() << "for (unsigned int r = 0; r < numSpikeBlocks; r++)";
     {
         CodeStream::Scope b(env.getStream());
