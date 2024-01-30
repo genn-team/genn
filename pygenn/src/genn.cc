@@ -567,6 +567,7 @@ PYBIND11_MODULE(genn, m)
         .def_property_readonly("spike_time_required", &NeuronGroup::isSpikeTimeRequired)
         .def_property_readonly("prev_spike_time_required", &NeuronGroup::isPrevSpikeTimeRequired)
 
+        .def_property("recording_zero_copy_enabled", &NeuronGroup::isRecordingZeroCopyEnabled, &NeuronGroup::setRecordingZeroCopyEnabled)
         .def_property("spike_recording_enabled", &NeuronGroup::isSpikeRecordingEnabled, &NeuronGroup::setSpikeRecordingEnabled)
         .def_property("spike_event_recording_enabled", &NeuronGroup::isSpikeEventRecordingEnabled, &NeuronGroup::setSpikeEventRecordingEnabled)
         .def_property("spike_time_location", &NeuronGroup::getSpikeTimeLocation, &NeuronGroup::setSpikeTimeLocation)
