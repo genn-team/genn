@@ -111,7 +111,7 @@ def test_forward(make_model, backend, precision):
         init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity(decoder_model, {}))
-    sparse_constant_weight_pre_s_pop.parallelism_hint = SpanType.PRESYNAPTIC
+    sparse_constant_weight_pre_s_pop.parallelism_hint = ParallelismHint.PRESYNAPTIC
 
     # Create one output neuron pop with constant weight sparse decoder population
     manual_sparse_constant_weight_n_pop = model.add_neuron_population(
@@ -187,6 +187,19 @@ def test_forward(make_model, backend, precision):
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity(decoder_model, {}))
 
+    # Create one output neuron pop with bitmask decoder
+    # population with word-packed parallelism
+    word_packed_bitmask_n_pop = model.add_neuron_population(
+        "PostWordPackedBitmaskNeuron", 4, post_neuron_model,
+        {}, {"x": 0.0})
+    word_packed_bitmask_s_pop = model.add_synapse_population(
+        "WordPackedBitmaskSynapse", "BITMASK",
+        ss_pop, word_packed_bitmask_n_pop,
+        init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity(decoder_model, {}))
+    word_packed_bitmask_s_pop.parallelism_hint = ParallelismHint.WORD_PACKED_BITMASK
+
     # Create one output neuron pop with dense decoder population
     dense_n_pop = model.add_neuron_population(
         "PostDenseNeuron", 4, post_neuron_model, 
@@ -228,7 +241,8 @@ def test_forward(make_model, backend, precision):
                           sparse_constant_weight_pre_n_pop,
                           manual_sparse_constant_weight_n_pop,
                           sparse_n_pop, sparse_pre_n_pop, sparse_hybrid_n_pop,
-                          manual_sparse_n_pop, bitmask_n_pop, dense_n_pop, 
+                          manual_sparse_n_pop, bitmask_n_pop,
+                          word_packed_bitmask_n_pop, dense_n_pop,
                           manual_dense_n_pop, sparse_event_n_pop]
     while model.timestep < 16:
         model.step_time()
