@@ -214,7 +214,7 @@ output_neuron_model = create_neuron_model(
 # CLI
 # ----------------------------------------------------------------------------
 parser = ArgumentParser()
-parser.add_argument("--record-trial", type=int, nargs="*", help="Index of trial(s) to record")
+parser.add_argument("--record-trial", type=int, nargs="*", required=True, help="Index of trial(s) to record")
 parser.add_argument("--target-file", type=str, default="oxford-target.ras", help="Filename of spike file to train model on")
 parser.add_argument("--num-trials", type=int, default=600, help="Number of trials to train for")
 parser.add_argument("--kernel-profiling", action="store_true", help="Output kernel profiling data")
