@@ -40,7 +40,8 @@ public:
     enum class ParallelismHint
     {
         POSTSYNAPTIC,
-        PRESYNAPTIC
+        PRESYNAPTIC,
+        WORD_PACKED_BITMASK,
     };
 
     //------------------------------------------------------------------------

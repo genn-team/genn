@@ -1372,7 +1372,7 @@ size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
     if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) || (sg.getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ)) {
         return sg.getMaxConnections();
     }
-    else if(getPreferences().enableBitmaskOptimisations && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
+    else if((sg.getParallelismHint() == SynapseGroup::ParallelismHint::WORD_PACKED_BITMASK) && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
         return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
     }
     else {
@@ -1876,7 +1876,9 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
             else if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
                 throw std::runtime_error("The single-threaded CPU backend does not support procedural connectivity.");
             }
-            else if(getPreferences().enableBitmaskOptimisations && (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
+            else if((sg.getArchetype().getParallelismHint() == SynapseGroup::ParallelismHint::WORD_PACKED_BITMASK)
+                    && (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK))
+            {
                 // Determine the number of words in each row
                 groupEnv.printLine("const unsigned int rowWords = (($(num_post) + 32 - 1) / 32);");
                 groupEnv.getStream() << "for(unsigned int w = 0; w < rowWords; w++)";
@@ -1884,7 +1886,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     CodeStream::Scope b(groupEnv.getStream());
 
                     // Read row word
-                    groupEnv.printLine("uint32_t connectivityWord = $(_gp)[(ipre * rowWords) + w];");
+                    groupEnv.printLine("uint32_t connectivityWord = $(_gp)[($(id_pre) * rowWords) + w];");
 
                     // Set ipost to first synapse in connectivity word
                     groupEnv.getStream() << "unsigned int ipost = w * 32;" << std::endl;

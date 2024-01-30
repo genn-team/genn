@@ -347,7 +347,8 @@ PYBIND11_MODULE(genn, m)
     //! Parallelism hints for synapse groups
     pybind11::enum_<SynapseGroup::ParallelismHint>(m, "ParallelismHint")
         .value("POSTSYNAPTIC", SynapseGroup::ParallelismHint::POSTSYNAPTIC)
-        .value("PRESYNAPTIC", SynapseGroup::ParallelismHint::PRESYNAPTIC);
+        .value("PRESYNAPTIC", SynapseGroup::ParallelismHint::PRESYNAPTIC)
+        .value("WORD_PACKED_BITMASK", SynapseGroup::ParallelismHint::WORD_PACKED_BITMASK);
 
     //------------------------------------------------------------------------
     // Free functions
@@ -947,7 +948,6 @@ PYBIND11_MODULE(genn, m)
     pybind11::class_<CodeGenerator::PreferencesBase>(m, "PreferencesBase")
         .def_readwrite("optimize_code", &CodeGenerator::PreferencesBase::optimizeCode)
         .def_readwrite("debug_code", &CodeGenerator::PreferencesBase::debugCode)
-        .def_readwrite("enable_bitmask_optimisations", &CodeGenerator::PreferencesBase::enableBitmaskOptimisations)
         .def_readwrite("genn_log_level", &CodeGenerator::PreferencesBase::gennLogLevel)
         .def_readwrite("code_generator_log_level", &CodeGenerator::PreferencesBase::codeGeneratorLogLevel)
         .def_readwrite("transpiler_log_level", &CodeGenerator::PreferencesBase::transpilerLogLevel)

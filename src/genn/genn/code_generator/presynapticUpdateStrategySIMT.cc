@@ -555,8 +555,7 @@ bool PostSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const Prefere
 {
     // Postsynaptic bitmask parallelism can be used if bitmask optimisations are enabled and
     // if synapse groups with bitmask connectivity and no dendritic delays request postsynaptic parallelism
-    return (preferences.enableBitmaskOptimisations
-            && (sg.getParallelismHint() == SynapseGroup::ParallelismHint::POSTSYNAPTIC)
+    return ((sg.getParallelismHint() == SynapseGroup::ParallelismHint::WORD_PACKED_BITMASK)
             && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK)
             && !sg.isDendriticDelayRequired());
 }
