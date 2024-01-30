@@ -186,18 +186,6 @@ def test_forward(make_model, backend, precision):
         init_sparse_connectivity(decoder_model, {}))
     manual_sparse_s_pop.set_sparse_connections(pre_inds, post_inds)
 
-    # Create one output neuron pop with bitmask decoder population
-    bitmask_n_pop = model.add_neuron_population(
-        "PostBitmaskNeuron", 4, post_neuron_model, 
-        {}, {"x": 0.0})
-    model.add_synapse_population(
-        "BitmaskSynapse", "SPARSE",
-        pre_pop, bitmask_n_pop,
-        init_weight_update(continous_constant_weight_update_model, {"g": 1.0},
-                           pre_var_refs={"x": create_var_ref(pre_pop, "x")}),
-        init_postsynaptic("DeltaCurr"),
-        init_sparse_connectivity(decoder_model, {}))
-
     # Create one output neuron pop with dense decoder population
     dense_n_pop = model.add_neuron_population(
         "PostDenseNeuron", 4, post_neuron_model, 
@@ -230,7 +218,7 @@ def test_forward(make_model, backend, precision):
                           sparse_constant_weight_pre_n_pop,
                           manual_sparse_constant_weight_n_pop,
                           sparse_n_pop, sparse_pre_n_pop, sparse_hybrid_n_pop,
-                          manual_sparse_n_pop, bitmask_n_pop, dense_n_pop, 
+                          manual_sparse_n_pop, dense_n_pop, 
                           manual_dense_n_pop]
     while model.timestep < 15:
         model.step_time()
