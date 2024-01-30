@@ -71,14 +71,14 @@ KC_MBON_PARAMS = {"tau": 15.0,
 # Current source model, allowing current to be injected into neuron from variable
 cs_model = create_current_source_model(
     "cs_model",
-    var_name_types=[("magnitude", "scalar")],
+    vars=[("magnitude", "scalar")],
     injection_code="injectCurrent(magnitude);")
 
 # Minimal integrate and fire neuron model
 if_model = create_neuron_model(
     "IF",
     params=["Vthresh"],
-    var_name_types=[("V", "scalar")],
+    vars=[("V", "scalar")],
     sim_code=
     """
     V += Isyn;
@@ -96,7 +96,7 @@ if_model = create_neuron_model(
 symmetric_stdp = create_weight_update_model(
     "symmetric_stdp",
     params=["tau", "rho", "eta", "wMin", "wMax"],
-    var_name_types=[("g", "scalar")],
+    vars=[("g", "scalar")],
     pre_spike_syn_code=
     """
     const scalar dt = t - st_post;
