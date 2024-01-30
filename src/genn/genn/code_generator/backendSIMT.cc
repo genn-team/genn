@@ -1567,7 +1567,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                         // If there is row-building code in this snippet
                         const auto indexTypeName = getSynapseIndexType(sg).getName();
                         if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
-                            addSynapseEnv.getStream() << "const " << indexTypeName << " rowStartGID = $(id) * (" << indexTypeName << ")($_row_stride);" << std::endl;
+                            addSynapseEnv.getStream() << "const " << indexTypeName << " rowStartGID = $(id) * (" << indexTypeName << ")$(_row_stride);" << std::endl;
                             addSynapseEnv.getStream() << getAtomic(Type::Uint32, AtomicOperation::OR) << "(&$(_gp)[(rowStartGID + ($(0))) / 32], 0x80000000 >> ((rowStartGID + ($(0))) & 31));" << std::endl;
                         }
                         // Otherwise

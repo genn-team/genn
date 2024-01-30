@@ -1188,12 +1188,12 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                                  // **THINK** why is this logic so convoluted?
                                 if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
                                     addSynapseEnv.printLine("const int64_t rowStartGID = $(id_pre) * $(_row_stride);");
-                                    addSynapseEnv.printLine("setB($(_gp)[(rowStartGID + ($(id_post))) / 32], (rowStartGID + $(id_post)) & 31);");
+                                    addSynapseEnv.printLine("$(_gp)[(rowStartGID + $(id_post)) / 32] |= (0x80000000 >> ((rowStartGID + $(id_post)) & 31));");
                                 }
                                 // Otherwise
                                 else {
                                     addSynapseEnv.printLine("const int64_t colStartGID = $(id_post);");
-                                    addSynapseEnv.printLine("setB($(_gp)[(colStartGID + (($(id_pre)) * $(_row_stride))) / 32], ((colStartGID + (($(id_pre)) * $(_row_stride))) & 31));");
+                                    addSynapseEnv.printLine("$(_gp)[(colStartGID + ($(id_pre) * $(_row_stride))) / 32] |= (0x80000000 >> ((colStartGID + ($(id_pre) * $(_row_stride))) & 31));");
                                 }
                             }
                         }
@@ -1946,7 +1946,8 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                         synEnv.printLine("const " + indexTypeName + " gid = ((" + indexTypeName + ")$(id_pre) * $(num_post)) + $(id_post);");
 
-                        synEnv.getStream() << "if (B(" << synEnv["_gp"] << "[gid / 32], gid & 31))" << CodeStream::OB(20);
+                        synEnv.print("if($(_gp)[gid / 32] & (0x80000000 >> (gid & 31)))");
+                        synEnv.getStream() << CodeStream::OB(20);
                     }
                     else {
                         synEnv.add(indexType.addConst(), "id_syn", "idSyn",

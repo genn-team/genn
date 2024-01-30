@@ -247,18 +247,21 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
             env.print("if ($(id) < $(_row_stride))");
             {
                 CodeStream::Scope b(env.getStream());
+                EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(env, sg);
+
                 const auto indexType = backend.getSynapseIndexType(sg);
                 const auto indexTypeName = indexType.getName();
+
                 if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    env.printLine("const " + indexTypeName + " gid = ((" + indexTypeName + ")$(_sh_spk" +  eventSuffix + ")[j] * $(_row_stride)) + $(id);");
+                    synEnv.printLine("const " + indexTypeName + " gid = ((" + indexTypeName + ")$(_sh_spk" +  eventSuffix + ")[j] * $(_row_stride)) + $(id);");
                     
                 }
 
                 if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    env.getStream() << "if (B(" << env["_gp"] << "[gid / 32], gid & 31))" << CodeStream::OB(135);
+                    synEnv.print("if($(_gp)[gid / 32] & (0x80000000 >> (gid & 31)))");
+                    synEnv.getStream() << CodeStream::OB(135);
                 }
 
-                EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(env, sg);
 
                 synEnv.add(Type::Uint32.addConst(), "id_pre", "$(_sh_spk" + eventSuffix + ")[j]");
                 synEnv.add(indexType.addConst(), "id_syn", "synAddress",
@@ -312,7 +315,7 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
                 }
 
                 if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    env.getStream() << CodeStream::CB(135); // end if (B(dd_gp" << sg.getName() << "[gid / 32], gid
+                    synEnv.getStream() << CodeStream::CB(135); // end if (B(dd_gp" << sg.getName() << "[gid / 32], gid
                 }
             }
         }
