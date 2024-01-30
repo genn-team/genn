@@ -181,7 +181,7 @@ def test_forward(make_model, backend, precision):
         "PostBitmaskNeuron", 4, post_neuron_model, 
         {}, {"x": 0.0})
     model.add_synapse_population(
-        "BitmaskSynapse", "SPARSE",
+        "BitmaskSynapse", "BITMASK",
         ss_pop, bitmask_n_pop,
         init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
         init_postsynaptic("DeltaCurr"),
