@@ -37,7 +37,7 @@ public:
     //------------------------------------------------------------------------
     // Enumerations
     //------------------------------------------------------------------------
-    enum class SpanType
+    enum class ParallelismHint
     {
         POSTSYNAPTIC,
         PRESYNAPTIC
@@ -109,14 +109,13 @@ public:
     //! Sets the number of delay steps used to delay events and variables between presynaptic neuron and synapse
     void setAxonalDelaySteps(unsigned int timesteps);
 
-    //! Set how CUDA implementation is parallelised
-    /*! with a thread per target neuron (default) or a thread per source spike */
-    void setSpanType(SpanType spanType);
+    //! Provide a hint as to how this synapse group should be parallelised
+    void setParallelismHint(ParallelismHint parallelismHint){ m_ParallelismHint = parallelismHint; }
 
-    //! Set how many threads CUDA implementation uses to process each spike when span type is PRESYNAPTIC
+    //! Provide hint as to how many threads SIMT backend might use to process each spike if PRESYNAPTIC parallelism is selected
     // **TODO** this shouldn't be in SynapseGroup - it's backend-specific
-    void setNumThreadsPerSpike(unsigned int numThreadsPerSpike);
-
+    void setNumThreadsPerSpike(unsigned int numThreadsPerSpike){ m_NumThreadsPerSpike = numThreadsPerSpike; }
+ 
     //! Sets the number of delay steps used to delay events and variables between postsynaptic neuron and synapse
     void setBackPropDelaySteps(unsigned int timesteps);
 
@@ -128,7 +127,7 @@ public:
     //------------------------------------------------------------------------
     const std::string &getName() const{ return m_Name; }
 
-    SpanType getSpanType() const{ return m_SpanType; }
+    ParallelismHint getParallelismHint() const{ return m_ParallelismHint; }
     unsigned int getNumThreadsPerSpike() const{ return m_NumThreadsPerSpike; }
     unsigned int getBackPropDelaySteps() const{ return m_BackPropDelaySteps; }
     unsigned int getAxonalDelaySteps() const{ return m_AxonalDelaySteps; }
@@ -430,8 +429,8 @@ private:
     //! Name of the synapse group
     const std::string m_Name;
 
-    //! Execution order of synapses in the kernel. It determines whether synapses are executed in parallel for every postsynaptic neuron, or for every presynaptic neuron.
-    SpanType m_SpanType;
+    //! Hint as to how synapse group should be parallelised
+    ParallelismHint m_ParallelismHint;
 
     //! How many threads CUDA implementation uses to process each spike when span type is PRESYNAPTIC
     unsigned int m_NumThreadsPerSpike;

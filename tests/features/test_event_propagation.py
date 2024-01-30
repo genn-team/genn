@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from pygenn import types
 
-from pygenn.genn import SpanType, VarAccess
+from pygenn.genn import ParallelismHint, VarAccess
 from pygenn import (create_neuron_model,
                     create_sparse_connect_init_snippet,
                     create_var_init_snippet,
@@ -111,7 +111,7 @@ def test_forward(make_model, backend, precision):
         init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity(decoder_model, {}))
-    sparse_constant_weight_pre_s_pop.span_type = SpanType.PRESYNAPTIC
+    sparse_constant_weight_pre_s_pop.parallelism_hint = SpanType.PRESYNAPTIC
 
     # Create one output neuron pop with constant weight sparse decoder population
     manual_sparse_constant_weight_n_pop = model.add_neuron_population(
@@ -147,7 +147,7 @@ def test_forward(make_model, backend, precision):
         init_weight_update("StaticPulse", {}, {"g": 1.0}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity(decoder_model, {}))
-    sparse_pre_s_pop.span_type = SpanType.PRESYNAPTIC
+    sparse_pre_s_pop.parallelism_hint = ParallelismHint.PRESYNAPTIC
     
     # Create one output neuron pop with sparse 
     # decoder population and presynaptic parallelism
@@ -161,7 +161,7 @@ def test_forward(make_model, backend, precision):
         init_weight_update("StaticPulse", {}, {"g": 1.0}, {}, {}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity(decoder_model, {}))
-    sparse_hybrid_s_pop.span_type = SpanType.PRESYNAPTIC
+    sparse_hybrid_s_pop.parallelism_hint = ParallelismHint.PRESYNAPTIC
     sparse_hybrid_s_pop.num_threads_per_spike = 2
 
     # Create one output neuron pop with sparse decoder population
@@ -292,7 +292,7 @@ def test_forward_den_delay(make_model, backend, precision):
         init_postsynaptic("DeltaCurr", {}, {}))
     sparse_pre_s_pop.max_dendritic_delay_timesteps = 10
     sparse_pre_s_pop.set_sparse_connections(np.arange(10), np.zeros(10, dtype=int))
-    sparse_pre_s_pop.span_type = SpanType.PRESYNAPTIC
+    sparse_pre_s_pop.parallelism_hint = ParallelismHint.PRESYNAPTIC
 
     # Build model and load
     model.build()
@@ -637,7 +637,7 @@ def test_reverse(make_model, backend, precision):
         init_weight_update(static_pulse_reverse_model, {}, {"g": weights}),
         init_postsynaptic("DeltaCurr"))
     s_pre_pop.set_sparse_connections(pre_inds, post_inds)
-    s_pre_pop.span_type = SpanType.PRESYNAPTIC
+    s_pre_pop.parallelism_hint = ParallelismHint.PRESYNAPTIC
 
     s_event_pop = model.add_synapse_population(
         "SparseEventSynapse", "SPARSE",

@@ -169,26 +169,6 @@ void SynapseGroup::setAxonalDelaySteps(unsigned int timesteps)
     m_SrcNeuronGroup->checkNumDelaySlots(m_AxonalDelaySteps);
 }
 //----------------------------------------------------------------------------
-void SynapseGroup::setSpanType(SpanType spanType)
-{
-    if ((getMatrixType() & SynapseMatrixConnectivity::SPARSE) || (getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL)) {
-        m_SpanType = spanType;
-    }
-    else {
-        throw std::runtime_error("setSpanType: This function can only be used on synapse groups with sparse or bitmask connectivity.");
-    }
-}
-//----------------------------------------------------------------------------
-void SynapseGroup::setNumThreadsPerSpike(unsigned int numThreadsPerSpike)
-{
-    if (m_SpanType == SpanType::PRESYNAPTIC) {
-        m_NumThreadsPerSpike = numThreadsPerSpike;
-    }
-    else {
-        throw std::runtime_error("setNumThreadsPerSpike: This function can only be used on synapse groups with a presynaptic span type.");
-    }
-}
-//----------------------------------------------------------------------------
 void SynapseGroup::setBackPropDelaySteps(unsigned int timesteps)
 {
     m_BackPropDelaySteps = timesteps;
@@ -298,7 +278,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
                            const InitToeplitzConnectivitySnippet::Init &toeplitzInitialiser,
                            VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
                            VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled)
-    :   m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_NumThreadsPerSpike(1), m_AxonalDelaySteps(0), m_BackPropDelaySteps(0),
+    :   m_Name(name), m_ParallelismHint(ParallelismHint::POSTSYNAPTIC), m_NumThreadsPerSpike(1), m_AxonalDelaySteps(0), m_BackPropDelaySteps(0),
         m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup), 
         m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled),
         m_OutputLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
@@ -847,7 +827,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
     Type::updateHash(getSparseIndType(), hash);
     Utils::updateHash(getNumThreadsPerSpike(), hash);
-    Utils::updateHash(getSpanType(), hash);
+    Utils::updateHash(getParallelismHint(), hash);
     Utils::updateHash(isPSModelFused(), hash);
     Utils::updateHash(getSrcNeuronGroup()->getNumDelaySlots(), hash);
     Utils::updateHash(getTrgNeuronGroup()->getNumDelaySlots(), hash);

@@ -62,7 +62,7 @@ size_t PreSpan::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
 bool PreSpan::isCompatible(const SynapseGroupInternal &sg, const PreferencesBase&) const
 {
     // Presynaptic parallelism can be used when synapse groups request it and they have sparse connectivity
-    return ((sg.getSpanType() == SynapseGroup::SpanType::PRESYNAPTIC)
+    return ((sg.getParallelismHint() == SynapseGroup::ParallelismHint::PRESYNAPTIC)
             && (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE));
 }
 //----------------------------------------------------------------------------
@@ -181,7 +181,7 @@ size_t PostSpan::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) cons
 bool PostSpan::isCompatible(const SynapseGroupInternal &sg, const PreferencesBase&) const
 {
     // Postsynatic parallelism can be used when synapse groups request it
-    return ((sg.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC)
+    return ((sg.getParallelismHint() == SynapseGroup::ParallelismHint::POSTSYNAPTIC)
             && !(sg.getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL)
             && !(sg.getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ));
 }
@@ -556,7 +556,7 @@ bool PostSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const Prefere
     // Postsynaptic bitmask parallelism can be used if bitmask optimisations are enabled and
     // if synapse groups with bitmask connectivity and no dendritic delays request postsynaptic parallelism
     return (preferences.enableBitmaskOptimisations
-            && (sg.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC)
+            && (sg.getParallelismHint() == SynapseGroup::ParallelismHint::POSTSYNAPTIC)
             && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK)
             && !sg.isDendriticDelayRequired());
 }

@@ -345,9 +345,9 @@ PYBIND11_MODULE(genn, m)
              pybind11::is_operator());
 
     //! Parallelism hints for synapse groups
-    pybind11::enum_<SynapseGroup::SpanType>(m, "SpanType")
-        .value("POSTSYNAPTIC", SynapseGroup::SpanType::POSTSYNAPTIC)
-        .value("PRESYNAPTIC", SynapseGroup::SpanType::PRESYNAPTIC);
+    pybind11::enum_<SynapseGroup::ParallelismHint>(m, "ParallelismHint")
+        .value("POSTSYNAPTIC", SynapseGroup::ParallelismHint::POSTSYNAPTIC)
+        .value("PRESYNAPTIC", SynapseGroup::ParallelismHint::PRESYNAPTIC);
 
     //------------------------------------------------------------------------
     // Free functions
@@ -607,7 +607,7 @@ PYBIND11_MODULE(genn, m)
         .def_property("max_connections",&SynapseGroup::getMaxConnections, &SynapseGroup::setMaxConnections)
         .def_property("max_source_connections",&SynapseGroup::getMaxSourceConnections, &SynapseGroup::setMaxSourceConnections)
         .def_property("max_dendritic_delay_timesteps",&SynapseGroup::getMaxDendriticDelayTimesteps, &SynapseGroup::setMaxDendriticDelayTimesteps)
-        .def_property("span_type",&SynapseGroup::getSpanType, &SynapseGroup::setSpanType)
+        .def_property("parallelism_hint",&SynapseGroup::getParallelismHint, &SynapseGroup::setParallelismHint)
         .def_property("num_threads_per_spike",&SynapseGroup::getNumThreadsPerSpike, &SynapseGroup::setNumThreadsPerSpike)
         .def_property("back_prop_delay_steps",&SynapseGroup::getBackPropDelaySteps, &SynapseGroup::setBackPropDelaySteps)
         .def_property("axonal_delay_steps",&SynapseGroup::getAxonalDelaySteps, &SynapseGroup::setAxonalDelaySteps)
