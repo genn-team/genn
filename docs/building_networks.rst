@@ -61,13 +61,73 @@ However, like many other parts of GeNN, you can easily create your own variable 
 
 Variables references
 --------------------
-Advanced!
+As well as variables and parameters, various types of model have variable references which are used to reference variables belonging to other populations.
+For example, postsynaptic update models can reference variables in the postsynaptic neuron model and custom updates are 'attached' to other populations based on their variable references.
+
+A variable reference called R could be assigned to various types of variable using the following syntax:
+
+..  code-block:: python
+
+    neuron_var_ref =  {"R": pygenn.create_var_ref(ng, "V")}
+    current_source_var_ref =  {"R": pygenn.create_var_ref(cs, "V")}
+    custom_update_var_ref = {"R": pygenn.create_var_ref(cu, "V")}
+    postsynaptic_model_var_ref =  {"R": pygenn.create_psm_var_ref(sg, "V")}
+    wu_pre_var_ref =  {"R": pygenn.create_wu_pre_var_ref(sg, "Pre")}
+    wu_post_var_ref =  {"R": pygenn.create_wu_post_var_ref(sg, "Post")}
+
+where ``ng`` is a :class:`.NeuronGroup` (as returned by :meth:`.GeNNModel.add_neuron_population`), ``cs`` is a :class:`.CurrentSource` (as returned by :meth:`.GeNNModel.add_current_source`), ``cu`` is a :class:`.CustomUpdate` (as returned by :meth:`.GeNNModel.add_custom_update`) and ``sg`` is a :class:`.SynapseGroup` (as returned by :meth:`.GeNNModel.add_synapse_population`).
+
+While references of these types can be used interchangably in the same custom update, as long as all referenced variables have the same delays and belong to populations of the same size, per-synapse weight update model variables must be referenced with slightly different syntax:
+
+..  code-block:: python
+
+    wu_var_ref = {"R": pygenn.create_wu_var_ref(sg, "g")}
+    cu_wu_var_ref = {"R": pygenn.create_wu_var_ref(cu, "g")}
+
+where ``sg`` is a :class:`.SynapseGroup` (as returned by :meth:`.GeNNModel.add_synapse_population`) and ``cu`` is a :class:`.CustomUpdateWU` (as returned by :meth:`.GeNNModel.add_custom_update`) which operates on another synapse group's state variables.
+
+TODO custom connectivity updateBaseHash
+
+These 'weight update variable references' also have the additional feature that they can be used to define a link to a 'transpose' variable:
+
+..  code-block:: python
+
+    wu_transpose_var_ref = {"R": create_wu_var_ref(sg, "g", back_sg, "g")}
+
+where ``back_sg`` is another :class:`.SynapseGroup` with tranposed dimensions to sg i.e. its _postsynaptic_ population has the same number of neurons as sg's _presynaptic_ population and vice-versa.
+
+After the update has run, any updates made to the 'forward' variable will also be applied to the tranpose variable 
+[#]_ Tranposing is currently only possible on variables belonging to synapse groups with :attr:`.SynapseMatrixType.DENSE` connectivity [#]_
+
+
+
 
 Neuron populations
 ------------------
 Neuron populations contain a number of neurons with the same model and are added using:
 
-.. automethod:: pygenn.GeNNModel.add_neuron_population
+.. automethod:: .GeNNModel.add_neuron_population
+
+
+For example, a population of 10 tonic spiking Izhikevich neurons could be added to a model as follows:
+
+..  code-block:: python
+
+    # Izhikevich model parameters - tonic spiking
+    izh_p = {
+        "a": 0.02,
+        "b": 0.2,
+        "c": -65.0,
+        "d": 6.0
+    }
+
+    # Izhikevich model initial conditions - tonic spiking
+    izh_ini = {
+        "V": -65.0,
+        "U": -20.0
+    }
+
+    pop1 = model.add_neuron_population("pop1", 10, "Izhikevich", izh_p, izh_ini) 
 
 The user may add as many neuron populations as the model necessitates.
 They must all have unique names. The possible values for the arguments,
@@ -78,22 +138,26 @@ Synapse populations
 -------------------
 Synapse populations connect two neuron populations via synapses:
 
-.. automethod:: pygenn.GeNNModel.add_synapse_population
+.. automethod:: .GeNNModel.add_synapse_population
+
+additional input variables
 
 Current sources
 ---------------
 Current sources 
 
-.. automethod:: pygenn.GeNNModel.add_current_source
+.. automethod:: .GeNNModel.add_current_source
+
+additional input variables
 
 Custom updates
 --------------
 Current sources 
 
-.. automethod:: pygenn.GeNNModel.add_custom_update
+.. automethod:: .GeNNModel.add_custom_update
 
 Custom connectivity updates
 ---------------------------
 Current sources 
 
-.. automethod:: pygenn.GeNNModel.add_custom_connectivity_update
+.. automethod:: .GeNNModel.add_custom_connectivity_update
