@@ -65,6 +65,30 @@ pygenn.init\_var\_snippets module
    :undoc-members:
    :show-inheritance:
 
+pygenn.libgenn\_cuda\_backend\_dynamic module
+---------------------------------------------
+
+.. automodule:: pygenn.libgenn_cuda_backend_dynamic
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pygenn.libgenn\_dynamic module
+------------------------------
+
+.. automodule:: pygenn.libgenn_dynamic
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pygenn.libgenn\_single\_threaded\_cpu\_backend\_dynamic module
+--------------------------------------------------------------
+
+.. automodule:: pygenn.libgenn_single_threaded_cpu_backend_dynamic
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pygenn.neuron\_models module
 ----------------------------
 
