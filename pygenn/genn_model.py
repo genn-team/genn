@@ -48,6 +48,7 @@ from platform import system
 from psutil import cpu_count
 from setuptools import msvc
 from subprocess import check_call  # to call make
+import re
 import sys
 from textwrap import dedent
 from warnings import warn
@@ -132,6 +133,31 @@ for b in ["cuda", "single_threaded_cpu", "opencl"]:
     else:
         backend_modules[b] = m
 
+# Regular expressions used for upgrading function calls and variables in code strings
+_code_upgrades = [
+    (re.compile(r"\$\(gennrand_uniform\)"), r"gennrand_uniform()"),
+    (re.compile(r"\$\(gennrand_normal\)"), r"gennrand_normal()"),
+    (re.compile(r"\$\(gennrand_exponential\)"), r"gennrand_exponential()"),
+    (re.compile(r"\$\(gennrand_log_normal,(.*)\)"), r"gennrand_log_normal(\1)"),
+    (re.compile(r"\$\(gennrand_gamma,(.*)\)"), r"gennrand_gamma(\1)"),
+    (re.compile(r"\$\(gennrand_binomial,(.*)\)"), r"gennrand_binomial(\1)"),
+    (re.compile(r"\$\(addToPre,(.*)\)"), r"addToPre(\1)"),
+    (re.compile(r"\$\(addToInSyn,(.*)\)"), r"addToPost(\1)"),
+    (re.compile(r"\$\(addToInSynDelay,(.*),(.*)\)"), r"addToPostDelay(\1, \2)"),
+    (re.compile(r"\$\(addSynapse,(.*)\)"), r"addSynapse(\1)"),
+    (re.compile(r"\$\(sT_pre\)"), r"st_pre"),
+    (re.compile(r"\$\(sT_post\)"), r"st_post"),
+    (re.compile(r"\$\(seT_pre\)"), r"set_pre"),
+    (re.compile(r"\$\(seT_post\)"), r"set_post"),
+    (re.compile(r"\$\(prev_sT_pre\)"), r"prev_st_pre"),
+    (re.compile(r"\$\(prev_sT_post\)"), r"prev_st_post"),
+    (re.compile(r"\$\(prev_seT_pre\)"), r"prev_set_pre"),
+    (re.compile(r"\$\(prev_seT_post\)"), r"prev_set_post"),
+    (re.compile(r"\$\(endRow\)"), None),
+    (re.compile(r"\$\(endCol\)"), None)]
+
+# Regular expression used for upgrading remaining variable references in code strings
+_var_upgrade = re.compile(r"\$\(([_a-zA-Z][_a-zA-Z0-9]*)\)")
 
 class GeNNModel(ModelSpecInternal):
     """GeNNModel class
@@ -823,7 +849,41 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, params={}):
     return ToeplitzConnectivityInit(init_toeplitz_connect_snippet, 
                                     prepare_param_vals(params))
 
+def upgrade_code_string(code, class_name):
+    # Apply special-case upgrades
+    upgraded = False
 
+    for obj, replace in _code_upgrades:
+        # If there's no supported replacement
+        if replace is None:
+            # Search and give error if found
+            match = obj.search(code)
+            if match is not None:
+                raise RuntimeError(f"'{match.group(0)}' call in "
+                                   f"'{class_name}' is no longer supported")
+        # Otherwise
+        else:
+            # Replace pattern in code
+            code, n_subs = obj.subn(replace, code)
+            
+            # If any substitutions were made, give warning
+            if n_subs > 0:
+                upgraded = True
+
+    # Replace old style $(XX) variables with plain XX
+    # **NOTE** this is done after functions as single-parameter
+    # function calls and variables were indistinguishable with old syntax
+    code, n_subs = _var_upgrade.subn(r"\1", code)
+    if n_subs > 0:
+        upgraded = True
+
+    # If any upgrades were made, give warning
+    if upgraded:
+        warn(f"Legacy $() syntax in '{class_name}' has been automatically "
+             f"removed but this functionality will be removed in future so "
+             f"please update your model", DeprecationWarning)
+    return code
+    
 def create_model(class_name, base, params, param_names, derived_params,
                  extra_global_params, custom_body):
     """This helper function completes a custom model class creation.
@@ -929,14 +989,17 @@ def create_neuron_model(class_name, params=None, param_names=None,
     body = {}
 
     if sim_code is not None:
-        body["get_sim_code"] = lambda self: dedent(sim_code)
+        body["get_sim_code"] =\
+            lambda self: dedent(upgrade_code_string(sim_code, class_name))
 
     if threshold_condition_code is not None:
         body["get_threshold_condition_code"] = \
-            lambda self: dedent(threshold_condition_code)
+            lambda self: dedent(upgrade_code_string(threshold_condition_code,
+                                                    class_name))
 
     if reset_code is not None:
-        body["get_reset_code"] = lambda self: dedent(reset_code)
+        body["get_reset_code"] = lambda self: dedent(upgrade_code_string(reset_code,
+                                                                         class_name))
 
     if additional_input_vars:
         body["get_additional_input_vars"] = \
@@ -987,10 +1050,13 @@ def create_postsynaptic_model(class_name, params=None, param_names=None,
     body = {}
 
     if decay_code is not None:
-        body["get_decay_code"] = lambda self: dedent(decay_code)
+        body["get_decay_code"] =\
+            lambda self: dedent(upgrade_code_string(decay_code, class_name))
 
     if apply_input_code is not None:
-        body["get_apply_input_code"] = lambda self: dedent(apply_input_code)
+        body["get_apply_input_code"] =\
+            lambda self: dedent(upgrade_code_string(apply_input_code,
+                                                    class_name))
 
     if var_name_types is not None:
         body["get_vars"] = \
@@ -998,7 +1064,7 @@ def create_postsynaptic_model(class_name, params=None, param_names=None,
     
     if neuron_var_refs is not None:
         body["get_neuron_var_refs"] =\
-            lambda self: [VarRef(*v) for v in var_refs]
+            lambda self: [VarRef(*v) for v in neuron_var_refs]
     
     return create_model(class_name, PostsynapticModelBase, params, 
                         param_names, derived_params, 
@@ -1011,9 +1077,12 @@ def create_weight_update_model(class_name, params=None, param_names=None,
                                pre_neuron_var_refs=None,
                                post_neuron_var_refs=None,
                                derived_params=None, sim_code=None,
-                               event_code=None, learn_post_code=None,
+                               event_code=None, pre_event_code=None, 
+                               post_event_code=None, learn_post_code=None,
                                synapse_dynamics_code=None,
                                event_threshold_condition_code=None,
+                               pre_event_threshold_condition_code=None,
+                               post_event_threshold_condition_code=None,
                                pre_spike_code=None, post_spike_code=None,
                                pre_dynamics_code=None, post_dynamics_code=None,
                                extra_global_params=None):
@@ -1026,72 +1095,111 @@ def create_weight_update_model(class_name, params=None, param_names=None,
     create_sparse_connect_init_snippet
 
     Args:
-    class_name                      --  name of the new class
+    class_name                          --  name of the new class
 
     Keyword args:
-    param_names                     --  list of strings with param names of
-                                        the model
-    var_name_types                  --  list of pairs of strings with variable
-                                        names and types of the model
-    pre_var_name_types              --  list of pairs of strings with
-                                        presynaptic variable names and
-                                        types of the model
-    post_var_name_types             --  list of pairs of strings with
-                                        postsynaptic variable names and
-                                        types of the model
-    pre_neuron_var_refs             --  references to presynaptic neuron variables
-    post_neuron_var_refs            --  references to postsynaptic neuron variables
-    derived_params                  --  list of pairs, where the first member
-                                        is string with name of the derived
-                                        parameter and the second should be 
-                                        a functor returned by create_dpf_class
-    sim_code                        --  string with the simulation code
-    event_code                      --  string with the event code
-    learn_post_code                 --  string with the code to include in
-                                        learn_synapse_post kernel/function
-    synapse_dynamics_code           --  string with the synapse dynamics code
-    event_threshold_condition_code  --  string with the event threshold
-                                        condition code
-    pre_spike_code                  --  string with the code run once per
-                                        spiking presynaptic neuron
-    post_spike_code                 --  string with the code run once per
-                                        spiking postsynaptic neuron
-    pre_dynamics_code               --  string with the code run every
-                                        timestep on presynaptic neuron
-    post_dynamics_code              --  string with the code run every
-                                        timestep on postsynaptic neuron
-    extra_global_params             --  list of pairs of strings with names and
-                                        types of additional parameters
+    param_names                         --  list of strings with param names of
+                                            the model
+    var_name_types                      --  list of pairs of strings with variable
+                                            names and types of the model
+    pre_var_name_types                  --  list of pairs of strings with
+                                            presynaptic variable names and
+                                            types of the model
+    post_var_name_types                 --  list of pairs of strings with
+                                            postsynaptic variable names and
+                                            types of the model
+    pre_neuron_var_refs                 --  references to presynaptic neuron variables
+    post_neuron_var_refs                --  references to postsynaptic neuron variables
+    derived_params                      --  list of pairs, where the first member
+                                            is string with name of the derived
+                                            parameter and the second should be 
+                                            a functor returned by create_dpf_class
+    sim_code                            --  string with the simulation code
+    pre_event_code                      --  string with the presynaptic event code
+    post_event_code                     --  string with the postsynaptic event code
+    learn_post_code                     --  string with the code to include in
+                                            learn_synapse_post kernel/function
+    synapse_dynamics_code               --  string with the synapse dynamics code
+    pre_event_threshold_condition_code  --  string with the presynaptic event threshold
+                                            condition code
+    post_event_threshold_condition_code --  string with the postsynaptic event threshold
+                                            condition code
+    pre_spike_code                      --  string with the code run once per
+                                            spiking presynaptic neuron
+    post_spike_code                     --  string with the code run once per
+                                            spiking postsynaptic neuron
+    pre_dynamics_code                   --  string with the code run every
+                                            timestep on presynaptic neuron
+    post_dynamics_code                  --  string with the code run every
+                                            timestep on postsynaptic neuron
+    extra_global_params                 --  list of pairs of strings with names and
+                                            types of additional parameters
     """
     body = {}
 
-    if sim_code is not None:
-        body["get_sim_code"] = lambda self: dedent(sim_code)
-
     if event_code is not None:
-        body["get_event_code"] = lambda self: dedent(event_code)
+        warn("The 'event_code' parameter has been renamed to 'pre_event_code'"
+             " and will be removed in future", DeprecationWarning)
+        pre_event_code = event_code
+    if event_threshold_condition_code is not None:
+        warn("The 'event_threshold_condition_code' parameter has been "
+             "renamed to 'pre_event_threshold_condition_code' and will "
+             "be removed in future", DeprecationWarning)
+        pre_event_threshold_condition_code = event_threshold_condition_code
+
+    if sim_code is not None:
+        body["get_sim_code"] =\
+            lambda self: dedent(upgrade_code_string(sim_code, class_name))
+
+    if pre_event_code is not None:
+        body["get_pre_event_code"] =\
+            lambda self: dedent(upgrade_code_string(pre_event_code,
+                                                    class_name))
+
+    if post_event_code is not None:
+        body["get_post_event_code"] =\
+            lambda self: dedent(upgrade_code_string(post_event_code,
+                                                    class_name))
 
     if learn_post_code is not None:
-        body["get_learn_post_code"] = lambda self: dedent(learn_post_code)
+        body["get_learn_post_code"] =\
+            lambda self: dedent(upgrade_code_string(learn_post_code,
+                                                    class_name))
 
     if synapse_dynamics_code is not None:
-        body["get_synapse_dynamics_code"] = lambda self: dedent(synapse_dynamics_code)
+        body["get_synapse_dynamics_code"] =\
+            lambda self: dedent(upgrade_code_string(synapse_dynamics_code,
+                                                    class_name))
 
-    if event_threshold_condition_code is not None:
-        body["get_event_threshold_condition_code"] = \
-            lambda self: dedent(event_threshold_condition_code)
+    if pre_event_threshold_condition_code is not None:
+        body["get_pre_event_threshold_condition_code"] = \
+            lambda self: dedent(upgrade_code_string(pre_event_threshold_condition_code,
+                                                    class_name))
+    
+    if post_event_threshold_condition_code is not None:
+        body["get_post_event_threshold_condition_code"] = \
+            lambda self: dedent(upgrade_code_string(post_event_threshold_condition_code,
+                                                    class_name))
 
     if pre_spike_code is not None:
-        body["get_pre_spike_code"] = lambda self: dedent(pre_spike_code)
+        body["get_pre_spike_code"] =\
+            lambda self: dedent(upgrade_code_string(pre_spike_code,
+                                                    class_name))
 
     if post_spike_code is not None:
-        body["get_post_spike_code"] = lambda self: dedent(post_spike_code)
+        body["get_post_spike_code"] =\
+            lambda self: dedent(upgrade_code_string(post_spike_code,
+                                                    class_name))
 
     if pre_dynamics_code is not None:
-        body["get_pre_dynamics_code"] = lambda self: dedent(pre_dynamics_code)
+        body["get_pre_dynamics_code"] =\
+            lambda self: dedent(upgrade_code_string(pre_dynamics_code,
+                                                    class_name))
 
     if post_dynamics_code is not None:
-        body["get_post_dynamics_code"] = lambda self: dedent(post_dynamics_code)
+        body["get_post_dynamics_code"] =\
+            lambda self: dedent(upgrade_code_string(post_dynamics_code,
+                                                    class_name))
     
     if var_name_types is not None:
         body["get_vars"] = \
@@ -1148,7 +1256,9 @@ def create_current_source_model(class_name, params=None, param_names=None,
     body = {}
 
     if injection_code is not None:
-        body["get_injection_code"] = lambda self: dedent(injection_code)
+        body["get_injection_code"] =\
+            lambda self: dedent(upgrade_code_string(injection_code,
+                                                    class_name))
 
     if var_name_types is not None:
         body["get_vars"] = \
@@ -1198,7 +1308,8 @@ def create_custom_update_model(class_name, params=None, param_names=None,
     body = {}
 
     if update_code is not None:
-        body["get_update_code"] = lambda self: dedent(update_code)
+        body["get_update_code"] =\
+            lambda self: dedent(upgrade_code_string(update_code, class_name))
 
     if var_refs is not None:
         body["get_var_refs"] = lambda self: [VarRef(*v) for v in var_refs]
@@ -1258,10 +1369,14 @@ def create_custom_connectivity_update_model(class_name, params=None,
     body = {}
 
     if row_update_code is not None:
-        body["get_row_update_code"] = lambda self: dedent(row_update_code)
+        body["get_row_update_code"] =\
+            lambda self: dedent(upgrade_code_string(row_update_code,
+                                                    class_name))
 
     if host_update_code is not None:
-        body["get_host_update_code"] = lambda self: dedent(host_update_code)
+        body["get_host_update_code"] =\
+            lambda self: dedent(upgrade_code_string(host_update_code,
+                                                    class_name))
 
     if var_name_types is not None:
         body["get_vars"] = \
@@ -1318,7 +1433,9 @@ def create_var_init_snippet(class_name, params=None, param_names=None,
     body = {}
 
     if var_init_code is not None:
-        body["get_code"] = lambda self: dedent(var_init_code)
+        body["get_code"] =\
+            lambda self: dedent(upgrade_code_string(var_init_code,
+                                                    class_name))
 
     return create_model(class_name, InitVarSnippetBase, 
                         params, param_names, derived_params, 
@@ -1369,10 +1486,14 @@ def create_sparse_connect_init_snippet(class_name, params=None,
     body = {}
 
     if row_build_code is not None:
-        body["get_row_build_code"] = lambda self: dedent(row_build_code)
+        body["get_row_build_code"] =\
+            lambda self: dedent(upgrade_code_string(row_build_code,
+                                                    class_name))
 
     if col_build_code is not None:
-        body["get_col_build_code"] = lambda self: dedent(col_build_code)
+        body["get_col_build_code"] =\
+            lambda self: dedent(upgrade_code_string(col_build_code,
+                                                    class_name))
 
     if calc_max_row_len_func is not None:
         body["get_calc_max_row_length_func"] = \
@@ -1429,10 +1550,8 @@ def create_toeplitz_connect_init_snippet(class_name, params=None,
 
     if diagonal_build_code is not None:
         body["get_diagonal_build_code"] =\
-            lambda self: dedent(diagonal_build_code)
-
-    if col_build_code is not None:
-        body["get_col_build_code"] = lambda self: dedent(col_build_code)
+            lambda self: dedent(upgrade_code_string(diagonal_build_code,
+                                                    class_name))
 
     if calc_max_row_len_func is not None:
         body["get_calc_max_row_length_func"] = \

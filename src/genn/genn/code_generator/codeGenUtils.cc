@@ -1,22 +1,7 @@
 #include "code_generator/codeGenUtils.h"
 
-// Is C++ regex library operational?
-// We assume it is for:
-// 1) Compilers that don't define __GNUCC__
-// 2) Clang
-// 3) GCC 5.X.Y and future
-// 4) Any future (4.10.Y?) GCC 4.X.Y releases
-// 5) GCC 4.9.1 and subsequent patch releases (GCC fully implemented regex in 4.9.0
-// BUT bug 61227 https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61227 prevented \w from working until 4.9.1)
-#if !defined(__GNUC__) || \
-    __clang__ || \
-    __GNUC__ > 4 || \
-    (__GNUC__ == 4 && (__GNUC_MINOR__ > 9 || \
-                      (__GNUC_MINOR__ == 9 && __GNUC_PATCHLEVEL__ >= 1)))
-    #include <regex>
-#else
-    #error "GeNN now requires a functioning std::regex implementation - please upgrade your version of GCC to at least 4.9.1"
-#endif
+// Standard C++ library
+#include <regex>
 
 // Standard C includes
 #include <cstring>
@@ -47,7 +32,8 @@ void genTypeRange(CodeStream &os, const Type::ResolvedType &type, const std::str
 }
 //----------------------------------------------------------------------------
 void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, 
-                           EnvironmentExternalBase &env, Transpiler::ErrorHandler &errorHandler)
+                                       Transpiler::TypeChecker::EnvironmentInternal &typeCheckEnv, Transpiler::PrettyPrinter::EnvironmentInternal &prettyPrintEnv,
+                                       Transpiler::ErrorHandler &errorHandler)
 {
     using namespace Transpiler;
 
@@ -58,16 +44,28 @@ void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const T
     }
 
     // Resolve types
-    auto resolvedTypes = TypeChecker::typeCheck(expression.get(), env, typeContext, errorHandler);
+    auto resolvedTypes = TypeChecker::typeCheck(expression.get(), typeCheckEnv, typeContext, errorHandler);
     if(errorHandler.hasError()) {
         throw std::runtime_error("Type check error " + errorHandler.getContext());
     }
 
     // Pretty print
-    PrettyPrinter::print(expression, env, typeContext, resolvedTypes);
+    PrettyPrinter::print(expression, prettyPrintEnv, typeContext, resolvedTypes);
+}
+//----------------------------------------------------------------------------
+void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, 
+                           EnvironmentExternalBase &env, Transpiler::ErrorHandler &errorHandler)
+{
+    using namespace Transpiler;
+
+    // Create top-level internal environments and pretty-print
+    TypeChecker::EnvironmentInternal typeCheckEnv(env);
+    PrettyPrinter::EnvironmentInternal prettyPrintEnv(env);
+    prettyPrintExpression(tokens, typeContext, typeCheckEnv, prettyPrintEnv, errorHandler);
 }
  //--------------------------------------------------------------------------
-void prettyPrintStatements(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, 
+void prettyPrintStatements(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext,
+                           Transpiler::TypeChecker::EnvironmentInternal &typeCheckEnv, Transpiler::PrettyPrinter::EnvironmentInternal &prettyPrintEnv,
                            Transpiler::ErrorHandler &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
                            Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler)
 {
@@ -80,13 +78,28 @@ void prettyPrintStatements(const std::vector<Transpiler::Token> &tokens, const T
     }
 
     // Resolve types
-    auto resolvedTypes = TypeChecker::typeCheck(updateStatements, env, typeContext, errorHandler, forEachSynapseTypeCheckHandler);
+    auto resolvedTypes = TypeChecker::typeCheck(updateStatements, typeCheckEnv, typeContext, 
+                                                errorHandler, forEachSynapseTypeCheckHandler);
     if(errorHandler.hasError()) {
         throw std::runtime_error("Type check error " + errorHandler.getContext());
     }
 
     // Pretty print
-    PrettyPrinter::print(updateStatements, env, typeContext, resolvedTypes, forEachSynapsePrettyPrintHandler);
+    PrettyPrinter::print(updateStatements, prettyPrintEnv, typeContext, 
+                         resolvedTypes, forEachSynapsePrettyPrintHandler);
+}
+ //--------------------------------------------------------------------------
+void prettyPrintStatements(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, 
+                           Transpiler::ErrorHandler &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
+                           Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler)
+{
+    using namespace Transpiler;
+
+    // Create top-level internal environments and pretty-print
+    TypeChecker::EnvironmentInternal typeCheckEnv(env);
+    PrettyPrinter::EnvironmentInternal prettyPrintEnv(env);
+    prettyPrintStatements(tokens, typeContext, typeCheckEnv, prettyPrintEnv, errorHandler,
+                          forEachSynapseTypeCheckHandler, forEachSynapsePrettyPrintHandler);
 }
 //--------------------------------------------------------------------------
 std::string printSubs(const std::string &format, Transpiler::PrettyPrinter::EnvironmentBase &env)

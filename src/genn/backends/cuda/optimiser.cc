@@ -218,15 +218,15 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
     // Loop through synapse groups
     size_t numPreSynapseResetGroups = 0;
     for(const auto &s : model.getSynapseGroups()) {
-        if(s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()) {
+        if(s.second.isPreSpikeEventRequired() || s.second.isPreSpikeRequired()) {
             groupSizes[KernelPresynapticUpdate].push_back(model.getBatchSize() * Backend::getNumPresynapticUpdateThreads(s.second, preferences));
         }
 
-        if(!s.second.getWUInitialiser().getSnippet()->getLearnPostCode().empty()) {
+        if(s.second.isPostSpikeRequired() || s.second.isPostSpikeEventRequired()) {
             groupSizes[KernelPostsynapticUpdate].push_back(model.getBatchSize() * Backend::getNumPostsynapticUpdateThreads(s.second));
         }
 
-        if(!s.second.getWUInitialiser().getSnippet()->getSynapseDynamicsCode().empty()) {
+        if(!Utils::areTokensEmpty(s.second.getWUInitialiser().getSynapseDynamicsCodeTokens())) {
             groupSizes[KernelSynapseDynamicsUpdate].push_back(model.getBatchSize() * Backend::getNumSynapseDynamicsThreads(s.second));
         }
 

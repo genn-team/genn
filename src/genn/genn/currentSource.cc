@@ -106,8 +106,10 @@ bool CurrentSource::isVarInitRequired() const
                        });
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type CurrentSource::getHashDigest() const
+boost::uuids::detail::sha1::digest_type CurrentSource::getHashDigest(const NeuronGroup *ng) const
 {
+    assert(ng == getTrgNeuronGroup());
+
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getCurrentSourceModel()->getHashDigest(), hash);
     Utils::updateHash(getTargetVar(), hash);
@@ -122,8 +124,10 @@ boost::uuids::detail::sha1::digest_type CurrentSource::getHashDigest() const
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type CurrentSource::getInitHashDigest() const
+boost::uuids::detail::sha1::digest_type CurrentSource::getInitHashDigest(const NeuronGroup *ng) const
 {
+    assert(ng == getTrgNeuronGroup());
+
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getCurrentSourceModel()->getVars(), hash);
 

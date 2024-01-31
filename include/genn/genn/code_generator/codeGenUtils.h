@@ -55,74 +55,27 @@ inline size_t padSize(size_t size, size_t blockSize)
 
 GENN_EXPORT void genTypeRange(CodeStream &os, const Type::ResolvedType &type, const std::string &prefix);
 
-//--------------------------------------------------------------------------
-/*! \brief This function uses the transpiler to parse, type check and pretty print previously scanned vector of tokens representing an expression
- */
- //--------------------------------------------------------------------------
+//! Parse, type check and pretty print previously scanned vector of tokens representing an expression
+GENN_EXPORT void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, 
+                                       Transpiler::TypeChecker::EnvironmentInternal &typeCheckEnv, Transpiler::PrettyPrinter::EnvironmentInternal &prettyPrintEnv,
+                                       Transpiler::ErrorHandler &errorHandler);
+
+//! Parse, type check and pretty print previously scanned vector of tokens representing an expression
 GENN_EXPORT void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, 
                                        EnvironmentExternalBase &env, Transpiler::ErrorHandler &errorHandler);
 
-//--------------------------------------------------------------------------
-/*! \brief This function uses the transpiler to parse, type check and pretty print previously scanned vector of tokens representing a statemebt
- */
- //--------------------------------------------------------------------------
+//! Parse, type check and pretty print previously scanned vector of tokens representing a statement
+GENN_EXPORT void prettyPrintStatements(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext,
+                                       Transpiler::TypeChecker::EnvironmentInternal &typeCheckEnv, Transpiler::PrettyPrinter::EnvironmentInternal &prettyPrintEnv,
+                                       Transpiler::ErrorHandler &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler = nullptr,
+                                       Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler = nullptr);
+
+//! Parse, type check and pretty print previously scanned vector of tokens representing a statement
 GENN_EXPORT void prettyPrintStatements(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, EnvironmentExternalBase &env, 
                                        Transpiler::ErrorHandler &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler = nullptr,
                                        Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler = nullptr);
 
 GENN_EXPORT std::string printSubs(const std::string &format, Transpiler::PrettyPrinter::EnvironmentBase &env);
-
-//-------------------------------------------------------------------------
-/*!
-  \brief Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.
-*/
-//-------------------------------------------------------------------------
-/*template<typename P, typename D, typename V, typename S>
-void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &substitutions, const NeuronGroupInternal *archetypeNG, 
-                                       const std::string &delayOffset, const std::string &sourceSuffix, const std::string &destSuffix, 
-                                       const std::string &varPrefix, const std::string &varSuffix, bool useLocalNeuronVars,
-                                       P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn, V getVarIndexFn, S getPrevSpikeTimeIndexFn)
-{
-
-    // Substitute spike times
-    const bool delay = archetypeNG->isDelayRequired();
-    const std::string spikeTimeVarIndex = getVarIndexFn(delay, VarAccessDuplication::DUPLICATE);
-    const std::string prevSpikeTimeVarIndex = getPrevSpikeTimeIndexFn(delay, VarAccessDuplication::DUPLICATE);
-    substitutions.addVarSubstitution("sT" + sourceSuffix,
-                                     "(" + delayOffset + varPrefix + "group->sT" + destSuffix + "[" + spikeTimeVarIndex + "]" + varSuffix + ")");
-    substitutions.addVarSubstitution("prev_sT" + sourceSuffix,
-                                     "(" + delayOffset + varPrefix + "group->prevST" + destSuffix + "[" + prevSpikeTimeVarIndex + "]" + varSuffix + ")");
-
-    // Substitute spike-like-event times
-    substitutions.addVarSubstitution("seT" + sourceSuffix,
-                                     "(" + delayOffset + varPrefix + "group->seT" + destSuffix + "[" + spikeTimeVarIndex + "]" + varSuffix + ")");
-    substitutions.addVarSubstitution("prev_seT" + sourceSuffix,
-                                     "(" + delayOffset + varPrefix + "group->prevSET" + destSuffix + "[" + prevSpikeTimeVarIndex + "]" + varSuffix + ")");
-
-    // Substitute neuron variables
-    const auto *nm = archetypeNG->getNeuronModel();
-    if(useLocalNeuronVars) {
-        substitutions.addVarNameSubstitution(nm->getVars(), sourceSuffix, "l");
-    }
-    else {
-        for(const auto &v : nm->getVars()) {
-            const std::string varIdx = getVarIndexFn(delay && archetypeNG->isVarQueueRequired(v.name),
-                                                     getVarAccessDuplication(v.access));
-
-            substitutions.addVarSubstitution(v.name + sourceSuffix,
-                                             varPrefix + "group->" + v.name + destSuffix + "[" + varIdx + "]" + varSuffix);
-        }
-    }
-
-    // Substitute (potentially heterogeneous) parameters and derived parameters from neuron model
-    substitutions.addParamValueSubstitution(nm->getParamNames(), archetypeNG->getParams(), isParamHeterogeneousFn,
-                                            sourceSuffix, "group->", destSuffix);
-    substitutions.addVarValueSubstitution(nm->getDerivedParams(), archetypeNG->getDerivedParams(), isDerivedParamHeterogeneousFn,
-                                          sourceSuffix, "group->", destSuffix);
-
-    // Substitute extra global parameters from neuron model
-    substitutions.addVarNameSubstitution(nm->getExtraGlobalParams(), sourceSuffix, "group->", destSuffix);
-}*/
 
 template<typename G>
 bool isKernelSizeHeterogeneous(const G &group, size_t dimensionIndex)

@@ -2,8 +2,6 @@ import numpy as np
 import pytest
 from pygenn import types
 
-from pygenn import GeNNModel
-
 from pygenn import (create_current_source_model, 
                     create_custom_connectivity_update_model,
                     create_custom_update_model,
@@ -19,7 +17,7 @@ from pygenn import (create_current_source_model,
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_egp_var_init(backend, precision):
+def test_egp_var_init(make_model, backend, precision):
     # Create var init snippet which fills variable with 10 repeated value
     repeat_var_init_snippet = create_var_init_snippet(
         "repeat_var_init",
@@ -65,7 +63,7 @@ def test_egp_var_init(backend, precision):
         pre_var_name_types=[("pre_repeat", "scalar")],
         post_var_name_types=[("post_repeat", "scalar")])
     
-    model = GeNNModel(precision, "test_egp_var_init", backend=backend)
+    model = make_model(precision, "test_egp_var_init", backend=backend)
 
     ss_pop = model.add_neuron_population("SpikeSource", 20, "SpikeSource", {}, {});
     
@@ -136,7 +134,7 @@ def test_egp_var_init(backend, precision):
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_egp_ref(backend, precision):
+def test_egp_ref(make_model, backend, precision):
     neuron_model = create_neuron_model(
         "neuron",
         sim_code=
@@ -159,10 +157,10 @@ def test_egp_ref(backend, precision):
         """,
         var_refs=[("v", "scalar")],
         extra_global_param_refs=[("e", "scalar*")])
-    
-    model = GeNNModel(precision, "test_egp_ref", backend=backend)
+
+    model = make_model(precision, "test_egp_ref", backend=backend)
     model.dt = 1.0
-    
+
     n_pop = model.add_neuron_population("Neurons", 10, neuron_model, {}, {"x": 10.0});
     n_pop.extra_global_params["e"].set_init_values(np.empty(10))
 
@@ -172,16 +170,13 @@ def test_egp_ref(backend, precision):
     # Build model and load
     model.build()
     model.load()
-    
+
     while model.timestep < 10:
         model.custom_update("CustomUpdate")
         model.step_time()
-        
+
         correct = np.zeros(10)
         correct[model.timestep - 1] = 1.0
-        
+
         n_pop.vars["x"].pull_from_device()
         assert np.allclose(n_pop.vars["x"].view, correct)
-
-if __name__ == '__main__':
-    test_egp_var_init("cuda", types.Float)

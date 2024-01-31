@@ -21,29 +21,29 @@ public:
 
     SET_SIM_CODE(
         "addToPost(g);\n"
-        "scalar dt = sT_post - t - tauShift; \n"
+        "scalar dt = st_post - t - tauShift; \n"
         "scalar dg = 0;\n"
         "if (dt > lim0)  \n"
         "    dg = -off0 ; \n"
         "else if (dt > 0)  \n"
         "    dg = slope0 * dt + off1; \n"
         "else if (dt > lim1)  \n"
-        "    dg = slope1 * dt + ($(off1)); \n"
-        "else dg = - ($(off2)) ; \n"
-        "$(gRaw) += dg; \n"
-        "$(g)=$(gMax)/2 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");
+        "    dg = slope1 * dt + (off1); \n"
+        "else dg = - (off2) ; \n"
+        "gRaw += dg; \n"
+        "g=gMax/2 *(tanh(gSlope*(gRaw - (gMid)))+1); \n");
     SET_LEARN_POST_CODE(
-        "scalar dt = $(t) - ($(sT_pre)) - ($(tauShift)); \n"
+        "scalar dt = t - st_pre - (tauShift); \n"
         "scalar dg =0; \n"
-        "if (dt > $(lim0))  \n"
-        "    dg = -($(off0)) ; \n"
+        "if (dt > lim0)  \n"
+        "    dg = -(off0) ; \n"
         "else if (dt > 0)  \n"
-        "    dg = $(slope0) * dt + ($(off1)); \n"
-        "else if (dt > $(lim1))  \n"
-        "    dg = $(slope1) * dt + ($(off1)); \n"
-        "else dg = -($(off2)) ; \n"
-        "$(gRaw) += dg; \n"
-        "$(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");
+        "    dg = slope0 * dt + (off1); \n"
+        "else if (dt > lim1)  \n"
+        "    dg = slope1 * dt + (off1); \n"
+        "else dg = -(off2) ; \n"
+        "gRaw += dg; \n"
+        "g=gMax/2.0 *(tanh(gSlope*(gRaw - (gMid)))+1); \n");
 
     SET_DERIVED_PARAMS({
         {"lim0", [](const ParamValues &pars, double){ return (1/pars.at("tPunish01").cast<double>() + 1 / pars.at("tChng").cast<double>()) * pars.at("tLrn").cast<double>() / (2/pars.at("tChng").cast<double>()); }},
@@ -61,7 +61,7 @@ class STDPAdditive : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(STDPAdditive);
     SET_PARAMS({"tauPlus", "tauMinus", "Aplus", "Aminus",
-                     "Wmin", "Wmax"});
+                "Wmin", "Wmax"});
     SET_DERIVED_PARAMS({
         {"tauPlusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauPlus").cast<double>()); }},
         {"tauMinusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauMinus").cast<double>()); }}});
@@ -70,22 +70,22 @@ public:
     SET_POST_VARS({{"postTrace", "scalar"}});
     
     SET_SIM_CODE(
-        "$(addToInSyn, $(g));\n"
-        "const scalar dt = $(t) - $(sT_post); \n"
+        "addToPost(g);\n"
+        "const scalar dt = t - sT_post; \n"
         "if (dt > 0) {\n"
-        "    const scalar newWeight = $(g) - ($(Aminus) * $(postTrace));\n"
-        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "    const scalar newWeight = g - (Aminus * postTrace);\n"
+        "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
         "}\n");
     SET_LEARN_POST_CODE(
-        "const scalar dt = $(t) - $(sT_pre);\n"
+        "const scalar dt = t - sT_pre;\n"
         "if (dt > 0) {\n"
-        "    const scalar newWeight = $(g) + ($(Aplus) * $(preTrace));\n"
-        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "    const scalar newWeight = g + (Aplus * preTrace);\n"
+        "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
         "}\n");
-    SET_PRE_SPIKE_CODE("$(preTrace) += 1.0;\n");
-    SET_POST_SPIKE_CODE("$(postTrace) += 1.0;\n");
-    SET_PRE_DYNAMICS_CODE("$(preTrace) *= $(tauPlusDecay);\n");
-    SET_POST_DYNAMICS_CODE("$(postTrace) *= $(tauMinusDecay);\n");
+    SET_PRE_SPIKE_CODE("preTrace += 1.0;\n");
+    SET_POST_SPIKE_CODE("postTrace += 1.0;\n");
+    SET_PRE_DYNAMICS_CODE("preTrace *= tauPlusDecay;\n");
+    SET_POST_DYNAMICS_CODE("postTrace *= tauMinusDecay;\n");
 };
 IMPLEMENT_SNIPPET(STDPAdditive);
 }

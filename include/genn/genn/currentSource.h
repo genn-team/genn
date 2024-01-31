@@ -96,11 +96,11 @@ protected:
 
     //! Updates hash with current source
     /*! NOTE: this can only be called after model is finalized */
-    boost::uuids::detail::sha1::digest_type getHashDigest() const;
+    boost::uuids::detail::sha1::digest_type getHashDigest(const NeuronGroup *ng) const;
 
     //! Updates hash with current source initialisation
     /*! NOTE: this can only be called after model is finalized */
-    boost::uuids::detail::sha1::digest_type getInitHashDigest() const;
+    boost::uuids::detail::sha1::digest_type getInitHashDigest(const NeuronGroup *ng) const;
 
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
 

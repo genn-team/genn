@@ -88,7 +88,11 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
                {synEnv.addInitialiser("const " + timeStr + " stPost = " + backPropDelayMs + " + $(_trg_st)[" + postSTIndex + "];")});
     synEnv.add(sg.getTimeType().addConst(), "prev_st_post", "prevSTPost",
                {synEnv.addInitialiser("const " + timeStr + " prevSTPost = " + backPropDelayMs + " + $(_trg_prev_st)[" + prevPostSTIndex + "];")});
-
+    synEnv.add(sg.getTimeType().addConst(), "set_post", "setPost",
+               {synEnv.addInitialiser("const " + timeStr + " setPost = " + backPropDelayMs + " + $(_trg_set)[" + postSTIndex + "];")});
+    synEnv.add(sg.getTimeType().addConst(), "prev_set_post", "prevSETPost",
+               {synEnv.addInitialiser("const " + timeStr + " prevSETPost = " + backPropDelayMs + " + $(_trg_prev_set)[" + prevPostSTIndex + "];")});
+    
     // If weights are individual, substitute variables for values stored in global memory
     if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
         synEnv.template addVars<SynapseWUVarAdapter>(
@@ -339,41 +343,10 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest() 
 //----------------------------------------------------------------------------
 const std::string PresynapticUpdateGroupMerged::name = "PresynapticUpdate";
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(EnvironmentExternalBase &env, unsigned int batchSize)
-{
-    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(env, *this);
-
-    // Substitute parameter and derived parameter names
-    const auto *wum = getArchetype().getWUInitialiser().getSnippet();
-    synEnv.addInitialiserParams("", &SynapseGroupInternal::getWUInitialiser, 
-                                &PresynapticUpdateGroupMerged::isWUParamHeterogeneous,
-                                &SynapseGroupInternal::isWUParamDynamic);
-    synEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getWUInitialiser, &PresynapticUpdateGroupMerged::isWUDerivedParamHeterogeneous);
-    synEnv.addExtraGlobalParams(wum->getExtraGlobalParams());
-
-    // Substitute in presynaptic neuron properties
-    /*const unsigned int batchSize = modelMerged.getModel().getBatchSize();
-    neuronSubstitutionsInSynapticCode(synapseSubs, getArchetype().getSrcNeuronGroup(), "", "_pre", "Pre", "", "", false,
-                                      [this](const std::string &p) { return isSrcNeuronParamHeterogeneous(p); },
-                                      [this](const std::string &p) { return isSrcNeuronDerivedParamHeterogeneous(p); },
-                                      [batchSize, &synapseSubs, this](bool delay, VarAccessDuplication varDuplication) 
-                                      {
-                                          return getPreVarIndex(delay, batchSize, varDuplication, synapseSubs["id_pre"]); 
-                                      },
-                                      [batchSize, &synapseSubs, this](bool delay, VarAccessDuplication varDuplication) 
-                                      { 
-                                          return getPrePrevSpikeTimeIndex(delay, batchSize, varDuplication, synapseSubs["id_pre"]); 
-                                      });*/
-
-    // Pretty print code back to environment
-    Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' weight update model event threshold code");
-    prettyPrintStatements(getArchetype().getWUInitialiser().getEventThresholdCodeTokens(), getTypeContext(), synEnv, errorHandler);
-}
-//----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateSpikeEventUpdate(EnvironmentExternalBase &env, 
                                                             unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getEventCodeTokens(), "event code", *this, batchSize, dt);
+    applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getPreEventCodeTokens(), "presynaptic event code", *this, batchSize, dt);
 }
 //----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateSpikeUpdate(EnvironmentExternalBase &env, 
@@ -393,7 +366,7 @@ void PresynapticUpdateGroupMerged::generateProceduralConnectivity(EnvironmentExt
                                   &PresynapticUpdateGroupMerged::isSparseConnectivityInitParamHeterogeneous);
     groupEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getConnectivityInitialiser,
                                          &PresynapticUpdateGroupMerged::isSparseConnectivityInitDerivedParamHeterogeneous);
-    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "", "");
+    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "SparseConnect", "");
 
     Transpiler::ErrorHandler errorHandler("Synapse group procedural connectivity '" + getArchetype().getName() + "' row build code");
     prettyPrintStatements(connectInit.getRowBuildCodeTokens(), getTypeContext(), groupEnv, errorHandler);
@@ -411,7 +384,7 @@ void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(EnvironmentExter
                                   &PresynapticUpdateGroupMerged::isToeplitzConnectivityInitParamHeterogeneous);
     groupEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getToeplitzConnectivityInitialiser,
                                          &PresynapticUpdateGroupMerged::isToeplitzConnectivityInitDerivedParamHeterogeneous);
-    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "", "");
+    groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "ToeplitzConnect", "");
 
     // Pretty print code back to environment
     Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' Toeplitz connectivity diagonal build code");
@@ -425,8 +398,14 @@ void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(EnvironmentExter
 //----------------------------------------------------------------------------
 const std::string PostsynapticUpdateGroupMerged::name = "PostsynapticUpdate";
 //----------------------------------------------------------------------------
-void PostsynapticUpdateGroupMerged::generateSynapseUpdate(EnvironmentExternalBase &env, 
-                                                          unsigned int batchSize, double dt)
+void PostsynapticUpdateGroupMerged::generateSpikeEventUpdate(EnvironmentExternalBase &env, 
+                                                             unsigned int batchSize, double dt)
+{
+    applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getPostEventCodeTokens(), "postsynaptic event code", *this, batchSize, dt);
+}
+//----------------------------------------------------------------------------
+void PostsynapticUpdateGroupMerged::generateSpikeUpdate(EnvironmentExternalBase &env, 
+                                                        unsigned int batchSize, double dt)
 {
     applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getPostLearnCodeTokens(), "learn post code", *this, batchSize, dt);
 }

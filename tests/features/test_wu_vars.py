@@ -3,8 +3,6 @@ import pytest
 from pygenn import types
 from scipy import stats
 
-from pygenn import GeNNModel
-
 from pygenn.genn import VarAccess
 from pygenn import (create_neuron_model,
                     create_weight_update_model,
@@ -30,7 +28,7 @@ pattern_spike_neuron_model = create_neuron_model(
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 @pytest.mark.parametrize("fuse", [True, False])
 @pytest.mark.parametrize("delay", [0, 20])
-def test_wu_var(backend, precision, fuse, delay):
+def test_wu_var(make_model, backend, precision, fuse, delay):
     # Weight update models which update a PRESYNAPTIC variable 
     # when a PRESYNAPTIC spike is received and copy it into synapse 
     # during various kinds of synaptic event
@@ -121,7 +119,7 @@ def test_wu_var(backend, precision, fuse, delay):
         s = t;
         """)
 
-    model = GeNNModel(precision, "test_wu_var", backend=backend)
+    model = make_model(precision, "test_wu_var", backend=backend)
     model.dt = 1.0
     model.fuse_pre_post_weight_update_models = fuse
     model.fuse_postsynaptic_models = fuse
@@ -215,7 +213,7 @@ def test_wu_var(backend, precision, fuse, delay):
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 @pytest.mark.parametrize("fuse", [True, False])
 @pytest.mark.parametrize("delay", [0, 20])
-def test_wu_var_cont(backend, precision, fuse, delay):
+def test_wu_var_cont(make_model, backend, precision, fuse, delay):
     # Weight update models which update a PRESYNAPTIC variable 
     # when a PRESYNAPTIC spike is received and copy it into synapse 
     # during various kinds of synaptic event
@@ -278,7 +276,7 @@ def test_wu_var_cont(backend, precision, fuse, delay):
         s = t + shift;
         """)
 
-    model = GeNNModel(precision, "test_wu_var_cont", backend=backend)
+    model = make_model(precision, "test_wu_var_cont", backend=backend)
     model.dt = 1.0
     model.fuse_pre_post_weight_update_models = fuse
     model.fuse_postsynaptic_models = fuse
@@ -351,6 +349,3 @@ def test_wu_var_cont(backend, precision, fuse, delay):
             w_value = s.vars["w"].values
             if not np.allclose(delayed_time, w_value):
                 assert False, f"{s.name} var has wrong value ({w_value} rather than {delayed_time})"
-
-if __name__ == '__main__':
-    test_wu_var_cont("cuda", types.Float, True, 0)

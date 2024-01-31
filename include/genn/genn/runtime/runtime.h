@@ -45,6 +45,7 @@ namespace GeNN::CodeGenerator
 {
 class BackendBase;
 class ModelSpecMerged;
+class NeuronGroupMergedBase;
 }
 
 namespace filesystem
@@ -55,11 +56,11 @@ class path;
 
 #define IMPLEMENT_GROUP_OVERLOADS(GROUP)                                                                            \
 public:                                                                                                             \
-    void setDynamicParamValue(const GROUP &group, const std::string &paramName,                                          \
-                              const Type::NumericValue &value)                                                           \
+    void setDynamicParamValue(const GROUP &group, const std::string &paramName,                                     \
+                              const Type::NumericValue &value)                                                      \
     {                                                                                                               \
-        setDynamicParamValue(m_##GROUP##DynamicParameters.at(&group).at(paramName),                                      \
-                             value);                                                                                     \
+        setDynamicParamValue(m_##GROUP##DynamicParameters.at(&group).at(paramName),                                 \
+                             value);                                                                                \
     }                                                                                                               \
     void allocateArray(const GROUP &group, const std::string &varName, size_t count)                                \
     {                                                                                                               \
@@ -67,24 +68,23 @@ public:                                                                         
     }                                                                                                               \
     MergedDynamicFieldDestinations &getMergedParamDestinations(const GROUP &group, const std::string &paramName)    \
     {                                                                                                               \
-        return m_##GROUP##DynamicParameters.at(&group).at(paramName).second;                                      \
+        return m_##GROUP##DynamicParameters.at(&group).at(paramName).second;                                        \
     }                                                                                                               \
     ArrayBase *getArray(const GROUP &group, const std::string &varName) const                                       \
     {                                                                                                               \
         return m_##GROUP##Arrays.at(&group).at(varName).get();                                                      \
     }                                                                                                               \
 private:                                                                                                            \
-    void createArray(const GROUP *group, const std::string &varName,                                                \
-                     const Type::ResolvedType &type, size_t count,                                                  \
-                     VarLocation location, bool uninitialized = false)                                              \
+    void createArray(const GROUP *group, const std::string &varName, const Type::ResolvedType &type,                \
+                     size_t count, VarLocation location, bool uninitialized = false, unsigned int logIndent = 1)    \
     {                                                                                                               \
         createArray(m_##GROUP##Arrays[group],                                                                       \
-                    varName, type, count, location, uninitialized);                                                 \
+                    varName, type, count, location, uninitialized, logIndent);                                      \
     }                                                                                                               \
     void createDynamicParamDestinations(const GROUP *group, const std::string &paramName,                           \
-                                        const Type::ResolvedType &type)                                             \
+                                        const Type::ResolvedType &type, unsigned int logIndent = 1)                 \
     {                                                                                                               \
-        createDynamicParamDestinations(m_##GROUP##DynamicParameters[group], paramName, type);                       \
+        createDynamicParamDestinations(m_##GROUP##DynamicParameters[group], paramName, type, logIndent);            \
     }
 
 //--------------------------------------------------------------------------
@@ -334,27 +334,67 @@ public:
     //! Get recorded spikes from neuron group
     BatchEventArray getRecordedSpikes(const NeuronGroup &group) const
     {
-        return getRecordedEvents(group, getArray(group, "recordSpk"));
+        return getRecordedEvents(group.getNumNeurons(), 
+                                 getArray(group, "recordSpk"));
     }
 
-    //! Get recorded spike-like events from neuron group
-    BatchEventArray getRecordedSpikeEvents(const NeuronGroup &group) const
+    //! Get recorded presynaptic spike-like events from synapse group
+    BatchEventArray getRecordedPreSpikeEvents(const SynapseGroup &group) const
     {
-        return getRecordedEvents(group, getArray(group, "recordSpkEvent"));
+        const auto &groupInternal = static_cast<const SynapseGroupInternal&>(group);
+        return getRecordedEvents(groupInternal.getSrcNeuronGroup()->getNumNeurons(), 
+                                 getFusedSrcSpikeEventArray(groupInternal, "RecordSpkEvent"));
+    }
+
+    //! Get recorded postsynaptic spike-like events from synapse group
+    BatchEventArray getRecordedPostSpikeEvents(const SynapseGroup &group) const
+    {
+        const auto &groupInternal = static_cast<const SynapseGroupInternal&>(group);
+        return getRecordedEvents(groupInternal.getTrgNeuronGroup()->getNumNeurons(),
+                                 getFusedTrgSpikeEventArray(groupInternal, "RecordSpkEvent"));
     }
 
     //! Write recorded spikes to CSV file
     void writeRecordedSpikes(const NeuronGroup &group, const std::string &path) const
     {
-        return writeRecordedEvents(group, getArray(group, "recordSpk"), path);
+        return writeRecordedEvents(group.getNumNeurons(), getArray(group, "recordSpk"), path);
     }
 
-    //! Write recorded spike-like events to CSV file
-    void writeRecordedSpikeEvents(const NeuronGroup &group, const std::string &path) const
+    //! Write recorded presynaptic spike-like events to CSV file
+    void writeRecordedPreSpikeEvents(const SynapseGroup &group, const std::string &path) const
     {
-        return writeRecordedEvents(group, getArray(group, "recordSpkEvent"), path);
+        const auto &groupInternal = static_cast<const SynapseGroupInternal&>(group);
+        return writeRecordedEvents(groupInternal.getSrcNeuronGroup()->getNumNeurons(), 
+                                   getFusedSrcSpikeEventArray(groupInternal, "RecordSpkEvent"),
+                                   path);
     }
 
+     //! Write recorded postsynaptic spike-like events to CSV file
+    void writeRecordedPostSpikeEvents(const SynapseGroup &group, const std::string &path) const
+    {
+        const auto &groupInternal = static_cast<const SynapseGroupInternal&>(group);
+        return writeRecordedEvents(groupInternal.getTrgNeuronGroup()->getNumNeurons(), 
+                                   getFusedTrgSpikeEventArray(groupInternal, "RecordSpkEvent"),
+                                   path);
+    }
+
+    //! Get array associated with fused event group (either spike or spike-event)
+    /*! \param ng   Parent merged neuron group
+        \param i    Index of the group within the merged group
+        \param sg   Child synapse group of neuron group at index i
+        \param name Name of variable array is associated with*/
+    ArrayBase *getFusedEventArray(const CodeGenerator::NeuronGroupMergedBase &ng, size_t i, 
+                                  const SynapseGroupInternal &sg, const std::string &name) const;
+
+
+    ArrayBase *getFusedSrcSpikeArray(const SynapseGroupInternal &g, const std::string &name) const;
+    
+    ArrayBase *getFusedTrgSpikeArray(const SynapseGroupInternal &g, const std::string &name) const;
+    
+    ArrayBase *getFusedSrcSpikeEventArray(const SynapseGroupInternal &g, const std::string &name) const;
+
+    ArrayBase *getFusedTrgSpikeEventArray(const SynapseGroupInternal &g, const std::string &name) const;
+   
 private:
     //----------------------------------------------------------------------------
     // Type defines
@@ -377,12 +417,12 @@ private:
     void *getSymbol(const std::string &symbolName, bool allowMissing = false) const;
 
     void createArray(ArrayMap &groupArrays, const std::string &varName, const Type::ResolvedType &type, 
-                     size_t count, VarLocation location, bool uninitialized = false);
+                     size_t count, VarLocation location, bool uninitialized = false, unsigned int logIndent = 1);
     void createDynamicParamDestinations(std::unordered_map<std::string, std::pair<Type::ResolvedType, MergedDynamicFieldDestinations>> &destinations, 
-                                        const std::string &paramName, const Type::ResolvedType &type);
-    BatchEventArray getRecordedEvents(const NeuronGroup &group, ArrayBase *array) const;
+                                        const std::string &paramName, const Type::ResolvedType &type, unsigned int logIndent = 1);
+    BatchEventArray getRecordedEvents(unsigned int numNeurons, ArrayBase *array) const;
 
-    void writeRecordedEvents(const NeuronGroup &group, ArrayBase *array, const std::string &path) const;
+    void writeRecordedEvents(unsigned int numNeurons, ArrayBase *array, const std::string &path) const;
 
     template<typename G>
     void addMergedArrays(const G &mergedGroup)
@@ -425,17 +465,17 @@ private:
     }
 
     template<typename A, typename G>
-    void createEGPArrays(const G *group)
+    void createEGPArrays(const G *group, unsigned int logIndent = 1)
     {
         A adaptor(*group);
         for(const auto &egp : adaptor.getDefs()) {
             const auto resolvedType = egp.type.resolve(getModel().getTypeContext());
-            createArray(group, egp.name, resolvedType, 0, adaptor.getLoc(egp.name));
+            createArray(group, egp.name, resolvedType, 0, adaptor.getLoc(egp.name), false, logIndent);
         }
     }
 
     template<typename A, typename G, typename S>
-    void createVarArrays(const G *group, size_t batchSize, bool batched, S getSizeFn)
+    void createVarArrays(const G *group, size_t batchSize, bool batched, S getSizeFn, unsigned int logIndent = 1)
     {
         A adaptor(*group);
         for(const auto &var : adaptor.getDefs()) {
@@ -447,12 +487,13 @@ private:
             const size_t numVarCopies = ((varDims & VarAccessDim::BATCH) && batched) ? batchSize : 1;
             const size_t varSize = getSizeFn(var.name, varDims);
             createArray(group, var.name, resolvedType, numVarCopies * varSize,
-                        adaptor.getLoc(var.name), uninitialized);
+                        adaptor.getLoc(var.name), uninitialized, logIndent);
 
             // Loop through EGPs required to initialize neuron variable and create
             for(const auto &egp : varInit.getSnippet()->getExtraGlobalParams()) {
                 const auto resolvedEGPType = egp.type.resolve(getModel().getTypeContext());
-                createArray(group, egp.name + var.name, resolvedEGPType, 0, VarLocation::HOST_DEVICE);
+                createArray(group, egp.name + var.name, resolvedEGPType, 0, VarLocation::HOST_DEVICE,
+                            false, logIndent);
             }
         }
     }
@@ -467,7 +508,7 @@ private:
         \param batched          Should these variables ever be batched*/
     template<typename A, typename G>
     void createNeuronVarArrays(const G *group, size_t numNeurons, size_t batchSize, 
-                               size_t numDelaySlots, bool batched)
+                               size_t numDelaySlots, bool batched, unsigned int logIndent = 1)
     {
         A adaptor(*group);
         createVarArrays<A>(
@@ -478,18 +519,19 @@ private:
                 const size_t numVarDelaySlots = adaptor.isVarDelayed(varName) ? numDelaySlots : 1;
                 const size_t numElements = ((varDims & VarAccessDim::ELEMENT) ? numNeurons : 1);
                 return numVarDelaySlots * numElements;
-            });
+            },
+            logIndent);
                   
     }
 
     template<typename G>
     void createDynamicParamDestinations(const G &group, const Snippet::Base::ParamVec &params, 
-                                      bool (G::*isDynamic)(const std::string&) const)
+                                      bool (G::*isDynamic)(const std::string&) const, unsigned int logIndent = 1)
     {
         const auto &typeContext = getModel().getTypeContext();
         for(const auto &p : params) {
             if(std::invoke(isDynamic, group, p.name)) {
-                createDynamicParamDestinations(&group, p.name, p.type.resolve(typeContext));
+                createDynamicParamDestinations(&group, p.name, p.type.resolve(typeContext), logIndent);
             }
         }
     }
@@ -521,6 +563,8 @@ private:
     template<typename G>
     void pushMergedGroup(const G &g)
     {
+        LOGD_RUNTIME << "Pushing merged group '" << G::name << "' index: " << g.getIndex();
+
         // Loop through groups
         const auto sortedFields = g.getSortedFields(m_Backend.get());
 
@@ -545,6 +589,7 @@ private:
         // Loop through groups in merged group
         for(unsigned int groupIndex = 0; groupIndex < g.getGroups().size(); groupIndex++) {
             // Create vector of bytes to serialise arguments into
+            LOGD_RUNTIME << "\tGroup: " << groupIndex;
             std::vector<std::byte> argumentStorage;
 
             // Create vector of arguments
@@ -563,6 +608,7 @@ private:
                         [&argumentStorage, &f, this](const ArrayBase *array)
                         {
                             // If this field should contain host pointer
+                            LOGD_RUNTIME << "\t\t" << f.name << " = array (" << array << ")";
                             const bool pointerToPointer = f.type.isPointerToPointer();
                             if(f.fieldType & CodeGenerator::GroupMergedFieldType::HOST) {
                                 array->serialiseHostPointer(argumentStorage, pointerToPointer);
@@ -586,10 +632,12 @@ private:
                         // Otherwise, if field contains numeric value
                         [&argumentStorage, &f](const Type::NumericValue &value)
                         { 
+                            LOGD_RUNTIME << "\t\t" << f.name << " = numeric (" << Type::writeNumeric(value, f.type) << ")";
                             Type::serialiseNumeric(value, f.type, argumentStorage);
                         },
                         [&argumentStorage, &f](std::pair<Type::NumericValue, MergedDynamicFieldDestinations&> value)
                         {
+                            LOGD_RUNTIME << "\t\t" << f.name << " = dynamic numeric (" << Type::writeNumeric(value.first, f.type) << ")";
                             Type::serialiseNumeric(value.first, f.type, argumentStorage);
                         }},
                     f.getValue(*this, g.getGroups()[groupIndex], groupIndex));

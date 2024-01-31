@@ -154,74 +154,26 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
     // Loop through neuron groups
     const size_t batchSize = getModel().getBatchSize();
     for(const auto &n : getModel().getNeuronGroups()) {
-        // True spike variables
         LOGD_RUNTIME << "Allocating memory for neuron group '" << n.first << "'";
         const size_t numNeuronDelaySlots = batchSize * n.second.getNumNeurons() * n.second.getNumDelaySlots();
-        
-        // If spikes are required, allocate arrays for counts and spikes
-        if(n.second.isTrueSpikeRequired()) {
-            createArray(&n.second, "spkCnt", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
-                        n.second.getSpikeLocation());
-            createArray(&n.second, "spk", Type::Uint32, numNeuronDelaySlots, 
-                        n.second.getSpikeLocation());
-        }
 
-        // If spike-like events are required, allocate arrays for counts and spikes
-        if(n.second.isSpikeEventRequired()) {
-            createArray(&n.second, "spkEvntCnt", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
-                        n.second.getSpikeEventLocation());
-            createArray(&n.second, "spkEvnt", Type::Uint32, numNeuronDelaySlots, 
-                        n.second.getSpikeEventLocation());
-        }
-        
         // If spike or spike-like event recording is enabled
         if(n.second.isSpikeRecordingEnabled() || n.second.isSpikeEventRecordingEnabled()) {
             if(!numRecordingTimesteps) {
                 throw std::runtime_error("Cannot use recording system without specifying number of recording timesteps");
             }
 
-            // Calculate number of words required and allocate arrays
-            const size_t numRecordingWords = (ceilDivide(n.second.getNumNeurons(), 32) * batchSize) * numRecordingTimesteps.value();
             if(n.second.isSpikeRecordingEnabled()) {
-                createArray(&n.second, "recordSpk", Type::Uint32,  numRecordingWords, 
-                            VarLocation::HOST_DEVICE);
-
-            }
-            else if(n.second.isSpikeEventRecordingEnabled()) {
-                createArray(&n.second, "recordSpkEvent", Type::Uint32,  numRecordingWords, 
+                const size_t numRecordingWords = (ceilDivide(n.second.getNumNeurons(), 32) * batchSize) * numRecordingTimesteps.value();
+                createArray(&n.second, "recordSpk", Type::Uint32, numRecordingWords,
                             VarLocation::HOST_DEVICE);
             }
-           
         }
 
         // If neuron group has axonal or back-propagation delays, add delay queue pointer
         if (n.second.isDelayRequired()) {
             createArray(&n.second, "spkQuePtr", Type::Uint32, 1, VarLocation::DEVICE);
             m_DelayQueuePointer.try_emplace(&n.second, 0);
-        }
-        
-        // If neuron group needs to record its spike times
-        if (n.second.isSpikeTimeRequired()) {
-            createArray(&n.second, "sT", getModel().getTimePrecision(), numNeuronDelaySlots, 
-                        n.second.getSpikeTimeLocation());
-        }
-
-        // If neuron group needs to record its previous spike times
-        if (n.second.isPrevSpikeTimeRequired()) {
-            createArray(&n.second, "prevST", getModel().getTimePrecision(), numNeuronDelaySlots, 
-                        n.second.getPrevSpikeTimeLocation());
-        }
-
-        // If neuron group needs to record its spike-like-event times
-        if (n.second.isSpikeEventTimeRequired()) {
-            createArray(&n.second, "seT", getModel().getTimePrecision(), numNeuronDelaySlots, 
-                        n.second.getSpikeEventTimeLocation());
-        }
-
-        // If neuron group needs to record its previous spike-like-event times
-        if (n.second.isPrevSpikeEventTimeRequired()) {
-            createArray(&n.second, "prevSET", getModel().getTimePrecision(), numNeuronDelaySlots, 
-                        n.second.getPrevSpikeEventTimeLocation());
         }
 
         // If neuron group needs per-neuron RNGs
@@ -249,23 +201,25 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 
         // Create arrays for current source variables and extra global parameters
         for (const auto *cs : n.second.getCurrentSources()) {
+            LOGD_RUNTIME << "\tChild current source '" << cs->getName() << "'";
             createNeuronVarArrays<CurrentSourceVarAdapter>(cs, n.second.getNumNeurons(), batchSize, 1, true);
             createEGPArrays<CurrentSourceEGPAdapter>(cs);
             createDynamicParamDestinations<CurrentSourceInternal>(*cs, cs->getCurrentSourceModel()->getParams(),
-                                                                  &CurrentSourceInternal::isParamDynamic);
+                                                                  &CurrentSourceInternal::isParamDynamic, 2);
         }
 
         // Loop through fused postsynaptic model from incoming populations
         for(const auto *sg : n.second.getFusedPSMInSyn()) {
+            LOGD_RUNTIME << "\tFused PSM incoming synapse group '" << sg->getName() << "'";
             createArray(sg, "outPost", getModel().getPrecision(), 
                         sg->getTrgNeuronGroup()->getNumNeurons() * batchSize,
-                        sg->getInSynLocation());
+                        sg->getInSynLocation(), false, 2);
             
             if (sg->isDendriticDelayRequired()) {
                 createArray(sg, "denDelay", getModel().getPrecision(), 
                             (size_t)sg->getMaxDendriticDelayTimesteps() * (size_t)sg->getTrgNeuronGroup()->getNumNeurons() * batchSize,
-                            sg->getDendriticDelayLocation());
-                createArray(sg, "denDelayPtr", Type::Uint32, 1, VarLocation::DEVICE);
+                            sg->getDendriticDelayLocation(), false, 2);
+                createArray(sg, "denDelayPtr", Type::Uint32, 1, VarLocation::DEVICE, false, 2);
             }
 
             // Create arrays for postsynaptic model state variables
@@ -274,22 +228,81 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 
         // Create arrays for fused pre-output variables
         for(const auto *sg : n.second.getFusedPreOutputOutSyn()) {
+            LOGD_RUNTIME << "\tFused pre-output outgoing synapse group '" << sg->getName() << "'";
             createArray(sg, "outPre", getModel().getPrecision(), 
                         sg->getSrcNeuronGroup()->getNumNeurons() * batchSize,
-                        sg->getInSynLocation());
+                        sg->getInSynLocation(), false, 2);
         }
         
         // Create arrays for variables from fused incoming synaptic populations
         for(const auto *sg: n.second.getFusedWUPreOutSyn()) {
+            LOGD_RUNTIME << "\tFused WU pre incoming synapse group '" << sg->getName() << "'";
             const unsigned int preDelaySlots = (sg->getDelaySteps() == NO_DELAY) ? 1 : sg->getSrcNeuronGroup()->getNumDelaySlots();
-            createNeuronVarArrays<SynapseWUPreVarAdapter>(sg, sg->getSrcNeuronGroup()->getNumNeurons(), batchSize, preDelaySlots, true);
+            createNeuronVarArrays<SynapseWUPreVarAdapter>(sg, sg->getSrcNeuronGroup()->getNumNeurons(), 
+                                                          batchSize, preDelaySlots, true, 2);
         }
         
         // Create arrays for variables from fused outgoing synaptic populations
-        for(const auto *sg: n.second.getFusedWUPostInSyn()) { 
+        for(const auto *sg: n.second.getFusedWUPostInSyn()) {
+            LOGD_RUNTIME << "\tFused WU post outgoing synapse group '" << sg->getName() << "'";
             const unsigned int postDelaySlots = (sg->getBackPropDelaySteps() == NO_DELAY) ? 1 : sg->getTrgNeuronGroup()->getNumDelaySlots();
-            createNeuronVarArrays<SynapseWUPostVarAdapter>(sg, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize, postDelaySlots, true);
-        }  
+            createNeuronVarArrays<SynapseWUPostVarAdapter>(sg, sg->getTrgNeuronGroup()->getNumNeurons(), 
+                                                           batchSize, postDelaySlots, true, 2);
+        }
+
+        // Create arrays for spikes
+        for(const auto *sg: n.second.getFusedSpike()) {
+            LOGD_RUNTIME << "\tFused spike '" << sg->getName() << "'";
+
+            // Prefix array names depending on whether neuron group is source or target of merged synapse group
+            const std::string prefix = (&n.second == sg->getSrcNeuronGroup()) ? "src" : "trg";
+            createArray(sg, prefix + "SpkCnt", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
+                        n.second.getSpikeLocation(), false, 2);
+            createArray(sg, prefix + "Spk", Type::Uint32, numNeuronDelaySlots, 
+                        n.second.getSpikeLocation(), false, 2);
+
+            // If neuron group needs to record its spike times
+            if (n.second.isSpikeTimeRequired()) {
+                createArray(sg, prefix + "ST", getModel().getTimePrecision(), numNeuronDelaySlots, 
+                            n.second.getSpikeTimeLocation(), false, 2);
+            }
+
+            // If neuron group needs to record its previous spike times
+            if (n.second.isPrevSpikeTimeRequired()) {
+                createArray(sg, prefix + "PrevST", getModel().getTimePrecision(), numNeuronDelaySlots, 
+                            n.second.getPrevSpikeTimeLocation(), false, 2);
+            }
+        }
+
+        // Create arrays for spike events
+        for(const auto *sg: n.second.getFusedSpikeEvent()) {
+            LOGD_RUNTIME << "\tFused spike event '" << sg->getName() << "'";
+
+            // Prefix array names depending on whether neuron group is source or target of merged synapse group
+            const std::string prefix = (&n.second == sg->getSrcNeuronGroup()) ? "src" : "trg";
+            createArray(sg, prefix + "SpkCntEvent", Type::Uint32, batchSize * n.second.getNumDelaySlots(), 
+                        n.second.getSpikeEventLocation(), false, 2);
+            createArray(sg, prefix + "SpkEvent", Type::Uint32, numNeuronDelaySlots, 
+                        n.second.getSpikeEventLocation(), false, 2);
+
+            // If neuron group needs to record its spike-like-event times
+            if (n.second.isSpikeEventTimeRequired()) {
+                createArray(sg, prefix + "SET", getModel().getTimePrecision(), numNeuronDelaySlots, 
+                            n.second.getSpikeEventTimeLocation(), false, 2);
+            }
+
+            // If neuron group needs to record its previous spike-like-event times
+            if (n.second.isPrevSpikeEventTimeRequired()) {
+                createArray(sg, prefix + "PrevSET", getModel().getTimePrecision(), numNeuronDelaySlots, 
+                            n.second.getPrevSpikeEventTimeLocation(), false, 2);
+            }
+
+            if(n.second.isSpikeEventRecordingEnabled()) {
+                const size_t numRecordingWords = (ceilDivide(n.second.getNumNeurons(), 32) * batchSize) * numRecordingTimesteps.value();
+                createArray(sg, prefix + "RecordSpkEvent", Type::Uint32, numRecordingWords, 
+                            VarLocation::HOST_DEVICE, false, 2);
+            }
+        }
     }
 
     // Loop through synapse groups
@@ -359,7 +372,9 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             }
 
             // **TODO** remap is not always required
-            if(m_Backend.get().isPostsynapticRemapRequired() && !Utils::areTokensEmpty(s.second.getWUInitialiser().getPostLearnCodeTokens())) {
+            if(m_Backend.get().isPostsynapticRemapRequired() 
+               && (s.second.isPostSpikeRequired() || s.second.isPostSpikeEventRequired())) 
+            {
                 // Create column lengths array
                 const size_t numPost = s.second.getTrgNeuronGroup()->getNumNeurons();
                 const size_t colStride = s.second.getMaxSourceConnections();
@@ -681,9 +696,63 @@ void Runtime::pullRecordingBuffersFromDevice() const
 
         // If spike event recording is enabled, pull array from device
         if(n.second.isSpikeEventRecordingEnabled()) {
-            getArray(n.second, "recordSpk")->pullFromDevice();
+            for(const auto *sg : n.second.getFusedSpikeEvent()) {
+                const std::string prefix = (&n.second == sg->getSrcNeuronGroup()) ? "src" : "trg";
+                getArray(*sg, prefix + "RecordSpkEvent")->pullFromDevice();
+            }
         }
     }
+}
+//----------------------------------------------------------------------------
+ArrayBase *Runtime::getFusedEventArray(const CodeGenerator::NeuronGroupMergedBase &ng, size_t i, 
+                                       const SynapseGroupInternal &sg, const std::string &name) const
+{
+    // Get the corresponding merged group in the parent neuron group
+    const auto &n = ng.getGroups().at(i);
+
+    // If the neuron group is the SOURCE of synapse group, we should use it's SOURCE prefixed array
+    const std::string prefix = (&n.get() == sg.getSrcNeuronGroup()) ? "src" : "trg";
+    return getArray(sg, prefix + name);
+}
+//--------------------------------------------------------------------------
+ArrayBase *Runtime::getFusedSrcSpikeArray(const SynapseGroupInternal &g, const std::string &name) const
+{
+    // Get the synapse group SOURCE spike generation has been fused with
+    const auto &f = static_cast<const SynapseGroupInternal&>(g.getFusedSpikeTarget(g.getSrcNeuronGroup()));
+
+    // If the fused target shares a SOURCE neuron with original synapse group, we should use it's SOURCE prefixed array
+    const std::string prefix = (g.getSrcNeuronGroup() == f.getSrcNeuronGroup()) ? "src" : "trg";
+    return getArray(f, prefix + name); 
+}
+//--------------------------------------------------------------------------
+ArrayBase *Runtime::getFusedTrgSpikeArray(const SynapseGroupInternal &g, const std::string &name) const
+{
+    // Get the synapse group TARGET spike generation has been fused with
+    const auto &f = static_cast<const SynapseGroupInternal&>(g.getFusedSpikeTarget(g.getTrgNeuronGroup()));
+
+    // If the fused target shares a TARGET neuron with original synapse group, we should use it's TARGET prefixed array
+    const std::string prefix = (g.getTrgNeuronGroup() == f.getTrgNeuronGroup()) ? "trg" : "src";
+    return getArray(f, prefix + name); 
+}
+//--------------------------------------------------------------------------
+ArrayBase *Runtime::getFusedSrcSpikeEventArray(const SynapseGroupInternal &g, const std::string &name) const
+{
+    // Get the synapse group SOURCE spike generation has been fused with
+    const auto &f = static_cast<const SynapseGroupInternal&>(g.getFusedSpikeEventTarget(g.getSrcNeuronGroup()));
+
+    // If the fused target shares a SOURCE neuron with original synapse group, we should use it's SOURCE prefixed array
+    const std::string prefix = (g.getSrcNeuronGroup() == f.getSrcNeuronGroup()) ? "src" : "trg";
+    return getArray(f, prefix + name); 
+}
+//--------------------------------------------------------------------------
+ArrayBase *Runtime::getFusedTrgSpikeEventArray(const SynapseGroupInternal &g, const std::string &name) const
+{
+    // Get the synapse group TARGET spike generation has been fused with
+    const auto &f = static_cast<const SynapseGroupInternal&>(g.getFusedSpikeEventTarget(g.getTrgNeuronGroup()));
+
+    // If the fused target shares a TARGET neuron with original synapse group, we should use it's TARGET prefixed array
+    const std::string prefix = (g.getTrgNeuronGroup() == f.getTrgNeuronGroup()) ? "trg" : "src";
+    return getArray(f, prefix + name); 
 }
 //----------------------------------------------------------------------------
 const ModelSpecInternal &Runtime::getModel() const
@@ -717,20 +786,22 @@ void *Runtime::getSymbol(const std::string &symbolName, bool allowMissing) const
 }
 //----------------------------------------------------------------------------
 void Runtime::createArray(ArrayMap &groupArrays, const std::string &varName, const Type::ResolvedType &type, 
-                          size_t count, VarLocation location, bool uninitialized)
+                          size_t count, VarLocation location, bool uninitialized, unsigned int logIndent)
 {
-    LOGD_RUNTIME << "\tArray '" << varName << "' = " << count << " * " << type.getSize(m_Backend.get().getPointerBytes()) << " bytes (" << type.getName() << ")";
     const auto r = groupArrays.try_emplace(varName, m_Backend.get().createArray(type, count, location, uninitialized));
-    if(!r.second) {
+    if(r.second) {
+        LOGD_RUNTIME << std::string(logIndent, '\t') << "Array '" << varName << "' = " << count << " * " << type.getName() << "(" << r.first->second.get() << ")";
+    }
+    else {
         throw std::runtime_error("Unable to allocate array with " 
                                  "duplicate name '" + varName + "'");
     }
 }
 //----------------------------------------------------------------------------
 void Runtime::createDynamicParamDestinations(std::unordered_map<std::string, std::pair<Type::ResolvedType, MergedDynamicFieldDestinations>> &destinations, 
-                                             const std::string &paramName, const Type::ResolvedType &type)
+                                             const std::string &paramName, const Type::ResolvedType &type, unsigned int logIndent)
 {
-    LOGD_RUNTIME << "\tDynamic param '" << paramName << "' (" << type.getName() << ")";
+    LOGD_RUNTIME << std::string(logIndent, '\t') << "Dynamic param '" << paramName << "' (" << type.getName() << ")";
     const auto r = destinations.try_emplace(paramName, std::make_pair(type, MergedDynamicFieldDestinations()));
     if(!r.second) {
         throw std::runtime_error("Unable to add dynamic parameter with " 
@@ -738,14 +809,14 @@ void Runtime::createDynamicParamDestinations(std::unordered_map<std::string, std
     }
 }
 //----------------------------------------------------------------------------
-Runtime::BatchEventArray Runtime::getRecordedEvents(const NeuronGroup &group, ArrayBase *array) const
+Runtime::BatchEventArray Runtime::getRecordedEvents(unsigned int numNeurons, ArrayBase *array) const
 {
     if(!m_NumRecordingTimesteps) {
         throw std::runtime_error("Recording buffer not allocated - cannot get recorded events");
     }
 
     // Calculate number of words per-timestep
-    const size_t timestepWords = ceilDivide(group.getNumNeurons(), 32);
+    const size_t timestepWords = ceilDivide(numNeurons, 32);
 
     if(m_Timestep < *m_NumRecordingTimesteps) {
         throw std::runtime_error("Event recording data can only be accessed once buffer is full");
@@ -798,10 +869,10 @@ Runtime::BatchEventArray Runtime::getRecordedEvents(const NeuronGroup &group, Ar
     return events;
 }
 //----------------------------------------------------------------------------
-void Runtime::writeRecordedEvents(const NeuronGroup &group, ArrayBase *array, const std::string &path) const
+void Runtime::writeRecordedEvents(unsigned int numNeurons, ArrayBase *array, const std::string &path) const
 {
     // Get events
-    const auto events = getRecordedEvents(group, array);
+    const auto events = getRecordedEvents(numNeurons, array);
 
     // Open file and write header
     std::ofstream file(path);

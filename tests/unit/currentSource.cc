@@ -16,7 +16,7 @@ TEST(CurrentSource, CompareDifferentModel)
     // Add neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+    auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     // Add one gaussian current source
     ParamValues cs0ParamVals{{"mean", 0.0}, {"sd", 0.1}};
@@ -33,7 +33,7 @@ TEST(CurrentSource, CompareDifferentModel)
 
     CurrentSourceInternal *cs0Internal = static_cast<CurrentSourceInternal*>(cs0);
     CurrentSourceInternal *cs1Internal = static_cast<CurrentSourceInternal*>(cs1);
-    ASSERT_NE(cs0Internal->getHashDigest(), cs1Internal->getHashDigest());
+    ASSERT_NE(cs0Internal->getHashDigest(pop), cs1Internal->getHashDigest(pop));
 }
 
 TEST(CurrentSource, CompareDifferentParameters)
@@ -43,7 +43,7 @@ TEST(CurrentSource, CompareDifferentParameters)
     // Add neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+    auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     // Add one gaussian current source
     ParamValues cs0ParamVals{{"mean", 0.0}, {"sd", 0.1}};
@@ -60,7 +60,7 @@ TEST(CurrentSource, CompareDifferentParameters)
 
     CurrentSourceInternal *cs0Internal = static_cast<CurrentSourceInternal*>(cs0);
     CurrentSourceInternal *cs1Internal = static_cast<CurrentSourceInternal*>(cs1);
-    ASSERT_EQ(cs0Internal->getHashDigest(), cs1Internal->getHashDigest());
+    ASSERT_EQ(cs0Internal->getHashDigest(pop), cs1Internal->getHashDigest(pop));
 }
 
 TEST(CurrentSource, CompareSameParameters)
@@ -70,7 +70,7 @@ TEST(CurrentSource, CompareSameParameters)
     // Add neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+    auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     // Add one gaussian current source
     ParamValues cs0ParamVals{{"mean", 0.0}, {"sd", 0.1}};
@@ -87,7 +87,7 @@ TEST(CurrentSource, CompareSameParameters)
 
     CurrentSourceInternal *cs0Internal = static_cast<CurrentSourceInternal*>(cs0);
     CurrentSourceInternal *cs1Internal = static_cast<CurrentSourceInternal*>(cs1);
-    ASSERT_EQ(cs0Internal->getHashDigest(), cs1Internal->getHashDigest());
+    ASSERT_EQ(cs0Internal->getHashDigest(pop), cs1Internal->getHashDigest(pop));
 }
 
 TEST(CurrentSource, InvalidName)

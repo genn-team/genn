@@ -86,7 +86,7 @@ public:
 
     std::string getPreISynIndex(unsigned int batchSize, const std::string &index) const
     {
-        return ((batchSize == 1) ? "" : "$(pre_batch_offset) + ") + index;
+        return ((batchSize == 1) ? "" : "$(_pre_batch_offset) + ") + index;
     }
 
     std::string getSynVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
@@ -119,7 +119,6 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
-    void generateSpikeEventThreshold(EnvironmentExternalBase &env, unsigned int batchSize);
     void generateSpikeEventUpdate(EnvironmentExternalBase &env, 
                                   unsigned int batchSize, double dt);
     void generateSpikeUpdate(EnvironmentExternalBase &env, 
@@ -148,8 +147,10 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
-    void generateSynapseUpdate(EnvironmentExternalBase &env, 
-                               unsigned int batchSize, double dt);
+    void generateSpikeEventUpdate(EnvironmentExternalBase &env, 
+                                  unsigned int batchSize, double dt);
+    void generateSpikeUpdate(EnvironmentExternalBase &env, 
+                             unsigned int batchSize, double dt);
     
     //----------------------------------------------------------------------------
     // Static constants

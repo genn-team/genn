@@ -3,16 +3,14 @@ import pytest
 from pygenn import types
 from scipy import stats
 
-from pygenn import GeNNModel
-
 from pygenn import (init_postsynaptic, init_sparse_connectivity,
                     init_weight_update)
 
 @pytest.mark.flaky
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_connect_init(backend, precision):
-    model = GeNNModel(precision, "test_connect_init", backend=backend)
+def test_connect_init(make_model, backend, precision):
+    model = make_model(precision, "test_connect_init", backend=backend)
     model.narrow_sparse_ind_enabled = True
     
     # Create pre and postsynaptic neuron populations
@@ -58,7 +56,3 @@ def test_connect_init(backend, precision):
     # Check neurons are uniformly distributed within each row/column
     assert stats.chisquare(np.bincount(fixed_number_post_s_pop.get_sparse_post_inds(), minlength=100)).pvalue > 0.05
     assert stats.chisquare(np.bincount(fixed_number_pre_s_pop.get_sparse_pre_inds(), minlength=100)).pvalue > 0.05
-
-
-if __name__ == '__main__':
-    test_connect_init("cuda", types.Float)

@@ -3,6 +3,7 @@
 // Standard C++ includes
 #include <functional>
 #include <string>
+#include <unordered_set>
 
 // GeNN includes
 #include "gennExport.h"
@@ -53,14 +54,44 @@ public:
     }
 };
 
+//---------------------------------------------------------------------------
+// GeNN::Transpiler::PrettyPrinter::EnvironmentInternal
+//---------------------------------------------------------------------------
+class GENN_EXPORT EnvironmentInternal : public EnvironmentBase
+{
+public:
+    EnvironmentInternal(EnvironmentBase &enclosing)
+    :   m_Enclosing(enclosing)
+    {
+    }
+
+    //---------------------------------------------------------------------------
+    // EnvironmentBase virtuals
+    //---------------------------------------------------------------------------
+    virtual std::string define(const std::string &name) final;
+    virtual std::string getName(const std::string &name, std::optional<Type::ResolvedType> type) final;
+
+    virtual CodeGenerator::CodeStream &getStream()
+    {
+        return m_Enclosing.getStream();
+    }
+
+private:
+    //---------------------------------------------------------------------------
+    // Members
+    //---------------------------------------------------------------------------
+    EnvironmentBase &m_Enclosing;
+    std::unordered_set<std::string> m_LocalVariables;
+};
+
 typedef std::function<void(EnvironmentBase&, std::function<void(EnvironmentBase&)>)> StatementHandler;
 
 //---------------------------------------------------------------------------
 // Free functions
 //---------------------------------------------------------------------------
-void print(const Statement::StatementList &statements, EnvironmentBase &environment, 
+void print(const Statement::StatementList &statements, EnvironmentInternal &environment, 
            const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes,
            StatementHandler forEachSynapseHandler = nullptr);
-void print(const Expression::ExpressionPtr &expression, EnvironmentBase &environment, 
+void print(const Expression::ExpressionPtr &expression, EnvironmentInternal &environment, 
            const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes);
 }

@@ -58,10 +58,14 @@ void CustomUpdateGroupMerged::generateCustomUpdate(EnvironmentExternalBase &env,
     cuEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomUpdateInternal::getDerivedParams, &CustomUpdateGroupMerged::isDerivedParamHeterogeneous);
     cuEnv.addExtraGlobalParams(cm->getExtraGlobalParams());
     cuEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs());
+    
+    // Expose batch size
+    cuEnv.add(Type::Uint32.addConst(), "num_batch", 
+              std::to_string((getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1));
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateGroupMerged> varEnv(
-        *this, *this, getTypeContext(), cuEnv, "", "l", false, false,
+        *this, *this, getTypeContext(), cuEnv, "", "l", false,
         [this, batchSize, &cuEnv](const std::string&, CustomUpdateVarAccess d)
         {
             return getVarIndex(batchSize, getVarAccessDim(d, getArchetype().getDims()), "$(id)");
@@ -69,7 +73,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(EnvironmentExternalBase &env,
     
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarRefCache<CustomUpdateVarRefAdapter, CustomUpdateGroupMerged> varRefEnv(
-        *this, *this, getTypeContext(), varEnv, "", "l", false, false,
+        *this, *this, getTypeContext(), varEnv, "", "l", false,
         [this, batchSize, &varEnv](const std::string&, const Models::VarReference &v)
         { 
             return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, batchSize,
@@ -188,9 +192,13 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(EnvironmentExternalBase
     cuEnv.addExtraGlobalParams(cm->getExtraGlobalParams());
     cuEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs());
 
+    // Expose batch size
+    cuEnv.add(Type::Uint32.addConst(), "num_batch", 
+              std::to_string((getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1));
+
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateWUGroupMergedBase> varEnv(
-        *this, *this, getTypeContext(), cuEnv, "", "l", false, false,
+        *this, *this, getTypeContext(), cuEnv, "", "l", false,
         [this, batchSize, &cuEnv](const std::string&, CustomUpdateVarAccess d)
         {
             return getVarIndex(batchSize, getVarAccessDim(d, getArchetype().getDims()), "$(id_syn)");
@@ -198,7 +206,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(EnvironmentExternalBase
     
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarRefCache<CustomUpdateWUVarRefAdapter, CustomUpdateWUGroupMergedBase> varRefEnv(
-        *this, *this, getTypeContext(), varEnv, "", "l", false, false,
+        *this, *this, getTypeContext(), varEnv, "", "l", false,
         [this, batchSize, &varEnv](const std::string&, const Models::WUVarReference &v)
         {
             return getVarRefIndex(batchSize, v.getVarDims(), "$(id_syn)");

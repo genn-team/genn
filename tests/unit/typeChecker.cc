@@ -139,7 +139,8 @@ void typeCheckStatements(std::string_view code, TypeChecker::EnvironmentBase &ty
     ASSERT_FALSE(errorHandler.hasError());
 
     // Typecheck
-    TypeChecker::typeCheck(statements, typeEnvironment, typeContext, errorHandler);
+    TypeChecker::EnvironmentInternal typeEnvironmentInternal(typeEnvironment);
+    TypeChecker::typeCheck(statements, typeEnvironmentInternal, typeContext, errorHandler);
     ASSERT_FALSE(errorHandler.hasError());
 }
 
@@ -155,7 +156,8 @@ Type::ResolvedType typeCheckExpression(std::string_view code, TypeChecker::Envir
     EXPECT_FALSE(errorHandler.hasError());
     
     // Typecheck
-    const auto resolvedTypes = TypeChecker::typeCheck(expression.get(), typeEnvironment, typeContext, errorHandler);
+    TypeChecker::EnvironmentInternal typeEnvironmentInternal(typeEnvironment);
+    const auto resolvedTypes = TypeChecker::typeCheck(expression.get(), typeEnvironmentInternal, typeContext, errorHandler);
     EXPECT_FALSE(errorHandler.hasError());
     return resolvedTypes.at(expression.get());
 }

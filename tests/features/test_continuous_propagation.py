@@ -2,8 +2,6 @@ import numpy as np
 import pytest
 from pygenn import types
 
-from pygenn import GeNNModel
-
 from pygenn.genn import SpanType, VarAccess, VarAccessMode
 from pygenn import (create_neuron_model,
                     create_sparse_connect_init_snippet,
@@ -52,7 +50,7 @@ decoder_dense_model = create_var_init_snippet(
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_forward(backend, precision):
+def test_forward(make_model, backend, precision):
     continous_weight_update_model = create_weight_update_model(
         "continous_weight_update",
         var_name_types=[("g", "scalar", VarAccess.READ_ONLY)],
@@ -71,7 +69,7 @@ def test_forward(backend, precision):
         addToPost(g * x);
         """)
         
-    model = GeNNModel(precision, "test_forward", backend=backend)
+    model = make_model(precision, "test_forward", backend=backend)
     model.dt = 1.0
 
     # Create neuron model to generate one-hot pattern to decode
@@ -252,7 +250,7 @@ def test_forward(backend, precision):
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_forward_den_delay(backend, precision):
+def test_forward_den_delay(make_model, backend, precision):
     continous_den_delay_wum = create_weight_update_model(
         "continous_den_delay",
         var_name_types=[("g", "scalar", VarAccess.READ_ONLY),
@@ -263,7 +261,7 @@ def test_forward_den_delay(backend, precision):
         addToPostDelay(g * x, d);
         """)
 
-    model = GeNNModel(precision, "test_forward_den_delay", backend=backend)
+    model = make_model(precision, "test_forward_den_delay", backend=backend)
     model.dt = 1.0
 
     # Create neuron model to generate one-hot pattern to decode
@@ -332,7 +330,7 @@ def test_forward_den_delay(backend, precision):
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_reverse(backend, precision):
+def test_reverse(make_model, backend, precision):
     pre_reverse_neuron_model = create_neuron_model(
         "pre_reverse_neuron",
         sim_code=
@@ -351,7 +349,7 @@ def test_reverse(backend, precision):
         addToPre(g * x);
         """)
 
-    model = GeNNModel(precision, "test_reverse", backend=backend)
+    model = make_model(precision, "test_reverse", backend=backend)
     model.dt = 1.0
 
     # Create neuron model with extra y variable 
@@ -383,7 +381,7 @@ def test_reverse(backend, precision):
     pre_inds = np.asarray(pre_inds)
     post_inds = np.asarray(post_inds)
     weights = np.asarray(weights)
-    
+
     # Add connectivity
     s_pop = model.add_synapse_population(
         "SparseSynapse", "SPARSE", 0,
@@ -392,7 +390,7 @@ def test_reverse(backend, precision):
                            pre_var_refs={"x": create_var_ref(pre_n_pop, "x")}),
         init_postsynaptic("DeltaCurr"))
     s_pop.set_sparse_connections(pre_inds, post_inds)
-    
+
     s_pre_pop = model.add_synapse_population(
         "SparsePreSynapse", "SPARSE", 0,
         pre_pre_n_pop, post_n_pop,
@@ -401,7 +399,7 @@ def test_reverse(backend, precision):
         init_postsynaptic("DeltaCurr"))
     s_pre_pop.set_sparse_connections(pre_inds, post_inds)
     s_pre_pop.span_type = SpanType.PRESYNAPTIC
-    
+
     # Build model and load
     model.build()
     model.load()
@@ -409,13 +407,9 @@ def test_reverse(backend, precision):
     # Simulate 16 timesteps
     while model.timestep < 16:
         model.step_time()
-        
+
         pre_n_pop.vars["y"].pull_from_device()
         pre_pre_n_pop.vars["y"].pull_from_device()
-        
+
         assert np.sum(pre_n_pop.vars["y"].view) == (model.timestep - 1)
         assert np.sum(pre_pre_n_pop.vars["y"].view) == (model.timestep - 1)
-
-if __name__ == '__main__':
-    test_reverse("cuda", types.Float)
-    

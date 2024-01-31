@@ -270,6 +270,19 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
         throw std::runtime_error("Custom updates uses reduction model but shape is incorrect.");
     }
 
+    // Give error if custom update model includes any shared neuron variables
+    // **NOTE** because there's no way to reference neuron variables with WUVarReferences, 
+    // this safely checks for attempts to do neuron reductions
+    const auto vars = getCustomUpdateModel()->getVars();
+    if (std::any_of(vars.cbegin(), vars.cend(),
+                    [](const auto &v)
+                    {
+                        return (v.access == CustomUpdateVarAccess::READ_ONLY_SHARED_NEURON);
+                    }))
+    {
+        throw std::runtime_error("Custom weight updates cannot use models with SHARED_NEURON variables.");
+    }
+
     // Give error if references point to different synapse groups
     // **NOTE** this could be relaxed for dense
     if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),

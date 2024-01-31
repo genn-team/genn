@@ -28,47 +28,6 @@ namespace GeNN
 class GENN_EXPORT NeuronGroup
 {
 public:
-    //------------------------------------------------------------------------
-    // SpikeEventThreshold
-    //------------------------------------------------------------------------
-    //! Structure used for storing spike event data
-    struct SpikeEventThreshold
-    {
-        SpikeEventThreshold(const std::string &e, const std::string &s, bool egp, SynapseGroupInternal *sg)
-            : eventThresholdCode(e), supportCode(s), synapseStateInThresholdCode(egp), synapseGroup(sg)
-        {
-        }
-
-        const std::string eventThresholdCode;
-        const std::string supportCode;
-        const bool synapseStateInThresholdCode;
-        SynapseGroupInternal *synapseGroup;
-
-        //! Less than operator (used for std::set::insert), lexicographically compares all three struct
-        //! members - meaning that event thresholds featuring extra global parameters or presynaptic
-        //! state variables from different synapse groups will not get combined together in neuron update
-        bool operator < (const SpikeEventThreshold &other) const
-        {
-            if (synapseStateInThresholdCode) {
-                return (std::tie(eventThresholdCode, supportCode, synapseGroup) 
-                        < std::tie(other.eventThresholdCode, other.supportCode, other.synapseGroup));
-            }
-            else {
-                return (std::tie(eventThresholdCode, supportCode) 
-                        < std::tie(other.eventThresholdCode, other.supportCode));
-            }
-        }
-
-        //! Equality operator (used for set::set equality used when testing neuron groups mergability),
-        //! Compares only the two code strings as neuron groups with threshold conditions 
-        //! featuring extra global parameters from different synapse groups can still be merged
-        bool operator == (const SpikeEventThreshold &other) const
-        {
-            return ((eventThresholdCode == other.eventThresholdCode)
-                    && (supportCode == other.supportCode));
-        }
-    };
-
     NeuronGroup(const NeuronGroup&) = delete;
     NeuronGroup() = delete;
 
@@ -187,8 +146,6 @@ protected:
     
     // Set a variable as requiring queueing
     void setVarQueueRequired(const std::string &varName){ m_VarQueueRequired.insert(varName); }
-    
-    void addSpkEventCondition(const std::string &code, SynapseGroupInternal *synapseGroup);
 
     void addInSyn(SynapseGroupInternal *synapseGroup){ m_InSyn.push_back(synapseGroup); }
     void addOutSyn(SynapseGroupInternal *synapseGroup){ m_OutSyn.push_back(synapseGroup); }
@@ -208,12 +165,15 @@ protected:
     const std::vector<SynapseGroupInternal*> &getInSyn() const{ return m_InSyn; }
     const std::vector<SynapseGroupInternal*> &getFusedPSMInSyn() const{ return m_FusedPSMInSyn; }
     const std::vector<SynapseGroupInternal *> &getFusedWUPostInSyn() const { return m_FusedWUPostInSyn; }
-    
+
     //! Gets pointers to all synapse groups emanating from this neuron group
     const std::vector<SynapseGroupInternal*> &getOutSyn() const{ return m_OutSyn; }
     const std::vector<SynapseGroupInternal *> &getFusedWUPreOutSyn() const { return m_FusedWUPreOutSyn; }
     const std::vector<SynapseGroupInternal *> &getFusedPreOutputOutSyn() const { return m_FusedPreOutputOutSyn; }
 
+    const std::vector<SynapseGroupInternal*> &getFusedSpike() const{ return m_FusedSpike; }
+    const std::vector<SynapseGroupInternal*> &getFusedSpikeEvent() const{ return m_FusedSpikeEvent; }
+    
     //! Does this neuron group require an RNG to simulate?
     bool isSimRNGRequired() const;
 
@@ -233,8 +193,6 @@ protected:
     const std::vector<CurrentSourceInternal*> &getCurrentSources() const { return m_CurrentSourceGroups; }
 
     const std::unordered_map<std::string, Type::NumericValue> &getDerivedParams() const{ return m_DerivedParams; }
-
-    const std::set<SpikeEventThreshold> &getSpikeEventCondition() const{ return m_SpikeEventCondition; }
 
     //! Helper to get vector of incoming synapse groups which have postsynaptic update code
     std::vector<SynapseGroupInternal*> getFusedInSynWithPostCode() const;
@@ -288,10 +246,11 @@ private:
     std::vector<SynapseGroupInternal*> m_InSyn;
     std::vector<SynapseGroupInternal*> m_OutSyn;
     std::vector<SynapseGroupInternal*> m_FusedPSMInSyn;
+    std::vector<SynapseGroupInternal*> m_FusedSpike;
+    std::vector<SynapseGroupInternal*> m_FusedSpikeEvent;
     std::vector<SynapseGroupInternal*> m_FusedWUPostInSyn;
     std::vector<SynapseGroupInternal*> m_FusedWUPreOutSyn;
     std::vector<SynapseGroupInternal*> m_FusedPreOutputOutSyn;
-    std::set<SpikeEventThreshold> m_SpikeEventCondition;
     unsigned int m_NumDelaySlots;
     std::vector<CurrentSourceInternal*> m_CurrentSourceGroups;
 

@@ -38,8 +38,8 @@ public:
     virtual std::vector<Var> getVars() const{ return {}; }
 
     //! Gets the code that defines the execution of one timestep of integration of the neuron model.
-    /*! The code will refer to $(NN) for the value of the variable with name "NN".
-        It needs to refer to the predefined variable "ISYN", i.e. contain $(ISYN), if it is to receive input. */
+    /*! The code will refer to NN for the value of the variable with name "NN".
+        It needs to refer to the predefined variable "ISYN", i.e. contain ISYN, if it is to receive input. */
     virtual std::string getSimCode() const{ return ""; }
 
     //! Gets code which defines the condition for a true spike in the described neuron model.
@@ -110,22 +110,22 @@ public:
     DECLARE_SNIPPET(NeuronModels::RulkovMap);
 
     SET_SIM_CODE(
-        "if ($(V) <= 0) {\n"
-        "   $(preV)= $(V);\n"
-        "   $(V)= $(ip0)/(($(Vspike)) - $(V) - ($(beta))*$(Isyn)) +($(ip1));\n"
+        "if (V <= 0) {\n"
+        "   preV= V;\n"
+        "   V= ip0/((Vspike) - V - (beta)*Isyn) +(ip1);\n"
         "}\n"
         "else {"
-        "   if (($(V) < $(ip2)) && ($(preV) <= 0)) {\n"
-        "       $(preV)= $(V);\n"
-        "       $(V)= $(ip2);\n"
+        "   if ((V < ip2) && (preV <= 0)) {\n"
+        "       preV= V;\n"
+        "       V= ip2;\n"
         "   }\n"
         "   else {\n"
-        "       $(preV)= $(V);\n"
-        "       $(V)= -($(Vspike));\n"
+        "       preV= V;\n"
+        "       V= -(Vspike);\n"
         "   }\n"
         "}\n");
 
-    SET_THRESHOLD_CONDITION_CODE("$(V) >= $(ip2)");
+    SET_THRESHOLD_CONDITION_CODE("V >= ip2");
 
     SET_PARAMS({"Vspike", "alpha", "y", "beta"});
     SET_VARS({{"V","scalar"}, {"preV", "scalar"}});
@@ -163,18 +163,18 @@ public:
     DECLARE_SNIPPET(NeuronModels::Izhikevich);
 
     SET_SIM_CODE(
-        "if ($(V) >= 30.0){\n"
-        "   $(V)=$(c);\n"
-        "   $(U)+=$(d);\n"
+        "if (V >= 30.0){\n"
+        "   V=c;\n"
+        "   U+=d;\n"
         "} \n"
-        "$(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*dt; //at two times for numerical stability\n"
-        "$(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*dt;\n"
-        "$(U)+=$(a)*($(b)*$(V)-$(U))*dt;\n"
-        "if ($(V) > 30.0){   //keep this to not confuse users with unrealistiv voltage values \n"
-        "  $(V)=30.0; \n"
+        "V+=0.5*(0.04*V*V+5.0*V+140.0-U+Isyn)*dt; //at two times for numerical stability\n"
+        "V+=0.5*(0.04*V*V+5.0*V+140.0-U+Isyn)*dt;\n"
+        "U+=a*(b*V-U)*dt;\n"
+        "if (V > 30.0){   //keep this to not confuse users with unrealistiv voltage values \n"
+        "  V=30.0; \n"
         "}\n");
 
-    SET_THRESHOLD_CONDITION_CODE("$(V) >= 29.99");
+    SET_THRESHOLD_CONDITION_CODE("V >= 29.99");
 
     SET_PARAMS({"a", "b", "c", "d"});
     SET_VARS({{"V","scalar"}, {"U", "scalar"}});
@@ -219,20 +219,20 @@ public:
     DECLARE_SNIPPET(LIF);
 
     SET_SIM_CODE(
-        "if ($(RefracTime) <= 0.0) {\n"
-        "  scalar alpha = (($(Isyn) + $(Ioffset)) * $(Rmembrane)) + $(Vrest);\n"
-        "  $(V) = alpha - ($(ExpTC) * (alpha - $(V)));\n"
+        "if (RefracTime <= 0.0) {\n"
+        "  scalar alpha = ((Isyn + Ioffset) * Rmembrane) + Vrest;\n"
+        "  V = alpha - (ExpTC * (alpha - V));\n"
         "}\n"
         "else {\n"
-        "  $(RefracTime) -= dt;\n"
+        "  RefracTime -= dt;\n"
         "}\n"
     );
 
-    SET_THRESHOLD_CONDITION_CODE("$(RefracTime) <= 0.0 && $(V) >= $(Vthresh)");
+    SET_THRESHOLD_CONDITION_CODE("RefracTime <= 0.0 && V >= Vthresh");
 
     SET_RESET_CODE(
-        "$(V) = $(Vreset);\n"
-        "$(RefracTime) = $(TauRefrac);\n");
+        "V = Vreset;\n"
+        "RefracTime = TauRefrac;\n");
 
     SET_PARAMS({
         "C",          // Membrane capacitance
@@ -288,9 +288,9 @@ public:
     DECLARE_SNIPPET(NeuronModels::SpikeSourceArray);
     SET_SIM_CODE("")
     SET_THRESHOLD_CONDITION_CODE(
-        "$(startSpike) != $(endSpike) && "
-        "$(t) >= $(spikeTimes)[$(startSpike)]" );
-    SET_RESET_CODE( "$(startSpike)++;\n" );
+        "startSpike != endSpike && "
+        "t >= spikeTimes[startSpike]" );
+    SET_RESET_CODE( "startSpike++;\n" );
     SET_VARS({{"startSpike", "unsigned int"}, {"endSpike", "unsigned int", VarAccess::READ_ONLY_DUPLICATE}});
     SET_EXTRA_GLOBAL_PARAMS( {{"spikeTimes", "scalar*"}} );
     SET_NEEDS_AUTO_REFRACTORY(false);
@@ -339,16 +339,16 @@ public:
     DECLARE_SNIPPET(NeuronModels::Poisson);
 
     SET_SIM_CODE(
-        "if(($(t) - $(spikeTime)) > $(tspike) && $(V) > $(Vrest)){\n"
-        "   $(V) = $(Vrest);\n"
+        "if((t - spikeTime) > tspike && V > Vrest){\n"
+        "   V = Vrest;\n"
         "}"
-        "else if(($(t) - $(spikeTime)) > $(trefract)){\n"
-        "   if($(gennrand_uniform) < $(firingProb)[$(offset) + $(id)]){\n"
-        "       $(V) = $(Vspike);\n"
-        "       $(spikeTime) = $(t);\n"
+        "else if((t - spikeTime) > trefract){\n"
+        "   if(gennrand_uniform < firingProb[offset + id]){\n"
+        "       V = Vspike;\n"
+        "       spikeTime = t;\n"
         "   }\n"
         "}\n");
-    SET_THRESHOLD_CONDITION_CODE("$(V) >= $(Vspike)");
+    SET_THRESHOLD_CONDITION_CODE("V >= Vspike");
 
     SET_PARAMS({"trefract", "tspike", "Vspike", "Vrest"});
     SET_VARS({{"V", "scalar"}, {"spikeTime", "scalar"}});
@@ -378,13 +378,13 @@ public:
     DECLARE_SNIPPET(NeuronModels::PoissonNew);
 
     SET_SIM_CODE(
-        "if($(timeStepToSpike) <= 0.0f) {\n"
-        "    $(timeStepToSpike) += $(isi) * $(gennrand_exponential);\n"
+        "if(timeStepToSpike <= 0.0f) {\n"
+        "    timeStepToSpike += isi * gennrand_exponential;\n"
         "}\n"
-        "$(timeStepToSpike) -= 1.0;\n"
+        "timeStepToSpike -= 1.0;\n"
     );
 
-    SET_THRESHOLD_CONDITION_CODE("$(timeStepToSpike) <= 0.0");
+    SET_THRESHOLD_CONDITION_CODE("timeStepToSpike <= 0.0");
 
     SET_PARAMS({"rate"});
     SET_VARS({{"timeStepToSpike", "scalar"}});
@@ -450,39 +450,39 @@ public:
         "unsigned int mt;\n"
         "scalar mdt= dt/25.0;\n"
         "for (mt=0; mt < 25; mt++) {\n"
-        "   Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n"
-        "       $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n"
-        "       $(gl)*($(V)-($(El)))-$(Isyn));\n"
+        "   Imem= -(m*m*m*h*gNa*(V-(ENa))+\n"
+        "       n*n*n*n*gK*(V-(EK))+\n"
+        "       gl*(V-(El))-Isyn);\n"
         "   scalar a;\n"
         "   if (V == -52.0) {\n"
         "       a= 1.28;\n"
         "   }\n"
         "   else {\n"
-        "       a= 0.32*(-52.0-$(V))/(exp((-52.0-$(V))/4.0)-1.0);\n"
+        "       a= 0.32*(-52.0-V)/(exp((-52.0-V)/4.0)-1.0);\n"
         "   }\n"
         "   scalar b;\n"
         "   if (V == -25.0) {\n"
         "       b= 1.4;\n"
         "   }\n"
         "   else {\n"
-        "       b= 0.28*($(V)+25.0)/(exp(($(V)+25.0)/5.0)-1.0);\n"
+        "       b= 0.28*(V+25.0)/(exp((V+25.0)/5.0)-1.0);\n"
         "   }\n"
-        "   $(m)+= (a*(1.0-$(m))-b*$(m))*mdt;\n"
-        "   a= 0.128*exp((-48.0-$(V))/18.0);\n"
-        "   b= 4.0 / (exp((-25.0-$(V))/5.0)+1.0);\n"
-        "   $(h)+= (a*(1.0-$(h))-b*$(h))*mdt;\n"
+        "   m+= (a*(1.0-m)-b*m)*mdt;\n"
+        "   a= 0.128*exp((-48.0-V)/18.0);\n"
+        "   b= 4.0 / (exp((-25.0-V)/5.0)+1.0);\n"
+        "   h+= (a*(1.0-h)-b*h)*mdt;\n"
         "   if (V == -50.0) {\n"
         "       a= 0.16;\n"
         "   }\n"
         "   else {\n"
-        "       a= 0.032*(-50.0-$(V))/(exp((-50.0-$(V))/5.0)-1.0);\n"
+        "       a= 0.032*(-50.0-V)/(exp((-50.0-V)/5.0)-1.0);\n"
         "   }\n"
-        "   b= 0.5*exp((-55.0-$(V))/40.0);\n"
-        "   $(n)+= (a*(1.0-$(n))-b*$(n))*mdt;\n"
-        "   $(V)+= Imem/$(C)*mdt;\n"
+        "   b= 0.5*exp((-55.0-V)/40.0);\n"
+        "   n+= (a*(1.0-n)-b*n)*mdt;\n"
+        "   V+= Imem/C*mdt;\n"
         "}\n");
 
-    SET_THRESHOLD_CONDITION_CODE("$(V) >= 0.0");
+    SET_THRESHOLD_CONDITION_CODE("V >= 0.0");
 
     SET_PARAMS({"gNa", "ENa", "gK", "EK", "gl", "El", "C"});
     SET_VARS({{"V", "scalar"}, {"m", "scalar"}, {"h", "scalar"}, {"n", "scalar"}});
@@ -505,19 +505,19 @@ public:
         "unsigned int mt;\n"
         "scalar mdt= dt/25.0;\n"
         "for (mt=0; mt < 25; mt++) {\n"
-        "   Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n"
-        "       $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n"
-        "       $(gl)*($(V)-($(El)))-$(Isyn));\n"
-        "   scalar a= 0.32*(-52.0-$(V))/(exp((-52.0-$(V))/4.0)-1.0);\n"
-        "   scalar b= 0.28*($(V)+25.0)/(exp(($(V)+25.0)/5.0)-1.0);\n"
-        "   $(m)+= (a*(1.0-$(m))-b*$(m))*mdt;\n"
-        "   a= 0.128*exp((-48.0-$(V))/18.0);\n"
-        "   b= 4.0 / (exp((-25.0-$(V))/5.0)+1.0);\n"
-        "   $(h)+= (a*(1.0-$(h))-b*$(h))*mdt;\n"
-        "   a= 0.032*(-50.0-$(V))/(exp((-50.0-$(V))/5.0)-1.0);\n"
-        "   b= 0.5*exp((-55.0-$(V))/40.0);\n"
-        "   $(n)+= (a*(1.0-$(n))-b*$(n))*mdt;\n"
-        "   $(V)+= Imem/$(C)*mdt;\n"
+        "   Imem= -(m*m*m*h*gNa*(V-(ENa))+\n"
+        "       n*n*n*n*gK*(V-(EK))+\n"
+        "       gl*(V-(El))-Isyn);\n"
+        "   scalar a= 0.32*(-52.0-V)/(exp((-52.0-V)/4.0)-1.0);\n"
+        "   scalar b= 0.28*(V+25.0)/(exp((V+25.0)/5.0)-1.0);\n"
+        "   m+= (a*(1.0-m)-b*m)*mdt;\n"
+        "   a= 0.128*exp((-48.0-V)/18.0);\n"
+        "   b= 4.0 / (exp((-25.0-V)/5.0)+1.0);\n"
+        "   h+= (a*(1.0-h)-b*h)*mdt;\n"
+        "   a= 0.032*(-50.0-V)/(exp((-50.0-V)/5.0)-1.0);\n"
+        "   b= 0.5*exp((-55.0-V)/40.0);\n"
+        "   n+= (a*(1.0-n)-b*n)*mdt;\n"
+        "   V+= Imem/C*mdt;\n"
         "}\n");
 };
 
@@ -538,22 +538,22 @@ public:
         "unsigned int mt;\n"
         "scalar mdt= dt/25.0;\n"
         "for (mt=0; mt < 25; mt++) {\n"
-        "   Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n"
-        "       $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n"
-        "       $(gl)*($(V)-($(El)))-$(Isyn));\n"
-        "   scalar tmp= abs(exp((-52.0-$(V))/4.0)-1.0);\n"
-        "   scalar a= 0.32*abs(-52.0-$(V))/(tmp+SCALAR_MIN);\n"
-        "   tmp= abs(exp(($(V)+25.0)/5.0)-1.0);\n"
-        "   scalar b= 0.28*abs($(V)+25.0)/(tmp+SCALAR_MIN);\n"
-        "   $(m)+= (a*(1.0-$(m))-b*$(m))*mdt;\n"
-        "   a= 0.128*exp((-48.0-$(V))/18.0);\n"
-        "   b= 4.0 / (exp((-25.0-$(V))/5.0)+1.0);\n"
-        "   $(h)+= (a*(1.0-$(h))-b*$(h))*mdt;\n"
-        "   tmp= abs(exp((-50.0-$(V))/5.0)-1.0);\n"
-        "   a= 0.032*abs(-50.0-$(V))/(tmp+SCALAR_MIN);\n"
-        "   b= 0.5*exp((-55.0-$(V))/40.0);\n"
-        "   $(n)+= (a*(1.0-$(n))-b*$(n))*mdt;\n"
-        "   $(V)+= Imem/$(C)*mdt;\n"
+        "   Imem= -(m*m*m*h*gNa*(V-(ENa))+\n"
+        "       n*n*n*n*gK*(V-(EK))+\n"
+        "       gl*(V-(El))-Isyn);\n"
+        "   scalar tmp= abs(exp((-52.0-V)/4.0)-1.0);\n"
+        "   scalar a= 0.32*abs(-52.0-V)/(tmp+SCALAR_MIN);\n"
+        "   tmp= abs(exp((V+25.0)/5.0)-1.0);\n"
+        "   scalar b= 0.28*abs(V+25.0)/(tmp+SCALAR_MIN);\n"
+        "   m+= (a*(1.0-m)-b*m)*mdt;\n"
+        "   a= 0.128*exp((-48.0-V)/18.0);\n"
+        "   b= 4.0 / (exp((-25.0-V)/5.0)+1.0);\n"
+        "   h+= (a*(1.0-h)-b*h)*mdt;\n"
+        "   tmp= abs(exp((-50.0-V)/5.0)-1.0);\n"
+        "   a= 0.032*abs(-50.0-V)/(tmp+SCALAR_MIN);\n"
+        "   b= 0.5*exp((-55.0-V)/40.0);\n"
+        "   n+= (a*(1.0-n)-b*n)*mdt;\n"
+        "   V+= Imem/C*mdt;\n"
         "}\n");
 };
 
@@ -572,38 +572,38 @@ public:
     SET_SIM_CODE(
         "scalar Imem;\n"
         "unsigned int mt;\n"
-        "scalar mdt= DT/scalar($(ntimes));\n"
-        "for (mt=0; mt < $(ntimes); mt++) {\n"
-        "   Imem= -($(m)*$(m)*$(m)*$(h)*$(gNa)*($(V)-($(ENa)))+\n"
-        "       $(n)*$(n)*$(n)*$(n)*$(gK)*($(V)-($(EK)))+\n"
-        "       $(gl)*($(V)-($(El)))-$(Isyn));\n"
+        "scalar mdt= DT/scalar(ntimes);\n"
+        "for (mt=0; mt < ntimes; mt++) {\n"
+        "   Imem= -(m*m*m*h*gNa*(V-(ENa))+\n"
+        "       n*n*n*n*gK*(V-(EK))+\n"
+        "       gl*(V-(El))-Isyn);\n"
         "   scalar a;\n"
         "   if (V == -52.0) {\n"
         "       a= 1.28;\n"
         "   }\n"
         "   else {\n"
-        "       a= 0.32*(-52.0-$(V))/(exp((-52.0-$(V))/4.0)-1.0);\n"
+        "       a= 0.32*(-52.0-V)/(exp((-52.0-V)/4.0)-1.0);\n"
         "   }\n"
         "   scalar b;\n"
         "   if (V == -25.0) {\n"
         "       b= 1.4;\n"
         "   }\n"
         "   else {\n"
-        "       b= 0.28*($(V)+25.0)/(exp(($(V)+25.0)/5.0)-1.0);\n"
+        "       b= 0.28*(V+25.0)/(exp((V+25.0)/5.0)-1.0);\n"
         "   }\n"
-        "   $(m)+= (a*(1.0-$(m))-b*$(m))*mdt;\n"
-        "   a= 0.128*exp((-48.0-$(V))/18.0);\n"
-        "   b= 4.0 / (exp((-25.0-$(V))/5.0)+1.0);\n"
-        "   $(h)+= (a*(1.0-$(h))-b*$(h))*mdt;\n"
+        "   m+= (a*(1.0-m)-b*m)*mdt;\n"
+        "   a= 0.128*exp((-48.0-V)/18.0);\n"
+        "   b= 4.0 / (exp((-25.0-V)/5.0)+1.0);\n"
+        "   h+= (a*(1.0-h)-b*h)*mdt;\n"
         "   if (lV == -50.0) {\n"
         "       a= 0.16;\n"
         "   }\n"
         "   else {\n"
-        "       a= 0.032*(-50.0-$(V))/(exp((-50.0-$(V))/5.0)-1.0);\n"
+        "       a= 0.032*(-50.0-V)/(exp((-50.0-V)/5.0)-1.0);\n"
         "   }\n"
-        "   b= 0.5*exp((-55.0-$(V))/40.0);\n"
-        "   $(n)+= (a*(1.0-$(n))-b*$(n))*mdt;\n"
-        "   $(V)+= Imem/$(C)*mdt;\n"
+        "   b= 0.5*exp((-55.0-V)/40.0);\n"
+        "   n+= (a*(1.0-n)-b*n)*mdt;\n"
+        "   V+= Imem/C*mdt;\n"
         "}\n");
 
     SET_PARAMS({"gNa", "ENa", "gK", "EK", "gl", "El", "C", "ntimes"});

@@ -161,8 +161,7 @@ TEST(CustomConnectivityUpdate, DependentVariables)
 
     // Attach custom connectivity update
     auto *ccu1 = model.addCustomConnectivityUpdate<RemoveSynapse>("CustomConnectivityUpdate1", "Test2", "Synapses1",
-                                                                  {}, {{"a", 1.0}}, {}, {},
-                                                                  {}, {}, {});
+                                                                  {}, {{"a", 1.0}});
 
     // Create synapse group with individual weights
     model.addSynapsePopulation(
@@ -173,8 +172,7 @@ TEST(CustomConnectivityUpdate, DependentVariables)
 
     // Attach custom connectivity update
     auto *ccu2 = model.addCustomConnectivityUpdate<RemoveSynapse>("CustomConnectivityUpdate2", "Test2", "Synapses2",
-                                                                  {}, {{"a", 1.0}}, {}, {},
-                                                                  {}, {}, {});
+                                                                  {}, {{"a", 1.0}});
 
     // Create synapse group with individual weights
     auto *sg3 = model.addSynapsePopulation(
@@ -189,8 +187,7 @@ TEST(CustomConnectivityUpdate, DependentVariables)
 
     // Attach custom connectivity update
     auto *ccu3 = model.addCustomConnectivityUpdate<RemoveSynapse>("CustomConnectivityUpdate3", "Test2", "Synapses3",
-                                                                  {}, {{"a", 1.0}}, {}, {},
-                                                                  {}, {}, {});
+                                                                  {}, {{"a", 1.0}});
 
     // Create synapse group with individual weights
     model.addSynapsePopulation(
@@ -201,13 +198,11 @@ TEST(CustomConnectivityUpdate, DependentVariables)
 
     // Attach custom connectivity update
     model.addCustomConnectivityUpdate<RemoveSynapse>("CustomConnectivityUpdate42", "Test2", "Synapses4",
-                                                     {}, {{"a", 1.0}}, {}, {},
-                                                     {}, {}, {});
+                                                     {}, {{"a", 1.0}});
 
     // Attach custom connectivity update
     auto *ccu4 = model.addCustomConnectivityUpdate<RemoveSynapse>("CustomConnectivityUpdate4", "Test1", "Synapses4",
-                                                                  {}, {{"a", 1.0}}, {}, {},
-                                                                  {}, {}, {});
+                                                                  {}, {{"a", 1.0}});
 
     model.finalise();
 
@@ -270,19 +265,19 @@ TEST(CustomConnectivityUpdate, DependentVariablesManualReferences)
     WUVarReferences ccu12VarRefs{{"b", createWUVarRef(synapseGroups[0], "g")}};
     auto *ccu12 = model.addCustomConnectivityUpdate<RemoveSynapseVarRef>("CustomConnectivityUpdate12", "Test2", "Synapses0",
                                                                          {}, {{"a", 1.0}}, {}, {},
-                                                                         ccu12VarRefs, {}, {});
+                                                                         ccu12VarRefs);
 
     // Add another custom connectivity update to second synapse group with a manual reference to custom update variable
     WUVarReferences ccu22VarRefs{{"b", createWUVarRef(customUpdates[1], "sum")}};
     auto *ccu22 = model.addCustomConnectivityUpdate<RemoveSynapseVarRef>("CustomConnectivityUpdate22", "Test2", "Synapses1",
                                                                          {}, {{"a", 1.0}}, {}, {},
-                                                                         ccu22VarRefs, {}, {});
+                                                                         ccu22VarRefs);
 
     // Add another custom connectivity update to third synapse group with a manual reference to custom connectivity update variable
     WUVarReferences ccu32VarRefs{{"b", createWUVarRef(customConnectivityUpdates[2], "a")}};
     auto *ccu32 = model.addCustomConnectivityUpdate<RemoveSynapseVarRef>("CustomConnectivityUpdate32", "Test2", "Synapses2",
                                                                          {}, {{"a", 1.0}}, {}, {},
-                                                                         ccu32VarRefs, {}, {});
+                                                                         ccu32VarRefs);
 
     model.finalise();
 
@@ -334,14 +329,11 @@ TEST(CustomConnectivityUpdate, CompareDifferentDependentVars)
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     
     auto *ccu1 = model.addCustomConnectivityUpdate<RemoveSynapse>("CustomConnectivityUpdate1", "Test2", "Synapses1",
-                                                                  {}, {{"a", 1.0}}, {}, {},
-                                                                  {}, {}, {});
+                                                                  {}, {{"a", 1.0}});
     auto *ccu2 = model.addCustomConnectivityUpdate<RemoveSynapse>("CustomConnectivityUpdate2", "Test2", "Synapses2",
-                                                                  {}, {{"a", 1.0}}, {}, {},
-                                                                  {}, {}, {});
+                                                                  {}, {{"a", 1.0}});
     auto *ccu3 = model.addCustomConnectivityUpdate<RemoveSynapse>("CustomConnectivityUpdate3", "Test2", "Synapses3",
-                                                                  {}, {{"a", 1.0}}, {}, {},
-                                                                  {}, {}, {});
+                                                                  {}, {{"a", 1.0}});
     model.finalise();
     
     auto *ccu1Internal = static_cast<CustomConnectivityUpdateInternal*>(ccu1);
@@ -387,8 +379,7 @@ TEST(CustomConnectivityUpdate, BitmaskConnectivity)
 
     try {
         model.addCustomConnectivityUpdate<RemoveSynapse>("CustomConnectivityUpdate1", "Test2", "Synapses1",
-                                                         {}, {{"a", 1.0}}, {}, {},
-                                                         {}, {}, {});
+                                                         {}, {{"a", 1.0}});
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -433,7 +424,7 @@ TEST(CustomConnectivityUpdate, WrongPrePostSize)
                                                         {}, {}, {}, {},
                                                         WUVarReferences{{"g", createWUVarRef(syn, "g")}}, 
                                                         VarReferences{{"threshLow", createVarRef(other, "V")}, 
-                                                                    {"threshHigh", createVarRef(other, "U")}}, {});
+                                                                      {"threshHigh", createVarRef(other, "U")}});
     
     // Create custom update with postsynaptic var reference to other population
     model.addCustomConnectivityUpdate<RemoveSynapsePost>("CustomConnectivityUpdate4", "Test2", "Synapses1",
@@ -448,7 +439,7 @@ TEST(CustomConnectivityUpdate, WrongPrePostSize)
                                                             {}, {}, {}, {},
                                                             WUVarReferences{{"g", createWUVarRef(syn, "g")}}, 
                                                             VarReferences{{"threshLow", createVarRef(otherWrongSize, "V")}, 
-                                                                          {"threshHigh", createVarRef(otherWrongSize, "U")}}, {});
+                                                                          {"threshHigh", createVarRef(otherWrongSize, "U")}});
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -496,7 +487,7 @@ TEST(CustomConnectivityUpdate, WrongSG)
                                                         {}, {}, {}, {},
                                                         WUVarReferences{{"g", createWUVarRef(syn1, "g")}}, 
                                                         VarReferences{{"threshLow", createVarRef(pre, "V")}, 
-                                                                      {"threshHigh", createVarRef(pre, "U")}}, {});
+                                                                      {"threshHigh", createVarRef(pre, "U")}});
     
     // Create custom update with var reference on syn2
     try {
@@ -504,7 +495,7 @@ TEST(CustomConnectivityUpdate, WrongSG)
                                                             {}, {}, {}, {},
                                                             WUVarReferences{{"g", createWUVarRef(syn2, "g")}}, 
                                                             VarReferences{{"threshLow", createVarRef(pre, "V")}, 
-                                                                          {"threshHigh", createVarRef(pre, "U")}}, {});
+                                                                          {"threshHigh", createVarRef(pre, "U")}});
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -535,7 +526,7 @@ TEST(CustomConnectivityUpdate, DuplicatePrePost)
                                                         {}, {}, {}, {},
                                                         WUVarReferences{{"g", createWUVarRef(syn, "g")}}, 
                                                         VarReferences{{"threshLow", createVarRef(pre, "V")}, 
-                                                                      {"threshHigh", createVarRef(pre, "U")}}, {});
+                                                                      {"threshHigh", createVarRef(pre, "U")}});
 
     try {
         model.finalise();
@@ -577,14 +568,14 @@ TEST(CustomConnectivityUpdate, MixedPreDelayGroups)
                                                         {}, {}, {}, {},
                                                         WUVarReferences{{"g", createWUVarRef(syn1, "g")}}, 
                                                         VarReferences{{"threshLow", createVarRef(pre1, "V")}, 
-                                                                      {"threshHigh", createVarRef(pre1, "V")}}, {});
+                                                                      {"threshHigh", createVarRef(pre1, "V")}});
     
     // Create custom update with both presynaptic var references to different (delay) groups
     model.addCustomConnectivityUpdate<RemoveSynapsePre>("CustomConnectivityUpdate2", "Test2", "Synapses1",
                                                         {}, {}, {}, {},
                                                         WUVarReferences{{"g", createWUVarRef(syn1, "g")}}, 
                                                         VarReferences{{"threshLow", createVarRef(pre1, "V")}, 
-                                                                      {"threshHigh", createVarRef(pre2, "V")}}, {});
+                                                                      {"threshHigh", createVarRef(pre2, "V")}});
     try {
         model.finalise();
         FAIL();
@@ -661,8 +652,7 @@ TEST(CustomConnectivityUpdate, InvalidName)
 
     try {
         model.addCustomConnectivityUpdate<RemoveSynapse>("Custom-Connectivity-Update-1", "Test2", "Synapses1",
-                                                         {}, {{"a", 1.0}}, {}, {},
-                                                         {}, {}, {});
+                                                         {}, {{"a", 1.0}});
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -688,8 +678,7 @@ TEST(CustomConnectivityUpdate, InvalidUpdateGroupName)
 
     try {
         model.addCustomConnectivityUpdate<RemoveSynapse>("CustomConnectivityUpdate1", "Test-2", "Synapses1",
-                                                         {}, {{"a", 1.0}}, {}, {},
-                                                         {}, {}, {});
+                                                         {}, {{"a", 1.0}});
         FAIL();
     }
     catch(const std::runtime_error &) {

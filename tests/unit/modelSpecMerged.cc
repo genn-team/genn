@@ -58,27 +58,27 @@ public:
     SET_POST_VARS({{"postTrace", "scalar"}});
 
     SET_PRE_SPIKE_CODE(
-        "scalar dt = $(t) - $(sT_pre);\n"
-        "$(preTrace) = ($(preTrace) * exp(-dt / $(tauPlus))) + 1.0;\n");
+        "scalar dt = t - sT_pre;\n"
+        "preTrace = (preTrace * exp(-dt / tauPlus)) + 1.0;\n");
 
     SET_POST_SPIKE_CODE(
-        "scalar dt = $(t) - $(sT_post);\n"
-        "$(postTrace) = ($(postTrace) * exp(-dt / $(tauMinus))) + 1.0;\n");
+        "scalar dt = t - sT_post;\n"
+        "postTrace = (postTrace * exp(-dt / tauMinus)) + 1.0;\n");
 
     SET_SIM_CODE(
-        "$(addToInSyn, $(g));\n"
-        "scalar dt = $(t) - $(sT_post); \n"
+        "addToPost(g);\n"
+        "scalar dt = t - sT_post; \n"
         "if (dt > 0) {\n"
-        "    const scalar timing = $(postTrace) * exp(-dt / $(tauMinus));\n"
-        "    const scalar newWeight = $(g) - ($(Aminus) * timing);\n"
-        "    $(g) = fmax($(Wmin), newWeight);\n"
+        "    const scalar timing = postTrace * exp(-dt / tauMinus);\n"
+        "    const scalar newWeight = g - (Aminus * timing);\n"
+        "    g = fmax(Wmin, newWeight);\n"
         "}\n");
     SET_LEARN_POST_CODE(
-        "scalar dt = $(t) - $(sT_pre);\n"
+        "scalar dt = t - sT_pre;\n"
         "if (dt > 0) {\n"
-        "    const scalar timing = $(postTrace) * exp(-dt / $(tauPlus));\n"
-        "    const scalar newWeight = $(g) + ($(Aplus) * timing);\n"
-        "    $(g) = fmin($(Wmax), newWeight);\n"
+        "    const scalar timing = postTrace * exp(-dt / tauPlus);\n"
+        "    const scalar newWeight = g + (Aplus * timing);\n"
+        "    g = fmin(Wmax, newWeight);\n"
         "}\n");
 };
 IMPLEMENT_SNIPPET(STDPAdditive);
@@ -1319,15 +1319,15 @@ TEST(ModelSpecMerged, CompareCustomConnectivityUpdateVarInitParamChanges)
     const std::array<double, 3> initParams1{1.0, 1.0, 1.0};
     const std::array<double, 3> initParams2{2.0, 1.0, 1.0};
     const std::array<double, 3> initParams3{1.0, 2.0, 1.0};
-    const std::array<double, 3> initParams4{1.0, 1.0, 1.0};
+    const std::array<double, 3> initParams4{1.0, 1.0, 2.0};
     
     // Make array of parameter tuples to build model with and flags determining whether the hashes should match baseline
     const std::pair<std::array<double, 3>, bool> modelModifiers[] = {
         {initParams1,   true},
         {initParams1,   true},
-        {initParams2,   true},
-        {initParams3,   true},
-        {initParams4,   true}};
+        {initParams2,   false},
+        {initParams3,   false},
+        {initParams4,   false}};
     
     test(modelModifiers, 
          [](const std::array<double, 3> &params, ModelSpecInternal &model)
@@ -1347,8 +1347,7 @@ TEST(ModelSpecMerged, CompareCustomConnectivityUpdateVarInitParamChanges)
 
             model.addCustomConnectivityUpdate<RemoveSynapsePrePost>(
                 "CustomConnectivityUpdate1", "Test2", "Synapses1",
-                {}, {{"g", params[0]}}, {{"preThresh", params[1]}}, {{"postThresh", params[2]}},
-                {}, {}, {});
+                {}, {{"g", params[0]}}, {{"preThresh", params[1]}}, {{"postThresh", params[2]}});
          });
 }
 //--------------------------------------------------------------------------

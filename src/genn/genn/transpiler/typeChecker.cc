@@ -129,47 +129,6 @@ bool checkImplicitConversion(const Type::ResolvedType &rightType, const Type::Re
 }
 
 //---------------------------------------------------------------------------
-// EnvironmentInternal
-//---------------------------------------------------------------------------
-class EnvironmentInternal : public EnvironmentBase
-{
-public:
-    EnvironmentInternal(EnvironmentBase &enclosing)
-    :   m_Enclosing(enclosing)
-    {
-    }
-
-    //---------------------------------------------------------------------------
-    // EnvironmentBase virtuals
-    //---------------------------------------------------------------------------
-    virtual void define(const Token &name, const Type::ResolvedType &type, ErrorHandlerBase &errorHandler) final
-    {
-        if(!m_Types.try_emplace(name.lexeme, type).second) {
-            errorHandler.error(name, "Redeclaration of variable");
-            throw TypeCheckError();
-        }
-    }
-
-    virtual std::vector<Type::ResolvedType> getTypes(const Token &name, ErrorHandlerBase &errorHandler) final
-    {
-        auto type = m_Types.find(name.lexeme);
-        if(type == m_Types.end()) {
-            return m_Enclosing.getTypes(name, errorHandler);
-        }
-        else {
-            return {type->second};
-        }
-    }
-
-private:
-    //---------------------------------------------------------------------------
-    // Members
-    //---------------------------------------------------------------------------
-    EnvironmentBase &m_Enclosing;
-    std::unordered_map<std::string, Type::ResolvedType> m_Types;
-};
-
-//---------------------------------------------------------------------------
 // Visitor
 //---------------------------------------------------------------------------
 class Visitor : public Expression::Visitor, public Statement::Visitor
@@ -896,24 +855,44 @@ Type::ResolvedType EnvironmentBase::getType(const Token &name, ErrorHandlerBase 
 }
 
 //---------------------------------------------------------------------------
+// GeNN::Transpiler::TypeChecker::EnvironmentInternal
+//---------------------------------------------------------------------------
+void EnvironmentInternal::define(const Token &name, const Type::ResolvedType &type, ErrorHandlerBase &errorHandler)
+{
+    if(!m_Types.try_emplace(name.lexeme, type).second) {
+        errorHandler.error(name, "Redeclaration of variable");
+        throw TypeCheckError();
+    }
+}
+//---------------------------------------------------------------------------
+std::vector<Type::ResolvedType> EnvironmentInternal::getTypes(const Token &name, ErrorHandlerBase &errorHandler)
+{
+    auto type = m_Types.find(name.lexeme);
+    if(type == m_Types.end()) {
+        return m_Enclosing.getTypes(name, errorHandler);
+    }
+    else {
+        return {type->second};
+    }
+}
+
+//---------------------------------------------------------------------------
 // GeNN::Transpiler::TypeChecker
 //---------------------------------------------------------------------------
-ResolvedTypeMap GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &statements, EnvironmentBase &environment, 
+ResolvedTypeMap GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &statements, EnvironmentInternal &environment, 
                                                          const Type::TypeContext &context, ErrorHandlerBase &errorHandler,
                                                          StatementHandler forEachSynapseHandler)
 {
     ResolvedTypeMap expressionTypes;
-    EnvironmentInternal internalEnvironment(environment);
-    Visitor visitor(statements, internalEnvironment, expressionTypes, 
+    Visitor visitor(statements, environment, expressionTypes, 
                     context, errorHandler, forEachSynapseHandler);
     return expressionTypes;
 }
 //---------------------------------------------------------------------------
-ResolvedTypeMap GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, EnvironmentBase &environment,
+ResolvedTypeMap GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, EnvironmentInternal &environment,
                                                          const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
 {
     ResolvedTypeMap expressionTypes;
-    EnvironmentInternal internalEnvironment(environment);
-    Visitor visitor(expression, internalEnvironment, expressionTypes, context, errorHandler);
+    Visitor visitor(expression, environment, expressionTypes, context, errorHandler);
     return expressionTypes;
 }

@@ -22,8 +22,8 @@ public:
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
     SET_SIM_CODE(
-        "$(addToInSyn, $(g));\n"
-        "$(addToPre, $(g));\n");
+        "addToPost(g);\n"
+        "addToPre(g);\n");
 };
 IMPLEMENT_SNIPPET(StaticPulseBack);
 
@@ -35,10 +35,27 @@ public:
     SET_PARAMS({"g"});
 
     SET_SIM_CODE(
-        "$(addToInSyn, $(g));\n"
-        "$(addToPre, $(g));\n");
+        "addToPost(g);\n"
+        "addToPre(g);\n");
 };
 IMPLEMENT_SNIPPET(StaticPulseBackConstantWeight);
+
+class StaticPulseEvent : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_SNIPPET(StaticPulseEvent);
+
+    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
+    SET_PARAMS({"VThresh"});
+    SET_PRE_NEURON_VAR_REFS({{"V", "scalar"}});
+
+    SET_PRE_EVENT_THRESHOLD_CONDITION_CODE(
+        "V > VThresh");
+
+    SET_PRE_EVENT_CODE(
+        "addToPost(g);\n");
+};
+IMPLEMENT_SNIPPET(StaticPulseEvent);
 
 class WeightUpdateModelPost : public WeightUpdateModels::Base
 {
@@ -48,8 +65,8 @@ public:
     SET_PARAMS({"w", "p"});
     SET_POST_VARS({{"s", "scalar"}});
 
-    SET_SIM_CODE("$(w)= $(s);\n");
-    SET_POST_SPIKE_CODE("$(s) = $(t) * $(p);\n");
+    SET_SIM_CODE("w= s;\n");
+    SET_POST_SPIKE_CODE("s = t * p;\n");
 };
 IMPLEMENT_SNIPPET(WeightUpdateModelPost);
 
@@ -61,8 +78,8 @@ public:
     SET_PARAMS({"w", "p"});
     SET_PRE_VARS({{"s", "scalar"}});
 
-    SET_SIM_CODE("$(w)= $(s);\n");
-    SET_PRE_SPIKE_CODE("$(s) = $(t) * $(p);\n");
+    SET_SIM_CODE("w= s;\n");
+    SET_PRE_SPIKE_CODE("s = t * p;\n");
 };
 IMPLEMENT_SNIPPET(WeightUpdateModelPre);
 
@@ -72,10 +89,10 @@ public:
     DECLARE_SNIPPET(AlphaCurr);
 
     SET_DECAY_CODE(
-        "$(x) = (dt * $(expDecay) * $(inSyn) * $(init)) + ($(expDecay) * $(x));\n"
-        "$(inSyn)*=$(expDecay);\n");
+        "x = (dt * expDecay * inSyn * init) + (expDecay * x);\n"
+        "inSyn*=expDecay;\n");
 
-    SET_CURRENT_CONVERTER_CODE("$(x)");
+    SET_CURRENT_CONVERTER_CODE("x");
 
     SET_PARAMS({"tau"});
 
@@ -94,20 +111,20 @@ public:
 
     SET_ADDITIONAL_INPUT_VARS({{"Isyn2", "scalar", 0.0}});
     SET_SIM_CODE(
-        "if ($(RefracTime) <= 0.0) {\n"
-        "  scalar alpha = (($(Isyn2) + $(Ioffset)) * $(Rmembrane)) + $(Vrest);\n"
-        "  $(V) = alpha - ($(ExpTC) * (alpha - $(V)));\n"
+        "if (RefracTime <= 0.0) {\n"
+        "  scalar alpha = ((Isyn2 + Ioffset) * Rmembrane) + Vrest;\n"
+        "  V = alpha - (ExpTC * (alpha - V));\n"
         "}\n"
         "else {\n"
-        "  $(RefracTime) -= dt;\n"
+        "  RefracTime -= dt;\n"
         "}\n"
     );
 
-    SET_THRESHOLD_CONDITION_CODE("$(RefracTime) <= 0.0 && $(V) >= $(Vthresh)");
+    SET_THRESHOLD_CONDITION_CODE("RefracTime <= 0.0 && V >= Vthresh");
 
     SET_RESET_CODE(
-        "$(V) = $(Vreset);\n"
-        "$(RefracTime) = $(TauRefrac);\n");
+        "V = Vreset;\n"
+        "RefracTime = TauRefrac;\n");
 
     SET_PARAMS({
         "C",          // Membrane capacitance
@@ -135,20 +152,20 @@ public:
     DECLARE_SNIPPET(LIFRandom);
 
     SET_SIM_CODE(
-        "if ($(RefracTime) <= 0.0) {\n"
-        "  scalar alpha = (($(Isyn) + $(Ioffset) + $(gennrand_normal)) * $(Rmembrane)) + $(Vrest);\n"
-        "  $(V) = alpha - ($(ExpTC) * (alpha - $(V)));\n"
+        "if (RefracTime <= 0.0) {\n"
+        "  scalar alpha = ((Isyn + Ioffset + gennrand_normal) * Rmembrane) + Vrest;\n"
+        "  V = alpha - (ExpTC * (alpha - V));\n"
         "}\n"
         "else {\n"
-        "  $(RefracTime) -= DT;\n"
+        "  RefracTime -= DT;\n"
         "}\n"
     );
 
-    SET_THRESHOLD_CONDITION_CODE("$(RefracTime) <= 0.0 && $(V) >= $(Vthresh)");
+    SET_THRESHOLD_CONDITION_CODE("RefracTime <= 0.0 && V >= Vthresh");
 
     SET_RESET_CODE(
-        "$(V) = $(Vreset);\n"
-        "$(RefracTime) = $(TauRefrac);\n");
+        "V = Vreset;\n"
+        "RefracTime = TauRefrac;\n");
 
     SET_PARAMS({
         "C",          // Membrane capacitance
@@ -181,22 +198,22 @@ public:
     SET_POST_VARS({{"postTrace", "scalar"}});
     
     SET_SIM_CODE(
-        "$(addToInSyn, $(g));\n"
-        "const scalar dt = $(t) - $(sT_post); \n"
+        "addToPost(g);\n"
+        "const scalar dt = t - sT_post; \n"
         "if (dt > 0) {\n"
-        "    const scalar newWeight = $(g) - ($(Aminus) * $(postTrace));\n"
-        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "    const scalar newWeight = g - (Aminus * postTrace);\n"
+        "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
         "}\n");
     SET_LEARN_POST_CODE(
-        "const scalar dt = $(t) - $(sT_pre);\n"
+        "const scalar dt = t - sT_pre;\n"
         "if (dt > 0) {\n"
-        "    const scalar newWeight = $(g) + ($(Aplus) * $(preTrace));\n"
-        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "    const scalar newWeight = g + (Aplus * preTrace);\n"
+        "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
         "}\n");
-    SET_PRE_SPIKE_CODE("$(preTrace) += 1.0;\n");
-    SET_POST_SPIKE_CODE("$(postTrace) += 1.0;\n");
-    SET_PRE_DYNAMICS_CODE("$(preTrace) *= $(tauPlusDecay);\n");
-    SET_POST_DYNAMICS_CODE("$(postTrace) *= $(tauMinusDecay);\n");
+    SET_PRE_SPIKE_CODE("preTrace += 1.0;\n");
+    SET_POST_SPIKE_CODE("postTrace += 1.0;\n");
+    SET_PRE_DYNAMICS_CODE("preTrace *= tauPlusDecay;\n");
+    SET_POST_DYNAMICS_CODE("postTrace *= tauMinusDecay;\n");
 };
 IMPLEMENT_SNIPPET(STDPAdditive);
 }
@@ -208,7 +225,7 @@ TEST(NeuronGroup, InvalidName)
 {
     ModelSpec model;
     try {
-        model.addNeuronPopulation<NeuronModels::SpikeSource>("Neurons-0", 10, {}, {});
+        model.addNeuronPopulation<NeuronModels::SpikeSource>("Neurons-0", 10);
      FAIL();
     }
     catch(const std::runtime_error &) {
@@ -435,7 +452,7 @@ TEST(NeuronGroup, FusePSM)
     
     // Add two neuron groups to model
     model.addNeuronPopulation<LIFAdditional>("Pre", 10, paramVals, varVals);
-    model.addNeuronPopulation<LIFAdditional>("Post", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<LIFAdditional>("Post", 10, paramVals, varVals);
 
     // Create baseline synapse group
     auto *syn = model.addSynapsePopulation(
@@ -484,11 +501,11 @@ TEST(NeuronGroup, FusePSM)
     auto synDelayInternal = static_cast<SynapseGroupInternal*>(synDelay);
  
     // Check all groups can be fused
-    ASSERT_TRUE(synInternal->canPSBeFused());
-    ASSERT_TRUE(syn2Internal->canPSBeFused());
-    ASSERT_TRUE(synParamInternal->canPSBeFused());
-    ASSERT_TRUE(synTargetInternal->canPSBeFused());
-    ASSERT_TRUE(synDelayInternal->canPSBeFused());
+    ASSERT_TRUE(synInternal->canPSBeFused(post));
+    ASSERT_TRUE(syn2Internal->canPSBeFused(post));
+    ASSERT_TRUE(synParamInternal->canPSBeFused(post));
+    ASSERT_TRUE(synTargetInternal->canPSBeFused(post));
+    ASSERT_TRUE(synDelayInternal->canPSBeFused(post));
 
     // Check that identically configured PSMs can be merged
     ASSERT_EQ(&synInternal->getFusedPSTarget(), &syn2Internal->getFusedPSTarget());
@@ -563,10 +580,10 @@ TEST(NeuronGroup, FuseVarPSM)
     auto syn4Internal = static_cast<SynapseGroupInternal*>(syn4);
     
     // Check only groups with 'safe' model can be fused
-    ASSERT_TRUE(syn1Internal->canPSBeFused());
-    ASSERT_TRUE(syn2Internal->canPSBeFused());
-    ASSERT_TRUE(syn3Internal->canPSBeFused());
-    ASSERT_FALSE(syn4Internal->canPSBeFused());
+    ASSERT_TRUE(syn1Internal->canPSBeFused(post));
+    ASSERT_TRUE(syn2Internal->canPSBeFused(post));
+    ASSERT_TRUE(syn3Internal->canPSBeFused(post));
+    ASSERT_FALSE(syn4Internal->canPSBeFused(post));
     
     // Check that identically configured PSMs can be merged
     ASSERT_EQ(&syn1Internal->getFusedPSTarget(), &syn2Internal->getFusedPSTarget());
@@ -623,6 +640,74 @@ TEST(NeuronGroup, FusePreOutput)
     
     // Check that PSMs targetting different variables cannot be merged
     ASSERT_NE(&synInternal->getFusedPreOutputTarget(), &synTargetInternal->getFusedPreOutputTarget());
+}
+
+TEST(NeuronGroup, FuseSpikeEvent)
+{
+    ModelSpecInternal model;
+    
+    // Add two neuron groups to model
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
+    auto *ngPre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    auto *ngPost = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+    
+    VarValues synVarVals1{{"g", 0.1}};
+    VarValues synVarVals2{{"g", 0.2}};
+    ParamValues synParamVals1{{"VThresh", -50.0}};
+    ParamValues synParamVals2{{"VThresh", -55.0}};
+    VarReferences synPreVarReferences1{{"V", createVarRef(ngPre, "V")}};
+    VarReferences synPreVarReferences2{{"V", createVarRef(ngPre, "U")}};
+ 
+    // Add baseline synapse population
+    auto *sg0 = model.addSynapsePopulation(
+        "SG0", SynapseMatrixType::DENSE, NO_DELAY,
+        "Pre", "Post",
+        initWeightUpdate<StaticPulseEvent>(synParamVals1, synVarVals1, {}, {}, synPreVarReferences1),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    
+    // Add synapse population with different variable values
+    auto *sg1 = model.addSynapsePopulation(
+        "SG1", SynapseMatrixType::DENSE, NO_DELAY,
+        "Pre", "Post",
+        initWeightUpdate<StaticPulseEvent>(synParamVals1, synVarVals2, {}, {}, synPreVarReferences1),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+
+    // Add synapse population with different parameter values
+    auto *sg2 = model.addSynapsePopulation(
+        "SG2", SynapseMatrixType::DENSE, NO_DELAY,
+        "Pre", "Post",
+        initWeightUpdate<StaticPulseEvent>(synParamVals2, synVarVals1, {}, {}, synPreVarReferences1),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    
+    // Add synapse population with different pre-var references
+    auto *sg3 = model.addSynapsePopulation(
+        "SG3", SynapseMatrixType::DENSE, NO_DELAY,
+        "Pre", "Post",
+        initWeightUpdate<StaticPulseEvent>(synParamVals1, synVarVals1, {}, {}, synPreVarReferences2),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    
+    model.finalise();
+
+    // Cast synapse groups to internal types
+    auto ngPreInternal = static_cast<NeuronGroupInternal*>(ngPre);
+    auto ngPostInternal = static_cast<NeuronGroupInternal*>(ngPost);
+    auto sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
+    auto sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
+    auto sg2Internal = static_cast<SynapseGroupInternal*>(sg2);
+    auto sg3Internal = static_cast<SynapseGroupInternal*>(sg3);
+ 
+    // Check that spike-event generation for synapse groups with different per-synapse variables can be fused
+    ASSERT_EQ(&sg0Internal->getFusedSpikeEventTarget(ngPre), &sg1Internal->getFusedSpikeEventTarget(ngPre));
+    
+    // Check that spike-event generation for synapse groups with different parameters cannot be fused
+    ASSERT_NE(&sg0Internal->getFusedSpikeEventTarget(ngPre), &sg2Internal->getFusedSpikeEventTarget(ngPre));
+
+    // Check that spike-event generation for synapse groups with different neuron variable reference cannot be fused
+    ASSERT_NE(&sg0Internal->getFusedSpikeEventTarget(ngPre), &sg3Internal->getFusedSpikeEventTarget(ngPre));
+
+    ASSERT_EQ(ngPreInternal->getFusedSpikeEvent().size(), 3);
+    ASSERT_TRUE(ngPostInternal->getFusedSpikeEvent().empty());
 }
 
 TEST(NeuronGroup, CompareNeuronModels)

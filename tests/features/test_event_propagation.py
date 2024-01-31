@@ -2,8 +2,6 @@ import numpy as np
 import pytest
 from pygenn import types
 
-from pygenn import GeNNModel
-
 from pygenn.genn import SpanType, VarAccess
 from pygenn import (create_neuron_model,
                     create_sparse_connect_init_snippet,
@@ -42,6 +40,18 @@ decoder_dense_model = create_var_init_snippet(
     value = (((id_pre + 1) & jValue) != 0) ? 1.0 : 0.0;
     """)
 
+static_event_pulse_model = create_weight_update_model(
+    "static_event_pulse",
+    var_name_types=[("g", "scalar")],
+    event_threshold_condition_code=
+    """
+    (unsigned int)round(t) == id
+    """,
+    event_code=
+    """
+    addToPost(g);
+    """)
+
 # (Normalised) horizontal Sobel convolution kernel
 vertical_kernel = np.asarray([[1.0,   0.0,    -1.0],
                               [2.0,   0.0,    -2.0],
@@ -54,8 +64,8 @@ horizontal_kernel = np.asarray([[1.0,     2.0,    1.0],
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_forward(backend, precision):    
-    model = GeNNModel(precision, "test_forward", backend=backend)
+def test_forward(make_model, backend, precision):
+    model = make_model(precision, "test_forward", backend=backend)
     model.dt = 1.0
 
     # Create spike source array to generate one-hot pattern to decode
@@ -197,6 +207,17 @@ def test_forward(backend, precision):
         init_weight_update("StaticPulse", {}, {"g": dense.flatten()}),
         init_postsynaptic("DeltaCurr", {}, {}))
 
+    # Create one output neuron pop with sparse decoder population driven by spike-like evnets
+    sparse_event_n_pop = model.add_neuron_population(
+        "PostSparseEventNeuron", 4, post_neuron_model, 
+        {}, {"x": 0.0})
+    model.add_synapse_population(
+        "SparseEventSynapse", "SPARSE", 0,
+        ss_pop, sparse_event_n_pop,
+        init_weight_update(static_event_pulse_model, {}, {"g": 1.0}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity(decoder_model, {}))
+
     # Build model and load
     model.build()
     model.load()
@@ -208,7 +229,7 @@ def test_forward(backend, precision):
                           manual_sparse_constant_weight_n_pop,
                           sparse_n_pop, sparse_pre_n_pop, sparse_hybrid_n_pop,
                           manual_sparse_n_pop, bitmask_n_pop, dense_n_pop, 
-                          manual_dense_n_pop]
+                          manual_dense_n_pop, sparse_event_n_pop]
     while model.timestep < 16:
         model.step_time()
 
@@ -227,8 +248,8 @@ def test_forward(backend, precision):
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_forward_den_delay(backend, precision):
-    model = GeNNModel(precision, "test_forward_den_delay", backend=backend)
+def test_forward_den_delay(make_model, backend, precision):
+    model = make_model(precision, "test_forward_den_delay", backend=backend)
     model.dt = 1.0
 
     # Create spike source array to generate one-hot pattern to decode
@@ -295,8 +316,8 @@ def test_forward_den_delay(backend, precision):
 
 @pytest.mark.parametrize("backend", ["cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_forward_procedural(backend, precision):
-    model = GeNNModel(precision, "test_forward_procedural", backend=backend)
+def test_forward_procedural(make_model, backend, precision):
+    model = make_model(precision, "test_forward_procedural", backend=backend)
     model.dt = 1.0
 
     # Create spike source array to generate one-hot pattern to decode
@@ -351,8 +372,8 @@ def test_forward_procedural(backend, precision):
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_forward_kernel(backend, precision):
-    model = GeNNModel(precision, "test_forward_kernel", backend=backend)
+def test_forward_kernel(make_model, backend, precision):
+    model = make_model(precision, "test_forward_kernel", backend=backend)
     model.dt = 1.0
 
     # Create spike source array to present test pattern
@@ -452,8 +473,8 @@ def test_forward_kernel(backend, precision):
 
 @pytest.mark.parametrize("backend", ["cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_forward_kernel_procedural(backend, precision):
-    model = GeNNModel(precision, "test_forward_kernel_procedural", backend=backend)
+def test_forward_kernel_procedural(make_model, backend, precision):
+    model = make_model(precision, "test_forward_kernel_procedural", backend=backend)
     model.dt = 1.0
 
     # Create spike source array to present test pattern
@@ -513,7 +534,7 @@ def test_forward_kernel_procedural(backend, precision):
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_reverse(backend, precision):
+def test_reverse(make_model, backend, precision):
     pre_reverse_spike_source_model = create_neuron_model(
         "pre_reverse_spike_source",
         var_name_types=[("startSpike", "unsigned int"), 
@@ -532,6 +553,15 @@ def test_reverse(backend, precision):
         """
         startSpike++;
         """)
+    
+    pre_model = create_neuron_model(
+        "pre",
+        var_name_types=[("x", "scalar")],
+        extra_global_params=[("spikeTimes", "scalar*")],
+        sim_code=
+        """
+        x = Isyn;
+        """)
 
     static_pulse_reverse_model = create_weight_update_model(
         "static_pulse_reverse",
@@ -541,7 +571,21 @@ def test_reverse(backend, precision):
         """,
         var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
 
-    model = GeNNModel(precision, "test_reverse", backend=backend)
+
+    static_event_pulse_reverse_model = create_weight_update_model(
+        "static_event_pulse_reverse",
+        var_name_types=[("g", "scalar")],
+        event_threshold_condition_code=
+        """
+        (unsigned int)round(t) == id
+        """,
+        event_code=
+        """
+        addToPre(g);
+        """)
+
+
+    model = make_model(precision, "test_reverse", backend=backend)
     model.dt = 1.0
 
     # Create spike source arrays with extra x variable 
@@ -554,7 +598,10 @@ def test_reverse(backend, precision):
         "PreSpikeSource", 16, pre_reverse_spike_source_model,
         {}, {"startSpike": np.arange(16), "endSpike": np.arange(1, 17), "x": 0.0})
     pre_pre_n_pop.extra_global_params["spikeTimes"].set_init_values(np.arange(16.0))
-    
+    pre_event_n_pop = model.add_neuron_population(
+        "EventSpikeSource", 16, pre_model,
+        {}, {"x": 0.0})
+
     # Add postsynptic population to connect to
     post_n_pop = model.add_neuron_population(
         "Post", 4, post_neuron_model,
@@ -591,6 +638,13 @@ def test_reverse(backend, precision):
         init_postsynaptic("DeltaCurr"))
     s_pre_pop.set_sparse_connections(pre_inds, post_inds)
     s_pre_pop.span_type = SpanType.PRESYNAPTIC
+
+    s_event_pop = model.add_synapse_population(
+        "SparseEventSynapse", "SPARSE", 0,
+        pre_event_n_pop, post_n_pop,
+        init_weight_update(static_event_pulse_reverse_model, {}, {"g": weights}),
+        init_postsynaptic("DeltaCurr"))
+    s_event_pop.set_sparse_connections(pre_inds, post_inds)
     
     # Build model and load
     model.build()
@@ -602,13 +656,15 @@ def test_reverse(backend, precision):
         
         pre_n_pop.vars["x"].pull_from_device()
         pre_pre_n_pop.vars["x"].pull_from_device()
-        
+        pre_event_n_pop.vars["x"].pull_from_device()
+
         assert np.sum(pre_n_pop.vars["x"].view) == (model.timestep - 1)
         assert np.sum(pre_pre_n_pop.vars["x"].view) == (model.timestep - 1)
+        assert np.sum(pre_event_n_pop.vars["x"].view) == (model.timestep - 1)
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_reverse_post(backend, precision):
+def test_reverse_post(make_model, backend, precision):
     pre_reverse_model = create_neuron_model(
         "pre_reverse",
         var_name_types=[("x", "scalar")],
@@ -624,8 +680,20 @@ def test_reverse_post(backend, precision):
         $(addToPre, $(g));
         """,
         var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
+    
+    static_pulse_reverse_event_post_model = create_weight_update_model(
+        "static_pulse_reverse_event_post",
+        post_event_code=
+        """
+        $(addToPre, $(g));
+        """,
+        post_event_threshold_condition_code=
+        """
+        (unsigned int)round(t) == id
+        """,
+        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
 
-    model = GeNNModel(precision, "test_reverse_post", backend=backend)
+    model = make_model(precision, "test_reverse_post", backend=backend)
     model.dt = 1.0
 
     # Add presynaptic populations to sum reverse input
@@ -634,6 +702,9 @@ def test_reverse_post(backend, precision):
         {}, {"x": 0.0})
     dense_pre_n_pop = model.add_neuron_population(
         "DensePost", 4, pre_reverse_model,
+        {}, {"x": 0.0})
+    sparse_event_pre_n_pop = model.add_neuron_population(
+        "SparseEvemtPost", 4, pre_reverse_model,
         {}, {"x": 0.0})
         
     # Create spike source array to generate one-hot pattern to decode
@@ -671,14 +742,20 @@ def test_reverse_post(backend, precision):
         dense_pre_n_pop, post_n_pop,
         init_weight_update(static_pulse_reverse_post_model, {}, {"g": dense.flatten()}),
         init_postsynaptic("DeltaCurr"))
-        
+    sparse_event_s_pop = model.add_synapse_population(
+        "SparseEventSynapse", "SPARSE", 0,
+        sparse_event_pre_n_pop, post_n_pop,
+        init_weight_update(static_pulse_reverse_event_post_model, {}, {"g": 1.0}),
+        init_postsynaptic("DeltaCurr"))
+    sparse_event_s_pop.set_sparse_connections(pre_inds, post_inds)
+
     # Build model and load
     model.build()
     model.load()
 
     # Simulate 16 timesteps
     output_place_values = 2 ** np.arange(4)
-    output_populations = [sparse_pre_n_pop, dense_pre_n_pop]
+    output_populations = [sparse_pre_n_pop, sparse_event_pre_n_pop, dense_pre_n_pop]
     while model.timestep < 16:
         model.step_time()
         
@@ -694,7 +771,3 @@ def test_reverse_post(backend, precision):
             output_value = np.sum(output_place_values[output_binary])
             if output_value != (model.timestep - 1):
                 assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
-
-if __name__ == '__main__':
-    test_reverse("cuda", types.Float)
-    

@@ -21,7 +21,6 @@
 
 using namespace GeNN;
 using namespace GeNN::CodeGenerator;
-using namespace GeNN::Runtime;
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -61,7 +60,8 @@ void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentG
         for (size_t d = 0; d < kernelSize.size(); d++) {
             // If this dimension has a heterogeneous size, add it to struct
             if (isKernelSizeHeterogeneous(env.getGroup(), d)) {
-                env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), "kernelSize" + std::to_string(d),
+                env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), 
+                             Type::Uint32, "kernelSize" + std::to_string(d),
                              [d](const auto&, const auto &g, size_t) { return g.getSynapseGroup()->getKernelSize().at(d); });
             }
 
@@ -104,32 +104,13 @@ void buildStandardNeuronEnvironment(EnvironmentGroupMergedField<G> &env, unsigne
     env.addField(Uint32.addConst(), "num_neurons",
                  Uint32, "numNeurons",
                  [](const auto&, const auto &ng, size_t) { return ng.getNumNeurons(); });
-    env.addField(Uint32.createPointer(), "_spk_cnt", "spkCnt",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCnt"); });
-    env.addField(Uint32.createPointer(), "_spk", "spk",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spk"); });
-    env.addField(Uint32.createPointer(), "_spk_cnt_evnt", "spkCntEvnt",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkCntEvnt"); });
-    env.addField(Uint32.createPointer(), "_spk_evnt", "spkEvnt",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "sSpkEvnt"); });
     env.addField(Uint32.createPointer(), "_spk_que_ptr", "spkQuePtr",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkQuePtr"); });
-
-    env.addField(env.getGroup().getTimeType().createPointer(), "_st", "sT",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "sT"); });
-    env.addField(env.getGroup().getTimeType().createPointer(), "_set", "seT",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "seT"); });
-    env.addField(env.getGroup().getTimeType().createPointer(), "_prev_st", "prevST", 
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "prevST"); });
-    env.addField(env.getGroup().getTimeType().createPointer(), "_prev_set", "prevSET",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "prevSET"); });
-
     env.addField(Uint32.createPointer(), "_record_spk", "recordSpk",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "recordSpk"); });
-    env.addField(Uint32.createPointer(), "_record_spk_event", "recordSpkEvent",
-                 [](const auto &runtime, const auto &g, size_t){ return runtime.getArray(g, "recordSpkEvent"); });
 
     // If batching is enabled, calculate batch offset
+    env.add(Uint32.addConst(), "num_batch", std::to_string(batchSize));
     if(batchSize > 1) {
         env.add(Uint32.addConst(), "_batch_offset", "batchOffset",
                 {env.addInitialiser("const unsigned int batchOffset = $(num_neurons) * $(batch);")});
@@ -188,7 +169,7 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
                  [&backend](const auto&, const SynapseGroupInternal &sg, size_t) { return backend.getSynapticMatrixRowStride(sg); });
     env.addField(Uint32, "_col_stride", "colStride", 
                  [](const auto&, const SynapseGroupInternal &sg, size_t) { return sg.getMaxSourceConnections(); });
-                        
+
     // Postsynaptic model fields         
     env.addField(env.getGroup().getScalarType().createPointer(), "_out_post", "outPost",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "outPost"); });
@@ -205,33 +186,41 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
     env.addField(Uint32.createPointer(), "_src_spk_que_ptr", "srcSpkQuePtr",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "spkQuePtr"); });
     env.addField(Uint32.createPointer(), "_src_spk_cnt", "srcSpkCnt",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "spkCnt"); });
+                 [](const auto &runtime, const auto &g, size_t){ return runtime.getFusedSrcSpikeArray(g, "SpkCnt"); });
     env.addField(Uint32.createPointer(), "_src_spk", "srcSpk",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "spk"); });
-    env.addField(Uint32.createPointer(), "_src_spk_cnt_evnt", "srcSpkCntEvnt",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "spkCntEvnt"); });
-    env.addField(Uint32.createPointer(), "_src_spk_evnt", "srcSpkEvnt",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "spkEvnt"); });
+                 [](const auto &runtime, const auto &g, size_t){ return runtime.getFusedSrcSpikeArray(g, "Spk"); });
+    env.addField(Uint32.createPointer(), "_src_spk_cnt_event", "srcSpkCntEvent",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedSrcSpikeEventArray(g, "SpkCntEvent"); });
+    env.addField(Uint32.createPointer(), "_src_spk_event", "srcSpkEvent",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedSrcSpikeEventArray(g, "SpkEvent"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_src_st", "srcST",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "sT"); });
-    env.addField(env.getGroup().getTimeType().createPointer(), "_src_set", "srcSET",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "seT"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedSrcSpikeArray(g, "ST"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_src_prev_st", "srcPrevST",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "prevST"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedSrcSpikeArray(g, "PrevST"); });
+    env.addField(env.getGroup().getTimeType().createPointer(), "_src_set", "srcSET",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedSrcSpikeEventArray(g, "SET"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_src_prev_set", "srcPrevSET",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "prevSET" ); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedSrcSpikeEventArray(g, "PrevSET" ); });
     
     // Target neuron fields
     env.addField(Uint32.createPointer(), "_trg_spk_que_ptr", "trgSpkQuePtr",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getTrgNeuronGroup(), "spkQuePtr"); });
     env.addField(Uint32.createPointer(), "_trg_spk_cnt", "trgSpkCnt",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getTrgNeuronGroup(), "spkCnt"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeArray(g, "SpkCnt"); });
     env.addField(Uint32.createPointer(), "_trg_spk", "trgSpk",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getTrgNeuronGroup(), "spk"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeArray(g, "Spk"); });
+    env.addField(Uint32.createPointer(), "_trg_spk_cnt_event", "trgSpkCntEvent",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeEventArray(g, "SpkCntEvent"); });
+    env.addField(Uint32.createPointer(), "_trg_spk_event", "trgSpkEvent",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeEventArray(g, "SpkEvent"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_trg_st", "trgST",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getTrgNeuronGroup(), "sT"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeArray(g, "ST"); });
     env.addField(env.getGroup().getTimeType().createPointer(), "_trg_prev_st", "trgPrevST",
-                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getTrgNeuronGroup(), "prevST"); });
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeArray(g, "PrevST"); });
+    env.addField(env.getGroup().getTimeType().createPointer(), "_trg_set", "trgSET",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeEventArray(g, "SET"); });
+    env.addField(env.getGroup().getTimeType().createPointer(), "_trg_prev_set", "trgPrevSET",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeEventArray(g, "PrevSET"); });
 
     // Connectivity fields
     if(env.getGroup().getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
@@ -256,8 +245,9 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
         for (size_t d = 0; d < kernelSize.size(); d++) {
             // If this dimension has a heterogeneous size, add it to struct
             if (isKernelSizeHeterogeneous(env.getGroup(), d)) {
-                env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), "kernelSize" + std::to_string(d),
-                                [d](const auto&, const auto &g, size_t) { return g.getKernelSize().at(d); });
+                env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), 
+                             Type::Uint32, "kernelSize" + std::to_string(d),
+                             [d](const auto&, const auto &g, size_t) { return g.getKernelSize().at(d); });
             }
 
             // Multiply size by dimension
@@ -274,6 +264,7 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
     }
 
     // If batching is enabled
+    env.add(Uint32.addConst(), "num_batch", std::to_string(batchSize));
     if(batchSize > 1) {
         // Calculate batch offsets into pre and postsynaptic populations
         env.add(Uint32.addConst(), "_pre_batch_offset", "preBatchOffset",
@@ -320,17 +311,13 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
                     {env.addInitialiser("const unsigned int preBatchDelayOffset = $(_pre_delay_offset) + ($(_pre_batch_offset) * " + std::to_string(numSrcDelaySlots) + ");")});
         }
 
-        if(env.getGroup().getArchetype().isPrevPreSpikeTimeRequired() 
-            || env.getGroup().getArchetype().isPrevPreSpikeEventTimeRequired()) 
-        {
-            env.add(Uint32, "_pre_prev_spike_time_delay_offset", "prePrevSpikeTimeDelayOffset",
-                    {env.addInitialiser("const unsigned int prePrevSpikeTimeDelayOffset = ((*$(_src_spk_que_ptr) + " 
-                                        + std::to_string(numSrcDelaySlots - numDelaySteps - 1) + ") % " + std::to_string(numSrcDelaySlots) + ") * $(num_pre);")});
+        env.add(Uint32, "_pre_prev_spike_time_delay_offset", "prePrevSpikeTimeDelayOffset",
+                {env.addInitialiser("const unsigned int prePrevSpikeTimeDelayOffset = ((*$(_src_spk_que_ptr) + " 
+                                    + std::to_string(numSrcDelaySlots - numDelaySteps - 1) + ") % " + std::to_string(numSrcDelaySlots) + ") * $(num_pre);")});
 
-            if(batchSize > 1) {
-                env.add(Uint32, "_pre_prev_spike_time_batch_delay_offset", "prePrevSpikeTimeBatchDelayOffset",
-                        {env.addInitialiser("const unsigned int prePrevSpikeTimeBatchDelayOffset = $(_pre_prev_spike_time_delay_offset) + ($(_pre_batch_offset) * " + std::to_string(numSrcDelaySlots) + ");")});
-            }
+        if(batchSize > 1) {
+            env.add(Uint32, "_pre_prev_spike_time_batch_delay_offset", "prePrevSpikeTimeBatchDelayOffset",
+                    {env.addInitialiser("const unsigned int prePrevSpikeTimeBatchDelayOffset = $(_pre_prev_spike_time_delay_offset) + ($(_pre_batch_offset) * " + std::to_string(numSrcDelaySlots) + ");")});
         }
     }
 
@@ -360,16 +347,13 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
                     {env.addInitialiser("const unsigned int postBatchDelayOffset = $(_post_delay_offset) + ($(_post_batch_offset) * " + std::to_string(numTrgDelaySlots) + ");")});
         }
 
-        if(env.getGroup().getArchetype().isPrevPostSpikeTimeRequired()) {
-            env.add(Uint32, "_post_prev_spike_time_delay_offset", "postPrevSpikeTimeDelayOffset",
-                    {env.addInitialiser("const unsigned int postPrevSpikeTimeDelayOffset = ((*$(_trg_spk_que_ptr) + " 
-                                        + std::to_string(numTrgDelaySlots - numBackPropDelaySteps - 1) + ") % " + std::to_string(numTrgDelaySlots) + ") * $(num_post);")});
+        env.add(Uint32, "_post_prev_spike_time_delay_offset", "postPrevSpikeTimeDelayOffset",
+                {env.addInitialiser("const unsigned int postPrevSpikeTimeDelayOffset = ((*$(_trg_spk_que_ptr) + " 
+                                    + std::to_string(numTrgDelaySlots - numBackPropDelaySteps - 1) + ") % " + std::to_string(numTrgDelaySlots) + ") * $(num_post);")});
 
-            if(batchSize > 1) {
-                env.add(Uint32, "_post_prev_spike_time_batch_delay_offset", "postPrevSpikeTimeBatchDelayOffset",
-                        {env.addInitialiser("const unsigned int postPrevSpikeTimeBatchDelayOffset = $(_post_prev_spike_time_delay_offset) + ($(_post_batch_offset) * " + std::to_string(numTrgDelaySlots) + ");")});
-            }
-
+        if(batchSize > 1) {
+            env.add(Uint32, "_post_prev_spike_time_batch_delay_offset", "postPrevSpikeTimeBatchDelayOffset",
+                    {env.addInitialiser("const unsigned int postPrevSpikeTimeBatchDelayOffset = $(_post_prev_spike_time_delay_offset) + ($(_post_batch_offset) * " + std::to_string(numTrgDelaySlots) + ");")});
         }
     }
 }

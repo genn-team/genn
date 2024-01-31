@@ -80,9 +80,35 @@ public:
         void updateHash(boost::uuids::detail::sha1 &hash) const
         {
             updateBaseHash(hash);
-            Utils::updateHash(getArchetype().getInitHashDigest(), hash);
+            Utils::updateHash(getArchetype().getInitHashDigest(getArchetype().getTrgNeuronGroup()), hash);
 
         }
+    };
+
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronInitGroupMerged::SynSpike
+    //----------------------------------------------------------------------------
+    //! Child group merged for synapse groups that process spikes
+    class SynSpike : public ChildGroupMerged<SynapseGroupInternal>
+    {
+    public:
+        using ChildGroupMerged::ChildGroupMerged;
+
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                      NeuronInitGroupMerged &ng, unsigned int batchSize);
+    };
+
+    //----------------------------------------------------------------------------
+    // GeNN::CodeGenerator::NeuronInitGroupMerged::SynSpikeEvent
+    //----------------------------------------------------------------------------
+    //! Child group merged for synapse groups that process spikes events
+    class SynSpikeEvent : public ChildGroupMerged<SynapseGroupInternal>
+    {
+    public:
+        using ChildGroupMerged::ChildGroupMerged;
+
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                      NeuronInitGroupMerged &ng, unsigned int batchSize);
     };
 
     //----------------------------------------------------------------------------
@@ -104,7 +130,7 @@ public:
         void updateHash(boost::uuids::detail::sha1 &hash) const
         {
             updateBaseHash(hash);
-            Utils::updateHash(getArchetype().getPSInitHashDigest(), hash);
+            Utils::updateHash(getArchetype().getPSInitHashDigest(getArchetype().getTrgNeuronGroup()), hash);
         }
     };
 
@@ -143,7 +169,7 @@ public:
         void updateHash(boost::uuids::detail::sha1 &hash) const
         {
             updateBaseHash(hash);
-            Utils::updateHash(getArchetype().getWUPostInitHashDigest(), hash);
+            Utils::updateHash(getArchetype().getWUPrePostInitHashDigest(getArchetype().getTrgNeuronGroup()), hash);
         }
     };
 
@@ -166,7 +192,7 @@ public:
         void updateHash(boost::uuids::detail::sha1 &hash) const
         {
             updateBaseHash(hash);
-            Utils::updateHash(getArchetype().getWUPreInitHashDigest(), hash);
+            Utils::updateHash(getArchetype().getWUPrePostInitHashDigest(getArchetype().getSrcNeuronGroup()), hash);
         }
     };
 
@@ -187,6 +213,8 @@ public:
     void generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
 
     const std::vector<CurrentSource> &getMergedCurrentSourceGroups() const { return m_MergedCurrentSourceGroups; }
+    const std::vector<SynSpike> &getMergedSpikeGroups() const{ return m_MergedSpikeGroups; }
+    const std::vector<SynSpikeEvent> &getMergedSpikeEventGroups() const{ return m_MergedSpikeEventGroups; }
     const std::vector<InSynPSM> &getMergedInSynPSMGroups() const { return m_MergedInSynPSMGroups; }
     const std::vector<OutSynPreOutput> &getMergedOutSynPreOutputGroups() const { return m_MergedOutSynPreOutputGroups; }
     const std::vector<InSynWUMPostVars> &getMergedInSynWUMPostVarGroups() const { return m_MergedInSynWUMPostVarGroups; }
@@ -199,18 +227,11 @@ public:
 
 private:
     //------------------------------------------------------------------------
-    // Private methods
-    //------------------------------------------------------------------------
-    void genInitSpikeCount(const BackendBase &backend, EnvironmentExternalBase &env, bool spikeEvent, unsigned int batchSize);
-
-    void genInitSpikes(const BackendBase &backend, EnvironmentExternalBase &env, bool spikeEvent, unsigned int batchSize);
-
-    void genInitSpikeTime(const BackendBase &backend, EnvironmentExternalBase &env, const std::string &varName, unsigned int batchSize);
- 
-    //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     std::vector<CurrentSource> m_MergedCurrentSourceGroups;
+    std::vector<SynSpike> m_MergedSpikeGroups;
+    std::vector<SynSpikeEvent> m_MergedSpikeEventGroups;
     std::vector<InSynPSM> m_MergedInSynPSMGroups;
     std::vector<OutSynPreOutput> m_MergedOutSynPreOutputGroups;
     std::vector<InSynWUMPostVars> m_MergedInSynWUMPostVarGroups;

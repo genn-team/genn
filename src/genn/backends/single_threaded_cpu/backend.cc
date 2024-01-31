@@ -184,40 +184,26 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                     if(n.getArchetype().isDelayRequired()) {
                         groupEnv.printLine("const unsigned int lastTimestepDelaySlot = *$(_spk_que_ptr);");
                         groupEnv.printLine("const unsigned int lastTimestepDelayOffset = lastTimestepDelaySlot * $(num_neurons);");
-                        if(n.getArchetype().isPrevSpikeTimeRequired()) {
-                            // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt)[lastTimestepDelaySlot]; i++)");
-                            {
-                                CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.printLine("$(_prev_st)[lastTimestepDelayOffset + $(_spk)[lastTimestepDelayOffset + i]] = $(t) - $(dt);");
-                            }
-                        }
-                        if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
-                            // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt_envt)[lastTimestepDelaySlot]; i++)");
-                            {
-                                CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.printLine("$(_prev_set)[lastTimestepDelayOffset + $(_spk_evnt)[lastTimestepDelayOffset + i]] = $(t) - $(dt);");
-                            }
-                        }
                     }
-                    else {
-                        if(n.getArchetype().isPrevSpikeTimeRequired()) {
-                            // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt)[0]; i++)");
+
+                    // Generate code to update previous spike times
+                    if(n.getArchetype().isPrevSpikeTimeRequired()) {
+                        n.generateSpikes(
+                            groupEnv,
+                            [&n, this](EnvironmentExternalBase &env)
                             {
-                                CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.printLine("$(_prev_st)[$(_spk)[i]] = $(t) - $(dt);");
-                            }
-                        }
-                        if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
-                            // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            groupEnv.print("for(unsigned int i = 0; i < $(_spk_cnt_evnt)[0]; i++)");
+                                genPrevEventTimeUpdate(env, n, true);
+                            });
+                    }
+                    
+                    // Generate code to update previous spike-event times
+                    if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
+                        n.generateSpikeEvents(
+                            groupEnv,
+                            [&n, this](EnvironmentExternalBase &env)
                             {
-                                CodeStream::Scope b(groupEnv.getStream());
-                                groupEnv.printLine("$(_prev_set)[$(_spk_evnt)[i]] = $(t) - $(dt);");
-                            }
-                        }
+                                genPrevEventTimeUpdate(env, n, false);
+                            });
                     }
                 }
             });
@@ -271,7 +257,12 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
                         // Zero spike-like-event recording buffer
                         if(n.getArchetype().isSpikeEventRecordingEnabled()) {
-                            groupEnv.printLine("std::fill_n(&$(_record_spk_event)[recordingTimestep * numRecordingWords], numRecordingWords, 0);");
+                            n.generateSpikeEvents(
+                                groupEnv,
+                                [](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent&)
+                                {
+                                    env.printLine("std::fill_n(&$(_record_spk_event)[recordingTimestep * numRecordingWords], numRecordingWords, 0);");
+                                });
                         }
                     }
 
@@ -287,22 +278,43 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                         EnvironmentLibrary rngEnv(groupEnv, StandardLibrary::getHostRNGFunctions(modelMerged.getModel().getPrecision()));
 
                         // Generate neuron update
-                        n.generateNeuronUpdate(*this, rngEnv, 1,
-                                               // Emit true spikes
-                                               [this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng)
-                                               {
-                                                   // Insert code to update WU vars
-                                                   ng.generateWUVarUpdate(env, 1);
+                        n.generateNeuronUpdate(
+                            *this, rngEnv, 1,
+                            // Emit true spikes
+                            [&n, this](EnvironmentExternalBase &env)
+                            {
+                                // Insert code to update WU vars
+                                n.generateWUVarUpdate(env, 1);
 
-                                                   // Insert code to emit true spikes
-                                                   genEmitSpike(env, ng, true, ng.getArchetype().isSpikeRecordingEnabled());
-                                               },
-                                               // Emit spike-like events
-                                               [this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng)
-                                               {
-                                                   // Insert code to emit spike-like events
-                                                   genEmitSpike(env, ng, false, ng.getArchetype().isSpikeEventRecordingEnabled());
-                                               });
+                                // If recording is enabled
+                                if(n.getArchetype().isSpikeRecordingEnabled()) {
+                                    env.printLine("$(_record_spk)[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));");
+                                }
+
+                                // Generate spike dagta structure updates
+                                n.generateSpikes(
+                                    env,
+                                    [&n, this](EnvironmentExternalBase &env)
+                                    {
+                                        genEmitEvent(env, n, true);
+                                    });
+                               
+                            },
+                            // Emit spike-like events
+                            [&n, this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent &sg)
+                            {
+                                sg.generate(
+                                    env, n,
+                                    [&n, this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent&)
+                                    {
+                                        genEmitEvent(env, n, false);
+
+                                        // If recording is enabled
+                                        if(n.getArchetype().isSpikeEventRecordingEnabled()) {
+                                            env.printLine("$(_record_spk_event)[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));");
+                                        }
+                                    });
+                            });
                     }
                 }
             });
@@ -462,12 +474,12 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                         buildStandardEnvironment(groupEnv, 1);
                     
                         // generate the code for processing spike-like events
-                        if (s.getArchetype().isSpikeEventRequired()) {
+                        if (s.getArchetype().isPreSpikeEventRequired()) {
                             genPresynapticUpdate(groupEnv, s, modelMerged.getModel().getDT(), false);
                         }
 
                         // generate the code for processing true spike events
-                        if (s.getArchetype().isTrueSpikeRequired()) {
+                        if (s.getArchetype().isPreSpikeRequired()) {
                             genPresynapticUpdate(groupEnv, s, modelMerged.getModel().getDT(), true);
                         }
                         funcEnv.getStream() << std::endl;
@@ -495,58 +507,14 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                         EnvironmentGroupMergedField<PostsynapticUpdateGroupMerged> groupEnv(funcEnv, s);
                         buildStandardEnvironment(groupEnv, 1);
 
-                        // Get number of postsynaptic spikes
-                        if (s.getArchetype().getTrgNeuronGroup()->isDelayRequired() && s.getArchetype().getTrgNeuronGroup()->isTrueSpikeRequired()) {
-                            groupEnv.printLine("const unsigned int numSpikes = $(_trg_spk_cnt)[$(_post_delay_slot)];");
-                        }
-                        else {
-                            groupEnv.printLine("const unsigned int numSpikes = $(_trg_spk_cnt)[0];");
+                        // generate the code for processing spike-like events
+                        if (s.getArchetype().isPostSpikeEventRequired()) {
+                            genPostsynapticUpdate(groupEnv, s, modelMerged.getModel().getDT(), false);
                         }
 
-                        // Loop through postsynaptic spikes
-                        groupEnv.getStream() << "for (unsigned int j = 0; j < numSpikes; j++)";
-                        {
-                            CodeStream::Scope b(groupEnv.getStream());
-
-                            // **TODO** prod types
-                            const std::string offsetTrueSpkPost = (s.getArchetype().getTrgNeuronGroup()->isTrueSpikeRequired() && s.getArchetype().getTrgNeuronGroup()->isDelayRequired()) ? "$(_post_delay_offset) + " : "";
-                            groupEnv.printLine("const unsigned int spike = $(_trg_spk)[" + offsetTrueSpkPost + "j];");
-
-                            // Loop through column of presynaptic neurons
-                            if (s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                groupEnv.printLine("const unsigned int npre = $(_col_length)[spike];");
-                                groupEnv.getStream() << "for (unsigned int i = 0; i < npre; i++)";
-                            }
-                            else {
-                                groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
-                            }
-                            {
-                                CodeStream::Scope b(groupEnv.getStream());
-                                EnvironmentGroupMergedField<PostsynapticUpdateGroupMerged> synEnv(groupEnv, s);
-
-                                if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                    // Add initialisers to calculate column and row-major indices
-                                    // **TODO** fast divide optimisations
-                                    const size_t colMajorIdxInit = synEnv.addInitialiser("const unsigned int colMajorIndex = (spike * $(_col_stride)) + i;");
-                                    const size_t rowMajorIdxInit = synEnv.addInitialiser("const unsigned int rowMajorIndex = $(_remap)[colMajorIndex];");
-                                    const size_t idPreInit = synEnv.addInitialiser("const unsigned int idPre = rowMajorIndex / $(_row_stride);");
-
-                                    // Add presynaptic and synapse index to environment
-                                    synEnv.add(Type::Uint32.addConst(), "id_pre", "idPre", {colMajorIdxInit, rowMajorIdxInit, idPreInit});
-                                    synEnv.add(Type::Uint32.addConst(), "id_syn", "rowMajorIndex", {colMajorIdxInit, rowMajorIdxInit});
-                                }
-                                else {
-                                    // Add presynaptic and synapse index to environment
-                                    synEnv.add(Type::Uint32.addConst(), "id_pre", "i");
-                                    synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", 
-                                               {synEnv.addInitialiser("const unsigned int idSyn = (i * $(num_post)) + spike;")});
-                                }
-
-                                synEnv.add(Type::Uint32.addConst(), "id_post", "spike");
-                                synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + s.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
-            
-                                s.generateSynapseUpdate(synEnv, 1, modelMerged.getModel().getDT());
-                            }
+                        // generate the code for processing true spike events
+                        if (s.getArchetype().isPostSpikeRequired()) {
+                            genPostsynapticUpdate(groupEnv, s, modelMerged.getModel().getDT(), true);
                         }
                         groupEnv.getStream() << std::endl;
                     }
@@ -1221,25 +1189,23 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                         }
 
                         // If postsynaptic learning is required
-                        if(!Utils::areTokensEmpty(s.getArchetype().getWUInitialiser().getPostLearnCodeTokens())) {
+                        if(s.getArchetype().isPostSpikeRequired() || s.getArchetype().isPostSpikeEventRequired()) {
                             groupEnv.printLine("// Loop through synapses in corresponding matrix row");
                             groupEnv.print("for(unsigned int j = 0; j < $(_row_length)[i]; j++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
 
-                                // If postsynaptic learning is required, calculate column length and remapping
-                                if(!s.getArchetype().getWUInitialiser().getSnippet()->getLearnPostCode().empty()) {
-                                    groupEnv.printLine("// Calculate index of this synapse in the row-major matrix");
-                                    groupEnv.printLine("const unsigned int rowMajorIndex = (i * $(_row_stride)) + j;");
-                                    groupEnv.printLine("// Using this, lookup postsynaptic target");
-                                    groupEnv.printLine("const unsigned int postIndex = $(_ind)[rowMajorIndex];");
-                                    groupEnv.printLine("// From this calculate index of this synapse in the column-major matrix)");
-                                    groupEnv.printLine("const unsigned int colMajorIndex = (postIndex * $(_col_stride)) + $(_col_length)[postIndex];");
-                                    groupEnv.printLine("// Increment column length corresponding to this postsynaptic neuron");
-                                    groupEnv.printLine("$(_col_length)[postIndex]++;");
-                                    groupEnv.printLine("// Add remapping entry");
-                                    groupEnv.printLine("$(_remap)[colMajorIndex] = rowMajorIndex;");
-                                }
+                                // Calculate column length and remapping
+                                groupEnv.printLine("// Calculate index of this synapse in the row-major matrix");
+                                groupEnv.printLine("const unsigned int rowMajorIndex = (i * $(_row_stride)) + j;");
+                                groupEnv.printLine("// Using this, lookup postsynaptic target");
+                                groupEnv.printLine("const unsigned int postIndex = $(_ind)[rowMajorIndex];");
+                                groupEnv.printLine("// From this calculate index of this synapse in the column-major matrix)");
+                                groupEnv.printLine("const unsigned int colMajorIndex = (postIndex * $(_col_stride)) + $(_col_length)[postIndex];");
+                                groupEnv.printLine("// Increment column length corresponding to this postsynaptic neuron");
+                                groupEnv.printLine("$(_col_length)[postIndex]++;");
+                                groupEnv.printLine("// Add remapping entry");
+                                groupEnv.printLine("$(_remap)[colMajorIndex] = rowMajorIndex;");
                             }
                         }
                     }
@@ -1704,7 +1670,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                                    double dt, bool trueSpike) const
 {
     // Get suffix based on type of events
-    const std::string eventSuffix = trueSpike ? "" : "_evnt";
+    const std::string eventSuffix = trueSpike ? "" : "_event";
 
     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ) {
         // Create environment for generating presynaptic update code into seperate CodeStream
@@ -1811,17 +1777,6 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
             const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "$(_pre_delay_offset) + " : "";
             groupEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
                          {groupEnv.addInitialiser("const unsigned int idPre = $(_src_spk" + eventSuffix + ")[" + queueOffset + "i];")});
-
-            // If this is a spike-like event, insert threshold check for this presynaptic neuron
-            if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
-                groupEnv.getStream() << "if(";
-
-                // Generate weight update threshold condition
-                sg.generateSpikeEventThreshold(groupEnv, 1);
-
-                groupEnv.getStream() << ")";
-                groupEnv.getStream() << CodeStream::OB(10);
-            }
 
             // If connectivity is sparse
             if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -1943,43 +1898,123 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     }
                 }
             }
-            // If this is a spike-like event, close braces around threshold check
-            if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
-                groupEnv.getStream() << CodeStream::CB(10);
+        }
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genPostsynapticUpdate(EnvironmentExternalBase &env, PostsynapticUpdateGroupMerged &sg, 
+                                    double dt, bool trueSpike) const
+{
+    // Get suffix based on type of events
+    const std::string eventSuffix = trueSpike ? "" : "_event";
+
+    // Get number of postsynaptic spikes
+    if (sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
+        env.printLine("const unsigned int numSpikes = $(_trg_spk_cnt" + eventSuffix + ")[$(_post_delay_slot)];");
+    }
+    else {
+        env.printLine("const unsigned int numSpikes = $(_trg_spk_cnt" + eventSuffix + ")[0];");
+    }
+
+    // Loop through postsynaptic spikes
+    env.getStream() << "for (unsigned int j = 0; j < numSpikes; j++)";
+    {
+        CodeStream::Scope b(env.getStream());
+
+        // **TODO** prod types
+        const std::string offsetTrueSpkPost = sg.getArchetype().getTrgNeuronGroup()->isDelayRequired() ? "$(_post_delay_offset) + " : "";
+        env.printLine("const unsigned int spike = $(_trg_spk" + eventSuffix + ")[" + offsetTrueSpkPost + "j];");
+
+        // Loop through column of presynaptic neurons
+        if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            env.printLine("const unsigned int npre = $(_col_length)[spike];");
+            env.getStream() << "for (unsigned int i = 0; i < npre; i++)";
+        }
+        else {
+            env.print("for (unsigned int i = 0; i < $(num_pre); i++)");
+        }
+        {
+            CodeStream::Scope b(env.getStream());
+            EnvironmentGroupMergedField<PostsynapticUpdateGroupMerged> synEnv(env, sg);
+
+            if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                // Add initialisers to calculate column and row-major indices
+                // **TODO** fast divide optimisations
+                const size_t colMajorIdxInit = synEnv.addInitialiser("const unsigned int colMajorIndex = (spike * $(_col_stride)) + i;");
+                const size_t rowMajorIdxInit = synEnv.addInitialiser("const unsigned int rowMajorIndex = $(_remap)[colMajorIndex];");
+                const size_t idPreInit = synEnv.addInitialiser("const unsigned int idPre = rowMajorIndex / $(_row_stride);");
+
+                // Add presynaptic and synapse index to environment
+                synEnv.add(Type::Uint32.addConst(), "id_pre", "idPre", {colMajorIdxInit, rowMajorIdxInit, idPreInit});
+                synEnv.add(Type::Uint32.addConst(), "id_syn", "rowMajorIndex", {colMajorIdxInit, rowMajorIdxInit});
+            }
+            else {
+                // Add presynaptic and synapse index to environment
+                synEnv.add(Type::Uint32.addConst(), "id_pre", "i");
+                synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", 
+                            {synEnv.addInitialiser("const unsigned int idSyn = (i * $(num_post)) + spike;")});
+            }
+
+            synEnv.add(Type::Uint32.addConst(), "id_post", "spike");
+            synEnv.add(Type::AddToPre, "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
+            
+            if(trueSpike) {
+                sg.generateSpikeUpdate(synEnv, 1, dt);
+            }
+            else {
+                sg.generateSpikeEventUpdate(synEnv, 1, dt);
             }
         }
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genEmitSpike(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike, bool recordingEnabled) const
+void Backend::genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng, bool trueSpike) const
 {
-    // Determine at what offset we should write into the spike queue
+    const std::string suffix = trueSpike ? "" : "_event";
+    const std::string time = trueSpike ? "st" : "set";
+    if(ng.getArchetype().isDelayRequired()) {
+        // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
+        env.print("for(unsigned int i = 0; i < $(_spk_cnt" + suffix + ")[lastTimestepDelaySlot]; i++)");
+        {
+            CodeStream::Scope b(env.getStream());
+            env.printLine("$(_prev_" + time + ")[lastTimestepDelayOffset + $(_spk" + suffix + ")[lastTimestepDelayOffset + i]] = $(t) - $(dt);");
+        }
+    }
+    else {
+        // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
+        env.print("for(unsigned int i = 0; i < $(_spk_cnt" + suffix + ")[0]; i++)");
+        {
+            CodeStream::Scope b(env.getStream());
+            env.printLine("$(_prev_" + time + ")[$(_spk" + suffix + ")[i]] = $(t) - $(dt);");
+        }
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike) const
+{
     const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
 
-    const std::string suffix = trueSpike ? "" : "_evnt";
-    if(trueSpike ? ng.getArchetype().isTrueSpikeRequired() : ng.getArchetype().isSpikeEventRequired()) {
-        env.print("$(_spk" + suffix + ")[" + queueOffset + "$(_spk_cnt" + suffix + ")");
-        if(ng.getArchetype().isDelayRequired()) { // WITH DELAY
-            env.print("[*$(_spk_que_ptr)]++]");
+    // Update event time
+    if(trueSpike) {
+        if(ng.getArchetype().isSpikeTimeRequired()) {
+            env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
         }
-        else { // NO DELAY
-            env.getStream() << "[0]++]";
+    }
+    else {
+        if(ng.getArchetype().isSpikeEventTimeRequired()) {
+            env.printLine("$(_set)[" + queueOffset + "$(id)] = $(t);");
         }
-        env.printLine(" = $(id);");
-    }
-
-    // Reset spike and spike-like-event times
-    if(trueSpike && ng.getArchetype().isSpikeTimeRequired()) {
-        env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
-    }
-    else if(!trueSpike && ng.getArchetype().isSpikeEventTimeRequired()) {
-        env.printLine("$(_set)[" + queueOffset + "$(id)] = $(t);");
     }
     
-    // If recording is enabled
-    if(recordingEnabled) {
-        env.printLine("$(_record_spk" + suffix + ")[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));");
+    const std::string suffix = trueSpike ? "" : "_event";
+    env.print("$(_spk" + suffix + ")[" + queueOffset + "$(_spk_cnt" + suffix + ")");
+    if(ng.getArchetype().isDelayRequired()) {
+        env.print("[*$(_spk_que_ptr)]++]");
     }
+    else {
+        env.getStream() << "[0]++]";
+    }
+    env.printLine(" = $(id);");
 }
 //--------------------------------------------------------------------------
 void Backend::genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateGroupMerged &cg, const std::string &idxName) const

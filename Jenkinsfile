@@ -199,7 +199,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                     ${env.PYTHON} -m venv ${WORKSPACE}/venv
                     . ${WORKSPACE}/venv/bin/activate
                     pip install -U pip
-                    pip install numpy scipy pybind11 pytest flakey pytest-cov wheel flake8 bitarray
+                    pip install numpy scipy pybind11 pytest flaky pytest-cov wheel flake8 bitarray
                     """;
                 }
 
@@ -234,7 +234,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         // Run ML GeNN test suite
                         def commandsTest = """
                         . ${WORKSPACE}/venv/bin/activate
-                        pytest -v --cov ../../pygenn --cov-report=xml:${coveragePython} --junitxml test_results_feature.xml 1>> "${outputFilename}" 2>&1
+                        pytest -s -v --cov ../../pygenn --cov-report=xml:${coveragePython} --junitxml test_results_feature.xml 1>> "${outputFilename}" 2>&1
                         """;
                         def statusTests = sh script:commandsTest, returnStatus:true;
                         if (statusTests != 0) {

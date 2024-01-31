@@ -6,7 +6,6 @@
 #include <iterator>
 #include <sstream>
 #include <stack>
-#include <unordered_set>
 
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
@@ -25,52 +24,6 @@ using namespace GeNN::Transpiler::PrettyPrinter;
 //---------------------------------------------------------------------------
 namespace
 {
-//---------------------------------------------------------------------------
-// EnvironmentInternal
-//---------------------------------------------------------------------------
-class EnvironmentInternal : public EnvironmentBase
-{
-public:
-    EnvironmentInternal(EnvironmentBase &enclosing)
-    :   m_Enclosing(enclosing)
-    {
-    }
-
-    //---------------------------------------------------------------------------
-    // EnvironmentBase virtuals
-    //---------------------------------------------------------------------------
-    virtual std::string define(const std::string &name) final
-    {
-        if(!m_LocalVariables.emplace(name).second) {
-            throw std::runtime_error("Redeclaration of variable");
-        }
-
-        return "_" + name;
-    }
-
-    virtual std::string getName(const std::string &name, std::optional<Type::ResolvedType> type) final
-    {
-        if(m_LocalVariables.find(name) == m_LocalVariables.end()) {
-            return m_Enclosing.getName(name, type);
-        }
-        else {
-            return "_" + name;
-        }
-    }
-
-    virtual CodeStream &getStream()
-    {
-        return m_Enclosing.getStream();
-    }
-
-private:
-    //---------------------------------------------------------------------------
-    // Members
-    //---------------------------------------------------------------------------
-    EnvironmentBase &m_Enclosing;
-    std::unordered_set<std::string> m_LocalVariables;
-};
-
 //---------------------------------------------------------------------------
 // EnvironmentCallArgument
 //---------------------------------------------------------------------------
@@ -507,19 +460,39 @@ void EnvironmentBase::printLine(const std::string &format)
 }
 
 //---------------------------------------------------------------------------
+// GeNN::Transpiler::PrettyPrinter::EnvironmentInternal
+//---------------------------------------------------------------------------
+std::string EnvironmentInternal::define(const std::string &name)
+{
+    if(!m_LocalVariables.emplace(name).second) {
+        throw std::runtime_error("Redeclaration of variable");
+    }
+
+    return "_" + name;
+}
+//---------------------------------------------------------------------------
+std::string EnvironmentInternal::getName(const std::string &name, std::optional<Type::ResolvedType> type)
+{
+    if(m_LocalVariables.find(name) == m_LocalVariables.end()) {
+        return m_Enclosing.getName(name, type);
+    }
+    else {
+        return "_" + name;
+    }
+}
+
+//---------------------------------------------------------------------------
 // GeNN::Transpiler::PrettyPrinter
 //---------------------------------------------------------------------------
-void GeNN::Transpiler::PrettyPrinter::print(const Statement::StatementList &statements, EnvironmentBase &environment, 
+void GeNN::Transpiler::PrettyPrinter::print(const Statement::StatementList &statements, EnvironmentInternal &environment, 
                                             const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes,
                                             StatementHandler forEachSynapseHandler)
 {
-    EnvironmentInternal internalEnvironment(environment);
-    Visitor visitor(statements, internalEnvironment, context, resolvedTypes, forEachSynapseHandler);
+    Visitor visitor(statements, environment, context, resolvedTypes, forEachSynapseHandler);
 }
 //---------------------------------------------------------------------------
-void GeNN::Transpiler::PrettyPrinter::print(const Expression::ExpressionPtr &expression, EnvironmentBase &environment,
+void GeNN::Transpiler::PrettyPrinter::print(const Expression::ExpressionPtr &expression, EnvironmentInternal &environment,
                                             const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes)
 {
-    EnvironmentInternal internalEnvironment(environment);
-    Visitor visitor(expression, internalEnvironment, context, resolvedTypes);
+    Visitor visitor(expression, environment, context, resolvedTypes);
 }

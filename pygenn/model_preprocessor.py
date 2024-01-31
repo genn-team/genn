@@ -13,7 +13,7 @@ from .genn import (NumericValue, ResolvedType, SynapseMatrixConnectivity,
                    SynapseMatrixWeight, VarInit)
 from .init_var_snippets import Uninitialised
 
-class Array:
+class ArrayBase:
     def __init__(self, variable_type, group):
         # Make copy of type as e.g. a reference to model.precision would result in circular dependency
         self.type = copy(variable_type)
@@ -48,7 +48,13 @@ class Array:
         self._view = None
         self._array = None
 
-class VariableBase(Array):
+
+class Array(ArrayBase):
+    @property
+    def view(self):
+        return self._view
+
+class VariableBase(ArrayBase):
 
     """Base class holding information about GeNN variables"""
 
