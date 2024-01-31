@@ -554,7 +554,7 @@ size_t PostSpanBitmask::getSynapticMatrixRowStride(const SynapseGroupInternal &s
     return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
 }
 //----------------------------------------------------------------------------
-bool PostSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const
+bool PostSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const PreferencesBase&) const
 {
     // Postsynaptic bitmask parallelism can be used if bitmask optimisations are enabled and
     // if synapse groups with bitmask connectivity and no dendritic delays request postsynaptic parallelism
