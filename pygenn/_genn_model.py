@@ -58,26 +58,26 @@ from weakref import proxy
 import numpy as np
 
 # pygenn imports
-from .genn import (generate_code, init_logging, CurrentSource,
-                   CurrentSourceModelBase, CustomConnectivityUpdate,
-                   CustomConnectivityUpdateModelBase, CustomUpdate,
-                   CustomUpdateModelBase, CustomUpdateVar, CustomUpdateWU,
-                   DerivedParam, EGP, EGPRef,
-                   InitSparseConnectivitySnippetBase,
-                   InitToeplitzConnectivitySnippetBase, InitVarSnippetBase,
-                   ModelSpecInternal, NeuronGroup, NeuronModelBase,
-                   NumericValue, Param, ParamVal, PlogSeverity,
-                   PostsynapticInit, PostsynapticModelBase,
-                   SparseConnectivityInit, SynapseGroup, SynapseMatrixType,
-                   ToeplitzConnectivityInit, UnresolvedType, Var, VarInit,
-                   VarLocation, VarRef, WeightUpdateInit,
-                   WeightUpdateModelBase)
+from ._genn import (generate_code, init_logging, CurrentSource,
+                    CurrentSourceModelBase, CustomConnectivityUpdate,
+                    CustomConnectivityUpdateModelBase, CustomUpdate,
+                    CustomUpdateModelBase, CustomUpdateVar, CustomUpdateWU,
+                    DerivedParam, EGP, EGPRef,
+                    InitSparseConnectivitySnippetBase,
+                    InitToeplitzConnectivitySnippetBase, InitVarSnippetBase,
+                    ModelSpecInternal, NeuronGroup, NeuronModelBase,
+                    NumericValue, Param, ParamVal, PlogSeverity,
+                    PostsynapticInit, PostsynapticModelBase,
+                    SparseConnectivityInit, SynapseGroup, SynapseMatrixType,
+                    ToeplitzConnectivityInit, UnresolvedType, Var, VarInit,
+                    VarLocation, VarRef, WeightUpdateInit,
+                    WeightUpdateModelBase)
 
 from .runtime import Runtime
-from .genn_groups import (CurrentSourceMixin, CustomConnectivityUpdateMixin,
-                          CustomUpdateMixin, CustomUpdateWUMixin,
-                          NeuronGroupMixin, SynapseGroupMixin)
-from .model_preprocessor import get_snippet, get_var_init, prepare_param_vals
+from ._genn_groups import (CurrentSourceMixin, CustomConnectivityUpdateMixin,
+                           CustomUpdateMixin, CustomUpdateWUMixin,
+                           NeuronGroupMixin, SynapseGroupMixin)
+from ._model_preprocessor import get_snippet, get_var_init, prepare_param_vals
 from . import (current_source_models, custom_connectivity_update_models,
                custom_update_models, init_sparse_connectivity_snippets, 
                init_toeplitz_connectivity_snippets, init_var_snippets,

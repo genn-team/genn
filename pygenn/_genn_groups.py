@@ -8,12 +8,12 @@ from weakref import proxy
 import numpy as np
 
 from . import neuron_models, types
-from .genn import (CustomUpdateWU, NumericValue, SynapseMatrixConnectivity,
-                   SynapseMatrixWeight, VarAccessDim, VarLocation)
-from .genn import get_var_access_dim
-from .model_preprocessor import (prepare_egps, prepare_vars, Array,
-                                 ExtraGlobalParameter, SynapseVariable,
-                                 Variable)
+from ._genn import (CustomUpdateWU, NumericValue, SynapseMatrixConnectivity,
+                    SynapseMatrixWeight, VarAccessDim, VarLocation)
+from ._genn import get_var_access_dim
+from ._model_preprocessor import (prepare_egps, prepare_vars, Array,
+                                  ExtraGlobalParameter, SynapseVariable,
+                                  Variable)
 
 def _get_num_var_copies(var_dims, batch_size):
     if (var_dims & VarAccessDim.BATCH):

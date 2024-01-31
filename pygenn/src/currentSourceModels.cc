@@ -21,7 +21,7 @@ const Base *getBaseInstance()
 //----------------------------------------------------------------------------
 PYBIND11_MODULE(current_source_models, m) 
 {
-    pybind11::module_::import("pygenn.genn");
+    pybind11::module_::import("pygenn._genn");
 
     //------------------------------------------------------------------------
     // Free functions
