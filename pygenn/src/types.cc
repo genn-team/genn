@@ -11,7 +11,7 @@ using namespace GeNN::Type;
 //----------------------------------------------------------------------------
 PYBIND11_MODULE(types, m)
 {
-    pybind11::module_::import("pygenn.genn");
+    pybind11::module_::import("pygenn._genn");
      
     //------------------------------------------------------------------------
     // Attributes

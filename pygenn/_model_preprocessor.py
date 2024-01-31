@@ -8,8 +8,8 @@ from deprecated import deprecated
 from numbers import Number
 from weakref import proxy, ref, ProxyTypes
 import numpy as np
-from .genn import (NumericValue, ResolvedType, SynapseMatrixConnectivity,
-                   SynapseMatrixWeight, VarInit)
+from ._genn import (NumericValue, ResolvedType, SynapseMatrixConnectivity,
+                    SynapseMatrixWeight, VarInit)
 from .init_var_snippets import Uninitialised
 
 class ArrayBase:

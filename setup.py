@@ -181,7 +181,7 @@ ext_modules = [
     Pybind11Extension("runtime",
                       [os.path.join(pygenn_src, "runtime.cc")],
                       **genn_extension_kwargs),
-    Pybind11Extension("genn",
+    Pybind11Extension("_genn",
                       [os.path.join(pygenn_src, "genn.cc")],
                       **genn_extension_kwargs),
     Pybind11Extension("types",
