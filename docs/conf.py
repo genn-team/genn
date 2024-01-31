@@ -45,7 +45,7 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # Mock imports for readthedocs
-autodoc_mock_imports = []
+autodoc_mock_imports = ["pygenn.genn", "pygenn.genn_model", "pygenn.genn_groups"]
 
 # -- Options for HTML output -------------------------------------------------
 
