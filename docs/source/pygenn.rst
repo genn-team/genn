@@ -1,6 +1,11 @@
 pygenn package
 ==============
 
+.. automodule:: pygenn
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Submodules
 ----------
 
@@ -36,30 +41,6 @@ pygenn.custom\_update\_models module
    :undoc-members:
    :show-inheritance:
 
-pygenn.genn module
-------------------
-
-.. automodule:: pygenn.genn
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pygenn.genn\_groups module
---------------------------
-
-.. automodule:: pygenn.genn_groups
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pygenn.genn\_model module
--------------------------
-
-.. automodule:: pygenn.genn_model
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 pygenn.init\_sparse\_connectivity\_snippets module
 --------------------------------------------------
 
@@ -80,14 +61,6 @@ pygenn.init\_var\_snippets module
 ---------------------------------
 
 .. automodule:: pygenn.init_var_snippets
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pygenn.model\_preprocessor module
----------------------------------
-
-.. automodule:: pygenn.model_preprocessor
    :members:
    :undoc-members:
    :show-inheritance:
@@ -116,14 +89,6 @@ pygenn.runtime module
    :undoc-members:
    :show-inheritance:
 
-pygenn.shared\_library\_model module
-------------------------------------
-
-.. automodule:: pygenn.shared_library_model
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 pygenn.single\_threaded\_cpu\_backend module
 --------------------------------------------
 
@@ -144,14 +109,6 @@ pygenn.weight\_update\_models module
 ------------------------------------
 
 .. automodule:: pygenn.weight_update_models
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: pygenn
    :members:
    :undoc-members:
    :show-inheritance:

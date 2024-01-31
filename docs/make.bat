@@ -25,7 +25,7 @@ if errorlevel 9009 (
 	exit /b 1
 )
 
-sphinx-apidoc --maxdepth 1 --force -o source\ ..\pygenn
+sphinx-apidoc --maxdepth 2 --module-first --force -o source\ ..\pygenn
 
 %SPHINXBUILD% -M %1 %SOURCEDIR% %BUILDDIR% %SPHINXOPTS% %O%
 goto end
