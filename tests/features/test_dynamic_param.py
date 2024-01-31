@@ -28,14 +28,11 @@ def test_dynamic_param(make_model, backend, precision):
     
     postsynaptic_model = create_postsynaptic_model(
         "postsynaptic",
-        decay_code=
+        sim_code=
         """
+        injectCurrent(inSyn);
         psmX = t + psmShift + psmInput;
         $(inSyn) = 0;
-        """,
-        apply_input_code=
-        """
-        $(Isyn) += $(inSyn);
         """,
         params=["psmInput"],
         var_name_types=[("psmX", "scalar"), ("psmShift", "scalar")])

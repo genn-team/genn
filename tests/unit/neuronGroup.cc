@@ -88,11 +88,10 @@ class AlphaCurr : public PostsynapticModels::Base
 public:
     DECLARE_SNIPPET(AlphaCurr);
 
-    SET_DECAY_CODE(
+    SET_SIM_CODE(
+        "injectCurrent(x);\n"
         "x = (dt * expDecay * inSyn * init) + (expDecay * x);\n"
-        "inSyn*=expDecay;\n");
-
-    SET_CURRENT_CONVERTER_CODE("x");
+        "inSyn *= expDecay;\n");
 
     SET_PARAMS({"tau"});
 

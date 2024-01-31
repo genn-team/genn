@@ -575,13 +575,8 @@ bool SynapseGroup::canPSBeFused(const NeuronGroup *ng) const
     // **NOTE** this is kind of silly as, if it's not referenced in either of 
     // these code strings, there wouldn't be a lot of point in a PSM EGP existing!
     for(const auto &egp : getPSInitialiser().getSnippet()->getExtraGlobalParams()) {
-        // If this EGP is referenced in decay code, return false
-        if(Utils::isIdentifierReferenced(egp.name, getPSInitialiser().getDecayCodeTokens())) {
-            return false;
-        }
-        
-        // If this EGP is referenced in apply input code, return false
-        if(Utils::isIdentifierReferenced(egp.name, getPSInitialiser().getApplyInputCodeTokens())) {
+        // If this EGP is referenced in sim code, return false
+        if(Utils::isIdentifierReferenced(egp.name, getPSInitialiser().getSimCodeTokens())) {
             return false;
         }
     }
@@ -590,13 +585,8 @@ bool SynapseGroup::canPSBeFused(const NeuronGroup *ng) const
     for(const auto &p : getPSInitialiser().getSnippet()->getParams()) {
         // If parameter is dynamic
         if(isPSParamDynamic(p.name)) {
-            // If this parameter is referenced in decay code, return false
-            if(Utils::isIdentifierReferenced(p.name, getPSInitialiser().getDecayCodeTokens())) {
-                return false;
-            }
-        
-            // If this parameter is referenced in apply input code, return false
-            if(Utils::isIdentifierReferenced(p.name, getPSInitialiser().getApplyInputCodeTokens())) {
+            // If this parameter is referenced in sim code, return false
+            if(Utils::isIdentifierReferenced(p.name, getPSInitialiser().getSimCodeTokens())) {
                 return false;
             }
         }
