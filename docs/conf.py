@@ -29,6 +29,7 @@ author = "James Knight, Thomas Nowotny"
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
 ]
