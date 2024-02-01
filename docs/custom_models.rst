@@ -6,6 +6,19 @@ Custom models
 --------
 GeNNCode
 --------
+GeNN model functionality is implemented using strings of C-like code which we call GeNNCode.
+This is essentially C99 (https://en.cppreference.com/w/c/language) with the following differences:
+
+- No preprocessor
+- Enough support for strings to printf debug messages but not much more i.e. no ``strstr`` etc.
+- Functions, typedefines and structures cannot be defined in user code
+- Structures are not supported at all
+- Some esoteric C99 language features like octal integer and hexadecimal floating point literals aren't supported
+- The & operator isn't supported - on the target GPU hardware, local variables are assumed to be stored in registers and not addressable. The only time this is limiting is when dealing with extra global parameter arrays as you can no longer do stuff like ``const int *egpSubset = &egp[offset];`` and instead have to do ``const int *egpSubset = egp + offset;``.
+- Like C++ (but not C99) function overloading is supported so ``sin(30.0f)`` will resolve to the floating point rather than double-precision version.
+- Floating point literals like ``30.0`` without a suffix will be treated as ``scalar``, ``30.0f`` will always be treated as float and ``30.0d`` will always be treated as double.
+- A LP64 data model is used on all platforms where ``int`` is 32-bit and ``long`` is 64-bit.
+- Only the following standard library functions are supported: ``cos``, ``sin`, ``tan``, ``acos``, ``asin``, ``atan``, ``atan2``, ``cosh``, ``sinh``, ``tanh``, ``acosh``, ``asinh``, ``atanh``, ``exp``, ``expm1``, ``exp2``, ``pow``, ``scalbn``, ``log``, ``log1p``, ``log2``, ``log10``, ``ldexp``, ``ilogb``, ``sqrt``, ``cbrt``, ``hypot``, ``ceil``, ``floor``, ``fmod``, ``round``, ``rint``, ``trunc``, ``nearbyint``, ``nextafter``, ``remainder``, ``fabs``, ``fdim``, ``fmax``, ``fmin``, ``erf``, ``erfc``, ``tgamma``, ``lgamma``, ``copysign``, ``fma``, ``min``, ``max``, ``abs``,``printf``
 
 Random number generation
 ------------------------
@@ -19,9 +32,6 @@ In GeNN this can be implemented by using the following functions within GeNNCode
 - ``gennrand_gamma, ALPHA)`` returns a number drawn from a gamma distribution with the specified shape.
 - ``gennrand_binomial, N, P)`` returns a number drawn from a binomial distribution with the specified shape.
 
-Literals
---------
-0.0d 0.0f 0.0
 
 -----
 Types
@@ -156,11 +166,12 @@ in a fully event-driven manner as follows:
 
 Pre and postsynaptic dynamics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The memory required for synapse variables and the computational cost of updating them tends to grow with \f$O(N^2)\f$ with the number of neurons.
+The memory required for synapse variables and the computational cost of updating them tends to grow with :math:`O(N^2)` with the number of neurons.
 Therefore, if it is possible, implementing synapse variables on a per-neuron rather than per-synapse basis is a good idea. 
-The \add_cpp_python_text{SET_PRE_VARS() and SET_POST_VARS() macros, `pre_var_name_types` and `post_var_name_types` keyword arguments} are used to define any pre or postsynaptic state variables.
-Then the \add_cpp_python_text{SET_PRE_DYNAMICS_CODE() and SET_POST_DYNAMICS_CODE() macros, `pre_dynamics_code` and `post_dynamics_code` keyword arguments} can be used to define any time-driven updates to these variables and the \add_cpp_python_text{SET_PRE_SPIKE_CODE() and SET_POST_SPIKE_CODE() macros, `pre_spike_code` and `post_spike_code` keyword arguments} any spike-driven updates.
-For example, using pre and postsynaptic variables, our event-driven STDP rule can be extended to use all-to-all spike pairing using pre and postsynaptic <i>trace</i> variables \cite Morrison2008 :
+The ``pre_var_name_types`` and ``post_var_name_types`` keyword arguments} are used to define any pre or postsynaptic state variables.
+For example, using pre and postsynaptic variables, our event-driven STDP rule can be extended to use all-to-all spike pairing using pre and postsynaptic _trace_ variables [Morrison2008]_ :
+
+TODO move into create function documentation
 \note
 These pre and postsynaptic code snippets can only access the corresponding pre and postsynaptic variables as well as those associated with the pre or postsynaptic neuron population. Like other state variables, variables defined here as `NAME` can be accessed in weight update model code strings using the \$(NAME) syntax. 
 
@@ -218,12 +229,16 @@ where ``V_pre`` is a presynaptic variable reference.
 
 Spike-like events
 ^^^^^^^^^^^^^^^^^
-As well as time-driven synapse dynamics and spike event-driven updates, GeNN weight update models also support "spike-like events". These are triggerd by a threshold condition -- implemented with the code string specified using the  \add_cpp_python_text{SET_EVENT_THRESHOLD_CONDITION_CODE() macro,`event_threshold_condition_code` keyword argument}. This typically involves the pre-synaptic variables, e.g. the membrane potential: 
-\add_toggle_code_cpp
-SET_EVENT_THRESHOLD_CONDITION_CODE("$(V_pre) > -0.02");
-\end_toggle_code
-\add_toggle_code_python
-event_threshold_condition_code="$(V_pre) > -0.02"
+As well as time-driven synapse dynamics and spike event-driven updates, GeNN weight update models also support "spike-like events". 
+These can be triggered by a threshold condition evaluated on the pre or postsynaptic neuron. 
+This typically involves pre or postsynaptic weight update model variables or variable references respectively.
+
+For example, to trigger a presynaptic spike-like event when the presynaptic neuron's voltage is greater than 0.02, the following could be added to a weight update model definition:
+
+..  code-block:: python
+
+    pre_event_threshold_condition_code ="V_pre > -0.02"
+
 \end_toggle_code
 Whenever this expression evaluates to true, the event code set using the \add_cpp_python_text{SET_EVENT_CODE() macro,`event_code` keyword argument} is executed. For an example, see WeightUpdateModels::StaticGraded.
 Weight update models can indicate whether they require the times of these spike-like-events using the \add_cpp_python_text{SET_NEEDS_PRE_SPIKE_EVENT_TIME() and SET_NEEDS_PREV_PRE_SPIKE_EVENT_TIME() macros, ``is_pre_spike_event_time_required`` and ``is_prev_pre_spike_event_time_required`` keyword arguments}.
