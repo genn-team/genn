@@ -317,8 +317,9 @@ public:
 
     SET_PARAMS({"Epre", "Vslope"});
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
+    SET_PRE_NEURON_VAR_REFS({{"V", "scalar", VarAccessMode::READ_ONLY}});
 
-    SET_PRE_EVENT_THRESHOLD_CONDITION_CODE("V_pre > Epre");
+    SET_PRE_EVENT_THRESHOLD_CONDITION_CODE("V > Epre");
     SET_PRE_EVENT_SYN_CODE("addToPost(fmax(0.0, g * tanh((V_pre - Epre) / Vslope) * dt));\n");
 };
 
