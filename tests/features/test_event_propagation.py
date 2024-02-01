@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from pygenn import types
 
-from pygenn.genn import ParallelismHint, VarAccess
+from pygenn import ParallelismHint, VarAccess
 from pygenn import (create_neuron_model,
                     create_sparse_connect_init_snippet,
                     create_var_init_snippet,

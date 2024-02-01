@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from pygenn import types
 
-from pygenn.genn import CustomUpdateVarAccess, VarAccess, VarAccessMode
+from pygenn import CustomUpdateVarAccess, VarAccess, VarAccessMode
 
 from scipy.special import softmax
 from pygenn import (create_current_source_model, 

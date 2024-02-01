@@ -3,7 +3,7 @@ import pytest
 from pygenn import types
 from scipy import stats
 
-from pygenn.genn import VarAccess, VarAccessMode
+from pygenn import VarAccess, VarAccessMode
 from pygenn import (create_neuron_model, create_var_ref,
                     create_weight_update_model,
                     init_postsynaptic,
