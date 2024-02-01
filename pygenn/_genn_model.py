@@ -48,6 +48,8 @@ from platform import system
 from psutil import cpu_count
 from setuptools import msvc
 from subprocess import check_call  # to call make
+from typing import Optional, List, Sequence, Tuple, Union
+
 import re
 import sys
 from textwrap import dedent
@@ -67,10 +69,10 @@ from ._genn import (generate_code, init_logging, CurrentSource,
                     InitToeplitzConnectivitySnippetBase, InitVarSnippetBase,
                     ModelSpecInternal, NeuronGroup, NeuronModelBase,
                     NumericValue, Param, ParamVal, PlogSeverity,
-                    PostsynapticInit, PostsynapticModelBase,
+                    PostsynapticInit, PostsynapticModelBase, ResolvedType,
                     SparseConnectivityInit, SynapseGroup, SynapseMatrixType,
-                    ToeplitzConnectivityInit, UnresolvedType, Var, VarInit,
-                    VarLocation, VarRef, WeightUpdateInit,
+                    ToeplitzConnectivityInit, UnresolvedType, Var, VarAccess,
+                    VarAccessMode, VarInit, VarLocation, VarRef, WeightUpdateInit,
                     WeightUpdateModelBase)
 
 from .runtime import Runtime
@@ -82,6 +84,14 @@ from . import (current_source_models, custom_connectivity_update_models,
                custom_update_models, init_sparse_connectivity_snippets, 
                init_toeplitz_connectivity_snippets, init_var_snippets,
                neuron_models, postsynaptic_models, types, weight_update_models)
+
+TypeType = Union[str, ResolvedType]
+ModelParamsType = Optional[Sequence[Union[str, Tuple[str, TypeType]]]]
+ModelVarsType = Optional[Sequence[Union[Tuple[str, TypeType],
+                                        Tuple[str, TypeType, VarAccess]]]]
+ModelVarRefsType = Optional[Sequence[Union[Tuple[str, TypeType],
+                                          Tuple[str, TypeType, VarAccessMode]]]]
+ModelEGPType = Optional[Sequence[Tuple[str, TypeType]]]
 
 # Dynamically add Python mixin to wrapped class
 CurrentSource.__bases__ += (CurrentSourceMixin,)
@@ -174,13 +184,14 @@ class GeNNModel(ModelSpecInternal):
     This class helps to define, build and run a GeNN model from python
     """
 
-    def __init__(self, precision="float", model_name="GeNNModel",
-                 backend=None, time_precision=None,
-                 genn_log_level=PlogSeverity.WARNING,
-                 code_gen_log_level=PlogSeverity.WARNING,
-                 transpiler_log_level=PlogSeverity.WARNING,
-                 runtime_log_level=PlogSeverity.WARNING,
-                 backend_log_level=PlogSeverity.WARNING,
+    def __init__(self, precision: TypeType = "float",
+                 model_name: str = "GeNNModel",
+                 backend=None, time_precision: Optional[TypeType] = None,
+                 genn_log_level: PlogSeverity = PlogSeverity.WARNING,
+                 code_gen_log_level: PlogSeverity = PlogSeverity.WARNING,
+                 transpiler_log_level: PlogSeverity = PlogSeverity.WARNING,
+                 runtime_log_level: PlogSeverity = PlogSeverity.WARNING,
+                 backend_log_level: PlogSeverity = PlogSeverity.WARNING,
                  **preference_kwargs):
         """Init GeNNModel
         Keyword args:
@@ -340,7 +351,7 @@ class GeNNModel(ModelSpecInternal):
         neuron      --  type of the NeuronModels class as string or instance of
                         neuron class derived from
                         ``pygenn.genn_wrapper.NeuronModels.Custom`` (see also
-                        pygenn.genn_model.create_custom_neuron_class)
+                        pygenn.genn_model.create_neuron_model)
         params      --  dict with param values for the NeuronModels class
         vars        --  dict with initial variable values for the
                         NeuronModels class
@@ -415,7 +426,7 @@ class GeNNModel(ModelSpecInternal):
                                     string or instance of CurrentSourceModels
                                     class derived from
                                     ``pygenn.genn_wrapper.CurrentSourceModels.Custom`` (see also
-                                    pygenn.genn_model.create_custom_current_source_class)
+                                    pygenn.genn_model.create_current_source_model)
         pop                     --  population into which the current source 
                                     should be injected (NeuronGroup object)
         params                  --  dict with param values for the
@@ -457,7 +468,7 @@ class GeNNModel(ModelSpecInternal):
                                    string or instance of CustomUpdateModel
                                    class derived from
                                    ``CustomUpdateModelBase`` (see also
-                                   pygenn.genn_model.create_custom_custom_update_class)
+                                   pygenn.genn_model.create_custom_update_model)
         params                  -- dict with param values for the
                                    CustomUpdateModel class
         vars                    -- dict with initial variable values for the
@@ -506,7 +517,7 @@ class GeNNModel(ModelSpecInternal):
                                        CustomConnectivityUpdateModel class 
                                        derived from 
                                        ``pygenn.genn_wrapper.CustomConnectivityUpdateModel.Custom``
-                                       (see also pygenn.genn_model.create_custom_custom_connectivity_update_class)
+                                       (see also pygenn.genn_model.create_custom_connectivity_update_model)
         params                      -- dict with param values for the
                                        CustomConnectivityUpdateModel class
         vars                        -- dict with initial variable values for the
@@ -821,7 +832,7 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, params={}):
     return ToeplitzConnectivityInit(init_toeplitz_connect_snippet, 
                                     prepare_param_vals(params))
 
-def upgrade_code_string(code, class_name):
+def _upgrade_code_string(code, class_name):
     # Apply special-case upgrades
     upgraded = False
 
@@ -855,33 +866,9 @@ def upgrade_code_string(code, class_name):
              f"removed but this functionality will be removed in future so "
              f"please update your model", FutureWarning)
     return code
-    
-def create_model(class_name, base, params, param_names, derived_params,
-                 extra_global_params, custom_body):
-    """This helper function completes a custom model class creation.
 
-    This part is common for all model classes and is nearly useless on its own
-    unless you specify custom_body.
-    See also:
-    create_neuron_model
-    create_weight_update_model
-    create_postsynaptic_model
-    create_current_source_model
-    create_var_init_snippet
-    create_sparse_connect_init_snippet
-
-    Args:
-    class_name      --  name of the new class
-    base            --  base class
-    params          --  list of tuples with param names and types of the model
-    derived_params  --  list of tuples, where the first member is string with
-                        name of the derived parameter and the second should 
-                        be a functor returned by create_dpf_class
-    extra_global_params --  list of pairs of strings with names and types of
-                            additional parameters
-    custom_body     --  dictionary with attributes and methods of the new class
-    """
-
+def _create_model(class_name: str, base, params, param_names, derived_params,
+                  extra_global_params, custom_body):
     def ctor(self):
         base.__init__(self)
 
@@ -921,41 +908,46 @@ def create_model(class_name, base, params, param_names, derived_params,
 
     return type(class_name, (base,), body)()
 
-def create_neuron_model(class_name, params=None, param_names=None,
-                        vars=None, var_name_types=None, derived_params=None,
-                        sim_code=None, threshold_condition_code=None,
-                        reset_code=None, extra_global_params=None,
+def create_neuron_model(class_name: str, params: ModelParamsType = None,
+                        param_names=None, vars: ModelVarsType = None,
+                        var_name_types=None, derived_params=None,
+                        sim_code: Optional[str] = None,
+                        threshold_condition_code: Optional[str] = None,
+                        reset_code: Optional[str] = None,
+                        extra_global_params: ModelEGPType = None,
                         additional_input_vars=None,
-                        is_auto_refractory_required=None):
-    """This helper function creates a custom NeuronModel class.
-    See also:
-    create_postsynaptic_model
-    create_weight_update_model
-    create_current_source_model
-    create_var_init_snippet
-    create_sparse_connect_init_snippet
+                        auto_refractory_required: bool = False):
+    """Creates a new neuron model.
+    Within all of the code strings, the variables, parameters,
+    derived parameters, additional input variables and extra global
+    parameters defined in this model can all be referred to be name.
+    Additionally, the code may refer to the following built in read-only variables
+
+    - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
+    - ``Isyn`` which represents the total incoming synaptic input.
+    - ``id`` which represents a neurons index within a population (starting from zero)
+    - ``num_neurons`` which represents the number of neurons in the population
 
     Args:
-    class_name                  --  name of the new class
-
-    Keyword args:
-    param_names                 --  list of strings with param names
-                                    of the model
-    vars                        --  list of pairs of strings with varible names
-                                    and types of the model
-    derived_params              --  list of pairs, where the first member
-                                    is string with name of the derived
-                                    parameter and the second should be a 
-                                    functor returned by create_dpf_class
-    sim_code                    --  string with the simulation code
-    threshold_condition_code    --  string with the threshold condition code
-    reset_code                  --  string with the reset code
-    extra_global_params         --  list of pairs of strings with names and
-                                    types of additional parameters
-    additional_input_vars       --  list of tuples with names and types as
+        class_name:                 name of the new class (only for debugging)
+        params:                     name and optional types of model parameters
+        vars:                       names, types and optional variable access
+                                    modifiers of model variables
+        derived_params:             names, types and callables to calculate
+                                    derived parameter values from params
+        sim_code:                   string containing the simulation code
+                                    statements to be run every timestep
+        threshold_condition_code:   string containing a threshold condition
+                                    expression to test whether a spike
+                                    should be emitted
+        reset_code:                 string containing the reset code
+                                    statements to run after emitting a spike
+        extra_global_params:        names and types of model
+                                    extra global parameters
+        additional_input_vars:      list of tuples with names and types as
                                     strings and initial values of additional
                                     local input variables
-    is_auto_refractory_required --  does this model require auto-refractory
+        auto_refractory_required:   does this model require auto-refractory
                                     logic to be generated?
     """
     body = {}
@@ -967,16 +959,16 @@ def create_neuron_model(class_name, params=None, param_names=None,
 
     if sim_code is not None:
         body["get_sim_code"] =\
-            lambda self: dedent(upgrade_code_string(sim_code, class_name))
+            lambda self: dedent(_upgrade_code_string(sim_code, class_name))
 
     if threshold_condition_code is not None:
         body["get_threshold_condition_code"] = \
-            lambda self: dedent(upgrade_code_string(threshold_condition_code,
+            lambda self: dedent(_upgrade_code_string(threshold_condition_code,
                                                     class_name))
 
     if reset_code is not None:
-        body["get_reset_code"] = lambda self: dedent(upgrade_code_string(reset_code,
-                                                                         class_name))
+        body["get_reset_code"] = lambda self: dedent(_upgrade_code_string(reset_code,
+                                                                          class_name))
 
     if additional_input_vars:
         body["get_additional_input_vars"] = \
@@ -987,44 +979,49 @@ def create_neuron_model(class_name, params=None, param_names=None,
         body["get_vars"] = \
             lambda self: [Var(*vn) for vn in vars]
 
-    if is_auto_refractory_required is not None:
+    if auto_refractory_required is not None:
         body["is_auto_refractory_required"] = \
-            lambda self: is_auto_refractory_required
+            lambda self: auto_refractory_required
 
-    return create_model(class_name, NeuronModelBase, params, param_names,
-                        derived_params, extra_global_params, body)
+    return _create_model(class_name, NeuronModelBase, params, param_names,
+                         derived_params, extra_global_params, body)
 
 
 def create_postsynaptic_model(class_name, params=None, param_names=None,
                               vars=None, var_name_types=None, 
-                              neuron_var_refs=None, derived_params=None,
-                              sim_code=None, decay_code=None,
+                              neuron_var_refs: ModelVarRefsType = None,
+                              derived_params=None,
+                              sim_code: Optional[str] = None, decay_code=None,
                               apply_input_code=None,
-                              extra_global_params=None):
-    """This helper function creates a custom PostsynapticModel class.
-    See also:
-    create_neuron_model
-    create_weight_update_model
-    create_current_source_model
-    create_var_init_snippet
-    create_sparse_connect_init_snippet
+                              extra_global_params: ModelEGPType = None):
+    """Creates a new postsynaptic update model.
+    Within all of the code strings, the variables, parameters,
+    derived parameters and extra global parameters defined in this model
+    can all be referred to be name. Additionally, the code may refer to the
+    following built in read-only variables:
+
+    - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
+    - ``id`` which represents a neurons index within a population (starting from zero)
+    - ``num_neurons`` which represents the number of neurons in the population
+
+    Finally, the function ``injectCurrent(x)`` can be used to inject a current
+    ``x`` into the postsynaptic neuron. The variable it goes into can be
+    configured using the :attr:`SynapseGroup.post_target_var``.
 
     Args:
-    class_name          --  name of the new class
-
-    Keyword args:
-    param_names         --  list of strings with param names of the model
-    vars                --  list of pairs of strings with varible names and
-                            types of the model
-    neuron_var_refs     --  references to neuron variables
-    derived_params      --  list of pairs, where the first member is string
-                            with name of the derived parameter and the second
-                            should be a functor returned by create_dpf_class
-    sim_code            --  string with the decay code
-    decay_code          --  string with the decay code
-    apply_input_code    --  string with the apply input code
-    extra_global_params --  list of pairs of strings with names and
-                            types of additional parameters
+        class_name:                 name of the new class (only for debugging)
+        params:                     name and optional types of model parameters
+        vars:                       names, types and optional variable access
+                                    modifiers of model variables
+        neuron_var_refs:            names, types and optional variable access
+                                    of references to be assigned to postsynaptic
+                                    neuron variables
+        derived_params:             names, types and callables to calculate
+                                    derived parameter values from params
+        sim_code:                   string containing the simulation code
+                                    statements to be run every timestep
+        extra_global_params:        names and types of model
+                                    extra global parameters
     """
     body = {}
     if decay_code is not None or apply_input_code is not None:
@@ -1039,7 +1036,7 @@ def create_postsynaptic_model(class_name, params=None, param_names=None,
 
     if sim_code is not None:
         body["get_sim_code"] =\
-            lambda self: dedent(upgrade_code_string(sim_code, class_name))
+            lambda self: dedent(_upgrade_code_string(sim_code, class_name))
 
     if vars is not None:
         body["get_vars"] = \
@@ -1049,76 +1046,102 @@ def create_postsynaptic_model(class_name, params=None, param_names=None,
         body["get_neuron_var_refs"] =\
             lambda self: [VarRef(*v) for v in neuron_var_refs]
     
-    return create_model(class_name, PostsynapticModelBase, params, 
-                        param_names, derived_params, 
-                        extra_global_params, body)
+    return _create_model(class_name, PostsynapticModelBase, params,
+                         param_names, derived_params,
+                         extra_global_params, body)
 
 
-def create_weight_update_model(class_name, params=None, param_names=None,
-                               vars=None, var_name_types=None, 
-                               pre_vars=None, pre_var_name_types=None,
-                               post_vars=None, post_var_name_types=None, 
-                               pre_neuron_var_refs=None,
-                               post_neuron_var_refs=None,
-                               derived_params=None, sim_code=None,
-                               pre_spike_syn_code=None, event_code=None, 
-                               pre_event_syn_code=None, 
-                               post_event_syn_code=None, learn_post_code=None,
-                               post_spike_syn_code=None,
-                               synapse_dynamics_code=None,
-                               event_threshold_condition_code=None,
-                               pre_event_threshold_condition_code=None,
-                               post_event_threshold_condition_code=None,
-                               pre_spike_code=None, post_spike_code=None,
-                               pre_dynamics_code=None, post_dynamics_code=None,
-                               extra_global_params=None):
-    """This helper function creates a custom WeightUpdateModel class.
-    See also:
-    create_neuron_model
-    create_postsynaptic_model
-    create_current_source_model
-    create_var_init_snippet
-    create_sparse_connect_init_snippet
+def create_weight_update_model(
+        class_name: str, params: ModelParamsType = None, param_names=None,
+        vars: ModelVarsType = None, var_name_types=None,
+        pre_vars: ModelVarsType = None, pre_var_name_types=None,
+        post_vars: ModelVarsType = None, post_var_name_types=None,
+        pre_neuron_var_refs: ModelVarRefsType = None,
+        post_neuron_var_refs: ModelVarRefsType = None,
+        derived_params=None, sim_code=None,
+        pre_spike_syn_code: Optional[str] = None, event_code=None,
+        pre_event_syn_code: Optional[str] = None,
+        post_event_syn_code: Optional[str] = None, learn_post_code=None,
+        post_spike_syn_code: Optional[str] = None,
+        synapse_dynamics_code: Optional[str] = None,
+        event_threshold_condition_code=None,
+        pre_event_threshold_condition_code: Optional[str] = None,
+        post_event_threshold_condition_code: Optional[str] = None,
+        pre_spike_code: Optional[str] = None,
+        post_spike_code: Optional[str] = None,
+        pre_dynamics_code: Optional[str] = None,
+        post_dynamics_code: Optional[str] = None,
+        extra_global_params: ModelEGPType  = None):
+    """Creates a new weight update model.
+    GeNN operates on the assumption that the postsynaptic output of the synapses are added linearly at the postsynaptic neuron.
+    Within all of the synaptic code strings (``pre_spike_syn_code``, ``pre_event_syn_code``,
+    ``post_event_syn_code``, ``post_spike_syn_code`` and ``synapse_dynamics_code`` ) these currents are delivered using the ``addToPost(inc)`` function.
+    For example,
+
+    ..  code-block:: python
+
+        pre_spike_syn_code="addToPost(inc);"
+
+    where ``inc`` is the amount to add to the postsynaptic neuron for each pre-synaptic spike.
+    Dendritic delays can also be inserted between the synapse and the postsynaptic neuron by using the ``addToPostDelay(inc, delay)`` function.
+    For example,
+
+    ..  code-block:: python
+
+        pre_spike_syn_code="addToPostDelay(inc, delay);"
+
+    where, once again, ``inc`` is the amount to add to the postsynaptic neuron and ``delay`` is the length of the dendritic delay in timesteps.
+    By implementing ``delay`` as a weight update model variable, heterogeneous synaptic delays can be implemented.
+    For an example, see WeightUpdateModels::StaticPulseDendriticDelay for a simple synapse update model with heterogeneous dendritic delays.
+
+    When using dendritic delays, the *maximum* dendritic delay for a synapse populations must be specified via the
+    :attr:`SynapseGroup.max_dendritic_delay_timesteps`` property. One can also define synaptic effects that occur in the reverse direction,
+    i.e. terms that are added to a target variable in the _presynaptic_ neuron using the ``addToPre(inc)`` function. For example,
+
+    ..  code-block:: python
+
+        pre_spike_syn_code="addToPre(inc * V_post);"
+
+    would add terms ``inc * V_post`` to for each _outgoing_ synapse of a presynaptic neuron.
+    One can also set alternative input variables in the presynaptic neuron as the target variable of this reverse input using \add_cpp_python_text{SynapseGroup::setPreTargetVar(),`pygenn.SynapseGroup.pre_target_var`}, see section \ref neuron_additional_input on how to define additional input variables for a neuron population.
+    Unlike for normal forward synaptic actions, reverse synaptic actions with \$(addToPre,\$(inc)) are not modulated through a post-synaptic model but added directly into the indicated presynaptic target input variable, such as \$(Isyn).
 
     Args:
-    class_name                          --  name of the new class
-
-    Keyword args:
-    param_names                         --  list of strings with param names of
-                                            the model
-    vars                                --  list of pairs of strings with variable
-                                            names and types of the model
-    pre_vars                            --  list of pairs of strings with
-                                            presynaptic variable names and
-                                            types of the model
-    post_vars                           --  list of pairs of strings with
-                                            postsynaptic variable names and
-                                            types of the model
-    pre_neuron_var_refs                 --  references to presynaptic neuron variables
-    post_neuron_var_refs                --  references to postsynaptic neuron variables
-    derived_params                      --  list of pairs, where the first member
-                                            is string with name of the derived
-                                            parameter and the second should be 
-                                            a functor returned by create_dpf_class
-    pre_spike_syn_code                  --  string with the presynaptic spike code
-    pre_event_syn_code                  --  string with the presynaptic event code
-    post_event_syn_code                 --  string with the postsynaptic event code
-    post_spike_syn_code                 --  string with the postsynaptic spike code
-    synapse_dynamics_code               --  string with the synapse dynamics code
-    pre_event_threshold_condition_code  --  string with the presynaptic event threshold
-                                            condition code
-    post_event_threshold_condition_code --  string with the postsynaptic event threshold
-                                            condition code
-    pre_spike_code                      --  string with the code run once per
-                                            spiking presynaptic neuron
-    post_spike_code                     --  string with the code run once per
-                                            spiking postsynaptic neuron
-    pre_dynamics_code                   --  string with the code run every
-                                            timestep on presynaptic neuron
-    post_dynamics_code                  --  string with the code run every
-                                            timestep on postsynaptic neuron
-    extra_global_params                 --  list of pairs of strings with names and
-                                            types of additional parameters
+        class_name:                             name of the new class (only for debugging)
+        params:                                 name and optional types of model parameters
+        vars:                                   names, types and optional variable access
+                                                modifiers of per-synapse model variables
+        pre_vars:                               names, types and optional variable access
+                                                modifiers of per-presynaptic neuron model variables
+        post_vars                               names, types and optional variable access
+                                                modifiers of per-postsynaptic neuron model variables
+        pre_neuron_var_refs:                    names, types and optional variable access
+                                                of references to be assigned to presynaptic
+                                                neuron variables
+        post_neuron_var_refs:                   names, types and optional variable access
+                                                of references to be assigned to postsynaptic
+                                                neuron variables
+        derived_params:                         names, types and callables to calculate
+                                                derived parameter values from params
+        pre_spike_syn_code:                     string with the presynaptic spike code
+        pre_event_syn_code:                     string with the presynaptic event code
+        post_event_syn_code:                    string with the postsynaptic event code
+        post_spike_syn_code:                    string with the postsynaptic spike code
+        synapse_dynamics_code:                  string with the synapse dynamics code
+        pre_event_threshold_condition_code:     string with the presynaptic event threshold
+                                                condition code
+        post_event_threshold_condition_code:    string with the postsynaptic event threshold
+                                                condition code
+        pre_spike_code:                         string with the code run once per
+                                                spiking presynaptic neuron
+        post_spike_code:                        string with the code run once per
+                                                spiking postsynaptic neuron
+        pre_dynamics_code:                      string with the code run every
+                                                timestep on presynaptic neuron
+        post_dynamics_code:                     string with the code run every
+                                                timestep on postsynaptic neuron
+        extra_global_params:                    names and types of model
+                                                extra global parameters
     """
     body = {}
     
@@ -1156,58 +1179,58 @@ def create_weight_update_model(class_name, params=None, param_names=None,
         
     if pre_spike_syn_code is not None:
         body["get_pre_spike_syn_code"] =\
-            lambda self: dedent(upgrade_code_string(pre_spike_syn_code,
-                                                    class_name))
+            lambda self: dedent(_upgrade_code_string(pre_spike_syn_code,
+                                                     class_name))
 
     if pre_event_syn_code is not None:
         body["get_pre_event_syn_code"] =\
-            lambda self: dedent(upgrade_code_string(pre_event_syn_code,
-                                                    class_name))
+            lambda self: dedent(_upgrade_code_string(pre_event_syn_code,
+                                                     class_name))
 
     if post_event_syn_code is not None:
         body["get_post_event_syn_code"] =\
-            lambda self: dedent(upgrade_code_string(post_event_syn_code,
-                                                    class_name))
+            lambda self: dedent(_upgrade_code_string(post_event_syn_code,
+                                                     class_name))
 
     if post_spike_syn_code is not None:
         body["get_post_spike_syn_code"] =\
-            lambda self: dedent(upgrade_code_string(post_spike_syn_code,
-                                                    class_name))
+            lambda self: dedent(_upgrade_code_string(post_spike_syn_code,
+                                                     class_name))
 
     if synapse_dynamics_code is not None:
         body["get_synapse_dynamics_code"] =\
-            lambda self: dedent(upgrade_code_string(synapse_dynamics_code,
-                                                    class_name))
+            lambda self: dedent(_upgrade_code_string(synapse_dynamics_code,
+                                                     class_name))
 
     if pre_event_threshold_condition_code is not None:
         body["get_pre_event_threshold_condition_code"] = \
-            lambda self: dedent(upgrade_code_string(pre_event_threshold_condition_code,
-                                                    class_name))
+            lambda self: dedent(_upgrade_code_string(pre_event_threshold_condition_code,
+                                                     class_name))
     
     if post_event_threshold_condition_code is not None:
         body["get_post_event_threshold_condition_code"] = \
-            lambda self: dedent(upgrade_code_string(post_event_threshold_condition_code,
-                                                    class_name))
+            lambda self: dedent(_upgrade_code_string(post_event_threshold_condition_code,
+                                                     class_name))
 
     if pre_spike_code is not None:
         body["get_pre_spike_code"] =\
-            lambda self: dedent(upgrade_code_string(pre_spike_code,
-                                                    class_name))
+            lambda self: dedent(_upgrade_code_string(pre_spike_code,
+                                                     class_name))
 
     if post_spike_code is not None:
         body["get_post_spike_code"] =\
-            lambda self: dedent(upgrade_code_string(post_spike_code,
-                                                    class_name))
+            lambda self: dedent(_upgrade_code_string(post_spike_code,
+                                                     class_name))
 
     if pre_dynamics_code is not None:
         body["get_pre_dynamics_code"] =\
-            lambda self: dedent(upgrade_code_string(pre_dynamics_code,
-                                                    class_name))
+            lambda self: dedent(_upgrade_code_string(pre_dynamics_code,
+                                                     class_name))
 
     if post_dynamics_code is not None:
         body["get_post_dynamics_code"] =\
-            lambda self: dedent(upgrade_code_string(post_dynamics_code,
-                                                    class_name))
+            lambda self: dedent(_upgrade_code_string(post_dynamics_code,
+                                                     class_name))
     
     if vars is not None:
         body["get_vars"] = \
@@ -1229,9 +1252,9 @@ def create_weight_update_model(class_name, params=None, param_names=None,
         body["get_post_neuron_var_refs"] =\
             lambda self: [VarRef(*v) for v in post_neuron_var_refs]
     
-    return create_model(class_name, WeightUpdateModelBase, params, 
-                        param_names, derived_params, 
-                        extra_global_params, body)
+    return _create_model(class_name, WeightUpdateModelBase, params,
+                         param_names, derived_params,
+                         extra_global_params, body)
 
 
 def create_current_source_model(class_name, params=None, param_names=None,
@@ -1269,8 +1292,8 @@ def create_current_source_model(class_name, params=None, param_names=None,
 
     if injection_code is not None:
         body["get_injection_code"] =\
-            lambda self: dedent(upgrade_code_string(injection_code,
-                                                    class_name))
+            lambda self: dedent(_upgrade_code_string(injection_code,
+                                                     class_name))
 
     if vars is not None:
         body["get_vars"] = \
@@ -1280,9 +1303,9 @@ def create_current_source_model(class_name, params=None, param_names=None,
         body["get_neuron_var_refs"] =\
             lambda self: [VarRef(*v) for v in var_refs]
 
-    return create_model(class_name, CurrentSourceModelBase, params,
-                        param_names, derived_params,
-                        extra_global_params, body)
+    return _create_model(class_name, CurrentSourceModelBase, params,
+                         param_names, derived_params,
+                         extra_global_params, body)
 
 
 def create_custom_update_model(class_name, params=None, param_names=None, 
@@ -1325,7 +1348,7 @@ def create_custom_update_model(class_name, params=None, param_names=None,
 
     if update_code is not None:
         body["get_update_code"] =\
-            lambda self: dedent(upgrade_code_string(update_code, class_name))
+            lambda self: dedent(_upgrade_code_string(update_code, class_name))
 
     if var_refs is not None:
         body["get_var_refs"] = lambda self: [VarRef(*v) for v in var_refs]
@@ -1338,9 +1361,9 @@ def create_custom_update_model(class_name, params=None, param_names=None,
         body["get_extra_global_param_refs"] =\
             lambda self: [EGPRef(*e) for e in extra_global_param_refs]
 
-    return create_model(class_name, CustomUpdateModelBase, params,
-                        param_names, derived_params,
-                        extra_global_params, body)
+    return _create_model(class_name, CustomUpdateModelBase, params,
+                         param_names, derived_params,
+                         extra_global_params, body)
 
 def create_custom_connectivity_update_model(class_name, params=None,
                                             vars=None, pre_vars=None,
@@ -1389,13 +1412,13 @@ def create_custom_connectivity_update_model(class_name, params=None,
 
     if row_update_code is not None:
         body["get_row_update_code"] =\
-            lambda self: dedent(upgrade_code_string(row_update_code,
-                                                    class_name))
+            lambda self: dedent(_upgrade_code_string(row_update_code,
+                                                     class_name))
 
     if host_update_code is not None:
         body["get_host_update_code"] =\
-            lambda self: dedent(upgrade_code_string(host_update_code,
-                                                    class_name))
+            lambda self: dedent(_upgrade_code_string(host_update_code,
+                                                     class_name))
 
     if vars is not None:
         body["get_vars"] = \
@@ -1420,45 +1443,57 @@ def create_custom_connectivity_update_model(class_name, params=None,
         body["get_post_var_refs"] = \
             lambda self: [VarRef(*v) for v in post_var_refs]
 
-    return create_model(class_name, CustomConnectivityUpdateModelBase,
-                        params, None, derived_params, 
-                        extra_global_params, body)
+    return _create_model(class_name, CustomConnectivityUpdateModelBase,
+                         params, None, derived_params,
+                         extra_global_params, body)
 
 
-def create_var_init_snippet(class_name, params=None, param_names=None,
-                            derived_params=None, var_init_code=None, 
+def create_var_init_snippet(class_name: str, params: ModelParamsType = None,
+                            param_names=None, derived_params=None,
+                            var_init_code: Optional[str] = None,
                             extra_global_params=None):
-    """This helper function creates a custom InitVarSnippet class.
-    See also:
-    create_neuron_model
-    create_weight_update_model
-    create_postsynaptic_model
-    create_current_source_model
-    create_sparse_connect_init_snippet
+    """Creates a new variable initialisation snippet
+    Within the ``var_init_code``, the parameters, derived parameters and
+    extra global parameters defined in this snippet can all be referred to be name.
+    Additionally, the code may refer to the following built in read-only variables
+
+    - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
+
+    And, if the snippet is used to initialise a per-neuron variable:
+
+    - ``id`` which represents a neurons index within a population (starting from zero)
+    - ``num_neurons`` which represents the number of neurons in the population
+
+    or, a per-synapse variable:
+
+    - ``id_pre`` which represents the index of the presynaptic neuron (starting from zero)
+    - ``id_post`` which represents the index of the postsynaptic neuron (starting from zero)
+    - ``num_pre`` which represents the number of presynaptic neurons
+    - ``num_post`` which represents the number of postsynaptic neurons
+
+    Finally, the variable being initialised is represented by
+    the write-only ``value`` variable.
 
     Args:
-    class_name          --  name of the new class
-
-    Keyword args:
-
-    param_names         --  list of strings with param names of the model
-    derived_params      --  list of pairs, where the first member is string with
-                            name of the derived parameter and the second MUST be
-                            an instance of the pygenn.genn_wrapper.DerivedParamFunc class
-    var_init_code       --  string with the variable initialization code
-    extra_global_params --  list of pairs of strings with names and
-                            types of additional parameters
+        class_name:             name of the new model (only for debugging)
+        params:                 name and optional types of model parameters
+        derived_params:         names, types and callables to calculate
+                                derived parameter values from paramss
+        var_init_code:          string containing the code statements
+                                required to initialise the variable
+        extra_global_params:    names and types of model
+                                extra global parameters
     """
     body = {}
 
     if var_init_code is not None:
         body["get_code"] =\
-            lambda self: dedent(upgrade_code_string(var_init_code,
-                                                    class_name))
+            lambda self: dedent(_upgrade_code_string(var_init_code,
+                                                     class_name))
 
-    return create_model(class_name, InitVarSnippetBase, 
-                        params, param_names, derived_params, 
-                        extra_global_params, body)
+    return _create_model(class_name, InitVarSnippetBase,
+                         params, param_names, derived_params,
+                         extra_global_params, body)
 
 
 def create_sparse_connect_init_snippet(class_name, params=None, 
@@ -1506,13 +1541,13 @@ def create_sparse_connect_init_snippet(class_name, params=None,
 
     if row_build_code is not None:
         body["get_row_build_code"] =\
-            lambda self: dedent(upgrade_code_string(row_build_code,
-                                                    class_name))
+            lambda self: dedent(_upgrade_code_string(row_build_code,
+                                                     class_name))
 
     if col_build_code is not None:
         body["get_col_build_code"] =\
-            lambda self: dedent(upgrade_code_string(col_build_code,
-                                                    class_name))
+            lambda self: dedent(_upgrade_code_string(col_build_code,
+                                                     class_name))
 
     if calc_max_row_len_func is not None:
         body["get_calc_max_row_length_func"] = \
@@ -1526,9 +1561,9 @@ def create_sparse_connect_init_snippet(class_name, params=None,
         body["get_calc_kernel_size_func"] = \
             lambda self: _wrap_kernel_size_lambda(calc_kernel_size_func)
 
-    return create_model(class_name, InitSparseConnectivitySnippetBase, params,
-                        param_names, derived_params, 
-                        extra_global_params, body)
+    return _create_model(class_name, InitSparseConnectivitySnippetBase, params,
+                         param_names, derived_params,
+                         extra_global_params, body)
 
 def create_toeplitz_connect_init_snippet(class_name, params=None,
                                          param_names=None,
@@ -1569,8 +1604,8 @@ def create_toeplitz_connect_init_snippet(class_name, params=None,
 
     if diagonal_build_code is not None:
         body["get_diagonal_build_code"] =\
-            lambda self: dedent(upgrade_code_string(diagonal_build_code,
-                                                    class_name))
+            lambda self: dedent(_upgrade_code_string(diagonal_build_code,
+                                                     class_name))
 
     if calc_max_row_len_func is not None:
         body["get_calc_max_row_length_func"] = \
@@ -1580,9 +1615,9 @@ def create_toeplitz_connect_init_snippet(class_name, params=None,
         body["get_calc_kernel_size_func"] = \
             lambda self: _wrap_kernel_size_lambda(calc_kernel_size_func)
 
-    return create_model(class_name, InitToeplitzConnectivitySnippetBase,
-                        params, param_names, derived_params,
-                        extra_global_params, body)
+    return _create_model(class_name, InitToeplitzConnectivitySnippetBase,
+                         params, param_names, derived_params,
+                         extra_global_params, body)
 
 @deprecated("This wrapper is now unnecessary - use callables directly",
             category=FutureWarning)

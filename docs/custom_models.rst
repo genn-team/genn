@@ -14,7 +14,7 @@ This is essentially C99 (https://en.cppreference.com/w/c/language) with the foll
 - Functions, typedefines and structures cannot be defined in user code
 - Structures are not supported at all
 - Some esoteric C99 language features like octal integer and hexadecimal floating point literals aren't supported
-- The & operator isn't supported - on the target GPU hardware, local variables are assumed to be stored in registers and not addressable. The only time this is limiting is when dealing with extra global parameter arrays as you can no longer do stuff like ``const int *egpSubset = &egp[offset];`` and instead have to do ``const int *egpSubset = egp + offset;``.
+- The address of (&) operator isn't supported. On the GPU hardware GeNN targets, local variables are assumed to be stored in registers and not addressable. The only time this is limiting is when dealing with extra global parameter arrays as you can no longer do stuff like ``const int *egpSubset = &egp[offset];`` and instead have to do ``const int *egpSubset = egp + offset;``.
 - Like C++ (but not C99) function overloading is supported so ``sin(30.0f)`` will resolve to the floating point rather than double-precision version.
 - Floating point literals like ``30.0`` without a suffix will be treated as ``scalar``, ``30.0f`` will always be treated as float and ``30.0d`` will always be treated as double.
 - A LP64 data model is used on all platforms where ``int`` is 32-bit and ``long`` is 64-bit.
@@ -27,10 +27,10 @@ In GeNN this can be implemented by using the following functions within GeNNCode
 
 - ``gennrand_uniform()`` returns a number drawn uniformly from the interval :math:`[0.0, 1.0]`
 - ``gennrand_normal()`` returns a number drawn from a normal distribution with a mean of 0 and a standard deviation of 1.
-- ``gennrand_exponential()`` returns a number drawn from an exponential distribution with \f$\lambda=1\f$.
-- ``gennrand_log_normal, MEAN, STDDEV)`` returns a number drawn from a log-normal distribution with the specified mean and standard deviation.
-- ``gennrand_gamma, ALPHA)`` returns a number drawn from a gamma distribution with the specified shape.
-- ``gennrand_binomial, N, P)`` returns a number drawn from a binomial distribution with the specified shape.
+- ``gennrand_exponential()`` returns a number drawn from an exponential distribution with :math:`\lambda=1`.
+- ``gennrand_log_normal(mean, std)`` returns a number drawn from a log-normal distribution with the specified mean and standard deviation.
+- ``gennrand_gamma(alpha)`` returns a number drawn from a gamma distribution with the specified shape.
+- ``gennrand_binomial(n, p)`` returns a number drawn from a binomial distribution with the specified shape.
 
 
 -----
@@ -38,18 +38,49 @@ Types
 -----
 pass
 
----------------
-Variable access
----------------
-pass
-
 -----------------------
 Initialisation snippets
 -----------------------
+Initialisation snippets are use GeNNCode to initialise various parts of a GeNN model.
+They are configurable by the user with parameters, derived parameters and extra global parameters.
+Parameters have a homogeneous numeric value across the population being initialised. 
+'Derived parameters' are a mechanism for enhanced efficiency when running neuron models. 
+They allow constants used within the GeNNCode implementation of a model to be computed 
+from more 'user friendly' parameters provided by the user. For example, a decay to apply 
+each timestep could be computed from a time constant provided in a parameter called ``tau`` 
+by passing the following keyword arguments to one of the snippet or model creation functions described bwlo:
+
+..  code-block:: python
+
+    params=["tau"],
+    derived_params=[("ExpTC", lambda pars, dt: np.exp(-dt / pars["tau"]))])
+
 
 Variable initialisation
 -----------------------
-pass
+New variable initialisation snippets can be defined by calling:
+
+.. autofunction:: pygenn.create_var_init_snippet
+
+For example, if we wanted to define a snippet to initialise variables by sampling from a normal distribution, 
+redrawing if the value is negative (which could be useful to ensure delays remain causal):
+
+
+..  code-block:: python
+
+    normal_positive_model = pygenn.create_var_init_snippet(
+        "normal_positive",
+        params=["mean", "sd],
+        var_init_code=
+            """
+            scalar normal;
+            do
+            {
+            normal = mean + (gennrand_normal() * sd);
+            } while (normal < 0.0);
+            value = normal;
+            """)
+
 
 Sparse connectivity initialisation
 ----------------------------------
@@ -62,11 +93,12 @@ pass
 ------
 Models
 ------
+Stat
+
 
 Neuron models
 -------------
-In order to define a new neuron type, it is necessary to define a new class derived from NeuronModels::Base.
-However, for convenience, convenience, 
+New neuron models are defined by calling:
 
 .. autofunction:: pygenn.create_neuron_model
 
@@ -77,33 +109,19 @@ For example, we can define a leaky integrator :math:`\tau\frac{dV}{dt}= -V + I_{
     leaky_integrator_model = pygenn.create_neuron_model(
         "leaky_integrator",
 
-        sim_code="V += (-V + Isyn) * (dt / tau);",
+        sim_code=
+            """
+            V += (-V + Isyn) * (dt / tau);
+            """,
         threshold_condition_code="V >= 1.0",
-        reset_code="V = 0.0;",
+        reset_code=
+            """
+            V = 0.0;
+            """,
 
         params=["tau"],
         vars=[("V", "scalar", pygenn.VarAccess.READ_WRITE)])
 
-
-Derived parameters
-^^^^^^^^^^^^^^^^^^
-'Derived parameters' are a mechanism for enhanced efficiency when running neuron models. 
-If parameters with model-side meaning, such as time constants or conductances always appear in a certain combination in the model, then it is more efficient to pre-compute this combination and define it as a dependent parameter.
-
-For example, because the equation defining the previous leaky integrator example has an algebraic solution, it can be more accurately solved as follows - using a derived parameter to calculate :math:`\exp\left(\frac{-t}{\tau}\right)`:
-
-..  code-block:: python
-
-    leaky_integrator_2_model = pygenn.create_neuron_model(
-        "leaky_integrator_2",
-
-        sim_code="V = Isyn - ExpTC * (Isyn - V);",
-        threshold_condition_code="V >= 1.0",
-        reset_code="V = 0.0;",
-
-        params=["tau"],
-        vars=[("V", "scalar", VarAccess_READ_WRITE)],
-        derived_params=[("ExpTC", lambda pars, dt: np.exp(-dt / pars["tau"]))])
 
 Additional input variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -118,7 +136,7 @@ For example, if we wanted our leaky integrator to operate on the the product of 
     sim_code=
         """
         const scalar input = Isyn * Isyn2;
-        V = input - ExpTC * (input - V);
+        sim_code="V += (-V + input) * (dt / tau);
         """,
 
 
