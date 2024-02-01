@@ -31,7 +31,6 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
-    "sphinx_autodoc_typehints",
 ]
 
 napoleon_use_param = True
@@ -48,6 +47,8 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # Mock imports for readthedocs
 autodoc_mock_imports = []
 
+autodoc_typehints = "both"
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -61,3 +62,22 @@ html_theme = "default"
 #html_static_path = ["_static"]
 
 primary_domain = "py"
+
+deprecations = {
+    ("function", "pygenn.create_neuron_model"): ["param_names", "var_name_types",
+                                                 "pre_var_name_types", "post_var_name_types",
+                                                 "sim_code", "event_code", "learn_post_code",
+                                                 "event_threshold_condition_code"],
+    ("function", "pygenn.create_var_init_snippet"): ["param_names"]
+
+}
+def remove_deprecated_arguments(app, what, name, obj, options, signature, return_annotation):
+    if (what, name) in deprecations:
+        deprecated_args = deprecations[(what, name)]
+        print(f"DEPRECATING {deprecated_args} from {name}")
+
+        signature_args = signature[1:-1].split(",")
+
+
+def setup(app):
+    app.connect("autodoc-process-signature", remove_deprecated_arguments)
