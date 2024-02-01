@@ -16,6 +16,7 @@ hyperparameter values etc to enable rapid prototyping of SNN models.
     building_networks
     simulating_networks
     custom_models
+    references
     
     Reference <source/pygenn>
 
