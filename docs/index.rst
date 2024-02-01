@@ -9,16 +9,16 @@ to reduce cognitive load  by automatically calculating layer sizes, default
 hyperparameter values etc to enable rapid prototyping of SNN models.
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 4
     :titlesonly:
     
     upgrading
     building_networks
     simulating_networks
     custom_models
-    references
+    bibliography
     
-    Reference <source/pygenn>
+    Reference documentation <source/pygenn>
 
 ------------------
 Indices and tables
