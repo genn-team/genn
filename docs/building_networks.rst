@@ -33,6 +33,7 @@ Parameters
 ----------
 Parameters are homogeneous across an entire population and 
 
+DYNAMIC PARAMETERS
 
 Variables
 ----------
