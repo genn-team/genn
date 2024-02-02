@@ -1103,8 +1103,8 @@ def create_weight_update_model(
         pre_spike_syn_code="addToPre(inc * V_post);"
 
     would add terms ``inc * V_post`` to for each _outgoing_ synapse of a presynaptic neuron.
-    Like postsynaptic models, by default these inputs are accumulated in ``Isyn`` but they
-    can also be directed to additional input variables by setting the 
+    Like postsynaptic models, by default these inputs are accumulated in ``Isyn`` in the presynaptic 
+    neuron but they can also be directed to additional input variables by setting the 
     :attr:`SynapseGroup.pre_target_var` property. Unlike for normal forward synaptic 
     actions, reverse synaptic actions with ``addToPre(inc)`` are not modulated through 
     a post-synaptic model but added directly into the indicated presynaptic target input variable.
