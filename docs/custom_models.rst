@@ -98,6 +98,7 @@ Stat
 
 Neuron models
 -------------
+Neuron models define the dynamics and spiking behaviour of populations of neurons.
 New neuron models are defined by calling:
 
 .. autofunction:: pygenn.create_neuron_model
@@ -142,6 +143,8 @@ For example, if we wanted our leaky integrator to operate on the the product of 
 
 Weight update models
 --------------------
+Weight update models define the event-driven and time-driven behaviour of synapses and what output they deliver to postsynaptic (and presynaptic) neurons.
+New weight update models are defined by calling:
 
 .. autofunction:: pygenn.create_weight_update_model
 
@@ -164,7 +167,8 @@ in a fully event-driven manner as follows:
         params=["tauPlus", "tauMinus", "aPlus", "aMinus", "wMin", "wMax"],
         vars=[("g", "scalar")],
 
-        pre_spike_syn_code="""
+        pre_spike_syn_code=
+            """
             addToPost(g);
             const scalar dt = t - st_post;
             if (dt > 0) {
@@ -173,7 +177,8 @@ in a fully event-driven manner as follows:
                 g = fmax(Wmin, fmin(Wmax, newWeight));
             }
             """,
-        post_spike_syn_code="""
+        post_spike_syn_code=
+            """
             const scalar dt = t - st_pre;
             if (dt > 0) {
                 const scalar timing = exp(-dt / tauPlus);
@@ -189,10 +194,6 @@ Therefore, if it is possible, implementing synapse variables on a per-neuron rat
 The ``pre_var_name_types`` and ``post_var_name_types`` keyword arguments} are used to define any pre or postsynaptic state variables.
 For example, using pre and postsynaptic variables, our event-driven STDP rule can be extended to use all-to-all spike pairing using pre and postsynaptic _trace_ variables [Morrison2008]_ :
 
-TODO move into create function documentation
-\note
-These pre and postsynaptic code snippets can only access the corresponding pre and postsynaptic variables as well as those associated with the pre or postsynaptic neuron population. Like other state variables, variables defined here as `NAME` can be accessed in weight update model code strings using the \$(NAME) syntax. 
-
 ..  code-block:: python
 
     stdp_additive_2_model = genn_model.create_custom_weight_update_class(
@@ -202,7 +203,8 @@ These pre and postsynaptic code snippets can only access the corresponding pre a
         pre_vars=[("preTrace", "scalar")],
         post_vars=[("postTrace", "scalar")],
         
-        pre_spike_syn_code="""
+        pre_spike_syn_code=
+            """
             addToPost(g);
             const scalar dt = t - st_post;
             if(dt > 0) {
@@ -210,7 +212,8 @@ These pre and postsynaptic code snippets can only access the corresponding pre a
                 g = fmin(wMax, fmax(wMin, newWeight));
             }
             """,
-        post_spike_syn_code="""
+        post_spike_syn_code=
+            """
             const scalar dt = t - st_pre;
             if(dt > 0) {
                 const scalar newWeight = g + (aPlus * preTrace);
@@ -218,16 +221,20 @@ These pre and postsynaptic code snippets can only access the corresponding pre a
             }
             """,
 
-        pre_spike_code="""
+        pre_spike_code=
+            """
             preTrace += 1.0;
             """,
-        pre_dynamics_code="""
+        pre_dynamics_code=
+            """
             preTrace *= tauPlusDecay;
             """,
-        post_spike_code="""
+        post_spike_code=
+            """
             postTrace += 1.0;
             """,
-        post_dynamics_code="""
+        post_dynamics_code=
+            """
             postTrace *= tauMinusDecay;
             """)
 
@@ -276,4 +283,75 @@ pass
 
 Custom connectivity update models
 ---------------------------------
-pass
+
+Parallel synapse iteration and removal
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The main GPU operation that custom connectivity updates expose is the ability to generate per-presynaptic neuron update code. This can be used to implement a very simple model which removes 'diagonals' from the connection matrix:
+
+..  code-block:: python
+
+    remove_diagonal_model = pygenn.create_custom_connectivity_update_model(
+        "remove_diagonal",
+        row_update_code=
+            """
+            for_each_synapse {
+                if(id_post == id_pre) {
+                    remove_synapse();
+                    break;
+                }
+            }
+            """)
+
+Parallel synapse creation
+^^^^^^^^^^^^^^^^^^^^^^^^^
+Similarly you could implement a custom connectivity model which adds diagonals back into the connection matrix like this:
+
+..  code-block:: python
+
+    add_diagonal_model = pygenn.create_custom_connectivity_update_model(
+        "add_diagonal",
+        row_update_code=
+            """
+            add_synapse(id_pre);
+            """)
+
+One important issue here is that lots of other parts of the model (e.g. other custom connectivity updates or custom weight updates) _might_ have state variables 'attached' to the same connectivity that the custom update is modifying. GeNN will automatically detect this and add and shuffle all these variables around accordingly which is fine for removing synapses but has no way of knowing what value to add synapses with. If you want new synapses to be created with state variables initialised to values other than zero, you need to use variables references to hook them to the custom connectivity update. For example, if you wanted to be able to provide weights for your new synapse, you could update the previous example model like:
+
+..  code-block:: python
+
+    add_diagonal_model = pygenn.create_custom_connectivity_update_model(
+        "add_diagonal",
+        var_refs=[("g", "scalar")],
+        row_update_code=
+            """
+            add_synapse(id_pre, 1.0);
+            """)
+
+Host updates
+^^^^^^^^^^^^
+Some common connectivity update scenarios involve some computation which can't be easily parallelized. If, for example you wanted to determine which elements on each row you wanted to remove on the host, you can include ``host_update_code`` which gets run before the row update code:
+
+..  code-block:: python
+
+    remove_diagonal_model = pygenn.create_custom_connectivity_update_model(
+        "remove_diagonal",
+        pre_var_name_types=[("postInd", "unsigned int")],
+        row_update_code=
+            """
+            for_each_synapse {
+                if(id_post == postInd) {
+                    remove_synapse();
+                    break;
+                }
+            }
+            """,
+        host_update_code=
+            """
+            for(unsigned int i = 0; i < num_pre; i++) {
+               postInd[i] = i;
+            }
+            pushpostIndToDevice();
+            """)
+
+Within host update code, you have full access to parameters, derived parameters, extra global parameters and pre and postsynaptic variables. By design you do not have access to per-synapse variables or variable references and, currently, you can not access pre and post synaptic variable references as there are issues regarding delays. Each variable has an accompanying push and pull function to copy it to and from the device, for variables this has no parameters as illustrated in the above example and for pointer extra global parameters it has a single parameter specifying the size of the array.
+

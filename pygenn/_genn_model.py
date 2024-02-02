@@ -1096,7 +1096,7 @@ def create_weight_update_model(
     For an example, see WeightUpdateModels::StaticPulseDendriticDelay for a simple synapse update model with heterogeneous dendritic delays.
 
     When using dendritic delays, the *maximum* dendritic delay for a synapse populations must be specified via the
-    :attr:`SynapseGroup.max_dendritic_delay_timesteps`` property. One can also define synaptic effects that occur in the reverse direction,
+    :attr:`SynapseGroup.max_dendritic_delay_timesteps` property. One can also define synaptic effects that occur in the reverse direction,
     i.e. terms that are added to a target variable in the _presynaptic_ neuron using the ``addToPre(inc)`` function. For example,
 
     ..  code-block:: python
@@ -1104,8 +1104,11 @@ def create_weight_update_model(
         pre_spike_syn_code="addToPre(inc * V_post);"
 
     would add terms ``inc * V_post`` to for each _outgoing_ synapse of a presynaptic neuron.
-    One can also set alternative input variables in the presynaptic neuron as the target variable of this reverse input using \add_cpp_python_text{SynapseGroup::setPreTargetVar(),`pygenn.SynapseGroup.pre_target_var`}, see section \ref neuron_additional_input on how to define additional input variables for a neuron population.
-    Unlike for normal forward synaptic actions, reverse synaptic actions with \$(addToPre,\$(inc)) are not modulated through a post-synaptic model but added directly into the indicated presynaptic target input variable, such as \$(Isyn).
+    Like postsynaptic models, by default these inputs are accumulated in ``Isyn`` but they
+    can also be directed to additional input variables by setting the 
+    :attr:`SynapseGroup.pre_target_var` property. Unlike for normal forward synaptic 
+    actions, reverse synaptic actions with ``addToPre(inc)`` are not modulated through 
+    a post-synaptic model but added directly into the indicated presynaptic target input variable.
 
     Args:
         class_name:                             name of the new class (only for debugging)
@@ -1134,13 +1137,22 @@ def create_weight_update_model(
         post_event_threshold_condition_code:    string with the postsynaptic event threshold
                                                 condition code
         pre_spike_code:                         string with the code run once per
-                                                spiking presynaptic neuron
+                                                spiking presynaptic neuron. Only
+                                                presynaptic variables and 
+                                                variable references can be 
+                                                referenced from this code.
         post_spike_code:                        string with the code run once per
                                                 spiking postsynaptic neuron
         pre_dynamics_code:                      string with the code run every
-                                                timestep on presynaptic neuron
+                                                timestep on presynaptic neuron.
+                                                Only presynaptic variables and
+                                                variable references can be
+                                                referenced from this code.
         post_dynamics_code:                     string with the code run every
-                                                timestep on postsynaptic neuron
+                                                timestep on postsynaptic neuron.
+                                                Only postsynaptic variables and
+                                                variable references can be
+                                                referenced from this code.
         extra_global_params:                    names and types of model
                                                 extra global parameters
     """
