@@ -130,7 +130,6 @@ Normally, neuron models receive the linear sum of the inputs coming from all of 
 However neuron models can define additional input variables - allowing input from different synaptic inputs to be combined non-linearly.
 For example, if we wanted our leaky integrator to operate on the the product of two input currents, we could modify our model as follows:
 
-
 ..  code-block:: python
 
     additional_input_vars=[("Isyn2", "scalar", 1.0)],
@@ -269,9 +268,17 @@ Whenever this expression evaluates to true, the event code set using the \add_cp
 Weight update models can indicate whether they require the times of these spike-like-events using the \add_cpp_python_text{SET_NEEDS_PRE_SPIKE_EVENT_TIME() and SET_NEEDS_PREV_PRE_SPIKE_EVENT_TIME() macros, ``is_pre_spike_event_time_required`` and ``is_prev_pre_spike_event_time_required`` keyword arguments}.
 These times can then be accessed through the \$(seT_pre) and \$(prev_seT_pre) variables.
 
-Postsynaptic update models
---------------------------
-pass
+Postsynaptic models
+-------------------
+The postsynaptic models defines how synaptic input translates into an input current (or other input term for models that are not current based).
+They can contain equations defining dynamics that are applied to the (summed) synaptic activation, e.g. an exponential decay over time.
+New postsynaptic models are defined by calling:
+
+.. autofunction:: pygenn.create_postsynaptic_model
+
+By default, the inputs injected by postsynaptic models are accumulated in ``Isyn`` in the postsynaptic 
+neuron but they they can also be directed to additional input variables by setting the :attr:`SynapseGroup.post_target_var` property. 
+
 
 Current source models
 ---------------------
