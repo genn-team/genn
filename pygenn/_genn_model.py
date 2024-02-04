@@ -917,7 +917,7 @@ def create_neuron_model(class_name: str, params: ModelParamsType = None,
                         extra_global_params: ModelEGPType = None,
                         additional_input_vars=None,
                         auto_refractory_required: bool = False):
-    """Creates a new neuron model.
+    r"""Creates a new neuron model.
     Within all of the code strings, the variables, parameters,
     derived parameters, additional input variables and extra global
     parameters defined in this model can all be referred to be name.
@@ -949,6 +949,42 @@ def create_neuron_model(class_name: str, params: ModelParamsType = None,
                                     local input variables
         auto_refractory_required:   does this model require auto-refractory
                                     logic to be generated?
+    
+    For example, we can define a leaky integrator :math:`\tau\frac{dV}{dt}= -V + I_{{\rm syn}}` solved using Euler's method:
+
+    ..  code-block:: python
+
+        leaky_integrator_model = pygenn.create_neuron_model(
+            "leaky_integrator",
+
+            sim_code=
+                \"""
+                V += (-V + Isyn) * (dt / tau);
+                \""",
+            threshold_condition_code="V >= 1.0",
+            reset_code=
+                \"""
+                V = 0.0;
+                \""",
+
+            params=["tau"],
+            vars=[("V", "scalar", pygenn.VarAccess.READ_WRITE)])
+
+    Additional input variables
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    Normally, neuron models receive the linear sum of the inputs coming from all of their synaptic inputs through the ``Isyn`` variable. 
+    However neuron models can define additional input variables - allowing input from different synaptic inputs to be combined non-linearly.
+    For example, if we wanted our leaky integrator to operate on the the product of two input currents, we could modify our model as follows:
+
+    ..  code-block:: python
+
+        additional_input_vars=[("Isyn2", "scalar", 1.0)],
+        sim_code=
+            \"""
+            const scalar input = Isyn * Isyn2;
+            sim_code="V += (-V + input) * (dt / tau);
+            \""",
+
     """
     body = {}
     
@@ -1072,7 +1108,7 @@ def create_weight_update_model(
         pre_dynamics_code: Optional[str] = None,
         post_dynamics_code: Optional[str] = None,
         extra_global_params: ModelEGPType  = None):
-    """Creates a new weight update model.
+    r"""Creates a new weight update model.
     GeNN operates on the assumption that the postsynaptic output of the synapses are added linearly at the postsynaptic neuron.
     Within all of the synaptic code strings (``pre_spike_syn_code``, ``pre_event_syn_code``,
     ``post_event_syn_code``, ``post_spike_syn_code`` and ``synapse_dynamics_code`` ) these currents are delivered using the ``addToPost(inc)`` function.
@@ -1154,6 +1190,116 @@ def create_weight_update_model(
                                                 referenced from this code.
         extra_global_params:                    names and types of model
                                                 extra global parameters
+    
+    For example, we can define a simple additive STDP rule with nearest-neighbour spike pairing and the following time-dependence:
+
+    ..  math::
+
+        \Delta w_{ij} & = \
+            \begin{cases}
+                A_{+}\exp\left(-\frac{\Delta t}{\tau_{+}}\right) & if\, \Delta t>0\\
+                A_{-}\exp\left(\frac{\Delta t}{\tau_{-}}\right) & if\, \Delta t\leq0
+            \end{cases}
+
+    in a fully event-driven manner as follows:
+
+    ..  code-block:: python
+
+        stdp_additive_model = pygenn.create_weight_update_model(
+            "stdp_additive",
+            params=["tauPlus", "tauMinus", "aPlus", "aMinus", "wMin", "wMax"],
+            vars=[("g", "scalar")],
+
+            pre_spike_syn_code=
+                \"""
+                addToPost(g);
+                const scalar dt = t - st_post;
+                if (dt > 0) {
+                    const scalar timing = exp(-dt / tauMinus);
+                    const scalar newWeight = g - (Aminus * timing);
+                    g = fmax(Wmin, fmin(Wmax, newWeight));
+                }
+                \""",
+            post_spike_syn_code=
+                \"""
+                const scalar dt = t - st_pre;
+                if (dt > 0) {
+                    const scalar timing = exp(-dt / tauPlus);
+                    const scalar newWeight = g + (Aplus * timing);
+                    g = fmax(Wmin, fmin(Wmax, newWeight));
+                }
+                \""")
+
+    Pre and postsynaptic dynamics
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    The memory required for synapse variables and the computational cost of updating them tends to grow with :math:`O(N^2)` with the number of neurons.
+    Therefore, if it is possible, implementing synapse variables on a per-neuron rather than per-synapse basis is a good idea. 
+    The ``pre_var_name_types`` and ``post_var_name_types`` keyword arguments} are used to define any pre or postsynaptic state variables.
+    For example, using pre and postsynaptic variables, our event-driven STDP rule can be extended to use all-to-all spike pairing using pre and postsynaptic _trace_ variables [Morrison2008]_ :
+
+    ..  code-block:: python
+
+        stdp_additive_2_model = genn_model.create_custom_weight_update_class(
+            "stdp_additive_2",
+            params=["tauPlus", "tauMinus", "aPlus", "aMinus", "wMin", "wMax"],
+            vars=[("g", "scalar")],
+            pre_vars=[("preTrace", "scalar")],
+            post_vars=[("postTrace", "scalar")],
+            
+            pre_spike_syn_code=
+                \"""
+                addToPost(g);
+                const scalar dt = t - st_post;
+                if(dt > 0) {
+                    const scalar newWeight = g - (aMinus * postTrace);
+                    g = fmin(wMax, fmax(wMin, newWeight));
+                }
+                \""",
+            post_spike_syn_code=
+                \"""
+                const scalar dt = t - st_pre;
+                if(dt > 0) {
+                    const scalar newWeight = g + (aPlus * preTrace);
+                    g = fmin(wMax, fmax(wMin, newWeight));
+                }
+                \""",
+
+            pre_spike_code="preTrace += 1.0;",
+            pre_dynamics_code="preTrace *= tauPlusDecay;",
+            post_spike_code="postTrace += 1.0;",
+            post_dynamics_code="postTrace *= tauMinusDecay;")
+
+    Synapse dynamics
+    ^^^^^^^^^^^^^^^^
+    Unlike the event-driven updates previously described, synapse dynamics code is run for each synapse, each timestep i.e. unlike the others it is time-driven. 
+    This can be used where synapses have internal variables and dynamics that are described in continuous time, e.g. by ODEs.
+    However using this mechanism is typically computationally very costly because of the large number of synapses in a typical network. 
+    By using the ``addToPost()`` and ``addToPostDelay()`` functions discussed in the context of ``pre_spike_syn_code``, the synapse dynamics can also be used to implement continuous synapses for rate-based models.
+    For example a continous synapse could be added to a weight update model definition as follows:
+
+    ..  code-block:: python
+
+        synapse_dynamics_code="addToPost(g * V_pre);",
+
+    where ``V_pre`` is a presynaptic variable reference.
+
+    Spike-like events
+    ^^^^^^^^^^^^^^^^^
+    As well as time-driven synapse dynamics and spike event-driven updates, GeNN weight update models also support "spike-like events". 
+    These can be triggered by a threshold condition evaluated on the pre or postsynaptic neuron. 
+    This typically involves pre or postsynaptic weight update model variables or variable references respectively.
+
+    For example, to trigger a presynaptic spike-like event when the presynaptic neuron's voltage is greater than 0.02, the following could be added to a weight update model definition:
+
+    ..  code-block:: python
+
+        pre_event_threshold_condition_code ="V_pre > -0.02"
+
+    \end_toggle_code
+    Whenever this expression evaluates to true, the event code set using the \add_cpp_python_text{SET_EVENT_CODE() macro,`event_code` keyword argument} is executed. For an example, see WeightUpdateModels::StaticGraded.
+    Weight update models can indicate whether they require the times of these spike-like-events using the \add_cpp_python_text{SET_NEEDS_PRE_SPIKE_EVENT_TIME() and SET_NEEDS_PREV_PRE_SPIKE_EVENT_TIME() macros, ``is_pre_spike_event_time_required`` and ``is_prev_pre_spike_event_time_required`` keyword arguments}.
+    These times can then be accessed through the \$(seT_pre) and \$(prev_seT_pre) variables.
+
     """
     body = {}
     
@@ -1274,27 +1420,34 @@ def create_current_source_model(class_name, params=None, param_names=None,
                                 neuron_var_refs=None, derived_params=None,
                                 injection_code=None, extra_global_params=None):
     """This helper function creates a custom NeuronModel class.
-    See also:
-    create_neuron_model
-    create_weight_update_model
-    create_current_source_model
-    create_var_init_snippet
-    create_sparse_connect_init_snippet
-
     Args:
-    class_name          --  name of the new class
+        class_name:             name of the new class (only for debugging)
+        params:                 name and optional types of model parameters
+        vars:                   names, types and optional variable access
+                                modifiers of model variables
+        neuron_var_refs:        names, types and optional variable access
+                                of references to be assigned to variables
+                                in neuron population current source is attached to
+        derived_params:         names, types and callables to calculate
+                                derived parameter values from params
+        injection_code:         string containing the simulation code
+                                statements to be run every timestep
+        extra_global_params:    names and types of model
+                                extra global parameters
+    
+    Within all the injection_code code string, the variables, parameters,
+    derived parameters, neuron variable references and extra global
+    parameters defined in this model can all be referred to be name.
+    Additionally, the code may refer to the following built in read-only variables
 
-    Keyword args:
-    param_names         --  list of strings with param names of the model
-    vars                --  list of pairs of strings with varible names and
-                            types of the model
-    neuron_var_refs     --  references to neuron variables
-    derived_params      --  list of pairs, where the first member is string
-                            with name of the derived parameter and the second
-                            should be a functor returned by create_dpf_class
-    injection_code      --  string with the current injection code
-    extra_global_params --  list of pairs of strings with names and types of
-                            additional parameters
+    - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
+    - ``id`` which represents a neurons index within a population (starting from zero)
+    - ``num_neurons`` which represents the number of neurons in the population
+    
+    Finally, the function ``injectCurrent(x)`` can be used to inject a current
+    ``x`` into the attached neuron. The variable it goes into can be
+    configured using the :attr:`CurrentSource.target_var``.
+
     """
     body = {}
     if var_name_types is not None:
@@ -1326,31 +1479,23 @@ def create_custom_update_model(class_name, params=None, param_names=None,
                                update_code=None, extra_global_params=None,
                                extra_global_param_refs=None):
     """This helper function creates a custom CustomUpdate class.
-    See also:
-    create_neuron_model
-    create_weight_update_model
-    create_current_source_model
-    create_var_init_snippet
-    create_sparse_connect_init
-
-    Args:
-    class_name              --  name of the new class
-
-    Keyword args:
-    param_names         --  list of strings with param names of the model
-    var_name_types      --  list of tuples of strings with varible names and
-                            types of the variable
-    derived_params      --  list of tuples, where the first member is string
-                            with name of the derived parameter and the second
-                            should be a functor returned by create_dpf_class
-    var_refs            --  list of tuples of strings with varible names and
-                            types of variabled variable
-    update_code         --  string with the current injection code
-    extra_global_params --  list of pairs of strings with names and types of
-                            additional parameters
-    extra_global_param_refs --  list of pairs of strings with names and types of
-                                extra global parameter references
     
+    Args:
+        class_name:                 name of the new class (only for debugging)
+        params:                     name and optional types of model parameters
+        vars:                       names, types and optional variable access
+                                    modifiers of model variables
+        var_refs:                   names, types and optional variable access
+                                    of references to be assigned to variables
+                                    in population(s) custom update is attached to
+        derived_params:             names, types and callables to calculate
+                                    derived parameter values from params
+        update_code:                string containing the code statements 
+                                    to be run when custom update is launched
+        extra_global_params:        names and types of model
+                                    extra global parameters
+        extra_global_param_refs:    names and types of extra global
+                                    parameter references
     """
     body = {}
     if var_name_types is not None:
@@ -1377,48 +1522,123 @@ def create_custom_update_model(class_name, params=None, param_names=None,
                          param_names, derived_params,
                          extra_global_params, body)
 
-def create_custom_connectivity_update_model(class_name, params=None,
-                                            vars=None, pre_vars=None,
-                                            post_vars=None,
+def create_custom_connectivity_update_model(class_name: str, 
+                                            params: ModelParamsType = None,
+                                            vars: ModelVarsType = None, 
+                                            pre_vars: ModelVarsType = None,
+                                            post_vars: ModelVarsType = None,
                                             derived_params=None, 
-                                            var_refs=None,
-                                            pre_var_refs=None,
-                                            post_var_refs=None,
-                                            row_update_code=None,
-                                            host_update_code=None,
+                                            var_refs: ModelVarRefsType = None,
+                                            pre_var_refs: ModelVarRefsType = None,
+                                            post_var_refs: ModelVarRefsType = None,
+                                            row_update_code: Optional[str] = None,
+                                            host_update_code: Optional[str] = None,
                                             extra_global_params=None):
-    """This helper function creates a custom CustomConnectivityUpdate class.
-    See also:
-    create_neuron_model
-    create_weight_update_model
-    create_current_source_model
-    create_var_init_snippet
-    create_sparse_connect_init
+    """Creates a new custom connectivity update model.
+    
+    Within host update code, you have full access to parameters, derived parameters, 
+    extra global parameters and pre and postsynaptic variables. By design you do
+    not have access to per-synapse variables or variable references and, currently, 
+    you can not access pre and post synaptic variable references as there are issues regarding delays. 
+    Each variable has an accompanying push and pull function to copy it to and from the device, 
+    for variables this has no parameters as illustrated in the above example and for 
+    extra global parameters it has a single parameter specifying the size of the array.
 
     Args:
-    class_name          --  name of the new class
+        class_name:                 name of the new class (only for debugging)
+        params:                     name and optional types of model parameters
+        vars:                       names, types and optional variable access
+                                    modifiers of per-synapse model variables
+        pre_vars:                   names, types and optional variable access
+                                    modifiers of per-presynaptic neuron model variables
+        post_vars                   names, types and optional variable access
+                                    modifiers of per-postsynaptic neuron model variables
+        derived_params:             names, types and callables to calculate
+                                    derived parameter values from params
+        var_refs:                   names, types and optional variable access
+                                    of references to be assigned to synaptic variables
+        pre_neuron_var_refs:        names, types and optional variable access
+                                    of references to be assigned to presynaptic
+                                    neuron variables
+        post_neuron_var_refs:       names, types and optional variable access
+                                    of references to be assigned to postsynaptic
+                                    neuron variables
+        row_update_code:            string containing the code statements 
+                                    to be run when custom update is launched
+        host_update_code:           string containing the code statements to be run
+                                    on CPU when custom connectivity update is launched
+        extra_global_params:        names and types of model
+                                    extra global parameters
 
-    Keyword args:
-    param_names         --  list of strings with param names of the model
-    vars                --  list of tuples of strings with variable names and
-                            types of the variable
-    pre_vars            --  list of tuples of strings with variable names and
-                            types of presynaptic  variable
-    post_vars           --  list of tuples of strings with variable names and
-                            types of postsynaptic variable
-    derived_params      --  list of tuples, where the first member is string
-                            with name of the derived parameter and the second
-                            should be a functor returned by create_dpf_class
-    var_refs            --  list of tuples of strings with variable names and
-                            types of synaptic variable references
-    pre_var_refs        --  list of tuples of strings with variable names and
-                            types of presynaptic variable references
-    post_var_refs       --  list of tuples of strings with variable names and
-                            types of postsynaptic variable references
-    row_update_code     --  string with per-row update code
-    host_update_code    --  string with host update code
-    extra_global_params --  list of pairs of strings with names and types of
-                            additional parameters
+    Parallel synapse iteration and removal
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    The main GPU operation that custom connectivity updates expose is the ability to generate per-presynaptic neuron update code. This can be used to implement a very simple model which removes 'diagonals' from the connection matrix:
+
+    ..  code-block:: python
+
+        remove_diagonal_model = pygenn.create_custom_connectivity_update_model(
+            "remove_diagonal",
+            row_update_code=
+                \"""
+                for_each_synapse {
+                    if(id_post == id_pre) {
+                        remove_synapse();
+                        break;
+                    }
+                }
+                \""")
+
+    Parallel synapse creation
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+    Similarly you could implement a custom connectivity model which adds diagonals back into the connection matrix like this:
+
+    ..  code-block:: python
+
+        add_diagonal_model = pygenn.create_custom_connectivity_update_model(
+            "add_diagonal",
+            row_update_code=
+                \"""
+                add_synapse(id_pre);
+                \""")
+
+    One important issue here is that lots of other parts of the model (e.g. other custom connectivity updates or custom weight updates) _might_ have state variables 'attached' to the same connectivity that the custom update is modifying. GeNN will automatically detect this and add and shuffle all these variables around accordingly which is fine for removing synapses but has no way of knowing what value to add synapses with. If you want new synapses to be created with state variables initialised to values other than zero, you need to use variables references to hook them to the custom connectivity update. For example, if you wanted to be able to provide weights for your new synapse, you could update the previous example model like:
+
+    ..  code-block:: python
+
+        add_diagonal_model = pygenn.create_custom_connectivity_update_model(
+            "add_diagonal",
+            var_refs=[("g", "scalar")],
+            row_update_code=
+                \"""
+                add_synapse(id_pre, 1.0);
+                \""")
+
+    Host updates
+    ^^^^^^^^^^^^
+    Some common connectivity update scenarios involve some computation which can't be easily parallelized. If, for example you wanted to determine which elements on each row you wanted to remove on the host, you can include ``host_update_code`` which gets run before the row update code:
+
+    ..  code-block:: python
+
+        remove_diagonal_model = pygenn.create_custom_connectivity_update_model(
+            "remove_diagonal",
+            pre_var_name_types=[("postInd", "unsigned int")],
+            row_update_code=
+                \"""
+                for_each_synapse {
+                    if(id_post == postInd) {
+                        remove_synapse();
+                        break;
+                    }
+                }
+                \""",
+            host_update_code=
+                \"""
+                for(unsigned int i = 0; i < num_pre; i++) {
+                   postInd[i] = i;
+                }
+                pushpostIndToDevice();
+                \""")
+
     """
     body = {}
 
@@ -1495,6 +1715,24 @@ def create_var_init_snippet(class_name: str, params: ModelParamsType = None,
                                 required to initialise the variable
         extra_global_params:    names and types of model
                                 extra global parameters
+
+    For example, if we wanted to define a snippet to initialise variables by sampling from a normal distribution, 
+    redrawing if the value is negative (which could be useful to ensure delays remain causal):
+
+    ..  code-block:: python
+
+        normal_positive_model = pygenn.create_var_init_snippet(
+            'normal_positive',
+            params=['mean', 'sd'],
+            var_init_code=
+                \"""
+                scalar normal;
+                do
+                {
+                normal = mean + (gennrand_normal() * sd);
+                } while (normal < 0.0);
+                value = normal;
+                \""")
     """
     body = {}
 
