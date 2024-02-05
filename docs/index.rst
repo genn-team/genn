@@ -18,6 +18,8 @@ hyperparameter values etc to enable rapid prototyping of SNN models.
     custom_models
     bibliography
     
+    userproject/index
+
     Reference documentation <source/pygenn>
 
 ------------------
