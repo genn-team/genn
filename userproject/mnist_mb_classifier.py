@@ -1,3 +1,9 @@
+"""
+MNIST classification using an insect-inspired mushroom body model
+=================================================================
+
+This example doesn't do much, it just makes a simple plot
+"""
 import mnist
 import numpy as np
 from copy import copy

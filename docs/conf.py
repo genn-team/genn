@@ -31,7 +31,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
-]
+    "sphinx_gallery.gen_gallery"]
 
 napoleon_use_param = True
 napoleon_use_ivar = True
@@ -55,6 +55,11 @@ autodoc_typehints = "both"
 # a list of builtin themes.
 #
 html_theme = "default"
+
+sphinx_gallery_conf = {
+     "examples_dirs": "../userproject",   # path to your example scripts
+     "gallery_dirs": "userproject",  # path to where to save gallery generated output
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

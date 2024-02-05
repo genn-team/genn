@@ -1,3 +1,9 @@
+"""
+PyGeNN implementation of SuperSpike
+===================================
+
+This example doesn't do much, it just makes a simple plot
+"""
 import numpy as np
 
 from argparse import ArgumentParser
