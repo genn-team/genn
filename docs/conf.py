@@ -31,7 +31,8 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
-    "sphinx_gallery.gen_gallery"]
+    "sphinx_gallery.gen_gallery",
+    "sphinxarg.ext"]
 
 napoleon_use_param = True
 napoleon_use_ivar = True
