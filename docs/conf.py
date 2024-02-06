@@ -79,7 +79,9 @@ deprecations = {
                                                        "apply_input_code", "decay_code"],
     ("function", "pygenn.create_current_source_model"): ["param_names", "var_name_types"],
     ("function", "pygenn.create_custom_update_model"): ["param_names", "var_name_types"],
-    ("function", "pygenn.create_var_init_snippet"): ["param_names"]
+    ("function", "pygenn.create_var_init_snippet"): ["param_names"],
+    ("function", "pygenn.create_sparse_connect_init_snippet"): ["param_names"],
+    ("function", "pygenn.create_toeplitz_connect_init_snippet"): ["param_names"],
 
 }
 def remove_deprecated_arguments(app, what, name, obj, options, signature, return_annotation):

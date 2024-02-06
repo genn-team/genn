@@ -48,7 +48,7 @@ from platform import system
 from psutil import cpu_count
 from setuptools import msvc
 from subprocess import check_call  # to call make
-from typing import Dict, Optional, List, Sequence, Tuple, Union
+from typing import Callable, Dict, Optional, List, Sequence, Tuple, Union
 
 import re
 import sys
@@ -87,6 +87,7 @@ from . import (current_source_models, custom_connectivity_update_models,
 
 TypeType = Union[str, ResolvedType]
 ModelParamsType = Optional[Sequence[Union[str, Tuple[str, TypeType]]]]
+ModelDerivedParamsType = Optional[Sequence[Tuple[str, Callable, TypeType]]]
 ModelVarsType = Optional[Sequence[Union[Tuple[str, TypeType],
                                         Tuple[str, TypeType, VarAccess]]]]
 CUModelVarsType = Optional[Sequence[Union[Tuple[str, TypeType],
@@ -775,15 +776,23 @@ class GeNNModel(ModelSpecInternal):
         # Pull recording buffers from device
         self._runtime.pull_recording_buffers_from_device()
 
-def init_var(snippet, params={}):
-    """This helper function creates a VarInit object
-    to easily initialise a variable using a snippet.
-
+def init_var(snippet: Union[InitVarSnippetBase, str],
+             params: PopParamVals = {}):
+    """Initialises a variable initialisation snippet with parameter values
+     
     Args:
-    snippet -- type of the InitVarSnippet class as string or
-               instance of class derived from
-               InitVarSnippetBase class.
-    params  --  dict with param values for the InitVarSnippet class
+        snippet:        variable init snippet, either as a string referencing
+                        a built in snipept (see :mod:`.init_var_snippets`) 
+                        or an instance of :class:`.InitVarSnippetBase` 
+                        (for example returned by :func:`.create_var_init_snippet`)
+        params:         parameter values for the variable init snippet (see `Parameters`_)
+    
+    For example, the built in model could be initialised to initialise a variable 
+    by sampling from the normal distribution with a mean of 0 and a standard deviation of 1:
+
+    ..  code-block:: python
+
+        init = init_var("Normal", {"mean": 0.0, "sd": 1.0})
     """
     # Get snippet and wrap in VarInit object
     snippet = get_snippet(snippet, InitVarSnippetBase, init_var_snippets)
@@ -791,7 +800,8 @@ def init_var(snippet, params={}):
     # Use add function to create suitable VarInit
     return VarInit(snippet, prepare_param_vals(params))
 
-def init_sparse_connectivity(snippet, params: PopParamVals = {}):
+def init_sparse_connectivity(snippet: Union[InitSparseConnectivitySnippetBase, str],
+                             params: PopParamVals = {}):
     """Initialises a sparse connectivity 
     initialisation snippet with parameter values
      
@@ -815,8 +825,9 @@ def init_sparse_connectivity(snippet, params: PopParamVals = {}):
     return SparseConnectivityInit(snippet, prepare_param_vals(params))
 
 
-def init_postsynaptic(snippet, params: PopParamVals = {}, 
-                      vars: PopVarVals = {}, var_refs: PopVarVals = {}):
+def init_postsynaptic(snippet: Union[PostsynapticModelBase, str], 
+                      params: PopParamVals = {}, vars: PopVarVals = {}, 
+                      var_refs: PopVarVals = {}):
     """Initialises a postsynaptic model with parameter values, 
     variable initialisers and variable references
 
@@ -905,7 +916,7 @@ def init_connectivity(init_sparse_connect_snippet, params={}):
     return init_sparse_connectivity(init_sparse_connect_snippet, params)
 
 def init_toeplitz_connectivity(init_toeplitz_connect_snippet, params={}):
-    """Initialises a toeplitz connectivity 
+    r"""Initialises a toeplitz connectivity 
     initialisation snippet with parameter values
      
     Args:
@@ -1016,7 +1027,8 @@ def _create_model(class_name: str, base, params, param_names, derived_params,
 
 def create_neuron_model(class_name: str, params: ModelParamsType = None,
                         param_names=None, vars: ModelVarsType = None,
-                        var_name_types=None, derived_params=None,
+                        var_name_types=None, 
+                        derived_params: ModelDerivedParamsType = None,
                         sim_code: Optional[str] = None,
                         threshold_condition_code: Optional[str] = None,
                         reset_code: Optional[str] = None,
@@ -1132,7 +1144,7 @@ def create_neuron_model(class_name: str, params: ModelParamsType = None,
 def create_postsynaptic_model(class_name, params=None, param_names=None,
                               vars=None, var_name_types=None, 
                               neuron_var_refs: ModelVarRefsType = None,
-                              derived_params=None,
+                              derived_params: ModelDerivedParamsType = None,
                               sim_code: Optional[str] = None, decay_code=None,
                               apply_input_code=None,
                               extra_global_params: ModelEGPType = None):
@@ -1200,7 +1212,7 @@ def create_weight_update_model(
         post_vars: ModelVarsType = None, post_var_name_types=None,
         pre_neuron_var_refs: ModelVarRefsType = None,
         post_neuron_var_refs: ModelVarRefsType = None,
-        derived_params=None, sim_code=None,
+        derived_params: ModelDerivedParamsType = None, sim_code=None,
         pre_spike_syn_code: Optional[str] = None, event_code=None,
         pre_event_syn_code: Optional[str] = None,
         post_event_syn_code: Optional[str] = None, learn_post_code=None,
@@ -1523,7 +1535,8 @@ def create_weight_update_model(
 
 def create_current_source_model(class_name: str, params: ModelParamsType = None,
                                 param_names=None, vars: ModelVarsType = None, var_name_types=None,
-                                neuron_var_refs: ModelVarRefsType = None, derived_params=None,
+                                neuron_var_refs: ModelVarRefsType = None, 
+                                derived_params: ModelDerivedParamsType = None,
                                 injection_code: Optional[str] = None, 
                                 extra_global_params: ModelEGPType = None):
     """This helper function creates a custom NeuronModel class.
@@ -1582,7 +1595,8 @@ def create_current_source_model(class_name: str, params: ModelParamsType = None,
 
 def create_custom_update_model(class_name: str, params: ModelParamsType = None,
                                param_names=None, vars: ModelVarsType = None, 
-                               var_name_types=None, derived_params=None, 
+                               var_name_types=None, 
+                               derived_params: ModelDerivedParamsType = None, 
                                var_refs: CUModelVarsType = None, 
                                update_code: Optional[str] = None, 
                                extra_global_params: ModelEGPType = None,
@@ -1636,7 +1650,7 @@ def create_custom_connectivity_update_model(class_name: str,
                                             vars: ModelVarsType = None, 
                                             pre_vars: ModelVarsType = None,
                                             post_vars: ModelVarsType = None,
-                                            derived_params=None, 
+                                            derived_params: ModelDerivedParamsType = None, 
                                             var_refs: ModelVarRefsType = None,
                                             pre_var_refs: ModelVarRefsType = None,
                                             post_var_refs: ModelVarRefsType = None,
@@ -1795,7 +1809,8 @@ def create_custom_connectivity_update_model(class_name: str,
 
 
 def create_var_init_snippet(class_name: str, params: ModelParamsType = None,
-                            param_names=None, derived_params=None,
+                            param_names=None, 
+                            derived_params: ModelDerivedParamsType = None,
                             var_init_code: Optional[str] = None,
                             extra_global_params=None):
     """Creates a new variable initialisation snippet
@@ -1860,45 +1875,78 @@ def create_var_init_snippet(class_name: str, params: ModelParamsType = None,
                          extra_global_params, body)
 
 
-def create_sparse_connect_init_snippet(class_name, params=None, 
-                                       param_names=None, derived_params=None,
-                                       row_build_code=None,
-                                       col_build_code=None,
-                                       calc_max_row_len_func=None,
-                                       calc_max_col_len_func=None,
-                                       calc_kernel_size_func=None,
-                                       extra_global_params=None):
-    """This helper function creates a custom
-    InitSparseConnectivitySnippet class.
-    See also:
-    create_neuron_model
-    create_weight_update_model
-    create_postsynaptic_model
-    create_current_source_model
-    create_var_init_snippet
+def create_sparse_connect_init_snippet(class_name: str, params=None, 
+                                       param_names: ModelParamsType = None, 
+                                       derived_params: ModelDerivedParamsType = None,
+                                       row_build_code: Optional[str] = None,
+                                       col_build_code: Optional[str] =None,
+                                       calc_max_row_len_func: Optional[Callable] = None,
+                                       calc_max_col_len_func: Optional[Callable] = None,
+                                       calc_kernel_size_func: Optional[Callable] = None,
+                                       extra_global_params: ModelEGPType = None):
+    r"""Creates a new sparse connectivity initialisation snippet
+    Within the code strings, the parameters, derived parameters and
+    extra global parameters defined in this snippet can all be referred to be name.
+    Additionally, the code may refer to the following built in read-only variables
+    
+    - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
+    - ``num_pre`` which represents the number of presynaptic neurons
+    - ``num_post`` which represents the number of postsynaptic neurons
+    - ``thread`` 
 
+    and, in ``row_build_code``:
+    - ``id_pre`` represents the index of the presynaptic neuron (starting from zero)
+    - ``id_post_begin`` when some procedural connectivity is used with multiple 
+      threads per presynaptic neuron, represents the index of the first postsynaptic neuron to connect.
+    
+    and, in ``col_build_code``:
+    - ``id_post`` which represents the index of the postsynaptic neuron (starting from zero)
+
+    Finally, the function ``addSynapse(x)`` can be used to add a new synapse to the connectivity 
+    where, in ``row_build_code``, ``x`` is the index of the postsynaptic neuron to connect `id_pre`` to
+    and, in ``col_build_code``, ``x`` is the index of the presynaptic neuron to connect to ``id_post``
+    
     Args:
-    class_name              --  name of the new class
+        class_name:             name of the snippet (only for debugging)
+        params:                 name and optional types of model parameters
+        derived_params:         names, types and callables to calculate
+                                derived parameter values from paramss
+        row_build_code:         code for building connectivity row by row
+        col_build_code:         code for building connectivity column by column
+        calc_max_row_len_func:  used to calculate the maximum
+                                row length of synaptic matrix created using this snippet
+        calc_max_col_len_func:  used to calculate the maximum
+                                column length of synaptic matrix created using this snippet
+        calc_kernel_size_func:  used to calculate the size of the kernel if snippet requires one
+        extra_global_params:    names and types of snippet extra global parameters
+    
+    For example, if we wanted to define a snippet to initialise connectivity where each
+    presynaptic neuron targets a fixed number of postsynaptic neurons, sampled uniformly 
+    with replacement, we could define a snippet as follows:
+    
+    ..  code-block:: python
+        
+        from scipy.stats import binom
 
-    Keyword args:
-    param_names             --  list of strings with param names of the model
-    derived_params          --  list of pairs, where the first member is string
-                                with name of the derived parameter and the
-                                second MUST be an instance of the class which
-                                inherits from pygenn.genn_wrapper.DerivedParamFunc
-    row_build_code          --  string with row building initialization code
-    col_build_code          --  string with column building initialization code
+        fixed_number_post = pygenn.create_sparse_connect_init_snippet(
+            "fixed_number_post",
+            params=[("num", "unsigned int")],
+            row_build_code=
+                \"""
+                for(unsigned int c = num; c != 0; c--) {
+                   const unsigned int idPost = (unsigned int)ceil(gennrand_uniform() * num_post) - 1;
+                   addSynapse(idPost + id_post_begin);
+                }
+                \""",
+            calc_max_row_len_func=lambda num_pre, num_post, pars: pars["num"],
+            calc_max_col_len_func=lambda num_pre, num_post, pars: binom.ppf(0.9999 ** (1.0 / num_post),
+                                                                            pars["num"] * num_pre,
+                                                                            1.0 / num_post))
 
-    calc_max_row_len_func   --  instance of class inheriting from
-                                CalcMaxLengthFunc used to calculate maximum
-                                row length of synaptic matrix
-    calc_max_col_len_func   --  instance of class inheriting from
-                                CalcMaxLengthFunc used to calculate maximum
-                                col length of synaptic matrix
-    calc_kernel_size_func   --  instance of class inheriting from CalcKernelSizeFunc
-                                used to calculate kernel dimensions
-    extra_global_params     --  list of pairs of strings with names and
-                                types of additional parameters
+    For full details of how maximum column lengths are calculated, you should refer to our paper [Knight2018]_ but, 
+    in short, the number of connections that end up in a column are distributed binomially with :math:`n=\text{num}` and :math:`p=\frac{1}{\text{num_post}}`
+    Therefore, we can calculate the maximum column length by looking at the inverse cummulative distribution function (CDF) for the binomial distribution,
+    looking at the point in the inverse CDF where there is a 0.9999 chance of the bound being correct when drawing synapses from ``num_post`` columns.
     """
 
     body = {}

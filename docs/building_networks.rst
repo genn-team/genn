@@ -50,15 +50,15 @@ by copying in a sequence of values from Python:
 
     ini = {"m": np.arange(400.0), ...}
 
-or by specifying a variable initialisation snippet which can itself be configured with parameters:
+or by using a variable initialisation snippet configured using the following function:
+
+.. autofunction:: pygenn.init_var
+
+and then used in the dictionary the same way:
 
 ..  code-block:: python
 
-    params = {"mean": 0.05, "sd": 0.01}
-    ini = {"m": pygenn.init_var("Normal", params), ...}
-
-where built in snippets, included in the :mod:`.init_var_snippets` module, can be selected by name like "Normal".
-However, like many other parts of GeNN, you can easily create your own variable initialisation snippets as described in TODO.
+    ini = {"m": init, ...}
 
 Variables references
 --------------------
