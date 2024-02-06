@@ -11,7 +11,6 @@ This example can be used as follows:
    :filename: ../userproject/potjans_microcircuit.py
    :func: get_parser
    :prog: potjans_microcircuit
-
 """
 import numpy as np 
 
@@ -147,9 +146,6 @@ def get_full_mean_input_current(layer, pop):
     assert mean_input_current >= 0.0
     return mean_input_current
 
-# ----------------------------------------------------------------------------
-# CLI
-# ----------------------------------------------------------------------------
 def get_parser():
     parser = ArgumentParser()
     parser.add_argument("--duration", type=float, default=1000.0, help="Duration to simulate (ms)")
@@ -160,6 +156,9 @@ def get_parser():
     parser.add_argument("--save-data", action="store_true", help="Save spike data (rather than plotting it)")
     return parser
 
+# ----------------------------------------------------------------------------
+# Entry point
+# ----------------------------------------------------------------------------
 if __name__ == "__main__":
     args = get_parser().parse_args()
 
