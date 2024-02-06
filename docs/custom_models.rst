@@ -77,7 +77,11 @@ New sparse connectivity initialisation snippets can be defined by calling:
 
 Toeplitz connectivity initialisation
 ------------------------------------
-pass
+Toeplitz connectivity initialisation snippets are used to generate convolution-like connectivity 
+on the fly when using :attr:`SynapseMatrixType.TOEPLITZ` connectivity.
+New toeplitz connectivity initialisation snippets can be defined by calling:
+
+.. autofunction:: pygenn.create_toeplitz_connect_init_snippet
 
 ------
 Models
@@ -116,7 +120,7 @@ New current source models are defined by calling:
 
 Custom update models
 ---------------------
-Custom update models define operations that can
+Custom update models define operations on model variables that can be triggered on demand by the user.
 New custom update models are defined by calling:
 
 .. autofunction:: pygenn.create_custom_update_model
@@ -124,7 +128,7 @@ New custom update models are defined by calling:
 
 Custom connectivity update models
 ---------------------------------
-Custom connectivity updates describe 
+Custom update models define operations on model connectivity that can be triggered on demand by the user.
 New custom connectivity update models are defined by calling:
 
 .. autofunction:: pygenn.create_custom_connectivity_update_model

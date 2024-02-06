@@ -35,6 +35,14 @@ Parameters are homogeneous across an entire population and
 
 DYNAMIC PARAMETERS
 
+Extra global parameters
+-----------------------
+TODO
+
+Extra global parameter references
+---------------------------------
+TODO
+
 Variables
 ----------
 Variables can be initialised in many ways.
@@ -100,8 +108,25 @@ where ``back_sg`` is another :class:`.SynapseGroup` with tranposed dimensions to
 After the update has run, any updates made to the 'forward' variable will also be applied to the tranpose variable 
 [#]_ Tranposing is currently only possible on variables belonging to synapse groups with :attr:`.SynapseMatrixType.DENSE` connectivity [#]_
 
+Variable locations
+------------------
+Once you have defined *how* your variables are going to be initialised you need to configure *where* they will be allocated. 
+By default memory is allocated for variables on both the GPU and the host.
+However, the following alternative 'variable locations' are available:
 
+.. autoattribute:: .VarLocation.DEVICE
+.. autoattribute:: .VarLocation.HOST_DEVICE
+.. autoattribute:: .VarLocation.HOST_DEVICE_ZERO_COPY
 
+Note, 'Zero copy' memory is only supported on newer embedded systems such as
+ the Jetson TX1 where there is no physical seperation between GPU and host memory and 
+ thus the same physical of memory can be shared between them. 
+
+..
+    TODO into enum
+    - VarLocation::DEVICE - Variables are only allocated on the GPU, saving memory but meaning that they can't easily be copied to the host - best for internal state variables.
+    - VarLocation::HOST_DEVICE - Variables are allocated on both the GPU and the host  - the default.
+    - VarLocation::HOST_DEVICE_ZERO_COPY - Variables are allocated as 'zero-copy' memory accessible to the host and GPU - useful on devices such as Jetson TX1 where physical memory is shared between the GPU and CPU.
 
 Neuron populations
 ------------------
@@ -143,16 +168,23 @@ Current sources
 
 .. automethod:: .GeNNModel.add_current_source
 
-additional input variables
-
 Custom updates
 --------------
-Current sources 
+The neuron groups, synapse groups and current sources described in previous sections are all updated automatically every timestep.
+However, in many types of model, there are also processes that would benefit from GPU acceleration but only need to be triggered occasionally. 
+For example, such updates could be used in a classifier to to reset the state of neurons after a stimuli has been presented or in a model 
+which uses gradient-based learning to optimize network weights based on gradients accumulated over several timesteps.
+
+Custom updates allows such updates to be described as models, similar to the neuron and synapse models described in the preceding sections. 
+The custom update system also provides functionality for efficiently calculating the tranpose of variables associated with synapse groups 
+(current only with :attr:`.SynapseMatrixType.DENSE` connectivity). Custom updates are added to a model using:
 
 .. automethod:: .GeNNModel.add_custom_update
 
 Custom connectivity updates
 ---------------------------
-Current sources 
+Like custom update, custom connectivity updates are triggered manually by the user but, rather than 
+updating model *variables*, they update model *connectivity* (current only with :attr:`.SynapseMatrixType.SPARSE` connectivity).
+Custom connectivity updates are added to a model using:
 
 .. automethod:: .GeNNModel.add_custom_connectivity_update

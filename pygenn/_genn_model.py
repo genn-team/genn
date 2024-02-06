@@ -65,7 +65,7 @@ from ._genn import (generate_code, init_logging, CurrentSource,
                     CustomConnectivityUpdateModelBase, CustomUpdate,
                     CustomUpdateModelBase, CustomUpdateVar, 
                     CustomUpdateVarAccess, CustomUpdateWU, DerivedParam,
-                    EGP, EGPRef, InitSparseConnectivitySnippetBase,
+                    EGP, EGPRef, EGPReference, InitSparseConnectivitySnippetBase,
                     InitToeplitzConnectivitySnippetBase, InitVarSnippetBase,
                     ModelSpecInternal, NeuronGroup, NeuronModelBase,
                     NumericValue, Param, ParamVal, PlogSeverity,
@@ -79,12 +79,13 @@ from .runtime import Runtime
 from ._genn_groups import (CurrentSourceMixin, CustomConnectivityUpdateMixin,
                            CustomUpdateMixin, CustomUpdateWUMixin,
                            NeuronGroupMixin, SynapseGroupMixin)
-from ._model_preprocessor import get_snippet, get_var_init, prepare_param_vals
+from .model_preprocessor import get_snippet, get_var_init, prepare_param_vals
 from . import (current_source_models, custom_connectivity_update_models,
                custom_update_models, init_sparse_connectivity_snippets, 
                init_toeplitz_connectivity_snippets, init_var_snippets,
                neuron_models, postsynaptic_models, types, weight_update_models)
 
+# Type aliases used in model creation functions
 TypeType = Union[str, ResolvedType]
 ModelParamsType = Optional[Sequence[Union[str, Tuple[str, TypeType]]]]
 ModelDerivedParamsType = Optional[Sequence[Tuple[str, Callable, TypeType]]]
@@ -96,10 +97,12 @@ ModelVarRefsType = Optional[Sequence[Union[Tuple[str, TypeType],
                                           Tuple[str, TypeType, VarAccessMode]]]]
 ModelEGPType = Optional[Sequence[Tuple[str, TypeType]]]
 
+# Type aliases used in add_XXX methods
 PopParamVals = Dict[str, Union[int, float]]
 PopVarVals = Dict[str, Union[VarInit, int, float, np.ndarray, Sequence]]
 PopVarRefs = Dict[str, VarReference] 
 PopWUVarRefs = Dict[str, WUVarReference]
+PopEGPRefs = Dict[str, EGPReference]
 
 # Dynamically add Python mixin to wrapped class
 CurrentSource.__bases__ += (CurrentSourceMixin,)
@@ -456,25 +459,33 @@ class GeNNModel(ModelSpecInternal):
         self.synapse_populations[pop_name] = s_group
         return s_group
 
-    def add_current_source(self, cs_name, current_source_model, pop,
-                           params={}, vars={}, var_refs = {}):
+    def add_current_source(self, cs_name: str, current_source_model: Union[CurrentSourceModelBase, str], 
+                           pop: NeuronGroup, params: PopParamVals = {}, vars: PopVarVals = {}, 
+                           var_refs: PopVarRefs = {}) -> CurrentSource:
         """Add a current source to the GeNN model
 
         Args:
-        cs_name                 --  name of the new current source
-        current_source_model    --  type of the CurrentSourceModels class as
-                                    string or instance of CurrentSourceModels
-                                    class derived from
-                                    ``pygenn.genn_wrapper.CurrentSourceModels.Custom`` (see also
-                                    pygenn.genn_model.create_current_source_model)
-        pop                     --  population into which the current source 
-                                    should be injected (NeuronGroup object)
-        params                  --  dict with param values for the
-                                    CurrentSourceModel class
-        vars                    --  dict with initial variable values for the
-                                    CurrentSourceModel class
-        var_refs                --  dict with variable references to pop for the
-                                    CurrentSourceModel class
+            cs_name:                unique name
+            current_source_model:   current source model either as a string referring a built in model 
+                                    (see :mod:`.current_source_models`) or an instance of :class:`.CurrentSourceModelBase`
+                                    (for example returned by :func:`.create_current_source_model`)
+            pop:                    neuron population to inject current into
+            params:                 parameter values for the current source model (see `Parameters`_)
+            vars:                   initial variable values or initialisers 
+                                    for the current source model (see `Variables`_)
+            var_refs:               variables references to neuron variables in ``pop``,
+                                    typically created using :func:`.create_var_ref`
+                                    (see `Variables references`_)
+
+        For example, a current source to inject a gaussian noise current in added to a model as follows:
+
+        ..  code-block:: python
+
+            cs = model.add_current_source("noise", "GaussianNoise", pop,
+                                          {"mean": 0.0, "sd": 1.0})
+
+        where ``pop`` is a reference to a neuron population 
+        (as returned by :meth:`.GeNNModel.add_neuron_population`)
         """
         if self._built:
             raise Exception("GeNN model already built")
@@ -496,27 +507,32 @@ class GeNNModel(ModelSpecInternal):
         self.current_sources[cs_name] = c_source
         return c_source
     
-    def add_custom_update(self, cu_name, group_name, custom_update_model,
-                          params={}, vars={}, var_refs={}, egp_refs={}):
-        """Add a current source to the GeNN model
-
+    def add_custom_update(self, cu_name: str, group_name: str, 
+                          custom_update_model: Union[CustomUpdateModelBase, str],
+                          params: PopParamVals = {}, vars: PopVarVals = {}, 
+                          var_refs: Union[PopVarRefs, PopWUVarRefs] = {},
+                          egp_refs: PopEGPRefs = {}):
+        """Add a custom update to the GeNN model
+        
         Args:
-        cu_name                 -- name of the new current source
-        group_name              -- name of custom update group this
-                                   update belongs to
-        custom_update_model     -- type of the CustomUpdateModel class as
-                                   string or instance of CustomUpdateModel
-                                   class derived from
-                                   ``CustomUpdateModelBase`` (see also
-                                   pygenn.genn_model.create_custom_update_model)
-        params                  -- dict with param values for the
-                                   CustomUpdateModel class
-        vars                    -- dict with initial variable values for the
-                                   CustomUpdateModel class
-        var_refs                -- dict with variable references for the
-                                   CustomUpdateModel class
-        egp_refs                -- dict with extra global parameter references 
-                                   for the CustomUpdateModel class
+            cu_name:                unique name
+            group_name:             name of the 'custom update group' to include this update in. 
+                                    All custom updates in the same group are executed simultaneously.
+            custom_update_model:    custom update model either as a string referring a built in model 
+                                    (see :mod:`.custom_update_models`) or an instance of 
+                                    :class:`.CustomUpdateModelBase`
+                                    (for example returned by :func:`.create_custom_update_model`)
+            params:                 parameter values for the current source model (see `Parameters`_)
+            vars:                   initial variable values or initialisers 
+                                    for the current source model (see `Variables`_)
+            var_refs:               references to variables in other populations to 
+                                    access from this update, typically created using either
+                                    :func:`.create_var_ref` or :func:`.create_wu_var_ref`
+                                    (see `Variables references`_).
+            egp_refs:               references to extra global parameters in other populations
+                                    to access from this update, typically created using
+                                    :func:`.create_egp_ref` (see `Extra global parameter references`_).
+
         """
         if self._built:
             raise Exception("GeNN model already built")
@@ -538,12 +554,13 @@ class GeNNModel(ModelSpecInternal):
         self.custom_updates[cu_name] = c_update
         return c_update
     
-    def add_custom_connectivity_update(self, cu_name, group_name, syn_group,
-                                       custom_conn_update_model,
-                                       params={}, vars={}, pre_vars={},
-                                       post_vars={}, var_refs={},
-                                       pre_var_refs={}, post_var_refs={},
-                                       egp_refs={}):
+    def add_custom_connectivity_update(self, cu_name: str, group_name: str, 
+                                       syn_group: SynapseGroup,
+                                       custom_conn_update_model: Union[CustomConnectivityUpdateModelBase, str],
+                                       params: PopParamVals = {}, vars: PopVarVals = {}, pre_vars: PopVarVals = {},
+                                       post_vars: PopVarVals = {}, var_refs: PopWUVarRefs = {},
+                                       pre_var_refs: PopVarRefs = {}, post_var_refs: PopVarRefs = {},
+                                       egp_refs: PopEGPRefs = {}):
         """Add a custom connectivity update to the GeNN model
 
         Args:
@@ -757,7 +774,7 @@ class GeNNModel(ModelSpecInternal):
 
         self._runtime.step_time()
     
-    def custom_update(self, name):
+    def custom_update(self, name: str):
         """Perform custom update"""
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before performing custom update")
@@ -839,7 +856,7 @@ def init_postsynaptic(snippet: Union[PostsynapticModelBase, str],
         params:         parameter values for the postsynaptic model (see `Parameters`_)
         vars:           initial synaptic variable values or initialisers 
                         for the postsynaptic model (see `Variables`_)
-        var_refs:       variables references to postsynaptic neuron variables,
+        var_refs:       references to postsynaptic neuron variables,
                         typically created using :func:`.create_var_ref`
                         (see `Variables references`_)
 
@@ -883,10 +900,10 @@ def init_weight_update(snippet, params: PopParamVals = {}, vars: PopVarVals = {}
                         initialisers (see `Variables`_)
         post_vars:      initial postsynaptic variable values or initialisers
                         (see `Variables`_)
-        pre_var_refs:   variables references to presynaptic neuron variables,
+        pre_var_refs:   references to presynaptic neuron variables,
                         typically created using :func:`.create_var_ref`
                         (see `Variables references`_)
-        post_var_refs:  variables references to postsynaptic neuron variables,
+        post_var_refs:  references to postsynaptic neuron variables,
                         typically created using :func:`.create_var_ref`
                         (see `Variables references`_)
 
@@ -1160,7 +1177,7 @@ def create_postsynaptic_model(class_name, params=None, param_names=None,
 
     Finally, the function ``injectCurrent(x)`` can be used to inject a current
     ``x`` into the postsynaptic neuron. The variable it goes into can be
-    configured using the :attr:`SynapseGroup.post_target_var``.
+    configured using the :attr:`SynapseGroup.post_target_var`.
 
     Args:
         class_name:                 name of the new class (only for debugging)
@@ -1539,7 +1556,20 @@ def create_current_source_model(class_name: str, params: ModelParamsType = None,
                                 derived_params: ModelDerivedParamsType = None,
                                 injection_code: Optional[str] = None, 
                                 extra_global_params: ModelEGPType = None):
-    """This helper function creates a custom NeuronModel class.
+    """Creates a new current source model.
+    Within the ``injection_code`` code string, the variables, parameters,
+    derived parameters, neuron variable references and extra global
+    parameters defined in this model can all be referred to be name.
+    Additionally, the code may refer to the following built in read-only variables
+
+    - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
+    - ``id`` which represents a neurons index within a population (starting from zero)
+    - ``num_neurons`` which represents the number of neurons in the population
+    
+    Finally, the function ``injectCurrent(x)`` can be used to inject a current
+    ``x`` into the attached neuron. The variable it goes into can be
+    configured using the :attr:`CurrentSource.target_var`.
+
     Args:
         class_name:             name of the new class (only for debugging)
         params:                 name and optional types of model parameters
@@ -1555,18 +1585,15 @@ def create_current_source_model(class_name: str, params: ModelParamsType = None,
         extra_global_params:    names and types of model
                                 extra global parameters
     
-    Within the ``injection_code`` code string, the variables, parameters,
-    derived parameters, neuron variable references and extra global
-    parameters defined in this model can all be referred to be name.
-    Additionally, the code may refer to the following built in read-only variables
-
-    - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
-    - ``id`` which represents a neurons index within a population (starting from zero)
-    - ``num_neurons`` which represents the number of neurons in the population
+    For example, we can define a simple current source that
+    injects uniformly-distributed noise as follows:
     
-    Finally, the function ``injectCurrent(x)`` can be used to inject a current
-    ``x`` into the attached neuron. The variable it goes into can be
-    configured using the :attr:`CurrentSource.target_var``.
+    ..  code-block:: python
+
+        uniform_noise_model = pygenn.create_current_source_model(
+            "uniform_noise",
+            params=["magnitude"],
+            injection_code="injectCurrent(gennrand_uniform() * magnitude);")
 
     """
     body = {}
@@ -1594,15 +1621,33 @@ def create_current_source_model(class_name: str, params: ModelParamsType = None,
 
 
 def create_custom_update_model(class_name: str, params: ModelParamsType = None,
-                               param_names=None, vars: ModelVarsType = None, 
+                               param_names=None, vars: CUModelVarsType = None, 
                                var_name_types=None, 
                                derived_params: ModelDerivedParamsType = None, 
-                               var_refs: CUModelVarsType = None, 
+                               var_refs: ModelVarRefsType = None, 
                                update_code: Optional[str] = None, 
                                extra_global_params: ModelEGPType = None,
                                extra_global_param_refs=None):
-    """This helper function creates a custom CustomUpdate class.
-    
+    """Creates a new custom update model.
+    Within the ``update_code`` code string, the variables, parameters,
+    derived parameters, variable references, extra global parameters 
+    and extra global parameter references defined in this model can all be referred to be name.
+    Additionally, the code may refer to the following built in read-only variables
+
+    - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
+
+     And, if a custom update using this model is attached to per-neuron variables:
+
+    - ``id`` which represents a neurons index within a population (starting from zero)
+    - ``num_neurons`` which represents the number of neurons in the population
+
+    or, to per-synapse variables:
+
+    - ``id_pre`` which represents the index of the presynaptic neuron (starting from zero)
+    - ``id_post`` which represents the index of the postsynaptic neuron (starting from zero)
+    - ``num_pre`` which represents the number of presynaptic neurons
+    - ``num_post`` which represents the number of postsynaptic neurons
+
     Args:
         class_name:                 name of the new class (only for debugging)
         params:                     name and optional types of model parameters
@@ -1619,6 +1664,64 @@ def create_custom_update_model(class_name: str, params: ModelParamsType = None,
                                     extra global parameters
         extra_global_param_refs:    names and types of extra global
                                     parameter references
+    
+    For example, we can define a custom update which will set a referenced variable to the value of a custom update model state variable:
+
+    ..  code-block:: python
+
+        reset_model = pygenn.create_custom_update_model(
+            "reset",
+            vars=[("v", "scalar", pygenn.CustomUpdateVarAccess.READ_ONLY)],
+            var_refs=[("r", "scalar", pygenn.VarAccessMode.READ_WRITE)],
+            update_code="r = v;")
+    
+    When used in a model with batch size > 1, whether custom updates of this sort are batched or not depends on the variables their references point to.
+    If any referenced variables have :attr:`.VarAccess.READ_ONLY_DUPLICATE` or :attr:`.VarAccess.READ_WRITE` access modes, then the update will be batched 
+    and any variables associated with the custom update with :attr:`.VarAccess.READ_ONLY_DUPLICATE` or :attr:`.VarAccess.READ_WRITE` access modes will be duplicated across the batches.
+    
+    Batch reduction
+    ^^^^^^^^^^^^^^^
+    As well as the standard variable access modes described previously, custom updates support variables with 'batch reduction' access modes 
+    such as :attr:`.CustomUpdateVarAccess.REDUCE_BATCH_SUM` and :attr:`.CustomUpdateVarAccess.REDUCE_BATCH_MAX`.
+    These access modes allow values read from variables duplicated across batches to be reduced into variables that are shared across batches.
+    For example, in a gradient-based learning scenario, a model like this could be used to sum gradients from across all batches so they can be used as the input to a learning rule operating on shared synaptic weights:
+    
+    ..  code-block:: python
+
+        reduce_model = pygenn.create_custom_update_model(
+            "gradient_batch_reduce",
+            vars=[("reducedGradient", "scalar", pygenn.CustomUpdateVarAccess.REDUCE_BATCH_SUM)],
+            var_refs=[("gradient", "scalar", pygenn.VarAccessMode.READ_ONLY)],
+            update_code=
+                \"""
+                reducedGradient = gradient;
+                gradient = 0;
+                \""")
+    
+    Batch reductions can also be performed into variable references with 
+    the :attr:`.VarAccessMode.REDUCE_SUM` or :attr:`VarAccessMode.REDUCE_MAX` access modes.
+    
+    Neuron reduction
+    ^^^^^^^^^^^^^^^^
+    Similarly to the batch reduction modes discussed previously, custom updates also support variables with several 'neuron reduction' access modes
+    such as :attr:`.CustomUpdateVarAccess.REDUCE_NEURON_SUM` and :attr:`.CustomUpdateVarAccess.REDUCE_NEURON_MAX`.
+
+    These access modes allow values read from per-neuron variables to be reduced into variables that are shared across neurons.
+    For example, a model like this could be used to calculate the maximum value of a state variable in a population of neurons:
+
+    ..  code-block:: python
+
+        reduce_model = pygenn.create_custom_update_model(
+            "neuron_reduce",
+            vars=[("reduction", "scalar", pygenn.CustomUpdateVarAccess.REDUCE_NEURON_SUM)],
+            var_refs=[("gradient", "scalar", pygenn.VarAccessMode.READ_ONLY)],
+            update_code=
+                \"""
+                reduction = source;
+                \""")
+
+    Again, like batch reductions, neuron reductions can also be performed into variable references with 
+    the :attr:`.VarAccessMode.REDUCE_SUM` or :attr:`VarAccessMode.REDUCE_MAX` access modes.
     """
     body = {}
     if var_name_types is not None:
