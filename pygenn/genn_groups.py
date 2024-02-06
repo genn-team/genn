@@ -1,7 +1,3 @@
-""" @namespace pygenn.genn_groups
-This module provides classes which automate model checks and parameter
-conversions for GeNN Groups
-"""
 from deprecated import deprecated
 from warnings import warn
 from weakref import proxy
