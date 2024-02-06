@@ -53,14 +53,87 @@ If batching was enabled, spike recording data from batch ``b`` would be accessed
 Variables
 ---------
 In real simulations, as well as spikes, you often want to interact with model state variables as the simulation runs.
-Both model state variables and 
+State variables are encapsulated in :class:`pygenn.model_preprocessor.VariableBase` objects and all populations own dictionaries of these, accessible by variable name.
+For example :class:`.NeuronGroup` has :attr:`.NeuronGroup.vars` whereas, :class:`.SynapseGroup` has :attr:`.SynapseGroup.vars`, 
+:attr:`.SynapseGroup.pre_vars` and :attr:`.SynapseGroup.post_vars`.
+By default, copies of GeNN variables are allocated both on the GPU device and the host from where they can be accessed from Python.
+However, if variable's location is set to :attr:`.VarLocation.DEVICE`, they cannot be accessed from Python.
 
+Pushing and pulling
+-------------------
+The contents of the host copy of a variable can be 'pushed' to the GPU device by calling :meth:`pygenn.model_preprocessor.ArrayBase.push_to_device`
+and 'pulled' from the GPU device into the host copy by calling :meth:`pygenn.model_preprocessor.ArrayBase.pull_from_device`.
+When using the single-threaded CPU backend, these operations do nothing but we recommend leaving them in place so models will work transparantly across all backends.
+
+Values and views
+----------------
+To access the data associated with a variable, you can use the ``current_values`` property. For example to save the current values of a variable: 
+
+..  code-block:: python
+
+    np.save("values.npy", pop.vars["V"].current_values)
+
+This will make a copy of the data owned by GeNN and applying any processing required to transform it into a user-friendly format.
+For example, state variables associated with sparse matrices will be re-ordered into the same order as the indices used to construct the matrix
+and the values from the current delay step will be extracted for per-neuron variables which are accessed from synapse groups with delays.
+If you wish to access the values across all delay steps, the ``values`` property can be used.
+Additionally, you can can *directly* access the memory owned by GeNN using a 'memory view' for example to set all elements of a variable:
+
+..  code-block:: python
+
+    pop.vars["V"].current_view[:] = 1.0
 
 -----------------------
 Extra global parameters
 -----------------------
+Extra global parameters behave very much like variables. 
+They are encapsulated in :class:`pygenn.model_preprocessor.ExtraGlobalParameter` objects which are derived from the same 
+:class:`pygenn.model_preprocessor.ArrayBase` base class and thus share much of the functionality described above.
+Populations also own dictionaries of extra global parameters, accessible by name.
+For example :class:`.NeuronGroup` has :attr:`.NeuronGroup.extra_global_params` whereas, :class:`.SynapseGroup` has 
+:attr:`.SynapseGroup.extra_global_params` to hold extra global parameters associated with the weight update model and
+:attr:`.SynapseGroup.psm_extra_global_params` to hold extra global parameters associated with the postsynaptic model.
+
+One very important difference between extra global parameters and variables is that extra global parameters need to be allocated
+and provided with an initial contents before the model is loaded. For example, to allocate an extra global parameter
+called ``X`` to hold 100 elements which are initially all zero you could do the following:
+
+..  code-block:: python
+
+    ...
+    pop.extra_global_params["X"].set_init_values(np.zeros(100))
+
+    model.build()
+    model.load()
+
+After allocation, extra global parameters can be accessed just like variables, for example:
+
+..  code-block:: python
+
+    pop.extra_global_params["X"].current_view[:] = 1.0
+    pop.extra_global_params["X"].push_to_device()
+
 
 ------------------
 Dynamic parameters
 ------------------
+As discussed previously, when building a model, parameters can be made dynamic e.g. by calling :meth:`pygenn.NeuronGroup.set_param_dynamic` on a :class:`.NeuronGroup`.
+The values of these parameters can then be set at runtime using the :meth:`pygenn.GroupMixin.set_dynamic_param_value` method. For example to increase the value of a
+parameterm called ``tau`` on a population ``pop``, you could do the following:
 
+..  code-block:: python
+
+    ...
+    pop.set_param_dynamic("tau")
+    
+    model.build()
+    model.load()
+    
+    tau = np.arange(0, 100, 10)
+    while model.timestep < 100:
+        if (model.timestep % 10) == 0:
+            pop.set_dynamic_param_value("tau", tau[model.timestep // 10])
+            
+        model.step_time()
+        
+        

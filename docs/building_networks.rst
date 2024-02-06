@@ -31,9 +31,15 @@ Populations
 
 Parameters
 ----------
-Parameters are homogeneous across an entire population and 
+Parameters are initialised to constant numeric values which are homogeneous across an entire population:
 
-DYNAMIC PARAMETERS
+..  code-block:: python
+
+    ini = {"m": 0.0529324, ...}
+
+They are very efficient to access from models as their values are either hard-coded into the kernels 
+or, on the GPU, delivered via high-performance constant cache.
+However 
 
 Extra global parameters
 -----------------------
