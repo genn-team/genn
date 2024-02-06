@@ -36,12 +36,6 @@ In GeNN this can be implemented by using the following functions within GeNNCode
 - ``gennrand_gamma(alpha)`` returns a number drawn from a gamma distribution with the specified shape.
 - ``gennrand_binomial(n, p)`` returns a number drawn from a binomial distribution with the specified shape.
 
-
------
-Types
------
-pass
-
 -----------------------
 Initialisation snippets
 -----------------------
