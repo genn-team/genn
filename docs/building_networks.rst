@@ -22,6 +22,18 @@ For example, the single-threaded CPU backend could be manually selected with:
     model = GeNNModel("float", "YourModelName", 
                       backend="single_threaded_cpu")
 
+When running models on a GPU, smaller models may not fully occupy the device. In some scenerios such as gradient-based training and parameter sweeping,
+this can be overcome by runing multiple copies of the same model at the same time (batching in Machine Learning speak).
+Batching can be enabled on a GeNN model with:
+
+..  code-block:: python
+
+    model.batch_size = 512
+
+Parameters and sparse connectivity are shared across all batches. 
+Whether state variables are duplicated or shared is controlled by the :class:`.VarAccess` or :class:`.CustomUpdateVarAccess`  
+associated with each variable. Please see TODO for more details.
+
 Additionally, any preferences exposed by the backend can be configured here. 
 For example, the CUDA backend allows you to select which CUDA device to use via the manual_device_id
 
@@ -43,7 +55,7 @@ However
 
 Extra global parameters
 -----------------------
-TODO
+Often when b
 
 Extra global parameter references
 ---------------------------------
@@ -101,8 +113,6 @@ While references of these types can be used interchangably in the same custom up
     cu_wu_var_ref = {"R": pygenn.create_wu_var_ref(cu, "g")}
 
 where ``sg`` is a :class:`.SynapseGroup` (as returned by :meth:`.GeNNModel.add_synapse_population`) and ``cu`` is a :class:`.CustomUpdateWU` (as returned by :meth:`.GeNNModel.add_custom_update`) which operates on another synapse group's state variables.
-
-TODO custom connectivity updateBaseHash
 
 These 'weight update variable references' also have the additional feature that they can be used to define a link to a 'transpose' variable:
 
@@ -162,12 +172,20 @@ Postsynaptic models define how synaptic input translates into an input current
 .. autofunction:: pygenn.init_postsynaptic
     :noindex:
 
-Additionally synaptic connectivity can be initialised on the GPU using either:
+GeNN provides a number of different data structures for implementing synaptic connectivity:
+
+.. autoclass:: pygenn.SynapseMatrixType
+    :noindex:
+
+:attr:`pygenn.SynapseMatrixType.DENSE` and :attr:`pygenn.SynapseMatrixType.DENSE_PROCEDURAL` 
+connectivity can be initialised on the GPU by simply using the variable initialisation snippets described in `Variables`_ 
+to initialise the weight update model variables. :attr:`pygenn.SynapseMatrixType.SPARSE`, :attr:`pygenn.SynapseMatrixType.BITMASK` 
+and :attr:`pygenn.SynapseMatrixType.PROCEDURAL` synaptic connectivity can be initialised on the GPU using:
 
 .. autofunction:: pygenn.init_sparse_connectivity
     :noindex:
 
-or:
+and :attr:`pygenn.SynapseMatrixType.TOEPLITZ` can be initialised using:
 
 .. autofunction:: pygenn.init_toeplitz_connectivity
     :noindex:
