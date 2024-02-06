@@ -65,6 +65,7 @@ Variable initialisation
 New variable initialisation snippets can be defined by calling:
 
 .. autofunction:: pygenn.create_var_init_snippet
+    :noindex:
 
 Sparse connectivity initialisation
 ----------------------------------
@@ -74,6 +75,7 @@ generate connectivity on the fly when using :attr:`SynapseMatrixType.PROCEDURAL`
 New sparse connectivity initialisation snippets can be defined by calling:
 
 .. autofunction:: pygenn.create_sparse_connect_init_snippet
+    :noindex:
 
 Toeplitz connectivity initialisation
 ------------------------------------
@@ -82,6 +84,7 @@ on the fly when using :attr:`SynapseMatrixType.TOEPLITZ` connectivity.
 New toeplitz connectivity initialisation snippets can be defined by calling:
 
 .. autofunction:: pygenn.create_toeplitz_connect_init_snippet
+    :noindex:
 
 ------
 Models
@@ -95,6 +98,7 @@ Neuron models define the dynamics and spiking behaviour of populations of neuron
 New neuron models are defined by calling:
 
 .. autofunction:: pygenn.create_neuron_model
+    :noindex:
 
 Weight update models
 --------------------
@@ -102,6 +106,7 @@ Weight update models define the event-driven and time-driven behaviour of synaps
 New weight update models are defined by calling:
 
 .. autofunction:: pygenn.create_weight_update_model
+    :noindex:
 
 Postsynaptic models
 -------------------
@@ -110,6 +115,7 @@ They can contain equations defining dynamics that are applied to the (summed) sy
 New postsynaptic models are defined by calling:
 
 .. autofunction:: pygenn.create_postsynaptic_model
+    :noindex:
 
 Current source models
 ---------------------
@@ -117,6 +123,7 @@ Current source models allow input currents to be injected into neuron models.
 New current source models are defined by calling:
 
 .. autofunction:: pygenn.create_current_source_model
+    :noindex:
 
 Custom update models
 ---------------------
@@ -124,7 +131,7 @@ Custom update models define operations on model variables that can be triggered 
 New custom update models are defined by calling:
 
 .. autofunction:: pygenn.create_custom_update_model
-
+    :noindex:
 
 Custom connectivity update models
 ---------------------------------
@@ -132,3 +139,4 @@ Custom update models define operations on model connectivity that can be trigger
 New custom connectivity update models are defined by calling:
 
 .. autofunction:: pygenn.create_custom_connectivity_update_model
+    :noindex:
