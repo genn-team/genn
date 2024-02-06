@@ -16,7 +16,7 @@ help:
 .PHONY: help Makefile apidoc
 
 apidoc:
-	@$(SPHINXAPIDOC) --maxdepth 2 --module-first --force -o source/ ../pygenn
+	@$(SPHINXAPIDOC) --maxdepth 2 --module-first --force -o source/ ../pygenn ../pygenn/genn_model.py
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
