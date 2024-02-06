@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Upgrading from GeNN 4 &#8212; PyGeNN  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=89b800e6" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css?v=61a4c737" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=b3ba4146"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Building networks" href="building_networks.html" />
+    <link rel="prev" title="PyGeNN documentation" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="building_networks.html" title="Building networks"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="PyGeNN documentation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">PyGeNN  documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Upgrading from GeNN 4</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="upgrading-from-genn-4">
+<h1>Upgrading from GeNN 4<a class="headerlink" href="#upgrading-from-genn-4" title="Permalink to this heading">¶</a></h1>
+<p>GeNN 5 does not aim to be a backward-compatible upgrade.
+In PyGeNN we have strived to add backward compatibility where possible but most models will need to be updated.</p>
+<section id="genncode">
+<h2>GeNNCode<a class="headerlink" href="#genncode" title="Permalink to this heading">¶</a></h2>
+<p>In GeNN 4 GeNNCode was passed directly to the underlying compiler whereas, in GeNN 5, it is parsed and only a subset of C99 language features are supported.
+In PyGeNN,</p>
+<ul class="simple">
+<li><p>The &amp; operator isn’t supported - on the target GPU hardware, local variables are assumed to be stored in registers and not addressable. The only time this is limiting is when dealing with extra global parameter arrays as you can no longer do stuff like <code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">int</span> <span class="pre">*egpSubset</span> <span class="pre">=</span> <span class="pre">&amp;egp[offset];</span></code> and instead have to do <code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">int</span> <span class="pre">*egpSubset</span> <span class="pre">=</span> <span class="pre">egp</span> <span class="pre">+</span> <span class="pre">offset;</span></code>.</p></li>
+<li><p>The old <code class="docutils literal notranslate"><span class="pre">$(xx)</span></code> syntax for referencing GeNN stuff is no longer necessary at all.</p></li>
+</ul>
+</section>
+<section id="syntax-changes">
+<h2>Syntax changes<a class="headerlink" href="#syntax-changes" title="Permalink to this heading">¶</a></h2>
+<p>In order to streamline the modelling process and reduce the number of ways to achieve the same thing we have to maintain,
+several areas of GeNN syntax have changed:</p>
+<ul>
+<li><p>single PSM code string</p></li>
+<li><p><a class="reference internal" href="source/pygenn.html#pygenn.GeNNModel.add_synapse_population" title="pygenn.GeNNModel.add_synapse_population"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GeNNModel.add_synapse_population()</span></code></a> was becoming rather cumbersome and this was only made worse by postsynaptic models and weight update models now taking variable references.
+To improve this:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Axonal delay is now no longer a required parameter and, if required, can now be set using <a class="reference internal" href="source/pygenn.html#pygenn.SynapseGroup.axonal_delay_steps" title="pygenn.SynapseGroup.axonal_delay_steps"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SynapseGroup.axonal_delay_steps</span></code></a></p></li>
+<li><p>The postsynaptic and weight update models used by the synapse group are initialised seperately using <a class="reference internal" href="source/pygenn.html#pygenn.init_postsynaptic" title="pygenn.init_postsynaptic"><code class="xref py py-func docutils literal notranslate"><span class="pre">init_postsynaptic()</span></code></a> and <a class="reference internal" href="source/pygenn.html#pygenn.init_weight_update" title="pygenn.init_weight_update"><code class="xref py py-func docutils literal notranslate"><span class="pre">init_weight_update()</span></code></a> respectively.</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>The row build and diagonal build state variables in sparse/toeplitz connectivity building code were really ugly and confusing. Sparse connectivity init snippets now just let the user write whatever sort of loop they want and do the initialisation outside and toeplitz reuses the for_each_synapse structure described above to do similar.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">GLOBALG</span></code> and <code class="docutils literal notranslate"><span class="pre">INDIVIDUALG</span></code> confused almost all new users and were really only used with <code class="docutils literal notranslate"><span class="pre">StaticPulse</span></code> weight update models. Same functionality can be achieved with a <code class="docutils literal notranslate"><span class="pre">StaticPulseConstantWeight</span></code> version with the weight as a parameter. Then I’ve renamed all the ‘obvious’ <a class="reference internal" href="source/pygenn.html#pygenn.SynapseMatrixType" title="pygenn.SynapseMatrixType"><code class="xref py py-class docutils literal notranslate"><span class="pre">SynapseMatrixType</span></code></a> variants so you just chose <a class="reference internal" href="source/pygenn.html#pygenn.SynapseMatrixType.SPARSE" title="pygenn.SynapseMatrixType.SPARSE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SynapseMatrixType.SPARSE</span></code></a>, <a class="reference internal" href="source/pygenn.html#pygenn.SynapseMatrixType.DENSE" title="pygenn.SynapseMatrixType.DENSE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SynapseMatrixType.DENSE</span></code></a>, <a class="reference internal" href="source/pygenn.html#pygenn.SynapseMatrixType.TOEPLITZ" title="pygenn.SynapseMatrixType.TOEPLITZ"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SynapseMatrixType.TOEPLITZ</span></code></a> or <a class="reference internal" href="source/pygenn.html#pygenn.SynapseMatrixType.PROCEDURAL" title="pygenn.SynapseMatrixType.PROCEDURAL"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SynapseMatrixType.PROCEDURAL</span></code></a> (with <a class="reference internal" href="source/pygenn.html#pygenn.SynapseMatrixType.DENSE_PROCEDURALG" title="pygenn.SynapseMatrixType.DENSE_PROCEDURALG"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SynapseMatrixType.DENSE_PROCEDURALG</span></code></a> and <a class="reference internal" href="source/pygenn.html#pygenn.SynapseMatrixType.PROCEDURAL_KERNELG" title="pygenn.SynapseMatrixType.PROCEDURAL_KERNELG"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SynapseMatrixType.PROCEDURAL_KERNELG</span></code></a> for more unusual options)</p></li>
+<li><p>Extra global parameters only support the ‘pointer’ form, awaiting a PR to implement settable parameters to replace the other sort</p></li>
+<li><p>Removed implicit variable referneces</p></li>
+</ul>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Upgrading from GeNN 4</a><ul>
+<li><a class="reference internal" href="#genncode">GeNNCode</a></li>
+<li><a class="reference internal" href="#syntax-changes">Syntax changes</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="index.html"
+                          title="previous chapter">PyGeNN documentation</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="building_networks.html"
+                          title="next chapter">Building networks</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/upgrading.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="building_networks.html" title="Building networks"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="PyGeNN documentation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">PyGeNN  documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Upgrading from GeNN 4</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2024, James Knight, Thomas Nowotny.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.1.2.
+    </div>
+  </body>
+</html>

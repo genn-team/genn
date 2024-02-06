@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>PyGeNN implementation of local cortical microcircuit model &#8212; PyGeNN  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=89b800e6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=61a4c737" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=b3ba4146"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="PyGeNN implementation of SuperSpike" href="superspike_demo.html" />
+    <link rel="prev" title="MNIST classification using an insect-inspired mushroom body model" href="mnist_mb_classifier.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="superspike_demo.html" title="PyGeNN implementation of SuperSpike"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mnist_mb_classifier.html" title="MNIST classification using an insect-inspired mushroom body model"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">PyGeNN  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">User projects</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">PyGeNN implementation of local cortical microcircuit model</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-userproject-potjans-microcircuit-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="pygenn-implementation-of-local-cortical-microcircuit-model">
+<span id="sphx-glr-userproject-potjans-microcircuit-py"></span><h1>PyGeNN implementation of local cortical microcircuit model<a class="headerlink" href="#pygenn-implementation-of-local-cortical-microcircuit-model" title="Permalink to this heading">¶</a></h1>
+<p>This example model is a reimplementation of the microcircuit model developed by Tobias C. Potjans and Markus Diesmann <a class="reference internal" href="../bibliography.html#potjans2014" id="id1"><span>[Potjans2014]</span></a>.
+It is a full-scale spiking network model of the local cortical microcircuit.
+The simulated spontaneous activity is asynchronous irregular and cell-type specific firing rates are in agreement
+with in vivo recordings in awake animals, including the low rate of layer 2/3 excitatory cells.
+This example can be used as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">potjans_microcircuit</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">duration</span> <span class="n">DURATION</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">neuron</span><span class="o">-</span><span class="n">scale</span> <span class="n">NEURON_SCALE</span><span class="p">]</span>
+                            <span class="p">[</span><span class="o">--</span><span class="n">connectivity</span><span class="o">-</span><span class="n">scale</span> <span class="n">CONNECTIVITY_SCALE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">kernel</span><span class="o">-</span><span class="n">profiling</span><span class="p">]</span>
+                            <span class="p">[</span><span class="o">--</span><span class="n">procedural</span><span class="o">-</span><span class="n">connectivity</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">save</span><span class="o">-</span><span class="n">data</span><span class="p">]</span>
+</pre></div>
+</div>
+<section id="named-arguments">
+<h2>Named Arguments<a class="headerlink" href="#named-arguments" title="Permalink to this heading">¶</a></h2>
+<dl class="option-list">
+<dt><kbd>--duration</kbd></dt>
+<dd><p>Duration to simulate (ms)</p>
+<p>Default: 1000.0</p>
+</dd>
+<dt><kbd>--neuron-scale</kbd></dt>
+<dd><p>Scaling factor to apply to number of neurons</p>
+<p>Default: 1.0</p>
+</dd>
+<dt><kbd>--connectivity-scale</kbd></dt>
+<dd><p>Scaling factor to apply to number of neurons</p>
+<p>Default: 1.0</p>
+</dd>
+<dt><kbd>--kernel-profiling</kbd></dt>
+<dd><p>Output kernel profiling data</p>
+<p>Default: False</p>
+</dd>
+<dt><kbd>--procedural-connectivity</kbd></dt>
+<dd><p>Use procedural connectivity</p>
+<p>Default: False</p>
+</dd>
+<dt><kbd>--save-data</kbd></dt>
+<dd><p>Save spike data (rather than plotting it)</p>
+<p>Default: False</p>
+</dd>
+</dl>
+</section>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">argparse</span> <span class="kn">import</span> <span class="n">ArgumentParser</span>
+<span class="kn">from</span> <span class="nn">pygenn</span> <span class="kn">import</span> <span class="p">(</span><span class="n">GeNNModel</span><span class="p">,</span> <span class="n">VarLocation</span><span class="p">,</span> <span class="n">init_postsynaptic</span><span class="p">,</span>
+                    <span class="n">init_sparse_connectivity</span><span class="p">,</span> <span class="n">init_weight_update</span><span class="p">,</span> <span class="n">init_var</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">norm</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">perf_counter</span>
+
+<span class="c1"># ----------------------------------------------------------------------------</span>
+<span class="c1"># Parameters</span>
+<span class="c1"># ----------------------------------------------------------------------------</span>
+<span class="c1"># Layer names</span>
+<span class="n">LAYER_NAMES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;23&quot;</span><span class="p">,</span> <span class="s2">&quot;4&quot;</span><span class="p">,</span> <span class="s2">&quot;5&quot;</span><span class="p">,</span> <span class="s2">&quot;6&quot;</span><span class="p">]</span>
+
+<span class="c1"># Population names</span>
+<span class="n">POPULATION_NAMES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="s2">&quot;I&quot;</span><span class="p">]</span>
+
+<span class="c1"># Simulation timestep [ms]</span>
+<span class="n">DT_MS</span> <span class="o">=</span> <span class="mf">0.1</span>
+
+<span class="c1"># How many threads to use per spike for procedural connectivity?</span>
+<span class="n">NUM_THREADS_PER_SPIKE</span> <span class="o">=</span> <span class="mi">8</span>
+
+<span class="c1"># Background rate per synapse</span>
+<span class="n">BACKGROUND_RATE</span> <span class="o">=</span> <span class="mf">8.0</span>  <span class="c1"># spikes/s</span>
+
+<span class="c1"># Relative inhibitory synaptic weight</span>
+<span class="n">G</span> <span class="o">=</span> <span class="o">-</span><span class="mf">4.0</span>
+
+<span class="c1"># Mean synaptic weight for all excitatory projections except L4e-&gt;L2/3e</span>
+<span class="n">MEAN_W</span> <span class="o">=</span> <span class="mf">87.8e-3</span>  <span class="c1"># nA</span>
+<span class="n">EXTERNAL_W</span> <span class="o">=</span> <span class="mf">87.8e-3</span>   <span class="c1"># nA</span>
+
+<span class="c1"># Mean synaptic weight for L4e-&gt;L2/3e connections</span>
+<span class="c1"># See p. 801 of the paper, second paragraph under &#39;Model Parameterization&#39;,</span>
+<span class="c1"># and the caption to Supplementary Fig. 7</span>
+<span class="n">LAYER_23_4_W</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">MEAN_W</span>   <span class="c1"># nA</span>
+
+<span class="c1"># Standard deviation of weight distribution relative to mean for</span>
+<span class="c1"># all projections except L4e-&gt;L2/3e</span>
+<span class="n">REL_W</span> <span class="o">=</span> <span class="mf">0.1</span>
+
+<span class="c1"># Standard deviation of weight distribution relative to mean for L4e-&gt;L2/3e</span>
+<span class="c1"># This value is not mentioned in the paper, but is chosen to match the</span>
+<span class="c1"># original code by Tobias Potjans</span>
+<span class="n">LAYER_23_4_RELW</span> <span class="o">=</span> <span class="mf">0.05</span>
+
+<span class="c1"># Numbers of neurons in full-scale model</span>
+<span class="n">NUM_NEURONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;23&quot;</span><span class="p">:</span>   <span class="p">{</span><span class="s2">&quot;E&quot;</span><span class="p">:</span><span class="mi">20683</span><span class="p">,</span> <span class="s2">&quot;I&quot;</span><span class="p">:</span> <span class="mi">5834</span><span class="p">},</span>
+    <span class="s2">&quot;4&quot;</span><span class="p">:</span>    <span class="p">{</span><span class="s2">&quot;E&quot;</span><span class="p">:</span><span class="mi">21915</span><span class="p">,</span> <span class="s2">&quot;I&quot;</span><span class="p">:</span> <span class="mi">5479</span><span class="p">},</span>
+    <span class="s2">&quot;5&quot;</span><span class="p">:</span>    <span class="p">{</span><span class="s2">&quot;E&quot;</span><span class="p">:</span><span class="mi">4850</span><span class="p">,</span>  <span class="s2">&quot;I&quot;</span><span class="p">:</span> <span class="mi">1065</span><span class="p">},</span>
+    <span class="s2">&quot;6&quot;</span><span class="p">:</span>    <span class="p">{</span><span class="s2">&quot;E&quot;</span><span class="p">:</span><span class="mi">14395</span><span class="p">,</span> <span class="s2">&quot;I&quot;</span><span class="p">:</span> <span class="mi">2948</span><span class="p">}}</span>
+
+<span class="c1"># Probabilities for &gt;=1 connection between neurons in the given populations.</span>
+<span class="c1"># The first index is for the target population; the second for the source population</span>
+<span class="n">CONNECTION_PROBABILTIES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;23E&quot;</span><span class="p">:</span>  <span class="p">{</span><span class="s2">&quot;23E&quot;</span><span class="p">:</span> <span class="mf">0.1009</span><span class="p">,</span> <span class="s2">&quot;23I&quot;</span><span class="p">:</span> <span class="mf">0.1689</span><span class="p">,</span>  <span class="s2">&quot;4E&quot;</span><span class="p">:</span> <span class="mf">0.0437</span><span class="p">,</span>   <span class="s2">&quot;4I&quot;</span><span class="p">:</span> <span class="mf">0.0818</span><span class="p">,</span>   <span class="s2">&quot;5E&quot;</span><span class="p">:</span> <span class="mf">0.0323</span><span class="p">,</span>   <span class="s2">&quot;5I&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>      <span class="s2">&quot;6E&quot;</span><span class="p">:</span> <span class="mf">0.0076</span><span class="p">,</span>   <span class="s2">&quot;6I&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+    <span class="s2">&quot;23I&quot;</span><span class="p">:</span>  <span class="p">{</span><span class="s2">&quot;23E&quot;</span><span class="p">:</span> <span class="mf">0.1346</span><span class="p">,</span> <span class="s2">&quot;23I&quot;</span><span class="p">:</span> <span class="mf">0.1371</span><span class="p">,</span>  <span class="s2">&quot;4E&quot;</span><span class="p">:</span> <span class="mf">0.0316</span><span class="p">,</span>   <span class="s2">&quot;4I&quot;</span><span class="p">:</span> <span class="mf">0.0515</span><span class="p">,</span>   <span class="s2">&quot;5E&quot;</span><span class="p">:</span> <span class="mf">0.0755</span><span class="p">,</span>   <span class="s2">&quot;5I&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>      <span class="s2">&quot;6E&quot;</span><span class="p">:</span> <span class="mf">0.0042</span><span class="p">,</span>   <span class="s2">&quot;6I&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+    <span class="s2">&quot;4E&quot;</span><span class="p">:</span>   <span class="p">{</span><span class="s2">&quot;23E&quot;</span><span class="p">:</span> <span class="mf">0.0077</span><span class="p">,</span> <span class="s2">&quot;23I&quot;</span><span class="p">:</span> <span class="mf">0.0059</span><span class="p">,</span>  <span class="s2">&quot;4E&quot;</span><span class="p">:</span> <span class="mf">0.0497</span><span class="p">,</span>   <span class="s2">&quot;4I&quot;</span><span class="p">:</span> <span class="mf">0.135</span><span class="p">,</span>    <span class="s2">&quot;5E&quot;</span><span class="p">:</span> <span class="mf">0.0067</span><span class="p">,</span>   <span class="s2">&quot;5I&quot;</span><span class="p">:</span> <span class="mf">0.0003</span><span class="p">,</span>   <span class="s2">&quot;6E&quot;</span><span class="p">:</span> <span class="mf">0.0453</span><span class="p">,</span>   <span class="s2">&quot;6I&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+    <span class="s2">&quot;4I&quot;</span><span class="p">:</span>   <span class="p">{</span><span class="s2">&quot;23E&quot;</span><span class="p">:</span> <span class="mf">0.0691</span><span class="p">,</span> <span class="s2">&quot;23I&quot;</span><span class="p">:</span> <span class="mf">0.0029</span><span class="p">,</span>  <span class="s2">&quot;4E&quot;</span><span class="p">:</span> <span class="mf">0.0794</span><span class="p">,</span>   <span class="s2">&quot;4I&quot;</span><span class="p">:</span> <span class="mf">0.1597</span><span class="p">,</span>   <span class="s2">&quot;5E&quot;</span><span class="p">:</span> <span class="mf">0.0033</span><span class="p">,</span>   <span class="s2">&quot;5I&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>      <span class="s2">&quot;6E&quot;</span><span class="p">:</span> <span class="mf">0.1057</span><span class="p">,</span>   <span class="s2">&quot;6I&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+    <span class="s2">&quot;5E&quot;</span><span class="p">:</span>   <span class="p">{</span><span class="s2">&quot;23E&quot;</span><span class="p">:</span> <span class="mf">0.1004</span><span class="p">,</span> <span class="s2">&quot;23I&quot;</span><span class="p">:</span> <span class="mf">0.0622</span><span class="p">,</span>  <span class="s2">&quot;4E&quot;</span><span class="p">:</span> <span class="mf">0.0505</span><span class="p">,</span>   <span class="s2">&quot;4I&quot;</span><span class="p">:</span> <span class="mf">0.0057</span><span class="p">,</span>   <span class="s2">&quot;5E&quot;</span><span class="p">:</span> <span class="mf">0.0831</span><span class="p">,</span>   <span class="s2">&quot;5I&quot;</span><span class="p">:</span> <span class="mf">0.3726</span><span class="p">,</span>   <span class="s2">&quot;6E&quot;</span><span class="p">:</span> <span class="mf">0.0204</span><span class="p">,</span>   <span class="s2">&quot;6I&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+    <span class="s2">&quot;5I&quot;</span><span class="p">:</span>   <span class="p">{</span><span class="s2">&quot;23E&quot;</span><span class="p">:</span> <span class="mf">0.0548</span><span class="p">,</span> <span class="s2">&quot;23I&quot;</span><span class="p">:</span> <span class="mf">0.0269</span><span class="p">,</span>  <span class="s2">&quot;4E&quot;</span><span class="p">:</span> <span class="mf">0.0257</span><span class="p">,</span>   <span class="s2">&quot;4I&quot;</span><span class="p">:</span> <span class="mf">0.0022</span><span class="p">,</span>   <span class="s2">&quot;5E&quot;</span><span class="p">:</span> <span class="mf">0.06</span><span class="p">,</span>     <span class="s2">&quot;5I&quot;</span><span class="p">:</span> <span class="mf">0.3158</span><span class="p">,</span>   <span class="s2">&quot;6E&quot;</span><span class="p">:</span> <span class="mf">0.0086</span><span class="p">,</span>   <span class="s2">&quot;6I&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+    <span class="s2">&quot;6E&quot;</span><span class="p">:</span>   <span class="p">{</span><span class="s2">&quot;23E&quot;</span><span class="p">:</span> <span class="mf">0.0156</span><span class="p">,</span> <span class="s2">&quot;23I&quot;</span><span class="p">:</span> <span class="mf">0.0066</span><span class="p">,</span>  <span class="s2">&quot;4E&quot;</span><span class="p">:</span> <span class="mf">0.0211</span><span class="p">,</span>   <span class="s2">&quot;4I&quot;</span><span class="p">:</span> <span class="mf">0.0166</span><span class="p">,</span>   <span class="s2">&quot;5E&quot;</span><span class="p">:</span> <span class="mf">0.0572</span><span class="p">,</span>   <span class="s2">&quot;5I&quot;</span><span class="p">:</span> <span class="mf">0.0197</span><span class="p">,</span>   <span class="s2">&quot;6E&quot;</span><span class="p">:</span> <span class="mf">0.0396</span><span class="p">,</span>   <span class="s2">&quot;6I&quot;</span><span class="p">:</span> <span class="mf">0.2252</span><span class="p">},</span>
+    <span class="s2">&quot;6I&quot;</span><span class="p">:</span>   <span class="p">{</span><span class="s2">&quot;23E&quot;</span><span class="p">:</span> <span class="mf">0.0364</span><span class="p">,</span> <span class="s2">&quot;23I&quot;</span><span class="p">:</span> <span class="mf">0.001</span><span class="p">,</span>   <span class="s2">&quot;4E&quot;</span><span class="p">:</span> <span class="mf">0.0034</span><span class="p">,</span>   <span class="s2">&quot;4I&quot;</span><span class="p">:</span> <span class="mf">0.0005</span><span class="p">,</span>   <span class="s2">&quot;5E&quot;</span><span class="p">:</span> <span class="mf">0.0277</span><span class="p">,</span>   <span class="s2">&quot;5I&quot;</span><span class="p">:</span> <span class="mf">0.008</span><span class="p">,</span>    <span class="s2">&quot;6E&quot;</span><span class="p">:</span> <span class="mf">0.0658</span><span class="p">,</span>   <span class="s2">&quot;6I&quot;</span><span class="p">:</span> <span class="mf">0.1443</span><span class="p">}}</span>
+
+
+<span class="c1"># In-degrees for external inputs</span>
+<span class="n">NUM_EXTERNAL_INPUTS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;23&quot;</span><span class="p">:</span>   <span class="p">{</span><span class="s2">&quot;E&quot;</span><span class="p">:</span> <span class="mi">1600</span><span class="p">,</span> <span class="s2">&quot;I&quot;</span><span class="p">:</span> <span class="mi">1500</span><span class="p">},</span>
+    <span class="s2">&quot;4&quot;</span><span class="p">:</span>    <span class="p">{</span><span class="s2">&quot;E&quot;</span><span class="p">:</span> <span class="mi">2100</span><span class="p">,</span> <span class="s2">&quot;I&quot;</span><span class="p">:</span> <span class="mi">1900</span><span class="p">},</span>
+    <span class="s2">&quot;5&quot;</span><span class="p">:</span>    <span class="p">{</span><span class="s2">&quot;E&quot;</span><span class="p">:</span> <span class="mi">2000</span><span class="p">,</span> <span class="s2">&quot;I&quot;</span><span class="p">:</span> <span class="mi">1900</span><span class="p">},</span>
+    <span class="s2">&quot;6&quot;</span><span class="p">:</span>    <span class="p">{</span><span class="s2">&quot;E&quot;</span><span class="p">:</span> <span class="mi">2900</span><span class="p">,</span> <span class="s2">&quot;I&quot;</span><span class="p">:</span> <span class="mi">2100</span><span class="p">}}</span>
+
+<span class="c1"># Mean rates in the full-scale model, necessary for scaling</span>
+<span class="c1"># Precise values differ somewhat between network realizations</span>
+<span class="n">MEAN_FIRING_RATES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;23&quot;</span><span class="p">:</span>   <span class="p">{</span><span class="s2">&quot;E&quot;</span><span class="p">:</span> <span class="mf">0.971</span><span class="p">,</span>    <span class="s2">&quot;I&quot;</span><span class="p">:</span> <span class="mf">2.868</span><span class="p">},</span>
+    <span class="s2">&quot;4&quot;</span><span class="p">:</span>    <span class="p">{</span><span class="s2">&quot;E&quot;</span><span class="p">:</span> <span class="mf">4.746</span><span class="p">,</span>    <span class="s2">&quot;I&quot;</span><span class="p">:</span> <span class="mf">5.396</span><span class="p">},</span>
+    <span class="s2">&quot;5&quot;</span><span class="p">:</span>    <span class="p">{</span><span class="s2">&quot;E&quot;</span><span class="p">:</span> <span class="mf">8.142</span><span class="p">,</span>    <span class="s2">&quot;I&quot;</span><span class="p">:</span> <span class="mf">9.078</span><span class="p">},</span>
+    <span class="s2">&quot;6&quot;</span><span class="p">:</span>    <span class="p">{</span><span class="s2">&quot;E&quot;</span><span class="p">:</span> <span class="mf">0.991</span><span class="p">,</span>    <span class="s2">&quot;I&quot;</span><span class="p">:</span> <span class="mf">7.523</span><span class="p">}}</span>
+
+<span class="c1"># Means and standard deviations of delays from given source populations (ms)</span>
+<span class="n">MEAN_DELAY</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;E&quot;</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">,</span> <span class="s2">&quot;I&quot;</span><span class="p">:</span> <span class="mf">0.75</span><span class="p">}</span>
+
+<span class="n">DELAY_SD</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;E&quot;</span><span class="p">:</span> <span class="mf">0.75</span><span class="p">,</span> <span class="s2">&quot;I&quot;</span><span class="p">:</span> <span class="mf">0.375</span><span class="p">}</span>
+
+<span class="c1"># ----------------------------------------------------------------------------</span>
+<span class="c1"># Helper functions</span>
+<span class="c1"># ----------------------------------------------------------------------------</span>
+<span class="k">def</span> <span class="nf">get_scaled_num_neurons</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">pop</span><span class="p">,</span> <span class="n">neuron_scale</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">neuron_scale</span> <span class="o">*</span> <span class="n">NUM_NEURONS</span><span class="p">[</span><span class="n">layer</span><span class="p">][</span><span class="n">pop</span><span class="p">]))</span>
+
+<span class="k">def</span> <span class="nf">get_full_num_inputs</span><span class="p">(</span><span class="n">src_layer</span><span class="p">,</span> <span class="n">src_pop</span><span class="p">,</span> <span class="n">trg_layer</span><span class="p">,</span> <span class="n">trg_pop</span><span class="p">):</span>
+    <span class="n">num_src</span> <span class="o">=</span> <span class="n">NUM_NEURONS</span><span class="p">[</span><span class="n">src_layer</span><span class="p">][</span><span class="n">src_pop</span><span class="p">]</span>
+    <span class="n">num_trg</span> <span class="o">=</span> <span class="n">NUM_NEURONS</span><span class="p">[</span><span class="n">trg_layer</span><span class="p">][</span><span class="n">trg_pop</span><span class="p">]</span>
+    <span class="n">connection_prob</span> <span class="o">=</span> <span class="n">CONNECTION_PROBABILTIES</span><span class="p">[</span><span class="n">trg_layer</span> <span class="o">+</span> <span class="n">trg_pop</span><span class="p">][</span><span class="n">src_layer</span> <span class="o">+</span> <span class="n">src_pop</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">connection_prob</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">num_trg</span> <span class="o">*</span> <span class="n">num_src</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">num_trg</span> <span class="o">*</span> <span class="n">num_src</span><span class="p">)))</span> <span class="o">/</span> <span class="n">num_trg</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">get_mean_weight</span><span class="p">(</span><span class="n">src_layer</span><span class="p">,</span> <span class="n">src_pop</span><span class="p">,</span> <span class="n">trg_layer</span><span class="p">,</span> <span class="n">trg_pop</span><span class="p">):</span>
+    <span class="c1"># Determine mean weight</span>
+    <span class="k">if</span> <span class="n">src_pop</span> <span class="o">==</span> <span class="s2">&quot;E&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">src_layer</span> <span class="o">==</span> <span class="s2">&quot;4&quot;</span> <span class="ow">and</span> <span class="n">trg_layer</span> <span class="o">==</span> <span class="s2">&quot;23&quot;</span> <span class="ow">and</span> <span class="n">trg_pop</span> <span class="o">==</span> <span class="s2">&quot;E&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">LAYER_23_4_W</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">MEAN_W</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">G</span> <span class="o">*</span> <span class="n">MEAN_W</span>
+
+<span class="k">def</span> <span class="nf">get_scaled_num_connections</span><span class="p">(</span><span class="n">src_layer</span><span class="p">,</span> <span class="n">src_pop</span><span class="p">,</span> <span class="n">trg_layer</span><span class="p">,</span> <span class="n">trg_pop</span><span class="p">,</span>
+                               <span class="n">neuron_scale</span><span class="p">,</span> <span class="n">connectivity_scale</span><span class="p">):</span>
+    <span class="c1"># Scale full number of inputs by scaling factor</span>
+    <span class="n">num_inputs</span> <span class="o">=</span> <span class="n">get_full_num_inputs</span><span class="p">(</span><span class="n">src_layer</span><span class="p">,</span> <span class="n">src_pop</span><span class="p">,</span> <span class="n">trg_layer</span><span class="p">,</span> <span class="n">trg_pop</span><span class="p">)</span> <span class="o">*</span> <span class="n">connectivity_scale</span>
+    <span class="k">assert</span> <span class="n">num_inputs</span> <span class="o">&gt;=</span> <span class="mf">0.0</span>
+
+    <span class="c1"># Multiply this by number of postsynaptic neurons</span>
+    <span class="n">num_neurons</span> <span class="o">=</span> <span class="n">get_scaled_num_neurons</span><span class="p">(</span><span class="n">trg_layer</span><span class="p">,</span> <span class="n">trg_pop</span><span class="p">,</span> <span class="n">neuron_scale</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">num_inputs</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">num_neurons</span><span class="p">)))</span>
+
+<span class="k">def</span> <span class="nf">get_full_mean_input_current</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">pop</span><span class="p">):</span>
+    <span class="c1"># Loop through source populations</span>
+    <span class="n">mean_input_current</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">for</span> <span class="n">src_layer</span> <span class="ow">in</span> <span class="n">LAYER_NAMES</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">src_pop</span> <span class="ow">in</span> <span class="n">POPULATION_NAMES</span><span class="p">:</span>
+            <span class="n">mean_input_current</span> <span class="o">+=</span> <span class="p">(</span><span class="n">get_mean_weight</span><span class="p">(</span><span class="n">src_layer</span><span class="p">,</span> <span class="n">src_pop</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">pop</span><span class="p">)</span> <span class="o">*</span>
+                                   <span class="n">get_full_num_inputs</span><span class="p">(</span><span class="n">src_layer</span><span class="p">,</span> <span class="n">src_pop</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">pop</span><span class="p">)</span> <span class="o">*</span>
+                                   <span class="n">MEAN_FIRING_RATES</span><span class="p">[</span><span class="n">src_layer</span><span class="p">][</span><span class="n">src_pop</span><span class="p">])</span>
+
+    <span class="c1"># Add mean external input current</span>
+    <span class="n">mean_input_current</span> <span class="o">+=</span> <span class="n">EXTERNAL_W</span> <span class="o">*</span> <span class="n">NUM_EXTERNAL_INPUTS</span><span class="p">[</span><span class="n">layer</span><span class="p">][</span><span class="n">pop</span><span class="p">]</span> <span class="o">*</span> <span class="n">BACKGROUND_RATE</span>
+    <span class="k">assert</span> <span class="n">mean_input_current</span> <span class="o">&gt;=</span> <span class="mf">0.0</span>
+    <span class="k">return</span> <span class="n">mean_input_current</span>
+
+<span class="k">def</span> <span class="nf">get_parser</span><span class="p">():</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">ArgumentParser</span><span class="p">()</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--duration&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">1000.0</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Duration to simulate (ms)&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--neuron-scale&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Scaling factor to apply to number of neurons&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--connectivity-scale&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Scaling factor to apply to number of neurons&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--kernel-profiling&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Output kernel profiling data&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--procedural-connectivity&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Use procedural connectivity&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--save-data&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Save spike data (rather than plotting it)&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">parser</span>
+
+<span class="c1"># ----------------------------------------------------------------------------</span>
+<span class="c1"># Entry point</span>
+<span class="c1"># ----------------------------------------------------------------------------</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">get_parser</span><span class="p">()</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="c1"># ----------------------------------------------------------------------------</span>
+    <span class="c1"># Network creation</span>
+    <span class="c1"># ----------------------------------------------------------------------------</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">GeNNModel</span><span class="p">(</span><span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="s2">&quot;potjans_microcircuit&quot;</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="n">DT_MS</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">fuse_postsynaptic_models</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">default_narrow_sparse_ind_enabled</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">timing_enabled</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">kernel_profiling</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">default_var_location</span> <span class="o">=</span> <span class="n">VarLocation</span><span class="o">.</span><span class="n">DEVICE</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">default_sparse_connectivity_location</span> <span class="o">=</span> <span class="n">VarLocation</span><span class="o">.</span><span class="n">DEVICE</span>
+
+    <span class="n">lif_init</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;V&quot;</span><span class="p">:</span> <span class="n">init_var</span><span class="p">(</span><span class="s2">&quot;Normal&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">58.0</span><span class="p">,</span> <span class="s2">&quot;sd&quot;</span><span class="p">:</span> <span class="mf">5.0</span><span class="p">}),</span> <span class="s2">&quot;RefracTime&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+    <span class="n">poisson_init</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;current&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+
+    <span class="n">exp_curr_init</span> <span class="o">=</span> <span class="n">init_postsynaptic</span><span class="p">(</span><span class="s2">&quot;ExpCurr&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;tau&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">})</span>
+
+    <span class="n">quantile</span> <span class="o">=</span> <span class="mf">0.9999</span>
+    <span class="n">normal_quantile_cdf</span> <span class="o">=</span> <span class="n">norm</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">quantile</span><span class="p">)</span>
+    <span class="n">max_delay</span> <span class="o">=</span> <span class="p">{</span><span class="n">pop</span><span class="p">:</span> <span class="n">MEAN_DELAY</span><span class="p">[</span><span class="n">pop</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">DELAY_SD</span><span class="p">[</span><span class="n">pop</span><span class="p">]</span> <span class="o">*</span> <span class="n">normal_quantile_cdf</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">pop</span> <span class="ow">in</span> <span class="n">POPULATION_NAMES</span><span class="p">}</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Max excitatory delay:</span><span class="si">%f</span><span class="s2">ms , max inhibitory delay:</span><span class="si">%f</span><span class="s2">ms&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">max_delay</span><span class="p">[</span><span class="s2">&quot;E&quot;</span><span class="p">],</span> <span class="n">max_delay</span><span class="p">[</span><span class="s2">&quot;I&quot;</span><span class="p">]))</span>
+
+    <span class="c1"># Calculate maximum dendritic delay slots</span>
+    <span class="c1"># **NOTE** it seems inefficient using maximum for all but this allows more aggressive merging of postsynaptic models</span>
+    <span class="n">max_dendritic_delay_slots</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">max_delay</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">/</span> <span class="n">DT_MS</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Max dendritic delay slots:</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">max_dendritic_delay_slots</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Creating neuron populations:&quot;</span><span class="p">)</span>
+    <span class="n">total_neurons</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">neuron_populations</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">LAYER_NAMES</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">pop</span> <span class="ow">in</span> <span class="n">POPULATION_NAMES</span><span class="p">:</span>
+            <span class="n">pop_name</span> <span class="o">=</span> <span class="n">layer</span> <span class="o">+</span> <span class="n">pop</span>
+
+            <span class="c1"># Calculate external input rate, weight and current</span>
+            <span class="n">ext_input_rate</span> <span class="o">=</span> <span class="n">NUM_EXTERNAL_INPUTS</span><span class="p">[</span><span class="n">layer</span><span class="p">][</span><span class="n">pop</span><span class="p">]</span> <span class="o">*</span> <span class="n">args</span><span class="o">.</span><span class="n">connectivity_scale</span> <span class="o">*</span> <span class="n">BACKGROUND_RATE</span>
+            <span class="n">ext_weight</span> <span class="o">=</span> <span class="n">EXTERNAL_W</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">connectivity_scale</span><span class="p">)</span>
+            <span class="n">ext_input_current</span> <span class="o">=</span> <span class="mf">0.001</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">connectivity_scale</span><span class="p">))</span> <span class="o">*</span> <span class="n">get_full_mean_input_current</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">pop</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">ext_input_current</span> <span class="o">&gt;=</span> <span class="mf">0.0</span>
+
+            <span class="n">lif_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;C&quot;</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span> <span class="s2">&quot;TauM&quot;</span><span class="p">:</span> <span class="mf">10.0</span><span class="p">,</span> <span class="s2">&quot;Vrest&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">65.0</span><span class="p">,</span> <span class="s2">&quot;Vreset&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">65.0</span><span class="p">,</span> <span class="s2">&quot;Vthresh&quot;</span> <span class="p">:</span> <span class="o">-</span><span class="mf">50.0</span><span class="p">,</span>
+                        <span class="s2">&quot;Ioffset&quot;</span><span class="p">:</span> <span class="n">ext_input_current</span><span class="p">,</span> <span class="s2">&quot;TauRefrac&quot;</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">}</span>
+            <span class="n">poisson_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="n">ext_weight</span><span class="p">,</span> <span class="s2">&quot;tauSyn&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">&quot;rate&quot;</span><span class="p">:</span> <span class="n">ext_input_rate</span><span class="p">}</span>
+
+            <span class="n">pop_size</span> <span class="o">=</span> <span class="n">get_scaled_num_neurons</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">pop</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">neuron_scale</span><span class="p">)</span>
+            <span class="n">neuron_pop</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_neuron_population</span><span class="p">(</span><span class="n">pop_name</span><span class="p">,</span> <span class="n">pop_size</span><span class="p">,</span> <span class="s2">&quot;LIF&quot;</span><span class="p">,</span> <span class="n">lif_params</span><span class="p">,</span> <span class="n">lif_init</span><span class="p">)</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">add_current_source</span><span class="p">(</span><span class="n">pop_name</span> <span class="o">+</span> <span class="s2">&quot;_poisson&quot;</span><span class="p">,</span> <span class="s2">&quot;PoissonExp&quot;</span><span class="p">,</span> <span class="n">neuron_pop</span><span class="p">,</span> <span class="n">poisson_params</span><span class="p">,</span> <span class="n">poisson_init</span><span class="p">)</span>
+
+            <span class="c1"># Enable spike recording</span>
+            <span class="n">neuron_pop</span><span class="o">.</span><span class="n">spike_recording_enabled</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">Population </span><span class="si">%s</span><span class="s2">: num neurons:</span><span class="si">%u</span><span class="s2">, external input rate:</span><span class="si">%f</span><span class="s2">, external weight:</span><span class="si">%f</span><span class="s2">, external DC offset:</span><span class="si">%f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">pop_name</span><span class="p">,</span> <span class="n">pop_size</span><span class="p">,</span> <span class="n">ext_input_rate</span><span class="p">,</span> <span class="n">ext_weight</span><span class="p">,</span> <span class="n">ext_input_current</span><span class="p">))</span>
+
+            <span class="c1"># Add number of neurons to total</span>
+            <span class="n">total_neurons</span> <span class="o">+=</span> <span class="n">pop_size</span>
+
+            <span class="c1"># Add neuron population to dictionary</span>
+            <span class="n">neuron_populations</span><span class="p">[</span><span class="n">pop_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">neuron_pop</span>
+
+    <span class="c1"># Loop through target populations and layers</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Creating synapse populations:&quot;</span><span class="p">)</span>
+    <span class="n">total_synapses</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">num_sub_rows</span> <span class="o">=</span> <span class="n">NUM_THREADS_PER_SPIKE</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">procedural_connectivity</span> <span class="k">else</span> <span class="mi">1</span>
+    <span class="k">for</span> <span class="n">trg_layer</span> <span class="ow">in</span> <span class="n">LAYER_NAMES</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">trg_pop</span> <span class="ow">in</span> <span class="n">POPULATION_NAMES</span><span class="p">:</span>
+            <span class="n">trg_name</span> <span class="o">=</span> <span class="n">trg_layer</span> <span class="o">+</span> <span class="n">trg_pop</span>
+
+            <span class="c1"># Loop through source populations and layers</span>
+            <span class="k">for</span> <span class="n">src_layer</span> <span class="ow">in</span> <span class="n">LAYER_NAMES</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">src_pop</span> <span class="ow">in</span> <span class="n">POPULATION_NAMES</span><span class="p">:</span>
+                    <span class="n">src_name</span> <span class="o">=</span> <span class="n">src_layer</span> <span class="o">+</span> <span class="n">src_pop</span>
+
+                    <span class="c1"># Determine mean weight</span>
+                    <span class="n">mean_weight</span> <span class="o">=</span> <span class="n">get_mean_weight</span><span class="p">(</span><span class="n">src_layer</span><span class="p">,</span> <span class="n">src_pop</span><span class="p">,</span> <span class="n">trg_layer</span><span class="p">,</span> <span class="n">trg_pop</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">connectivity_scale</span><span class="p">)</span>
+
+                    <span class="c1"># Determine weight standard deviation</span>
+                    <span class="k">if</span> <span class="n">src_pop</span> <span class="o">==</span> <span class="s2">&quot;E&quot;</span> <span class="ow">and</span> <span class="n">src_layer</span> <span class="o">==</span> <span class="s2">&quot;4&quot;</span> <span class="ow">and</span> <span class="n">trg_layer</span> <span class="o">==</span> <span class="s2">&quot;23&quot;</span> <span class="ow">and</span> <span class="n">trg_pop</span> <span class="o">==</span> <span class="s2">&quot;E&quot;</span><span class="p">:</span>
+                        <span class="n">weight_sd</span> <span class="o">=</span> <span class="n">mean_weight</span> <span class="o">*</span> <span class="n">LAYER_23_4_RELW</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">weight_sd</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">mean_weight</span> <span class="o">*</span> <span class="n">REL_W</span><span class="p">)</span>
+
+                    <span class="c1"># Calculate number of connections</span>
+                    <span class="n">num_connections</span> <span class="o">=</span> <span class="n">get_scaled_num_connections</span><span class="p">(</span><span class="n">src_layer</span><span class="p">,</span> <span class="n">src_pop</span><span class="p">,</span>
+                                                                <span class="n">trg_layer</span><span class="p">,</span> <span class="n">trg_pop</span><span class="p">,</span>
+                                                                <span class="n">args</span><span class="o">.</span><span class="n">neuron_scale</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">connectivity_scale</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">num_connections</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">Connection between &#39;</span><span class="si">%s</span><span class="s2">&#39; and &#39;</span><span class="si">%s</span><span class="s2">&#39;: numConnections=</span><span class="si">%u</span><span class="s2">, meanWeight=</span><span class="si">%f</span><span class="s2">, weightSD=</span><span class="si">%f</span><span class="s2">, meanDelay=</span><span class="si">%f</span><span class="s2">, delaySD=</span><span class="si">%f</span><span class="s2">&quot;</span>
+                            <span class="o">%</span> <span class="p">(</span><span class="n">src_name</span><span class="p">,</span> <span class="n">trg_name</span><span class="p">,</span> <span class="n">num_connections</span><span class="p">,</span> <span class="n">mean_weight</span><span class="p">,</span> <span class="n">weight_sd</span><span class="p">,</span> <span class="n">MEAN_DELAY</span><span class="p">[</span><span class="n">src_pop</span><span class="p">],</span> <span class="n">DELAY_SD</span><span class="p">[</span><span class="n">src_pop</span><span class="p">]))</span>
+
+                        <span class="c1"># Build parameters for fixed number total connector</span>
+                        <span class="n">connect_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;num&quot;</span><span class="p">:</span> <span class="n">num_connections</span><span class="p">}</span>
+
+                        <span class="c1"># Build distribution for delay parameters</span>
+                        <span class="n">d_dist</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="n">MEAN_DELAY</span><span class="p">[</span><span class="n">src_pop</span><span class="p">],</span> <span class="s2">&quot;sd&quot;</span><span class="p">:</span> <span class="n">DELAY_SD</span><span class="p">[</span><span class="n">src_pop</span><span class="p">],</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="n">max_delay</span><span class="p">[</span><span class="n">src_pop</span><span class="p">]}</span>
+
+                        <span class="n">total_synapses</span> <span class="o">+=</span> <span class="n">num_connections</span>
+
+                        <span class="c1"># Build unique synapse name</span>
+                        <span class="n">synapse_name</span> <span class="o">=</span> <span class="n">src_name</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="n">trg_name</span>
+
+                        <span class="n">matrix_type</span> <span class="o">=</span> <span class="s2">&quot;PROCEDURAL&quot;</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">procedural_connectivity</span> <span class="k">else</span> <span class="s2">&quot;SPARSE&quot;</span>
+
+                        <span class="c1"># Excitatory</span>
+                        <span class="k">if</span> <span class="n">src_pop</span> <span class="o">==</span> <span class="s2">&quot;E&quot;</span><span class="p">:</span>
+                            <span class="c1"># Build distribution for weight parameters</span>
+                            <span class="c1"># **HACK** np.float32 doesn&#39;t seem to automatically cast</span>
+                            <span class="n">w_dist</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="n">mean_weight</span><span class="p">,</span> <span class="s2">&quot;sd&quot;</span><span class="p">:</span> <span class="n">weight_sd</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">)}</span>
+
+                            <span class="c1"># Create weight parameters</span>
+                            <span class="n">static_synapse_init</span> <span class="o">=</span> <span class="n">init_weight_update</span><span class="p">(</span><span class="s2">&quot;StaticPulseDendriticDelay&quot;</span><span class="p">,</span> <span class="p">{},</span>
+                                                                    <span class="p">{</span><span class="s2">&quot;g&quot;</span><span class="p">:</span> <span class="n">init_var</span><span class="p">(</span><span class="s2">&quot;NormalClipped&quot;</span><span class="p">,</span> <span class="n">w_dist</span><span class="p">),</span>
+                                                                    <span class="s2">&quot;d&quot;</span><span class="p">:</span> <span class="n">init_var</span><span class="p">(</span><span class="s2">&quot;NormalClippedDelay&quot;</span><span class="p">,</span> <span class="n">d_dist</span><span class="p">)})</span>
+                            <span class="c1"># Add synapse population</span>
+                            <span class="n">syn_pop</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_synapse_population</span><span class="p">(</span><span class="n">synapse_name</span><span class="p">,</span> <span class="n">matrix_type</span><span class="p">,</span>
+                                <span class="n">neuron_populations</span><span class="p">[</span><span class="n">src_name</span><span class="p">],</span> <span class="n">neuron_populations</span><span class="p">[</span><span class="n">trg_name</span><span class="p">],</span>
+                                <span class="n">static_synapse_init</span><span class="p">,</span> <span class="n">exp_curr_init</span><span class="p">,</span>
+                                <span class="n">init_sparse_connectivity</span><span class="p">(</span><span class="s2">&quot;FixedNumberTotalWithReplacement&quot;</span><span class="p">,</span> <span class="n">connect_params</span><span class="p">))</span>
+
+                            <span class="c1"># Set max dendritic delay and span type</span>
+                            <span class="n">syn_pop</span><span class="o">.</span><span class="n">max_dendritic_delay_timesteps</span> <span class="o">=</span> <span class="n">max_dendritic_delay_slots</span>
+
+                            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">procedural_connectivity</span><span class="p">:</span>
+                                <span class="n">syn_pop</span><span class="o">.</span><span class="n">num_threads_per_spike</span> <span class="o">=</span> <span class="n">NUM_THREADS_PER_SPIKE</span>
+                        <span class="c1"># Inhibitory</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="c1"># Build distribution for weight parameters</span>
+                            <span class="c1"># **HACK** np.float32 doesn&#39;t seem to automatically cast</span>
+                            <span class="n">w_dist</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="n">mean_weight</span><span class="p">,</span> <span class="s2">&quot;sd&quot;</span><span class="p">:</span> <span class="n">weight_sd</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">),</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+
+                            <span class="c1"># Create weight parameters</span>
+                            <span class="n">static_synapse_init</span> <span class="o">=</span> <span class="n">init_weight_update</span><span class="p">(</span><span class="s2">&quot;StaticPulseDendriticDelay&quot;</span><span class="p">,</span> <span class="p">{},</span>
+                                                                    <span class="p">{</span><span class="s2">&quot;g&quot;</span><span class="p">:</span> <span class="n">init_var</span><span class="p">(</span><span class="s2">&quot;NormalClipped&quot;</span><span class="p">,</span> <span class="n">w_dist</span><span class="p">),</span>
+                                                                    <span class="s2">&quot;d&quot;</span><span class="p">:</span> <span class="n">init_var</span><span class="p">(</span><span class="s2">&quot;NormalClippedDelay&quot;</span><span class="p">,</span> <span class="n">d_dist</span><span class="p">)})</span>
+                            <span class="c1"># Add synapse population</span>
+                            <span class="n">syn_pop</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_synapse_population</span><span class="p">(</span><span class="n">synapse_name</span><span class="p">,</span> <span class="n">matrix_type</span><span class="p">,</span>
+                                <span class="n">neuron_populations</span><span class="p">[</span><span class="n">src_name</span><span class="p">],</span> <span class="n">neuron_populations</span><span class="p">[</span><span class="n">trg_name</span><span class="p">],</span>
+                                <span class="n">static_synapse_init</span><span class="p">,</span> <span class="n">exp_curr_init</span><span class="p">,</span>
+                                <span class="n">init_sparse_connectivity</span><span class="p">(</span><span class="s2">&quot;FixedNumberTotalWithReplacement&quot;</span><span class="p">,</span> <span class="n">connect_params</span><span class="p">))</span>
+
+                            <span class="c1"># Set max dendritic delay and span type</span>
+                            <span class="n">syn_pop</span><span class="o">.</span><span class="n">max_dendritic_delay_timesteps</span> <span class="o">=</span> <span class="n">max_dendritic_delay_slots</span>
+
+                            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">procedural_connectivity</span><span class="p">:</span>
+                                <span class="n">syn_pop</span><span class="o">.</span><span class="n">num_threads_per_spike</span> <span class="o">=</span> <span class="n">NUM_THREADS_PER_SPIKE</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Total neurons=</span><span class="si">%u</span><span class="s2">, total synapses=</span><span class="si">%u</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">total_neurons</span><span class="p">,</span> <span class="n">total_synapses</span><span class="p">))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Building Model&quot;</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading Model&quot;</span><span class="p">)</span>
+    <span class="n">duration_timesteps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">duration</span> <span class="o">/</span> <span class="n">DT_MS</span><span class="p">))</span>
+    <span class="n">ten_percent_timestep</span> <span class="o">=</span> <span class="n">duration_timesteps</span> <span class="o">//</span> <span class="mi">10</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">num_recording_timesteps</span><span class="o">=</span><span class="n">duration_timesteps</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Simulating&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Loop through timesteps</span>
+    <span class="n">sim_start_time</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
+    <span class="k">while</span> <span class="n">model</span><span class="o">.</span><span class="n">t</span> <span class="o">&lt;</span> <span class="n">args</span><span class="o">.</span><span class="n">duration</span><span class="p">:</span>
+        <span class="c1"># Advance simulation</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">step_time</span><span class="p">()</span>
+
+        <span class="c1"># Indicate every 10%</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">timestep</span> <span class="o">%</span> <span class="n">ten_percent_timestep</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%u%%</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">timestep</span> <span class="o">/</span> <span class="mi">100</span><span class="p">))</span>
+
+    <span class="n">sim_end_time</span> <span class="o">=</span>  <span class="n">perf_counter</span><span class="p">()</span>
+
+
+    <span class="c1"># Download recording data</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">pull_recording_buffers_from_device</span><span class="p">()</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Timing:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">Simulation:</span><span class="si">%f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">((</span><span class="n">sim_end_time</span> <span class="o">-</span> <span class="n">sim_start_time</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1000.0</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">kernel_profiling</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">Init:</span><span class="si">%f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="mf">1000.0</span> <span class="o">*</span> <span class="n">model</span><span class="o">.</span><span class="n">init_time</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">Sparse init:</span><span class="si">%f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="mf">1000.0</span> <span class="o">*</span> <span class="n">model</span><span class="o">.</span><span class="n">init_sparse_time</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">Neuron simulation:</span><span class="si">%f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="mf">1000.0</span> <span class="o">*</span> <span class="n">model</span><span class="o">.</span><span class="n">neuron_update_time</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">Synapse simulation:</span><span class="si">%f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="mf">1000.0</span> <span class="o">*</span> <span class="n">model</span><span class="o">.</span><span class="n">presynaptic_update_time</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">save_data</span><span class="p">:</span>
+        <span class="c1"># Loop through populations and write spike data to CSV</span>
+        <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">pop</span> <span class="ow">in</span> <span class="n">neuron_populations</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">_spikes.csv&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span><span class="n">pop</span><span class="o">.</span><span class="n">spike_recording_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                    <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%f</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">),</span> <span class="n">header</span><span class="o">=</span><span class="s2">&quot;Times [ms], Neuron ID&quot;</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+        <span class="c1"># Create plot</span>
+        <span class="n">figure</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># **YUCK** re-order neuron populations for plotting</span>
+        <span class="n">ordered_neuron_populations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">neuron_populations</span><span class="o">.</span><span class="n">values</span><span class="p">())))</span>
+
+        <span class="n">start_id</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">bar_y</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">pop</span> <span class="ow">in</span> <span class="n">ordered_neuron_populations</span><span class="p">:</span>
+            <span class="c1"># Get recording data</span>
+            <span class="n">spike_times</span><span class="p">,</span> <span class="n">spike_ids</span> <span class="o">=</span> <span class="n">pop</span><span class="o">.</span><span class="n">spike_recording_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="c1"># Plot spikes</span>
+            <span class="n">actor</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">spike_times</span><span class="p">,</span> <span class="n">spike_ids</span> <span class="o">+</span> <span class="n">start_id</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Plot bar showing rate in matching colour</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">barh</span><span class="p">(</span><span class="n">bar_y</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">spike_times</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">pop</span><span class="o">.</span><span class="n">num_neurons</span><span class="p">)</span> <span class="o">*</span> <span class="n">args</span><span class="o">.</span><span class="n">duration</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="p">),</span>
+                        <span class="n">align</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">actor</span><span class="o">.</span><span class="n">get_facecolor</span><span class="p">(),</span> <span class="n">ecolor</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Update offset</span>
+            <span class="n">start_id</span> <span class="o">+=</span> <span class="n">pop</span><span class="o">.</span><span class="n">num_neurons</span>
+
+            <span class="c1"># Update bar pos</span>
+            <span class="n">bar_y</span> <span class="o">+=</span> <span class="mf">1.0</span>
+
+        <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Time [ms]&quot;</span><span class="p">)</span>
+        <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Neuron number&quot;</span><span class="p">)</span>
+
+        <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Mean firingrate [Hz]&quot;</span><span class="p">)</span>
+        <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">neuron_populations</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">))</span>
+        <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">([</span><span class="n">n</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">ordered_neuron_populations</span><span class="p">])</span>
+
+        <span class="c1"># Show plot</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-userproject-potjans-microcircuit-py">
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/64c7fcd62013f68609d54d02d741b663/potjans_microcircuit.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">potjans_microcircuit.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/073c87394cbb11bb621dc9b007ea5e7e/potjans_microcircuit.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">potjans_microcircuit.py</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">PyGeNN implementation of local cortical microcircuit model</a><ul>
+<li><a class="reference internal" href="#named-arguments">Named Arguments</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="mnist_mb_classifier.html"
+                          title="previous chapter">MNIST classification using an insect-inspired mushroom body model</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="superspike_demo.html"
+                          title="next chapter">PyGeNN implementation of SuperSpike</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/userproject/potjans_microcircuit.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="superspike_demo.html" title="PyGeNN implementation of SuperSpike"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mnist_mb_classifier.html" title="MNIST classification using an insect-inspired mushroom body model"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">PyGeNN  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >User projects</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">PyGeNN implementation of local cortical microcircuit model</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2024, James Knight, Thomas Nowotny.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.1.2.
+    </div>
+  </body>
+</html>

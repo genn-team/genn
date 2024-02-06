@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>pygenn &#8212; PyGeNN  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=89b800e6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=61a4c737" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=b3ba4146"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">PyGeNN  documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pygenn</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="pygenn">
+<h1>pygenn<a class="headerlink" href="#pygenn" title="Permalink to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pygenn.html">pygenn package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.CurrentSource"><code class="docutils literal notranslate"><span class="pre">CurrentSource</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.CustomConnectivityUpdate"><code class="docutils literal notranslate"><span class="pre">CustomConnectivityUpdate</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.CustomUpdate"><code class="docutils literal notranslate"><span class="pre">CustomUpdate</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.CustomUpdateVarAccess"><code class="docutils literal notranslate"><span class="pre">CustomUpdateVarAccess</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.CustomUpdateWU"><code class="docutils literal notranslate"><span class="pre">CustomUpdateWU</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.GeNNModel"><code class="docutils literal notranslate"><span class="pre">GeNNModel</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.NeuronGroup"><code class="docutils literal notranslate"><span class="pre">NeuronGroup</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.ParallelismHint"><code class="docutils literal notranslate"><span class="pre">ParallelismHint</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.PlogSeverity"><code class="docutils literal notranslate"><span class="pre">PlogSeverity</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.SynapseGroup"><code class="docutils literal notranslate"><span class="pre">SynapseGroup</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.SynapseMatrixConnectivity"><code class="docutils literal notranslate"><span class="pre">SynapseMatrixConnectivity</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.SynapseMatrixType"><code class="docutils literal notranslate"><span class="pre">SynapseMatrixType</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.SynapseMatrixWeight"><code class="docutils literal notranslate"><span class="pre">SynapseMatrixWeight</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.VarAccess"><code class="docutils literal notranslate"><span class="pre">VarAccess</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.VarAccessDim"><code class="docutils literal notranslate"><span class="pre">VarAccessDim</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.VarAccessMode"><code class="docutils literal notranslate"><span class="pre">VarAccessMode</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.VarAccessModeAttribute"><code class="docutils literal notranslate"><span class="pre">VarAccessModeAttribute</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.VarLocation"><code class="docutils literal notranslate"><span class="pre">VarLocation</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.create_current_source_model"><code class="docutils literal notranslate"><span class="pre">create_current_source_model()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.create_custom_connectivity_update_model"><code class="docutils literal notranslate"><span class="pre">create_custom_connectivity_update_model()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.create_custom_update_model"><code class="docutils literal notranslate"><span class="pre">create_custom_update_model()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.create_egp_ref"><code class="docutils literal notranslate"><span class="pre">create_egp_ref()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.create_neuron_model"><code class="docutils literal notranslate"><span class="pre">create_neuron_model()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.create_postsynaptic_model"><code class="docutils literal notranslate"><span class="pre">create_postsynaptic_model()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.create_psm_egp_ref"><code class="docutils literal notranslate"><span class="pre">create_psm_egp_ref()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.create_psm_var_ref"><code class="docutils literal notranslate"><span class="pre">create_psm_var_ref()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.create_sparse_connect_init_snippet"><code class="docutils literal notranslate"><span class="pre">create_sparse_connect_init_snippet()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.create_toeplitz_connect_init_snippet"><code class="docutils literal notranslate"><span class="pre">create_toeplitz_connect_init_snippet()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.create_var_init_snippet"><code class="docutils literal notranslate"><span class="pre">create_var_init_snippet()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.create_var_ref"><code class="docutils literal notranslate"><span class="pre">create_var_ref()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.create_weight_update_model"><code class="docutils literal notranslate"><span class="pre">create_weight_update_model()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.create_wu_egp_ref"><code class="docutils literal notranslate"><span class="pre">create_wu_egp_ref()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.create_wu_post_var_ref"><code class="docutils literal notranslate"><span class="pre">create_wu_post_var_ref()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.create_wu_pre_var_ref"><code class="docutils literal notranslate"><span class="pre">create_wu_pre_var_ref()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.create_wu_var_ref"><code class="docutils literal notranslate"><span class="pre">create_wu_var_ref()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.get_var_access_dim"><code class="docutils literal notranslate"><span class="pre">get_var_access_dim()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.init_postsynaptic"><code class="docutils literal notranslate"><span class="pre">init_postsynaptic()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.init_sparse_connectivity"><code class="docutils literal notranslate"><span class="pre">init_sparse_connectivity()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.init_toeplitz_connectivity"><code class="docutils literal notranslate"><span class="pre">init_toeplitz_connectivity()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.init_var"><code class="docutils literal notranslate"><span class="pre">init_var()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#pygenn.init_weight_update"><code class="docutils literal notranslate"><span class="pre">init_weight_update()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#module-pygenn.cuda_backend">pygenn.cuda_backend module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#module-pygenn.current_source_models">pygenn.current_source_models module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#module-pygenn.custom_connectivity_update_models">pygenn.custom_connectivity_update_models module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#module-pygenn.custom_update_models">pygenn.custom_update_models module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#module-pygenn.genn_groups">pygenn.genn_groups module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#module-pygenn.init_sparse_connectivity_snippets">pygenn.init_sparse_connectivity_snippets module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#module-pygenn.init_toeplitz_connectivity_snippets">pygenn.init_toeplitz_connectivity_snippets module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#module-pygenn.init_var_snippets">pygenn.init_var_snippets module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#module-pygenn.model_preprocessor">pygenn.model_preprocessor module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#module-pygenn.neuron_models">pygenn.neuron_models module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#module-pygenn.postsynaptic_models">pygenn.postsynaptic_models module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#module-pygenn.runtime">pygenn.runtime module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#module-pygenn.single_threaded_cpu_backend">pygenn.single_threaded_cpu_backend module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#module-pygenn.types">pygenn.types module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pygenn.html#module-pygenn.weight_update_models">pygenn.weight_update_models module</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/source/modules.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">PyGeNN  documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pygenn</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2024, James Knight, Thomas Nowotny.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.1.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>PyGeNN implementation of SuperSpike &#8212; PyGeNN  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=89b800e6" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=61a4c737" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=b3ba4146"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pygenn package" href="../source/pygenn.html" />
+    <link rel="prev" title="PyGeNN implementation of local cortical microcircuit model" href="potjans_microcircuit.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../source/pygenn.html" title="pygenn package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="potjans_microcircuit.html" title="PyGeNN implementation of local cortical microcircuit model"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">PyGeNN  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">User projects</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">PyGeNN implementation of SuperSpike</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-userproject-superspike-demo-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="pygenn-implementation-of-superspike">
+<span id="sphx-glr-userproject-superspike-demo-py"></span><h1>PyGeNN implementation of SuperSpike<a class="headerlink" href="#pygenn-implementation-of-superspike" title="Permalink to this heading">¶</a></h1>
+<p>This example model is a reimplementation of the model developed by
+Friedemann Zenke and Surya Ganguli <a class="reference internal" href="../bibliography.html#zenke2018" id="id1"><span>[Zenke2018]</span></a>. It uses the SuperSpike
+learning rule to learn the transformation between fixed spike trains of
+Poisson noise and a target spiking output (by default the Radcliffe Camera at Oxford).</p>
+<p>This example can be used as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">superspike_demo</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">record</span><span class="o">-</span><span class="n">trial</span> <span class="p">[</span><span class="n">RECORD_TRIAL</span> <span class="p">[</span><span class="n">RECORD_TRIAL</span> <span class="o">...</span><span class="p">]]</span>
+                       <span class="p">[</span><span class="o">--</span><span class="n">target</span><span class="o">-</span><span class="n">file</span> <span class="n">TARGET_FILE</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">num</span><span class="o">-</span><span class="n">trials</span> <span class="n">NUM_TRIALS</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">kernel</span><span class="o">-</span><span class="n">profiling</span><span class="p">]</span>
+                       <span class="p">[</span><span class="o">--</span><span class="n">save</span><span class="o">-</span><span class="n">data</span><span class="p">]</span>
+</pre></div>
+</div>
+<section id="named-arguments">
+<h2>Named Arguments<a class="headerlink" href="#named-arguments" title="Permalink to this heading">¶</a></h2>
+<dl class="option-list">
+<dt><kbd>--record-trial</kbd></dt>
+<dd><p>Index of trial(s) to record</p>
+</dd>
+<dt><kbd>--target-file</kbd></dt>
+<dd><p>Filename of spike file to train model on</p>
+<p>Default: “oxford-target.ras”</p>
+</dd>
+<dt><kbd>--num-trials</kbd></dt>
+<dd><p>Number of trials to train for</p>
+<p>Default: 600</p>
+</dd>
+<dt><kbd>--kernel-profiling</kbd></dt>
+<dd><p>Output kernel profiling data</p>
+<p>Default: False</p>
+</dd>
+<dt><kbd>--save-data</kbd></dt>
+<dd><p>Save spike data (rather than plotting it)</p>
+<p>Default: False</p>
+</dd>
+</dl>
+</section>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">argparse</span> <span class="kn">import</span> <span class="n">ArgumentParser</span>
+<span class="kn">from</span> <span class="nn">pygenn</span> <span class="kn">import</span> <span class="p">(</span><span class="n">create_custom_update_model</span><span class="p">,</span> <span class="n">create_neuron_model</span><span class="p">,</span>
+                    <span class="n">create_postsynaptic_model</span><span class="p">,</span> <span class="n">create_var_ref</span><span class="p">,</span>
+                    <span class="n">create_weight_update_model</span><span class="p">,</span> <span class="n">create_wu_var_ref</span><span class="p">,</span>
+                    <span class="n">init_postsynaptic</span><span class="p">,</span> <span class="n">init_var</span><span class="p">,</span> <span class="n">init_weight_update</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pygenn</span> <span class="kn">import</span> <span class="n">GeNNModel</span>
+
+<span class="c1"># ----------------------------------------------------------------------------</span>
+<span class="c1"># Parameters</span>
+<span class="c1"># ----------------------------------------------------------------------------</span>
+<span class="n">TIMESTEP_MS</span> <span class="o">=</span> <span class="mf">0.1</span>
+
+<span class="c1"># Network structure</span>
+<span class="n">NUM_INPUT</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">NUM_OUTPUT</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">NUM_HIDDEN</span> <span class="o">=</span> <span class="mi">256</span>
+
+<span class="c1"># Model parameters</span>
+<span class="n">TAU_RISE_MS</span> <span class="o">=</span> <span class="mf">5.0</span>
+<span class="n">TAU_DECAY_MS</span> <span class="o">=</span> <span class="mf">10.0</span>
+<span class="n">TAU_RMS_MS</span> <span class="o">=</span> <span class="mf">30000.0</span>
+<span class="n">TAU_AVG_ERR_MS</span> <span class="o">=</span> <span class="mf">10000.0</span>
+<span class="n">R0</span> <span class="o">=</span> <span class="mf">0.001</span> <span class="o">*</span> <span class="mf">1000.0</span>
+<span class="n">EPSILON</span> <span class="o">=</span> <span class="mf">1E-32</span>
+<span class="n">TAU_DECAY_S</span> <span class="o">=</span> <span class="n">TAU_DECAY_MS</span> <span class="o">/</span> <span class="mf">1000.0</span>
+<span class="n">TAU_RISE_S</span> <span class="o">=</span> <span class="n">TAU_RISE_MS</span> <span class="o">/</span> <span class="mf">1000.0</span>
+<span class="n">TAU_AVG_ERR_S</span> <span class="o">=</span> <span class="n">TAU_AVG_ERR_MS</span> <span class="o">/</span> <span class="mf">1000.0</span>
+<span class="n">SCALE_TR_ERR_FLT</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="nb">pow</span><span class="p">((</span><span class="n">TAU_DECAY_S</span> <span class="o">*</span> <span class="n">TAU_RISE_S</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">TAU_DECAY_S</span> <span class="o">-</span> <span class="n">TAU_RISE_S</span><span class="p">),</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">TAU_DECAY_S</span><span class="o">/</span><span class="mi">2</span><span class="o">+</span><span class="n">TAU_RISE_S</span><span class="o">/</span><span class="mi">2</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">TAU_DECAY_S</span><span class="o">*</span><span class="n">TAU_RISE_S</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">TAU_DECAY_S</span><span class="o">+</span><span class="n">TAU_RISE_S</span><span class="p">)))</span> <span class="o">/</span> <span class="n">TAU_AVG_ERR_S</span>
+
+<span class="c1"># Weights</span>
+<span class="c1"># **NOTE** Auryn units are volts, seconds etc so essentially 1000x GeNN parameters</span>
+<span class="n">W_MIN</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.1</span> <span class="o">*</span> <span class="mf">1000.0</span>
+<span class="n">W_MAX</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="mf">1000.0</span>
+<span class="n">W0</span> <span class="o">=</span> <span class="mf">0.05</span> <span class="o">*</span> <span class="mf">1000.0</span>
+
+<span class="c1"># Experiment parameters</span>
+<span class="n">INPUT_FREQ_HZ</span> <span class="o">=</span> <span class="mf">5.0</span>
+<span class="n">UPDATE_TIME_MS</span> <span class="o">=</span> <span class="mf">500.0</span>
+<span class="n">TRIAL_MS</span> <span class="o">=</span> <span class="mf">1890.0</span>
+
+<span class="c1"># Convert parameters to timesteps</span>
+<span class="n">UPDATE_TIMESTEPS</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">UPDATE_TIME_MS</span> <span class="o">/</span> <span class="n">TIMESTEP_MS</span><span class="p">)</span>
+<span class="n">TRIAL_TIMESTEPS</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">TRIAL_MS</span> <span class="o">/</span> <span class="n">TIMESTEP_MS</span><span class="p">)</span>
+
+<span class="c1"># ----------------------------------------------------------------------------</span>
+<span class="c1"># Helper functions</span>
+<span class="c1"># ----------------------------------------------------------------------------</span>
+<span class="k">def</span> <span class="nf">calc_t_peak</span><span class="p">(</span><span class="n">tau_rise</span><span class="p">,</span> <span class="n">tau_decay</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">((</span><span class="n">tau_decay</span> <span class="o">*</span> <span class="n">tau_rise</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">tau_decay</span> <span class="o">-</span> <span class="n">tau_rise</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">tau_decay</span> <span class="o">/</span> <span class="n">tau_rise</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">write_spike_file</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">fmt</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;</span><span class="si">%f</span><span class="s2">&quot;</span><span class="p">,</span><span class="s2">&quot;</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">],</span>
+               <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="s2">&quot;Time [ms], Neuron ID&quot;</span><span class="p">)</span>
+
+<span class="c1"># ----------------------------------------------------------------------------</span>
+<span class="c1"># Custom models</span>
+<span class="c1"># ----------------------------------------------------------------------------</span>
+<span class="n">r_max_prop_model</span> <span class="o">=</span> <span class="n">create_custom_update_model</span><span class="p">(</span>
+    <span class="s2">&quot;r_max_prop&quot;</span><span class="p">,</span>
+    <span class="n">params</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;updateTime&quot;</span><span class="p">,</span> <span class="s2">&quot;tauRMS&quot;</span><span class="p">,</span> <span class="s2">&quot;epsilon&quot;</span><span class="p">,</span> <span class="s2">&quot;wMin&quot;</span><span class="p">,</span> <span class="s2">&quot;wMax&quot;</span><span class="p">,</span> <span class="s2">&quot;r0&quot;</span><span class="p">],</span>
+    <span class="nb">vars</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;upsilon&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">)],</span>
+    <span class="n">derived_params</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;updateTimesteps&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">pars</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;updateTime&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="n">dt</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s2">&quot;expRMS&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">pars</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">pars</span><span class="p">[</span><span class="s2">&quot;updateTime&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;tauRMS&quot;</span><span class="p">]))],</span>
+    <span class="n">var_refs</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;m&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;variable&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">)],</span>
+    <span class="n">update_code</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    // Get gradients</span>
+<span class="s2">    const scalar gradient = m / updateTimesteps;</span>
+<span class="s2">    // Calculate learning rate r</span>
+<span class="s2">    upsilon = fmax(upsilon * expRMS, gradient * gradient);</span>
+<span class="s2">    const scalar r = r0 / (sqrt(upsilon) + epsilon);</span>
+<span class="s2">    // Update synaptic parameter</span>
+<span class="s2">    variable += r * gradient;</span>
+<span class="s2">    variable = fmin(wMax, fmax(wMin, variable));</span>
+<span class="s2">    m = 0.0;</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+
+<span class="n">superspike_model</span> <span class="o">=</span> <span class="n">create_weight_update_model</span><span class="p">(</span>
+    <span class="s2">&quot;superspike&quot;</span><span class="p">,</span>
+    <span class="n">params</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tauRise&quot;</span><span class="p">,</span> <span class="s2">&quot;tauDecay&quot;</span><span class="p">,</span> <span class="s2">&quot;beta&quot;</span><span class="p">,</span> <span class="s2">&quot;Vthresh&quot;</span><span class="p">],</span>
+    <span class="nb">vars</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;e&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">),</span>
+          <span class="p">(</span><span class="s2">&quot;lambda&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;m&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">)],</span>
+    <span class="n">pre_vars</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;zTilda&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">)],</span>
+    <span class="n">post_vars</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;sigmaPrime&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">)],</span>
+    <span class="n">post_neuron_var_refs</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;errTilda&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">)],</span>
+
+    <span class="n">pre_spike_syn_code</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    addToPost(w);</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span>
+
+    <span class="n">pre_spike_code</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    z += 1.0;</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="n">pre_dynamics_code</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    // filtered presynaptic trace</span>
+<span class="s2">    z += (-z / tauRise) * dt;</span>
+<span class="s2">    zTilda += ((-zTilda + z) / tauDecay) * dt;</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span>
+
+    <span class="n">post_dynamics_code</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    // filtered partial derivative</span>
+<span class="s2">    if(V &lt; -80.0) {</span>
+<span class="s2">       sigmaPrime = 0.0;</span>
+<span class="s2">    }</span>
+<span class="s2">    else {</span>
+<span class="s2">       const scalar onePlusHi = 1.0 + fabs(beta * 0.001 * (V - Vthresh));</span>
+<span class="s2">       sigmaPrime = beta / (onePlusHi * onePlusHi);</span>
+<span class="s2">    }</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span>
+
+    <span class="n">synapse_dynamics_code</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    // Filtered eligibility trace</span>
+<span class="s2">    e += (zTilda * sigmaPrime - e / tauRise) * dt;</span>
+<span class="s2">    lambda += ((-lambda + e) / tauDecay) * dt;</span>
+
+<span class="s2">    // Get error from neuron model and compute full</span>
+<span class="s2">    // expression under integral and calculate m</span>
+<span class="s2">    m += lambda * errTilda;</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+
+<span class="n">feedback_model</span> <span class="o">=</span> <span class="n">create_weight_update_model</span><span class="p">(</span>
+    <span class="s2">&quot;feedback&quot;</span><span class="p">,</span>
+    <span class="nb">vars</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">)],</span>
+    <span class="n">pre_neuron_var_refs</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;errTilda&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">)],</span>
+    <span class="n">synapse_dynamics_code</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    addToPost(w * errTilda);</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+
+<span class="n">hidden_neuron_model</span> <span class="o">=</span> <span class="n">create_neuron_model</span><span class="p">(</span>
+    <span class="s2">&quot;hidden&quot;</span><span class="p">,</span>
+    <span class="n">params</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="s2">&quot;tauMem&quot;</span><span class="p">,</span> <span class="s2">&quot;Vrest&quot;</span><span class="p">,</span> <span class="s2">&quot;Vthresh&quot;</span><span class="p">,</span> <span class="s2">&quot;tauRefrac&quot;</span><span class="p">],</span>
+    <span class="nb">vars</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;refracTime&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;errTilda&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">)],</span>
+    <span class="n">additional_input_vars</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;ISynFeedback&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)],</span>
+    <span class="n">derived_params</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;ExpTC&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">pars</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">dt</span> <span class="o">/</span> <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;tauMem&quot;</span><span class="p">])),</span>
+                    <span class="p">(</span><span class="s2">&quot;Rmembrane&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">pars</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;tauMem&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;C&quot;</span><span class="p">])],</span>
+
+    <span class="n">sim_code</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    // membrane potential dynamics</span>
+<span class="s2">    if (refracTime == tauRefrac) {</span>
+<span class="s2">        V = Vrest;</span>
+<span class="s2">    }</span>
+<span class="s2">    if (refracTime &lt;= 0.0) {</span>
+<span class="s2">        scalar alpha = (Isyn * Rmembrane) + Vrest;</span>
+<span class="s2">        V = alpha - (ExpTC * (alpha - V));</span>
+<span class="s2">    }</span>
+<span class="s2">    else {</span>
+<span class="s2">        refracTime -= dt;</span>
+<span class="s2">    }</span>
+<span class="s2">    // error</span>
+<span class="s2">    errTilda = ISynFeedback;</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="n">reset_code</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    refracTime = tauRefrac;</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="n">threshold_condition_code</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    refracTime &lt;= 0.0 &amp;&amp; V &gt;= Vthresh</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+
+<span class="n">output_neuron_model</span> <span class="o">=</span> <span class="n">create_neuron_model</span><span class="p">(</span>
+    <span class="s2">&quot;output&quot;</span><span class="p">,</span>
+    <span class="n">params</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="s2">&quot;tauMem&quot;</span><span class="p">,</span> <span class="s2">&quot;Vrest&quot;</span><span class="p">,</span> <span class="s2">&quot;Vthresh&quot;</span><span class="p">,</span> <span class="s2">&quot;tauRefrac&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;tauRise&quot;</span><span class="p">,</span> <span class="s2">&quot;tauDecay&quot;</span><span class="p">,</span> <span class="s2">&quot;tauAvgErr&quot;</span><span class="p">],</span>
+    <span class="nb">vars</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;refracTime&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;errRise&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">),</span>
+          <span class="p">(</span><span class="s2">&quot;errTilda&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;avgSqrErr&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;errDecay&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">),</span>
+           <span class="p">(</span><span class="s2">&quot;startSpike&quot;</span><span class="p">,</span> <span class="s2">&quot;unsigned int&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;endSpike&quot;</span><span class="p">,</span> <span class="s2">&quot;unsigned int&quot;</span><span class="p">)],</span>
+    <span class="n">extra_global_params</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;spikeTimes&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar*&quot;</span><span class="p">)],</span>
+    <span class="n">derived_params</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;ExpTC&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">pars</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">dt</span> <span class="o">/</span> <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;tauMem&quot;</span><span class="p">])),</span>
+                    <span class="p">(</span><span class="s2">&quot;Rmembrane&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">pars</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;tauMem&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;C&quot;</span><span class="p">]),</span>
+                    <span class="p">(</span><span class="s2">&quot;normFactor&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">pars</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">calc_t_peak</span><span class="p">(</span><span class="n">pars</span><span class="p">[</span><span class="s2">&quot;tauRise&quot;</span><span class="p">],</span> <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;tauDecay&quot;</span><span class="p">])</span> <span class="o">/</span> <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;tauRise&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">calc_t_peak</span><span class="p">(</span><span class="n">pars</span><span class="p">[</span><span class="s2">&quot;tauRise&quot;</span><span class="p">],</span> <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;tauDecay&quot;</span><span class="p">])</span> <span class="o">/</span> <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;tauDecay&quot;</span><span class="p">]))),</span>
+                    <span class="p">(</span><span class="s2">&quot;tRiseMult&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">pars</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">dt</span> <span class="o">/</span> <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;tauRise&quot;</span><span class="p">])),</span>
+                    <span class="p">(</span><span class="s2">&quot;tDecayMult&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">pars</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">dt</span> <span class="o">/</span> <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;tauDecay&quot;</span><span class="p">])),</span>
+                    <span class="p">(</span><span class="s2">&quot;tPeak&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">pars</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="n">calc_t_peak</span><span class="p">(</span><span class="n">pars</span><span class="p">[</span><span class="s2">&quot;tauRise&quot;</span><span class="p">],</span> <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;tauDecay&quot;</span><span class="p">])),</span>
+                    <span class="p">(</span><span class="s2">&quot;mulAvgErr&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">pars</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">dt</span> <span class="o">/</span> <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;tauAvgErr&quot;</span><span class="p">]))],</span>
+
+    <span class="n">sim_code</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    // membrane potential dynamics</span>
+<span class="s2">    if (refracTime == tauRefrac) {</span>
+<span class="s2">        V = Vrest;</span>
+<span class="s2">    }</span>
+<span class="s2">    if (refracTime &lt;= 0.0) {</span>
+<span class="s2">        scalar alpha = (Isyn * Rmembrane) + Vrest;</span>
+<span class="s2">        V = alpha - (ExpTC * (alpha - V));</span>
+<span class="s2">    }</span>
+<span class="s2">    else {</span>
+<span class="s2">        refracTime -= dt;</span>
+<span class="s2">    }</span>
+<span class="s2">    // error</span>
+<span class="s2">    scalar sPred = 0.0;</span>
+<span class="s2">    if (startSpike != endSpike &amp;&amp; t &gt;= spikeTimes[startSpike]) {</span>
+<span class="s2">        startSpike++;</span>
+<span class="s2">        sPred = 1.0;</span>
+<span class="s2">    }</span>
+<span class="s2">    const scalar sReal = (refracTime &lt;= 0.0 &amp;&amp; V &gt;= Vthresh) ? 1.0 : 0.0;</span>
+<span class="s2">    const scalar mismatch = sPred - sReal;</span>
+<span class="s2">    errRise = (errRise * tRiseMult) + mismatch;</span>
+<span class="s2">    errDecay = (errDecay * tDecayMult) + mismatch;</span>
+<span class="s2">    errTilda = (errDecay - errRise) * normFactor;</span>
+<span class="s2">    // calculate average error trace</span>
+<span class="s2">    const scalar temp = errTilda * errTilda * dt * 0.001;</span>
+<span class="s2">    avgSqrErr *= mulAvgErr;</span>
+<span class="s2">    avgSqrErr += temp;</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="n">reset_code</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    refracTime = tauRefrac;</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="n">threshold_condition_code</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    refracTime &lt;= 0.0 &amp;&amp; V &gt;= Vthresh</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+
+<span class="c1"># ----------------------------------------------------------------------------</span>
+<span class="c1"># CLI</span>
+<span class="c1"># ----------------------------------------------------------------------------</span>
+<span class="k">def</span> <span class="nf">get_parser</span><span class="p">():</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">ArgumentParser</span><span class="p">()</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--record-trial&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Index of trial(s) to record&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--target-file&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;oxford-target.ras&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Filename of spike file to train model on&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--num-trials&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Number of trials to train for&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--kernel-profiling&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Output kernel profiling data&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--save-data&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Save spike data (rather than plotting it)&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">parser</span>
+
+
+<span class="c1"># ----------------------------------------------------------------------------</span>
+<span class="c1"># Entry point</span>
+<span class="c1"># ----------------------------------------------------------------------------</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">get_parser</span><span class="p">()</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="c1"># Sort trial indices to record</span>
+    <span class="n">args</span><span class="o">.</span><span class="n">record_trial</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">record_trial</span><span class="p">)</span>
+
+    <span class="c1"># ----------------------------------------------------------------------------</span>
+    <span class="c1"># Load target data</span>
+    <span class="c1"># ----------------------------------------------------------------------------</span>
+    <span class="c1"># Load target data</span>
+    <span class="n">target_spikes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">target_file</span><span class="p">,</span>
+                               <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;names&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;neuron_id&quot;</span><span class="p">),</span>
+                                      <span class="s2">&quot;formats&quot;</span><span class="p">:</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">)})</span>
+
+    <span class="c1"># Make neuron IDs zero-based</span>
+    <span class="n">target_spikes</span><span class="p">[</span><span class="s2">&quot;neuron_id&quot;</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
+
+    <span class="c1"># Convert times to milliseconds</span>
+    <span class="n">target_spikes</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span> <span class="o">*=</span> <span class="mf">1000.0</span>
+
+    <span class="c1"># Sort first by neuron id and then by time</span>
+    <span class="n">target_spikes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">target_spikes</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;neuron_id&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">])</span>
+
+    <span class="c1"># Count number of spikes</span>
+    <span class="n">target_neuron_end_times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">target_spikes</span><span class="p">[</span><span class="s2">&quot;neuron_id&quot;</span><span class="p">],</span> <span class="n">minlength</span><span class="o">=</span><span class="n">NUM_OUTPUT</span><span class="p">))</span>
+    <span class="n">target_neuron_start_times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(([</span><span class="mi">0</span><span class="p">],</span> <span class="n">target_neuron_end_times</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+
+    <span class="c1"># ----------------------------------------------------------------------------</span>
+    <span class="c1"># Generate frozen poisson input</span>
+    <span class="c1"># ----------------------------------------------------------------------------</span>
+    <span class="n">input_isi_ms</span> <span class="o">=</span> <span class="mf">1000.0</span> <span class="o">/</span> <span class="n">INPUT_FREQ_HZ</span>
+
+    <span class="c1"># Generate time of first spike for each neuron</span>
+    <span class="n">input_spike_times</span> <span class="o">=</span> <span class="n">input_isi_ms</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">exponential</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">NUM_INPUT</span><span class="p">)</span>
+    <span class="n">input_spike_times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">input_spike_times</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">NUM_INPUT</span><span class="p">))</span>
+
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="c1"># Generate vector of spike times</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">input_isi_ms</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">exponential</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">NUM_INPUT</span><span class="p">)</span>
+
+        <span class="c1"># Add previous times</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="n">input_spike_times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,:]</span>
+
+        <span class="c1"># If all neurons have reached end of trial</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">s</span> <span class="o">&gt;=</span> <span class="n">TRIAL_MS</span><span class="p">):</span>
+            <span class="k">break</span>
+        <span class="c1"># Otherwise stack</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">input_spike_times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">input_spike_times</span><span class="p">,</span> <span class="n">s</span><span class="p">))</span>
+
+    <span class="c1"># Count spikes per input neuron</span>
+    <span class="n">input_spikes_per_neuron</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">input_spike_times</span> <span class="o">&lt;</span> <span class="n">TRIAL_MS</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Concatenate spikes within trial together</span>
+    <span class="n">input_spikes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">input_spike_times</span><span class="p">[:</span><span class="n">input_spikes_per_neuron</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">i</span><span class="p">]</span>
+                                   <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM_INPUT</span><span class="p">)])</span>
+
+    <span class="c1"># Calculate indices</span>
+    <span class="n">input_neuron_end_times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">input_spikes_per_neuron</span><span class="p">)</span>
+    <span class="n">input_neuron_start_times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(([</span><span class="mi">0</span><span class="p">],</span> <span class="n">input_neuron_end_times</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+
+    <span class="c1"># ----------------------------------------------------------------------------</span>
+    <span class="c1"># Neuron initialisation</span>
+    <span class="c1"># ----------------------------------------------------------------------------</span>
+    <span class="n">input_init_vars</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;startSpike&quot;</span><span class="p">:</span> <span class="n">input_neuron_start_times</span><span class="p">,</span> <span class="s2">&quot;endSpike&quot;</span><span class="p">:</span> <span class="n">input_neuron_end_times</span><span class="p">}</span>
+
+    <span class="n">hidden_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;C&quot;</span> <span class="p">:</span> <span class="mf">10.0</span><span class="p">,</span> <span class="s2">&quot;tauMem&quot;</span><span class="p">:</span> <span class="mf">10.0</span><span class="p">,</span> <span class="s2">&quot;Vrest&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">60.0</span><span class="p">,</span>
+                     <span class="s2">&quot;Vthresh&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">50.0</span> <span class="p">,</span> <span class="s2">&quot;tauRefrac&quot;</span><span class="p">:</span> <span class="mf">5.0</span><span class="p">}</span>
+    <span class="n">hidden_init_vars</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;V&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">60.0</span><span class="p">,</span> <span class="s2">&quot;refracTime&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;errTilda&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+
+    <span class="n">output_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;C&quot;</span><span class="p">:</span> <span class="mf">10.0</span><span class="p">,</span> <span class="s2">&quot;tauMem&quot;</span><span class="p">:</span> <span class="mf">10.0</span><span class="p">,</span> <span class="s2">&quot;Vrest&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">60.0</span><span class="p">,</span>
+                     <span class="s2">&quot;Vthresh&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">50.0</span><span class="p">,</span> <span class="s2">&quot;tauRefrac&quot;</span><span class="p">:</span> <span class="mf">5.0</span><span class="p">,</span> <span class="s2">&quot;tauRise&quot;</span><span class="p">:</span> <span class="n">TAU_RISE_MS</span><span class="p">,</span>
+                     <span class="s2">&quot;tauDecay&quot;</span><span class="p">:</span> <span class="n">TAU_DECAY_MS</span><span class="p">,</span> <span class="s2">&quot;tauAvgErr&quot;</span><span class="p">:</span> <span class="n">TAU_AVG_ERR_MS</span><span class="p">}</span>
+    <span class="n">output_init_vars</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;V&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">60.0</span><span class="p">,</span> <span class="s2">&quot;refracTime&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;errRise&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                        <span class="s2">&quot;errTilda&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;errDecay&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;avgSqrErr&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                        <span class="s2">&quot;startSpike&quot;</span><span class="p">:</span> <span class="n">target_neuron_start_times</span><span class="p">,</span> <span class="s2">&quot;endSpike&quot;</span><span class="p">:</span> <span class="n">target_neuron_end_times</span><span class="p">}</span>
+
+    <span class="c1"># ----------------------------------------------------------------------------</span>
+    <span class="c1"># Synapse initialisation</span>
+    <span class="c1"># ----------------------------------------------------------------------------</span>
+    <span class="n">superspike_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;tauRise&quot;</span><span class="p">:</span> <span class="n">TAU_RISE_MS</span><span class="p">,</span> <span class="s2">&quot;tauDecay&quot;</span><span class="p">:</span> <span class="n">TAU_DECAY_MS</span><span class="p">,</span> <span class="s2">&quot;beta&quot;</span><span class="p">:</span> <span class="mf">1000.0</span><span class="p">,</span> <span class="s2">&quot;Vthresh&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">50.0</span><span class="p">}</span>
+    <span class="n">superspike_pre_init_vars</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;z&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;zTilda&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+    <span class="n">superspike_post_init_vars</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;sigmaPrime&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+
+    <span class="n">input_hidden_weight_dist_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;sd&quot;</span><span class="p">:</span> <span class="n">W0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">NUM_INPUT</span><span class="p">)),</span>
+                                       <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="n">W_MIN</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="n">W_MAX</span><span class="p">}</span>
+    <span class="n">input_hidden_init_vars</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;w&quot;</span><span class="p">:</span> <span class="n">init_var</span><span class="p">(</span><span class="s2">&quot;NormalClipped&quot;</span><span class="p">,</span> <span class="n">input_hidden_weight_dist_params</span><span class="p">),</span>
+                              <span class="s2">&quot;e&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;lambda&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;m&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+
+    <span class="n">hidden_output_weight_dist_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;sd&quot;</span><span class="p">:</span> <span class="n">W0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">NUM_HIDDEN</span><span class="p">)),</span>
+                                        <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="n">W_MIN</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="n">W_MAX</span><span class="p">}</span>
+    <span class="n">hidden_output_init_vars</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;w&quot;</span><span class="p">:</span> <span class="n">init_var</span><span class="p">(</span><span class="s2">&quot;NormalClipped&quot;</span><span class="p">,</span> <span class="n">hidden_output_weight_dist_params</span><span class="p">),</span>
+                               <span class="s2">&quot;e&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;lambda&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;m&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+
+    <span class="c1"># ----------------------------------------------------------------------------</span>
+    <span class="c1"># Custom update initialisation</span>
+    <span class="c1"># ----------------------------------------------------------------------------</span>
+    <span class="n">r_max_prop_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;updateTime&quot;</span><span class="p">:</span> <span class="n">UPDATE_TIME_MS</span><span class="p">,</span> <span class="s2">&quot;tauRMS&quot;</span><span class="p">:</span> <span class="n">TAU_RMS_MS</span><span class="p">,</span>
+                         <span class="s2">&quot;epsilon&quot;</span><span class="p">:</span> <span class="n">EPSILON</span><span class="p">,</span> <span class="s2">&quot;wMin&quot;</span><span class="p">:</span> <span class="n">W_MIN</span><span class="p">,</span> <span class="s2">&quot;wMax&quot;</span><span class="p">:</span> <span class="n">W_MAX</span><span class="p">,</span> <span class="s2">&quot;r0&quot;</span><span class="p">:</span> <span class="n">R0</span><span class="p">}</span>
+
+    <span class="c1"># ----------------------------------------------------------------------------</span>
+    <span class="c1"># Model description</span>
+    <span class="c1"># ----------------------------------------------------------------------------</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">GeNNModel</span><span class="p">(</span><span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="s2">&quot;superspike_demo&quot;</span><span class="p">,</span> <span class="n">generateLineInfo</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="n">TIMESTEP_MS</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">timing_enabled</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">kernel_profiling</span>
+
+    <span class="c1"># Add neuron populations</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_neuron_population</span><span class="p">(</span><span class="s2">&quot;Input&quot;</span><span class="p">,</span> <span class="n">NUM_INPUT</span><span class="p">,</span> <span class="s2">&quot;SpikeSourceArray&quot;</span><span class="p">,</span>
+                                        <span class="p">{},</span> <span class="n">input_init_vars</span><span class="p">)</span>
+    <span class="n">hidden</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_neuron_population</span><span class="p">(</span><span class="s2">&quot;Hidden&quot;</span><span class="p">,</span> <span class="n">NUM_HIDDEN</span><span class="p">,</span> <span class="n">hidden_neuron_model</span><span class="p">,</span>
+                                         <span class="n">hidden_params</span><span class="p">,</span> <span class="n">hidden_init_vars</span><span class="p">)</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_neuron_population</span><span class="p">(</span><span class="s2">&quot;Output&quot;</span><span class="p">,</span> <span class="n">NUM_OUTPUT</span><span class="p">,</span> <span class="n">output_neuron_model</span><span class="p">,</span>
+                                         <span class="n">output_params</span><span class="p">,</span> <span class="n">output_init_vars</span><span class="p">)</span>
+
+    <span class="nb">input</span><span class="o">.</span><span class="n">extra_global_params</span><span class="p">[</span><span class="s2">&quot;spikeTimes&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">set_init_values</span><span class="p">(</span><span class="n">input_spikes</span><span class="p">)</span>
+    <span class="n">output</span><span class="o">.</span><span class="n">extra_global_params</span><span class="p">[</span><span class="s2">&quot;spikeTimes&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">set_init_values</span><span class="p">(</span><span class="n">target_spikes</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">])</span>
+
+    <span class="c1"># Turn on recording</span>
+    <span class="n">any_recording</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">record_trial</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="nb">input</span><span class="o">.</span><span class="n">spike_recording_enabled</span> <span class="o">=</span> <span class="n">any_recording</span>
+    <span class="n">hidden</span><span class="o">.</span><span class="n">spike_recording_enabled</span> <span class="o">=</span> <span class="n">any_recording</span>
+    <span class="n">output</span><span class="o">.</span><span class="n">spike_recording_enabled</span> <span class="o">=</span> <span class="n">any_recording</span>
+
+    <span class="c1"># Add synapse populations</span>
+    <span class="n">input_hidden</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_synapse_population</span><span class="p">(</span>
+        <span class="s2">&quot;InputHidden&quot;</span><span class="p">,</span> <span class="s2">&quot;DENSE&quot;</span><span class="p">,</span>
+        <span class="nb">input</span><span class="p">,</span> <span class="n">hidden</span><span class="p">,</span>
+        <span class="n">init_weight_update</span><span class="p">(</span><span class="n">superspike_model</span><span class="p">,</span> <span class="n">superspike_params</span><span class="p">,</span> <span class="n">input_hidden_init_vars</span><span class="p">,</span> <span class="n">superspike_pre_init_vars</span><span class="p">,</span> <span class="n">superspike_post_init_vars</span><span class="p">,</span>
+                           <span class="n">post_var_refs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;V&quot;</span><span class="p">:</span> <span class="n">create_var_ref</span><span class="p">(</span><span class="n">hidden</span><span class="p">,</span> <span class="s2">&quot;V&quot;</span><span class="p">),</span> <span class="s2">&quot;errTilda&quot;</span><span class="p">:</span> <span class="n">create_var_ref</span><span class="p">(</span><span class="n">hidden</span><span class="p">,</span> <span class="s2">&quot;errTilda&quot;</span><span class="p">)}),</span>
+        <span class="n">init_postsynaptic</span><span class="p">(</span><span class="s2">&quot;ExpCurr&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;tau&quot;</span><span class="p">:</span> <span class="mf">5.0</span><span class="p">}))</span>
+
+    <span class="n">hidden_output</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_synapse_population</span><span class="p">(</span>
+        <span class="s2">&quot;HiddenOutput&quot;</span><span class="p">,</span> <span class="s2">&quot;DENSE&quot;</span><span class="p">,</span>
+        <span class="n">hidden</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span>
+        <span class="n">init_weight_update</span><span class="p">(</span><span class="n">superspike_model</span><span class="p">,</span> <span class="n">superspike_params</span><span class="p">,</span> <span class="n">hidden_output_init_vars</span><span class="p">,</span> <span class="n">superspike_pre_init_vars</span><span class="p">,</span> <span class="n">superspike_post_init_vars</span><span class="p">,</span>
+                           <span class="n">post_var_refs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;V&quot;</span><span class="p">:</span> <span class="n">create_var_ref</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="s2">&quot;V&quot;</span><span class="p">),</span> <span class="s2">&quot;errTilda&quot;</span><span class="p">:</span> <span class="n">create_var_ref</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="s2">&quot;errTilda&quot;</span><span class="p">)}),</span>
+        <span class="n">init_postsynaptic</span><span class="p">(</span><span class="s2">&quot;ExpCurr&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;tau&quot;</span><span class="p">:</span> <span class="mf">5.0</span><span class="p">}))</span>
+
+    <span class="n">output_hidden</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_synapse_population</span><span class="p">(</span>
+        <span class="s2">&quot;OutputHidden&quot;</span><span class="p">,</span> <span class="s2">&quot;DENSE&quot;</span><span class="p">,</span>
+        <span class="n">output</span><span class="p">,</span> <span class="n">hidden</span><span class="p">,</span>
+        <span class="n">init_weight_update</span><span class="p">(</span><span class="n">feedback_model</span><span class="p">,</span> <span class="p">{},</span> <span class="p">{</span><span class="s2">&quot;w&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span> <span class="n">pre_var_refs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;errTilda&quot;</span><span class="p">:</span> <span class="n">create_var_ref</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="s2">&quot;errTilda&quot;</span><span class="p">)}),</span>
+        <span class="n">init_postsynaptic</span><span class="p">(</span><span class="s2">&quot;DeltaCurr&quot;</span><span class="p">))</span>
+    <span class="n">output_hidden</span><span class="o">.</span><span class="n">post_target_var</span> <span class="o">=</span> <span class="s2">&quot;ISynFeedback&quot;</span>
+
+    <span class="c1"># Add custom update for calculating initial tranpose weights</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">add_custom_update</span><span class="p">(</span><span class="s2">&quot;input_hidden_transpose&quot;</span><span class="p">,</span> <span class="s2">&quot;CalculateTranspose&quot;</span><span class="p">,</span> <span class="s2">&quot;Transpose&quot;</span><span class="p">,</span>
+                            <span class="p">{},</span> <span class="p">{},</span> <span class="p">{</span><span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="n">create_wu_var_ref</span><span class="p">(</span><span class="n">hidden_output</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">output_hidden</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)})</span>
+
+    <span class="c1"># Add custom updates for gradient update</span>
+    <span class="n">input_hidden_optimiser_var_refs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;m&quot;</span><span class="p">:</span> <span class="n">create_wu_var_ref</span><span class="p">(</span><span class="n">input_hidden</span><span class="p">,</span> <span class="s2">&quot;m&quot;</span><span class="p">),</span>
+                                       <span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="n">create_wu_var_ref</span><span class="p">(</span><span class="n">input_hidden</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)}</span>
+    <span class="n">input_hidden_optimiser</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_custom_update</span><span class="p">(</span><span class="s2">&quot;input_hidden_optimiser&quot;</span><span class="p">,</span> <span class="s2">&quot;GradientLearn&quot;</span><span class="p">,</span> <span class="n">r_max_prop_model</span><span class="p">,</span>
+                                                     <span class="n">r_max_prop_params</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;upsilon&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span> <span class="n">input_hidden_optimiser_var_refs</span><span class="p">)</span>
+    <span class="n">input_hidden_optimiser</span><span class="o">.</span><span class="n">set_param_dynamic</span><span class="p">(</span><span class="s2">&quot;r0&quot;</span><span class="p">)</span>
+
+    <span class="n">hidden_output_optimiser_var_refs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;m&quot;</span><span class="p">:</span> <span class="n">create_wu_var_ref</span><span class="p">(</span><span class="n">hidden_output</span><span class="p">,</span> <span class="s2">&quot;m&quot;</span><span class="p">),</span>
+                                       <span class="s2">&quot;variable&quot;</span><span class="p">:</span> <span class="n">create_wu_var_ref</span><span class="p">(</span><span class="n">hidden_output</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">output_hidden</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)}</span>
+    <span class="n">hidden_output_optimiser</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_custom_update</span><span class="p">(</span><span class="s2">&quot;hidden_output_optimiser&quot;</span><span class="p">,</span> <span class="s2">&quot;GradientLearn&quot;</span><span class="p">,</span> <span class="n">r_max_prop_model</span><span class="p">,</span>
+                                                      <span class="n">r_max_prop_params</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;upsilon&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span> <span class="n">hidden_output_optimiser_var_refs</span><span class="p">)</span>
+    <span class="n">hidden_output_optimiser</span><span class="o">.</span><span class="n">set_param_dynamic</span><span class="p">(</span><span class="s2">&quot;r0&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Build and load model</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">num_recording_timesteps</span><span class="o">=</span><span class="n">TRIAL_TIMESTEPS</span><span class="p">)</span>
+
+    <span class="c1"># Calculate initial transpose feedback weights</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">custom_update</span><span class="p">(</span><span class="s2">&quot;CalculateTranspose&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Loop through trials</span>
+    <span class="n">output_avg_sqr_err_var</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">vars</span><span class="p">[</span><span class="s2">&quot;avgSqrErr&quot;</span><span class="p">]</span>
+    <span class="n">current_r0</span> <span class="o">=</span> <span class="n">R0</span>
+    <span class="n">timestep</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">input_spikes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">hidden_spikes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">output_spikes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">trial</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">num_trials</span><span class="p">):</span>
+        <span class="c1"># Reduce learning rate every 400 trials</span>
+        <span class="k">if</span> <span class="n">trial</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="n">trial</span> <span class="o">%</span> <span class="mi">400</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">current_r0</span> <span class="o">*=</span> <span class="mf">0.1</span>
+
+            <span class="n">input_hidden_optimiser</span><span class="o">.</span><span class="n">set_dynamic_param_value</span><span class="p">(</span><span class="s2">&quot;r0&quot;</span><span class="p">,</span> <span class="n">current_r0</span><span class="p">)</span>
+            <span class="n">hidden_output_optimiser</span><span class="o">.</span><span class="n">set_dynamic_param_value</span><span class="p">(</span><span class="s2">&quot;r0&quot;</span><span class="p">,</span> <span class="n">current_r0</span><span class="p">)</span>
+
+        <span class="c1"># Display trial number peridically</span>
+        <span class="k">if</span> <span class="n">trial</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="n">trial</span> <span class="o">%</span> <span class="mi">10</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Get average square error</span>
+            <span class="n">output_avg_sqr_err_var</span><span class="o">.</span><span class="n">pull_from_device</span><span class="p">()</span>
+
+            <span class="c1"># Calculate mean error</span>
+            <span class="n">time_s</span> <span class="o">=</span> <span class="n">timestep</span> <span class="o">*</span> <span class="n">TIMESTEP_MS</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="p">;</span>
+            <span class="n">mean_error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">output_avg_sqr_err_var</span><span class="o">.</span><span class="n">view</span><span class="p">)</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">NUM_OUTPUT</span><span class="p">);</span>
+            <span class="n">mean_error</span> <span class="o">*=</span> <span class="n">SCALE_TR_ERR_FLT</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">time_s</span> <span class="o">/</span> <span class="n">TAU_AVG_ERR_S</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1.0E-9</span><span class="p">);</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Trial </span><span class="si">%u</span><span class="s2"> (r0 = </span><span class="si">%f</span><span class="s2">, error = </span><span class="si">%f</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">trial</span><span class="p">,</span> <span class="n">current_r0</span><span class="p">,</span> <span class="n">mean_error</span><span class="p">))</span>
+
+        <span class="c1"># Reset model timestep</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">timestep</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Loop through timesteps within trial</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">TRIAL_TIMESTEPS</span><span class="p">):</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">step_time</span><span class="p">()</span>
+
+            <span class="c1"># If it&#39;s time to update weights</span>
+            <span class="k">if</span> <span class="n">timestep</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="n">timestep</span> <span class="o">%</span> <span class="n">UPDATE_TIMESTEPS</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">custom_update</span><span class="p">(</span><span class="s2">&quot;GradientLearn&quot;</span><span class="p">);</span>
+            <span class="n">timestep</span><span class="o">+=</span><span class="mi">1</span><span class="p">;</span>
+
+
+        <span class="c1"># Reset spike sources by re-uploading starting spike indices</span>
+        <span class="c1"># **TODO** build repeating spike source array</span>
+        <span class="nb">input</span><span class="o">.</span><span class="n">vars</span><span class="p">[</span><span class="s2">&quot;startSpike&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">push_to_device</span><span class="p">()</span>
+        <span class="n">output</span><span class="o">.</span><span class="n">vars</span><span class="p">[</span><span class="s2">&quot;startSpike&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">push_to_device</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">trial</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">record_trial</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">pull_recording_buffers_from_device</span><span class="p">();</span>
+
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">save_data</span><span class="p">:</span>
+                <span class="n">write_spike_file</span><span class="p">(</span><span class="s2">&quot;input_spikes_</span><span class="si">%u</span><span class="s2">.csv&quot;</span> <span class="o">%</span> <span class="n">trial</span><span class="p">,</span> <span class="nb">input</span><span class="o">.</span><span class="n">spike_recording_data</span><span class="p">)</span>
+                <span class="n">write_spike_file</span><span class="p">(</span><span class="s2">&quot;hidden_spikes_</span><span class="si">%u</span><span class="s2">.csv&quot;</span> <span class="o">%</span> <span class="n">trial</span><span class="p">,</span> <span class="n">hidden</span><span class="o">.</span><span class="n">spike_recording_data</span><span class="p">)</span>
+                <span class="n">write_spike_file</span><span class="p">(</span><span class="s2">&quot;output_spikes_</span><span class="si">%u</span><span class="s2">.csv&quot;</span> <span class="o">%</span> <span class="n">trial</span><span class="p">,</span> <span class="n">output</span><span class="o">.</span><span class="n">spike_recording_data</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">input_spikes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">spike_recording_data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">hidden_spikes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hidden</span><span class="o">.</span><span class="n">spike_recording_data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">output_spikes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">spike_recording_data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">kernel_profiling</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Init: </span><span class="si">%f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">model</span><span class="o">.</span><span class="n">init_time</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Init sparse: </span><span class="si">%f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">model</span><span class="o">.</span><span class="n">init_sparse_time</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Neuron update: </span><span class="si">%f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">model</span><span class="o">.</span><span class="n">neuron_update_time</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Presynaptic update: </span><span class="si">%f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">model</span><span class="o">.</span><span class="n">presynaptic_update_time</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Synapse dynamics: </span><span class="si">%f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">model</span><span class="o">.</span><span class="n">synapse_dynamics_time</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Gradient learning custom update: </span><span class="si">%f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">model</span><span class="o">.</span><span class="n">get_custom_update_time</span><span class="p">(</span><span class="s2">&quot;GradientLearn&quot;</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Gradient learning custom update transpose: </span><span class="si">%f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">model</span><span class="o">.</span><span class="n">get_custom_update_transpose_time</span><span class="p">(</span><span class="s2">&quot;GradientLearn&quot;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">save_data</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+        <span class="c1"># Create plot</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_spikes</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="s2">&quot;col&quot;</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="s2">&quot;row&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">spikes</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">input_spikes</span><span class="p">,</span> <span class="n">hidden_spikes</span><span class="p">,</span> <span class="n">output_spikes</span><span class="p">)):</span>
+            <span class="c1"># Plot spikes</span>
+            <span class="n">start_time_s</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">record_trial</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="mf">1.890</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">start_time_s</span> <span class="o">+</span> <span class="p">(</span><span class="n">spikes</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="p">),</span> <span class="n">spikes</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">)</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">start_time_s</span> <span class="o">+</span> <span class="p">(</span><span class="n">spikes</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="p">),</span> <span class="n">spikes</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">)</span>
+            <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">start_time_s</span> <span class="o">+</span> <span class="p">(</span><span class="n">spikes</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="p">),</span> <span class="n">spikes</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">edgecolors</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">)</span>
+
+            <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Time [s]&quot;</span><span class="p">)</span>
+
+        <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Neuron number&quot;</span><span class="p">)</span>
+        <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Neuron number&quot;</span><span class="p">)</span>
+        <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Neuron number&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Show plot</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-userproject-superspike-demo-py">
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/f57116a727438d4e47eb66f1b799aa48/superspike_demo.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">superspike_demo.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/e4eb8f1d78c6a51765a213d6d7c52aaa/superspike_demo.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">superspike_demo.py</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">PyGeNN implementation of SuperSpike</a><ul>
+<li><a class="reference internal" href="#named-arguments">Named Arguments</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="potjans_microcircuit.html"
+                          title="previous chapter">PyGeNN implementation of local cortical microcircuit model</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="../source/pygenn.html"
+                          title="next chapter">pygenn package</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/userproject/superspike_demo.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../source/pygenn.html" title="pygenn package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="potjans_microcircuit.html" title="PyGeNN implementation of local cortical microcircuit model"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">PyGeNN  documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >User projects</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">PyGeNN implementation of SuperSpike</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2024, James Knight, Thomas Nowotny.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.1.2.
+    </div>
+  </body>
+</html>
