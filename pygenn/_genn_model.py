@@ -76,9 +76,9 @@ from ._genn import (generate_code, init_logging, CurrentSource,
                     WeightUpdateInit, WeightUpdateModelBase, WUVarReference)
 
 from .runtime import Runtime
-from ._genn_groups import (CurrentSourceMixin, CustomConnectivityUpdateMixin,
-                           CustomUpdateMixin, CustomUpdateWUMixin,
-                           NeuronGroupMixin, SynapseGroupMixin)
+from .genn_groups import (CurrentSourceMixin, CustomConnectivityUpdateMixin,
+                          CustomUpdateMixin, CustomUpdateWUMixin,
+                          NeuronGroupMixin, SynapseGroupMixin)
 from .model_preprocessor import get_snippet, get_var_init, prepare_param_vals
 from . import (current_source_models, custom_connectivity_update_models,
                custom_update_models, init_sparse_connectivity_snippets, 
