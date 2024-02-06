@@ -1,8 +1,3 @@
-## @namespace pygenn.model_preprocessor
-"""
-This module provides functions for model validation, parameter type conversions
-and defines class Variable
-"""
 from copy import copy
 from deprecated import deprecated
 from numbers import Number
