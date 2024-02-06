@@ -68,7 +68,12 @@ New variable initialisation snippets can be defined by calling:
 
 Sparse connectivity initialisation
 ----------------------------------
-pass
+Sparse connectivity initialisation snippets can be used to initialise connectivity when using
+:attr:`SynapseMatrixType.SPARSE` or :attr:`SynapseMatrixType.BITMASK` connectivity; and to
+generate connectivity on the fly when using :attr:`SynapseMatrixType.PROCEDURAL` connectivity.
+New sparse connectivity initialisation snippets can be defined by calling:
+
+.. autofunction:: pygenn.create_sparse_connect_init_snippet
 
 Toeplitz connectivity initialisation
 ------------------------------------
@@ -77,8 +82,8 @@ pass
 ------
 Models
 ------
-Stat
-
+Models extend the snippets describe above by adding state. 
+They are used to define the behaviour of neurons, synapses and custom updates.
 
 Neuron models
 -------------
