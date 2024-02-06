@@ -93,6 +93,5 @@ def remove_deprecated_arguments(app, what, name, obj, options, signature, return
 
         return (signature, return_annotation)
 
-
 def setup(app):
     app.connect("autodoc-process-signature", remove_deprecated_arguments)

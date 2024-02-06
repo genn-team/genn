@@ -41,6 +41,14 @@ pygenn.custom\_update\_models module
    :undoc-members:
    :show-inheritance:
 
+pygenn.genn\_groups module
+--------------------------
+
+.. automodule:: pygenn.genn_groups
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pygenn.init\_sparse\_connectivity\_snippets module
 --------------------------------------------------
 
@@ -61,6 +69,14 @@ pygenn.init\_var\_snippets module
 ---------------------------------
 
 .. automodule:: pygenn.init_var_snippets
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pygenn.model\_preprocessor module
+---------------------------------
+
+.. automodule:: pygenn.model_preprocessor
    :members:
    :undoc-members:
    :show-inheritance:
