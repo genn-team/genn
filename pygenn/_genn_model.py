@@ -48,7 +48,7 @@ from platform import system
 from psutil import cpu_count
 from setuptools import msvc
 from subprocess import check_call  # to call make
-from typing import Optional, List, Sequence, Tuple, Union
+from typing import Dict, Optional, List, Sequence, Tuple, Union
 
 import re
 import sys
@@ -63,17 +63,17 @@ import numpy as np
 from ._genn import (generate_code, init_logging, CurrentSource,
                     CurrentSourceModelBase, CustomConnectivityUpdate,
                     CustomConnectivityUpdateModelBase, CustomUpdate,
-                    CustomUpdateModelBase, CustomUpdateVar, CustomUpdateWU,
-                    DerivedParam, EGP, EGPRef,
-                    InitSparseConnectivitySnippetBase,
+                    CustomUpdateModelBase, CustomUpdateVar, 
+                    CustomUpdateVarAccess, CustomUpdateWU, DerivedParam,
+                    EGP, EGPRef, InitSparseConnectivitySnippetBase,
                     InitToeplitzConnectivitySnippetBase, InitVarSnippetBase,
                     ModelSpecInternal, NeuronGroup, NeuronModelBase,
                     NumericValue, Param, ParamVal, PlogSeverity,
                     PostsynapticInit, PostsynapticModelBase, ResolvedType,
                     SparseConnectivityInit, SynapseGroup, SynapseMatrixType,
                     ToeplitzConnectivityInit, UnresolvedType, Var, VarAccess,
-                    VarAccessMode, VarInit, VarLocation, VarRef, WeightUpdateInit,
-                    WeightUpdateModelBase)
+                    VarAccessMode, VarInit, VarLocation, VarRef, VarReference,
+                    WeightUpdateInit, WeightUpdateModelBase, WUVarReference)
 
 from .runtime import Runtime
 from ._genn_groups import (CurrentSourceMixin, CustomConnectivityUpdateMixin,
@@ -89,9 +89,16 @@ TypeType = Union[str, ResolvedType]
 ModelParamsType = Optional[Sequence[Union[str, Tuple[str, TypeType]]]]
 ModelVarsType = Optional[Sequence[Union[Tuple[str, TypeType],
                                         Tuple[str, TypeType, VarAccess]]]]
+CUModelVarsType = Optional[Sequence[Union[Tuple[str, TypeType],
+                                          Tuple[str, TypeType, CustomUpdateVarAccess]]]]
 ModelVarRefsType = Optional[Sequence[Union[Tuple[str, TypeType],
                                           Tuple[str, TypeType, VarAccessMode]]]]
 ModelEGPType = Optional[Sequence[Tuple[str, TypeType]]]
+
+PopParamVals = Dict[str, Union[int, float]]
+PopVarVals = Dict[str, Union[VarInit, int, float, np.ndarray, Sequence]]
+PopVarRefs = Dict[str, VarReference] 
+PopWUVarRefs = Dict[str, WUVarReference]
 
 # Dynamically add Python mixin to wrapped class
 CurrentSource.__bases__ += (CurrentSourceMixin,)
@@ -341,20 +348,30 @@ class GeNNModel(ModelSpecInternal):
     def get_custom_update_transpose_time(self, name):
         return self._runtime.get_custom_update_transpose_time(name)
 
-    def add_neuron_population(self, pop_name, num_neurons, neuron,
-                              params={}, vars={}):
+    def add_neuron_population(self, pop_name: str, num_neurons: int, 
+                              neuron: Union[NeuronModelBase, str],
+                              params: PopParamVals = {}, 
+                              vars: PopVarVals = {}) -> NeuronGroup:
         """Add a neuron population to the GeNN model
 
         Args:
-        pop_name    --  name of the new population
-        num_neurons --  number of neurons in the new population
-        neuron      --  type of the NeuronModels class as string or instance of
-                        neuron class derived from
-                        ``pygenn.genn_wrapper.NeuronModels.Custom`` (see also
-                        pygenn.genn_model.create_neuron_model)
-        params      --  dict with param values for the NeuronModels class
-        vars        --  dict with initial variable values for the
-                        NeuronModels class
+            pop_name:       unique name
+            num_neurons:    number of neurons
+            neuron:         neuron model either as a string referring a built in model 
+                            (see :mod:`.neuron_models`) or an instance of :class:`.NeuronModelBase`
+                            (for example returned by :func:`.create_neuron_model`)
+            params:         parameter values for the neuron model (see `Parameters`_)
+            vars:           initial variable values or initialisers 
+                            for the neuron model (see `Variables`_)
+
+        For example, a population of 10 neurons using the built in Izhikevich model and 
+        the standard set of 'tonic spiking' parameters could be added to a model as follows:
+
+        ..  code-block:: python
+
+            pop = model.add_neuron_population("pop", 10, "Izhikevich",
+                                              {"a": 0.02, "b": 0.2, "c": -65.0, "d": 6.0},
+                                              {"V": -65.0, "U": -20.0})
         """
         if self._built:
             raise Exception("GeNN model already built")
@@ -375,20 +392,42 @@ class GeNNModel(ModelSpecInternal):
         self.neuron_populations[pop_name] = n_group
         return n_group
 
-    def add_synapse_population(self, pop_name, matrix_type,
-                               source, target, weight_update_init,
-                               postsynaptic_init, connectivity_init=None):
+    def add_synapse_population(self, pop_name: str, matrix_type: Union[SynapseMatrixType, str],
+                               source: NeuronGroup, target: NeuronGroup, 
+                               weight_update_init, postsynaptic_init, 
+                               connectivity_init: Union[None, SparseConnectivityInit, 
+                                                        ToeplitzConnectivityInit] = None) -> SynapseGroup:
         """Add a synapse population to the GeNN model
 
         Args:
-        pop_name             --  name of the new population
-        matrix_type          --  SynapseMatrixType describing type of the matrix
-        source               --  source neuron group (NeuronGroup object)
-        target               --  target neuron group (NeuronGroup object)
-        
-        connectivity_init    --  SparseConnectivityInit or 
-                                 ToeplitzConnectivityInit used to 
-                                 configure connectivity
+            pop_name:           unique name
+            matrix_type:        type of connectivity to use
+            source:             source neuron group
+            target:             target neuron group
+            weight_update_init: initialiser for weight update model, typically
+                                created using :func:`init_weight_update`
+            postsynaptic_init:  initialiser for postsynaptic model, typically
+                                created using :func:`init_postsynaptic`
+            connectivity_init:  initialiser for connectivity, typically created
+                                using :func:`init_sparse_connectivity` when 
+                                ``matrix_type`` is :attr:`SynapseMatrixType.BITMASK`,
+                                :attr:`SynapseMatrixType.SPARSE`, 
+                                :attr:`SynapseMatrixType.PROCEDURAL` or
+                                :attr:`SynapseMatrixType.PROCEDURAL_KERNELG` and with
+                                :func:`init_toeplitz_connectivity_connectivity` if
+                                it's :attr:`SynapseMatrixType.TOEPLITZ`
+
+        For example, a neuron population ``src_pop`` could be connected to another called
+        ``target_pop`` using sparse connectivity, static synapses and 
+        exponential shaped current inputs as follows:
+
+        ..  code-block:: python
+
+            pop = model.add_synapse_population("Syn", "SPARSE",
+                                               src_pop, target_pop,
+                                               init_weight_update("StaticPulseConstantWeight", {"g": 1.0}), 
+                                               init_postsynaptic("ExpCurr", {"tau": 5.0}),
+                                               init_sparse_connectivity("FixedProbability", {"prob": 0.1}))
         """
         if self._built:
             raise Exception("GeNN model already built")
@@ -751,26 +790,58 @@ def init_var(snippet, params={}):
     # Use add function to create suitable VarInit
     return VarInit(snippet, prepare_param_vals(params))
 
-def init_sparse_connectivity(snippet, params={}):
-    """This helper function creates a InitSparseConnectivitySnippet::Init
-    object to easily initialise connectivity using a snippet.
-
+def init_sparse_connectivity(snippet, params: PopParamVals = {}):
+    """Initialises a sparse connectivity 
+    initialisation snippet with parameter values
+     
     Args:
-    snippet -- type of the InitSparseConnectivitySnippet
-               class as string or instance of class
-               derived from
-               InitSparseConnectivitySnippetBase
-    params  -- dict with param values for the
-               InitSparseConnectivitySnippet class
+        snippet:        sparse connectivity init snippet, either as a string referencing
+                        a built in snipept (see :mod:`.init_sparse_connectivity_snippets`) 
+                        or an instance of :class:`.InitSparseConnectivitySnippetBase` 
+                        (for example returned by :func:`.create_sparse_connect_init_snippet`)
+        params:         parameter values for the sparse connectivity init snippet (see `Parameters`_)
+    
+    For example, the built in model could be initialised to generate connectivity 
+    where each pair of pre and postsynaptic neurons is connected with a probability of 0.1:
+
+    ..  code-block:: python
+
+        init = init_sparse_connectivity("FixedProbability", {"prob": 0.1})
     """
     # Get snippet and wrap in SparseConnectivityInit object
     snippet = get_snippet(snippet, InitSparseConnectivitySnippetBase,
                           init_sparse_connectivity_snippets)
     return SparseConnectivityInit(snippet, prepare_param_vals(params))
 
-                                              
 
-def init_postsynaptic(snippet, params={}, vars={}, var_refs={}):
+def init_postsynaptic(snippet, params: PopParamVals = {}, 
+                      vars: PopVarVals = {}, var_refs: PopVarVals = {}):
+    """Initialises a postsynaptic model with parameter values, 
+    variable initialisers and variable references
+
+    Args:
+        snippet:        postsynaptic model either as a string referring a built in model 
+                        (see :mod:`.postsynaptic_models_models`) or an instance of 
+                        :class:`.PostsynapticModelBase` (for example returned 
+                        by :func:`.create_postsynaptic_model`)
+        params:         parameter values for the postsynaptic model (see `Parameters`_)
+        vars:           initial synaptic variable values or initialisers 
+                        for the postsynaptic model (see `Variables`_)
+        var_refs:       variables references to postsynaptic neuron variables,
+                        typically created using :func:`.create_var_ref`
+                        (see `Variables references`_)
+
+    For example, the built in conductance model with exponential 
+    current shaping could be initialised as follows:
+
+    ..  code-block:: python
+
+        postsynaptic_init = init_postsynaptic("ExpCond", {"tau": 1.0, "E": -80.0}, 
+                                              var_refs={"V": create_var_ref(pop1, "V")})
+    
+    where ``pop1`` is a reference to the postsynaptic neuron population 
+    (as returned by :meth:`.GeNNModel.add_neuron_population`)
+    """
     # Get snippet and wrap in PostsynapticInit object
     snippet = get_snippet(snippet, PostsynapticModelBase,
                           postsynaptic_models)
@@ -782,8 +853,38 @@ def init_postsynaptic(snippet, params={}, vars={}, var_refs={}):
                              var_init, var_refs), 
             vars)
 
-def init_weight_update(snippet, params={}, vars={}, pre_vars={},
-                       post_vars={}, pre_var_refs={}, post_var_refs={}):
+def init_weight_update(snippet, params: PopParamVals = {}, vars: PopVarVals = {},
+                       pre_vars: PopVarVals = {}, post_vars: PopVarVals = {}, 
+                       pre_var_refs: PopVarRefs = {}, post_var_refs: PopVarRefs = {}):
+    """Initialises a weight update model with parameter values, 
+    variable initialisers and variable references
+
+    Args:
+        snippet:        weight update model either as a string referring a built in model 
+                        (see :mod:`.weight_update_models`) or an instance of 
+                        :class:`.WeightUpdateModelBase` (for example returned 
+                        by :func:`.create_weight_update_model`)
+        params:         parameter values (see `Parameters`_)
+        vars:           initial synaptic variable values or
+                        initialisers (see `Variables`_)
+        pre_vars:       initial presynaptic variable values or
+                        initialisers (see `Variables`_)
+        post_vars:      initial postsynaptic variable values or initialisers
+                        (see `Variables`_)
+        pre_var_refs:   variables references to presynaptic neuron variables,
+                        typically created using :func:`.create_var_ref`
+                        (see `Variables references`_)
+        post_var_refs:  variables references to postsynaptic neuron variables,
+                        typically created using :func:`.create_var_ref`
+                        (see `Variables references`_)
+
+    For example, the built in static pulse model with 
+    constant weights could be initialised as follows:
+
+    ..  code-block:: python
+
+        weight_init = init_weight_update("StaticPulseConstantWeight", {"g": 1.0})
+    """
     # Get snippet and wrap in WeightUpdateInit object
     snippet = get_snippet(snippet, WeightUpdateModelBase,
                           weight_update_models)
@@ -800,30 +901,34 @@ def init_weight_update(snippet, params={}, vars={}, pre_vars={},
 @deprecated("The name of this function was ambiguous, use init_sparse_connectivity instead",
             category=FutureWarning)
 def init_connectivity(init_sparse_connect_snippet, params={}):
-    """This helper function creates a InitSparseConnectivitySnippet::Init
-    object to easily initialise connectivity using a snippet.
-
-    Args:
-    init_sparse_connect_snippet --  type of the InitSparseConnectivitySnippet
-                                    class as string or instance of class
-                                    derived from
-                                    InitSparseConnectivitySnippetBase
-    params                      --  dict with param values for the
-                                    InitSparseConnectivitySnippet class
-    """
     return init_sparse_connectivity(init_sparse_connect_snippet, params)
 
 def init_toeplitz_connectivity(init_toeplitz_connect_snippet, params={}):
-    """This helper function creates a InitToeplitzConnectivitySnippet::Init
-    object to easily initialise connectivity using a snippet.
-
+    """Initialises a toeplitz connectivity 
+    initialisation snippet with parameter values
+     
     Args:
-    init_toeplitz_connect_snippet   -- type of the InitToeplitzConnectivitySnippet
-                                       class as string or instance of class
-                                       derived from
-                                       InitSparseConnectivitySnippetBase
-    params                          -- dict with param values for the
-                                       InitToeplitzConnectivitySnippet class
+        snippet:        toeplitz connectivity init snippet, either as a string referencing
+                        a built in snipept (see :mod:`.init_toeplitz_connectivity_snippets`) 
+                        or an instance of :class:`.InitToeplitzConnectivitySnippetBase` 
+                        (for example returned by :func:`.create_toeplitz_connect_init_snippet`)
+        params:         parameter values for the toeplitz connectivity init snippet (see `Parameters`_)
+    
+    For example, the built in model could be initialised to generate 2D convolutional 
+    connectivity with a :math:`3 \times 3` kernel, a :math:`64 \times 64 \times 1` input
+    and a :math:`62 \times 62 \times 1` input:
+
+    ..  code-block:: python
+
+        params = {"conv_kh": 3, "conv_kw": 3,
+                  "conv_ih": 64, "conv_iw": 64, "conv_ic": 1,
+                  "conv_oh": 62, "conv_ow": 62, "conv_oc": 1}
+    
+        init = init_toeplitz_connectivity("Conv2D", params))
+
+    note, this should be used to connect a presynaptic neuron population with 
+    :math:`64 \times 64 \times 1 = 4096` neurons to a postsynaptic neuron
+    population with :math:`62 \times 62 \times 1 = 3844` neurons.
     """
     # Get snippet and wrap in InitToeplitzConnectivitySnippet object
     init_toeplitz_connect_snippet = get_snippet(init_toeplitz_connect_snippet,
@@ -1415,10 +1520,11 @@ def create_weight_update_model(
                          extra_global_params, body)
 
 
-def create_current_source_model(class_name, params=None, param_names=None,
-                                vars=None, var_name_types=None,
-                                neuron_var_refs=None, derived_params=None,
-                                injection_code=None, extra_global_params=None):
+def create_current_source_model(class_name: str, params: ModelParamsType = None,
+                                param_names=None, vars: ModelVarsType = None, var_name_types=None,
+                                neuron_var_refs: ModelVarRefsType = None, derived_params=None,
+                                injection_code: Optional[str] = None, 
+                                extra_global_params: ModelEGPType = None):
     """This helper function creates a custom NeuronModel class.
     Args:
         class_name:             name of the new class (only for debugging)
@@ -1435,7 +1541,7 @@ def create_current_source_model(class_name, params=None, param_names=None,
         extra_global_params:    names and types of model
                                 extra global parameters
     
-    Within all the injection_code code string, the variables, parameters,
+    Within the ``injection_code`` code string, the variables, parameters,
     derived parameters, neuron variable references and extra global
     parameters defined in this model can all be referred to be name.
     Additionally, the code may refer to the following built in read-only variables
@@ -1473,10 +1579,12 @@ def create_current_source_model(class_name, params=None, param_names=None,
                          extra_global_params, body)
 
 
-def create_custom_update_model(class_name, params=None, param_names=None, 
-                               vars=None, var_name_types=None,
-                               derived_params=None, var_refs=None, 
-                               update_code=None, extra_global_params=None,
+def create_custom_update_model(class_name: str, params: ModelParamsType = None,
+                               param_names=None, vars: ModelVarsType = None, 
+                               var_name_types=None, derived_params=None, 
+                               var_refs: CUModelVarsType = None, 
+                               update_code: Optional[str] = None, 
+                               extra_global_params: ModelEGPType = None,
                                extra_global_param_refs=None):
     """This helper function creates a custom CustomUpdate class.
     

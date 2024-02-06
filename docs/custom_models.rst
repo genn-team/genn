@@ -3,6 +3,10 @@
 =============
 Custom models
 =============
+One of the main things that makes GeNN different than other SNN simulators is that all the 
+models and snippets  used to describe the behaviour of your model (see `Building networks`_)
+can be easily customised by the user using strings containing a C-like language called GeNNCode.
+
 --------
 GeNNCode
 --------
@@ -100,14 +104,18 @@ New postsynaptic models are defined by calling:
 
 Current source models
 ---------------------
-Current source models allow .
+Current source models allow input currents to be injected into neuron models.
 New current source models are defined by calling:
 
 .. autofunction:: pygenn.create_current_source_model
 
 Custom update models
 ---------------------
-pass
+Custom update models define operations that can
+New custom update models are defined by calling:
+
+.. autofunction:: pygenn.create_custom_update_model
+
 
 Custom connectivity update models
 ---------------------------------
