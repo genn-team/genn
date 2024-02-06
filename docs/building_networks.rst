@@ -67,6 +67,7 @@ by copying in a sequence of values from Python:
 or by using a variable initialisation snippet configured using the following function:
 
 .. autofunction:: pygenn.init_var
+    :noindex:
 
 and then used in the dictionary the same way:
 
@@ -121,8 +122,11 @@ By default memory is allocated for variables on both the GPU and the host.
 However, the following alternative 'variable locations' are available:
 
 .. autoattribute:: .VarLocation.DEVICE
+    :noindex:
 .. autoattribute:: .VarLocation.HOST_DEVICE
+    :noindex:
 .. autoattribute:: .VarLocation.HOST_DEVICE_ZERO_COPY
+    :noindex:
 
 Note, 'Zero copy' memory is only supported on newer embedded systems such as
  the Jetson TX1 where there is no physical seperation between GPU and host memory and 
@@ -139,6 +143,7 @@ Neuron populations
 Neuron populations contain a number of neurons with the same model and are added using:
 
 .. automethod:: .GeNNModel.add_neuron_population
+    :noindex:
 
 Synapse populations
 -------------------
@@ -149,30 +154,35 @@ each synapse and what output they deliver to postsynaptic (and presynaptic) neur
 Weight update models are typically initialised using:
 
 .. autofunction:: pygenn.init_weight_update
+    :noindex:
 
 Postsynaptic models define how synaptic input translates into an input current 
 (or other input term for models that are not current based) and are typically initialise using:
 
 .. autofunction:: pygenn.init_postsynaptic
+    :noindex:
 
 Additionally synaptic connectivity can be initialised on the GPU using either:
 
 .. autofunction:: pygenn.init_sparse_connectivity
+    :noindex:
 
 or:
 
 .. autofunction:: pygenn.init_toeplitz_connectivity
+    :noindex:
 
 Finally, with these components in place, a synapse population can be added to the model:
 
 .. automethod:: .GeNNModel.add_synapse_population
-
+    :noindex:
 
 Current sources
 ---------------
 Current sources 
 
 .. automethod:: .GeNNModel.add_current_source
+    :noindex:
 
 Custom updates
 --------------
@@ -186,6 +196,7 @@ The custom update system also provides functionality for efficiently calculating
 (current only with :attr:`.SynapseMatrixType.DENSE` connectivity). Custom updates are added to a model using:
 
 .. automethod:: .GeNNModel.add_custom_update
+    :noindex:
 
 Custom connectivity updates
 ---------------------------
@@ -194,3 +205,4 @@ updating model *variables*, they update model *connectivity* (current only with 
 Custom connectivity updates are added to a model using:
 
 .. automethod:: .GeNNModel.add_custom_connectivity_update
+    :noindex:
