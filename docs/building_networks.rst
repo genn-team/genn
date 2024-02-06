@@ -109,39 +109,33 @@ Neuron populations contain a number of neurons with the same model and are added
 
 .. automethod:: .GeNNModel.add_neuron_population
 
-
-For example, a population of 10 tonic spiking Izhikevich neurons could be added to a model as follows:
-
-..  code-block:: python
-
-    # Izhikevich model parameters - tonic spiking
-    izh_p = {
-        "a": 0.02,
-        "b": 0.2,
-        "c": -65.0,
-        "d": 6.0
-    }
-
-    # Izhikevich model initial conditions - tonic spiking
-    izh_ini = {
-        "V": -65.0,
-        "U": -20.0
-    }
-
-    pop1 = model.add_neuron_population("pop1", 10, "Izhikevich", izh_p, izh_ini) 
-
-The user may add as many neuron populations as the model necessitates.
-They must all have unique names. The possible values for the arguments,
-predefined models and their parameters and initial values are detailed
-
-
 Synapse populations
 -------------------
-Synapse populations connect two neuron populations via synapses:
+Synapse populations connect two neuron populations via synapses.
+Their behaviour is described by a weight update model and a postsynaptic model.
+The weight update model defines what kind of dynamics (if any) occurs at 
+each synapse and what output they deliver to postsynaptic (and presynaptic) neurons.
+Weight update models are typically initialised using:
+
+.. autofunction:: pygenn.init_weight_update
+
+Postsynaptic models define how synaptic input translates into an input current 
+(or other input term for models that are not current based) and are typically initialise using:
+
+.. autofunction:: pygenn.init_postsynaptic
+
+Additionally synaptic connectivity can be initialised on the GPU using either:
+
+.. autofunction:: pygenn.init_sparse_connectivity
+
+or:
+
+.. autofunction:: pygenn.init_toeplitz_connectivity
+
+Finally, with these components in place, a synapse population can be added to the model:
 
 .. automethod:: .GeNNModel.add_synapse_population
 
-additional input variables
 
 Current sources
 ---------------

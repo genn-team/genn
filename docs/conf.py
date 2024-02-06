@@ -48,7 +48,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # Mock imports for readthedocs
 autodoc_mock_imports = []
 
-autodoc_typehints = "both"
+autodoc_typehints = "description"
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -70,19 +70,27 @@ sphinx_gallery_conf = {
 primary_domain = "py"
 
 deprecations = {
-    ("function", "pygenn.create_neuron_model"): ["param_names", "var_name_types",
-                                                 "pre_var_name_types", "post_var_name_types",
-                                                 "sim_code", "event_code", "learn_post_code",
-                                                 "event_threshold_condition_code"],
+    ("function", "pygenn.create_neuron_model"): ["param_names", "var_name_types"],
+    ("function", "pygenn.create_weight_update_model"): ["param_names", "var_name_types",
+                                                        "pre_var_name_types", "post_var_name_types",
+                                                        "sim_code", "event_code", "learn_post_code",
+                                                        "event_threshold_condition_code"],
+    ("function", "pygenn.create_postsynaptic_model"): ["param_names", "var_name_types", 
+                                                       "apply_input_code", "decay_code"],
+    ("function", "pygenn.create_current_source_model"): ["param_names", "var_name_types"],
+    ("function", "pygenn.create_custom_update_model"): ["param_names", "var_name_types"],
     ("function", "pygenn.create_var_init_snippet"): ["param_names"]
 
 }
 def remove_deprecated_arguments(app, what, name, obj, options, signature, return_annotation):
     if (what, name) in deprecations:
         deprecated_args = deprecations[(what, name)]
-        print(f"DEPRECATING {deprecated_args} from {name}")
+        
+        # Remove arguments from signature
+        for a in deprecated_args:
+            signature = signature.replace(f"{a}=None,", "")
 
-        signature_args = signature[1:-1].split(",")
+        return (signature, return_annotation)
 
 
 def setup(app):

@@ -22,7 +22,12 @@ In order to streamline the modelling process and reduce the number of ways to ac
 several areas of GeNN syntax have changed:
 
 - single PSM code string
-- add_synapse_population
+- :meth:`.GeNNModel.add_synapse_population` was becoming rather cumbersome and this was only made worse by postsynaptic models and weight update models now taking variable references.
+  To improve this:
+
+    * Axonal delay is now no longer a required parameter and, if required, can now be set using :attr:`.SynapseGroup.axonal_delay_steps`
+    * The postsynaptic and weight update models used by the synapse group are initialised seperately using :func:`.init_postsynaptic` and :func:`.init_weight_update` respectively.
+
 - The row build and diagonal build state variables in sparse/toeplitz connectivity building code were really ugly and confusing. Sparse connectivity init snippets now just let the user write whatever sort of loop they want and do the initialisation outside and toeplitz reuses the for_each_synapse structure described above to do similar.
 - ``GLOBALG`` and ``INDIVIDUALG`` confused almost all new users and were really only used with ``StaticPulse`` weight update models. Same functionality can be achieved with a ``StaticPulseConstantWeight`` version with the weight as a parameter. Then I've renamed all the 'obvious' :class:`.SynapseMatrixType` variants so you just chose :attr:`.SynapseMatrixType.SPARSE`, :attr:`.SynapseMatrixType.DENSE`, :attr:`.SynapseMatrixType.TOEPLITZ` or :attr:`.SynapseMatrixType.PROCEDURAL` (with :attr:`.SynapseMatrixType.DENSE_PROCEDURALG` and :attr:`.SynapseMatrixType.PROCEDURAL_KERNELG` for more unusual options)
 - Extra global parameters only support the 'pointer' form, awaiting a PR to implement settable parameters to replace the other sort
