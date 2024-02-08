@@ -34,6 +34,9 @@
 // GeNN runtime includes
 #include "runtime/runtime.h"
 
+// Doc strings
+#include "docStrings.h"
+
 using namespace GeNN;
 using namespace pybind11::literals;
 
@@ -255,7 +258,7 @@ PYBIND11_MODULE(_genn, m)
         .value("DEBUG", plog::Severity::debug)
         .value("VERBOSE", plog::Severity::verbose);
 
-    pybind11::enum_<SynapseMatrixConnectivity>(m, "SynapseMatrixConnectivity")
+    pybind11::enum_<SynapseMatrixConnectivity>(m, "SynapseMatrixConnectivity", DOC(SynapseMatrixConnectivity))
         .value("DENSE", SynapseMatrixConnectivity::DENSE)
         .value("BITMASK", SynapseMatrixConnectivity::BITMASK)
         .value("SPARSE", SynapseMatrixConnectivity::SPARSE)
