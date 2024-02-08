@@ -91,7 +91,6 @@ def process_comment(comment):
     result = ''
 
     # Remove C++ comment syntax
-    leading_spaces = float('inf')
     for s in comment.expandtabs(tabsize=4).splitlines():
         s = s.strip()
         if s.startswith('/*!'):
@@ -106,14 +105,10 @@ def process_comment(comment):
             s = s[1:]
 
         if len(s) > 0:
-            leading_spaces = min(leading_spaces, len(s) - len(s.lstrip()))
+            leading_spaces = len(s) - len(s.lstrip())
+            s = s[leading_spaces:]
         result += s + '\n'
 
-    if leading_spaces != float('inf'):
-        result2 = ""
-        for s in result.splitlines():
-            result2 += s[leading_spaces:] + '\n'
-        result = result2
 
     # Doxygen tags
     cpp_group = r'([\w:]+)'

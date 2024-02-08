@@ -60,8 +60,8 @@ static const char *__doc_CurrentSourceModels_Base_getVars = R"doc(Gets model var
 static const char *__doc_CurrentSourceModels_Base_validate = R"doc(Validate names of parameters etc)doc";
 
 static const char *__doc_CurrentSourceModels_DC =
-R"doc( DC source
- It has a single parameter:
+R"doc(DC source
+It has a single parameter:
 - ``amp``    - amplitude of the current [nA])doc";
 
 static const char *__doc_CurrentSourceModels_DC_getInjectionCode = R"doc()doc";
@@ -71,8 +71,8 @@ static const char *__doc_CurrentSourceModels_DC_getInstance = R"doc()doc";
 static const char *__doc_CurrentSourceModels_DC_getParams = R"doc()doc";
 
 static const char *__doc_CurrentSourceModels_GaussianNoise =
-R"doc( Noisy current source with noise drawn from normal distribution
- It has 2 parameters:
+R"doc(Noisy current source with noise drawn from normal distribution
+It has 2 parameters:
 - ``mean``   - mean of the normal distribution [nA]
 - ``sd``     - standard deviation of the normal distribution [nA])doc";
 
@@ -83,9 +83,9 @@ static const char *__doc_CurrentSourceModels_GaussianNoise_getInstance = R"doc()
 static const char *__doc_CurrentSourceModels_GaussianNoise_getParams = R"doc()doc";
 
 static const char *__doc_CurrentSourceModels_PoissonExp =
-R"doc( Current source for injecting a current equivalent to a population of
- Poisson spike sources, one-to-one connected with exponential synapses
- It has 3 parameters:
+R"doc(Current source for injecting a current equivalent to a population of
+Poisson spike sources, one-to-one connected with exponential synapses
+It has 3 parameters:
 - ``weight`` - synaptic weight of the Poisson spikes [nA]
 - ``tauSyn`` - decay time constant [ms]
 - ``rate``   - mean firing rate [Hz])doc";
@@ -784,8 +784,8 @@ static const char *__doc_InitSparseConnectivitySnippet_Conv2D_getParams = R"doc(
 static const char *__doc_InitSparseConnectivitySnippet_Conv2D_getRowBuildCode = R"doc()doc";
 
 static const char *__doc_InitSparseConnectivitySnippet_FixedNumberPostWithReplacement =
-R"doc( Initialises connectivity with a fixed number of random synapses per row.
- The postsynaptic targets of the synapses can be initialised in parallel by sampling from the discrete
+R"doc(Initialises connectivity with a fixed number of random synapses per row.
+The postsynaptic targets of the synapses can be initialised in parallel by sampling from the discrete
 uniform distribution. However, to sample connections in ascending order, we sample from the 1st order statistic
 of the uniform distribution -- Beta[1, Npost] -- essentially the next smallest value. In this special case
 this is equivalent to the exponential distribution which can be sampled in constant time using the inversion method.)doc";
@@ -815,11 +815,11 @@ static const char *__doc_InitSparseConnectivitySnippet_FixedNumberPreWithReplace
 static const char *__doc_InitSparseConnectivitySnippet_FixedNumberPreWithReplacement_getParams = R"doc()doc";
 
 static const char *__doc_InitSparseConnectivitySnippet_FixedNumberTotalWithReplacement =
-R"doc( Initialises connectivity with a total number of random synapses.
- The first stage in using this connectivity is to determine how many of the total synapses end up in each row.
- This can be determined by sampling from the multinomial distribution. However, this operation cannot be
- efficiently parallelised so must be performed on the host and the result passed as an extra global parameter array.
- Once the length of each row is determined, the postsynaptic targets of the synapses can be initialised in parallel
+R"doc(Initialises connectivity with a total number of random synapses.
+The first stage in using this connectivity is to determine how many of the total synapses end up in each row.
+This can be determined by sampling from the multinomial distribution. However, this operation cannot be
+efficiently parallelised so must be performed on the host and the result passed as an extra global parameter array.
+Once the length of each row is determined, the postsynaptic targets of the synapses can be initialised in parallel
 by sampling from the discrete uniform distribution. However, to sample connections in ascending order, we sample
 from the 1st order statistic of the uniform distribution -- Beta[1, Npost] -- essentially the next smallest value.
 In this special case this is equivalent to the exponential distribution which can be sampled in constant time using the inversion method.)doc";
@@ -839,9 +839,9 @@ static const char *__doc_InitSparseConnectivitySnippet_FixedNumberTotalWithRepla
 static const char *__doc_InitSparseConnectivitySnippet_FixedNumberTotalWithReplacement_getRowBuildCode = R"doc()doc";
 
 static const char *__doc_InitSparseConnectivitySnippet_FixedProbability =
-R"doc( Initialises connectivity with a fixed probability of a synapse existing
- between a pair of pre and postsynaptic neurons.
- Whether a synapse exists between a pair of pre and a postsynaptic
+R"doc(Initialises connectivity with a fixed probability of a synapse existing
+between a pair of pre and postsynaptic neurons.
+Whether a synapse exists between a pair of pre and a postsynaptic
 neurons can be modelled using a Bernoulli distribution. While this COULD
 be sampled directly by repeatedly drawing from the uniform distribution,
 this is inefficient. Instead we sample from the geometric distribution
@@ -866,11 +866,11 @@ static const char *__doc_InitSparseConnectivitySnippet_FixedProbabilityBase_getP
 static const char *__doc_InitSparseConnectivitySnippet_FixedProbabilityBase_getRowBuildCode = R"doc()doc";
 
 static const char *__doc_InitSparseConnectivitySnippet_FixedProbabilityNoAutapse =
-R"doc( Initialises connectivity with a fixed probability of a synapse existing
- between a pair of pre and postsynaptic neurons. This version ensures there
- are no autapses - connections between neurons with the same id
- so should be used for recurrent connections.
- Whether a synapse exists between a pair of pre and a postsynaptic
+R"doc(Initialises connectivity with a fixed probability of a synapse existing
+between a pair of pre and postsynaptic neurons. This version ensures there
+are no autapses - connections between neurons with the same id
+so should be used for recurrent connections.
+Whether a synapse exists between a pair of pre and a postsynaptic
 neurons can be modelled using a Bernoulli distribution. While this COULD
 br sampling directly by repeatedly drawing from the uniform distribution,
 this is innefficient. Instead we sample from the gemetric distribution
@@ -991,8 +991,8 @@ static const char *__doc_InitVarSnippet_Base_getHashDigest = R"doc(Update hash f
 static const char *__doc_InitVarSnippet_Base_validate = R"doc(Validate names of parameters etc)doc";
 
 static const char *__doc_InitVarSnippet_Binomial =
-R"doc( Initialises variable by sampling from the binomial distribution
- This snippet takes 2 parameters:
+R"doc(Initialises variable by sampling from the binomial distribution
+This snippet takes 2 parameters:
 
 - ``n`` - number of trials
 - ``p`` - success probability for each trial)doc";
@@ -1004,8 +1004,8 @@ static const char *__doc_InitVarSnippet_Binomial_getInstance = R"doc()doc";
 static const char *__doc_InitVarSnippet_Binomial_getParams = R"doc()doc";
 
 static const char *__doc_InitVarSnippet_Constant =
-R"doc( Initialises variable to a constant value
- This snippet takes 1 parameter:
+R"doc(Initialises variable to a constant value
+This snippet takes 1 parameter:
 
 - ``value`` - The value to intialise the variable to
 
@@ -1019,8 +1019,8 @@ static const char *__doc_InitVarSnippet_Constant_getInstance = R"doc()doc";
 static const char *__doc_InitVarSnippet_Constant_getParams = R"doc()doc";
 
 static const char *__doc_InitVarSnippet_Exponential =
-R"doc( Initialises variable by sampling from the exponential distribution
- This snippet takes 1 parameter:
+R"doc(Initialises variable by sampling from the exponential distribution
+This snippet takes 1 parameter:
 
 - ``lambda`` - mean event rate (events per unit time/distance))doc";
 
@@ -1031,8 +1031,8 @@ static const char *__doc_InitVarSnippet_Exponential_getInstance = R"doc()doc";
 static const char *__doc_InitVarSnippet_Exponential_getParams = R"doc()doc";
 
 static const char *__doc_InitVarSnippet_Gamma =
-R"doc( Initialises variable by sampling from the gamma distribution
- This snippet takes 2 parameters:
+R"doc(Initialises variable by sampling from the gamma distribution
+This snippet takes 2 parameters:
 
 - ``a`` - distribution shape
 - ``b`` - distribution scale)doc";
@@ -1069,16 +1069,16 @@ static const char *__doc_InitVarSnippet_Kernel_getExtraGlobalParams = R"doc()doc
 static const char *__doc_InitVarSnippet_Kernel_getInstance = R"doc()doc";
 
 static const char *__doc_InitVarSnippet_Normal =
-R"doc( Initialises variable by sampling from the normal distribution
- This snippet takes 2 parameters:
+R"doc(Initialises variable by sampling from the normal distribution
+This snippet takes 2 parameters:
 
 - ``mean`` - The mean
 - ``sd`` - The standard deviation)doc";
 
 static const char *__doc_InitVarSnippet_NormalClipped =
-R"doc( Initialises variable by sampling from the normal distribution,
- Resamples value if out of range specified my min and max
- This snippet takes 2 parameters:
+R"doc(Initialises variable by sampling from the normal distribution,
+Resamples value if out of range specified my min and max
+This snippet takes 2 parameters:
 
 - ``mean`` - The mean
 - ``sd`` - ThGeNN::e standard deviation
@@ -1086,11 +1086,11 @@ R"doc( Initialises variable by sampling from the normal distribution,
 - ``max`` - The maximum value)doc";
 
 static const char *__doc_InitVarSnippet_NormalClippedDelay =
-R"doc( Initialises variable by sampling from the normal distribution,
- Resamples value of out of range specified my min and max.
- This snippet is intended for initializing (dendritic) delay parameters
- where parameters are specified in ms but converted to timesteps.
- This snippet takes 2 parameters:
+R"doc(Initialises variable by sampling from the normal distribution,
+Resamples value of out of range specified my min and max.
+This snippet is intended for initializing (dendritic) delay parameters
+where parameters are specified in ms but converted to timesteps.
+This snippet takes 2 parameters:
 
 - ``mean`` - The mean [ms]
 - ``sd`` - The standard deviation [ms]
@@ -1118,8 +1118,8 @@ static const char *__doc_InitVarSnippet_Normal_getInstance = R"doc()doc";
 static const char *__doc_InitVarSnippet_Normal_getParams = R"doc()doc";
 
 static const char *__doc_InitVarSnippet_Uniform =
-R"doc( Initialises variable by sampling from the uniform distribution
- This snippet takes 2 parameters:
+R"doc(Initialises variable by sampling from the uniform distribution
+This snippet takes 2 parameters:
 
 - ``min`` - The minimum value
 - ``max`` - The maximum value)doc";
@@ -1175,8 +1175,8 @@ static const char *__doc_ModelSpec_ModelSpec = R"doc()doc";
 static const char *__doc_ModelSpec_ModelSpec_2 = R"doc()doc";
 
 static const char *__doc_ModelSpec_addCurrentSource =
-R"doc( Adds a new current source to the model using a current source model managed by the user
- 
+R"doc(Adds a new current source to the model using a current source model managed by the user
+
 
 $Parameter ``currentSourceName``:
 
@@ -1208,8 +1208,8 @@ $Returns:
 pointer to newly created CurrentSource)doc";
 
 static const char *__doc_ModelSpec_addCurrentSource_2 =
-R"doc( Adds a new current source to the model using a singleton current source model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
- 
+R"doc(Adds a new current source to the model using a singleton current source model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
+
 
 $Template parameter ``CurrentSourceModel``:
 
@@ -1241,9 +1241,9 @@ $Returns:
 pointer to newly created CurrentSource)doc";
 
 static const char *__doc_ModelSpec_addCustomConnectivityUpdate =
-R"doc( Adds a new custom connectivity update attached to synapse group and potentially with synaptic, presynaptic and
- postsynaptic state variables and variable references using a custom connectivity update model managed by the user
- 
+R"doc(Adds a new custom connectivity update attached to synapse group and potentially with synaptic, presynaptic and
+postsynaptic state variables and variable references using a custom connectivity update model managed by the user
+
 
 $Template parameter ``CustomConnectivityUpdateModel``:
 
@@ -1310,10 +1310,10 @@ $Returns:
 pointer to newly created CustomConnectivityUpdate)doc";
 
 static const char *__doc_ModelSpec_addCustomConnectivityUpdate_2 =
-R"doc( Adds a new custom connectivity update attached to synapse group and potentially with synaptic, presynaptic and
- postsynaptic state variables and variable references using a singleton custom connectivity update model created
- using standard DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL and IMPLEMENT_MODEL macros
- 
+R"doc(Adds a new custom connectivity update attached to synapse group and potentially with synaptic, presynaptic and
+postsynaptic state variables and variable references using a singleton custom connectivity update model created
+using standard DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL and IMPLEMENT_MODEL macros
+
 
 $Template parameter ``CustomConnectivityUpdateModel``:
 
@@ -1380,8 +1380,8 @@ $Returns:
 pointer to newly created CustomConnectivityUpdate)doc";
 
 static const char *__doc_ModelSpec_addCustomUpdate =
-R"doc( Adds a new custom update with references to the model using a custom update model managed by the user
- 
+R"doc(Adds a new custom update with references to the model using a custom update model managed by the user
+
 
 $Parameter ``name``:
 
@@ -1418,9 +1418,9 @@ $Returns:
 pointer to newly created CustomUpdateBase)doc";
 
 static const char *__doc_ModelSpec_addCustomUpdate_2 =
-R"doc( Adds a new custom update with references to weight update model variable to the
- model using a custom update model managed by the user
- 
+R"doc(Adds a new custom update with references to weight update model variable to the
+model using a custom update model managed by the user
+
 
 $Parameter ``name``:
 
@@ -1457,9 +1457,9 @@ $Returns:
 pointer to newly created CustomUpdateBase)doc";
 
 static const char *__doc_ModelSpec_addCustomUpdate_3 =
-R"doc( Adds a new custom update to the model using a singleton custom update model
- created using standard DECLARE_CUSTOM_UPDATE_MODEL and IMPLEMENT_MODEL macros
- 
+R"doc(Adds a new custom update to the model using a singleton custom update model
+created using standard DECLARE_CUSTOM_UPDATE_MODEL and IMPLEMENT_MODEL macros
+
 
 $Template parameter ``CustomUpdateModel``:
 
@@ -1496,9 +1496,9 @@ $Returns:
 pointer to newly created CustomUpdateBase)doc";
 
 static const char *__doc_ModelSpec_addCustomUpdate_4 =
-R"doc( Adds a new custom update with references to weight update model variables to the model using a singleton
- custom update model created using standard DECLARE_CUSTOM_UPDATE_MODEL and IMPLEMENT_MODEL macros
- 
+R"doc(Adds a new custom update with references to weight update model variables to the model using a singleton
+custom update model created using standard DECLARE_CUSTOM_UPDATE_MODEL and IMPLEMENT_MODEL macros
+
 
 $Template parameter ``CustomUpdateModel``:
 
@@ -1535,8 +1535,8 @@ $Returns:
 pointer to newly created CustomUpdateBase)doc";
 
 static const char *__doc_ModelSpec_addNeuronPopulation =
-R"doc( Adds a new neuron group to the model using a neuron model managed by the user
- 
+R"doc(Adds a new neuron group to the model using a neuron model managed by the user
+
 
 $Parameter ``name``:
 
@@ -1568,8 +1568,8 @@ $Returns:
 pointer to newly created NeuronGroup)doc";
 
 static const char *__doc_ModelSpec_addNeuronPopulation_2 =
-R"doc( Adds a new neuron group to the model using a singleton neuron model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
- 
+R"doc(Adds a new neuron group to the model using a singleton neuron model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
+
 
 $Template parameter ``NeuronModel``:
 
@@ -1601,8 +1601,8 @@ $Returns:
 pointer to newly created NeuronGroup)doc";
 
 static const char *__doc_ModelSpec_addSynapsePopulation =
-R"doc( Adds a synapse population to the model using weight update and postsynaptic models managed by the user
- 
+R"doc(Adds a synapse population to the model using weight update and postsynaptic models managed by the user
+
 
 $Parameter ``name``:
 
@@ -1651,8 +1651,8 @@ $Returns:
 pointer to newly created SynapseGroup)doc";
 
 static const char *__doc_ModelSpec_addSynapsePopulation_2 =
-R"doc( Adds a synapse population to the model using weight update and postsynaptic models managed by the user
- 
+R"doc(Adds a synapse population to the model using weight update and postsynaptic models managed by the user
+
 
 $Parameter ``name``:
 
@@ -1858,8 +1858,8 @@ static const char *__doc_Models_Base_EGPRef_type = R"doc()doc";
 static const char *__doc_Models_Base_Var = R"doc()doc";
 
 static const char *__doc_Models_Base_VarBase =
-R"doc( A variable has a name, a type and an access type
- Explicit constructors required as although, through the wonders of C++
+R"doc(A variable has a name, a type and an access type
+Explicit constructors required as although, through the wonders of C++
 aggregate initialization, access would default to VarAccess::READ_WRITE
 if not specified, this results in a -Wmissing-field-initializers warning on GCC and Clang)doc";
 
@@ -2222,8 +2222,8 @@ static const char *__doc_NeuronGroup_isSpikeTimeRequired = R"doc()doc";
 static const char *__doc_NeuronGroup_isTrueSpikeRequired = R"doc()doc";
 
 static const char *__doc_NeuronGroup_isVarInitRequired =
-R"doc( Does this neuron group require any variables initializing?
- Because it occurs in the same kernel, this includes current source variables;
+R"doc(Does this neuron group require any variables initializing?
+Because it occurs in the same kernel, this includes current source variables;
 postsynaptic model variables and postsynaptic weight update variables
 from incoming synapse groups; and presynaptic weight update variables from outgoing synapse groups)doc";
 
@@ -2353,8 +2353,8 @@ static const char *__doc_NeuronModels_Base_getHashDigest = R"doc(Update hash fro
 static const char *__doc_NeuronModels_Base_getResetCode = R"doc(Gets code that defines the reset action taken after a spike occurred. This can be empty)doc";
 
 static const char *__doc_NeuronModels_Base_getSimCode =
-R"doc( Gets the code that defines the execution of one timestep of integration of the neuron model.
- The code will refer to NN for the value of the variable with name "NN".
+R"doc(Gets the code that defines the execution of one timestep of integration of the neuron model.
+The code will refer to NN for the value of the variable with name "NN".
 It needs to refer to the predefined variable "ISYN", i.e. contain ISYN, if it is to receive input.)doc";
 
 static const char *__doc_NeuronModels_Base_getThresholdConditionCode =
@@ -2370,8 +2370,8 @@ static const char *__doc_NeuronModels_Base_isAutoRefractoryRequired = R"doc(Does
 static const char *__doc_NeuronModels_Base_validate = R"doc(Validate names of parameters etc)doc";
 
 static const char *__doc_NeuronModels_Izhikevich =
-R"doc( Izhikevich neuron with fixed parameters \cite izhikevich2003simple.
- It is usually described as
+R"doc(Izhikevich neuron with fixed parameters \cite izhikevich2003simple.
+It is usually described as
 \f{eqnarray*}
 \frac{dV}{dt} &=& 0.04 V^2 + 5 V + 140 - U + I, \\
 \frac{dU}{dt} &=& a (bV-U),
@@ -2390,8 +2390,8 @@ Parameters are:
 - ``d`` - after-spike reset value of U)doc";
 
 static const char *__doc_NeuronModels_IzhikevichVariable =
-R"doc( Izhikevich neuron with variable parameters \cite izhikevich2003simple.
- This is the same model as NeuronModels::Izhikevich but parameters are defined as
+R"doc(Izhikevich neuron with variable parameters \cite izhikevich2003simple.
+This is the same model as NeuronModels::Izhikevich but parameters are defined as
 "variables" in order to allow users to provide individual values for each
 individual neuron instead of fixed values for all neurons across the population.
 
@@ -2442,8 +2442,8 @@ static const char *__doc_NeuronModels_LIF_getVars = R"doc()doc";
 static const char *__doc_NeuronModels_LIF_isAutoRefractoryRequired = R"doc()doc";
 
 static const char *__doc_NeuronModels_Poisson =
-R"doc( Poisson neurons
- Poisson neurons have constant membrane potential (``Vrest``) unless they are
+R"doc(Poisson neurons
+Poisson neurons have constant membrane potential (``Vrest``) unless they are
 activated randomly to the ``Vspike`` value if (t- ``spikeTime`` ) > ``trefract``.
 
 It has 2 variables:
@@ -2478,8 +2478,8 @@ noting that the approximation becomes poor for very high firing rates
 and large time steps.)doc";
 
 static const char *__doc_NeuronModels_PoissonNew =
-R"doc( Poisson neurons
- This neuron model emits spikes according to the Poisson distribution with a mean firing
+R"doc(Poisson neurons
+This neuron model emits spikes according to the Poisson distribution with a mean firing
 rate as determined by its single parameter.
 It has 1 state variable:
 
@@ -2520,8 +2520,8 @@ static const char *__doc_NeuronModels_Poisson_getThresholdConditionCode = R"doc(
 static const char *__doc_NeuronModels_Poisson_getVars = R"doc()doc";
 
 static const char *__doc_NeuronModels_RulkovMap =
-R"doc( Rulkov Map neuron
- The RulkovMap type is a map based neuron model based on \cite Rulkov2002 but in
+R"doc(Rulkov Map neuron
+The RulkovMap type is a map based neuron model based on \cite Rulkov2002 but in
 the 1-dimensional map form used in \cite nowotny2005self :
 \f{eqnarray*}{
 V(t+\Delta t) &=& \left\{ \begin{array}{ll}
@@ -2561,13 +2561,13 @@ static const char *__doc_NeuronModels_RulkovMap_getThresholdConditionCode = R"do
 static const char *__doc_NeuronModels_RulkovMap_getVars = R"doc()doc";
 
 static const char *__doc_NeuronModels_SpikeSource =
-R"doc( Empty neuron which allows setting spikes from external sources
- This model does not contain any update code and can be used to implement
+R"doc(Empty neuron which allows setting spikes from external sources
+This model does not contain any update code and can be used to implement
 the equivalent of a SpikeGeneratorGroup in Brian or a SpikeSourceArray in PyNN.)doc";
 
 static const char *__doc_NeuronModels_SpikeSourceArray =
-R"doc( Spike source array
- A neuron which reads spike times from a global spikes array.
+R"doc(Spike source array
+A neuron which reads spike times from a global spikes array.
 It has 2 variables:
 
 - ``startSpike`` - Index of the next spike in the global array
@@ -2598,8 +2598,8 @@ static const char *__doc_NeuronModels_SpikeSource_getThresholdConditionCode = R"
 static const char *__doc_NeuronModels_SpikeSource_isAutoRefractoryRequired = R"doc()doc";
 
 static const char *__doc_NeuronModels_TraubMiles =
-R"doc( Hodgkin-Huxley neurons with Traub & Miles algorithm.
- This conductance based model has been taken from \cite Traub1991 and can be described by the equations:
+R"doc(Hodgkin-Huxley neurons with Traub & Miles algorithm.
+This conductance based model has been taken from \cite Traub1991 and can be described by the equations:
 \f{eqnarray*}{
 C \frac{d V}{dt}  &=& -I_{{\rm Na}} -I_K-I_{{\rm leak}}-I_M-I_{i,DC}-I_{i,{\rm syn}}-I_i, \\
 I_{{\rm Na}}(t) &=& g_{{\rm Na}} m_i(t)^3 h_i(t)(V_i(t)-E_{{\rm Na}}) \\
@@ -2645,8 +2645,8 @@ This variant uses IF statements to check for a value at which a singularity woul
 If so, value calculated by L'Hospital rule is used.)doc";
 
 static const char *__doc_NeuronModels_TraubMilesAlt =
-R"doc( Hodgkin-Huxley neurons with Traub & Miles algorithm
- Using a workaround to avoid singularity: adding the munimum numerical value of the floating point precision used.
+R"doc(Hodgkin-Huxley neurons with Traub & Miles algorithm
+Using a workaround to avoid singularity: adding the munimum numerical value of the floating point precision used.
 \note See NeuronModels::TraubMiles for variable and parameter names.)doc";
 
 static const char *__doc_NeuronModels_TraubMilesAlt_getInstance = R"doc()doc";
@@ -2654,8 +2654,8 @@ static const char *__doc_NeuronModels_TraubMilesAlt_getInstance = R"doc()doc";
 static const char *__doc_NeuronModels_TraubMilesAlt_getSimCode = R"doc()doc";
 
 static const char *__doc_NeuronModels_TraubMilesFast =
-R"doc( Hodgkin-Huxley neurons with Traub & Miles algorithm: Original fast implementation, using 25 inner iterations.
- There are singularities in this model, which can be easily hit in float precision
+R"doc(Hodgkin-Huxley neurons with Traub & Miles algorithm: Original fast implementation, using 25 inner iterations.
+There are singularities in this model, which can be easily hit in float precision
 \note See NeuronModels::TraubMiles for variable and parameter names.)doc";
 
 static const char *__doc_NeuronModels_TraubMilesFast_getInstance = R"doc()doc";
@@ -2663,8 +2663,8 @@ static const char *__doc_NeuronModels_TraubMilesFast_getInstance = R"doc()doc";
 static const char *__doc_NeuronModels_TraubMilesFast_getSimCode = R"doc()doc";
 
 static const char *__doc_NeuronModels_TraubMilesNStep =
-R"doc( Hodgkin-Huxley neurons with Traub & Miles algorithm.
- Same as standard TraubMiles model but number of inner loops can be set using a parameter
+R"doc(Hodgkin-Huxley neurons with Traub & Miles algorithm.
+Same as standard TraubMiles model but number of inner loops can be set using a parameter
 \note See NeuronModels::TraubMiles for variable and parameter names.)doc";
 
 static const char *__doc_NeuronModels_TraubMilesNStep_getInstance = R"doc()doc";
@@ -2724,8 +2724,8 @@ static const char *__doc_PostsynapticModels_DeltaCurr_getInstance = R"doc()doc";
 static const char *__doc_PostsynapticModels_DeltaCurr_getSimCode = R"doc()doc";
 
 static const char *__doc_PostsynapticModels_ExpCond =
-R"doc( Exponential decay with synaptic input treated as a conductance value.
- This model has no variables, two parameters and a variable reference
+R"doc(Exponential decay with synaptic input treated as a conductance value.
+This model has no variables, two parameters and a variable reference
 - ``tau`` : Decay time constant
 - ``E``   : Reversal potential
 - ``V``   : Is a reference to the neuron's membrane voltage
@@ -2742,8 +2742,8 @@ static const char *__doc_PostsynapticModels_ExpCond_getParams = R"doc()doc";
 static const char *__doc_PostsynapticModels_ExpCond_getSimCode = R"doc()doc";
 
 static const char *__doc_PostsynapticModels_ExpCurr =
-R"doc( Exponential decay with synaptic input treated as a current value.
- This model has no variables and a single parameter:
+R"doc(Exponential decay with synaptic input treated as a current value.
+This model has no variables and a single parameter:
 - ``tau`` : Decay time constant)doc";
 
 static const char *__doc_PostsynapticModels_ExpCurr_getDerivedParams = R"doc()doc";
@@ -3738,8 +3738,8 @@ static const char *__doc_Utils_SHA1Hash = R"doc(Functor for generating a hash su
 static const char *__doc_Utils_SHA1Hash_operator_call = R"doc()doc";
 
 static const char *__doc_Utils_areTokensEmpty =
-R"doc( Is this sequence of tokens empty?
- For ease of parsing and as an extra check that we have scanned SOMETHING,
+R"doc(Is this sequence of tokens empty?
+For ease of parsing and as an extra check that we have scanned SOMETHING,
 empty token sequences should have a single EOF token)doc";
 
 static const char *__doc_Utils_clz = R"doc(Count leading zeros)doc";
@@ -3843,15 +3843,15 @@ static const char *__doc_WeightUpdateModels_Base = R"doc(Base class for all weig
 static const char *__doc_WeightUpdateModels_Base_getHashDigest = R"doc(Update hash from model)doc";
 
 static const char *__doc_WeightUpdateModels_Base_getPostDynamicsCode =
-R"doc( Gets code to be run after postsynaptic neuron update
- This is typically for the code to update postsynaptic variables. Presynaptic
+R"doc(Gets code to be run after postsynaptic neuron update
+This is typically for the code to update postsynaptic variables. Presynaptic
 and synapse variables are not accesible from within this code)doc";
 
 static const char *__doc_WeightUpdateModels_Base_getPostEventHashDigest = R"doc(Update hash from postsynaptic event-triggering components of model)doc";
 
 static const char *__doc_WeightUpdateModels_Base_getPostEventSynCode =
-R"doc( Gets code run when a postsynaptic spike-like event is received at the synapse
- Postsynaptic events are triggered for all postsynaptic neurons where
+R"doc(Gets code run when a postsynaptic spike-like event is received at the synapse
+Postsynaptic events are triggered for all postsynaptic neurons where
 the postsynaptic event threshold condition is met)doc";
 
 static const char *__doc_WeightUpdateModels_Base_getPostEventThresholdConditionCode = R"doc(Gets codes to test for postsynaptic events)doc";
@@ -3861,13 +3861,13 @@ static const char *__doc_WeightUpdateModels_Base_getPostHashDigest = R"doc(Updat
 static const char *__doc_WeightUpdateModels_Base_getPostNeuronVarRefs = R"doc(Gets names and types of variable references to postsynaptic neuron)doc";
 
 static const char *__doc_WeightUpdateModels_Base_getPostSpikeCode =
-R"doc( Gets code to be run once per spiking postsynaptic neuron before learn post code is run on synapses
- This is typically for the code to update postsynaptic variables. Presynaptic
+R"doc(Gets code to be run once per spiking postsynaptic neuron before learn post code is run on synapses
+This is typically for the code to update postsynaptic variables. Presynaptic
 and synapse variables are not accesible from within this code)doc";
 
 static const char *__doc_WeightUpdateModels_Base_getPostSpikeSynCode =
-R"doc( Gets code run when a postsynaptic spike is received at the synapse
- For examples when modelling STDP, this is where the effect of postsynaptic
+R"doc(Gets code run when a postsynaptic spike is received at the synapse
+For examples when modelling STDP, this is where the effect of postsynaptic
 spikes which occur _after_ presynaptic spikes are applied.)doc";
 
 static const char *__doc_WeightUpdateModels_Base_getPostVar = R"doc(Find the named postsynaptic variable)doc";
@@ -3877,15 +3877,15 @@ R"doc(Gets names and types (as strings) of state variables that are common
 across all synapses going to the same postsynaptic neuron)doc";
 
 static const char *__doc_WeightUpdateModels_Base_getPreDynamicsCode =
-R"doc( Gets code to be run after presynaptic neuron update
- This is typically for the code to update presynaptic variables. Postsynaptic
+R"doc(Gets code to be run after presynaptic neuron update
+This is typically for the code to update presynaptic variables. Postsynaptic
 and synapse variables are not accesible from within this code)doc";
 
 static const char *__doc_WeightUpdateModels_Base_getPreEventHashDigest = R"doc(Update hash from presynaptic event-triggering components of model)doc";
 
 static const char *__doc_WeightUpdateModels_Base_getPreEventSynCode =
-R"doc( Gets code run when a presynaptic spike-like event is received at the synapse
- Presynaptic events are triggered for all presynaptic neurons where
+R"doc(Gets code run when a presynaptic spike-like event is received at the synapse
+Presynaptic events are triggered for all presynaptic neurons where
 the presynaptic event threshold condition is met)doc";
 
 static const char *__doc_WeightUpdateModels_Base_getPreEventThresholdConditionCode = R"doc(Gets codes to test for presynaptic events)doc";
@@ -3895,8 +3895,8 @@ static const char *__doc_WeightUpdateModels_Base_getPreHashDigest = R"doc(Update
 static const char *__doc_WeightUpdateModels_Base_getPreNeuronVarRefs = R"doc(Gets names and types of variable references to presynaptic neuron)doc";
 
 static const char *__doc_WeightUpdateModels_Base_getPreSpikeCode =
-R"doc( Gets code to be run once per spiking presynaptic neuron before sim code is run on synapses
- This is typically for the code to update presynaptic variables. Postsynaptic
+R"doc(Gets code to be run once per spiking presynaptic neuron before sim code is run on synapses
+This is typically for the code to update presynaptic variables. Postsynaptic
 and synapse variables are not accesible from within this code)doc";
 
 static const char *__doc_WeightUpdateModels_Base_getPreSpikeSynCode = R"doc(Gets code run when a presynaptic spike is received at the synapse)doc";
@@ -3988,8 +3988,8 @@ static const char *__doc_WeightUpdateModels_Init_m_SynapseDynamicsCodeTokens = R
 static const char *__doc_WeightUpdateModels_Init_m_VarInitialisers = R"doc()doc";
 
 static const char *__doc_WeightUpdateModels_PiecewiseSTDP =
-R"doc( This is a simple STDP rule including a time delay for the finite transmission speed of the synapse.
- The STDP window is defined as a piecewise function:
+R"doc(This is a simple STDP rule including a time delay for the finite transmission speed of the synapse.
+The STDP window is defined as a piecewise function:
 \image html LEARN1SYNAPSE_explain_html.png
 \image latex LEARN1SYNAPSE_explain.png width=10cm
 
@@ -4057,8 +4057,8 @@ static const char *__doc_WeightUpdateModels_PiecewiseSTDP_getPreSpikeSynCode = R
 static const char *__doc_WeightUpdateModels_PiecewiseSTDP_getVars = R"doc()doc";
 
 static const char *__doc_WeightUpdateModels_StaticGraded =
-R"doc( Graded-potential, static synapse
- In a graded synapse, the conductance is updated gradually with the rule:
+R"doc(Graded-potential, static synapse
+In a graded synapse, the conductance is updated gradually with the rule:
 \f[ gSyn= g * tanh((V - E_{pre}) / V_{slope} \f]
 whenever the membrane potential :math:`V` is larger than the threshold :math:`E_{pre}`.
 The model has 1 variable:
@@ -4096,8 +4096,8 @@ static const char *__doc_WeightUpdateModels_StaticGraded_getPreNeuronVarRefs = R
 static const char *__doc_WeightUpdateModels_StaticGraded_getVars = R"doc()doc";
 
 static const char *__doc_WeightUpdateModels_StaticPulse =
-R"doc( Pulse-coupled, static synapse.
- No learning rule is applied to the synapse and for each pre-synaptic spikes,
+R"doc(Pulse-coupled, static synapse.
+No learning rule is applied to the synapse and for each pre-synaptic spikes,
 the synaptic conductances are simply added to the postsynaptic input variable.
 The model has 1 variable:
 - g - conductance of scalar type
@@ -4110,8 +4110,8 @@ and no other parameters.
 ```)doc";
 
 static const char *__doc_WeightUpdateModels_StaticPulseConstantWeight =
-R"doc( Pulse-coupled, static synapse.
- No learning rule is applied to the synapse and for each pre-synaptic spikes,
+R"doc(Pulse-coupled, static synapse.
+No learning rule is applied to the synapse and for each pre-synaptic spikes,
 the synaptic conductances are simply added to the postsynaptic input variable.
 The model has 1 parameter:
 - g - conductance
@@ -4130,8 +4130,8 @@ static const char *__doc_WeightUpdateModels_StaticPulseConstantWeight_getParams 
 static const char *__doc_WeightUpdateModels_StaticPulseConstantWeight_getPreSpikeSynCode = R"doc()doc";
 
 static const char *__doc_WeightUpdateModels_StaticPulseDendriticDelay =
-R"doc( Pulse-coupled, static synapse with heterogenous dendritic delays
- No learning rule is applied to the synapse and for each pre-synaptic spikes,
+R"doc(Pulse-coupled, static synapse with heterogenous dendritic delays
+No learning rule is applied to the synapse and for each pre-synaptic spikes,
 the synaptic conductances are simply added to the postsynaptic input variable.
 The model has 2 variables:
 - g - conductance of scalar type
@@ -4209,8 +4209,8 @@ static const char *__doc_getVarAccessMode_2 = R"doc()doc";
 static const char *__doc_getVarAccessMode_3 = R"doc()doc";
 
 static const char *__doc_initConnectivity =
-R"doc( Initialise connectivity using a sparse connectivity snippet
- 
+R"doc(Initialise connectivity using a sparse connectivity snippet
+
 
 $Template parameter ``S``:
 
@@ -4227,8 +4227,8 @@ $Returns:
 InitSparseConnectivitySnippet::Init object for passing to ``ModelSpec::addSynapsePopulation``)doc";
 
 static const char *__doc_initPostsynaptic =
-R"doc( Initialise postsynaptic update model
- 
+R"doc(Initialise postsynaptic update model
+
 
 $Template parameter ``S``:
 
@@ -4255,8 +4255,8 @@ $Returns:
 PostsynapticModels::Init object for passing to ``ModelSpec::addSynapsePopulation``)doc";
 
 static const char *__doc_initToeplitzConnectivity =
-R"doc( Initialise toeplitz connectivity using a toeplitz connectivity snippet
- 
+R"doc(Initialise toeplitz connectivity using a toeplitz connectivity snippet
+
 
 $Template parameter ``S``:
 
@@ -4273,8 +4273,8 @@ $Returns:
 InitToeplitzConnectivitySnippet::Init object for passing to ``ModelSpec::addSynapsePopulation``)doc";
 
 static const char *__doc_initVar =
-R"doc( Initialise a variable using an initialisation snippet
- 
+R"doc(Initialise a variable using an initialisation snippet
+
 
 $Template parameter ``S``:
 
@@ -4291,8 +4291,8 @@ $Returns:
 InitVarSnippet::Init object for use within model's VarValues)doc";
 
 static const char *__doc_initWeightUpdate =
-R"doc( Initialise weight update model
- 
+R"doc(Initialise weight update model
+
 
 $Template parameter ``S``:
 
@@ -4354,14 +4354,14 @@ static const char *__doc_operator_bor_2 = R"doc()doc";
 static const char *__doc_plog_IAppender = R"doc()doc";
 
 static const char *__doc_uninitialisedConnectivity =
-R"doc( Mark a synapse group's sparse connectivity as uninitialised
- This means that the backend will not generate any automatic initialization code, but will instead
+R"doc(Mark a synapse group's sparse connectivity as uninitialised
+This means that the backend will not generate any automatic initialization code, but will instead
 copy the connectivity from host to device during ``initializeSparse`` function
 (and, if necessary generate any additional data structures it requires))doc";
 
 static const char *__doc_uninitialisedVar =
-R"doc( Mark a variable as uninitialised
- This means that the backend will not generate any automatic initialization code, but will instead
+R"doc(Mark a variable as uninitialised
+This means that the backend will not generate any automatic initialization code, but will instead
 copy the variable from host to device during ``initializeSparse`` function)doc";
 
 #if defined(__GNUG__)
