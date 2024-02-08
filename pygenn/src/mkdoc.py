@@ -170,6 +170,14 @@ def process_comment(comment):
     s = re.sub(r'</?ul>', r'', s)
     s = re.sub(r'</li>', r'\n\n', s)
 
+    # Doxygen LaTeX commands.
+    #s = re.sub(r'[@\\]f\$\s*(.*?)\s*[@\\]f\$', r':math:`\1`', s,
+    #           flags=re.DOTALL)
+    #s = re.sub(r'[@\\]f\[\s*(.*?)\s*[@\\]f\]', r'\n\n.. math:: \1\n\n', s,
+    #           flags=re.DOTALL)
+    #s = re.sub(r'[@\\]f\{([\w*]+)\}\s*(.*?)\s*[@\\]f\}',
+    #           r'\n\n.. math:: \\begin{\1}\2\\end{\1}\n\n', s, flags=re.DOTALL)
+
     s = s.replace('``true``', '``True``')
     s = s.replace('``false``', '``False``')
 
