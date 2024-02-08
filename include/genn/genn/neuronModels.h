@@ -153,6 +153,7 @@ public:
     - \c U - Membrane recovery variable
 
     Parameters are:
+
     - \c a - time scale of U
     - \c b - sensitivity of U
     - \c c - after-spike reset value of V
@@ -327,8 +328,8 @@ public:
 
     \note This model uses a linear approximation for the probability
     of firing a spike in a given time step of size `DT`, i.e. the
-    probability of firing is \f$\lambda\f$ times `DT`: \f$ p = \lambda \Delta t
-    \f$, where $\lambda$ corresponds to the value of the relevant entry of `firingProb`. 
+    probability of firing is \f$\lambda\f$ times `DT`: \f$ p = \lambda \Delta t\f$, 
+    where $\lambda$ corresponds to the value of the relevant entry of `firingProb`. 
     This approximation is usually very good, especially for typical,
     quite small time steps and moderate firing rates. However, it is worth
     noting that the approximation becomes poor for very high firing rates
@@ -446,11 +447,9 @@ public:
     DECLARE_SNIPPET(NeuronModels::TraubMiles);
 
     SET_SIM_CODE(
-        "scalar Imem;\n"
-        "unsigned int mt;\n"
-        "scalar mdt= dt/25.0;\n"
-        "for (mt=0; mt < 25; mt++) {\n"
-        "   Imem= -(m*m*m*h*gNa*(V-(ENa))+\n"
+        "const scalar mdt= dt/25.0;\n"
+        "for (unsigned int mt=0; mt < 25; mt++) {\n"
+        "   const scalar Imem= -(m*m*m*h*gNa*(V-(ENa))+\n"
         "       n*n*n*n*gK*(V-(EK))+\n"
         "       gl*(V-(El))-Isyn);\n"
         "   scalar a;\n"
@@ -501,11 +500,9 @@ public:
     DECLARE_SNIPPET(NeuronModels::TraubMilesFast);
 
     SET_SIM_CODE(
-        "scalar Imem;\n"
-        "unsigned int mt;\n"
-        "scalar mdt= dt/25.0;\n"
-        "for (mt=0; mt < 25; mt++) {\n"
-        "   Imem= -(m*m*m*h*gNa*(V-(ENa))+\n"
+        "const scalar mdt= dt/25.0;\n"
+        "for (unsigned int mt=0; mt < 25; mt++) {\n"
+        "   const scalar Imem= -(m*m*m*h*gNa*(V-(ENa))+\n"
         "       n*n*n*n*gK*(V-(EK))+\n"
         "       gl*(V-(El))-Isyn);\n"
         "   scalar a= 0.32*(-52.0-V)/(exp((-52.0-V)/4.0)-1.0);\n"
@@ -534,11 +531,9 @@ public:
     DECLARE_SNIPPET(NeuronModels::TraubMilesAlt);
 
     SET_SIM_CODE(
-        "scalar Imem;\n"
-        "unsigned int mt;\n"
-        "scalar mdt= dt/25.0;\n"
-        "for (mt=0; mt < 25; mt++) {\n"
-        "   Imem= -(m*m*m*h*gNa*(V-(ENa))+\n"
+        "const scalar mdt= dt/25.0;\n"
+        "for (unsigned int mt=0; mt < 25; mt++) {\n"
+        "   const scalar Imem= -(m*m*m*h*gNa*(V-(ENa))+\n"
         "       n*n*n*n*gK*(V-(EK))+\n"
         "       gl*(V-(El))-Isyn);\n"
         "   scalar tmp= abs(exp((-52.0-V)/4.0)-1.0);\n"
@@ -570,11 +565,9 @@ public:
     DECLARE_SNIPPET(NeuronModels::TraubMilesNStep);
 
     SET_SIM_CODE(
-        "scalar Imem;\n"
-        "unsigned int mt;\n"
-        "scalar mdt= DT/scalar(ntimes);\n"
-        "for (mt=0; mt < ntimes; mt++) {\n"
-        "   Imem= -(m*m*m*h*gNa*(V-(ENa))+\n"
+        "const scalar mdt= dt/scalar(ntimes);\n"
+        "for (unsigned int mt=0; mt < ntimes; mt++) {\n"
+        "   const scalar Imem= -(m*m*m*h*gNa*(V-(ENa))+\n"
         "       n*n*n*n*gK*(V-(EK))+\n"
         "       gl*(V-(El))-Isyn);\n"
         "   scalar a;\n"
@@ -606,6 +599,6 @@ public:
         "   V+= Imem/C*mdt;\n"
         "}\n");
 
-    SET_PARAMS({"gNa", "ENa", "gK", "EK", "gl", "El", "C", "ntimes"});
+    SET_PARAMS({"gNa", "ENa", "gK", "EK", "gl", "El", "C", {"ntimes", "unsigned int"}});
 };
 } // GeNN::NeuronModels
