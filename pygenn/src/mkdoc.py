@@ -178,6 +178,7 @@ def process_comment(comment):
     s = s.replace('``false``', '``False``')
 
     # Re-flow text
+    """
     wrapper = textwrap.TextWrapper()
     wrapper.expand_tabs = True
     wrapper.replace_whitespace = True
@@ -207,7 +208,8 @@ def process_comment(comment):
                     if len(wrapped) > 0:
                         result += wrapped + '\n\n'
                     wrapper.initial_indent = wrapper.subsequent_indent = ''
-    return result.rstrip().lstrip('\n')
+    """
+    return s.rstrip().lstrip('\n')
 
 
 def extract(filename, node, prefix, output):
@@ -216,10 +218,11 @@ def extract(filename, node, prefix, output):
         return 0
     if node.kind in RECURSE_LIST:
         sub_prefix = prefix
-        if node.kind not in PREFIX_BLACKLIST:
+        d_spelling = d(node.spelling)
+        if node.kind not in PREFIX_BLACKLIST and d_spelling != "GeNN":
             if len(sub_prefix) > 0:
                 sub_prefix += '_'
-            sub_prefix += d(node.spelling)
+            sub_prefix += d_spelling
         for i in node.get_children():
             extract(filename, i, sub_prefix, output)
     if node.kind in PRINT_LIST:
