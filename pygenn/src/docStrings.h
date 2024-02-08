@@ -142,11 +142,11 @@ static const char *__doc_CurrentSource_getExtraGlobalParamLocation = R"doc(Get l
 
 static const char *__doc_CurrentSource_getHashDigest =
 R"doc(Updates hash with current source
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_CurrentSource_getInitHashDigest =
 R"doc(Updates hash with current source initialisation
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_CurrentSource_getInjectionCodeTokens = R"doc()doc";
 
@@ -160,7 +160,7 @@ static const char *__doc_CurrentSource_getParams = R"doc()doc";
 
 static const char *__doc_CurrentSource_getTargetVar =
 R"doc(Get name of neuron input variable current source model will inject into
-This will either be 'Isyn' or the name of one of the target neuron's additional input variables. */)doc";
+This will either be 'Isyn' or the name of one of the target neuron's additional input variables.)doc";
 
 static const char *__doc_CurrentSource_getTrgNeuronGroup = R"doc()doc";
 
@@ -194,7 +194,7 @@ static const char *__doc_CurrentSource_m_Params = R"doc()doc";
 
 static const char *__doc_CurrentSource_m_TargetVar =
 R"doc(Name of neuron input variable current source will inject into
-This should either be 'Isyn' or the name of one of the target neuron's additional input variables. */)doc";
+This should either be 'Isyn' or the name of one of the target neuron's additional input variables.)doc";
 
 static const char *__doc_CurrentSource_m_TrgNeuronGroup = R"doc()doc";
 
@@ -204,13 +204,13 @@ static const char *__doc_CurrentSource_m_VarLocation = R"doc(Location of individ
 
 static const char *__doc_CurrentSource_setExtraGlobalParamLocation =
 R"doc(Set location of extra global parameter
-This is ignored for simulations on hardware with a single memory space. */)doc";
+This is ignored for simulations on hardware with a single memory space.)doc";
 
 static const char *__doc_CurrentSource_setParamDynamic = R"doc(Set whether parameter is dynamic or not i.e. it can be changed at runtime)doc";
 
 static const char *__doc_CurrentSource_setTargetVar =
 R"doc(Set name of neuron input variable current source model will inject into
-This should either be 'Isyn' or the name of one of the target neuron's additional input variables. */)doc";
+This should either be 'Isyn' or the name of one of the target neuron's additional input variables.)doc";
 
 static const char *__doc_CurrentSource_setVarLocation = R"doc(Set location of current source state variable)doc";
 
@@ -369,13 +369,13 @@ static const char *__doc_CustomConnectivityUpdate_getExtraGlobalParamLocation = 
 
 static const char *__doc_CustomConnectivityUpdate_getHashDigest =
 R"doc(Updates hash with custom update
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_CustomConnectivityUpdate_getHostUpdateCodeTokens = R"doc()doc";
 
 static const char *__doc_CustomConnectivityUpdate_getInitHashDigest =
 R"doc(Updates hash with custom update
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_CustomConnectivityUpdate_getModel = R"doc(Gets the custom connectivity update model used by this group)doc";
 
@@ -469,21 +469,21 @@ static const char *__doc_CustomConnectivityUpdate_m_VarReferences = R"doc()doc";
 
 static const char *__doc_CustomConnectivityUpdate_setExtraGlobalParamLocation =
 R"doc(Set location of extra global parameter
-This is ignored for simulations on hardware with a single memory space. */)doc";
+This is ignored for simulations on hardware with a single memory space.)doc";
 
 static const char *__doc_CustomConnectivityUpdate_setParamDynamic = R"doc(Set whether parameter is dynamic or not i.e. it can be changed at runtime)doc";
 
 static const char *__doc_CustomConnectivityUpdate_setPostVarLocation =
 R"doc(Set location of postsynaptic state variable
-This is ignored for simulations on hardware with a single memory space */)doc";
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_CustomConnectivityUpdate_setPreVarLocation =
 R"doc(Set location of presynaptic state variable
-This is ignored for simulations on hardware with a single memory space */)doc";
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_CustomConnectivityUpdate_setVarLocation =
 R"doc(Set location of synaptic state variable
-This is ignored for simulations on hardware with a single memory space */)doc";
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_CustomUpdate = R"doc()doc";
 
@@ -565,21 +565,21 @@ static const char *__doc_CustomUpdateBase_m_VarLocation = R"doc(Location of indi
 
 static const char *__doc_CustomUpdateBase_setExtraGlobalParamLocation =
 R"doc(Set location of extra global parameter
-This is ignored for simulations on hardware with a single memory space. */)doc";
+This is ignored for simulations on hardware with a single memory space.)doc";
 
 static const char *__doc_CustomUpdateBase_setParamDynamic = R"doc(Set whether parameter is dynamic or not i.e. it can be changed at runtime)doc";
 
 static const char *__doc_CustomUpdateBase_setVarLocation =
 R"doc(Set location of state variable
-This is ignored for simulations on hardware with a single memory space */)doc";
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_CustomUpdateBase_updateHash =
 R"doc(Updates hash with custom update
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_CustomUpdateBase_updateInitHash =
 R"doc(Updates hash with custom update
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_CustomUpdateEGPAdapter = R"doc()doc";
 
@@ -623,7 +623,7 @@ static const char *__doc_CustomUpdateModels_Transpose_getVarRefs = R"doc()doc";
 
 static const char *__doc_CustomUpdateVarAccess =
 R"doc(Supported combinations of access mode and dimension for custom update variables
-The axes are defined 'subtractively' ie VarAccessDim::BATCH indicates that this axis should be removed */)doc";
+The axes are defined 'subtractively' ie VarAccessDim::BATCH indicates that this axis should be removed)doc";
 
 static const char *__doc_CustomUpdateVarAccess_READ_ONLY = R"doc()doc";
 
@@ -697,11 +697,11 @@ static const char *__doc_CustomUpdateWU_finalise = R"doc()doc";
 
 static const char *__doc_CustomUpdateWU_getHashDigest =
 R"doc(Updates hash with custom update
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_CustomUpdateWU_getInitHashDigest =
 R"doc(Updates hash with custom update
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_CustomUpdateWU_getKernelSize = R"doc()doc";
 
@@ -727,11 +727,11 @@ static const char *__doc_CustomUpdate_getDelayNeuronGroup = R"doc()doc";
 
 static const char *__doc_CustomUpdate_getHashDigest =
 R"doc(Updates hash with custom update
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_CustomUpdate_getInitHashDigest =
 R"doc(Updates hash with custom update
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_CustomUpdate_getNumNeurons = R"doc()doc";
 
@@ -771,7 +771,7 @@ static const char *__doc_InitSparseConnectivitySnippet_Conv2D =
 R"doc(Initialises convolutional connectivity
 Row build state variables are used to convert presynaptic neuron index to rows, columns and channels and,
 from these, to calculate the range of postsynaptic rows, columns and channels connections will be made within.
-This sparse connectivity snippet does not support multiple threads per neuron */)doc";
+This sparse connectivity snippet does not support multiple threads per neuron)doc";
 
 static const char *__doc_InitSparseConnectivitySnippet_Conv2D_getCalcKernelSizeFunc = R"doc()doc";
 
@@ -802,7 +802,7 @@ static const char *__doc_InitSparseConnectivitySnippet_FixedNumberPostWithReplac
 
 static const char *__doc_InitSparseConnectivitySnippet_FixedNumberPreWithReplacement =
 R"doc(Initialises connectivity with a fixed number of random synapses per column.
-No need for ordering here so fine to sample directly from uniform distribution */)doc";
+No need for ordering here so fine to sample directly from uniform distribution)doc";
 
 static const char *__doc_InitSparseConnectivitySnippet_FixedNumberPreWithReplacement_getCalcMaxColLengthFunc = R"doc()doc";
 
@@ -1779,11 +1779,11 @@ static const char *__doc_ModelSpec_m_Seed = R"doc(RNG seed)doc";
 
 static const char *__doc_ModelSpec_m_ShouldFusePostsynapticModels =
 R"doc(Should compatible postsynaptic models and dendritic delay buffers be fused?
-This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */)doc";
+This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved)doc";
 
 static const char *__doc_ModelSpec_m_ShouldFusePrePostWeightUpdateModels =
 R"doc(Should compatible pre and postsynaptic weight update model variables and updates be fused?
-This can significantly reduce the cost of updating neuron populations but means that per-synaptic group per and postsynaptic variables cannot be retrieved */)doc";
+This can significantly reduce the cost of updating neuron populations but means that per-synaptic group per and postsynaptic variables cannot be retrieved)doc";
 
 static const char *__doc_ModelSpec_m_TimePrecision = R"doc(Type of floating point variables used to store time)doc";
 
@@ -1799,29 +1799,29 @@ static const char *__doc_ModelSpec_setDT = R"doc(Set the integration step size o
 
 static const char *__doc_ModelSpec_setDefaultExtraGlobalParamLocation =
 R"doc(What is the default location for model extra global parameters?
-Historically, this was just left up to the user to handle*/)doc";
+Historically, this was just left up to the user to handle)doc";
 
 static const char *__doc_ModelSpec_setDefaultNarrowSparseIndEnabled = R"doc(Sets default for whether narrow i.e. less than 32-bit types are used for sparse matrix indices)doc";
 
 static const char *__doc_ModelSpec_setDefaultSparseConnectivityLocation =
 R"doc(What is the default location for sparse synaptic connectivity?
-Historically, everything was allocated on both the host AND device */)doc";
+Historically, everything was allocated on both the host AND device)doc";
 
 static const char *__doc_ModelSpec_setDefaultVarLocation =
 R"doc(What is the default location for model state variables?
-Historically, everything was allocated on both the host AND device */)doc";
+Historically, everything was allocated on both the host AND device)doc";
 
 static const char *__doc_ModelSpec_setFusePostsynapticModels =
 R"doc(Should compatible postsynaptic models and dendritic delay buffers be fused?
-This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */)doc";
+This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved)doc";
 
 static const char *__doc_ModelSpec_setFusePrePostWeightUpdateModels =
 R"doc(Should compatible pre and postsynaptic weight update model variables and updates be fused?
-This can significantly reduce the cost of updating neuron populations but means that per-synaptic group per and postsynaptic variables cannot be retrieved */)doc";
+This can significantly reduce the cost of updating neuron populations but means that per-synaptic group per and postsynaptic variables cannot be retrieved)doc";
 
 static const char *__doc_ModelSpec_setMergePostsynapticModels =
 R"doc(Should compatible postsynaptic models and dendritic delay buffers be fused?
-This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */)doc";
+This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved)doc";
 
 static const char *__doc_ModelSpec_setName = R"doc(Method to set the neuronal network model name)doc";
 
@@ -1983,7 +1983,7 @@ static const char *__doc_Models_VarReference_getNumNeurons = R"doc(Get size of v
 
 static const char *__doc_Models_VarReference_getReferencedCustomUpdate =
 R"doc(If this reference points to another custom update, return pointer to it
-This is used to detect circular dependencies */)doc";
+This is used to detect circular dependencies)doc";
 
 static const char *__doc_Models_VarReference_getTargetArray = R"doc(Get array associated with referenced variable)doc";
 
@@ -2027,7 +2027,7 @@ static const char *__doc_Models_WUVarReference_createWUVarReference_3 = R"doc()d
 
 static const char *__doc_Models_WUVarReference_getReferencedCustomUpdate =
 R"doc(If this reference points to another custom update, return pointer to it
-This is used to detect circular dependencies */)doc";
+This is used to detect circular dependencies)doc";
 
 static const char *__doc_Models_WUVarReference_getSynapseGroup = R"doc()doc";
 
@@ -2141,13 +2141,13 @@ static const char *__doc_NeuronGroup_getFusedWUPreOutSyn = R"doc()doc";
 
 static const char *__doc_NeuronGroup_getHashDigest =
 R"doc(Updates hash with neuron group
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_NeuronGroup_getInSyn = R"doc(Gets pointers to all synapse groups which provide input to this neuron group)doc";
 
 static const char *__doc_NeuronGroup_getInitHashDigest =
 R"doc(Updates hash with neuron group initialisation
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_NeuronGroup_getModel = R"doc(Gets the neuron model used by this group)doc";
 
@@ -2299,46 +2299,46 @@ static const char *__doc_NeuronGroup_m_VarQueueRequired = R"doc(Set of names of 
 
 static const char *__doc_NeuronGroup_setExtraGlobalParamLocation =
 R"doc(Set location of neuron model extra global parameter
-This is ignored for simulations on hardware with a single memory space. */)doc";
+This is ignored for simulations on hardware with a single memory space.)doc";
 
 static const char *__doc_NeuronGroup_setParamDynamic = R"doc(Set whether parameter is dynamic or not i.e. it can be changed at runtime)doc";
 
 static const char *__doc_NeuronGroup_setPrevSpikeEventTimeLocation =
 R"doc(Set location of this neuron group's previous output spike-like-event times
-This is ignored for simulations on hardware with a single memory space */)doc";
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_setPrevSpikeTimeLocation =
 R"doc(Set location of this neuron group's previous output spike times
-This is ignored for simulations on hardware with a single memory space */)doc";
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_setRecordingZeroCopyEnabled =
 R"doc(Set whether zero-copy memory (if available) should be
 used for spike and spike-like event recording
-This is ignored for simulations on hardware with a single memory space */)doc";
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_setSpikeEventLocation =
 R"doc(Set location of this neuron group's output spike events
-This is ignored for simulations on hardware with a single memory space */)doc";
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_setSpikeEventRecordingEnabled = R"doc(Enables and disable spike event recording for this population)doc";
 
 static const char *__doc_NeuronGroup_setSpikeEventTimeLocation =
 R"doc(Set location of this neuron group's output spike-like-event times
-This is ignored for simulations on hardware with a single memory space */)doc";
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_setSpikeLocation =
 R"doc(Set location of this neuron group's output spikes
-This is ignored for simulations on hardware with a single memory space */)doc";
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_setSpikeRecordingEnabled = R"doc(Enables and disable spike recording for this population)doc";
 
 static const char *__doc_NeuronGroup_setSpikeTimeLocation =
 R"doc(Set location of this neuron group's output spike times
-This is ignored for simulations on hardware with a single memory space */)doc";
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_setVarLocation =
 R"doc(Set variable location of neuron model state variable
-This is ignored for simulations on hardware with a single memory space */)doc";
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_setVarQueueRequired = R"doc()doc";
 
@@ -2359,7 +2359,7 @@ It needs to refer to the predefined variable "ISYN", i.e. contain ISYN, if it is
 
 static const char *__doc_NeuronModels_Base_getThresholdConditionCode =
 R"doc(Gets code which defines the condition for a true spike in the described neuron model.
-This evaluates to a bool (e.g. "V > 20"). */)doc";
+This evaluates to a bool (e.g. "V > 20").)doc";
 
 static const char *__doc_NeuronModels_Base_getVar = R"doc(Find the named variable)doc";
 
@@ -2717,7 +2717,7 @@ static const char *__doc_PostsynapticModels_Base_validate = R"doc(Validate names
 
 static const char *__doc_PostsynapticModels_DeltaCurr =
 R"doc(Simple delta current synapse.
-Synaptic input provides a direct inject of instantaneous current*/)doc";
+Synaptic input provides a direct inject of instantaneous current)doc";
 
 static const char *__doc_PostsynapticModels_DeltaCurr_getInstance = R"doc()doc";
 
@@ -2949,21 +2949,21 @@ static const char *__doc_SynapseGroup_getBackPropDelaySteps = R"doc()doc";
 
 static const char *__doc_SynapseGroup_getConnectivityHostInitHashDigest =
 R"doc(Generate hash of host connectivity initialisation of this synapse group
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getConnectivityInitHashDigest =
 R"doc(Generate hash of connectivity initialisation of this synapse group
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getConnectivityInitialiser = R"doc()doc";
 
 static const char *__doc_SynapseGroup_getCustomConnectivityUpdateReferences =
 R"doc(Gets custom connectivity updates which reference this synapse group
-Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */)doc";
+Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes.)doc";
 
 static const char *__doc_SynapseGroup_getCustomUpdateReferences =
 R"doc(Gets custom updates which reference this synapse group
-Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */)doc";
+Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes.)doc";
 
 static const char *__doc_SynapseGroup_getDendriticDelayLocation = R"doc(Get variable mode used for this synapse group's dendritic delay buffers)doc";
 
@@ -3004,15 +3004,15 @@ static const char *__doc_SynapseGroup_getPSExtraGlobalParamLocation = R"doc(Get 
 static const char *__doc_SynapseGroup_getPSFuseHashDigest =
 R"doc(Generate hash of postsynaptic update component of this synapse group with additional components to ensure PSMs
 with matching hashes can not only be simulated using the same code, but fused so only one needs simulating at all
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getPSHashDigest =
 R"doc(Generate hash of postsynaptic update component of this synapse group
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getPSInitHashDigest =
 R"doc(Generate hash of postsynaptic model variable initialisation component of this synapse group
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getPSInitialiser = R"doc()doc";
 
@@ -3022,19 +3022,19 @@ static const char *__doc_SynapseGroup_getParallelismHint = R"doc()doc";
 
 static const char *__doc_SynapseGroup_getPostTargetVar =
 R"doc(Get name of neuron input variable postsynaptic model will target
-This will either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */)doc";
+This will either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables.)doc";
 
 static const char *__doc_SynapseGroup_getPreOutputHashDigest =
 R"doc(Generate hash of presynaptic output update component of this synapse group
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getPreOutputInitHashDigest =
 R"doc(Generate hash of presynaptic output initialization component of this synapse group
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getPreTargetVar =
 R"doc(Get name of neuron input variable which a presynaptic output specified with $(addToPre) will target
-This will either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */)doc";
+This will either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables.)doc";
 
 static const char *__doc_SynapseGroup_getSparseConnectivityLocation = R"doc(Get variable mode used for sparse connectivity)doc";
 
@@ -3042,7 +3042,7 @@ static const char *__doc_SynapseGroup_getSparseIndType = R"doc(Get the type to u
 
 static const char *__doc_SynapseGroup_getSpikeHashDigest =
 R"doc(Generate hash of presynaptic or postsynaptic spike generation component of this synapse group
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getSrcNeuronGroup = R"doc()doc";
 
@@ -3060,11 +3060,11 @@ static const char *__doc_SynapseGroup_getWUExtraGlobalParamLocation = R"doc(Get 
 
 static const char *__doc_SynapseGroup_getWUHashDigest =
 R"doc(Generate hash of weight update component of this synapse group
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getWUInitHashDigest =
 R"doc(Generate hash of initialisation component of this synapse group
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getWUInitialiser = R"doc()doc";
 
@@ -3072,31 +3072,31 @@ static const char *__doc_SynapseGroup_getWUPostVarLocation = R"doc(Get location 
 
 static const char *__doc_SynapseGroup_getWUPreInitHashDigest =
 R"doc(Generate hash of presynaptic variable initialisation component of this synapse group
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getWUPrePostFuseHashDigest =
 R"doc(Generate hash of presynaptic or postsynaptic weight update component of this synapse group with additional components to ensure those
 with matching hashes can not only be simulated using the same code, but fused so only one needs simulating at all
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getWUPrePostHashDigest =
 R"doc(Generate hash of presynaptic or postsynaptic update component of this synapse group
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getWUPrePostInitHashDigest =
 R"doc(Generate hash of presynaptic or postsynaptic variable initialisation component of this synapse group
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getWUPreVarLocation = R"doc(Get location of weight update model presynaptic state variable by name)doc";
 
 static const char *__doc_SynapseGroup_getWUSpikeEventFuseHashDigest =
 R"doc(Generate hash of presynaptic or postsynaptic spike event generation of this synapse group with additional components to ensure PSMs
 with matching hashes can not only be simulated using the same code, but fused so only one needs simulating at all
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getWUSpikeEventHashDigest =
 R"doc(Generate hash of presynaptic or postsynaptic spike event generation component of this synapse group
-NOTE: this can only be called after model is finalized */)doc";
+NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getWUVarLocation = R"doc(Get location of weight update model per-synapse state variable by name)doc";
 
@@ -3178,45 +3178,45 @@ static const char *__doc_SynapseGroup_m_BackPropDelaySteps = R"doc(Global backpr
 
 static const char *__doc_SynapseGroup_m_CustomConnectivityUpdateReferences =
 R"doc(Custom connectivity updates which reference this synapse group
-Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */)doc";
+Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes.)doc";
 
 static const char *__doc_SynapseGroup_m_CustomUpdateReferences =
 R"doc(Custom updates which reference this synapse group
-Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */)doc";
+Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes.)doc";
 
 static const char *__doc_SynapseGroup_m_DendriticDelayLocation = R"doc(Variable mode used for this synapse group's dendritic delay buffers)doc";
 
 static const char *__doc_SynapseGroup_m_FusedPSTarget =
 R"doc(Synapse group postsynaptic model has been fused with
-If this is nullptr, postsynaptic model has not been fused */)doc";
+If this is nullptr, postsynaptic model has not been fused)doc";
 
 static const char *__doc_SynapseGroup_m_FusedPostSpikeEventTarget =
 R"doc(Synapse group postsynaptic spike event generation has been fused with
-If this is nullptr, postsynaptic spike event generation has not been fused */)doc";
+If this is nullptr, postsynaptic spike event generation has not been fused)doc";
 
 static const char *__doc_SynapseGroup_m_FusedPostSpikeTarget =
 R"doc(Synapse group postsynaptic spike generation has been fused with
-If this is nullptr, presynaptic spike generation has not been fused */)doc";
+If this is nullptr, presynaptic spike generation has not been fused)doc";
 
 static const char *__doc_SynapseGroup_m_FusedPreOutputTarget =
 R"doc(Synapse group presynaptic output has been fused with
-If this is nullptr, presynaptic output has not been fused */)doc";
+If this is nullptr, presynaptic output has not been fused)doc";
 
 static const char *__doc_SynapseGroup_m_FusedPreSpikeEventTarget =
 R"doc(Synapse group presynaptic spike event generation has been fused with
-If this is nullptr, presynaptic spike event generation has not been fused */)doc";
+If this is nullptr, presynaptic spike event generation has not been fused)doc";
 
 static const char *__doc_SynapseGroup_m_FusedPreSpikeTarget =
 R"doc(Synapse group presynaptic spike generation has been fused with
-If this is nullptr, presynaptic spike generation has not been fused */)doc";
+If this is nullptr, presynaptic spike generation has not been fused)doc";
 
 static const char *__doc_SynapseGroup_m_FusedWUPostTarget =
 R"doc(Synapse group postsynaptic weight update has been fused with
-If this is nullptr, postsynaptic weight update  has not been fused */)doc";
+If this is nullptr, postsynaptic weight update  has not been fused)doc";
 
 static const char *__doc_SynapseGroup_m_FusedWUPreTarget =
 R"doc(Synapse group presynaptic weight update has been fused with
-If this is nullptr, presynaptic weight update has not been fused */)doc";
+If this is nullptr, presynaptic weight update has not been fused)doc";
 
 static const char *__doc_SynapseGroup_m_KernelSize = R"doc(Kernel size)doc";
 
@@ -3248,11 +3248,11 @@ static const char *__doc_SynapseGroup_m_ParallelismHint = R"doc(Hint as to how s
 
 static const char *__doc_SynapseGroup_m_PostTargetVar =
 R"doc(Name of neuron input variable postsynaptic model will target
-This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */)doc";
+This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables.)doc";
 
 static const char *__doc_SynapseGroup_m_PreTargetVar =
 R"doc(Name of neuron input variable a presynaptic output specified with $(addToPre) will target
-This will either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */)doc";
+This will either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables.)doc";
 
 static const char *__doc_SynapseGroup_m_SparseConnectivityInitialiser = R"doc(Initialiser used for creating sparse connectivity)doc";
 
@@ -3294,13 +3294,13 @@ static const char *__doc_SynapseGroup_setFusedWUPrePostTarget = R"doc()doc";
 
 static const char *__doc_SynapseGroup_setMaxConnections =
 R"doc(Sets the maximum number of target neurons any source neurons can connect to
-Use with synaptic matrix types with SynapseMatrixConnectivity::SPARSE to optimise CUDA implementation */)doc";
+Use with synaptic matrix types with SynapseMatrixConnectivity::SPARSE to optimise CUDA implementation)doc";
 
 static const char *__doc_SynapseGroup_setMaxDendriticDelayTimesteps = R"doc(Sets the maximum dendritic delay for synapses in this synapse group)doc";
 
 static const char *__doc_SynapseGroup_setMaxSourceConnections =
 R"doc(Sets the maximum number of source neurons any target neuron can connect to
-Use with synaptic matrix types with SynapseMatrixConnectivity::SPARSE and postsynaptic learning to optimise CUDA implementation */)doc";
+Use with synaptic matrix types with SynapseMatrixConnectivity::SPARSE and postsynaptic learning to optimise CUDA implementation)doc";
 
 static const char *__doc_SynapseGroup_setNarrowSparseIndEnabled = R"doc(Enables or disables using narrow i.e. less than 32-bit types for sparse matrix indices)doc";
 
@@ -3308,49 +3308,49 @@ static const char *__doc_SynapseGroup_setNumThreadsPerSpike = R"doc(Provide hint
 
 static const char *__doc_SynapseGroup_setOutputLocation =
 R"doc(Set location of variables used for outputs from this synapse group e.g. outPre and outPost
-This is ignored for simulations on hardware with a single memory space */)doc";
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_setPSExtraGlobalParamLocation =
 R"doc(Set location of postsynaptic model extra global parameter
-This is ignored for simulations on hardware with a single memory space. */)doc";
+This is ignored for simulations on hardware with a single memory space.)doc";
 
 static const char *__doc_SynapseGroup_setPSParamDynamic = R"doc(Set whether weight update model parameter is dynamic or not i.e. it can be changed at runtime)doc";
 
 static const char *__doc_SynapseGroup_setPSVarLocation =
 R"doc(Set location of postsynaptic model state variable
-This is ignored for simulations on hardware with a single memory space */)doc";
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_setParallelismHint = R"doc(Provide a hint as to how this synapse group should be parallelised)doc";
 
 static const char *__doc_SynapseGroup_setPostTargetVar =
 R"doc(Set name of neuron input variable postsynaptic model will target
-This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */)doc";
+This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables.)doc";
 
 static const char *__doc_SynapseGroup_setPreTargetVar =
 R"doc(Set name of neuron input variable $(addToPre, . ) commands will target
-This should either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */)doc";
+This should either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables.)doc";
 
 static const char *__doc_SynapseGroup_setSparseConnectivityLocation =
 R"doc(Set variable mode used for sparse connectivity
-This is ignored for simulations on hardware with a single memory space */)doc";
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_setWUExtraGlobalParamLocation =
 R"doc(Set location of weight update model extra global parameter
-This is ignored for simulations on hardware with a single memory space. */)doc";
+This is ignored for simulations on hardware with a single memory space.)doc";
 
 static const char *__doc_SynapseGroup_setWUParamDynamic = R"doc(Set whether weight update model parameter is dynamic or not i.e. it can be changed at runtime)doc";
 
 static const char *__doc_SynapseGroup_setWUPostVarLocation =
 R"doc(Set location of weight update model postsynaptic state variable
-This is ignored for simulations on hardware with a single memory space */)doc";
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_setWUPreVarLocation =
 R"doc(Set location of weight update model presynaptic state variable
-This is ignored for simulations on hardware with a single memory space */)doc";
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_setWUVarLocation =
 R"doc(Set location of weight update model state variable
-This is ignored for simulations on hardware with a single memory space */)doc";
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseMatrixConnectivity = R"doc(Flags defining differnet types of synaptic matrix connectivity)doc";
 
