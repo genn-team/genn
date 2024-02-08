@@ -32,12 +32,12 @@ Computation times
    * - Example
      - Time
      - Mem (MB)
-   * - :ref:`sphx_glr_userproject_mnist_mb_classifier.py` (``..\userproject\mnist_mb_classifier.py``)
+   * - :ref:`sphx_glr_userproject_mnist_mb_classifier.py` (``../userproject/mnist_mb_classifier.py``)
      - 00:00.000
      - 0.0
-   * - :ref:`sphx_glr_userproject_potjans_microcircuit.py` (``..\userproject\potjans_microcircuit.py``)
+   * - :ref:`sphx_glr_userproject_potjans_microcircuit_pygenn.py` (``../userproject/potjans_microcircuit_pygenn.py``)
      - 00:00.000
      - 0.0
-   * - :ref:`sphx_glr_userproject_superspike_demo.py` (``..\userproject\superspike_demo.py``)
+   * - :ref:`sphx_glr_userproject_superspike_demo.py` (``../userproject/superspike_demo.py``)
      - 00:00.000
      - 0.0
