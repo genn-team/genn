@@ -2384,6 +2384,7 @@ Variables are:
 - ``U`` - Membrane recovery variable
 
 Parameters are:
+
 - ``a`` - time scale of U
 - ``b`` - sensitivity of U
 - ``c`` - after-spike reset value of V
@@ -2470,8 +2471,8 @@ It has two extra global parameters:
 
 \note This model uses a linear approximation for the probability
 of firing a spike in a given time step of size `DT`, i.e. the
-probability of firing is :math:`\lambda` times `DT`: :math:` p = \lambda \Delta t
-`, where $\lambda$ corresponds to the value of the relevant entry of `firingProb`.
+probability of firing is :math:`\lambda` times `DT`: :math:` p = \lambda \Delta t`,
+where $\lambda$ corresponds to the value of the relevant entry of `firingProb`.
 This approximation is usually very good, especially for typical,
 quite small time steps and moderate firing rates. However, it is worth
 noting that the approximation becomes poor for very high firing rates
