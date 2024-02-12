@@ -2372,10 +2372,15 @@ static const char *__doc_NeuronModels_Base_validate = R"doc(Validate names of pa
 static const char *__doc_NeuronModels_Izhikevich =
 R"doc(Izhikevich neuron with fixed parameters \cite izhikevich2003simple.
 It is usually described as
-\f{eqnarray*}
-\frac{dV}{dt} &=& 0.04 V^2 + 5 V + 140 - U + I, \\
-\frac{dU}{dt} &=& a (bV-U),
-\f}
+
+.. math::
+    :nowrap:
+
+    \begin{eqnarray*}
+    \frac{dV}{dt} &=& 0.04 V^2 + 5 V + 140 - U + I, \\
+    \frac{dU}{dt} &=& a (bV-U),
+    \end{eqnarray*}
+
 I is an external input current and the voltage V is reset to parameter c and U incremented by parameter d, whenever V >= 30 mV. This is paired with a particular integration procedure of two 0.5 ms Euler time steps for the V equation followed by one 1 ms time step of the U equation. Because of its popularity we provide this model in this form here event though due to the details of the usual implementation it is strictly speaking inconsistent with the displayed equations.
 
 Variables are:
@@ -2524,14 +2529,19 @@ static const char *__doc_NeuronModels_RulkovMap =
 R"doc(Rulkov Map neuron
 The RulkovMap type is a map based neuron model based on \cite Rulkov2002 but in
 the 1-dimensional map form used in \cite nowotny2005self :
-\f{eqnarray*}{
-V(t+\Delta t) &=& \left\{ \begin{array}{ll}
-V_{\rm spike} \Big(\frac{\alpha V_{\rm spike}}{V_{\rm spike}-V(t) \beta I_{\rm syn}} + y \Big) & V(t) \leq 0 \\
-V_{\rm spike} \big(\alpha+y\big) & V(t) \leq V_{\rm spike} \big(\alpha + y\big) \; \& \; V(t-\Delta t) \leq 0 \\
--V_{\rm spike} & {\rm otherwise}
-\end{array}
-\right.
-\f}
+
+.. math::
+    :nowrap:
+
+    \begin{eqnarray*}
+    V(t+\Delta t) &=& \left\{ \begin{array}{ll}
+    V_{\rm spike} \Big(\frac{\alpha V_{\rm spike}}{V_{\rm spike}-V(t) \beta I_{\rm syn}} + y \Big) & V(t) \leq 0 \\
+    V_{\rm spike} \big(\alpha+y\big) & V(t) \leq V_{\rm spike} \big(\alpha + y\big) \; \& \; V(t-\Delta t) \leq 0 \\
+    -V_{\rm spike} & {\rm otherwise}
+    \end{array}
+    \right.
+    \end{eqnarray*}
+
 \note
 The `RulkovMap` type only works as intended for the single time step size of `DT`= 0.5.
 
@@ -2601,20 +2611,31 @@ static const char *__doc_NeuronModels_SpikeSource_isAutoRefractoryRequired = R"d
 static const char *__doc_NeuronModels_TraubMiles =
 R"doc(Hodgkin-Huxley neurons with Traub & Miles algorithm.
 This conductance based model has been taken from \cite Traub1991 and can be described by the equations:
-\f{eqnarray*}{
-C \frac{d V}{dt}  &=& -I_{{\rm Na}} -I_K-I_{{\rm leak}}-I_M-I_{i,DC}-I_{i,{\rm syn}}-I_i, \\
-I_{{\rm Na}}(t) &=& g_{{\rm Na}} m_i(t)^3 h_i(t)(V_i(t)-E_{{\rm Na}}) \\
-I_{{\rm K}}(t) &=& g_{{\rm K}} n_i(t)^4(V_i(t)-E_{{\rm K}})  \\
-\frac{dy(t)}{dt} &=& \alpha_y (V(t))(1-y(t))-\beta_y(V(t)) y(t), \f}
+
+.. math::
+    :nowrap:
+
+    \begin{eqnarray*}
+    C \frac{d V}{dt}  &=& -I_{{\rm Na}} -I_K-I_{{\rm leak}}-I_M-I_{i,DC}-I_{i,{\rm syn}}-I_i, \\
+    I_{{\rm Na}}(t) &=& g_{{\rm Na}} m_i(t)^3 h_i(t)(V_i(t)-E_{{\rm Na}}) \\
+    I_{{\rm K}}(t) &=& g_{{\rm K}} n_i(t)^4(V_i(t)-E_{{\rm K}})  \\
+    \frac{dy(t)}{dt} &=& \alpha_y (V(t))(1-y(t))-\beta_y(V(t)) y(t),
+    \end{eqnarray*}
+
 where :math:`y_i= m, h, n`, and
-\f{eqnarray*}{
-\alpha_n&=& 0.032(-50-V)/\big(\exp((-50-V)/5)-1\big)  \\
-\beta_n &=& 0.5\exp((-55-V)/40)  \\
-\alpha_m &=& 0.32(-52-V)/\big(\exp((-52-V)/4)-1\big)  \\
-\beta_m &=& 0.28(25+V)/\big(\exp((25+V)/5)-1\big)  \\
-\alpha_h &=& 0.128\exp((-48-V)/18)  \\
-\beta_h &=& 4/\big(\exp((-25-V)/5)+1\big).
-\f}
+
+.. math::
+    :nowrap:
+
+    \begin{eqnarray*}
+    \alpha_n&=& 0.032(-50-V)/\big(\exp((-50-V)/5)-1\big)  \\
+    \beta_n &=& 0.5\exp((-55-V)/40)  \\
+    \alpha_m &=& 0.32(-52-V)/\big(\exp((-52-V)/4)-1\big)  \\
+    \beta_m &=& 0.28(25+V)/\big(\exp((25+V)/5)-1\big)  \\
+    \alpha_h &=& 0.128\exp((-48-V)/18)  \\
+    \beta_h &=& 4/\big(\exp((-25-V)/5)+1\big).
+    \end{eqnarray*}
+
 and typical parameters are :math:`C=0.143` nF, :math:`g_{{\rm leak}}= 0.02672`
 :math:`\mu`S, :math:`E_{{\rm leak}}= -63.563` mV, :math:`g_{{\rm Na}}=7.15` :math:`\mu`S,
 :math:`E_{{\rm Na}}= 50` mV, :math:`g_{{\rm {\rm K}}}=1.43` :math:`\mu`S,
