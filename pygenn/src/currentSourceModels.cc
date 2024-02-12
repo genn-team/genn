@@ -10,6 +10,13 @@
 
 using namespace GeNN::CurrentSourceModels;
 
+//----------------------------------------------------------------------------
+// Macros
+//----------------------------------------------------------------------------
+#define WRAP(NAME) m.def(#NAME, &getBaseInstance<NAME>,\
+                         pybind11::return_value_policy::reference,\
+                         DOC(CurrentSourceModels, NAME))
+
 namespace
 {
 template<typename T>
@@ -29,9 +36,7 @@ PYBIND11_MODULE(current_source_models, m)
     //------------------------------------------------------------------------
     // Free functions
     //------------------------------------------------------------------------
-    // **THINK** with some cunning, standard macros could maybe populate
-    // an array with instance pointers that we could loop over
-    m.def("DC", &getBaseInstance<DC>, pybind11::return_value_policy::reference, DOC(CurrentSourceModels, DC));
-    m.def("GaussianNoise", &getBaseInstance<GaussianNoise>, pybind11::return_value_policy::reference, DOC(CurrentSourceModels, GaussianNoise));
-    m.def("PoissonExp", &getBaseInstance<PoissonExp>, pybind11::return_value_policy::reference, DOC(CurrentSourceModels, PoissonExp));
+    WRAP(DC);
+    WRAP(GaussianNoise);
+    WRAP(PoissonExp);
 }

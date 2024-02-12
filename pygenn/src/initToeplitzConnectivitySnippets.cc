@@ -5,7 +5,17 @@
 // GeNN includes
 #include "initToeplitzConnectivitySnippet.h"
 
+// Doc strings
+#include "docStrings.h"
+
 using namespace GeNN::InitToeplitzConnectivitySnippet;
+
+//----------------------------------------------------------------------------
+// Macros
+//----------------------------------------------------------------------------
+#define WRAP(NAME) m.def(#NAME, &getBaseInstance<NAME>,\
+                         pybind11::return_value_policy::reference,\
+                         DOC(InitToeplitzConnectivitySnippet, NAME))
 
 namespace
 {
@@ -26,9 +36,7 @@ PYBIND11_MODULE(init_toeplitz_connectivity_snippets, m)
     //------------------------------------------------------------------------
     // Free functions
     //------------------------------------------------------------------------
-    // **THINK** with some cunning, standard macros could maybe populate
-    // an array with instance pointers that we could loop over
-    m.def("Uninitialised", &getBaseInstance<Uninitialised>, pybind11::return_value_policy::reference);
-    m.def("Conv2D", &getBaseInstance<Conv2D>, pybind11::return_value_policy::reference);
-    m.def("AvgPoolConv2D", &getBaseInstance<AvgPoolConv2D>, pybind11::return_value_policy::reference);
+    WRAP(Uninitialised);
+    WRAP(Conv2D);
+    WRAP(AvgPoolConv2D);
 }
