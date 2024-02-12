@@ -5,7 +5,17 @@
 // GeNN includes
 #include "postsynapticModels.h"
 
+// Doc strings
+#include "docStrings.h"
+
 using namespace GeNN::PostsynapticModels;
+
+//----------------------------------------------------------------------------
+// Macros
+//----------------------------------------------------------------------------
+#define WRAP(NAME) m.def(#NAME, &getBaseInstance<NAME>,\
+                         pybind11::return_value_policy::reference,\
+                         DOC(PostsynapticModels, NAME))
 
 namespace
 {
@@ -26,9 +36,7 @@ PYBIND11_MODULE(postsynaptic_models, m)
     //------------------------------------------------------------------------
     // Free functions
     //------------------------------------------------------------------------
-    // **THINK** with some cunning, standard macros could maybe populate
-    // an array with instance pointers that we could loop over
-    m.def("ExpCurr", &getBaseInstance<ExpCurr>, pybind11::return_value_policy::reference);
-    m.def("ExpCond", &getBaseInstance<ExpCond>, pybind11::return_value_policy::reference);
-    m.def("DeltaCurr", &getBaseInstance<DeltaCurr>, pybind11::return_value_policy::reference);
+    WRAP(ExpCurr);
+    WRAP(ExpCond);
+    WRAP(DeltaCurr);
 }

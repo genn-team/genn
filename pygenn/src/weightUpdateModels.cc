@@ -5,7 +5,17 @@
 // GeNN includes
 #include "weightUpdateModels.h"
 
+// Doc strings
+#include "docStrings.h"
+
 using namespace GeNN::WeightUpdateModels;
+
+//----------------------------------------------------------------------------
+// Macros
+//----------------------------------------------------------------------------
+#define WRAP(NAME) m.def(#NAME, &getBaseInstance<NAME>,\
+                         pybind11::return_value_policy::reference,\
+                         DOC(WeightUpdateModels, NAME))
 
 namespace
 {
@@ -26,11 +36,9 @@ PYBIND11_MODULE(weight_update_models, m)
     //------------------------------------------------------------------------
     // Free functions
     //------------------------------------------------------------------------
-    // **THINK** with some cunning, standard macros could maybe populate
-    // an array with instance pointers that we could loop over
-    m.def("StaticPulse", &getBaseInstance<StaticPulse>, pybind11::return_value_policy::reference);
-    m.def("StaticPulseConstantWeight", &getBaseInstance<StaticPulseConstantWeight>, pybind11::return_value_policy::reference);
-    m.def("StaticPulseDendriticDelay", &getBaseInstance<StaticPulseDendriticDelay>, pybind11::return_value_policy::reference);
-    m.def("StaticGraded", &getBaseInstance<StaticGraded>, pybind11::return_value_policy::reference);
-    m.def("PiecewiseSTDP", &getBaseInstance<PiecewiseSTDP>, pybind11::return_value_policy::reference);
+    WRAP(StaticPulse);
+    WRAP(StaticPulseConstantWeight);
+    WRAP(StaticPulseDendriticDelay);
+    WRAP(StaticGraded);
+    WRAP(PiecewiseSTDP);
 }
