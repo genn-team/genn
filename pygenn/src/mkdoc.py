@@ -175,8 +175,14 @@ def process_comment(comment):
     #           flags=re.DOTALL)
     #s = re.sub(r'[@\\]f\[\s*(.*?)\s*[@\\]f\]', r'\n\n.. math:: \1\n\n', s,
     #           flags=re.DOTALL)
-    #s = re.sub(r'[@\\]f\{([\w*]+)\}\s*(.*?)\s*[@\\]f\}',
-    #           r'\n\n.. math:: \\begin{\1}\2\\end{\1}\n\n', s, flags=re.DOTALL)
+    
+    # Replace block maths with a specified environment
+    def replace(match):
+        return ("\n.. math::\n    :nowrap:\n\n    \\begin{" + match.group(1) + "}\n" 
+                + textwrap.indent(match.group(2), "    ") 
+                + "\n    \\end{" + match.group(1) + "}\n")
+    s = re.sub(r'[@\\]f\{([\w*]+)\}\s*{?\s*(.*?)\s*[@\\]f\}',
+               replace, s, flags=re.DOTALL)
 
     s = s.replace('``true``', '``True``')
     s = s.replace('``false``', '``False``')
