@@ -41,6 +41,12 @@ using namespace GeNN;
 using namespace pybind11::literals;
 
 //----------------------------------------------------------------------------
+// Macros
+//----------------------------------------------------------------------------
+#define WRAP_ENUM(ENUM, VAL) .value(#VAL, ENUM::VAL, DOC(ENUM, VAL))
+
+
+//----------------------------------------------------------------------------
 // Anonymous namespace
 //----------------------------------------------------------------------------
 namespace
@@ -260,52 +266,52 @@ PYBIND11_MODULE(_genn, m)
         .value("VERBOSE", plog::Severity::verbose);
 
     pybind11::enum_<SynapseMatrixConnectivity>(m, "SynapseMatrixConnectivity", DOC(SynapseMatrixConnectivity))
-        .value("DENSE", SynapseMatrixConnectivity::DENSE)
-        .value("BITMASK", SynapseMatrixConnectivity::BITMASK)
-        .value("SPARSE", SynapseMatrixConnectivity::SPARSE)
-        .value("PROCEDURAL", SynapseMatrixConnectivity::PROCEDURAL)
-        .value("TOEPLITZ", SynapseMatrixConnectivity::TOEPLITZ);
+        WRAP_ENUM(SynapseMatrixConnectivity, DENSE)
+        WRAP_ENUM(SynapseMatrixConnectivity, BITMASK)
+        WRAP_ENUM(SynapseMatrixConnectivity, SPARSE)
+        WRAP_ENUM(SynapseMatrixConnectivity, PROCEDURAL)
+        WRAP_ENUM(SynapseMatrixConnectivity, TOEPLITZ);
 
-    pybind11::enum_<SynapseMatrixWeight>(m, "SynapseMatrixWeight")
-        .value("INDIVIDUAL", SynapseMatrixWeight::INDIVIDUAL)
-        .value("PROCEDURAL", SynapseMatrixWeight::PROCEDURAL)
-        .value("KERNEL", SynapseMatrixWeight::KERNEL);
+    pybind11::enum_<SynapseMatrixWeight>(m, "SynapseMatrixWeight", DOC(SynapseMatrixWeight))
+        WRAP_ENUM(SynapseMatrixWeight, INDIVIDUAL)
+        WRAP_ENUM(SynapseMatrixWeight, PROCEDURAL)
+        WRAP_ENUM(SynapseMatrixWeight, KERNEL);
 
     pybind11::enum_<SynapseMatrixType>(m, "SynapseMatrixType")
-        .value("DENSE", SynapseMatrixType::DENSE)
-        .value("DENSE_PROCEDURALG", SynapseMatrixType::DENSE_PROCEDURALG)
-        .value("BITMASK", SynapseMatrixType::BITMASK)
-        .value("SPARSE", SynapseMatrixType::SPARSE)
-        .value("PROCEDURAL", SynapseMatrixType::PROCEDURAL)
-        .value("PROCEDURAL_KERNELG", SynapseMatrixType::PROCEDURAL_KERNELG)
-        .value("TOEPLITZ", SynapseMatrixType::TOEPLITZ)
+        WRAP_ENUM(SynapseMatrixType, DENSE)
+        WRAP_ENUM(SynapseMatrixType, DENSE_PROCEDURALG)
+        WRAP_ENUM(SynapseMatrixType, BITMASK)
+        WRAP_ENUM(SynapseMatrixType, SPARSE)
+        WRAP_ENUM(SynapseMatrixType, PROCEDURAL)
+        WRAP_ENUM(SynapseMatrixType, PROCEDURAL_KERNELG)
+        WRAP_ENUM(SynapseMatrixType, TOEPLITZ)
 
         .def("__and__", [](SynapseMatrixType a, SynapseMatrixConnectivity b){ return a & b; }, 
              pybind11::is_operator())
         .def("__and__", [](SynapseMatrixType a, SynapseMatrixWeight b){ return a & b; }, 
              pybind11::is_operator());
 
-    pybind11::enum_<VarAccessModeAttribute>(m, "VarAccessModeAttribute")
-        .value("READ_ONLY", VarAccessModeAttribute::READ_ONLY)
-        .value("READ_WRITE", VarAccessModeAttribute::READ_WRITE)
-        .value("REDUCE", VarAccessModeAttribute::REDUCE)
-        .value("SUM", VarAccessModeAttribute::SUM)
-        .value("MAX", VarAccessModeAttribute::MAX);
+    pybind11::enum_<VarAccessModeAttribute>(m, "VarAccessModeAttribute", DOC(VarAccessModeAttribute))
+        WRAP_ENUM(VarAccessModeAttribute, READ_ONLY)
+        WRAP_ENUM(VarAccessModeAttribute, READ_WRITE)
+        WRAP_ENUM(VarAccessModeAttribute, REDUCE)
+        WRAP_ENUM(VarAccessModeAttribute, SUM)
+        WRAP_ENUM(VarAccessModeAttribute, MAX);
 
     //! Supported combination of VarAccessModeAttribute
     pybind11::enum_<VarAccessMode>(m, "VarAccessMode")
-        .value("READ_WRITE", VarAccessMode::READ_WRITE)
-        .value("READ_ONLY", VarAccessMode::READ_ONLY)
-        .value("REDUCE_SUM", VarAccessMode::REDUCE_SUM)
-        .value("REDUCE_MAX", VarAccessMode::REDUCE_MAX)
+        WRAP_ENUM(VarAccessMode, READ_WRITE)
+        WRAP_ENUM(VarAccessMode, READ_ONLY)
+        WRAP_ENUM(VarAccessMode, REDUCE_SUM)
+        WRAP_ENUM(VarAccessMode, REDUCE_MAX)
 
         .def("__and__", [](VarAccessMode a, VarAccessModeAttribute b){ return a & b; }, 
              pybind11::is_operator());
 
     //! Flags defining dimensions this variables has
-    pybind11::enum_<VarAccessDim>(m, "VarAccessDim")
-        .value("ELEMENT", VarAccessDim::ELEMENT)
-        .value("BATCH", VarAccessDim::BATCH)
+    pybind11::enum_<VarAccessDim>(m, "VarAccessDim", DOC(VarAccessDim))
+        WRAP_ENUM(VarAccessDim, ELEMENT)
+        WRAP_ENUM(VarAccessDim, BATCH)
 
         .def("__and__", [](VarAccessDim a, VarAccessDim b){ return a & b; }, 
              pybind11::is_operator())
@@ -313,46 +319,46 @@ PYBIND11_MODULE(_genn, m)
              pybind11::is_operator());
 
     //! Supported combinations of access mode and dimension for neuron variables
-    pybind11::enum_<VarAccess>(m, "VarAccess")
-        .value("READ_WRITE", VarAccess::READ_WRITE)
-        .value("READ_ONLY", VarAccess::READ_ONLY)
-        .value("READ_ONLY_DUPLICATE", VarAccess::READ_ONLY_DUPLICATE)
-        .value("READ_ONLY_SHARED_NEURON", VarAccess::READ_ONLY_SHARED_NEURON)
+    pybind11::enum_<VarAccess>(m, "VarAccess", DOC(VarAccess))
+        WRAP_ENUM(VarAccess, READ_WRITE)
+        WRAP_ENUM(VarAccess, READ_ONLY)
+        WRAP_ENUM(VarAccess, READ_ONLY_DUPLICATE)
+        WRAP_ENUM(VarAccess, READ_ONLY_SHARED_NEURON)
 
         .def("__and__", [](VarAccess a, VarAccessModeAttribute b){ return a & b; },
              pybind11::is_operator());
 
     //! Supported combinations of access mode and dimension for custom update variables
     /*! The axes are defined 'subtractively' ie VarAccessDim::BATCH indicates that this axis should be removed */
-    pybind11::enum_<CustomUpdateVarAccess>(m, "CustomUpdateVarAccess")
-        .value("READ_WRITE", CustomUpdateVarAccess::READ_WRITE)
-        .value("READ_ONLY", CustomUpdateVarAccess::READ_ONLY)
-        .value("READ_ONLY_SHARED", CustomUpdateVarAccess::READ_ONLY_SHARED)
-        .value("READ_ONLY_SHARED_NEURON", CustomUpdateVarAccess::READ_ONLY_SHARED_NEURON)
-        .value("REDUCE_BATCH_SUM", CustomUpdateVarAccess::REDUCE_BATCH_SUM)
-        .value("REDUCE_BATCH_MAX", CustomUpdateVarAccess::REDUCE_BATCH_MAX)
-        .value("REDUCE_NEURON_SUM", CustomUpdateVarAccess::REDUCE_NEURON_SUM)
-        .value("REDUCE_NEURON_MAX", CustomUpdateVarAccess::REDUCE_NEURON_MAX)
+    pybind11::enum_<CustomUpdateVarAccess>(m, "CustomUpdateVarAccess", DOC(CustomUpdateVarAccess))
+        WRAP_ENUM(CustomUpdateVarAccess, READ_WRITE)
+        WRAP_ENUM(CustomUpdateVarAccess, READ_ONLY)
+        WRAP_ENUM(CustomUpdateVarAccess, READ_ONLY_SHARED)
+        WRAP_ENUM(CustomUpdateVarAccess, READ_ONLY_SHARED_NEURON)
+        WRAP_ENUM(CustomUpdateVarAccess, REDUCE_BATCH_SUM)
+        WRAP_ENUM(CustomUpdateVarAccess, REDUCE_BATCH_MAX)
+        WRAP_ENUM(CustomUpdateVarAccess, REDUCE_NEURON_SUM)
+        WRAP_ENUM(CustomUpdateVarAccess, REDUCE_NEURON_MAX)
 
         .def("__and__", [](CustomUpdateVarAccess a, VarAccessModeAttribute b){ return a & b; },
              pybind11::is_operator());
 
     //! Locations of variables
-    pybind11::enum_<VarLocation>(m, "VarLocation")
-        .value("HOST", VarLocation::HOST)
-        .value("DEVICE", VarLocation::DEVICE)
-        .value("ZERO_COPY", VarLocation::ZERO_COPY)
-        .value("HOST_DEVICE", VarLocation::HOST_DEVICE)
-        .value("HOST_DEVICE_ZERO_COPY", VarLocation::HOST_DEVICE_ZERO_COPY)
+    pybind11::enum_<VarLocation>(m, "VarLocation", DOC(VarLocation))
+        WRAP_ENUM(VarLocation, HOST)
+        WRAP_ENUM(VarLocation, DEVICE)
+        WRAP_ENUM(VarLocation, ZERO_COPY)
+        WRAP_ENUM(VarLocation, HOST_DEVICE)
+        WRAP_ENUM(VarLocation, HOST_DEVICE_ZERO_COPY)
 
         .def("__and__", [](VarLocation a, VarLocation b){ return a & b; }, 
              pybind11::is_operator());
 
     //! Parallelism hints for synapse groups
-    pybind11::enum_<SynapseGroup::ParallelismHint>(m, "ParallelismHint")
-        .value("POSTSYNAPTIC", SynapseGroup::ParallelismHint::POSTSYNAPTIC)
-        .value("PRESYNAPTIC", SynapseGroup::ParallelismHint::PRESYNAPTIC)
-        .value("WORD_PACKED_BITMASK", SynapseGroup::ParallelismHint::WORD_PACKED_BITMASK);
+    pybind11::enum_<SynapseGroup::ParallelismHint>(m, "ParallelismHint", DOC(SynapseGroup, ParallelismHint))
+        .value("POSTSYNAPTIC", SynapseGroup::ParallelismHint::POSTSYNAPTIC, DOC(SynapseGroup, ParallelismHint, POSTSYNAPTIC))
+        .value("PRESYNAPTIC", SynapseGroup::ParallelismHint::PRESYNAPTIC, DOC(SynapseGroup, ParallelismHint, PRESYNAPTIC))
+        .value("WORD_PACKED_BITMASK", SynapseGroup::ParallelismHint::WORD_PACKED_BITMASK, DOC(SynapseGroup, ParallelismHint, WORD_PACKED_BITMASK));
 
     //------------------------------------------------------------------------
     // Free functions
