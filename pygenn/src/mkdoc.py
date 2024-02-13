@@ -97,6 +97,8 @@ def process_comment(comment):
             s = s[3:]
         elif s.startswith('/*'):
             s = s[2:].lstrip('*')
+        elif s.startswith('//!<'):
+            s = s[4:]
         elif s.startswith('///') or s.startswith('//!'):
             s = s[3:]
         if s.endswith('*/'):
