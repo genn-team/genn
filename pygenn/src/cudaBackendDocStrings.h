@@ -186,17 +186,17 @@ static const char *__doc_CodeGenerator_CUDA_Backend_m_RuntimeVersion = R"doc()do
 
 static const char *__doc_CodeGenerator_CUDA_BlockSizeSelect = R"doc(Methods for selecting CUDA kernel block size)doc";
 
-static const char *__doc_CodeGenerator_CUDA_BlockSizeSelect_MANUAL = R"doc(< Use block sizes specified by user)doc";
+static const char *__doc_CodeGenerator_CUDA_BlockSizeSelect_MANUAL = R"doc(Use block sizes specified by user)doc";
 
-static const char *__doc_CodeGenerator_CUDA_BlockSizeSelect_OCCUPANCY = R"doc(< Pick optimal blocksize for each kernel based on occupancy)doc";
+static const char *__doc_CodeGenerator_CUDA_BlockSizeSelect_OCCUPANCY = R"doc(Pick optimal blocksize for each kernel based on occupancy)doc";
 
 static const char *__doc_CodeGenerator_CUDA_DeviceSelect = R"doc(Methods for selecting CUDA device)doc";
 
-static const char *__doc_CodeGenerator_CUDA_DeviceSelect_MANUAL = R"doc(< Use device specified by user)doc";
+static const char *__doc_CodeGenerator_CUDA_DeviceSelect_MANUAL = R"doc(Use device specified by user)doc";
 
-static const char *__doc_CodeGenerator_CUDA_DeviceSelect_MOST_MEMORY = R"doc(< Pick device with most global memory)doc";
+static const char *__doc_CodeGenerator_CUDA_DeviceSelect_MOST_MEMORY = R"doc(Pick device with most global memory)doc";
 
-static const char *__doc_CodeGenerator_CUDA_DeviceSelect_OPTIMAL = R"doc(< Pick optimal device based on how well kernels can be simultaneously simulated and occupancy)doc";
+static const char *__doc_CodeGenerator_CUDA_DeviceSelect_OPTIMAL = R"doc(Pick optimal device based on how well kernels can be simultaneously simulated and occupancy)doc";
 
 static const char *__doc_CodeGenerator_CUDA_Optimiser_createBackend = R"doc()doc";
 
