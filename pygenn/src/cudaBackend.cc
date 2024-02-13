@@ -11,8 +11,18 @@
 // CUDA backend includes
 #include "optimiser.h"
 
+// Doc strings
+#include "cudaBackendDocStrings.h"
+
 using namespace GeNN;
 using namespace GeNN::CodeGenerator::CUDA;
+
+//----------------------------------------------------------------------------
+// Macros
+//----------------------------------------------------------------------------
+#define DOC_CUDA(...) DOC(CodeGenerator, CUDA, __VA_ARGS__)
+#define WRAP_ENUM(ENUM, VAL) .value(#VAL, ENUM::VAL, DOC_CUDA(ENUM, VAL))
+#define WRAP_MEMBER(NAME, CLASS, VAL) .def_readwrite(NAME, &CLASS::VAL, DOC_CUDA(CLASS, VAL))
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -38,30 +48,30 @@ PYBIND11_MODULE(cuda_backend, m)
     //------------------------------------------------------------------------
     // Enumerations
     //------------------------------------------------------------------------
-    pybind11::enum_<DeviceSelect>(m, "DeviceSelect")
-        .value("OPTIMAL", DeviceSelect::OPTIMAL)
-        .value("MOST_MEMORY", DeviceSelect::MOST_MEMORY)
-        .value("MANUAL", DeviceSelect::MANUAL);
+    pybind11::enum_<DeviceSelect>(m, "DeviceSelect", DOC_CUDA(DeviceSelect))
+        WRAP_ENUM(DeviceSelect, OPTIMAL)
+        WRAP_ENUM(DeviceSelect, MOST_MEMORY)
+        WRAP_ENUM(DeviceSelect, MANUAL);
 
-    pybind11::enum_<BlockSizeSelect>(m, "BlockSizeSelect")
-        .value("OCCUPANCY", BlockSizeSelect::OCCUPANCY)
-        .value("MANUAL", BlockSizeSelect::MANUAL);
+    pybind11::enum_<BlockSizeSelect>(m, "BlockSizeSelect", DOC_CUDA(BlockSizeSelect))
+        WRAP_ENUM(BlockSizeSelect, OCCUPANCY)
+        WRAP_ENUM(BlockSizeSelect, MANUAL);
 
     //------------------------------------------------------------------------
     // cuda_backend.Preferences
     //------------------------------------------------------------------------
-    pybind11::class_<Preferences, CodeGenerator::PreferencesBase>(m, "Preferences")
+    pybind11::class_<Preferences, CodeGenerator::PreferencesBase>(m, "Preferences", DOC_CUDA(Preferences))
         .def(pybind11::init<>())
-
-        .def_readwrite("show_ptx_info", &Preferences::showPtxInfo)
-        .def_readwrite("generate_line_info", &Preferences::generateLineInfo)
-        .def_readwrite("enable_nccl_reductions", &Preferences::enableNCCLReductions)
-        .def_readwrite("device_select_method", &Preferences::deviceSelectMethod)
-        .def_readwrite("manual_device_id", &Preferences::manualDeviceID)
-        .def_readwrite("block_size_select_method", &Preferences::blockSizeSelectMethod)
+        
+        WRAP_MEMBER("show_ptx_info", Preferences, showPtxInfo)
+        WRAP_MEMBER("generate_line_info", Preferences, generateLineInfo)
+        WRAP_MEMBER("enable_nccl_reductions", Preferences, enableNCCLReductions)
+        WRAP_MEMBER("device_select_method", Preferences, deviceSelectMethod)
+        WRAP_MEMBER("manual_device_id", Preferences, manualDeviceID)
+        WRAP_MEMBER("block_size_select_method", Preferences, blockSizeSelectMethod)
         // **TODO** some weirdness with "opaque types" means this doesn't work
-        .def_readwrite("manual_block_sizes", &Preferences::manualBlockSizes)
-        .def_readwrite("constant_cache_overhead", &Preferences::constantCacheOverhead);
+        WRAP_MEMBER("manual_block_sizes", Preferences, manualBlockSizes)
+        WRAP_MEMBER("constant_cache_overhead", Preferences, constantCacheOverhead);
 
     //------------------------------------------------------------------------
     // cuda_backend.State
