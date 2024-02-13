@@ -97,5 +97,15 @@ def remove_deprecated_arguments(app, what, name, obj, options, signature, return
 
         return (signature, return_annotation)
 
+def skip_deprecated_decorator(app, what, name, obj, skip, options):
+    # If object is wrapped, skip
+    # **YUCK** this is a poor test - we don't CURRENTLY use decorators
+    # for anything other than deprecating but we easily could
+    if hasattr(obj, "__wrapped__"):
+        return True
+    else:
+        return skip
+
 def setup(app):
     app.connect("autodoc-process-signature", remove_deprecated_arguments)
+    app.connect("autodoc-skip-member", skip_deprecated_decorator)
