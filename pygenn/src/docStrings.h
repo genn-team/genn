@@ -4081,7 +4081,11 @@ static const char *__doc_WeightUpdateModels_PiecewiseSTDP_getVars = R"doc()doc";
 static const char *__doc_WeightUpdateModels_StaticGraded =
 R"doc(Graded-potential, static synapse
 In a graded synapse, the conductance is updated gradually with the rule:
-\f[ gSyn= g * tanh((V - E_{pre}) / V_{slope} \f]
+
+.. math::
+
+    gSyn= g * tanh((V - E_{pre}) / V_{slope}
+
 whenever the membrane potential :math:`V` is larger than the threshold :math:`E_{pre}`.
 The model has 1 variable:
 - ``g:`` conductance of ``scalar`` type
