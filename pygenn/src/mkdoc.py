@@ -97,7 +97,7 @@ def process_comment(comment):
             s = s[3:]
         elif s.startswith('/*'):
             s = s[2:].lstrip('*')
-        elif s.startswith('//!<'):
+        elif s.startswith('//!<') or s.startswith('///<'):
             s = s[4:]
         elif s.startswith('///') or s.startswith('//!'):
             s = s[3:]
@@ -177,14 +177,22 @@ def process_comment(comment):
     #           flags=re.DOTALL)
     #s = re.sub(r'[@\\]f\[\s*(.*?)\s*[@\\]f\]', r'\n\n.. math:: \1\n\n', s,
     #           flags=re.DOTALL)
-    
+
+    # Replace block maths with default environment
+    def replace_math(match):
+        return ("\n.. math::\n\n"
+                + textwrap.indent(match.group(1), "    ") 
+                + "\n")
+    s = re.sub(r'[@\\]f\[\s(.*?)\s*[@\\]f\]',
+               replace_math, s, flags=re.DOTALL)
+
     # Replace block maths with a specified environment
-    def replace(match):
+    def replace_math_env(match):
         return ("\n.. math::\n    :nowrap:\n\n    \\begin{" + match.group(1) + "}\n" 
                 + textwrap.indent(match.group(2), "    ") 
                 + "\n    \\end{" + match.group(1) + "}\n")
     s = re.sub(r'[@\\]f\{([\w*]+)\}\s*{?\s*(.*?)\s*[@\\]f\}',
-               replace, s, flags=re.DOTALL)
+               replace_math_env, s, flags=re.DOTALL)
 
     s = s.replace('``true``', '``True``')
     s = s.replace('``false``', '``False``')
