@@ -3,11 +3,11 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>pygenn package &#8212; PyGeNN  documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
-    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=89b800e6" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=fc041d6f" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=61a4c737" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
@@ -203,15 +203,19 @@
 <dt class="sig sig-object py" id="pygenn.CustomUpdateVarAccess">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenn.</span></span><span class="sig-name descname"><span class="pre">CustomUpdateVarAccess</span></span><a class="headerlink" href="#pygenn.CustomUpdateVarAccess" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
+<p>Supported combinations of access mode and dimension for custom update variables
+The axes are defined ‘subtractively’ ie VarAccessDim::BATCH indicates that this axis should be removed</p>
 <p>Members:</p>
-<p>READ_WRITE</p>
-<p>READ_ONLY</p>
-<p>READ_ONLY_SHARED</p>
-<p>READ_ONLY_SHARED_NEURON</p>
-<p>REDUCE_BATCH_SUM</p>
-<p>REDUCE_BATCH_MAX</p>
-<p>REDUCE_NEURON_SUM</p>
-<p>REDUCE_NEURON_MAX</p>
+<blockquote>
+<div><p>READ_WRITE :</p>
+<p>READ_ONLY :</p>
+<p>READ_ONLY_SHARED :</p>
+<p>READ_ONLY_SHARED_NEURON :</p>
+<p>REDUCE_BATCH_SUM :</p>
+<p>REDUCE_BATCH_MAX :</p>
+<p>REDUCE_NEURON_SUM :</p>
+<p>REDUCE_NEURON_MAX :</p>
+</div></blockquote>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pygenn.CustomUpdateVarAccess.READ_ONLY">
 <span class="sig-name descname"><span class="pre">READ_ONLY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;CustomUpdateVarAccess.READ_ONLY:</span> <span class="pre">1&gt;</span></em><a class="headerlink" href="#pygenn.CustomUpdateVarAccess.READ_ONLY" title="Permalink to this definition">¶</a></dt>
@@ -681,9 +685,11 @@ file overwriting when performing parallel runs</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenn.</span></span><span class="sig-name descname"><span class="pre">ParallelismHint</span></span><a class="headerlink" href="#pygenn.ParallelismHint" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
 <p>Members:</p>
-<p>POSTSYNAPTIC</p>
-<p>PRESYNAPTIC</p>
-<p>WORD_PACKED_BITMASK</p>
+<blockquote>
+<div><p>POSTSYNAPTIC :</p>
+<p>PRESYNAPTIC :</p>
+<p>WORD_PACKED_BITMASK :</p>
+</div></blockquote>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pygenn.ParallelismHint.POSTSYNAPTIC">
 <span class="sig-name descname"><span class="pre">POSTSYNAPTIC</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;ParallelismHint.POSTSYNAPTIC:</span> <span class="pre">0&gt;</span></em><a class="headerlink" href="#pygenn.ParallelismHint.POSTSYNAPTIC" title="Permalink to this definition">¶</a></dt>
@@ -933,11 +939,11 @@ file overwriting when performing parallel runs</p>
 <p>Flags defining differnet types of synaptic matrix connectivity</p>
 <p>Members:</p>
 <blockquote>
-<div><p>DENSE</p>
-<p>BITMASK</p>
-<p>SPARSE</p>
-<p>PROCEDURAL</p>
-<p>TOEPLITZ</p>
+<div><p>DENSE :</p>
+<p>BITMASK :</p>
+<p>SPARSE :</p>
+<p>PROCEDURAL :</p>
+<p>TOEPLITZ :</p>
 </div></blockquote>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pygenn.SynapseMatrixConnectivity.BITMASK">
@@ -981,13 +987,13 @@ file overwriting when performing parallel runs</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenn.</span></span><span class="sig-name descname"><span class="pre">SynapseMatrixType</span></span><a class="headerlink" href="#pygenn.SynapseMatrixType" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
 <p>Members:</p>
-<p>DENSE</p>
-<p>DENSE_PROCEDURALG</p>
-<p>BITMASK</p>
-<p>SPARSE</p>
-<p>PROCEDURAL</p>
-<p>PROCEDURAL_KERNELG</p>
-<p>TOEPLITZ</p>
+<p>DENSE :</p>
+<p>DENSE_PROCEDURALG :</p>
+<p>BITMASK :</p>
+<p>SPARSE :</p>
+<p>PROCEDURAL :</p>
+<p>PROCEDURAL_KERNELG :</p>
+<p>TOEPLITZ :</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pygenn.SynapseMatrixType.BITMASK">
 <span class="sig-name descname"><span class="pre">BITMASK</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;SynapseMatrixType.BITMASK:</span> <span class="pre">66&gt;</span></em><a class="headerlink" href="#pygenn.SynapseMatrixType.BITMASK" title="Permalink to this definition">¶</a></dt>
@@ -1039,10 +1045,13 @@ file overwriting when performing parallel runs</p>
 <dt class="sig sig-object py" id="pygenn.SynapseMatrixWeight">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenn.</span></span><span class="sig-name descname"><span class="pre">SynapseMatrixWeight</span></span><a class="headerlink" href="#pygenn.SynapseMatrixWeight" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
+<p>Flags defining different types of synaptic matrix connectivity</p>
 <p>Members:</p>
-<p>INDIVIDUAL</p>
-<p>PROCEDURAL</p>
-<p>KERNEL</p>
+<blockquote>
+<div><p>INDIVIDUAL :</p>
+<p>PROCEDURAL :</p>
+<p>KERNEL :</p>
+</div></blockquote>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pygenn.SynapseMatrixWeight.INDIVIDUAL">
 <span class="sig-name descname"><span class="pre">INDIVIDUAL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;SynapseMatrixWeight.INDIVIDUAL:</span> <span class="pre">64&gt;</span></em><a class="headerlink" href="#pygenn.SynapseMatrixWeight.INDIVIDUAL" title="Permalink to this definition">¶</a></dt>
@@ -1074,11 +1083,14 @@ file overwriting when performing parallel runs</p>
 <dt class="sig sig-object py" id="pygenn.VarAccess">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenn.</span></span><span class="sig-name descname"><span class="pre">VarAccess</span></span><a class="headerlink" href="#pygenn.VarAccess" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
+<p>Supported combinations of access mode and dimension for neuron and synapse variables</p>
 <p>Members:</p>
-<p>READ_WRITE</p>
-<p>READ_ONLY</p>
-<p>READ_ONLY_DUPLICATE</p>
-<p>READ_ONLY_SHARED_NEURON</p>
+<blockquote>
+<div><p>READ_WRITE :</p>
+<p>READ_ONLY :</p>
+<p>READ_ONLY_DUPLICATE :</p>
+<p>READ_ONLY_SHARED_NEURON :</p>
+</div></blockquote>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pygenn.VarAccess.READ_ONLY">
 <span class="sig-name descname"><span class="pre">READ_ONLY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;VarAccess.READ_ONLY:</span> <span class="pre">33&gt;</span></em><a class="headerlink" href="#pygenn.VarAccess.READ_ONLY" title="Permalink to this definition">¶</a></dt>
@@ -1115,9 +1127,12 @@ file overwriting when performing parallel runs</p>
 <dt class="sig sig-object py" id="pygenn.VarAccessDim">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenn.</span></span><span class="sig-name descname"><span class="pre">VarAccessDim</span></span><a class="headerlink" href="#pygenn.VarAccessDim" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
+<p>Flags defining dimensions this variables has</p>
 <p>Members:</p>
-<p>ELEMENT</p>
-<p>BATCH</p>
+<blockquote>
+<div><p>ELEMENT :</p>
+<p>BATCH :</p>
+</div></blockquote>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pygenn.VarAccessDim.BATCH">
 <span class="sig-name descname"><span class="pre">BATCH</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;VarAccessDim.BATCH:</span> <span class="pre">64&gt;</span></em><a class="headerlink" href="#pygenn.VarAccessDim.BATCH" title="Permalink to this definition">¶</a></dt>
@@ -1145,10 +1160,10 @@ file overwriting when performing parallel runs</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenn.</span></span><span class="sig-name descname"><span class="pre">VarAccessMode</span></span><a class="headerlink" href="#pygenn.VarAccessMode" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
 <p>Members:</p>
-<p>READ_WRITE</p>
-<p>READ_ONLY</p>
-<p>REDUCE_SUM</p>
-<p>REDUCE_MAX</p>
+<p>READ_WRITE :</p>
+<p>READ_ONLY :</p>
+<p>REDUCE_SUM :</p>
+<p>REDUCE_MAX :</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pygenn.VarAccessMode.READ_ONLY">
 <span class="sig-name descname"><span class="pre">READ_ONLY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;VarAccessMode.READ_ONLY:</span> <span class="pre">1&gt;</span></em><a class="headerlink" href="#pygenn.VarAccessMode.READ_ONLY" title="Permalink to this definition">¶</a></dt>
@@ -1185,12 +1200,16 @@ file overwriting when performing parallel runs</p>
 <dt class="sig sig-object py" id="pygenn.VarAccessModeAttribute">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenn.</span></span><span class="sig-name descname"><span class="pre">VarAccessModeAttribute</span></span><a class="headerlink" href="#pygenn.VarAccessModeAttribute" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
+<p>Flags defining attributes of var access models
+<strong>NOTE</strong> Read-only and read-write are seperate flags rather than read and write so you can test mode &amp; VarAccessMode::READ_ONLY</p>
 <p>Members:</p>
-<p>READ_ONLY</p>
-<p>READ_WRITE</p>
-<p>REDUCE</p>
-<p>SUM</p>
-<p>MAX</p>
+<blockquote>
+<div><p>READ_ONLY :</p>
+<p>READ_WRITE : This variable is read only</p>
+<p>REDUCE : This variable is read-write</p>
+<p>SUM : This variable is a reduction target</p>
+<p>MAX : This variable’s reduction operation is a summation</p>
+</div></blockquote>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pygenn.VarAccessModeAttribute.MAX">
 <span class="sig-name descname"><span class="pre">MAX</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;VarAccessModeAttribute.MAX:</span> <span class="pre">16&gt;</span></em><a class="headerlink" href="#pygenn.VarAccessModeAttribute.MAX" title="Permalink to this definition">¶</a></dt>
@@ -1233,11 +1252,13 @@ file overwriting when performing parallel runs</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenn.</span></span><span class="sig-name descname"><span class="pre">VarLocation</span></span><a class="headerlink" href="#pygenn.VarLocation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
 <p>Members:</p>
-<p>HOST</p>
-<p>DEVICE</p>
-<p>ZERO_COPY</p>
-<p>HOST_DEVICE</p>
-<p>HOST_DEVICE_ZERO_COPY</p>
+<blockquote>
+<div><p>HOST :</p>
+<p>DEVICE :</p>
+<p>ZERO_COPY :</p>
+<p>HOST_DEVICE :</p>
+<p>HOST_DEVICE_ZERO_COPY :</p>
+</div></blockquote>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pygenn.VarLocation.DEVICE">
 <span class="sig-name descname"><span class="pre">DEVICE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;VarLocation.DEVICE:</span> <span class="pre">2&gt;</span></em><a class="headerlink" href="#pygenn.VarLocation.DEVICE" title="Permalink to this definition">¶</a></dt>
@@ -2230,18 +2251,15 @@ constant weights could be initialised as follows:</p>
 <section id="module-pygenn.cuda_backend">
 <span id="pygenn-cuda-backend-module"></span><h2>pygenn.cuda_backend module<a class="headerlink" href="#module-pygenn.cuda_backend" title="Permalink to this heading">¶</a></h2>
 <dl class="py class">
-<dt class="sig sig-object py" id="pygenn.cuda_backend.Backend">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenn.cuda_backend.</span></span><span class="sig-name descname"><span class="pre">Backend</span></span><a class="headerlink" href="#pygenn.cuda_backend.Backend" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BackendBase</span></code></p>
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="pygenn.cuda_backend.BlockSizeSelect">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenn.cuda_backend.</span></span><span class="sig-name descname"><span class="pre">BlockSizeSelect</span></span><a class="headerlink" href="#pygenn.cuda_backend.BlockSizeSelect" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
+<p>Methods for selecting CUDA kernel block size</p>
 <p>Members:</p>
-<p>OCCUPANCY</p>
-<p>MANUAL</p>
+<blockquote>
+<div><p>OCCUPANCY : Pick optimal blocksize for each kernel based on occupancy</p>
+<p>MANUAL : Use block sizes specified by user</p>
+</div></blockquote>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pygenn.cuda_backend.BlockSizeSelect.MANUAL">
 <span class="sig-name descname"><span class="pre">MANUAL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;BlockSizeSelect.MANUAL:</span> <span class="pre">1&gt;</span></em><a class="headerlink" href="#pygenn.cuda_backend.BlockSizeSelect.MANUAL" title="Permalink to this definition">¶</a></dt>
@@ -2268,10 +2286,13 @@ constant weights could be initialised as follows:</p>
 <dt class="sig sig-object py" id="pygenn.cuda_backend.DeviceSelect">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenn.cuda_backend.</span></span><span class="sig-name descname"><span class="pre">DeviceSelect</span></span><a class="headerlink" href="#pygenn.cuda_backend.DeviceSelect" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pybind11_object</span></code></p>
+<p>Methods for selecting CUDA device</p>
 <p>Members:</p>
-<p>OPTIMAL</p>
-<p>MOST_MEMORY</p>
-<p>MANUAL</p>
+<blockquote>
+<div><p>OPTIMAL : Pick optimal device based on how well kernels can be simultaneously simulated and occupancy</p>
+<p>MOST_MEMORY : Pick device with most global memory</p>
+<p>MANUAL : Use device specified by user</p>
+</div></blockquote>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="pygenn.cuda_backend.DeviceSelect.MANUAL">
 <span class="sig-name descname"><span class="pre">MANUAL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;DeviceSelect.MANUAL:</span> <span class="pre">2&gt;</span></em><a class="headerlink" href="#pygenn.cuda_backend.DeviceSelect.MANUAL" title="Permalink to this definition">¶</a></dt>
@@ -2303,73 +2324,59 @@ constant weights could be initialised as follows:</p>
 <dt class="sig sig-object py" id="pygenn.cuda_backend.Preferences">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenn.cuda_backend.</span></span><span class="sig-name descname"><span class="pre">Preferences</span></span><a class="headerlink" href="#pygenn.cuda_backend.Preferences" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PreferencesBase</span></code></p>
+<p>Preferences for CUDA backend</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="pygenn.cuda_backend.Preferences.block_size_select_method">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">block_size_select_method</span></span><a class="headerlink" href="#pygenn.cuda_backend.Preferences.block_size_select_method" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>How to select CUDA blocksize</p>
+</dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pygenn.cuda_backend.Preferences.constant_cache_overhead">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">constant_cache_overhead</span></span><a class="headerlink" href="#pygenn.cuda_backend.Preferences.constant_cache_overhead" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>How much constant cache is already used and therefore can’t be used by GeNN?
+Each of the four modules which includes CUDA headers(neuronUpdate, synapseUpdate, custom update, init and runner)
+Takes 72 bytes of constant memory for a lookup table used by cuRAND. If your application requires
+additional constant cache, increase this</p>
+</dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pygenn.cuda_backend.Preferences.device_select_method">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">device_select_method</span></span><a class="headerlink" href="#pygenn.cuda_backend.Preferences.device_select_method" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>How to select GPU device</p>
+</dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pygenn.cuda_backend.Preferences.enable_nccl_reductions">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">enable_nccl_reductions</span></span><a class="headerlink" href="#pygenn.cuda_backend.Preferences.enable_nccl_reductions" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Generate corresponding NCCL batch reductions</p>
+</dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pygenn.cuda_backend.Preferences.generate_line_info">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">generate_line_info</span></span><a class="headerlink" href="#pygenn.cuda_backend.Preferences.generate_line_info" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Should line info be included in resultant executable for debugging/profiling purposes?</p>
+</dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pygenn.cuda_backend.Preferences.manual_block_sizes">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">manual_block_sizes</span></span><a class="headerlink" href="#pygenn.cuda_backend.Preferences.manual_block_sizes" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>If block size select method is set to BlockSizeSelect::MANUAL, block size to use for each kernel</p>
+</dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pygenn.cuda_backend.Preferences.manual_device_id">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">manual_device_id</span></span><a class="headerlink" href="#pygenn.cuda_backend.Preferences.manual_device_id" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>If device select method is set to DeviceSelect::MANUAL, id of device to use</p>
+</dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pygenn.cuda_backend.Preferences.show_ptx_info">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">show_ptx_info</span></span><a class="headerlink" href="#pygenn.cuda_backend.Preferences.show_ptx_info" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
+<dd><p>Should PTX assembler information be displayed for each CUDA kernel during compilation?</p>
 </dd></dl>
 
-<dl class="py class">
-<dt class="sig sig-object py" id="pygenn.cuda_backend.Runtime">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenn.cuda_backend.</span></span><span class="sig-name descname"><span class="pre">Runtime</span></span><a class="headerlink" href="#pygenn.cuda_backend.Runtime" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pygenn.runtime.StateBase" title="pygenn.runtime.StateBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">StateBase</span></code></a></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="pygenn.cuda_backend.Runtime.nccl_generate_unique_id">
-<span class="sig-name descname"><span class="pre">nccl_generate_unique_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pygenn.cuda_backend.Runtime" title="pygenn.cuda_backend.Runtime"><span class="pre">pygenn.cuda_backend.Runtime</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pygenn.cuda_backend.Runtime.nccl_generate_unique_id" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pygenn.cuda_backend.Runtime.nccl_init_communicator">
-<span class="sig-name descname"><span class="pre">nccl_init_communicator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pygenn.cuda_backend.Runtime" title="pygenn.cuda_backend.Runtime"><span class="pre">pygenn.cuda_backend.Runtime</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pygenn.cuda_backend.Runtime.nccl_init_communicator" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="pygenn.cuda_backend.Runtime.nccl_unique_id">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nccl_unique_id</span></span><a class="headerlink" href="#pygenn.cuda_backend.Runtime.nccl_unique_id" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 </dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pygenn.cuda_backend.create_backend">
-<span class="sig-prename descclassname"><span class="pre">pygenn.cuda_backend.</span></span><span class="sig-name descname"><span class="pre">create_backend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pygenn._genn.ModelSpecInternal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pygenn.PlogSeverity" title="pygenn._genn.PlogSeverity"><span class="pre">pygenn._genn.PlogSeverity</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg3</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pygenn.cuda_backend.Preferences" title="pygenn.cuda_backend.Preferences"><span class="pre">pygenn.cuda_backend.Preferences</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pygenn.cuda_backend.Backend" title="pygenn.cuda_backend.Backend"><span class="pre">pygenn.cuda_backend.Backend</span></a></span></span><a class="headerlink" href="#pygenn.cuda_backend.create_backend" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 </section>
 <section id="module-pygenn.current_source_models">
@@ -2445,11 +2452,6 @@ It has 3 parameters:
 <dd><p>Bases: <a class="reference internal" href="#pygenn.genn_groups.GroupMixin" title="pygenn.genn_groups.GroupMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">GroupMixin</span></code></a></p>
 <p>Class representing a custom connectivity update</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="pygenn.genn_groups.CustomConnectivityUpdateMixin.get_var_values">
-<span class="sig-name descname"><span class="pre">get_var_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.genn_groups.CustomConnectivityUpdateMixin.get_var_values" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="pygenn.genn_groups.CustomConnectivityUpdateMixin.load">
 <span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.genn_groups.CustomConnectivityUpdateMixin.load" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -2494,11 +2496,6 @@ It has 3 parameters:
 <dd><p>Bases: <a class="reference internal" href="#pygenn.genn_groups.GroupMixin" title="pygenn.genn_groups.GroupMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">GroupMixin</span></code></a></p>
 <p>Class representing a custom weight update</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="pygenn.genn_groups.CustomUpdateWUMixin.get_var_values">
-<span class="sig-name descname"><span class="pre">get_var_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.genn_groups.CustomUpdateWUMixin.get_var_values" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="pygenn.genn_groups.CustomUpdateWUMixin.load">
 <span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.genn_groups.CustomUpdateWUMixin.load" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -2521,38 +2518,6 @@ It has 3 parameters:
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Parent class of NeuronGroupMixin,
 SynapseGroupMixin and CurrentSourceMixin</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="pygenn.genn_groups.GroupMixin.pull_extra_global_param_from_device">
-<span class="sig-name descname"><span class="pre">pull_extra_global_param_from_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">egp_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.genn_groups.GroupMixin.pull_extra_global_param_from_device" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pull extra global parameter from device</p>
-<p>Args:
-egp_name    –  string with the name of the variable</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pygenn.genn_groups.GroupMixin.pull_var_from_device">
-<span class="sig-name descname"><span class="pre">pull_var_from_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.genn_groups.GroupMixin.pull_var_from_device" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pull variable from the device for a given population</p>
-<p>Args:
-var_name    –  string with the name of the variable</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pygenn.genn_groups.GroupMixin.push_extra_global_param_to_device">
-<span class="sig-name descname"><span class="pre">push_extra_global_param_to_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">egp_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.genn_groups.GroupMixin.push_extra_global_param_to_device" title="Permalink to this definition">¶</a></dt>
-<dd><p>Push extra global parameter to device</p>
-<p>Args:
-egp_name    –  string with the name of the variable</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pygenn.genn_groups.GroupMixin.push_var_to_device">
-<span class="sig-name descname"><span class="pre">push_var_to_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.genn_groups.GroupMixin.push_var_to_device" title="Permalink to this definition">¶</a></dt>
-<dd><p>Push population state variable to the device</p>
-<p>Args:
-var_name    –  string with the name of the variable</p>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="pygenn.genn_groups.GroupMixin.set_dynamic_param_value">
 <span class="sig-name descname"><span class="pre">set_dynamic_param_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.genn_groups.GroupMixin.set_dynamic_param_value" title="Permalink to this definition">¶</a></dt>
@@ -2614,11 +2579,6 @@ ndarray of presynaptic indices</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="pygenn.genn_groups.SynapseGroupMixin.get_var_values">
-<span class="sig-name descname"><span class="pre">get_var_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.genn_groups.SynapseGroupMixin.get_var_values" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="pygenn.genn_groups.SynapseGroupMixin.load">
 <span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.genn_groups.SynapseGroupMixin.load" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -2645,37 +2605,9 @@ ndarray of presynaptic indices</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="pygenn.genn_groups.SynapseGroupMixin.pull_in_syn_from_device">
-<span class="sig-name descname"><span class="pre">pull_in_syn_from_device</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.genn_groups.SynapseGroupMixin.pull_in_syn_from_device" title="Permalink to this definition">¶</a></dt>
-<dd><p>Pull synaptic input current from device</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pygenn.genn_groups.SynapseGroupMixin.pull_psm_extra_global_param_from_device">
-<span class="sig-name descname"><span class="pre">pull_psm_extra_global_param_from_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">egp_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.genn_groups.SynapseGroupMixin.pull_psm_extra_global_param_from_device" title="Permalink to this definition">¶</a></dt>
-<dd><p>Wrapper around GeNNModel.pull_extra_global_param_from_device</p>
-<p>Args:
-egp_name    –  string with the name of the variable</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="pygenn.genn_groups.SynapseGroupMixin.push_connectivity_to_device">
 <span class="sig-name descname"><span class="pre">push_connectivity_to_device</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.genn_groups.SynapseGroupMixin.push_connectivity_to_device" title="Permalink to this definition">¶</a></dt>
 <dd><p>Push extra variables associated with connectivity to device</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pygenn.genn_groups.SynapseGroupMixin.push_in_syn_to_device">
-<span class="sig-name descname"><span class="pre">push_in_syn_to_device</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.genn_groups.SynapseGroupMixin.push_in_syn_to_device" title="Permalink to this definition">¶</a></dt>
-<dd><p>Push synaptic input current to device</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pygenn.genn_groups.SynapseGroupMixin.push_psm_extra_global_param_to_device">
-<span class="sig-name descname"><span class="pre">push_psm_extra_global_param_to_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">egp_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.genn_groups.SynapseGroupMixin.push_psm_extra_global_param_to_device" title="Permalink to this definition">¶</a></dt>
-<dd><p>Wrapper around GeNNModel.push_extra_global_param_to_device</p>
-<p>Args:
-egp_name    –  string with the name of the variable</p>
 </dd></dl>
 
 <dl class="py method">
@@ -2930,15 +2862,6 @@ This snippet takes 2 parameters:</p>
 </dd></dl>
 
 </section>
-<section id="pygenn-libgenn-cuda-backend-dynamic-module">
-<h2>pygenn.libgenn_cuda_backend_dynamic module<a class="headerlink" href="#pygenn-libgenn-cuda-backend-dynamic-module" title="Permalink to this heading">¶</a></h2>
-</section>
-<section id="pygenn-libgenn-dynamic-module">
-<h2>pygenn.libgenn_dynamic module<a class="headerlink" href="#pygenn-libgenn-dynamic-module" title="Permalink to this heading">¶</a></h2>
-</section>
-<section id="pygenn-libgenn-single-threaded-cpu-backend-dynamic-module">
-<h2>pygenn.libgenn_single_threaded_cpu_backend_dynamic module<a class="headerlink" href="#pygenn-libgenn-single-threaded-cpu-backend-dynamic-module" title="Permalink to this heading">¶</a></h2>
-</section>
 <section id="module-pygenn.model_preprocessor">
 <span id="pygenn-model-preprocessor-module"></span><h2>pygenn.model_preprocessor module<a class="headerlink" href="#module-pygenn.model_preprocessor" title="Permalink to this heading">¶</a></h2>
 <dl class="py class">
@@ -2985,11 +2908,6 @@ This snippet takes 2 parameters:</p>
 <p>Args:
 values – iterable or None</p>
 </dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pygenn.model_preprocessor.ExtraGlobalParameter.set_values">
-<span class="sig-name descname"><span class="pre">set_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.model_preprocessor.ExtraGlobalParameter.set_values" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="pygenn.model_preprocessor.ExtraGlobalParameter.values">
@@ -3074,11 +2992,6 @@ values – iterable or None</p>
 <p>Args:
 valinit_valuesues – iterable, single value or VarInit instance</p>
 </dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pygenn.model_preprocessor.VariableBase.set_values">
-<span class="sig-name descname"><span class="pre">set_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.model_preprocessor.VariableBase.set_values" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 </dd></dl>
 
@@ -3585,21 +3498,10 @@ This model has no variables and a single parameter:
 <section id="module-pygenn.single_threaded_cpu_backend">
 <span id="pygenn-single-threaded-cpu-backend-module"></span><h2>pygenn.single_threaded_cpu_backend module<a class="headerlink" href="#module-pygenn.single_threaded_cpu_backend" title="Permalink to this heading">¶</a></h2>
 <dl class="py class">
-<dt class="sig sig-object py" id="pygenn.single_threaded_cpu_backend.Backend">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenn.single_threaded_cpu_backend.</span></span><span class="sig-name descname"><span class="pre">Backend</span></span><a class="headerlink" href="#pygenn.single_threaded_cpu_backend.Backend" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BackendBase</span></code></p>
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="pygenn.single_threaded_cpu_backend.Preferences">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenn.single_threaded_cpu_backend.</span></span><span class="sig-name descname"><span class="pre">Preferences</span></span><a class="headerlink" href="#pygenn.single_threaded_cpu_backend.Preferences" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PreferencesBase</span></code></p>
 </dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="pygenn.single_threaded_cpu_backend.create_backend">
-<span class="sig-prename descclassname"><span class="pre">pygenn.single_threaded_cpu_backend.</span></span><span class="sig-name descname"><span class="pre">create_backend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pygenn._genn.ModelSpecInternal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pygenn.PlogSeverity" title="pygenn._genn.PlogSeverity"><span class="pre">pygenn._genn.PlogSeverity</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg3</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pygenn.single_threaded_cpu_backend.Preferences" title="pygenn.single_threaded_cpu_backend.Preferences"><span class="pre">pygenn.single_threaded_cpu_backend.Preferences</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pygenn.single_threaded_cpu_backend.Backend" title="pygenn.single_threaded_cpu_backend.Backend"><span class="pre">pygenn.single_threaded_cpu_backend.Backend</span></a></span></span><a class="headerlink" href="#pygenn.single_threaded_cpu_backend.create_backend" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 </section>
 <section id="module-pygenn.types">
@@ -3994,7 +3896,6 @@ and no other parameters.</p>
 <li><a class="reference internal" href="#pygenn.init_weight_update"><code class="docutils literal notranslate"><span class="pre">init_weight_update()</span></code></a></li>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
 <li><a class="reference internal" href="#module-pygenn.cuda_backend">pygenn.cuda_backend module</a><ul>
-<li><a class="reference internal" href="#pygenn.cuda_backend.Backend"><code class="docutils literal notranslate"><span class="pre">Backend</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.cuda_backend.BlockSizeSelect"><code class="docutils literal notranslate"><span class="pre">BlockSizeSelect</span></code></a><ul>
 <li><a class="reference internal" href="#pygenn.cuda_backend.BlockSizeSelect.MANUAL"><code class="docutils literal notranslate"><span class="pre">BlockSizeSelect.MANUAL</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.cuda_backend.BlockSizeSelect.OCCUPANCY"><code class="docutils literal notranslate"><span class="pre">BlockSizeSelect.OCCUPANCY</span></code></a></li>
@@ -4021,13 +3922,6 @@ and no other parameters.</p>
 <li><a class="reference internal" href="#pygenn.cuda_backend.Preferences.show_ptx_info"><code class="docutils literal notranslate"><span class="pre">Preferences.show_ptx_info</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#pygenn.cuda_backend.Runtime"><code class="docutils literal notranslate"><span class="pre">Runtime</span></code></a><ul>
-<li><a class="reference internal" href="#pygenn.cuda_backend.Runtime.nccl_generate_unique_id"><code class="docutils literal notranslate"><span class="pre">Runtime.nccl_generate_unique_id()</span></code></a></li>
-<li><a class="reference internal" href="#pygenn.cuda_backend.Runtime.nccl_init_communicator"><code class="docutils literal notranslate"><span class="pre">Runtime.nccl_init_communicator()</span></code></a></li>
-<li><a class="reference internal" href="#pygenn.cuda_backend.Runtime.nccl_unique_id"><code class="docutils literal notranslate"><span class="pre">Runtime.nccl_unique_id</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#pygenn.cuda_backend.create_backend"><code class="docutils literal notranslate"><span class="pre">create_backend()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-pygenn.current_source_models">pygenn.current_source_models module</a><ul>
@@ -4049,7 +3943,6 @@ and no other parameters.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#pygenn.genn_groups.CustomConnectivityUpdateMixin"><code class="docutils literal notranslate"><span class="pre">CustomConnectivityUpdateMixin</span></code></a><ul>
-<li><a class="reference internal" href="#pygenn.genn_groups.CustomConnectivityUpdateMixin.get_var_values"><code class="docutils literal notranslate"><span class="pre">CustomConnectivityUpdateMixin.get_var_values()</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.genn_groups.CustomConnectivityUpdateMixin.load"><code class="docutils literal notranslate"><span class="pre">CustomConnectivityUpdateMixin.load()</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.genn_groups.CustomConnectivityUpdateMixin.load_init_egps"><code class="docutils literal notranslate"><span class="pre">CustomConnectivityUpdateMixin.load_init_egps()</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.genn_groups.CustomConnectivityUpdateMixin.unload"><code class="docutils literal notranslate"><span class="pre">CustomConnectivityUpdateMixin.unload()</span></code></a></li>
@@ -4062,17 +3955,12 @@ and no other parameters.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#pygenn.genn_groups.CustomUpdateWUMixin"><code class="docutils literal notranslate"><span class="pre">CustomUpdateWUMixin</span></code></a><ul>
-<li><a class="reference internal" href="#pygenn.genn_groups.CustomUpdateWUMixin.get_var_values"><code class="docutils literal notranslate"><span class="pre">CustomUpdateWUMixin.get_var_values()</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.genn_groups.CustomUpdateWUMixin.load"><code class="docutils literal notranslate"><span class="pre">CustomUpdateWUMixin.load()</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.genn_groups.CustomUpdateWUMixin.load_init_egps"><code class="docutils literal notranslate"><span class="pre">CustomUpdateWUMixin.load_init_egps()</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.genn_groups.CustomUpdateWUMixin.unload"><code class="docutils literal notranslate"><span class="pre">CustomUpdateWUMixin.unload()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#pygenn.genn_groups.GroupMixin"><code class="docutils literal notranslate"><span class="pre">GroupMixin</span></code></a><ul>
-<li><a class="reference internal" href="#pygenn.genn_groups.GroupMixin.pull_extra_global_param_from_device"><code class="docutils literal notranslate"><span class="pre">GroupMixin.pull_extra_global_param_from_device()</span></code></a></li>
-<li><a class="reference internal" href="#pygenn.genn_groups.GroupMixin.pull_var_from_device"><code class="docutils literal notranslate"><span class="pre">GroupMixin.pull_var_from_device()</span></code></a></li>
-<li><a class="reference internal" href="#pygenn.genn_groups.GroupMixin.push_extra_global_param_to_device"><code class="docutils literal notranslate"><span class="pre">GroupMixin.push_extra_global_param_to_device()</span></code></a></li>
-<li><a class="reference internal" href="#pygenn.genn_groups.GroupMixin.push_var_to_device"><code class="docutils literal notranslate"><span class="pre">GroupMixin.push_var_to_device()</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.genn_groups.GroupMixin.set_dynamic_param_value"><code class="docutils literal notranslate"><span class="pre">GroupMixin.set_dynamic_param_value()</span></code></a></li>
 </ul>
 </li>
@@ -4086,17 +3974,12 @@ and no other parameters.</p>
 <li><a class="reference internal" href="#pygenn.genn_groups.SynapseGroupMixin"><code class="docutils literal notranslate"><span class="pre">SynapseGroupMixin</span></code></a><ul>
 <li><a class="reference internal" href="#pygenn.genn_groups.SynapseGroupMixin.get_sparse_post_inds"><code class="docutils literal notranslate"><span class="pre">SynapseGroupMixin.get_sparse_post_inds()</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.genn_groups.SynapseGroupMixin.get_sparse_pre_inds"><code class="docutils literal notranslate"><span class="pre">SynapseGroupMixin.get_sparse_pre_inds()</span></code></a></li>
-<li><a class="reference internal" href="#pygenn.genn_groups.SynapseGroupMixin.get_var_values"><code class="docutils literal notranslate"><span class="pre">SynapseGroupMixin.get_var_values()</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.genn_groups.SynapseGroupMixin.load"><code class="docutils literal notranslate"><span class="pre">SynapseGroupMixin.load()</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.genn_groups.SynapseGroupMixin.load_init_egps"><code class="docutils literal notranslate"><span class="pre">SynapseGroupMixin.load_init_egps()</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.genn_groups.SynapseGroupMixin.post_spike_event_recording_data"><code class="docutils literal notranslate"><span class="pre">SynapseGroupMixin.post_spike_event_recording_data</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.genn_groups.SynapseGroupMixin.pre_spike_event_recording_data"><code class="docutils literal notranslate"><span class="pre">SynapseGroupMixin.pre_spike_event_recording_data</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.genn_groups.SynapseGroupMixin.pull_connectivity_from_device"><code class="docutils literal notranslate"><span class="pre">SynapseGroupMixin.pull_connectivity_from_device()</span></code></a></li>
-<li><a class="reference internal" href="#pygenn.genn_groups.SynapseGroupMixin.pull_in_syn_from_device"><code class="docutils literal notranslate"><span class="pre">SynapseGroupMixin.pull_in_syn_from_device()</span></code></a></li>
-<li><a class="reference internal" href="#pygenn.genn_groups.SynapseGroupMixin.pull_psm_extra_global_param_from_device"><code class="docutils literal notranslate"><span class="pre">SynapseGroupMixin.pull_psm_extra_global_param_from_device()</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.genn_groups.SynapseGroupMixin.push_connectivity_to_device"><code class="docutils literal notranslate"><span class="pre">SynapseGroupMixin.push_connectivity_to_device()</span></code></a></li>
-<li><a class="reference internal" href="#pygenn.genn_groups.SynapseGroupMixin.push_in_syn_to_device"><code class="docutils literal notranslate"><span class="pre">SynapseGroupMixin.push_in_syn_to_device()</span></code></a></li>
-<li><a class="reference internal" href="#pygenn.genn_groups.SynapseGroupMixin.push_psm_extra_global_param_to_device"><code class="docutils literal notranslate"><span class="pre">SynapseGroupMixin.push_psm_extra_global_param_to_device()</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.genn_groups.SynapseGroupMixin.set_sparse_connections"><code class="docutils literal notranslate"><span class="pre">SynapseGroupMixin.set_sparse_connections()</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.genn_groups.SynapseGroupMixin.synapse_group"><code class="docutils literal notranslate"><span class="pre">SynapseGroupMixin.synapse_group</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.genn_groups.SynapseGroupMixin.unload"><code class="docutils literal notranslate"><span class="pre">SynapseGroupMixin.unload()</span></code></a></li>
@@ -4135,9 +4018,6 @@ and no other parameters.</p>
 <li><a class="reference internal" href="#pygenn.init_var_snippets.Uninitialised"><code class="docutils literal notranslate"><span class="pre">Uninitialised()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#pygenn-libgenn-cuda-backend-dynamic-module">pygenn.libgenn_cuda_backend_dynamic module</a></li>
-<li><a class="reference internal" href="#pygenn-libgenn-dynamic-module">pygenn.libgenn_dynamic module</a></li>
-<li><a class="reference internal" href="#pygenn-libgenn-single-threaded-cpu-backend-dynamic-module">pygenn.libgenn_single_threaded_cpu_backend_dynamic module</a></li>
 <li><a class="reference internal" href="#module-pygenn.model_preprocessor">pygenn.model_preprocessor module</a><ul>
 <li><a class="reference internal" href="#pygenn.model_preprocessor.Array"><code class="docutils literal notranslate"><span class="pre">Array</span></code></a><ul>
 <li><a class="reference internal" href="#pygenn.model_preprocessor.Array.view"><code class="docutils literal notranslate"><span class="pre">Array.view</span></code></a></li>
@@ -4151,7 +4031,6 @@ and no other parameters.</p>
 </li>
 <li><a class="reference internal" href="#pygenn.model_preprocessor.ExtraGlobalParameter"><code class="docutils literal notranslate"><span class="pre">ExtraGlobalParameter</span></code></a><ul>
 <li><a class="reference internal" href="#pygenn.model_preprocessor.ExtraGlobalParameter.set_init_values"><code class="docutils literal notranslate"><span class="pre">ExtraGlobalParameter.set_init_values()</span></code></a></li>
-<li><a class="reference internal" href="#pygenn.model_preprocessor.ExtraGlobalParameter.set_values"><code class="docutils literal notranslate"><span class="pre">ExtraGlobalParameter.set_values()</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.model_preprocessor.ExtraGlobalParameter.values"><code class="docutils literal notranslate"><span class="pre">ExtraGlobalParameter.values</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.model_preprocessor.ExtraGlobalParameter.view"><code class="docutils literal notranslate"><span class="pre">ExtraGlobalParameter.view</span></code></a></li>
 </ul>
@@ -4173,7 +4052,6 @@ and no other parameters.</p>
 <li><a class="reference internal" href="#pygenn.model_preprocessor.VariableBase"><code class="docutils literal notranslate"><span class="pre">VariableBase</span></code></a><ul>
 <li><a class="reference internal" href="#pygenn.model_preprocessor.VariableBase.set_array"><code class="docutils literal notranslate"><span class="pre">VariableBase.set_array()</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.model_preprocessor.VariableBase.set_init_values"><code class="docutils literal notranslate"><span class="pre">VariableBase.set_init_values()</span></code></a></li>
-<li><a class="reference internal" href="#pygenn.model_preprocessor.VariableBase.set_values"><code class="docutils literal notranslate"><span class="pre">VariableBase.set_values()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#pygenn.model_preprocessor.get_snippet"><code class="docutils literal notranslate"><span class="pre">get_snippet()</span></code></a></li>
@@ -4244,9 +4122,7 @@ and no other parameters.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-pygenn.single_threaded_cpu_backend">pygenn.single_threaded_cpu_backend module</a><ul>
-<li><a class="reference internal" href="#pygenn.single_threaded_cpu_backend.Backend"><code class="docutils literal notranslate"><span class="pre">Backend</span></code></a></li>
 <li><a class="reference internal" href="#pygenn.single_threaded_cpu_backend.Preferences"><code class="docutils literal notranslate"><span class="pre">Preferences</span></code></a></li>
-<li><a class="reference internal" href="#pygenn.single_threaded_cpu_backend.create_backend"><code class="docutils literal notranslate"><span class="pre">create_backend()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-pygenn.types">pygenn.types module</a></li>
