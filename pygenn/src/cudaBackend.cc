@@ -66,7 +66,7 @@ PYBIND11_MODULE(cuda_backend, m)
     //------------------------------------------------------------------------
     // cuda_backend.State
     //------------------------------------------------------------------------
-    pybind11::class_<State, Runtime::StateBase>(m, "Runtime")
+    pybind11::class_<State, Runtime::StateBase>(m, "_Runtime")
         .def("nccl_generate_unique_id", &State::ncclGenerateUniqueID)
         .def("nccl_init_communicator", &State::ncclInitCommunicator)
 
@@ -80,10 +80,10 @@ PYBIND11_MODULE(cuda_backend, m)
     //------------------------------------------------------------------------
     // cuda_backend.Backend
     //------------------------------------------------------------------------
-    pybind11::class_<Backend, CodeGenerator::BackendBase>(m, "Backend");
+    pybind11::class_<Backend, CodeGenerator::BackendBase>(m, "_Backend");
     
     //------------------------------------------------------------------------
     // Free functions
     //------------------------------------------------------------------------
-    m.def("create_backend", &createBackend, pybind11::return_value_policy::move);
+    m.def("_create_backend", &createBackend, pybind11::return_value_policy::move);
 }

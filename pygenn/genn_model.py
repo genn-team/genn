@@ -607,7 +607,7 @@ class GeNNModel(ModelSpecInternal):
                 setattr(self._preferences, k, v)
         
         # Create backend
-        self._backend = self._backend_module.create_backend(
+        self._backend = self._backend_module._create_backend(
             self, output_path, self.backend_log_level, self._preferences)
 
         # Generate code
