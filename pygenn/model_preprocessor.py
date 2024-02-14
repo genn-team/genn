@@ -292,18 +292,18 @@ class ExtraGlobalParameter(Array):
     def values(self, vals):
         self._view[:] = vals
 
-def prepare_param_vals(params):
+def _prepare_param_vals(params):
     return {n: NumericValue(v) for n, v in params.items()}
 
-def prepare_vars(vars, var_space, group, var_type=Variable):
+def _prepare_vars(vars, var_space, group, var_type=Variable):
     return {v.name: var_type(v.name, v.type, var_space[v.name], group)
             for v in vars}
 
-def prepare_egps(egps, group):
+def _prepare_egps(egps, group):
     return {e.name: ExtraGlobalParameter(e.name, e.type, group)
             for e in egps}
 
-def get_var_init(var_space):
+def _get_var_init(var_space):
     """ Build a dictionary of VarInit objects to specify if and how
     variables should be initialsed by GeNN
     
@@ -332,7 +332,7 @@ def get_var_init(var_space):
     return var_init
             
     
-def get_snippet(snippet, snippet_base_class, built_in_snippet_module):
+def _get_snippet(snippet, snippet_base_class, built_in_snippet_module):
     """Check whether the model is valid, i.e is native or derived
     from model_family.Custom
 
