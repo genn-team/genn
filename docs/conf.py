@@ -108,4 +108,4 @@ def skip_deprecated_decorator(app, what, name, obj, skip, options):
 
 def setup(app):
     app.connect("autodoc-process-signature", remove_deprecated_arguments)
-    app.connect("autodoc-skip-member", skip_deprecated_decorator)
+    #app.connect("autodoc-skip-member", skip_deprecated_decorator)
