@@ -238,7 +238,7 @@ class NeuronGroupMixin(GroupMixin):
     def spike_recording_data(self):
         return self._model._runtime.get_recorded_spikes(self)
 
-    def load(self, num_recording_timesteps):
+    def _load(self, num_recording_timesteps):
         """Loads neuron group"""
         batch_size = self._model.batch_size
         delay_group = self if self.num_delay_slots > 1 else None
@@ -274,14 +274,14 @@ class NeuronGroupMixin(GroupMixin):
         # Load neuron extra global params
         self._load_egp()
 
-    def unload(self):
+    def _unload(self):
         self._unload_vars()
         self._unload_egps()
 
         self.spike_times = None
         self.prev_spike_times = None
 
-    def load_init_egps(self):
+    def _load_init_egps(self):
         # Load any egps used for variable initialisation
         self._load_var_init_egps()
 
@@ -484,7 +484,7 @@ class SynapseGroupMixin(GroupMixin):
         """
         self.psm_extra_global_params[egp_name].push_to_device()
 
-    def load(self):
+    def _load(self):
         # If synapse population has non-dense connectivity
         # which requires initialising manually
         if not (self.matrix_type & SynapseMatrixConnectivity.DENSE):
@@ -584,7 +584,7 @@ class SynapseGroupMixin(GroupMixin):
         self._load_egp()
         self._load_egp(self.psm_extra_global_params)
 
-    def load_init_egps(self):
+    def _load_init_egps(self):
         # Load any egps used for connectivity initialisation
         self._load_egp(self.connectivity_extra_global_params)
 
@@ -610,7 +610,7 @@ class SynapseGroupMixin(GroupMixin):
     def synapse_group(self):
         return self
 
-    def unload(self):
+    def _unload(self):
         self._ind = None
         self._row_lengths = None
         self.out_post = None
@@ -645,7 +645,7 @@ class CurrentSourceMixin(GroupMixin):
         # as long as the group, keep Python reference
         self._current_source_model = self.model
 
-    def load(self):
+    def _load(self):
         # Load current source variables
         self._load_vars(self.model.get_vars(),
                         lambda v, d: _get_neuron_var_shape(
@@ -656,11 +656,11 @@ class CurrentSourceMixin(GroupMixin):
         # Load current source extra global parameters
         self._load_egp()
 
-    def load_init_egps(self):
+    def _load_init_egps(self):
         # Load any egps used for variable initialisation
         self._load_var_init_egps()
 
-    def unload(self):
+    def _unload(self):
         self._unload_vars()
         self._unload_egps()
 
@@ -684,7 +684,7 @@ class CustomUpdateMixin(GroupMixin):
         # as long as the group, keep Python reference
         self._custom_update_model = self.model
 
-    def load(self):
+    def _load(self):
         batch_size = (self._model.batch_size
                       if self._dims & VarAccessDim.BATCH
                       else 1)
@@ -694,11 +694,11 @@ class CustomUpdateMixin(GroupMixin):
                             self.num_neurons, batch_size))
         self._load_egp()
  
-    def load_init_egps(self):
+    def _load_init_egps(self):
         # Load any egps used for variable initialisation
         self._load_var_init_egps()
 
-    def unload(self):
+    def _unload(self):
         self._unload_vars()
         self._unload_egps()
 
@@ -722,7 +722,7 @@ class CustomUpdateWUMixin(GroupMixin):
         # as long as the group, keep Python reference
         self._custom_update_model = self.model
 
-    def load(self):
+    def _load(self):
         # Assert that population doesn't have procedural connectivity
         assert not (self.synapse_group.matrix_type 
                     & SynapseMatrixConnectivity.PROCEDURAL)
@@ -746,11 +746,11 @@ class CustomUpdateWUMixin(GroupMixin):
     def get_var_values(self, var_name):
         return self.vars[var_name].values
 
-    def load_init_egps(self):
+    def _load_init_egps(self):
         # Load any egps used for variable initialisation
         self._load_var_init_egps()
 
-    def unload(self):
+    def _unload(self):
         self._unload_vars()
         self._unload_egps()
 
@@ -784,7 +784,7 @@ class CustomConnectivityUpdateMixin(GroupMixin):
     def get_var_values(self, var_name):
         return self.vars[var_name].values
 
-    def load(self):
+    def _load(self):
         # Load variables
         self._load_vars(
             self.model.get_vars(),
@@ -809,7 +809,7 @@ class CustomConnectivityUpdateMixin(GroupMixin):
         # Load custom update extra global parameters
         self._load_egp()
 
-    def load_init_egps(self):
+    def _load_init_egps(self):
         # Load any egps used for variable initialisation
         self._load_var_init_egps()
         
@@ -817,7 +817,7 @@ class CustomConnectivityUpdateMixin(GroupMixin):
         self._load_var_init_egps(self.pre_vars)
         self._load_var_init_egps(self.post_vars)
 
-    def unload(self):
+    def _unload(self):
         self._unload_vars()
         self._unload_vars(self.pre_vars)
         self._unload_vars(self.post_vars)
