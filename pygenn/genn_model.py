@@ -39,7 +39,7 @@ from .runtime import Runtime
 from .genn_groups import (CurrentSourceMixin, CustomConnectivityUpdateMixin,
                           CustomUpdateMixin, CustomUpdateWUMixin,
                           NeuronGroupMixin, SynapseGroupMixin)
-from .model_preprocessor import get_snippet, get_var_init, prepare_param_vals
+from .model_preprocessor import _get_snippet, _get_var_init, _prepare_param_vals
 from . import (current_source_models, custom_connectivity_update_models,
                custom_update_models, init_sparse_connectivity_snippets, 
                init_toeplitz_connectivity_snippets, init_var_snippets,
@@ -341,15 +341,15 @@ class GeNNModel(ModelSpecInternal):
             raise Exception("GeNN model already built")
 
         # Resolve neuron model
-        neuron = get_snippet(neuron, NeuronModelBase, neuron_models)
+        neuron = _get_snippet(neuron, NeuronModelBase, neuron_models)
         
         # Extract parts of vars which should be initialised by GeNN
-        var_init = get_var_init(vars)
+        var_init = _get_var_init(vars)
         
         # Use superclass to add population
         n_group = super(GeNNModel, self).add_neuron_population(
             pop_name, int(num_neurons), neuron, 
-            prepare_param_vals(params), var_init)
+            _prepare_param_vals(params), var_init)
         
         # Initialise group, store group in dictionary and return
         n_group._init_group(self, vars)
@@ -451,16 +451,16 @@ class GeNNModel(ModelSpecInternal):
             raise Exception("GeNN model already built")
 
         # Resolve current source model
-        current_source_model = get_snippet(current_source_model, CurrentSourceModelBase,
-                                           current_source_models)
+        current_source_model = _get_snippet(current_source_model, CurrentSourceModelBase,
+                                            current_source_models)
         
         # Extract parts of vars which should be initialised by GeNN
-        var_init = get_var_init(vars)
+        var_init = _get_var_init(vars)
         
         # Use superclass to add population
         c_source = super(GeNNModel, self).add_current_source(
             cs_name, current_source_model, pop, 
-            prepare_param_vals(params), var_init, var_refs)
+            _prepare_param_vals(params), var_init, var_refs)
         
         # Initialise group, store group in dictionary and return
         c_source._init_group(self, vars, pop)
@@ -498,16 +498,16 @@ class GeNNModel(ModelSpecInternal):
             raise Exception("GeNN model already built")
         
         # Resolve custom update model
-        custom_update_model = get_snippet(custom_update_model, CustomUpdateModelBase,
-                                          custom_update_models)
+        custom_update_model = _get_snippet(custom_update_model, CustomUpdateModelBase,
+                                           custom_update_models)
         
         # Extract parts of vars which should be initialised by GeNN
-        var_init = get_var_init(vars)
+        var_init = _get_var_init(vars)
 
         # Use superclass to add population
         c_update = super(GeNNModel, self).add_custom_update(
             cu_name, group_name, custom_update_model,
-            prepare_param_vals(params), var_init, var_refs, egp_refs)
+            _prepare_param_vals(params), var_init, var_refs, egp_refs)
 
         # Setup back-reference, store group in dictionary and return
         c_update._init_group(self, vars)
@@ -554,19 +554,19 @@ class GeNNModel(ModelSpecInternal):
             raise Exception("GeNN model already built")
 
         # Resolve custom update model
-        custom_connectivity_update_model = get_snippet(
+        custom_connectivity_update_model = _get_snippet(
             custom_conn_update_model, CustomConnectivityUpdateModelBase,
             custom_connectivity_update_models)
 
         # Extract parts of vars which should be initialised by GeNN
-        var_init = get_var_init(vars)
-        pre_var_init = get_var_init(pre_vars)
-        post_var_init = get_var_init(post_vars)
+        var_init = _get_var_init(vars)
+        pre_var_init = _get_var_init(pre_vars)
+        post_var_init = _get_var_init(post_vars)
 
         # Use superclass to add population
         c_update = super(GeNNModel, self).add_custom_connectivity_update(
             cu_name, group_name, syn_group, custom_connectivity_update_model,
-            prepare_param_vals(params), var_init, pre_var_init, post_var_init,
+            _prepare_param_vals(params), var_init, pre_var_init, post_var_init,
             var_refs, pre_var_refs, post_var_refs, egp_refs)
 
         # Setup back-reference, store group in dictionary and return
@@ -767,10 +767,10 @@ def init_var(snippet: Union[InitVarSnippetBase, str],
         init = init_var("Normal", {"mean": 0.0, "sd": 1.0})
     """
     # Get snippet and wrap in VarInit object
-    snippet = get_snippet(snippet, InitVarSnippetBase, init_var_snippets)
+    snippet = _get_snippet(snippet, InitVarSnippetBase, init_var_snippets)
 
     # Use add function to create suitable VarInit
-    return VarInit(snippet, prepare_param_vals(params))
+    return VarInit(snippet, _prepare_param_vals(params))
 
 def init_sparse_connectivity(snippet: Union[InitSparseConnectivitySnippetBase, str],
                              params: PopParamVals = {}):
@@ -792,9 +792,9 @@ def init_sparse_connectivity(snippet: Union[InitSparseConnectivitySnippetBase, s
         init = init_sparse_connectivity("FixedProbability", {"prob": 0.1})
     """
     # Get snippet and wrap in SparseConnectivityInit object
-    snippet = get_snippet(snippet, InitSparseConnectivitySnippetBase,
-                          init_sparse_connectivity_snippets)
-    return SparseConnectivityInit(snippet, prepare_param_vals(params))
+    snippet = _get_snippet(snippet, InitSparseConnectivitySnippetBase,
+                           init_sparse_connectivity_snippets)
+    return SparseConnectivityInit(snippet, _prepare_param_vals(params))
 
 
 def init_postsynaptic(snippet: Union[PostsynapticModelBase, str], 
@@ -827,13 +827,13 @@ def init_postsynaptic(snippet: Union[PostsynapticModelBase, str],
     (as returned by :meth:`.GeNNModel.add_neuron_population`)
     """
     # Get snippet and wrap in PostsynapticInit object
-    snippet = get_snippet(snippet, PostsynapticModelBase,
-                          postsynaptic_models)
+    snippet = _get_snippet(snippet, PostsynapticModelBase,
+                           postsynaptic_models)
     
     # Extract parts of var spaces which should be initialised by GeNN
-    var_init = get_var_init(vars)
+    var_init = _get_var_init(vars)
     
-    return (PostsynapticInit(snippet, prepare_param_vals(params), 
+    return (PostsynapticInit(snippet, _prepare_param_vals(params), 
                              var_init, var_refs), 
             vars)
 
@@ -870,14 +870,14 @@ def init_weight_update(snippet, params: PopParamVals = {}, vars: PopVarVals = {}
         weight_init = init_weight_update("StaticPulseConstantWeight", {"g": 1.0})
     """
     # Get snippet and wrap in WeightUpdateInit object
-    snippet = get_snippet(snippet, WeightUpdateModelBase,
-                          weight_update_models)
+    snippet = _get_snippet(snippet, WeightUpdateModelBase,
+                           weight_update_models)
     
-    var_init = get_var_init(vars)
-    pre_var_init = get_var_init(pre_vars)
-    post_var_init = get_var_init(post_vars)
+    var_init = _get_var_init(vars)
+    pre_var_init = _get_var_init(pre_vars)
+    post_var_init = _get_var_init(post_vars)
     
-    return (WeightUpdateInit(snippet, prepare_param_vals(params), var_init, 
+    return (WeightUpdateInit(snippet, _prepare_param_vals(params), var_init, 
                              pre_var_init, post_var_init,
                              pre_var_refs, post_var_refs),
             vars, pre_vars, post_vars)
@@ -915,11 +915,11 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, params={}):
     population with :math:`62 \times 62 \times 1 = 3844` neurons.
     """
     # Get snippet and wrap in InitToeplitzConnectivitySnippet object
-    init_toeplitz_connect_snippet = get_snippet(init_toeplitz_connect_snippet,
-                                                InitToeplitzConnectivitySnippetBase,
-                                                init_toeplitz_connectivity_snippets)
+    init_toeplitz_connect_snippet = _get_snippet(init_toeplitz_connect_snippet,
+                                                 InitToeplitzConnectivitySnippetBase,
+                                                 init_toeplitz_connectivity_snippets)
     return ToeplitzConnectivityInit(init_toeplitz_connect_snippet, 
-                                    prepare_param_vals(params))
+                                    _prepare_param_vals(params))
 
 def _upgrade_code_string(code, class_name):
     # Apply special-case upgrades

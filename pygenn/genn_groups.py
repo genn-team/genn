@@ -7,7 +7,7 @@ from . import neuron_models, types
 from ._genn import (CustomUpdateWU, NumericValue, SynapseMatrixConnectivity,
                     SynapseMatrixWeight, VarAccessDim, VarLocation)
 from ._genn import get_var_access_dim
-from .model_preprocessor import (prepare_egps, prepare_vars, Array,
+from .model_preprocessor import (_prepare_egps, _prepare_vars, Array,
                                  ExtraGlobalParameter, SynapseVariable,
                                  Variable)
 
@@ -222,9 +222,9 @@ class NeuronGroupMixin(GroupMixin):
         """
         super(NeuronGroupMixin, self)._init_group(model)
 
-        self.vars = prepare_vars(self.model.get_vars(),
-                                 var_space, self)
-        self.extra_global_params = prepare_egps(
+        self.vars = _prepare_vars(self.model.get_vars(),
+                                  var_space, self)
+        self.extra_global_params = _prepare_egps(
             self.model.get_extra_global_params(), self)
 
         self.spike_times = None
@@ -305,20 +305,20 @@ class SynapseGroupMixin(GroupMixin):
 
         # Prepare weight update model variables and EGPS
         wu_snippet = self.wu_initialiser.snippet
-        self.vars = prepare_vars(wu_snippet.get_vars(),
-                                 wu_vars, self, SynapseVariable)
-        self.pre_vars = prepare_vars(wu_snippet.get_pre_vars(), 
-                                     wu_pre_vars, self)
-        self.post_vars = prepare_vars(wu_snippet.get_post_vars(), 
-                                      wu_post_vars, self)
-        self.extra_global_params = prepare_egps(
+        self.vars = _prepare_vars(wu_snippet.get_vars(),
+                                  wu_vars, self, SynapseVariable)
+        self.pre_vars = _prepare_vars(wu_snippet.get_pre_vars(), 
+                                      wu_pre_vars, self)
+        self.post_vars = _prepare_vars(wu_snippet.get_post_vars(), 
+                                       wu_post_vars, self)
+        self.extra_global_params = _prepare_egps(
             wu_snippet.get_extra_global_params(), self)
 
         # Prepare postsynaptic model variables and EGPS
         ps_snippet = self.ps_initialiser.snippet
-        self.psm_vars = prepare_vars(ps_snippet.get_vars(),
+        self.psm_vars = _prepare_vars(ps_snippet.get_vars(),
                                      ps_vars, self)
-        self.psm_extra_global_params = prepare_egps(
+        self.psm_extra_global_params = _prepare_egps(
             ps_snippet.get_extra_global_params(), self)
 
         # Prepare connectivity init EGPS
@@ -326,7 +326,7 @@ class SynapseGroupMixin(GroupMixin):
             connect_init = self.toeplitz_connectivity_initialiser
         else:
             connect_init = self.sparse_connectivity_initialiser
-        self.connectivity_extra_global_params = prepare_egps(
+        self.connectivity_extra_global_params = _prepare_egps(
             connect_init.snippet.get_extra_global_params(), self)
         
         # **YUCK** in order to ensure models stays in scope
@@ -636,9 +636,9 @@ class CurrentSourceMixin(GroupMixin):
         """
         super(CurrentSourceMixin, self)._init_group(model)
         self.target_pop = target_pop
-        self.vars = prepare_vars(self.model.get_vars(),
-                                 var_space, self)
-        self.extra_global_params = prepare_egps(
+        self.vars = _prepare_vars(self.model.get_vars(),
+                                  var_space, self)
+        self.extra_global_params = _prepare_egps(
             self.model.get_extra_global_params(), self)
         
         # **YUCK** in order to ensure model stays in scope
@@ -675,9 +675,9 @@ class CustomUpdateMixin(GroupMixin):
         model   -- pygenn.genn_model.GeNNModel this neuron group is part of
         """
         super(CustomUpdateMixin, self)._init_group(model)
-        self.vars = prepare_vars(self.model.get_vars(),
-                                 var_space, self)
-        self.extra_global_params = prepare_egps(
+        self.vars = _prepare_vars(self.model.get_vars(),
+                                  var_space, self)
+        self.extra_global_params = _prepare_egps(
             self.model.get_extra_global_params(), self)
         
         # **YUCK** in order to ensure model stays in scope
@@ -713,9 +713,9 @@ class CustomUpdateWUMixin(GroupMixin):
         model   -- pygenn.genn_model.GeNNModel this neuron group is part of
         """
         super(CustomUpdateWUMixin, self)._init_group(model)
-        self.vars = prepare_vars(self.model.get_vars(),
-                                 var_space, self, SynapseVariable)
-        self.extra_global_params = prepare_egps(
+        self.vars = _prepare_vars(self.model.get_vars(),
+                                  var_space, self, SynapseVariable)
+        self.extra_global_params = _prepare_egps(
             self.model.get_extra_global_params(), self)
         
         # **YUCK** in order to ensure model stays in scope
@@ -766,13 +766,13 @@ class CustomConnectivityUpdateMixin(GroupMixin):
         model   -- pygenn.genn_model.GeNNModel this neuron group is part of
         """
         super(CustomConnectivityUpdateMixin, self)._init_group(model)
-        self.vars = prepare_vars(self.model.get_vars(),
-                                 var_space, self, SynapseVariable)
-        self.pre_vars = prepare_vars(self.model.get_pre_vars(),
-                                     pre_var_space, self)
-        self.post_vars = prepare_vars(self.model.get_post_vars(),
-                                      post_var_space, self)
-        self.extra_global_params = prepare_egps(
+        self.vars = _prepare_vars(self.model.get_vars(),
+                                  var_space, self, SynapseVariable)
+        self.pre_vars = _prepare_vars(self.model.get_pre_vars(),
+                                      pre_var_space, self)
+        self.post_vars = _prepare_vars(self.model.get_post_vars(),
+                                       post_var_space, self)
+        self.extra_global_params = _prepare_egps(
             self.model.get_extra_global_params(), self)
         
         # **YUCK** in order to ensure model stays in scope
