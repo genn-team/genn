@@ -151,32 +151,32 @@ def _wrap_kernel_size_lambda(f):
 _var_upgrade = re.compile(r"\$\(([_a-zA-Z][_a-zA-Z0-9]*)\)")
 
 class GeNNModel(ModelSpecInternal):
-    """GeNNModel class
-    This class helps to define, build and run a GeNN model from python
+    """This class provided for interface for 
+    defining, building and running models
     """
 
     def __init__(self, precision: TypeType = "float",
                  model_name: str = "GeNNModel",
-                 backend=None, time_precision: Optional[TypeType] = None,
+                 backend: Optional[str] = None, 
+                 time_precision: Optional[TypeType] = None,
                  genn_log_level: PlogSeverity = PlogSeverity.WARNING,
                  code_gen_log_level: PlogSeverity = PlogSeverity.WARNING,
                  transpiler_log_level: PlogSeverity = PlogSeverity.WARNING,
                  runtime_log_level: PlogSeverity = PlogSeverity.WARNING,
                  backend_log_level: PlogSeverity = PlogSeverity.WARNING,
                  **preference_kwargs):
-        """Init GeNNModel
-        Keyword args:
-        precision               -- string precision as string ("float" or "double"). 
-        model_name              -- string name of the model. Defaults to "GeNNModel".
-        backend                 -- string specifying name of backend module to use
-                                   Defaults to one to pick 'best' backend for your system
-        time_precision          -- string time precision as string ("float" or "double")
-        genn_log_level          -- Log level for GeNN
-        code_gen_log_level      -- Log level for GeNN code-generator
-        transpiler_log_level    -- Log level for GeNN transpiler
-        runtime_log_level       -- Log level for GeNN runtime
-        backend_log_level       -- Log level for backend
-        preference_kwargs       -- Additional keyword arguments to set in backend preferences structure
+        """Initialize GeNNModel
+        Args:
+            precision:              Data type to use for ``scalar`` variables
+            model_name:             Name of the model
+            backend:                Name of backend module to use. Defaults to one to pick 'best' backend for your system
+            time_precision:         data type to use for representing time
+            genn_log_level:         Log level for GeNN
+            code_gen_log_level:     Log level for GeNN code-generator
+            transpiler_log_level:   Log level for GeNN transpiler
+            runtime_log_level:      Log level for GeNN runtime
+            backend_log_level:      Log level for backend
+            preference_kwargs:      Additional keyword arguments to set in backend preferences structure
         """
         # Superclass
         super(GeNNModel, self).__init__()
@@ -207,14 +207,14 @@ class GeNNModel(ModelSpecInternal):
 
         # Set model properties
         self.name = model_name
-        
+
         # Python-side dictionaries of populations
         self.neuron_populations = {}
         self.synapse_populations = {}
         self.current_sources = {}
         self.custom_connectivity_updates = {}
         self.custom_updates = {}
-        
+
         # Build dictionary containing conversions 
         # between GeNN C++ types and numpy types
         self.genn_types = {
@@ -231,11 +231,12 @@ class GeNNModel(ModelSpecInternal):
             types.Bool:     np.bool_}
 
     @property
-    def backend_name(self):
+    def backend_name(self) -> str:
+        """Name of the currently selected backend"""
         return self._backend_name
 
     @backend_name.setter
-    def backend_name(self, backend_name):
+    def backend_name(self, backend_name: str):
         if self._built:
             raise Exception("GeNN model already built")
 
@@ -263,9 +264,8 @@ class GeNNModel(ModelSpecInternal):
     def dT(self, dt):
         self.dt = dt
     
-    # **TODO** is there a better way of exposing inner class properties?
     @property
-    def t(self):
+    def t(self) -> float:
         """Simulation time in ms"""
         return self._runtime.time
 
@@ -276,40 +276,65 @@ class GeNNModel(ModelSpecInternal):
 
     @timestep.setter
     def timestep(self, timestep):
+        """Simulation time in timesteps"""
         self._runtime.timestep = timestep
 
-    @property
-    def free_device_mem_bytes(self):
-        return self._runtime.free_device_mem_bytes;
+    #@property
+    #def free_device_mem_bytes(self):
+    #    return self._runtime.free_device_mem_bytes;
 
     @property
-    def neuron_update_time(self):
+    def neuron_update_time(self) -> float:
+        """Time in seconds spent in neuron update kernel.
+        Only available if :attr:`.ModelSpecInternal.kernel_timing` is set """
         return self._runtime.neuron_update_time
 
     @property
-    def init_time(self):
+    def init_time(self) -> float:
+        """Time in seconds spent initialisation kernel.
+        Only available if :attr:`.ModelSpecInternal.kernel_timing` is set """
         return self._runtime.init_time
 
     @property
-    def presynaptic_update_time(self):
+    def presynaptic_update_time(self) -> float:
+        """Time in seconds spent in presynaptic update kernel.
+        Only available if :attr:`.ModelSpecInternal.kernel_timing` is set """
         return self._runtime.presynaptic_update_time
 
     @property
-    def postsynaptic_update_time(self):
+    def postsynaptic_update_time(self) -> float:
+        """Time in seconds spent in postsynaptic update kernel.
+        Only available if :attr:`.ModelSpecInternal.kernel_timing` is set """
         return self._runtime.postsynaptic_update_time
 
     @property
-    def synapse_dynamics_time(self):
+    def synapse_dynamics_time(self) -> float:
+        """Time in seconds spent in synapse dynamics kernel.
+        Only available if :attr:`.ModelSpecInternal.kernel_timing` is set """
         return self._runtime.synapse_dynamics_time
 
     @property
-    def init_sparse_time(self):
+    def init_sparse_time(self) -> float:
+        """Time in seconds spent in sparse initialisation kernel.
+        Only available if :attr:`.ModelSpecInternal.kernel_timing` is set """
         return self._runtime.init_sparse_time
 
-    def get_custom_update_time(self, name):
+    def get_custom_update_time(self, name: str) -> float:
+        """Get time in seconds spent in custom update.
+        Only available if :attr:`.ModelSpecInternal.kernel_timing` is set.
+    
+        Args:
+            name:   Name of custom update
+        """
         return self._runtime.get_custom_update_time(name)
 
-    def get_custom_update_transpose_time(self, name):
+    def get_custom_update_transpose_time(self, name: str) -> float:
+        """Get time in seconds spent in transpose custom update.
+        Only available if :attr:`.ModelSpecInternal.kernel_timing` is set.
+    
+        Args:
+            name:   Name of custom update
+        """
         return self._runtime.get_custom_update_transpose_time(name)
 
     def add_neuron_population(self, pop_name: str, num_neurons: int, 
@@ -573,15 +598,16 @@ class GeNNModel(ModelSpecInternal):
         self.custom_connectivity_updates[cu_name] = c_update
         return c_update
         
-    def build(self, path_to_model="./", always_rebuild=False, never_rebuild=False):
+    def build(self, path_to_model: str = "./", always_rebuild: bool = False, 
+              never_rebuild: bool = False):
         """Finalize and build a GeNN model
 
-        Keyword args:
-        path_to_model   --  path where to place the generated model code.
+        Args:
+            path_to_model:  path where to place the generated model code.
                             Defaults to the local directory.
-        always_rebuild   -- should model be rebuilt even if
+            always_rebuild: should model be rebuilt even if
                             it doesn't appear to be required
-        never_rebuild   --  should model never be rebuilt even it appears to
+            never_rebuild:  should model never be rebuilt even it appears to
                             need it. This should only ever be used to prevent
                             file overwriting when performing parallel runs
         """
@@ -623,11 +649,18 @@ class GeNNModel(ModelSpecInternal):
 
         self._built = True
 
-    def load(self, path_to_model="./", num_recording_timesteps=None):
-        """import the model as shared library and initialize it"""
+    def load(self, num_recording_timesteps: Optional[int] = None):
+        """Load the previously built model into memory;
+        
+        Args:
+            num_recording_timesteps:    Number of timesteps to record spikes
+                                        for. :meth:`.pull_recording_buffers_from_device` 
+                                        must be called after this number of timesteps
+        """
         if self._loaded:
             raise Exception("GeNN model already loaded")
-        self._path_to_model = path_to_model
+        if not self._built:
+            raise Exception("GeNN model has not been built")
         
         # Create runtime
         self._runtime = Runtime(self._path_to_model, self._model_merged,
@@ -695,6 +728,10 @@ class GeNNModel(ModelSpecInternal):
 
 
     def unload(self):
+        """Unload a previously loaded model, freeing all memory"""
+        if not self._loaded:
+            raise Exception("GeNN model has not been built")
+            
         # Loop through custom updates and unload
         for cu_data in self.custom_updates.values():
             cu_data._unload()
