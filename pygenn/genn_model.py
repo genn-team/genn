@@ -645,47 +645,47 @@ class GeNNModel(ModelSpecInternal):
         # Loop through neuron populations and load any
         # extra global parameters required for initialization
         for pop_data in self.neuron_populations.values():
-            pop_data.load_init_egps()
+            pop_data._load_init_egps()
 
         # Loop through synapse populations and load any 
         # extra global parameters required for initialization
         for pop_data in self.synapse_populations.values():
-            pop_data.load_init_egps()
+            pop_data._load_init_egps()
 
         # Loop through current sources
         for src_data in self.current_sources.values():
-            src_data.load_init_egps()
+            src_data._load_init_egps()
 
         # Loop through custom connectivity updates
         for cu_data in self.custom_connectivity_updates.values():
-            cu_data.load_init_egps()
+            cu_data._load_init_egps()
 
         # Loop through custom updates
         for cu_data in self.custom_updates.values():
-            cu_data.load_init_egps()
+            cu_data._load_init_egps()
 
         # Initialize model
         self._runtime.initialize()
 
         # Loop through neuron populations
         for pop_data in self.neuron_populations.values():
-            pop_data.load(num_recording_timesteps)
+            pop_data._load(num_recording_timesteps)
 
         # Loop through synapse populations
         for pop_data in self.synapse_populations.values():
-            pop_data.load()
+            pop_data._load()
 
         # Loop through current sources
         for src_data in self.current_sources.values():
-            src_data.load()
+            src_data._load()
 
         # Loop through custom connectivity updates
         for cu_data in self.custom_connectivity_updates.values():
-            cu_data.load()
+            cu_data._load()
 
         # Loop through custom updates
         for cu_data in self.custom_updates.values():
-            cu_data.load()
+            cu_data._load()
 
         # Now everything is set up call the sparse initialisation function
         self._runtime.initialize_sparse()
@@ -698,23 +698,23 @@ class GeNNModel(ModelSpecInternal):
     def unload(self):
         # Loop through custom updates and unload
         for cu_data in self.custom_updates.values():
-            cu_data.unload()
+            cu_data._unload()
         
         # Loop through custom connectivity updates and unload
         for cu_data in self.custom_connectivity_updates.values():
-            cu_data.unload()
+            cu_data._unload()
     
         # Loop through current sources and unload
         for src_data in self.current_sources.values():
-            src_data.unload()
+            src_data._unload()
 
         # Loop through synapse populations and unload
         for pop_data in self.synapse_populations.values():
-            pop_data.unload()
+            pop_data._unload()
 
         # Loop through neuron populations and unload
         for pop_data in self.neuron_populations.values():
-            pop_data.unload()
+            pop_data._unload()
 
         # Close runtime
         self._runtime = None
