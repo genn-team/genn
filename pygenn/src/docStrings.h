@@ -447,6 +447,7 @@ static const char *__doc_CurrentSourceModels_Base_validate = R"doc(Validate name
 static const char *__doc_CurrentSourceModels_DC =
 R"doc(DC source
 It has a single parameter:
+
 - ``amp``    - amplitude of the current [nA])doc";
 
 static const char *__doc_CurrentSourceModels_DC_getInjectionCode = R"doc()doc";
@@ -458,6 +459,7 @@ static const char *__doc_CurrentSourceModels_DC_getParams = R"doc()doc";
 static const char *__doc_CurrentSourceModels_GaussianNoise =
 R"doc(Noisy current source with noise drawn from normal distribution
 It has 2 parameters:
+
 - ``mean``   - mean of the normal distribution [nA]
 - ``sd``     - standard deviation of the normal distribution [nA])doc";
 
@@ -471,6 +473,7 @@ static const char *__doc_CurrentSourceModels_PoissonExp =
 R"doc(Current source for injecting a current equivalent to a population of
 Poisson spike sources, one-to-one connected with exponential synapses
 It has 3 parameters:
+
 - ``weight`` - synaptic weight of the Poisson spikes [nA]
 - ``tauSyn`` - decay time constant [ms]
 - ``rate``   - mean firing rate [Hz])doc";
@@ -1014,21 +1017,25 @@ static const char *__doc_CustomUpdateVarAccess =
 R"doc(Supported combinations of access mode and dimension for custom update variables
 The axes are defined 'subtractively' ie VarAccessDim::BATCH indicates that this axis should be removed)doc";
 
-static const char *__doc_CustomUpdateVarAccess_READ_ONLY = R"doc()doc";
+static const char *__doc_CustomUpdateVarAccess_READ_ONLY = R"doc(This variable can be only be read from and has the same dimensions as whatever the custom update is attached to)doc";
 
-static const char *__doc_CustomUpdateVarAccess_READ_ONLY_SHARED = R"doc()doc";
+static const char *__doc_CustomUpdateVarAccess_READ_ONLY_SHARED =
+R"doc(This variable can be only be read from and has the same dimensions as whatever
+the custom update is attached to aside from being shared across batches)doc";
 
-static const char *__doc_CustomUpdateVarAccess_READ_ONLY_SHARED_NEURON = R"doc()doc";
+static const char *__doc_CustomUpdateVarAccess_READ_ONLY_SHARED_NEURON =
+R"doc(This variable can be only be read from and has the same dimensions as whatever
+the custom update is attached to aside from being shared across neurons)doc";
 
-static const char *__doc_CustomUpdateVarAccess_READ_WRITE = R"doc()doc";
+static const char *__doc_CustomUpdateVarAccess_READ_WRITE = R"doc(This variable can be read from and written to and has the same dimensions as whatever the custom update is attached to)doc";
 
-static const char *__doc_CustomUpdateVarAccess_REDUCE_BATCH_MAX = R"doc()doc";
+static const char *__doc_CustomUpdateVarAccess_REDUCE_BATCH_MAX = R"doc(This variable is a target for a reduction across batches using a max operation)doc";
 
-static const char *__doc_CustomUpdateVarAccess_REDUCE_BATCH_SUM = R"doc()doc";
+static const char *__doc_CustomUpdateVarAccess_REDUCE_BATCH_SUM = R"doc(This variable is a target for a reduction across batches using a sum operation)doc";
 
-static const char *__doc_CustomUpdateVarAccess_REDUCE_NEURON_MAX = R"doc()doc";
+static const char *__doc_CustomUpdateVarAccess_REDUCE_NEURON_MAX = R"doc(This variable is a target for a reduction across neurons using a max operation)doc";
 
-static const char *__doc_CustomUpdateVarAccess_REDUCE_NEURON_SUM = R"doc()doc";
+static const char *__doc_CustomUpdateVarAccess_REDUCE_NEURON_SUM = R"doc(This variable is a target for a reduction across neurons using a sum operation)doc";
 
 static const char *__doc_CustomUpdateVarAdapter = R"doc()doc";
 
@@ -2796,7 +2803,7 @@ This is the same model as NeuronModels::Izhikevich but parameters are defined as
 "variables" in order to allow users to provide individual values for each
 individual neuron instead of fixed values for all neurons across the population.
 
-Accordingly, the model has the Variables
+Accordingly, the model has the variables:
 
 - ``V`` - Membrane potential
 - ``U`` - Membrane recovery variable
@@ -4224,9 +4231,9 @@ static const char *__doc_VarAccess = R"doc(Supported combinations of access mode
 
 static const char *__doc_VarAccessDim = R"doc(Flags defining dimensions this variables has)doc";
 
-static const char *__doc_VarAccessDim_BATCH = R"doc()doc";
+static const char *__doc_VarAccessDim_BATCH = R"doc(This variable stores seperate values for each batch)doc";
 
-static const char *__doc_VarAccessDim_ELEMENT = R"doc()doc";
+static const char *__doc_VarAccessDim_ELEMENT = R"doc(This variable stores seperate values for each element i.e. neuron or synapse)doc";
 
 static const char *__doc_VarAccessMode = R"doc(Supported combination of VarAccessModeAttribute)doc";
 
@@ -4234,43 +4241,50 @@ static const char *__doc_VarAccessModeAttribute =
 R"doc(Flags defining attributes of var access models
 **NOTE** Read-only and read-write are seperate flags rather than read and write so you can test mode & VarAccessMode::READ_ONLY)doc";
 
-static const char *__doc_VarAccessModeAttribute_MAX = R"doc(This variable's reduction operation is a summation)doc";
+static const char *__doc_VarAccessModeAttribute_MAX = R"doc(This variable's reduction operation is a maximum)doc";
 
-static const char *__doc_VarAccessModeAttribute_READ_ONLY = R"doc()doc";
+static const char *__doc_VarAccessModeAttribute_READ_ONLY = R"doc(This variable can only be read from)doc";
 
-static const char *__doc_VarAccessModeAttribute_READ_WRITE = R"doc(This variable is read only)doc";
+static const char *__doc_VarAccessModeAttribute_READ_WRITE = R"doc(This variable can be read from or written to)doc";
 
-static const char *__doc_VarAccessModeAttribute_REDUCE = R"doc(This variable is read-write)doc";
+static const char *__doc_VarAccessModeAttribute_REDUCE = R"doc(This variable is a reduction target)doc";
 
-static const char *__doc_VarAccessModeAttribute_SUM = R"doc(This variable is a reduction target)doc";
+static const char *__doc_VarAccessModeAttribute_SUM = R"doc(This variable's reduction operation is a summation)doc";
 
-static const char *__doc_VarAccessMode_READ_ONLY = R"doc()doc";
+static const char *__doc_VarAccessMode_READ_ONLY = R"doc(This variable can only be read from)doc";
 
-static const char *__doc_VarAccessMode_READ_WRITE = R"doc()doc";
+static const char *__doc_VarAccessMode_READ_WRITE = R"doc(This variable can be read from or written to)doc";
 
-static const char *__doc_VarAccessMode_REDUCE_MAX = R"doc()doc";
+static const char *__doc_VarAccessMode_REDUCE_MAX = R"doc(This variable is a target for a reduction with a max operation)doc";
 
-static const char *__doc_VarAccessMode_REDUCE_SUM = R"doc()doc";
+static const char *__doc_VarAccessMode_REDUCE_SUM = R"doc(This variable is a target for a reduction with a sum operation)doc";
 
-static const char *__doc_VarAccess_READ_ONLY = R"doc()doc";
+static const char *__doc_VarAccess_READ_ONLY = R"doc(This variable can only be read from and stores seperate values for each element but these are shared across batches)doc";
 
-static const char *__doc_VarAccess_READ_ONLY_DUPLICATE = R"doc()doc";
+static const char *__doc_VarAccess_READ_ONLY_DUPLICATE = R"doc(This variable can only be read from and stores seperate values for each element and each batch)doc";
 
-static const char *__doc_VarAccess_READ_ONLY_SHARED_NEURON = R"doc()doc";
+static const char *__doc_VarAccess_READ_ONLY_SHARED_NEURON = R"doc(This variable can only be read from and stores seperate values for each batch but these are shared across neurons)doc";
 
-static const char *__doc_VarAccess_READ_WRITE = R"doc()doc";
+static const char *__doc_VarAccess_READ_WRITE = R"doc(This variable can be read from and written to and stores seperate values for each element and each batch)doc";
 
-static const char *__doc_VarLocation = R"doc()doc";
+static const char *__doc_VarLocation = R"doc(Supported combination of VarLocationAttribute)doc";
 
-static const char *__doc_VarLocation_DEVICE = R"doc()doc";
+static const char *__doc_VarLocationAttribute = R"doc(Flags defining attributes of var locations)doc";
 
-static const char *__doc_VarLocation_HOST = R"doc()doc";
+static const char *__doc_VarLocationAttribute_DEVICE = R"doc(Variable is located on the device)doc";
 
-static const char *__doc_VarLocation_HOST_DEVICE = R"doc()doc";
+static const char *__doc_VarLocationAttribute_HOST = R"doc(Variable is located on the host)doc";
 
-static const char *__doc_VarLocation_HOST_DEVICE_ZERO_COPY = R"doc()doc";
+static const char *__doc_VarLocationAttribute_ZERO_COPY = R"doc(Variable is located in zero-copy memory)doc";
 
-static const char *__doc_VarLocation_ZERO_COPY = R"doc()doc";
+static const char *__doc_VarLocation_DEVICE = R"doc(Variable is only located on device. This can be used to save host memory.)doc";
+
+static const char *__doc_VarLocation_HOST_DEVICE = R"doc(Variable is located on both host and device. This is the default.)doc";
+
+static const char *__doc_VarLocation_HOST_DEVICE_ZERO_COPY =
+R"doc(Variable is shared between host and device using zero copy memory.
+This can improve performance if data is frequently copied between host and device
+but, on non cache-coherant architectures e.g. Jetson, can also reduce access speed.)doc";
 
 static const char *__doc_WeightUpdateModels_Base = R"doc(Base class for all weight update models)doc";
 
@@ -4556,7 +4570,9 @@ R"doc(Pulse-coupled, static synapse.
 No learning rule is applied to the synapse and for each pre-synaptic spikes,
 the synaptic conductances are simply added to the postsynaptic input variable.
 The model has 1 parameter:
+
 - g - conductance
+
 and no other variables.
 
 ``sim`` code is:
@@ -4576,8 +4592,10 @@ R"doc(Pulse-coupled, static synapse with heterogenous dendritic delays
 No learning rule is applied to the synapse and for each pre-synaptic spikes,
 the synaptic conductances are simply added to the postsynaptic input variable.
 The model has 2 variables:
-- g - conductance of scalar type
-- d - dendritic delay in timesteps
+
+- ``g`` - conductance of scalar type
+- ``d`` - dendritic delay in timesteps
+
 and no other parameters.
 
 ``sim`` code is:
