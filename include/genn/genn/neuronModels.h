@@ -193,7 +193,7 @@ public:
     "variables" in order to allow users to provide individual values for each
     individual neuron instead of fixed values for all neurons across the population.
 
-    Accordingly, the model has the Variables
+    Accordingly, the model has the variables:
 
     - \c V - Membrane potential
     - \c U - Membrane recovery variable

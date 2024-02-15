@@ -240,7 +240,9 @@ public:
 /*! No learning rule is applied to the synapse and for each pre-synaptic spikes,
     the synaptic conductances are simply added to the postsynaptic input variable.
     The model has 1 parameter:
+
     - g - conductance
+
     and no other variables.
 
     \c sim code is:
@@ -265,8 +267,10 @@ public:
 /*! No learning rule is applied to the synapse and for each pre-synaptic spikes,
     the synaptic conductances are simply added to the postsynaptic input variable.
     The model has 2 variables:
-    - g - conductance of scalar type
-    - d - dendritic delay in timesteps
+
+    - \c g - conductance of scalar type
+    - \c d - dendritic delay in timesteps
+
     and no other parameters.
 
     \c sim code is:
