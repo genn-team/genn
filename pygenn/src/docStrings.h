@@ -23,6 +23,429 @@
 #endif
 
 
+static const char *__doc_CodeGenerator_BackendBase = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_BackendBase = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_ReductionTarget = R"doc(Simple struct to hold reduction targets)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_ReductionTarget_access = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_ReductionTarget_index = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_ReductionTarget_name = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_ReductionTarget_type = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildSizeEnvironment = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildSizeEnvironment_2 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildSizeEnvironment_3 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildSizeEnvironment_4 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildSizeEnvironment_5 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_2 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_3 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_4 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_5 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_6 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_7 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_8 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_9 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_10 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_11 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_12 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_13 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_14 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_15 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_16 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_17 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_18 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_19 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_20 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_21 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_createArray =
+R"doc(Create backend-specific array object
+
+
+$Parameter ``type``:
+
+         data type of array
+
+
+$Parameter ``count``:
+
+        number of elements in array, if non-zero will allocate
+
+
+$Parameter ``location``:
+
+     location of array e.g. device-only)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_createPopulationRNG =
+R"doc(Create array of backend-specific population RNGs (if they are initialised on host this will occur here)
+
+
+$Parameter ``count``:
+
+        number of RNGs required)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_createState =
+R"doc(Create backend-specific runtime state object
+
+
+$Parameter ``runtime``:
+
+  runtime object)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genAllocateMemPreamble =
+R"doc(Allocate memory is the first function in GeNN generated code called by usercode and it should only ever be called once.
+Therefore it's a good place for any global initialisation. This function generates a 'preamble' to this function.)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genAssert = R"doc(On backends which support it, generate a runtime assert)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genCustomUpdate =
+R"doc(Generate platform-specific functions to perform custom updates
+
+
+$Parameter ``os``:
+
+                           CodeStream to write function to
+
+
+$Parameter ``modelMerged``:
+
+                  merged model to generate code for
+
+
+$Parameter ``preambleHandler``:
+
+              callback to write functions for pushing extra-global parameters)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genDefinitionsPreamble =
+R"doc(Definitions is the usercode-facing header file for the generated code. This function generates a 'preamble' to this header file.
+This will be included from a standard C++ compiler so shouldn't include any platform-specific types or headers)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genDenseSynapseVariableRowInit = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genFreeMemPreamble =
+R"doc(Free memory is called by usercode to free all memory allocatd by GeNN and should only ever be called once.
+This function generates a 'preamble' to this function, for example to free backend-specific objects)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genGlobalDeviceRNG =
+R"doc(Generate a single RNG instance
+On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genInit =
+R"doc(Generate platform-specific function to initialise model
+
+
+$Parameter ``os``:
+
+                           CodeStream to write function to
+
+
+$Parameter ``modelMerged``:
+
+                  merged model to generate code for
+
+
+$Parameter ``preambleHandler``:
+
+              callback to write functions for pushing extra-global parameters)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genInitReductionTargets =
+R"doc(Helper function to generate initialisation code for any reduction operations carried out be custom update group.
+Returns vector of ReductionTarget structs, providing all information to write back reduction results to memory)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genInitReductionTargets_2 =
+R"doc(Helper function to generate initialisation code for any reduction operations carried out be custom weight update group.
+//! Returns vector of ReductionTarget structs, providing all information to write back reduction results to memory)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genInitReductionTargets_3 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genKernelCustomUpdateVariableInit = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genKernelSynapseVariableInit = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genLazyVariableDynamicAllocation = R"doc(Generate code to allocate variable with a size known at runtime)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genLazyVariableDynamicPull = R"doc(Generate code for pulling a variable with a size known at runtime from the 'device')doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genLazyVariableDynamicPush = R"doc(Generate code for pushing a variable with a size known at runtime to the 'device')doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genMSBuildCompileModule = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genMSBuildConfigProperties =
+R"doc(In MSBuild, 'properties' are used to configure global project settings e.g. whether the MSBuild project builds a static or dynamic library
+This function can be used to add additional XML properties to this section.
+see https://docs.microsoft.com/en-us/visualstudio/msbuild/msbuild-properties for more information.)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genMSBuildImportProps = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genMSBuildImportTarget = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genMSBuildItemDefinitions =
+R"doc(In MSBuild, the 'item definitions' are used to override the default properties of 'items' such as ``<ClCompile>`` or ``<Link>``.
+This function should generate XML to correctly configure the 'items' required to build the generated code, taking into account ``$(Configuration)`` etc.
+see https://docs.microsoft.com/en-us/visualstudio/msbuild/msbuild-items#item-definitions for more information.)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genMakefileCompileRule =
+R"doc(The GNU make build system uses 'pattern rules' (https://www.gnu.org/software/make/manual/html_node/Pattern-Intro.html) to build backend modules into objects.
+This function should generate a GNU make pattern rule capable of building each module (i.e. compiling .cc file $< into .o file $@).)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genMakefileLinkRule =
+R"doc(The GNU make build system will populate a variable called ``$(OBJECTS)`` with a list of objects to link.
+This function should generate a GNU make rule to build these objects into a shared library.)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genMakefilePreamble = R"doc(This function can be used to generate a preamble for the GNU makefile used to build)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genMergedDynamicVariablePush = R"doc(Generate code for pushing a new pointer to a dynamic variable into the merged group structure on 'device')doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genNeuronUpdate =
+R"doc(Generate platform-specific function to update the state of all neurons
+
+
+$Parameter ``os``:
+
+                       CodeStream to write function to
+
+
+$Parameter ``modelMerged``:
+
+              merged model to generate code for
+
+
+$Parameter ``preambleHandler``:
+
+          callback to write functions for pushing extra-global parameters)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genPopVariableInit = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genReturnFreeDeviceMemoryBytes = R"doc(Generate code to return amount of free 'device' memory in bytes)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genRunnerPreamble = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genSparseSynapseVariableRowInit = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genStepTimeFinalisePreamble = R"doc(After all timestep logic is complete)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genSynapseUpdate =
+R"doc(Generate platform-specific function to update the state of all synapses
+
+
+$Parameter ``os``:
+
+                           CodeStream to write function to
+
+
+$Parameter ``modelMerged``:
+
+                  merged model to generate code for
+
+
+$Parameter ``preambleHandler``:
+
+              callback to write functions for pushing extra-global parameters)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genTimer = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genVariableInit = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_getDeviceMemoryBytes = R"doc(How many bytes of memory does 'device' have)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_getFilesToCopy =
+R"doc(Get list of files to copy into generated code
+Paths should be relative to share/genn/backends/)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_getHashDigest = R"doc(Get hash digest of this backends identification and the preferences it has been configured with)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_getMergedGroupFieldHostTypeName = R"doc(When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_getMergedGroupMemorySpaces =
+R"doc(Some backends will have additional small, fast, memory spaces for read-only data which might
+Be well-suited to storing merged group structs. This method returns the prefix required to
+Place arrays in these and their size in preferential order)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_getPointerBytes = R"doc(Get backend-specific pointer size in bytes)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_getPointerPrefix = R"doc(Different backends may have different or no pointer prefix (e.g. __global for OpenCL))doc";
+
+static const char *__doc_CodeGenerator_BackendBase_getPreferences = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_getPreferences_2 = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_getReductionInitialValue = R"doc(Get the initial value to start reduction operations from)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_getReductionOperation = R"doc(Generate a reduction operation to reduce value into reduction)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_getSynapseIndexType = R"doc(Get the type to use for synaptic indices within a merged synapse group)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_getSynapseIndexType_2 = R"doc(Get the type to use for synaptic indices within a merged custom weight update group)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_getSynapseIndexType_3 = R"doc(Get the type to use for synaptic indices within a merged custom connectivity update group)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_getSynapticMatrixRowStride = R"doc(Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_isArrayDeviceObjectRequired = R"doc(As well as host pointers, are device objects required?)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_isArrayHostObjectRequired = R"doc(As well as host pointers, are additional host objects required e.g. for buffers in OpenCL?)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_isGlobalDeviceRNGRequired = R"doc(Different backends use different RNGs for different things. Does this one require a global device RNG for the specified model?)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_isGlobalHostRNGRequired = R"doc(Different backends use different RNGs for different things. Does this one require a global host RNG for the specified model?)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_isHostReductionRequired = R"doc(Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_isPopulationRNGInitialisedOnDevice = R"doc(Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_isPostsynapticRemapRequired = R"doc(Different backends may implement synaptic plasticity differently. Does this one require a postsynaptic remapping data structure?)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_m_PointerBytes = R"doc(How large is a device pointer? E.g. on some AMD devices this != sizeof(char*))doc";
+
+static const char *__doc_CodeGenerator_BackendBase_m_Preferences = R"doc(Preferences)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_setPointerBytes = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CustomConnectivityUpdateGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CustomConnectivityUpdatePostInitGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CustomConnectivityUpdatePreInitGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CustomConnectivityUpdateSparseInitGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CustomUpdateGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CustomUpdateHostReductionGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CustomUpdateInitGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CustomUpdateTransposeWUGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CustomUpdateWUGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CustomWUUpdateHostReductionGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CustomWUUpdateInitGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CustomWUUpdateSparseInitGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_EnvironmentExternalBase = R"doc()doc";
+
+static const char *__doc_CodeGenerator_EnvironmentGroupMergedField = R"doc()doc";
+
+static const char *__doc_CodeGenerator_GroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_MemAlloc = R"doc()doc";
+
+static const char *__doc_CodeGenerator_MemAlloc_MemAlloc = R"doc()doc";
+
+static const char *__doc_CodeGenerator_MemAlloc_device = R"doc()doc";
+
+static const char *__doc_CodeGenerator_MemAlloc_getDeviceBytes = R"doc()doc";
+
+static const char *__doc_CodeGenerator_MemAlloc_getDeviceMBytes = R"doc()doc";
+
+static const char *__doc_CodeGenerator_MemAlloc_getHostBytes = R"doc()doc";
+
+static const char *__doc_CodeGenerator_MemAlloc_getHostMBytes = R"doc()doc";
+
+static const char *__doc_CodeGenerator_MemAlloc_getZeroCopyBytes = R"doc()doc";
+
+static const char *__doc_CodeGenerator_MemAlloc_getZeroCopyMBytes = R"doc()doc";
+
+static const char *__doc_CodeGenerator_MemAlloc_host = R"doc()doc";
+
+static const char *__doc_CodeGenerator_MemAlloc_hostDevice = R"doc()doc";
+
+static const char *__doc_CodeGenerator_MemAlloc_m_DeviceBytes = R"doc()doc";
+
+static const char *__doc_CodeGenerator_MemAlloc_m_HostBytes = R"doc()doc";
+
+static const char *__doc_CodeGenerator_MemAlloc_m_ZeroCopyBytes = R"doc()doc";
+
+static const char *__doc_CodeGenerator_MemAlloc_operator_iadd = R"doc()doc";
+
+static const char *__doc_CodeGenerator_MemAlloc_zero = R"doc()doc";
+
+static const char *__doc_CodeGenerator_MemAlloc_zeroCopy = R"doc()doc";
+
+static const char *__doc_CodeGenerator_ModelSpecMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_NeuronInitGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_NeuronPrevSpikeTimeUpdateGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_NeuronSpikeQueueUpdateGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_NeuronUpdateGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_PostsynapticUpdateGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_PreferencesBase = R"doc(Base class for backend preferences - can be accessed via a global in 'classic' C++ code generator)doc";
+
+static const char *__doc_CodeGenerator_PreferencesBase_backendLogLevel = R"doc(Logging level to use for backend)doc";
+
+static const char *__doc_CodeGenerator_PreferencesBase_codeGeneratorLogLevel = R"doc(Logging level to use for code generation)doc";
+
+static const char *__doc_CodeGenerator_PreferencesBase_debugCode = R"doc(Generate code with debug symbols)doc";
+
+static const char *__doc_CodeGenerator_PreferencesBase_gennLogLevel = R"doc(Logging level to use for model description)doc";
+
+static const char *__doc_CodeGenerator_PreferencesBase_optimizeCode = R"doc(Generate speed-optimized code, potentially at the expense of floating-point accuracy)doc";
+
+static const char *__doc_CodeGenerator_PreferencesBase_runtimeLogLevel = R"doc(Logging level to use for runtime)doc";
+
+static const char *__doc_CodeGenerator_PreferencesBase_transpilerLogLevel = R"doc(Logging level to use for transpiler)doc";
+
+static const char *__doc_CodeGenerator_PreferencesBase_updateHash = R"doc()doc";
+
+static const char *__doc_CodeGenerator_PreferencesBase_userCxxFlagsGNU = R"doc(C++ compiler options to be used for building all host side code (used for unix based platforms))doc";
+
+static const char *__doc_CodeGenerator_PreferencesBase_userNvccFlagsGNU = R"doc(NVCC compiler options they may want to use for all GPU code (used for unix based platforms))doc";
+
+static const char *__doc_CodeGenerator_PresynapticUpdateGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_SynapseConnectivityInitGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_SynapseDendriticDelayUpdateGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_SynapseDynamicsGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_SynapseInitGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_SynapseSparseInitGroupMerged = R"doc()doc";
+
+static const char *__doc_CodeGenerator_operator_lshift = R"doc()doc";
+
+static const char *__doc_CodeGenerator_operator_rshift = R"doc()doc";
+
 static const char *__doc_CurrentSource = R"doc()doc";
 
 static const char *__doc_CurrentSource_2 = R"doc()doc";
@@ -233,6 +656,8 @@ static const char *__doc_CustomConnectivityUpdateInternal = R"doc()doc";
 static const char *__doc_CustomConnectivityUpdateInternal_2 = R"doc()doc";
 
 static const char *__doc_CustomConnectivityUpdateInternal_3 = R"doc()doc";
+
+static const char *__doc_CustomConnectivityUpdateInternal_4 = R"doc()doc";
 
 static const char *__doc_CustomConnectivityUpdateInternal_CustomConnectivityUpdateInternal = R"doc()doc";
 
@@ -595,6 +1020,8 @@ static const char *__doc_CustomUpdateInternal = R"doc()doc";
 
 static const char *__doc_CustomUpdateInternal_2 = R"doc()doc";
 
+static const char *__doc_CustomUpdateInternal_3 = R"doc()doc";
+
 static const char *__doc_CustomUpdateInternal_CustomUpdateInternal = R"doc()doc";
 
 static const char *__doc_CustomUpdateModels_Base = R"doc(Base class for all current source models)doc";
@@ -678,6 +1105,8 @@ static const char *__doc_CustomUpdateWUInternal = R"doc()doc";
 static const char *__doc_CustomUpdateWUInternal_2 = R"doc()doc";
 
 static const char *__doc_CustomUpdateWUInternal_3 = R"doc()doc";
+
+static const char *__doc_CustomUpdateWUInternal_4 = R"doc()doc";
 
 static const char *__doc_CustomUpdateWUInternal_CustomUpdateWUInternal = R"doc()doc";
 
@@ -1169,6 +1598,8 @@ static const char *__doc_Logging_init = R"doc()doc";
 static const char *__doc_ModelSpec = R"doc(Object used for specifying a neuronal network model)doc";
 
 static const char *__doc_ModelSpecInternal = R"doc()doc";
+
+static const char *__doc_ModelSpecInternal_2 = R"doc()doc";
 
 static const char *__doc_ModelSpec_ModelSpec = R"doc()doc";
 
@@ -2095,6 +2526,8 @@ static const char *__doc_NeuronGroupInternal_3 = R"doc()doc";
 
 static const char *__doc_NeuronGroupInternal_4 = R"doc()doc";
 
+static const char *__doc_NeuronGroupInternal_5 = R"doc()doc";
+
 static const char *__doc_NeuronGroupInternal_NeuronGroupInternal = R"doc()doc";
 
 static const char *__doc_NeuronGroup_NeuronGroup = R"doc()doc";
@@ -2800,7 +3233,13 @@ static const char *__doc_PostsynapticModels_Init_m_VarInitialisers = R"doc()doc"
 
 static const char *__doc_Runtime_ArrayBase = R"doc()doc";
 
+static const char *__doc_Runtime_ArrayBase_2 = R"doc()doc";
+
 static const char *__doc_Runtime_Runtime = R"doc()doc";
+
+static const char *__doc_Runtime_Runtime_2 = R"doc()doc";
+
+static const char *__doc_Runtime_StateBase = R"doc()doc";
 
 static const char *__doc_Snippet_Base = R"doc()doc";
 
@@ -2932,6 +3371,8 @@ static const char *__doc_SynapseGroupInternal_2 = R"doc()doc";
 static const char *__doc_SynapseGroupInternal_3 = R"doc()doc";
 
 static const char *__doc_SynapseGroupInternal_4 = R"doc()doc";
+
+static const char *__doc_SynapseGroupInternal_5 = R"doc()doc";
 
 static const char *__doc_SynapseGroupInternal_SynapseGroupInternal = R"doc()doc";
 
