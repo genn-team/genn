@@ -292,9 +292,11 @@ public:
     \f[ gSyn= g * tanh((V - E_{pre}) / V_{slope} \f]
     whenever the membrane potential \f$V\f$ is larger than the threshold \f$E_{pre}\f$.
     The model has 1 variable:
+
     - \c g: conductance of \c scalar type
 
     The parameters are:
+
     - \c Epre: Presynaptic threshold potential
     - \c Vslope: Activation slope of graded release
 
@@ -366,10 +368,12 @@ public:
     -->
 
     The model has 2 variables:
+
     - \c g: conductance of \c scalar type
     - \c gRaw: raw conductance of \c scalar type
 
     Parameters are (compare to the figure above):
+
     - \c tLrn: Time scale of learning changes
     - \c tChng: Width of learning window
     - \c tDecay: Time scale of synaptic strength decay

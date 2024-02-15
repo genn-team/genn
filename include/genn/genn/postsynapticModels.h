@@ -88,6 +88,7 @@ private:
 //----------------------------------------------------------------------------
 //! Exponential decay with synaptic input treated as a current value.
 /*! This model has no variables and a single parameter:
+
   - \c tau : Decay time constant*/
 class ExpCurr : public Base
 {
@@ -109,11 +110,16 @@ public:
 // GeNN::PostsynapticModels::ExpCond
 //----------------------------------------------------------------------------
 //! Exponential decay with synaptic input treated as a conductance value.
-/*! This model has no variables, two parameters and a variable reference
+/*! This model has no variables, two parameters:
+
   - \c tau : Decay time constant
   - \c E   : Reversal potential
+
+ and a variable reference:
+
   - \c V   : Is a reference to the neuron's membrane voltage
-  \c tau is used by the derived parameter \c expdecay which returns expf(-dt/tau). */
+
+ \c tau is used by the derived parameter \c expdecay which returns expf(-dt/tau). */
 class ExpCond : public Base
 {
 public:

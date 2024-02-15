@@ -92,10 +92,12 @@ public:
     The `RulkovMap` type only works as intended for the single time step size of `DT`= 0.5.
 
     The `RulkovMap` type has 2 variables:
+
     - \c V - the membrane potential
     - \c preV - the membrane potential at the previous time step
 
     and it has 4 parameters:
+
     - \c Vspike - determines the amplitude of spikes, typically -60mV
     - \c alpha - determines the shape of the iteration function, typically \f$\alpha \f$= 3
     - \c y - "shift / excitation" parameter, also determines the iteration function,originally, y= -2.468
@@ -191,7 +193,8 @@ public:
     "variables" in order to allow users to provide individual values for each
     individual neuron instead of fixed values for all neurons across the population.
 
-    Accordingly, the model has the Variables:
+    Accordingly, the model has the Variables
+
     - \c V - Membrane potential
     - \c U - Membrane recovery variable
     - \c a - time scale of U
