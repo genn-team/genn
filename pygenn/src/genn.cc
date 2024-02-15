@@ -343,16 +343,20 @@ PYBIND11_MODULE(_genn, m)
 
         .def("__and__", [](CustomUpdateVarAccess a, VarAccessModeAttribute b){ return a & b; },
              pybind11::is_operator());
-
+    
+    //! Locations of variables
+    pybind11::enum_<VarLocationAttribute>(m, "VarLocationAttribute", DOC(VarLocationAttribute))
+        WRAP_ENUM(VarLocationAttribute, HOST)
+        WRAP_ENUM(VarLocationAttribute, DEVICE)
+        WRAP_ENUM(VarLocationAttribute, ZERO_COPY);
+             
     //! Locations of variables
     pybind11::enum_<VarLocation>(m, "VarLocation", DOC(VarLocation))
-        WRAP_ENUM(VarLocation, HOST)
         WRAP_ENUM(VarLocation, DEVICE)
-        WRAP_ENUM(VarLocation, ZERO_COPY)
         WRAP_ENUM(VarLocation, HOST_DEVICE)
         WRAP_ENUM(VarLocation, HOST_DEVICE_ZERO_COPY)
 
-        .def("__and__", [](VarLocation a, VarLocation b){ return a & b; }, 
+        .def("__and__", [](VarLocation a, VarLocationAttribute b){ return a & b; }, 
              pybind11::is_operator());
 
     //! Parallelism hints for synapse groups

@@ -5,7 +5,8 @@ import numpy as np
 
 from . import neuron_models, types
 from ._genn import (CustomUpdateWU, NumericValue, SynapseMatrixConnectivity,
-                    SynapseMatrixWeight, VarAccessDim, VarLocation)
+                    SynapseMatrixWeight, VarAccessDim, 
+                    VarLocation, VarLocationAttribute)
 from ._genn import get_var_access_dim
 from .model_preprocessor import (_prepare_egps, _prepare_vars, Array,
                                  ExtraGlobalParameter, SynapseVariable,
@@ -141,7 +142,7 @@ class GroupMixin(object):
 
             # If variable is located on host
             var_loc = get_location_fn(v.name) 
-            if var_loc & VarLocation.HOST:
+            if var_loc & VarLocationAttribute.HOST:
                 # If a function is provided, use it to get
                 # delay neuron group for this variable
                 delay_group = (None if get_delay_group_fn is None
@@ -245,7 +246,7 @@ class NeuronGroupMixin(GroupMixin):
         
         # If spike time is available and accessible on host, get array
         if (self.spike_time_required 
-            and (self.spike_time_location & VarLocation.HOST)):
+            and (self.spike_time_location & VarLocationAttribute.HOST)):
             self.spike_times = self._get_array(
                 "sT", self._model.time_precision,
                 _get_neuron_var_shape(
@@ -254,7 +255,7 @@ class NeuronGroupMixin(GroupMixin):
         
         # If previos spike time is availabel and accessible on host, get array
         if (self.prev_spike_time_required
-            and (self.prev_spike_time_location & VarLocation.HOST)):
+            and (self.prev_spike_time_location & VarLocationAttribute.HOST)):
             self.prev_spike_times = self._get_array(
                 "prevST", self._model.time_precision,
                 _get_neuron_var_shape(
@@ -491,7 +492,7 @@ class SynapseGroupMixin(GroupMixin):
             if (self.matrix_type & SynapseMatrixConnectivity.SPARSE):
                 # If connectivity is located on host
                 conn_loc = self.sparse_connectivity_location
-                if conn_loc & VarLocation.HOST:
+                if conn_loc & VarLocationAttribute.HOST:
                     # Get pointers to ragged data structure members
                     self._ind = self._get_array("ind", self._sparse_ind_type)
                     self._row_lengths = self._get_array("rowLength",
@@ -574,7 +575,7 @@ class SynapseGroupMixin(GroupMixin):
                 self.psm_vars, self.get_ps_var_location)
                 
             # If it's inSyn is accessible on the host
-            if self.output_location & VarLocation.HOST:
+            if self.output_location & VarLocationAttribute.HOST:
                 # Get array
                 self.out_post = self._get_array(
                     "outPost", self._model.precision,

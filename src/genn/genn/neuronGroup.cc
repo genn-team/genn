@@ -233,10 +233,10 @@ bool NeuronGroup::isSpikeEventRequired() const
 bool NeuronGroup::isZeroCopyEnabled() const
 {
     // If any bits of spikes require zero-copy return true
-    if(m_RecordingZeroCopyEnabled || (m_SpikeLocation & VarLocation::ZERO_COPY) 
-       || (m_SpikeEventLocation & VarLocation::ZERO_COPY) || (m_SpikeTimeLocation & VarLocation::ZERO_COPY) 
-       || (m_PrevSpikeTimeLocation & VarLocation::ZERO_COPY) || (m_SpikeEventTimeLocation& VarLocation::ZERO_COPY) 
-       || (m_PrevSpikeEventTimeLocation& VarLocation::ZERO_COPY)) 
+    if(m_RecordingZeroCopyEnabled || (m_SpikeLocation & VarLocationAttribute::ZERO_COPY) 
+       || (m_SpikeEventLocation & VarLocationAttribute::ZERO_COPY) || (m_SpikeTimeLocation & VarLocationAttribute::ZERO_COPY) 
+       || (m_PrevSpikeTimeLocation & VarLocationAttribute::ZERO_COPY) || (m_SpikeEventTimeLocation& VarLocationAttribute::ZERO_COPY) 
+       || (m_PrevSpikeEventTimeLocation& VarLocationAttribute::ZERO_COPY)) 
     {
         return true;
     }

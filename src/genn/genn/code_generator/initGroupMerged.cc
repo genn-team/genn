@@ -778,7 +778,7 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
         for(const auto &egp : connectInit.getSnippet()->getExtraGlobalParams()) {
             // If EGP is located on the host
             const auto loc = VarLocation::HOST_DEVICE;//getArchetype().getSparseConnectivityExtraGlobalParamLocation(egp.name);
-            if(loc & VarLocation::HOST) {
+            if(loc & VarLocationAttribute::HOST) {
                 const auto resolvedType = egp.type.resolve(getTypeContext());
                 assert(!resolvedType.isPointer());
                 const auto pointerType = resolvedType.createPointer();
