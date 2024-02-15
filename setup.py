@@ -179,7 +179,7 @@ if opencl_installed:
                       "extra_compile_args": ["-DCL_HPP_TARGET_OPENCL_VERSION=120", "-DCL_HPP_MINIMUM_OPENCL_VERSION=120"]}))
 
 ext_modules = [
-    Pybind11Extension("runtime",
+    Pybind11Extension("_runtime",
                       [os.path.join(pygenn_src, "runtime.cc")],
                       **genn_extension_kwargs),
     Pybind11Extension("_genn",

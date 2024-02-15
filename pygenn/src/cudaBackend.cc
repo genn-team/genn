@@ -22,7 +22,7 @@ using namespace GeNN::CodeGenerator::CUDA;
 //----------------------------------------------------------------------------
 #define DOC_CUDA(...) DOC(CodeGenerator, CUDA, __VA_ARGS__)
 #define WRAP_ENUM(ENUM, VAL) .value(#VAL, ENUM::VAL, DOC_CUDA(ENUM, VAL))
-#define WRAP_MEMBER(NAME, CLASS, VAL) .def_readwrite(NAME, &CLASS::VAL, DOC_CUDA(CLASS, VAL))
+#define WRAP_ATTR(NAME, CLASS, ATTR) .def_readwrite(NAME, &CLASS::ATTR, DOC_CUDA(CLASS, ATTR))
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -43,7 +43,7 @@ Backend createBackend(const ModelSpecInternal &model, const std::string &outputP
 PYBIND11_MODULE(cuda_backend, m) 
 {
     pybind11::module_::import("pygenn._genn");
-    pybind11::module_::import("pygenn.runtime");
+    pybind11::module_::import("pygenn._runtime");
 
     //------------------------------------------------------------------------
     // Enumerations
@@ -63,15 +63,15 @@ PYBIND11_MODULE(cuda_backend, m)
     pybind11::class_<Preferences, CodeGenerator::PreferencesBase>(m, "Preferences", DOC_CUDA(Preferences))
         .def(pybind11::init<>())
         
-        WRAP_MEMBER("show_ptx_info", Preferences, showPtxInfo)
-        WRAP_MEMBER("generate_line_info", Preferences, generateLineInfo)
-        WRAP_MEMBER("enable_nccl_reductions", Preferences, enableNCCLReductions)
-        WRAP_MEMBER("device_select_method", Preferences, deviceSelectMethod)
-        WRAP_MEMBER("manual_device_id", Preferences, manualDeviceID)
-        WRAP_MEMBER("block_size_select_method", Preferences, blockSizeSelectMethod)
+        WRAP_ATTR("show_ptx_info", Preferences, showPtxInfo)
+        WRAP_ATTR("generate_line_info", Preferences, generateLineInfo)
+        WRAP_ATTR("enable_nccl_reductions", Preferences, enableNCCLReductions)
+        WRAP_ATTR("device_select_method", Preferences, deviceSelectMethod)
+        WRAP_ATTR("manual_device_id", Preferences, manualDeviceID)
+        WRAP_ATTR("block_size_select_method", Preferences, blockSizeSelectMethod)
         // **TODO** some weirdness with "opaque types" means this doesn't work
-        WRAP_MEMBER("manual_block_sizes", Preferences, manualBlockSizes)
-        WRAP_MEMBER("constant_cache_overhead", Preferences, constantCacheOverhead);
+        WRAP_ATTR("manual_block_sizes", Preferences, manualBlockSizes)
+        WRAP_ATTR("constant_cache_overhead", Preferences, constantCacheOverhead);
 
     //------------------------------------------------------------------------
     // cuda_backend.State

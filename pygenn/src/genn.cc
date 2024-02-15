@@ -44,7 +44,9 @@ using namespace pybind11::literals;
 // Macros
 //----------------------------------------------------------------------------
 #define WRAP_ENUM(ENUM, VAL) .value(#VAL, ENUM::VAL, DOC(ENUM, VAL))
-
+#define WRAP_METHOD(NAME, CLASS, METH) .def(NAME, &CLASS::METH, DOC(CLASS, METH))
+#define WRAP_NS_METHOD(NAME, NS, CLASS, METH) .def(NAME, &NS::CLASS::METH, DOC(NS, CLASS, METH))
+#define WRAP_NS_ATTR(NAME, NS, CLASS, ATTR) .def_readwrite(NAME, &NS::CLASS::ATTR, DOC(NS, CLASS, ATTR))
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -471,9 +473,10 @@ PYBIND11_MODULE(_genn, m)
         // Methods
         //--------------------------------------------------------------------
         .def("set_param_dynamic", &CurrentSource::setParamDynamic,
-             pybind11::arg("param_name"), pybind11::arg("dynamic") = true)
-        .def("set_var_location", &CurrentSource::setVarLocation)
-        .def("get_var_location", pybind11::overload_cast<const std::string&>(&CurrentSource::getVarLocation, pybind11::const_));
+             pybind11::arg("param_name"), pybind11::arg("dynamic") = true,
+             DOC(CurrentSource, setParamDynamic))
+        WRAP_METHOD("set_var_location", CurrentSource, setVarLocation)
+        WRAP_METHOD("get_var_location", CurrentSource, getVarLocation);
     
     //------------------------------------------------------------------------
     // genn.CustomConnectivityUpdate
@@ -507,12 +510,12 @@ PYBIND11_MODULE(_genn, m)
         //--------------------------------------------------------------------
         .def("set_param_dynamic", &CustomConnectivityUpdate::setParamDynamic,
              pybind11::arg("param_name"), pybind11::arg("dynamic") = true)
-        .def("set_var_location", &CustomConnectivityUpdate::setVarLocation)
-        .def("set_pre_var_location", &CustomConnectivityUpdate::setPreVarLocation)
-        .def("set_post_var_location", &CustomConnectivityUpdate::setPostVarLocation)
-        .def("get_var_location", &CustomConnectivityUpdate::getVarLocation)
-        .def("get_pre_var_location", &CustomConnectivityUpdate::getPreVarLocation)
-        .def("get_post_var_location", &CustomConnectivityUpdate::getPostVarLocation);
+        WRAP_METHOD("set_var_location", CustomConnectivityUpdate, setVarLocation)
+        WRAP_METHOD("set_pre_var_location", CustomConnectivityUpdate, setPreVarLocation)
+        WRAP_METHOD("set_post_var_location", CustomConnectivityUpdate, setPostVarLocation)
+        WRAP_METHOD("get_var_location", CustomConnectivityUpdate, getVarLocation)
+        WRAP_METHOD("get_pre_var_location", CustomConnectivityUpdate, getPreVarLocation)
+        WRAP_METHOD("get_post_var_location", CustomConnectivityUpdate, getPostVarLocation);
 
 
     //------------------------------------------------------------------------
@@ -533,8 +536,8 @@ PYBIND11_MODULE(_genn, m)
         //--------------------------------------------------------------------
         .def("set_param_dynamic", &CustomUpdateBase::setParamDynamic,
              pybind11::arg("param_name"), pybind11::arg("dynamic") = true)
-        .def("set_var_location", &CustomUpdateBase::setVarLocation)
-        .def("get_var_location", &CustomUpdateBase::getVarLocation);
+        WRAP_METHOD("set_var_location", CustomUpdateBase, setVarLocation)
+        WRAP_METHOD("get_var_location", CustomUpdateBase, getVarLocation);
     
     //------------------------------------------------------------------------
     // genn.CustomUpdate
@@ -588,8 +591,8 @@ PYBIND11_MODULE(_genn, m)
         //--------------------------------------------------------------------
         .def("set_param_dynamic", &NeuronGroup::setParamDynamic,
              pybind11::arg("param_name"), pybind11::arg("dynamic") = true)
-        .def("set_var_location", &NeuronGroup::setVarLocation)
-        .def("get_var_location", pybind11::overload_cast<const std::string&>(&NeuronGroup::getVarLocation, pybind11::const_))
+        WRAP_METHOD("set_var_location", NeuronGroup, setVarLocation)
+        WRAP_METHOD("get_var_location", NeuronGroup, getVarLocation)
 
         // **NOTE** we use the 'publicist' pattern to expose some protected methods
         .def("_is_var_queue_required", &NeuronGroupInternal::isVarQueueRequired);
@@ -633,16 +636,16 @@ PYBIND11_MODULE(_genn, m)
         //--------------------------------------------------------------------
         .def("set_wu_param_dynamic", &SynapseGroup::setWUParamDynamic,
              pybind11::arg("param_name"), pybind11::arg("dynamic") = true)
-        .def("get_wu_var_location", &SynapseGroup::getWUVarLocation)
-        .def("set_wu_var_location", &SynapseGroup::setWUVarLocation)
-        .def("get_wu_pre_var_location", &SynapseGroup::getWUPreVarLocation)
-        .def("set_wu_pre_var_location", &SynapseGroup::setWUPreVarLocation)
-        .def("get_wu_post_var_location", &SynapseGroup::getWUPostVarLocation)
-        .def("set_wu_post_var_location", &SynapseGroup::setWUPostVarLocation)
+        WRAP_METHOD("get_wu_var_location", SynapseGroup, getWUVarLocation)
+        WRAP_METHOD("set_wu_var_location", SynapseGroup, setWUVarLocation)
+        WRAP_METHOD("get_wu_pre_var_location", SynapseGroup, getWUPreVarLocation)
+        WRAP_METHOD("set_wu_pre_var_location", SynapseGroup, setWUPreVarLocation)
+        WRAP_METHOD("get_wu_post_var_location", SynapseGroup, getWUPostVarLocation)
+        WRAP_METHOD("set_wu_post_var_location", SynapseGroup, setWUPostVarLocation)
         .def("set_ps_param_dynamic", &SynapseGroup::setPSParamDynamic,
              pybind11::arg("param_name"), pybind11::arg("dynamic") = true)
-        .def("get_ps_var_location", &SynapseGroup::getPSVarLocation)
-        .def("set_ps_var_location", &SynapseGroup::setPSVarLocation);
+        WRAP_METHOD("get_ps_var_location", SynapseGroup, getPSVarLocation)
+        WRAP_METHOD("set_ps_var_location", SynapseGroup, setPSVarLocation);
     
     //------------------------------------------------------------------------
     // genn.NumericValue
@@ -741,21 +744,21 @@ PYBIND11_MODULE(_genn, m)
     //------------------------------------------------------------------------
     pybind11::class_<InitSparseConnectivitySnippet::Base, Snippet::Base, PyInitSparseConnectivitySnippetBase>(m, "InitSparseConnectivitySnippetBase")
         .def(pybind11::init<>())
-        .def("get_row_build_code", &InitSparseConnectivitySnippet::Base::getRowBuildCode)
-        .def("get_col_build_code", &InitSparseConnectivitySnippet::Base::getColBuildCode)
-        .def("get_host_init_code", &InitSparseConnectivitySnippet::Base::getHostInitCode)
-        .def("get_calc_max_row_length_func", &InitSparseConnectivitySnippet::Base::getCalcMaxRowLengthFunc)
-        .def("get_calc_max_col_length_func", &InitSparseConnectivitySnippet::Base::getCalcMaxColLengthFunc)
-        .def("get_calc_kernel_size_func", &InitSparseConnectivitySnippet::Base::getCalcKernelSizeFunc);
+        WRAP_NS_METHOD("get_row_build_code", InitSparseConnectivitySnippet, Base, getRowBuildCode)
+        WRAP_NS_METHOD("get_col_build_code", InitSparseConnectivitySnippet, Base, getColBuildCode)
+        WRAP_NS_METHOD("get_host_init_code", InitSparseConnectivitySnippet, Base, getHostInitCode)
+        WRAP_NS_METHOD("get_calc_max_row_length_func", InitSparseConnectivitySnippet, Base, getCalcMaxRowLengthFunc)
+        WRAP_NS_METHOD("get_calc_max_col_length_func", InitSparseConnectivitySnippet, Base, getCalcMaxColLengthFunc)
+        WRAP_NS_METHOD("get_calc_kernel_size_func", InitSparseConnectivitySnippet, Base, getCalcKernelSizeFunc);
 
     //------------------------------------------------------------------------
     // genn.InitToeplitzConnectivitySnippetBase
     //------------------------------------------------------------------------
     pybind11::class_<InitToeplitzConnectivitySnippet::Base, Snippet::Base, PyInitToeplitzConnectivitySnippetBase>(m, "InitToeplitzConnectivitySnippetBase")
         .def(pybind11::init<>())
-        .def("get_diagonal_build_code", &InitToeplitzConnectivitySnippet::Base::getDiagonalBuildCode)
-        .def("get_calc_max_row_length_func", &InitToeplitzConnectivitySnippet::Base::getCalcMaxRowLengthFunc)
-        .def("get_calc_kernel_size_func", &InitToeplitzConnectivitySnippet::Base::getCalcKernelSizeFunc);
+        WRAP_NS_METHOD("get_diagonal_build_code", InitToeplitzConnectivitySnippet, Base, getDiagonalBuildCode)
+        WRAP_NS_METHOD("get_calc_max_row_length_func", InitToeplitzConnectivitySnippet, Base, getCalcMaxRowLengthFunc)
+        WRAP_NS_METHOD("get_calc_kernel_size_func", InitToeplitzConnectivitySnippet, Base, getCalcKernelSizeFunc);
 
     //------------------------------------------------------------------------
     // genn.InitVarSnippetBase
@@ -763,7 +766,7 @@ PYBIND11_MODULE(_genn, m)
     pybind11::class_<InitVarSnippet::Base, Snippet::Base, PyInitVarSnippetBase>(m, "InitVarSnippetBase")
         .def(pybind11::init<>())
 
-        .def("get_code", &InitVarSnippet::Base::getCode);
+        WRAP_NS_METHOD("get_code", InitVarSnippet, Base, getCode);
 
     //------------------------------------------------------------------------
     // genn.Var
@@ -816,10 +819,10 @@ PYBIND11_MODULE(_genn, m)
     pybind11::class_<CurrentSourceModels::Base, Snippet::Base, PyCurrentSourceModelBase>(m, "CurrentSourceModelBase")
         .def(pybind11::init<>())
 
-        .def("get_vars", &CurrentSourceModels::Base::getVars)
-        .def("get_neuron_var_refs", &CurrentSourceModels::Base::getNeuronVarRefs)
+        WRAP_NS_METHOD("get_vars", CurrentSourceModels, Base, getVars)
+        WRAP_NS_METHOD("get_neuron_var_refs", CurrentSourceModels, Base, getNeuronVarRefs)
 
-        .def("get_injection_code", &CurrentSourceModels::Base::getInjectionCode);
+        WRAP_NS_METHOD("get_injection_code", CurrentSourceModels, Base, getInjectionCode);
 
     //------------------------------------------------------------------------
     // genn.CustomConnectivityUpdateModelBase
@@ -827,16 +830,16 @@ PYBIND11_MODULE(_genn, m)
     pybind11::class_<CustomConnectivityUpdateModels::Base, Snippet::Base, PyCustomConnectivityUpdateModelBase>(m, "CustomConnectivityUpdateModelBase")
         .def(pybind11::init<>())
 
-        .def("get_vars", &CustomConnectivityUpdateModels::Base::getVars)
-        .def("get_pre_vars", &CustomConnectivityUpdateModels::Base::getPreVars)
-        .def("get_post_vars", &CustomConnectivityUpdateModels::Base::getPostVars)
+        WRAP_NS_METHOD("get_vars", CustomConnectivityUpdateModels, Base, getVars)
+        WRAP_NS_METHOD("get_pre_vars", CustomConnectivityUpdateModels, Base, getPreVars)
+        WRAP_NS_METHOD("get_post_vars", CustomConnectivityUpdateModels, Base, getPostVars)
         
-        .def("get_var_refs", &CustomConnectivityUpdateModels::Base::getVarRefs)
-        .def("get_pre_var_refs", &CustomConnectivityUpdateModels::Base::getPreVarRefs)
-        .def("get_post_var_refs", &CustomConnectivityUpdateModels::Base::getPostVarRefs)
+        WRAP_NS_METHOD("get_var_refs", CustomConnectivityUpdateModels, Base, getVarRefs)
+        WRAP_NS_METHOD("get_pre_var_refs", CustomConnectivityUpdateModels, Base, getPreVarRefs)
+        WRAP_NS_METHOD("get_post_var_refs", CustomConnectivityUpdateModels, Base, getPostVarRefs)
         
-        .def("get_row_update_code", &CustomConnectivityUpdateModels::Base::getRowUpdateCode)
-        .def("get_host_update_code", &CustomConnectivityUpdateModels::Base::getHostUpdateCode);
+        WRAP_NS_METHOD("get_row_update_code", CustomConnectivityUpdateModels, Base, getRowUpdateCode)
+        WRAP_NS_METHOD("get_host_update_code", CustomConnectivityUpdateModels, Base, getHostUpdateCode);
     
     //------------------------------------------------------------------------
     // genn.CustomUpdateModelBase
@@ -844,11 +847,11 @@ PYBIND11_MODULE(_genn, m)
     pybind11::class_<CustomUpdateModels::Base, Snippet::Base, PyCustomUpdateModelBase>(m, "CustomUpdateModelBase")
         .def(pybind11::init<>())
         
-        .def("get_vars", &CustomUpdateModels::Base::getVars)
-        .def("get_var_refs", &CustomUpdateModels::Base::getVarRefs)
-        .def("get_extra_global_param_refs", &CustomUpdateModels::Base::getExtraGlobalParamRefs)
+        WRAP_NS_METHOD("get_vars", CustomUpdateModels, Base, getVars)
+        WRAP_NS_METHOD("get_var_refs", CustomUpdateModels, Base, getVarRefs)
+        WRAP_NS_METHOD("get_extra_global_param_refs", CustomUpdateModels, Base, getExtraGlobalParamRefs)
 
-        .def("get_update_code", &CustomUpdateModels::Base::getUpdateCode);
+        WRAP_NS_METHOD("get_update_code", CustomUpdateModels, Base, getUpdateCode);
     
     //------------------------------------------------------------------------
     // genn.NeuronModelBase
@@ -856,14 +859,14 @@ PYBIND11_MODULE(_genn, m)
     pybind11::class_<NeuronModels::Base, Snippet::Base, PyNeuronModelBase>(m, "NeuronModelBase")
         .def(pybind11::init<>())
         
-        .def("get_vars", &NeuronModels::Base::getVars)
+        WRAP_NS_METHOD("get_vars", NeuronModels, Base, getVars)
 
-        .def("get_sim_code", &NeuronModels::Base::getSimCode)
-        .def("get_threshold_condition_code", &NeuronModels::Base::getThresholdConditionCode)
-        .def("get_reset_code", &NeuronModels::Base::getResetCode)
-        .def("get_additional_input_vars", &NeuronModels::Base::getAdditionalInputVars)
+        WRAP_NS_METHOD("get_sim_code", NeuronModels, Base, getSimCode)
+        WRAP_NS_METHOD("get_threshold_condition_code", NeuronModels, Base, getThresholdConditionCode)
+        WRAP_NS_METHOD("get_reset_code", NeuronModels, Base, getResetCode)
+        WRAP_NS_METHOD("get_additional_input_vars", NeuronModels, Base, getAdditionalInputVars)
         
-        .def("is_auto_refractory_required", &NeuronModels::Base::isAutoRefractoryRequired);
+        WRAP_NS_METHOD("is_auto_refractory_required", NeuronModels, Base, isAutoRefractoryRequired);
 
     //------------------------------------------------------------------------
     // genn.PostsynapticModelBase
@@ -871,10 +874,10 @@ PYBIND11_MODULE(_genn, m)
     pybind11::class_<PostsynapticModels::Base, Snippet::Base, PyPostsynapticModelBase>(m, "PostsynapticModelBase")
         .def(pybind11::init<>())
         
-        .def("get_vars", &PostsynapticModels::Base::getVars)
-        .def("get_neuron_var_refs", &PostsynapticModels::Base::getNeuronVarRefs)
+        WRAP_NS_METHOD("get_vars", PostsynapticModels, Base, getVars)
+        WRAP_NS_METHOD("get_neuron_var_refs", PostsynapticModels, Base, getNeuronVarRefs)
         
-        .def("get_sim_code", &PostsynapticModels::Base::getSimCode);
+        WRAP_NS_METHOD("get_sim_code", PostsynapticModels, Base, getSimCode);
 
     //------------------------------------------------------------------------
     // genn.WeightUpdateModelBase
@@ -882,22 +885,22 @@ PYBIND11_MODULE(_genn, m)
     pybind11::class_<WeightUpdateModels::Base, Snippet::Base, PyWeightUpdateModelBase>(m, "WeightUpdateModelBase")
         .def(pybind11::init<>())
         
-        .def("get_pre_spike_syn_code", &WeightUpdateModels::Base::getPreSpikeSynCode)
-        .def("get_pre_event_syn_code", &WeightUpdateModels::Base::getPreEventSynCode)
-        .def("get_post_event_syn_code", &WeightUpdateModels::Base::getPostEventSynCode)
-        .def("get_post_spike_syn_code", &WeightUpdateModels::Base::getPostSpikeSynCode)
-        .def("get_synapse_dynamics_code", &WeightUpdateModels::Base::getSynapseDynamicsCode)
-        .def("get_pre_event_threshold_condition_code", &WeightUpdateModels::Base::getPreEventThresholdConditionCode)
-        .def("get_post_event_threshold_condition_code", &WeightUpdateModels::Base::getPostEventThresholdConditionCode)
-        .def("get_pre_spike_code", &WeightUpdateModels::Base::getPreSpikeCode)
-        .def("get_post_spike_code", &WeightUpdateModels::Base::getPostSpikeCode)
-        .def("get_pre_dynamics_code", &WeightUpdateModels::Base::getPreDynamicsCode)
-        .def("get_post_dynamics_code", &WeightUpdateModels::Base::getPostDynamicsCode)
-        .def("get_vars", &WeightUpdateModels::Base::getVars)
-        .def("get_pre_vars", &WeightUpdateModels::Base::getPreVars)
-        .def("get_post_vars", &WeightUpdateModels::Base::getPostVars)
-        .def("get_pre_neuron_var_refs", &WeightUpdateModels::Base::getPreNeuronVarRefs)
-        .def("get_post_neuron_var_refs", &WeightUpdateModels::Base::getPostNeuronVarRefs);
+        WRAP_NS_METHOD("get_pre_spike_syn_code", WeightUpdateModels, Base, getPreSpikeSynCode)
+        WRAP_NS_METHOD("get_pre_event_syn_code", WeightUpdateModels, Base, getPreEventSynCode)
+        WRAP_NS_METHOD("get_post_event_syn_code", WeightUpdateModels, Base, getPostEventSynCode)
+        WRAP_NS_METHOD("get_post_spike_syn_code", WeightUpdateModels, Base, getPostSpikeSynCode)
+        WRAP_NS_METHOD("get_synapse_dynamics_code", WeightUpdateModels, Base, getSynapseDynamicsCode)
+        WRAP_NS_METHOD("get_pre_event_threshold_condition_code", WeightUpdateModels, Base, getPreEventThresholdConditionCode)
+        WRAP_NS_METHOD("get_post_event_threshold_condition_code", WeightUpdateModels, Base, getPostEventThresholdConditionCode)
+        WRAP_NS_METHOD("get_pre_spike_code", WeightUpdateModels, Base, getPreSpikeCode)
+        WRAP_NS_METHOD("get_post_spike_code", WeightUpdateModels, Base, getPostSpikeCode)
+        WRAP_NS_METHOD("get_pre_dynamics_code", WeightUpdateModels, Base, getPreDynamicsCode)
+        WRAP_NS_METHOD("get_post_dynamics_code", WeightUpdateModels, Base, getPostDynamicsCode)
+        WRAP_NS_METHOD("get_vars", WeightUpdateModels, Base, getVars)
+        WRAP_NS_METHOD("get_pre_vars", WeightUpdateModels, Base, getPreVars)
+        WRAP_NS_METHOD("get_post_vars", WeightUpdateModels, Base, getPostVars)
+        WRAP_NS_METHOD("get_pre_neuron_var_refs", WeightUpdateModels, Base, getPreNeuronVarRefs)
+        WRAP_NS_METHOD("get_post_neuron_var_refs", WeightUpdateModels, Base, getPostNeuronVarRefs);
 
     //------------------------------------------------------------------------
     // genn.SparseConnectivityInit
@@ -955,12 +958,12 @@ PYBIND11_MODULE(_genn, m)
     // genn.PreferencesBase
     //------------------------------------------------------------------------
     pybind11::class_<CodeGenerator::PreferencesBase>(m, "PreferencesBase")
-        .def_readwrite("optimize_code", &CodeGenerator::PreferencesBase::optimizeCode)
-        .def_readwrite("debug_code", &CodeGenerator::PreferencesBase::debugCode)
-        .def_readwrite("genn_log_level", &CodeGenerator::PreferencesBase::gennLogLevel)
-        .def_readwrite("code_generator_log_level", &CodeGenerator::PreferencesBase::codeGeneratorLogLevel)
-        .def_readwrite("transpiler_log_level", &CodeGenerator::PreferencesBase::transpilerLogLevel)
-        .def_readwrite("runtime_log_level", &CodeGenerator::PreferencesBase::runtimeLogLevel);
+        WRAP_NS_ATTR("optimize_code", CodeGenerator, PreferencesBase, optimizeCode)
+        WRAP_NS_ATTR("debug_code", CodeGenerator, PreferencesBase, debugCode)
+        WRAP_NS_ATTR("genn_log_level", CodeGenerator, PreferencesBase, gennLogLevel)
+        WRAP_NS_ATTR("code_generator_log_level", CodeGenerator, PreferencesBase, codeGeneratorLogLevel)
+        WRAP_NS_ATTR("transpiler_log_level", CodeGenerator, PreferencesBase, transpilerLogLevel)
+        WRAP_NS_ATTR("runtime_log_level", CodeGenerator, PreferencesBase, runtimeLogLevel);
 
     //------------------------------------------------------------------------
     // genn.BackendBase
@@ -968,19 +971,7 @@ PYBIND11_MODULE(_genn, m)
     pybind11::class_<CodeGenerator::BackendBase>(m, "BackendBase");
     
     //------------------------------------------------------------------------
-    // genn.BackendBase
+    // genn.ModelSpecMerged
     //------------------------------------------------------------------------
     pybind11::class_<CodeGenerator::ModelSpecMerged>(m, "ModelSpecMerged");
-    
-    //------------------------------------------------------------------------
-    // genn.MemAlloc
-    //------------------------------------------------------------------------
-    pybind11::class_<CodeGenerator::MemAlloc>(m, "MemAlloc")
-        .def_property_readonly("host_bytes", &CodeGenerator::MemAlloc::getHostBytes)
-        .def_property_readonly("device_bytes", &CodeGenerator::MemAlloc::getDeviceBytes)
-        .def_property_readonly("zero_copy_bytes", &CodeGenerator::MemAlloc::getZeroCopyBytes)
-        .def_property_readonly("host_mbytes", &CodeGenerator::MemAlloc::getHostMBytes)
-        .def_property_readonly("device_mbytes", &CodeGenerator::MemAlloc::getDeviceMBytes)
-        .def_property_readonly("zero_copy_mbytes", &CodeGenerator::MemAlloc::getZeroCopyMBytes);
-
 }
