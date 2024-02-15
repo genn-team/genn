@@ -362,40 +362,6 @@ static const char *__doc_CodeGenerator_EnvironmentGroupMergedField = R"doc()doc"
 
 static const char *__doc_CodeGenerator_GroupMerged = R"doc()doc";
 
-static const char *__doc_CodeGenerator_MemAlloc = R"doc()doc";
-
-static const char *__doc_CodeGenerator_MemAlloc_MemAlloc = R"doc()doc";
-
-static const char *__doc_CodeGenerator_MemAlloc_device = R"doc()doc";
-
-static const char *__doc_CodeGenerator_MemAlloc_getDeviceBytes = R"doc()doc";
-
-static const char *__doc_CodeGenerator_MemAlloc_getDeviceMBytes = R"doc()doc";
-
-static const char *__doc_CodeGenerator_MemAlloc_getHostBytes = R"doc()doc";
-
-static const char *__doc_CodeGenerator_MemAlloc_getHostMBytes = R"doc()doc";
-
-static const char *__doc_CodeGenerator_MemAlloc_getZeroCopyBytes = R"doc()doc";
-
-static const char *__doc_CodeGenerator_MemAlloc_getZeroCopyMBytes = R"doc()doc";
-
-static const char *__doc_CodeGenerator_MemAlloc_host = R"doc()doc";
-
-static const char *__doc_CodeGenerator_MemAlloc_hostDevice = R"doc()doc";
-
-static const char *__doc_CodeGenerator_MemAlloc_m_DeviceBytes = R"doc()doc";
-
-static const char *__doc_CodeGenerator_MemAlloc_m_HostBytes = R"doc()doc";
-
-static const char *__doc_CodeGenerator_MemAlloc_m_ZeroCopyBytes = R"doc()doc";
-
-static const char *__doc_CodeGenerator_MemAlloc_operator_iadd = R"doc()doc";
-
-static const char *__doc_CodeGenerator_MemAlloc_zero = R"doc()doc";
-
-static const char *__doc_CodeGenerator_MemAlloc_zeroCopy = R"doc()doc";
-
 static const char *__doc_CodeGenerator_ModelSpecMerged = R"doc()doc";
 
 static const char *__doc_CodeGenerator_NeuronInitGroupMerged = R"doc()doc";
@@ -441,10 +407,6 @@ static const char *__doc_CodeGenerator_SynapseDynamicsGroupMerged = R"doc()doc";
 static const char *__doc_CodeGenerator_SynapseInitGroupMerged = R"doc()doc";
 
 static const char *__doc_CodeGenerator_SynapseSparseInitGroupMerged = R"doc()doc";
-
-static const char *__doc_CodeGenerator_operator_lshift = R"doc()doc";
-
-static const char *__doc_CodeGenerator_operator_rshift = R"doc()doc";
 
 static const char *__doc_CurrentSource = R"doc()doc";
 
@@ -2834,7 +2796,8 @@ This is the same model as NeuronModels::Izhikevich but parameters are defined as
 "variables" in order to allow users to provide individual values for each
 individual neuron instead of fixed values for all neurons across the population.
 
-Accordingly, the model has the Variables:
+Accordingly, the model has the Variables
+
 - ``V`` - Membrane potential
 - ``U`` - Membrane recovery variable
 - ``a`` - time scale of U
@@ -2979,10 +2942,12 @@ the 1-dimensional map form used in \cite nowotny2005self :
 The `RulkovMap` type only works as intended for the single time step size of `DT`= 0.5.
 
 The `RulkovMap` type has 2 variables:
+
 - ``V`` - the membrane potential
 - ``preV`` - the membrane potential at the previous time step
 
 and it has 4 parameters:
+
 - ``Vspike`` - determines the amplitude of spikes, typically -60mV
 - ``alpha`` - determines the shape of the iteration function, typically :math:`\alpha `= 3
 - ``y`` - "shift / excitation" parameter, also determines the iteration function,originally, y= -2.468
@@ -3180,10 +3145,15 @@ static const char *__doc_PostsynapticModels_DeltaCurr_getSimCode = R"doc()doc";
 
 static const char *__doc_PostsynapticModels_ExpCond =
 R"doc(Exponential decay with synaptic input treated as a conductance value.
-This model has no variables, two parameters and a variable reference
+This model has no variables, two parameters:
+
 - ``tau`` : Decay time constant
 - ``E``   : Reversal potential
+
+and a variable reference:
+
 - ``V``   : Is a reference to the neuron's membrane voltage
+
 ``tau`` is used by the derived parameter ``expdecay`` which returns expf(-dt/tau).)doc";
 
 static const char *__doc_PostsynapticModels_ExpCond_getDerivedParams = R"doc()doc";
@@ -3199,6 +3169,7 @@ static const char *__doc_PostsynapticModels_ExpCond_getSimCode = R"doc()doc";
 static const char *__doc_PostsynapticModels_ExpCurr =
 R"doc(Exponential decay with synaptic input treated as a current value.
 This model has no variables and a single parameter:
+
 - ``tau`` : Decay time constant)doc";
 
 static const char *__doc_PostsynapticModels_ExpCurr_getDerivedParams = R"doc()doc";
@@ -4492,10 +4463,12 @@ If pre or postsynaptic spike at t: :math:` g_{raw}(t+dt) = g_0 + (g_{raw}(t)-g_0
 -->
 
 The model has 2 variables:
+
 - ``g:`` conductance of ``scalar`` type
 - ``gRaw:`` raw conductance of ``scalar`` type
 
 Parameters are (compare to the figure above):
+
 - ``tLrn:`` Time scale of learning changes
 - ``tChng:`` Width of learning window
 - ``tDecay:`` Time scale of synaptic strength decay
@@ -4529,9 +4502,11 @@ In a graded synapse, the conductance is updated gradually with the rule:
 
 whenever the membrane potential :math:`V` is larger than the threshold :math:`E_{pre}`.
 The model has 1 variable:
+
 - ``g:`` conductance of ``scalar`` type
 
 The parameters are:
+
 - ``Epre:`` Presynaptic threshold potential
 - ``Vslope:`` Activation slope of graded release
 
