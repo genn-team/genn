@@ -145,7 +145,7 @@ private:
         for(const auto &v : archetypeAdaptor.getDefs()) {
             // If var is located on the host
             const auto loc = archetypeAdaptor.getLoc(v.name);
-            if (loc & VarLocation::HOST) {
+            if (loc & VarLocationAttribute::HOST) {
                 // Add pointer field to allow user code to access
                 const auto resolvedType = v.type.resolve(getTypeContext());
                 const auto pointerType = resolvedType.createPointer();

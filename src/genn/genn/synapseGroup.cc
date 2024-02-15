@@ -253,15 +253,15 @@ bool SynapseGroup::isPrevPostSpikeEventTimeRequired() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isZeroCopyEnabled() const
 {
-    if(m_OutputLocation & VarLocation::ZERO_COPY) {
+    if(m_OutputLocation & VarLocationAttribute::ZERO_COPY) {
         return true;
     }
 
-    if(m_DendriticDelayLocation & VarLocation::ZERO_COPY) {
+    if(m_DendriticDelayLocation & VarLocationAttribute::ZERO_COPY) {
         return true;
     }
     
-    if(m_SparseConnectivityLocation & VarLocation::ZERO_COPY) {
+    if(m_SparseConnectivityLocation & VarLocationAttribute::ZERO_COPY) {
         return true;
     }
 

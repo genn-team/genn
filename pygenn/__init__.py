@@ -10,7 +10,8 @@ from ._genn import (create_pre_var_ref, create_post_var_ref,
                     CustomUpdateWU, CustomUpdateVarAccess, NeuronGroup,
                     ParallelismHint,PlogSeverity, SynapseGroup, SynapseMatrixType, 
                     SynapseMatrixConnectivity, SynapseMatrixWeight, VarAccess, 
-                    VarAccessDim, VarAccessMode, VarAccessModeAttribute, VarLocation)
+                    VarAccessDim, VarAccessMode, VarAccessModeAttribute,
+                    VarLocation, VarLocationAttribute)
 from .genn_model import (GeNNModel, create_neuron_model,
                          create_postsynaptic_model,
                          create_weight_update_model,
@@ -39,7 +40,8 @@ __all__ = ["create_current_source_model", "create_custom_update_model",
            "NeuronGroup", "ParallelismHint", "PlogSeverity", "SynapseGroup",
            "SynapseMatrixType", "SynapseMatrixConnectivity",
            "SynapseMatrixWeight", "VarAccess", "VarAccessDim",
-           "VarAccessMode", "VarAccessModeAttribute", "VarLocation"]
+           "VarAccessMode", "VarAccessModeAttribute",
+           "VarLocation", "VarLocationAttribute"]
 
 if sys.version_info >= (3, 8):
     from importlib import metadata
