@@ -35,7 +35,7 @@ from ._genn import (generate_code, init_logging, CurrentSource,
                     VarAccessMode, VarInit, VarLocation, VarRef, VarReference,
                     WeightUpdateInit, WeightUpdateModelBase, WUVarReference)
 
-from .runtime import Runtime
+from ._runtime import Runtime
 from .genn_groups import (CurrentSourceMixin, CustomConnectivityUpdateMixin,
                           CustomUpdateMixin, CustomUpdateWUMixin,
                           NeuronGroupMixin, SynapseGroupMixin)
