@@ -346,14 +346,14 @@ class GeNNModel(ModelSpecInternal):
         Args:
             pop_name:       unique name
             num_neurons:    number of neurons
-            neuron:         neuron model either as a string referencing a built in model 
+            neuron:         neuron model either as a string referencing a built-in model 
                             (see :mod:`.neuron_models`) or an instance of :class:`.NeuronModelBase`
                             (for example returned by :func:`.create_neuron_model`)
             params:         parameter values for the neuron model (see `Parameters`_)
             vars:           initial variable values or initialisers 
                             for the neuron model (see `Variables`_)
 
-        For example, a population of 10 neurons using the built in Izhikevich model and 
+        For example, a population of 10 neurons using the built-in Izhikevich model and 
         the standard set of 'tonic spiking' parameters could be added to a model as follows:
 
         ..  code-block:: python
@@ -451,7 +451,7 @@ class GeNNModel(ModelSpecInternal):
 
         Args:
             cs_name:                unique name
-            current_source_model:   current source model either as a string referencing a built in model 
+            current_source_model:   current source model either as a string referencing a built-in model 
                                     (see :mod:`.current_source_models`) or an instance of :class:`.CurrentSourceModelBase`
                                     (for example returned by :func:`.create_current_source_model`)
             pop:                    neuron population to inject current into
@@ -503,7 +503,7 @@ class GeNNModel(ModelSpecInternal):
             cu_name:                unique name
             group_name:             name of the 'custom update group' to include this update in. 
                                     All custom updates in the same group are executed simultaneously.
-            custom_update_model:    custom update model either as a string referencing a built in model 
+            custom_update_model:    custom update model either as a string referencing a built-in model 
                                     (see :mod:`.custom_update_models`) or an instance of 
                                     :class:`.CustomUpdateModelBase`
                                     (for example returned by :func:`.create_custom_update_model`)
@@ -552,7 +552,7 @@ class GeNNModel(ModelSpecInternal):
             group_name:                 name of the 'custom update group' to include this update in. 
                                         All custom updates in the same group are executed simultaneously.
             syn_group:                  Synapse group to attach custom connectivity update to
-            custom_conn_update_model:   custom connectivity update model either as a string referencing a built in model 
+            custom_conn_update_model:   custom connectivity update model either as a string referencing a built-in model 
                                         (see :mod:`.custom_connectivity_update_models`) or an instance of 
                                         :class:`.CustomConnectivityUpdateModelBaseUpdateModelBase`
                                         (for example returned by :func:`.create_custom_connectivity_update_model`)
@@ -790,12 +790,12 @@ def init_var(snippet: Union[InitVarSnippetBase, str],
      
     Args:
         snippet:        variable init snippet, either as a string referencing
-                        a built in snipept (see :mod:`.init_var_snippets`) 
+                        a built-in snippet (see :mod:`.init_var_snippets`) 
                         or an instance of :class:`.InitVarSnippetBase` 
                         (for example returned by :func:`.create_var_init_snippet`)
         params:         parameter values for the variable init snippet (see `Parameters`_)
     
-    For example, the built in model could be initialised to initialise a variable 
+    For example, the built-in model "Normal" could be used to initialise a variable 
     by sampling from the normal distribution with a mean of 0 and a standard deviation of 1:
 
     ..  code-block:: python
@@ -815,12 +815,12 @@ def init_sparse_connectivity(snippet: Union[InitSparseConnectivitySnippetBase, s
      
     Args:
         snippet:        sparse connectivity init snippet, either as a string referencing
-                        a built in snipept (see :mod:`.init_sparse_connectivity_snippets`) 
+                        a built-in snippet (see :mod:`.init_sparse_connectivity_snippets`) 
                         or an instance of :class:`.InitSparseConnectivitySnippetBase` 
                         (for example returned by :func:`.create_sparse_connect_init_snippet`)
         params:         parameter values for the sparse connectivity init snippet (see `Parameters`_)
     
-    For example, the built in model could be initialised to generate connectivity 
+    For example, the built-in model could be initialised to generate connectivity 
     where each pair of pre and postsynaptic neurons is connected with a probability of 0.1:
 
     ..  code-block:: python
@@ -840,7 +840,7 @@ def init_postsynaptic(snippet: Union[PostsynapticModelBase, str],
     variable initialisers and variable references
 
     Args:
-        snippet:        postsynaptic model either as a string referencing a built in model 
+        snippet:        postsynaptic model either as a string referencing a built-in model 
                         (see :mod:`.postsynaptic_models_models`) or an instance of 
                         :class:`.PostsynapticModelBase` (for example returned 
                         by :func:`.create_postsynaptic_model`)
@@ -851,7 +851,7 @@ def init_postsynaptic(snippet: Union[PostsynapticModelBase, str],
                         typically created using :func:`.create_var_ref`
                         (see `Variables references`_)
 
-    For example, the built in conductance model with exponential 
+    For example, the built-in conductance model with exponential 
     current shaping could be initialised as follows:
 
     ..  code-block:: python
@@ -880,7 +880,7 @@ def init_weight_update(snippet, params: PopParamVals = {}, vars: PopVarVals = {}
     variable initialisers and variable references
 
     Args:
-        snippet:        weight update model either as a string referencing a built in model 
+        snippet:        weight update model either as a string referencing a built-in model 
                         (see :mod:`.weight_update_models`) or an instance of 
                         :class:`.WeightUpdateModelBase` (for example returned 
                         by :func:`.create_weight_update_model`)
@@ -898,7 +898,7 @@ def init_weight_update(snippet, params: PopParamVals = {}, vars: PopVarVals = {}
                         typically created using :func:`.create_var_ref`
                         (see `Variables references`_)
 
-    For example, the built in static pulse model with 
+    For example, the built-in static pulse model with 
     constant weights could be initialised as follows:
 
     ..  code-block:: python
@@ -929,12 +929,12 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, params={}):
      
     Args:
         snippet:        toeplitz connectivity init snippet, either as a string referencing
-                        a built in snipept (see :mod:`.init_toeplitz_connectivity_snippets`) 
+                        a built-in snippet (see :mod:`.init_toeplitz_connectivity_snippets`) 
                         or an instance of :class:`.InitToeplitzConnectivitySnippetBase` 
                         (for example returned by :func:`.create_toeplitz_connect_init_snippet`)
         params:         parameter values for the toeplitz connectivity init snippet (see `Parameters`_)
     
-    For example, the built in model could be initialised to generate 2D convolutional 
+    For example, the built-in model could be initialised to generate 2D convolutional 
     connectivity with a :math:`3 \times 3` kernel, a :math:`64 \times 64 \times 1` input
     and a :math:`62 \times 62 \times 1` input:
 
@@ -1047,7 +1047,7 @@ def create_neuron_model(class_name: str, params: ModelParamsType = None,
     Within all of the code strings, the variables, parameters,
     derived parameters, additional input variables and extra global
     parameters defined in this model can all be referred to be name.
-    Additionally, the code may refer to the following built in read-only variables
+    Additionally, the code may refer to the following built-in read-only variables
 
     - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
     - ``Isyn`` which represents the total incoming synaptic input.
@@ -1160,7 +1160,7 @@ def create_postsynaptic_model(class_name, params=None, param_names=None,
     Within all of the code strings, the variables, parameters,
     derived parameters and extra global parameters defined in this model
     can all be referred to be name. Additionally, the code may refer to the
-    following built in read-only variables:
+    following built-in read-only variables:
 
     - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
     - ``id`` which represents a neurons index within a population (starting from zero)
@@ -1547,7 +1547,7 @@ def create_current_source_model(class_name: str, params: ModelParamsType = None,
     Within the ``injection_code`` code string, the variables, parameters,
     derived parameters, neuron variable references and extra global
     parameters defined in this model can all be referred to be name.
-    Additionally, the code may refer to the following built in read-only variables
+    Additionally, the code may refer to the following built-in read-only variables
 
     - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
     - ``id`` which represents a neurons index within a population (starting from zero)
@@ -1619,7 +1619,7 @@ def create_custom_update_model(class_name: str, params: ModelParamsType = None,
     Within the ``update_code`` code string, the variables, parameters,
     derived parameters, variable references, extra global parameters 
     and extra global parameter references defined in this model can all be referred to be name.
-    Additionally, the code may refer to the following built in read-only variables
+    Additionally, the code may refer to the following built-in read-only variables
 
     - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
 
@@ -1901,7 +1901,7 @@ def create_var_init_snippet(class_name: str, params: ModelParamsType = None,
     """Creates a new variable initialisation snippet
     Within the ``var_init_code``, the parameters, derived parameters and
     extra global parameters defined in this snippet can all be referred to be name.
-    Additionally, the code may refer to the following built in read-only variables
+    Additionally, the code may refer to the following built-in read-only variables
 
     - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
 
@@ -1972,7 +1972,7 @@ def create_sparse_connect_init_snippet(class_name: str, params=None,
     r"""Creates a new sparse connectivity initialisation snippet
     Within the code strings, the parameters, derived parameters and
     extra global parameters defined in this snippet can all be referred to be name.
-    Additionally, the code may refer to the following built in read-only variables
+    Additionally, the code may refer to the following built-in read-only variables
     
     - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
     - ``num_pre`` which represents the number of presynaptic neurons
@@ -2075,7 +2075,7 @@ def create_toeplitz_connect_init_snippet(class_name: str, params: ModelParamsTyp
     snippet of code specified using the `diagonal_build_code``.
     Within the code strings, the parameters, derived parameters and
     extra global parameters defined in this snippet can all be referred to be name.
-    Additionally, the code may refer to the following built in read-only variables
+    Additionally, the code may refer to the following built-in read-only variables
     
     - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
     - ``num_pre`` which represents the number of presynaptic neurons
