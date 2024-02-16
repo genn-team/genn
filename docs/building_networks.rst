@@ -7,7 +7,7 @@ Building networks
 The model
 ---------
 A network model is defined as follows:
-A :class:`.GeNNModel` must be created with a name and a default precision (see \ref floatPrecision)}:
+A :class:`.GeNNModel` must be created with a default precision (see \ref floatPrecision) and a name:
 
 ..  code-block:: python
 
@@ -22,7 +22,7 @@ For example, the single-threaded CPU backend could be manually selected with:
     model = GeNNModel("float", "YourModelName", 
                       backend="single_threaded_cpu")
 
-When running models on a GPU, smaller models may not fully occupy the device. In some scenerios such as gradient-based training and parameter sweeping,
+When running models on a GPU, smaller models may not fully occupy the device. In some scenarios such as gradient-based training and parameter sweeping,
 this can be overcome by runing multiple copies of the same model at the same time (batching in Machine Learning speak).
 Batching can be enabled on a GeNN model with:
 
@@ -35,11 +35,18 @@ Whether state variables are duplicated or shared is controlled by the :class:`.V
 associated with each variable. Please see TODO for more details.
 
 Additionally, any preferences exposed by the backend can be configured here. 
-For example, the CUDA backend allows you to select which CUDA device to use via the manual_device_id
+For example, the CUDA backend allows you to select which CUDA device to use via the manual_device_id:
+
+.. code-block:: python
+
+   model = GeNNModel("float", "YourModelName",
+                    backend="cuda", manual_device_id=0)
 
 -----------
 Populations
 -----------
+
+Populations formalise the concept of groups of neurons or synapses that are functionally related or a practical grouping, e.g. a brain region in a neuroscience model or a layer in a machine learning context.
 
 Parameters
 ----------
@@ -49,9 +56,10 @@ Parameters are initialised to constant numeric values which are homogeneous acro
 
     ini = {"m": 0.0529324, ...}
 
-They are very efficient to access from models as their values are either hard-coded into the kernels 
+They are very efficient to access from models as their values are either hard-coded into the backend code 
 or, on the GPU, delivered via high-performance constant cache.
-However 
+However, they can only be used if literally no changes are needed for the entire simulation and all members of
+the population have the exact same parameter value.
 
 Extra global parameters
 -----------------------
@@ -63,25 +71,26 @@ TODO
 
 Variables
 ----------
-Variables can be initialised in many ways.
-By using the GPU to fill them with a constant value:
+Variables contain values that are individual to the members of a population and can change over time. They can be initialised in many ways. The initialisation is configured through a Python dictionary that is then passed to :meth:`.GeNNModel.add_neuron_population` or :meth:`.GeNNModel.add_synapse_population` which create the populations.
+
+To initialise variables one can use the backend, e.g. GPU, to fill them with a constant value:
 
 ..  code-block:: python
 
     ini = {"m": 0.0529324, ...}
 
-by copying in a sequence of values from Python:
+or copy a sequence of values from Python:
 
 ..  code-block:: python
 
     ini = {"m": np.arange(400.0), ...}
 
-or by using a variable initialisation snippet configured using the following function:
+or use a variable initialisation snippet returned by the following function:
 
 .. autofunction:: pygenn.init_var
     :noindex:
 
-and then used in the dictionary the same way:
+The resulting initialisation snippet can then be used in the dictionary in the usual way:
 
 ..  code-block:: python
 
@@ -89,7 +98,7 @@ and then used in the dictionary the same way:
 
 Variables references
 --------------------
-As well as variables and parameters, various types of model have variable references which are used to reference variables belonging to other populations.
+As well as variables and parameters, various types of models have variable references which are used to reference variables belonging to other populations.
 For example, postsynaptic update models can reference variables in the postsynaptic neuron model and custom updates are 'attached' to other populations based on their variable references.
 
 A variable reference called R could be assigned to various types of variable using the following syntax:
