@@ -292,5 +292,5 @@ setup(
                       "importlib-metadata>=1.0;python_version<'3.8'"],
     extras_require={
         "doc": ["sphinx", "sphinx-gallery", "sphinx-argparse"],
-        "userproject": ["mnist", "scipy", "matplotlib"],
+        "userproject": ["mnist", "tqdm", "scipy", "matplotlib"],
         "test": ["bitarray", "pytest", "flaky", "pytest-cov"]})
