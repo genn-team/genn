@@ -131,22 +131,12 @@ Once you have defined *how* your variables are going to be initialised you need 
 By default memory is allocated for variables on both the GPU and the host.
 However, the following alternative 'variable locations' are available:
 
-.. autoattribute:: .VarLocation.DEVICE
-    :noindex:
-.. autoattribute:: .VarLocation.HOST_DEVICE
-    :noindex:
-.. autoattribute:: .VarLocation.HOST_DEVICE_ZERO_COPY
+.. autoclass:: pygenn.VarLocation
     :noindex:
 
 Note, 'Zero copy' memory is only supported on newer embedded systems such as
  the Jetson TX1 where there is no physical seperation between GPU and host memory and 
  thus the same physical of memory can be shared between them. 
-
-..
-    TODO into enum
-    - VarLocation::DEVICE - Variables are only allocated on the GPU, saving memory but meaning that they can't easily be copied to the host - best for internal state variables.
-    - VarLocation::HOST_DEVICE - Variables are allocated on both the GPU and the host  - the default.
-    - VarLocation::HOST_DEVICE_ZERO_COPY - Variables are allocated as 'zero-copy' memory accessible to the host and GPU - useful on devices such as Jetson TX1 where physical memory is shared between the GPU and CPU.
 
 Neuron populations
 ------------------

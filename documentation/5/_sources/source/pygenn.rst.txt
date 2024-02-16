@@ -97,6 +97,14 @@ pygenn.postsynaptic\_models module
    :undoc-members:
    :show-inheritance:
 
+pygenn.runtime module
+---------------------
+
+.. automodule:: pygenn.runtime
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pygenn.single\_threaded\_cpu\_backend module
 --------------------------------------------
 
