@@ -144,16 +144,6 @@ const EnvironmentLibrary::Library doubleRandomFunctions = {
     {"gennrand_binomial", {Type::ResolvedType::createFunction(Type::Uint32, {Type::Uint32, Type::Double}), "std::binomial_distribution<unsigned int>($(0), $(1))(hostRNG)"}},
 };
 
-/*{,
-{"frexp", "frexpf"},    // pointer arguments
-{"modf", "modff"},      // pointer arguments
-{"scalbln", "scalblnf"},    // long type
-{"lround", "lroundf"},  // long return type
-{"lrint", "lrintf"},    // long return type
-{"remquo", "remquof"},  // pointer arguments
-*/
-//min, max, printf
-
 //---------------------------------------------------------------------------
 // GeNN::CodeGenerator::StandardLibrary::FunctionTypes
 //---------------------------------------------------------------------------
