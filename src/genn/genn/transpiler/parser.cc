@@ -664,10 +664,15 @@ Statement::StatementPtr parseExpressionStatement(ParserState &parserState)
 {
     //  expression-statement ::=
     //      expression? ";"
-    auto expression = parseExpression(parserState);
+    if(parserState.match(Token::Type::SEMICOLON)) {
+        return std::make_unique<Statement::Expression>(nullptr);
+    }
+    else {
+        auto expression = parseExpression(parserState);
     
-    parserState.consume(Token::Type::SEMICOLON, "Expect ';' after expression");
-    return std::make_unique<Statement::Expression>(std::move(expression));
+        parserState.consume(Token::Type::SEMICOLON, "Expect ';' after expression");
+        return std::make_unique<Statement::Expression>(std::move(expression));
+    }
 }
 
 Statement::StatementPtr parseSelectionStatement(ParserState &parserState)
@@ -710,6 +715,7 @@ Statement::StatementPtr parseIterationStatement(ParserState &parserState)
     //      "for" statement
     //      "for" "(" expression? ";" expression? ";" expression? ")" statement
     //      "for" "(" declaration expression? ";" expression? ")" statement
+    //      "for_each_synapse" statement
 
     // If this is a while statement
     if(parserState.previous().type == Token::Type::WHILE) {
@@ -734,8 +740,9 @@ Statement::StatementPtr parseIterationStatement(ParserState &parserState)
     }
     // Otherwise, if this is a for_each_synapse statement
     else if(parserState.previous().type == Token::Type::FOR_EACH_SYNAPSE) {
+        const auto forEachSynapse = parserState.previous();
         auto body = parseStatement(parserState);
-        return std::make_unique<Statement::ForEachSynapse>(parserState.previous(),
+        return std::make_unique<Statement::ForEachSynapse>(forEachSynapse,
                                                            std::move(body));
     }
     // Otherwise, it's a for statement
