@@ -22,6 +22,10 @@ using namespace GeNN::Transpiler;
 //--------------------------------------------------------------------------
 namespace
 {
+const EnvironmentLibrary::Library backendFunctions = {
+    {"clz", {Type::ResolvedType::createFunction(Type::Int32, {Type::Uint32}), "gennCLZ($(0))"}},
+};
+
 //--------------------------------------------------------------------------
 // Timer
 //--------------------------------------------------------------------------
@@ -198,7 +202,8 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     CodeStream neuronUpdate(neuronUpdateStream);
 
     // Begin environment with standard library
-    EnvironmentLibrary neuronUpdateEnv(neuronUpdate, StandardLibrary::getMathsFunctions());
+    EnvironmentLibrary backendEnv(neuronUpdate, backendFunctions);
+    EnvironmentLibrary neuronUpdateEnv(backendEnv, StandardLibrary::getMathsFunctions());
 
     neuronUpdateEnv.getStream() << "void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
     if(modelMerged.getModel().isRecordingInUse()) {
@@ -410,7 +415,8 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
     CodeStream synapseUpdate(synapseUpdateStream);
 
     // Begin environment with standard library
-    EnvironmentLibrary synapseUpdateEnv(synapseUpdate, StandardLibrary::getMathsFunctions());
+    EnvironmentLibrary backendEnv(synapseUpdate, backendFunctions);
+    EnvironmentLibrary synapseUpdateEnv(backendEnv, StandardLibrary::getMathsFunctions());
 
     synapseUpdateEnv.getStream() << "void updateSynapses(" << modelMerged.getModel().getTimePrecision().getName() << " t)";
     {
@@ -624,7 +630,8 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     CodeStream customUpdate(customUpdateStream);
     
     // Begin environment with standard library
-    EnvironmentLibrary customUpdateEnv(customUpdate, StandardLibrary::getMathsFunctions());
+    EnvironmentLibrary backendEnv(customUpdate, backendFunctions);
+    EnvironmentLibrary customUpdateEnv(backendEnv, StandardLibrary::getMathsFunctions());
 
     // Loop through custom update groups
     for(const auto &g : customUpdateGroups) {
@@ -945,8 +952,8 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
     // Begin environment with RNG library and standard library
     EnvironmentLibrary rngEnv(init, StandardLibrary::getHostRNGFunctions(modelMerged.getModel().getPrecision()));
-    EnvironmentLibrary initEnv(rngEnv, StandardLibrary::getMathsFunctions());
-
+    EnvironmentLibrary backendEnv(rngEnv, backendFunctions);
+    EnvironmentLibrary initEnv(backendEnv, StandardLibrary::getMathsFunctions());
 
     initEnv.getStream() << "void initialize()";
     {
@@ -1881,7 +1888,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
             {
                 // Determine the number of words in each row
                 groupEnv.printLine("const unsigned int rowWords = $(_row_stride) / 32;");
-                groupEnv.getStream() << "for(unsigned int w = 0; w < rowWords; w++)";
+                groupEnv.print("for(unsigned int w = 0; w < rowWords; w++)");
                 {
                     CodeStream::Scope b(groupEnv.getStream());
 
@@ -1903,14 +1910,14 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                         CodeStream::Scope b(groupEnv.getStream());
 
                         // Cound leading zeros (as bits are indexed backwards this is index of next synapse)
-                        groupEnv.getStream() << "const int numLZ = gennCLZ(connectivityWord);" << std::endl;
+                        groupEnv.printLine("const int numLZ = gennCLZ(connectivityWord);");
 
                         // Shift off zeros and the one just discovered
                         // **NOTE** << 32 appears to result in undefined behaviour
-                        groupEnv.getStream() << "connectivityWord = (numLZ == 31) ? 0 : (connectivityWord << (numLZ + 1));" << std::endl;
+                        groupEnv.printLine("connectivityWord = (numLZ == 31) ? 0 : (connectivityWord << (numLZ + 1));");
 
                         // Add to ipost
-                        groupEnv.getStream() << "ipost += numLZ;" << std::endl;
+                        groupEnv.printLine("ipost += numLZ;");
 
                         // If we aren't in padding region
                         // **TODO** don't bother checking if there is no padding
@@ -1926,7 +1933,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                         }
 
                         // Increment ipost to take into account fact the next CLZ will go from bit AFTER synapse
-                        groupEnv.getStream() << "ipost++;" << std::endl;
+                        groupEnv.printLine("ipost++;");
                     }
                 }
             }

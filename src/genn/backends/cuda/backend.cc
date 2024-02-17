@@ -47,6 +47,10 @@ const EnvironmentLibrary::Library doubleRandomFunctions = {
     {"gennrand_binomial", {Type::ResolvedType::createFunction(Type::Uint32, {Type::Uint32, Type::Double}), "binomialDistDouble(&$(_rng), $(0), $(1))"}},
 };
 
+const EnvironmentLibrary::Library backendFunctions = {
+    {"clz", {Type::ResolvedType::createFunction(Type::Int32, {Type::Uint32}), "__clz($(0))"}},
+};
+
 //--------------------------------------------------------------------------
 // CUDADeviceType
 //--------------------------------------------------------------------------
@@ -577,7 +581,8 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     CodeStream neuronUpdate(neuronUpdateStream);
 
     // Begin environment with standard library
-    EnvironmentLibrary neuronUpdateEnv(neuronUpdate, StandardLibrary::getMathsFunctions());
+    EnvironmentLibrary backendEnv(neuronUpdate, backendFunctions);
+    EnvironmentLibrary neuronUpdateEnv(backendEnv, StandardLibrary::getMathsFunctions());
 
     // If any neuron groups require their previous spike times updating
     size_t idNeuronPrevSpikeTimeUpdate = 0;
@@ -718,7 +723,8 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
     CodeStream synapseUpdate(synapseUpdateStream);
 
     // Begin environment with standard library
-    EnvironmentLibrary synapseUpdateEnv(synapseUpdate, StandardLibrary::getMathsFunctions());
+    EnvironmentLibrary backendEnv(synapseUpdate, backendFunctions);
+    EnvironmentLibrary synapseUpdateEnv(backendEnv, StandardLibrary::getMathsFunctions());
 
     // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -891,7 +897,8 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     CodeStream customUpdate(customUpdateStream);
 
     // Begin environment with standard library
-    EnvironmentLibrary customUpdateEnv(customUpdate, StandardLibrary::getMathsFunctions());
+    EnvironmentLibrary backendEnv(customUpdate, backendFunctions);
+    EnvironmentLibrary customUpdateEnv(backendEnv, StandardLibrary::getMathsFunctions());
 
     // Build set containing union of all custom update group names
     std::set<std::string> customUpdateGroups;
@@ -1106,7 +1113,8 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
     // Begin environment with RNG library and standard library
     EnvironmentLibrary rngEnv(init, getRNGFunctions(model.getPrecision()));
-    EnvironmentLibrary initEnv(rngEnv, StandardLibrary::getMathsFunctions());
+    EnvironmentLibrary backendEnv(rngEnv, backendFunctions);
+    EnvironmentLibrary initEnv(backendEnv, StandardLibrary::getMathsFunctions());
 
     // If device RNG is required, generate kernel to initialise it
     if(isGlobalDeviceRNGRequired(model)) {
