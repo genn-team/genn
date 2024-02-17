@@ -58,16 +58,9 @@ CustomUpdateBase::CustomUpdateBase(const std::string &name, const std::string &u
     Utils::validatePopName(name, "Custom update");
     Utils::validatePopName(updateGroupName, "Custom update group name");
 
-    // Loop through all extra global parameter references
-    for (const auto &modelEGPRef : getModel()->getExtraGlobalParamRefs()) {
-        const auto egpRef = egpReferences.at(modelEGPRef.name);
+    // Check EGP reference types
+    Models::checkEGPReferenceTypes(m_EGPReferences, getModel()->getExtraGlobalParamRefs());
 
-        // Check types of extra global parameter references against those specified in model
-        // **THINK** this is rather conservative but I think not allowing "scalar" and whatever happens to be scalar type is ok
-        if (egpRef.getEGP().type != modelEGPRef.type) {
-            throw std::runtime_error("Incompatible type for extra global parameter reference '" + modelEGPRef.name + "'");
-        }
-    }
     // Scan custom update model code string
     m_UpdateCodeTokens = Utils::scanCode(getModel()->getUpdateCode(), 
                                          "Custom update '" + getName() + "' update code");
@@ -159,7 +152,8 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     m_VarReferences(varReferences), m_NumNeurons(varReferences.empty() ? 0 : varReferences.begin()->second.getNumNeurons()), m_DelayNeuronGroup(nullptr)
 {
     // Validate parameters, variables and variable references
-    getModel()->validate(getParams(), getVarInitialisers(), getVarReferences(), "Custom update " + getName());
+    getModel()->validate(getParams(), getVarInitialisers(), getVarReferences(), getEGPReferences(),
+                         "Custom update " + getName());
 
     if(varReferences.empty()) {
         throw std::runtime_error("Custom update models must reference variables.");
@@ -256,7 +250,8 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     m_VarReferences(varReferences), m_SynapseGroup(m_VarReferences.empty() ? nullptr : static_cast<SynapseGroupInternal*>(m_VarReferences.begin()->second.getSynapseGroup()))
 {
     // Validate parameters, variables and variable references
-    getModel()->validate(getParams(), getVarInitialisers(), getVarReferences(), "Custom update " + getName());
+    getModel()->validate(getParams(), getVarInitialisers(), getVarReferences(), getEGPReferences(),
+                         "Custom update " + getName());
 
     if(varReferences.empty()) {
         throw std::runtime_error("Custom update models must reference variables.");

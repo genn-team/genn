@@ -282,14 +282,14 @@ CustomConnectivityUpdate *ModelSpec::addCustomConnectivityUpdate(const std::stri
                                                                  const ParamValues &paramValues, const VarValues &varInitialisers,
                                                                  const VarValues &preVarInitialisers, const VarValues &postVarInitialisers,
                                                                  const WUVarReferences &varReferences, const VarReferences &preVarReferences,
-                                                                 const VarReferences &postVarReferences)
+                                                                 const VarReferences &postVarReferences, const EGPReferences &egpReferences)
 {
     // Add custom connectivity update to 
     auto result = m_CustomConnectivityUpdates.try_emplace(
         name,
         name, updateGroupName, static_cast<SynapseGroupInternal*>(synapseGroup), model,
         paramValues, varInitialisers, preVarInitialisers, postVarInitialisers, 
-        varReferences, preVarReferences, postVarReferences, 
+        varReferences, preVarReferences, postVarReferences, egpReferences,
         m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation);
 
     if(!result.second) {

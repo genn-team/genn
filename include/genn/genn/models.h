@@ -464,4 +464,7 @@ void checkVarReferenceTypes(const std::unordered_map<std::string, V> &varRefs, c
     }
 }
 
+GENN_EXPORT void checkEGPReferenceTypes(const std::unordered_map<std::string, EGPReference> &egpRefs,
+                                        const Base::EGPRefVec &modelEGPRefs);
+
 } // GeNN::Models

@@ -108,6 +108,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     updateEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomConnectivityUpdateInternal::getDerivedParams, 
                                &CustomConnectivityUpdateGroupMerged::isDerivedParamHeterogeneous);
     updateEnv.addExtraGlobalParams(cm->getExtraGlobalParams());
+    updateEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs());
     
     // Add presynaptic variables
     updateEnv.addVars<CustomConnectivityUpdatePreVarAdapter>("$(id_pre)");

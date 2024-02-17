@@ -19,10 +19,10 @@ public:
                                      const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                                      const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
                                      const std::unordered_map<std::string, Models::WUVarReference> &varReferences, const std::unordered_map<std::string, Models::VarReference> &preVarReferences,
-                                     const std::unordered_map<std::string, Models::VarReference> &postVarReferences, VarLocation defaultVarLocation,
-                                     VarLocation defaultExtraGlobalParamLocation)
+                                     const std::unordered_map<std::string, Models::VarReference> &postVarReferences, const std::unordered_map<std::string, Models::EGPReference> &egpReferences,
+                                     VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   CustomConnectivityUpdate(name, updateGroupName, synapseGroup, customConnectivityUpdateModel, params, varInitialisers, preVarInitialisers, postVarInitialisers,
-                                 varReferences, preVarReferences, postVarReferences, defaultVarLocation, defaultExtraGlobalParamLocation)
+                                 varReferences, preVarReferences, postVarReferences, egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation)
     {
         getSynapseGroup()->addCustomUpdateReference(this);
     }

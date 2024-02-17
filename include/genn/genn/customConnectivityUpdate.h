@@ -61,6 +61,8 @@ public:
     const std::unordered_map<std::string, Models::VarReference> &getPreVarReferences() const{ return m_PreVarReferences;  }
     const std::unordered_map<std::string, Models::VarReference> &getPostVarReferences() const{ return m_PostVarReferences;  }
 
+    const std::unordered_map<std::string, Models::EGPReference> &getEGPReferences() const{ return m_EGPReferences;  }
+
     //! Get variable location for synaptic state variable
     VarLocation getVarLocation(const std::string &varName) const{ return m_VarLocation.get(varName); }
 
@@ -91,8 +93,8 @@ protected:
                              const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                              const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
                              const std::unordered_map<std::string, Models::WUVarReference> &varReferences, const std::unordered_map<std::string, Models::VarReference> &preVarReferences,
-                             const std::unordered_map<std::string, Models::VarReference> &postVarReferences, VarLocation defaultVarLocation,
-                             VarLocation defaultExtraGlobalParamLocation);
+                             const std::unordered_map<std::string, Models::VarReference> &postVarReferences, const std::unordered_map<std::string, Models::EGPReference> &egpReferences,
+                             VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
     // Protected methods
@@ -167,6 +169,8 @@ private:
     const std::unordered_map<std::string, Models::VarReference> m_PreVarReferences;
     const std::unordered_map<std::string, Models::VarReference> m_PostVarReferences;
     
+    std::unordered_map<std::string, Models::EGPReference> m_EGPReferences;
+
     const NeuronGroup *m_PreDelayNeuronGroup;
     const NeuronGroup *m_PostDelayNeuronGroup;
 

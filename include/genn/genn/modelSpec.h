@@ -516,7 +516,7 @@ public:
                                                           const ParamValues &paramValues = {}, const VarValues &varInitialisers = {},
                                                           const VarValues &preVarInitialisers = {}, const VarValues &postVarInitialisers = {},
                                                           const WUVarReferences &varReferences = {}, const VarReferences &preVarReferences = {},
-                                                          const VarReferences &postVarReferences = {});
+                                                          const VarReferences &postVarReferences = {}, const EGPReferences &egpReferences = {});
 
     //! Adds a new custom connectivity update attached to synapse group and potentially with synaptic, presynaptic and 
     //! postsynaptic state variables and variable references using a singleton custom connectivity update model created 
@@ -539,12 +539,12 @@ public:
                                                           const ParamValues &paramValues = {}, const VarValues &varInitialisers = {},
                                                           const VarValues &preVarInitialisers = {}, const VarValues &postVarInitialisers = {},
                                                           const WUVarReferences &varReferences = {}, const VarReferences &preVarReferences = {},
-                                                          const VarReferences &postVarReferences = {})
+                                                          const VarReferences &postVarReferences = {}, const EGPReferences &egpReferences = {})
     {
         return addCustomConnectivityUpdate(name, updateGroupName, synapseGroup, 
                                            CustomConnectivityUpdateModel::getInstance(), paramValues,
                                            varInitialisers, preVarInitialisers, postVarInitialisers, 
-                                           varReferences, preVarReferences, postVarReferences);
+                                           varReferences, preVarReferences, postVarReferences, egpReferences);
     }
 
 protected:

@@ -676,4 +676,19 @@ void checkLocalVarReferences(const std::unordered_map<std::string, VarReference>
         }
     }
 }
+//----------------------------------------------------------------------------
+void checkEGPReferenceTypes(const std::unordered_map<std::string, EGPReference> &egpRefs,
+                            const Base::EGPRefVec &modelEGPRefs)
+{
+    // Loop through all extra global parameter references
+    for (const auto &modelEGPRef : modelEGPRefs) {
+        const auto egpRef = egpRefs.at(modelEGPRef.name);
+
+        // Check types of extra global parameter references against those specified in model
+        // **THINK** this is rather conservative but I think not allowing "scalar" and whatever happens to be scalar type is ok
+        if (egpRef.getEGP().type != modelEGPRef.type) {
+            throw std::runtime_error("Incompatible type for extra global parameter reference '" + modelEGPRef.name + "'");
+        }
+    }
+}
 }   // namespace GeNN::Models

@@ -23,6 +23,8 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     Utils::updateHash(getVarRefs(), hash);
     Utils::updateHash(getPreVarRefs(), hash);
     Utils::updateHash(getPostVarRefs(), hash);
+
+    Utils::updateHash(getExtraGlobalParamRefs(), hash);
     
     return hash.get_digest();
 }
@@ -34,6 +36,7 @@ void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &p
                     const std::unordered_map<std::string, Models::WUVarReference> &varRefTargets,
                     const std::unordered_map<std::string, Models::VarReference> &preVarRefTargets,
                     const std::unordered_map<std::string, Models::VarReference> &postVarRefTargets,
+                    const std::unordered_map<std::string, Models::EGPReference> &egpRefTargets,
                     const std::string &description) const
 {
     // Superclass
@@ -58,5 +61,8 @@ void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &p
     Utils::validateInitialisers(getVarRefs(), varRefTargets, "variable reference", description);
     Utils::validateInitialisers(getPreVarRefs(), preVarRefTargets, "presynaptic variable reference", description);
     Utils::validateInitialisers(getPostVarRefs(), postVarRefTargets, "postsynaptic variable reference", description);
+
+    // Validate EGP reference initialisers
+    Utils::validateInitialisers(getExtraGlobalParamRefs(), egpRefTargets, "extra global parameter reference", description);
 }
 }   // namespace GeNN::CustomConnectivityUpdateModels

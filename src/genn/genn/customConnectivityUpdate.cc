@@ -105,21 +105,21 @@ CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, cons
                                                    const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
                                                    const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
                                                    const std::unordered_map<std::string, Models::WUVarReference> &varReferences, const std::unordered_map<std::string, Models::VarReference> &preVarReferences,
-                                                   const std::unordered_map<std::string, Models::VarReference> &postVarReferences, VarLocation defaultVarLocation,
-                                                   VarLocation defaultExtraGlobalParamLocation)
+                                                   const std::unordered_map<std::string, Models::VarReference> &postVarReferences, const std::unordered_map<std::string, Models::EGPReference> &egpReferences,
+                                                   VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_UpdateGroupName(updateGroupName), m_SynapseGroup(synapseGroup), m_Model(customConnectivityUpdateModel),
     m_Params(params), m_VarInitialisers(varInitialisers), m_PreVarInitialisers(preVarInitialisers), m_PostVarInitialisers(postVarInitialisers),
     m_VarLocation(defaultVarLocation), m_PreVarLocation(defaultVarLocation), m_PostVarLocation(defaultVarLocation), 
     m_ExtraGlobalParamLocation(defaultExtraGlobalParamLocation), m_VarReferences(varReferences), m_PreVarReferences(preVarReferences), 
-    m_PostVarReferences(postVarReferences), m_PreDelayNeuronGroup(nullptr), m_PostDelayNeuronGroup(nullptr)
+    m_PostVarReferences(postVarReferences), m_EGPReferences(egpReferences), m_PreDelayNeuronGroup(nullptr), m_PostDelayNeuronGroup(nullptr)
 {
     
     // Validate names
     Utils::validatePopName(name, "Custom connectivity update");
     Utils::validatePopName(updateGroupName, "Custom connectivity update group name");
     getModel()->validate(getParams(), getVarInitialisers(), getPreVarInitialisers(),
-                                                 getPostVarInitialisers(), getVarReferences(), getPreVarReferences(),
-                                                 getPostVarReferences(), "Custom connectivity update " + getName());
+                         getPostVarInitialisers(), getVarReferences(), getPreVarReferences(),
+                         getPostVarReferences(), getEGPReferences(), "Custom connectivity update " + getName());
 
     // Scan custom connectivity update model code strings
     m_RowUpdateCodeTokens = Utils::scanCode(getModel()->getRowUpdateCode(), 
@@ -136,6 +136,9 @@ CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, cons
     Models::checkVarReferenceTypes(m_VarReferences, getModel()->getVarRefs());
     Models::checkVarReferenceTypes(m_PreVarReferences, getModel()->getPreVarRefs());
     Models::checkVarReferenceTypes(m_PostVarReferences, getModel()->getPostVarRefs());
+
+    // Check EGP reference types
+    Models::checkEGPReferenceTypes(m_EGPReferences, getModel()->getExtraGlobalParamRefs());
 
     // Give error if any WU var references aren't pointing to synapse group
     if (std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
