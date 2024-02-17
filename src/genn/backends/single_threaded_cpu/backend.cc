@@ -24,6 +24,7 @@ namespace
 {
 const EnvironmentLibrary::Library backendFunctions = {
     {"clz", {Type::ResolvedType::createFunction(Type::Int32, {Type::Uint32}), "gennCLZ($(0))"}},
+    {"atomic_or", {Type::ResolvedType::createFunction(Type::Void, {Type::Uint32.createPointer(), Type::Uint32}), "(*($(0)) |= ($(1)))"}}
 };
 
 //--------------------------------------------------------------------------
