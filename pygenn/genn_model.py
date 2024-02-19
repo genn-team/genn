@@ -491,7 +491,8 @@ class GeNNModel(ModelSpecInternal):
                                        custom_conn_update_model,
                                        params={}, vars={}, pre_vars={},
                                        post_vars={}, var_refs={},
-                                       pre_var_refs={}, post_var_refs={}):
+                                       pre_var_refs={}, post_var_refs={},
+                                       egp_refs={}):
         """Add a custom connectivity update to the GeNN model
 
         Args:
@@ -543,7 +544,7 @@ class GeNNModel(ModelSpecInternal):
         c_update = super(GeNNModel, self).add_custom_connectivity_update(
             cu_name, group_name, syn_group, custom_connectivity_update_model,
             prepare_param_vals(params), var_init, pre_var_init, post_var_init,
-            var_refs, pre_var_refs, post_var_refs)
+            var_refs, pre_var_refs, post_var_refs, egp_refs)
 
         # Setup back-reference, store group in dictionary and return
         c_update._init_group(self, vars, pre_vars, post_vars)
@@ -1351,7 +1352,8 @@ def create_custom_connectivity_update_model(class_name, params=None,
                                             post_var_refs=None,
                                             row_update_code=None,
                                             host_update_code=None,
-                                            extra_global_params=None):
+                                            extra_global_params=None,
+                                            extra_global_param_refs=None):
     """This helper function creates a custom CustomConnectivityUpdate class.
     See also:
     create_neuron_model
@@ -1419,6 +1421,10 @@ def create_custom_connectivity_update_model(class_name, params=None,
     if post_var_refs is not None:
         body["get_post_var_refs"] = \
             lambda self: [VarRef(*v) for v in post_var_refs]
+
+    if extra_global_param_refs is not None:
+        body["get_extra_global_param_refs"] =\
+            lambda self: [EGPRef(*e) for e in extra_global_param_refs]
 
     return create_model(class_name, CustomConnectivityUpdateModelBase,
                         params, None, derived_params, 

@@ -414,7 +414,7 @@ PYBIND11_MODULE(genn, m)
              static_cast<CustomConnectivityUpdate* (ModelSpecInternal::*)(
                 const std::string&, const std::string&, SynapseGroup*, const CustomConnectivityUpdateModels::Base*, 
                 const ParamValues&, const VarValues&, const VarValues&, const VarValues&, 
-                const WUVarReferences&, const VarReferences&, const VarReferences&)>(&ModelSpecInternal::addCustomConnectivityUpdate),
+                const WUVarReferences&, const VarReferences&, const VarReferences&, const EGPReferences&)>(&ModelSpecInternal::addCustomConnectivityUpdate),
             pybind11::return_value_policy::reference)
         .def("add_custom_update",  
              static_cast<CustomUpdate* (ModelSpecInternal::*)(
