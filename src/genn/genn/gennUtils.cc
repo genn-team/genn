@@ -22,6 +22,7 @@
 namespace
 {
 const std::unordered_set<std::string> randomFuncs{
+    "gennrand",
     "gennrand_uniform",
     "gennrand_normal",
     "gennrand_exponential",

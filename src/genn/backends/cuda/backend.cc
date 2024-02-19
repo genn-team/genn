@@ -30,6 +30,7 @@ using namespace GeNN::CodeGenerator;
 namespace
 {
 const EnvironmentLibrary::Library floatRandomFunctions = {
+    {"gennrand", {Type::ResolvedType::createFunction(Type::Uint32, {}), "curand(&$(_rng))"}},
     {"gennrand_uniform", {Type::ResolvedType::createFunction(Type::Float, {}), "curand_uniform(&$(_rng))"}},
     {"gennrand_normal", {Type::ResolvedType::createFunction(Type::Float, {}), "curand_normal(&$(_rng))"}},
     {"gennrand_exponential", {Type::ResolvedType::createFunction(Type::Float, {}), "exponentialDistFloat(&$(_rng))"}},
@@ -39,6 +40,7 @@ const EnvironmentLibrary::Library floatRandomFunctions = {
 };
 
 const EnvironmentLibrary::Library doubleRandomFunctions = {
+    {"gennrand", {Type::ResolvedType::createFunction(Type::Uint32, {}), "curand(&$(_rng))"}},
     {"gennrand_uniform", {Type::ResolvedType::createFunction(Type::Double, {}), "curand_uniform_double(&$(_rng))"}},
     {"gennrand_normal", {Type::ResolvedType::createFunction(Type::Double, {}), "curand_normal_double(&$(_rng))"}},
     {"gennrand_exponential", {Type::ResolvedType::createFunction(Type::Double, {}), "exponentialDistDouble(&$(_rng))"}},

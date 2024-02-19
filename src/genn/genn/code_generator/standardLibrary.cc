@@ -127,6 +127,7 @@ const auto libraryTypes = initLibraryTypes(
 }
 
 const EnvironmentLibrary::Library floatRandomFunctions = {
+    {"gennrand", {Type::ResolvedType::createFunction(Type::Uint32, {}), "hostRNG()"}},
     {"gennrand_uniform", {Type::ResolvedType::createFunction(Type::Float, {}), "standardUniformDistribution(hostRNG)"}},
     {"gennrand_normal", {Type::ResolvedType::createFunction(Type::Float, {}), "standardNormalDistribution(hostRNG)"}},
     {"gennrand_exponential", {Type::ResolvedType::createFunction(Type::Float, {}), "standardExponentialDistribution(hostRNG)"}},
@@ -136,6 +137,7 @@ const EnvironmentLibrary::Library floatRandomFunctions = {
 };
 
 const EnvironmentLibrary::Library doubleRandomFunctions = {
+    {"gennrand", {Type::ResolvedType::createFunction(Type::Uint32, {}), "hostRNG()"}},
     {"gennrand_uniform", {Type::ResolvedType::createFunction(Type::Double, {}), "standardUniformDistribution(hostRNG)"}},
     {"gennrand_normal", {Type::ResolvedType::createFunction(Type::Double, {}), "standardNormalDistribution(hostRNG)"}},
     {"gennrand_exponential", {Type::ResolvedType::createFunction(Type::Double, {}), "standardExponentialDistribution(hostRNG)"}},
