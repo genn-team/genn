@@ -82,6 +82,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateGroupMerged::get
     updateHash([](const auto &cg) { return cg.getVarReferences(); }, hash);
     updateHash([](const auto &cg) { return cg.getPreVarReferences(); }, hash);
     updateHash([](const auto &cg) { return cg.getPostVarReferences(); }, hash);
+    updateHash([](const auto& cg) { return cg.getEGPReferences(); }, hash);
 
     return hash.get_digest();
 }
@@ -99,6 +100,10 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
 
     updateEnv.add(indexType.addConst(), "_syn_stride", "synStride",
                   {updateEnv.addInitialiser("const " + indexTypeName + " synStride = (" + indexTypeName + ")$(num_pre) * $(_row_stride);")});
+
+    // Expose row length and row stride
+    updateEnv.add(Type::Uint32.addConst(), "row_length", "$(_row_length)[$(id_pre)]");
+    updateEnv.add(Type::Uint32.addConst(), "row_stride", "$(_row_stride)");
 
     // Substitute parameter and derived parameter names
     const auto *cm = getArchetype().getModel();
@@ -399,6 +404,9 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
                               return sgInternal->getSrcNeuronGroup()->getNumNeurons();
                           });
 
+        // Expose row length and row stride
+        groupEnv.add(Type::Uint32.addConst().createPointer(), "row_length", "$(_row_length)");
+        groupEnv.add(Type::Uint32.addConst(), "row_stride", "$(_row_stride)");
 
         // Substitute parameter and derived parameter names
         const auto *cm = getArchetype().getModel();
