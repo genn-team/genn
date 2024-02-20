@@ -158,7 +158,7 @@ class HalfNormal : public Base
 public:
     DECLARE_SNIPPET(InitVarSnippet::HalfNormal);
 
-    SET_CODE("value = mean + (fabs(gennrand_normal()) * sd);");
+    SET_CODE("value = mean + fabs(gennrand_normal() * sd);");
 
     SET_PARAMS({ "mean", "sd" });
 };
