@@ -33,6 +33,7 @@ PYBIND11_MODULE(init_var_snippets, m)
     m.def("Kernel", &getBaseInstance<Kernel>, pybind11::return_value_policy::reference);
     m.def("Uniform", &getBaseInstance<Uniform>, pybind11::return_value_policy::reference);
     m.def("Normal", &getBaseInstance<Normal>, pybind11::return_value_policy::reference);
+	m.def("HalfNormal", &getBaseInstance<HalfNormal>, pybind11::return_value_policy::reference);
     m.def("NormalClipped", &getBaseInstance<NormalClipped>, pybind11::return_value_policy::reference);
     m.def("NormalClippedDelay", &getBaseInstance<NormalClippedDelay>, pybind11::return_value_policy::reference);
     m.def("Exponential", &getBaseInstance<Exponential>, pybind11::return_value_policy::reference);

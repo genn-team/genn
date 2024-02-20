@@ -146,6 +146,24 @@ public:
 };
 
 //----------------------------------------------------------------------------
+// GeNN::InitVarSnippet::HalfNormal
+//----------------------------------------------------------------------------
+//! Initialises variable by sampling from the half-normal distribution
+/*! This snippet takes 2 parameters:
+ *
+    - \c mean - The mean
+    - \c sd - The standard deviation*/
+class HalfNormal : public Base
+{
+public:
+    DECLARE_SNIPPET(InitVarSnippet::HalfNormal);
+
+    SET_CODE("value = mean + fabs(gennrand_normal() * sd);");
+
+    SET_PARAMS({ "mean", "sd" });
+};
+
+//----------------------------------------------------------------------------
 // GeNN::InitVarSnippet::NormalClipped
 //----------------------------------------------------------------------------
 //! Initialises variable by sampling from the normal distribution,
