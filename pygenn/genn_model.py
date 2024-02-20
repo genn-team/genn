@@ -238,8 +238,8 @@ class GeNNModel(ModelSpecInternal):
         self.genn_types = {
             types.Float:    np.float32,
             types.Double:   np.float64,
-            types.Uint32:   np.int64,
-            types.Int32:    np.uint64,
+            types.Int64:    np.int64,
+            types.Uint64:   np.uint64,
             types.Int32:    np.int32,
             types.Uint32:   np.uint32,
             types.Int16:    np.int16,
