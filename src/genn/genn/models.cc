@@ -588,6 +588,17 @@ EGPReference EGPReference::createEGPRef(CustomUpdateWU *cu, const std::string &e
     }
 }
 //----------------------------------------------------------------------------
+EGPReference EGPReference::createEGPRef(CustomConnectivityUpdate *ccu, const std::string &egpName)
+{
+    const auto *ccm = ccu->getModel();
+    try {
+        return EGPReference(CCURef{ccu, ccm->getExtraGlobalParam(egpName).value()});
+    }
+    catch(std::bad_optional_access&) {
+        throw std::runtime_error("Extra global parameter '" + egpName + "' not found");
+    }
+}
+//----------------------------------------------------------------------------
 EGPReference EGPReference::createPSMEGPRef(SynapseGroup *sg, const std::string &egpName)
 {
     const auto *psm = sg->getPSInitialiser().getSnippet();

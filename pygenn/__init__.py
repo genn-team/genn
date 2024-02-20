@@ -2,7 +2,8 @@
 import sys
 
 # pygenn interface
-from .genn import (create_var_ref, create_psm_var_ref, create_wu_pre_var_ref,
+from .genn import (create_pre_var_ref, create_post_var_ref, 
+                   create_psm_var_ref, create_var_ref, create_wu_pre_var_ref,
                    create_wu_post_var_ref, create_wu_var_ref, create_egp_ref,
                    create_psm_egp_ref, create_wu_egp_ref, 
                    get_var_access_dim, CustomUpdateVarAccess, ParallelismHint,

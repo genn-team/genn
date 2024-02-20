@@ -380,6 +380,7 @@ public:
     static EGPReference createEGPRef(CurrentSource *cs, const std::string &egpName);
     static EGPReference createEGPRef(CustomUpdate *cu, const std::string &egpName);
     static EGPReference createEGPRef(CustomUpdateWU *cu, const std::string &egpName);
+    static EGPReference createEGPRef(CustomConnectivityUpdate *ccu, const std::string &egpName);
     static EGPReference createPSMEGPRef(SynapseGroup *sg, const std::string &egpName);
     static EGPReference createWUEGPRef(SynapseGroup *sg, const std::string &egpName);
 

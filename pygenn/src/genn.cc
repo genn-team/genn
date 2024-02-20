@@ -371,6 +371,7 @@ PYBIND11_MODULE(genn, m)
     m.def("create_egp_ref", pybind11::overload_cast<CurrentSource*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
     m.def("create_egp_ref", pybind11::overload_cast<CustomUpdate*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
     m.def("create_egp_ref", pybind11::overload_cast<CustomUpdateWU*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
+    m.def("create_egp_ref", pybind11::overload_cast<CustomConnectivityUpdate*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
     m.def("create_psm_egp_ref", pybind11::overload_cast<SynapseGroup*, const std::string&>(&createPSMEGPRef), pybind11::return_value_policy::move);
     m.def("create_wu_egp_ref", pybind11::overload_cast<SynapseGroup*, const std::string&>(&createWUEGPRef), pybind11::return_value_policy::move);
     m.def("get_var_access_dim", pybind11::overload_cast<VarAccess>(&getVarAccessDim));
