@@ -164,7 +164,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     const auto ccuVarRefs = cm->getVarRefs();
     const auto &dependentVars = getSortedArchetypeDependentVars();
     std::vector<Type::ResolvedType> addSynapseTypes{Type::Uint32};
-    addSynapseTypes.reserve(1 + ccuVars.size() + ccuVarRefs.size() + dependentVars.size());
+    addSynapseTypes.reserve(1 + ccuVars.size() + ccuVarRefs.size());
 
     // Generate code to add a synapse to this row
     std::stringstream addSynapseStream;
@@ -223,8 +223,6 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
             else {
                 addSynapse << "$(_dependent_var_" << i << ")[newIdx] = 0;" << std::endl;
             }
-
-            addSynapseTypes.push_back(dependentVars.at(i).getVarType().resolve(getTypeContext()));
         }
 
         // Increment row length
