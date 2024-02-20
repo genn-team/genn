@@ -402,9 +402,46 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
                               return sgInternal->getSrcNeuronGroup()->getNumNeurons();
                           });
 
-        // Expose row length and row stride
-        groupEnv.add(Type::Uint32.addConst().createPointer(), "row_length", "$(_row_length)");
-        groupEnv.add(Type::Uint32.addConst(), "row_stride", "$(_row_stride)");
+        // Expose row stride        
+        groupEnv.addField(Type::Uint32.addConst(), "row_stride",
+                          Type::Uint32, "rowStride", 
+                          [&backend](const auto&, const auto &cg, size_t) { return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup()); });
+
+        // If synapse group connectivity is accessible from the host
+        // **TODO** variable locations probably need hashing in host update group hash
+        const auto loc = getArchetype().getSynapseGroup()->getSparseConnectivityLocation();
+        if(loc & VarLocation::HOST) {
+            // Add host pointer field for row length
+            groupEnv.addField(Type::Uint32.createPointer(), "_row_length", "rowLength",
+                              [](const auto &runtime, const auto &cg, size_t) 
+                              { 
+                                  return runtime.getArray(*cg.getSynapseGroup(), "rowLength");
+                              },
+                              "", GroupMergedFieldType::HOST);
+
+            // Add substitution for direct access to field
+            groupEnv.add(Type::Uint32.addConst().createPointer(), "row_length", "$(_row_length)");
+
+            // If backend requires seperate device objects, add additional (private) field)
+            if(backend.isArrayDeviceObjectRequired()) {
+                groupEnv.addField(Type::Uint32.createPointer(), "_d_row_length", "d_rowLength",
+                                  [](const auto &runtime, const auto &cg, size_t)
+                                  {
+                                      return runtime.getArray(*cg.getSynapseGroup(), "rowLength");
+                                  });
+            }
+
+            // Generate code to pull this variable
+            std::stringstream pullStream;
+            CodeStream pull(pullStream);
+            backend.genLazyVariableDynamicPull(pull, Type::Uint32, "row_length",
+                                               loc, "$(num_pre)");
+
+            // Add substitution
+            groupEnv.add(Type::PushPull, "pullRowLengthFromDevice", pullStream.str());
+        }
+
+
 
         // Substitute parameter and derived parameter names
         const auto *cm = getArchetype().getModel();
