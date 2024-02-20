@@ -529,12 +529,12 @@ class GeNNModel(ModelSpecInternal):
         """
         if self._built:
             raise Exception("GeNN model already built")
-        
+
         # Resolve custom update model
         custom_connectivity_update_model = get_snippet(
             custom_conn_update_model, CustomConnectivityUpdateModelBase,
             custom_connectivity_update_models)
-        
+
         # Extract parts of vars which should be initialised by GeNN
         var_init = get_var_init(vars)
         pre_var_init = get_var_init(pre_vars)

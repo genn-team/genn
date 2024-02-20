@@ -124,7 +124,8 @@ public:
     virtual VarRefVec getVarRefs() const override { PYBIND11_OVERRIDE_NAME(VarRefVec, Base, "get_var_refs", getVarRefs); }
     virtual VarRefVec getPreVarRefs() const override { PYBIND11_OVERRIDE_NAME(VarRefVec, Base, "get_pre_var_refs", getPreVarRefs); }
     virtual VarRefVec getPostVarRefs() const override { PYBIND11_OVERRIDE_NAME(VarRefVec, Base, "get_post_var_refs", getPostVarRefs); }
-    
+    virtual EGPRefVec getExtraGlobalParamRefs() const override { PYBIND11_OVERRIDE_NAME(EGPRefVec, Base, "get_extra_global_param_refs", getExtraGlobalParamRefs); }
+
     virtual std::string getRowUpdateCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_row_update_code", getRowUpdateCode); }
     virtual std::string getHostUpdateCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_host_update_code", getHostUpdateCode); }
 };
@@ -826,7 +827,8 @@ PYBIND11_MODULE(genn, m)
         .def("get_var_refs", &CustomConnectivityUpdateModels::Base::getVarRefs)
         .def("get_pre_var_refs", &CustomConnectivityUpdateModels::Base::getPreVarRefs)
         .def("get_post_var_refs", &CustomConnectivityUpdateModels::Base::getPostVarRefs)
-        
+        .def("get_extra_global_param_refs", &CustomConnectivityUpdateModels::Base::getExtraGlobalParamRefs)
+
         .def("get_row_update_code", &CustomConnectivityUpdateModels::Base::getRowUpdateCode)
         .def("get_host_update_code", &CustomConnectivityUpdateModels::Base::getHostUpdateCode);
     
