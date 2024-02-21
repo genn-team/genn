@@ -573,6 +573,9 @@ class GeNNModel(ModelSpecInternal):
             post_var_refs:              references to postsynaptic variables,
                                         typically created using :func:`.create_var_ref`
                                         (see `Variables references`_)
+            egp_refs:                   references to extra global parameters in other populations
+                                        to access from this update, typically created using
+                                        :func:`.create_egp_ref` (see `Extra global parameter references`_).
 
         """
         if self._built:
@@ -1784,6 +1787,8 @@ def create_custom_connectivity_update_model(class_name: str,
                                     on CPU when custom connectivity update is launched
         extra_global_params:        names and types of model
                                     extra global parameters
+        extra_global_param_refs:    names and types of extra global
+                                    parameter references
 
     Parallel synapse iteration and removal
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
