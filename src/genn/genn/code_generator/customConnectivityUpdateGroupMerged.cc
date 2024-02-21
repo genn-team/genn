@@ -410,7 +410,7 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
         // If synapse group connectivity is accessible from the host
         // **TODO** variable locations probably need hashing in host update group hash
         const auto loc = getArchetype().getSynapseGroup()->getSparseConnectivityLocation();
-        if(loc & VarLocation::HOST) {
+        if(loc & VarLocationAttribute::HOST) {
             // Add host pointer field for row length
             groupEnv.addField(Type::Uint32.createPointer(), "_row_length", "rowLength",
                               [](const auto &runtime, const auto &cg, size_t) 
