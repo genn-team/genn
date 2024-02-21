@@ -628,6 +628,8 @@ static const char *__doc_CustomConnectivityUpdateInternal_CustomConnectivityUpda
 
 static const char *__doc_CustomConnectivityUpdateModels_Base = R"doc(Base class for all current source models)doc";
 
+static const char *__doc_CustomConnectivityUpdateModels_Base_getExtraGlobalParamRefs = R"doc(Gets names and types of model extra global parameter references)doc";
+
 static const char *__doc_CustomConnectivityUpdateModels_Base_getHashDigest = R"doc(Update hash from model)doc";
 
 static const char *__doc_CustomConnectivityUpdateModels_Base_getHostUpdateCode = R"doc(Gets the code that performs host update)doc";
@@ -755,6 +757,8 @@ custom connectivty update will update and thus will need modifying when we add a
 
 static const char *__doc_CustomConnectivityUpdate_getDerivedParams = R"doc()doc";
 
+static const char *__doc_CustomConnectivityUpdate_getEGPReferences = R"doc()doc";
+
 static const char *__doc_CustomConnectivityUpdate_getExtraGlobalParamLocation = R"doc(Get location of neuron model extra global parameter by name)doc";
 
 static const char *__doc_CustomConnectivityUpdate_getHashDigest =
@@ -818,6 +822,8 @@ static const char *__doc_CustomConnectivityUpdate_isZeroCopyEnabled = R"doc()doc
 static const char *__doc_CustomConnectivityUpdate_m_DerivedParams = R"doc()doc";
 
 static const char *__doc_CustomConnectivityUpdate_m_DynamicParams = R"doc(Data structure tracking whether parameters are dynamic or not)doc";
+
+static const char *__doc_CustomConnectivityUpdate_m_EGPReferences = R"doc()doc";
 
 static const char *__doc_CustomConnectivityUpdate_m_ExtraGlobalParamLocation = R"doc(Location of extra global parameters)doc";
 
@@ -2317,6 +2323,8 @@ static const char *__doc_Models_EGPReference_createEGPRef_3 = R"doc()doc";
 
 static const char *__doc_Models_EGPReference_createEGPRef_4 = R"doc()doc";
 
+static const char *__doc_Models_EGPReference_createEGPRef_5 = R"doc()doc";
+
 static const char *__doc_Models_EGPReference_createPSMEGPRef = R"doc()doc";
 
 static const char *__doc_Models_EGPReference_createWUEGPRef = R"doc()doc";
@@ -2460,6 +2468,8 @@ static const char *__doc_Models_WUVarReference_getVarType = R"doc()doc";
 static const char *__doc_Models_WUVarReference_m_Detail = R"doc()doc";
 
 static const char *__doc_Models_WUVarReference_operator_lt = R"doc()doc";
+
+static const char *__doc_Models_checkEGPReferenceTypes = R"doc()doc";
 
 static const char *__doc_Models_checkLocalVarReferences = R"doc(Helper function to check if local variable references are configured correctly)doc";
 
@@ -4627,6 +4637,8 @@ static const char *__doc_createEGPRef_2 = R"doc(Creates a reference to a current
 static const char *__doc_createEGPRef_3 = R"doc(Creates a reference to a custom update extra global parameter)doc";
 
 static const char *__doc_createEGPRef_4 = R"doc(Creates a reference to a custom weight update extra global parameter)doc";
+
+static const char *__doc_createEGPRef_5 = R"doc(Creates a reference to a custom weight update extra global parameter)doc";
 
 static const char *__doc_createPSMEGPRef = R"doc(Creates a reference to a postsynaptic model extra global parameter)doc";
 
