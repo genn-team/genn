@@ -12,13 +12,14 @@ Note, this documentation is under construction. If you cannot find what you are 
 .. toctree::
     :maxdepth: 4
     :titlesonly:
-    
+
+    installation
     upgrading
     building_networks
     simulating_networks
     custom_models
     bibliography
-    
+
     userproject/index
 
     Reference documentation <source/pygenn>

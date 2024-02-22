@@ -41,6 +41,14 @@ pygenn.custom\_update\_models module
    :undoc-members:
    :show-inheritance:
 
+pygenn.genn module
+------------------
+
+.. automodule:: pygenn.genn
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pygenn.genn\_groups module
 --------------------------
 

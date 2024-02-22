@@ -1,0 +1,185 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Installation &#8212; PyGeNN  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Upgrading from GeNN 4" href="upgrading.html" />
+    <link rel="prev" title="PyGeNN documentation" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="upgrading.html" title="Upgrading from GeNN 4"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="PyGeNN documentation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">PyGeNN  documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this heading">¶</a></h1>
+<p>In future we plan on providing binary builds of GeNN via conda. However, for now, GeNN
+needs to be installed from source.</p>
+<section id="pre-installation">
+<h2>Pre-installation<a class="headerlink" href="#pre-installation" title="Permalink to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p>Install the C++ compiler on the machine, if not already present.
+For Windows, Visual Studio 2019 or above is required. The Microsoft Visual Studio
+Community Edition can be downloaded from
+<a class="reference external" href="https://www.visualstudio.com/en-us/downloads/download-visual-studio-vs.aspx">https://www.visualstudio.com/en-us/downloads/download-visual-studio-vs.aspx</a>.
+When installing Visual Studio, one should select the ‘Desktop
+development with C++’ configuration. On Linux, the GNU Compiler
+Collection (GCC) 7.5 or above is required. This can be obtained from your
+Linux distribution repository, for example on Ubuntu by running <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">g++</span></code>,
+or alternatively from <a class="reference external" href="https://gcc.gnu.org/index.html">https://gcc.gnu.org/index.html</a>.</p></li>
+<li><p>If your machine has an NVIDIA GPU and you haven’t installed CUDA already,
+obtain a fresh installation of the NVIDIA CUDA toolkit from
+<a class="reference external" href="https://developer.nvidia.com/cuda-downloads">https://developer.nvidia.com/cuda-downloads</a>
+Again, be sure to pick CUDA and C++ compiler versions which are compatible
+with each other. The latest C++ compiler need not necessarily be
+compatible with the latest CUDA toolkit.</p></li>
+<li><p>GeNN uses the <code class="docutils literal notranslate"><span class="pre">CUDA_PATH</span></code> environment variable to determine which
+version of CUDA to build against. On Windows, this is set automatically when
+installing CUDA. However, if you choose, you can verify which version is
+selected by running <code class="docutils literal notranslate"><span class="pre">echo</span> <span class="pre">%CUDA_PATH</span></code> in a command prompt.
+However, on Linux and Mac you need to set <code class="docutils literal notranslate"><span class="pre">CUDA_PATH</span></code> manually with:
+<code class="docutils literal notranslate"><span class="pre">`bash</span>
+<span class="pre">export</span> <span class="pre">CUDA_PATH=/usr/local/cuda</span>
+<span class="pre">`</span></code>
+assuming CUDA is installed in /usr/local/cuda (the standard location
+on Ubuntu Linux). Again, to make this change persistent, this can
+be added to your login script (e.g. <code class="docutils literal notranslate"><span class="pre">.profile</span></code> or <code class="docutils literal notranslate"><span class="pre">.bashrc</span></code>)</p></li>
+<li><p>Either download the latest release of GeNN and extract into your
+home directory or clone using git from <a class="reference external" href="https://github.com/genn-team/genn">https://github.com/genn-team/genn</a></p></li>
+<li><p>On Linux, install the development version of libffi. For example, on Ubuntu you can do this
+by running <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">libffi-dev</span></code>.</p></li>
+<li><p>Install the pybind11, psutil and numpy packages with pip i.e. <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">pybind11</span> <span class="pre">psutil</span> <span class="pre">numpy</span></code>.</p></li>
+</ol>
+</section>
+<section id="building-with-setup-py">
+<h2>Building with setup.py<a class="headerlink" href="#building-with-setup-py" title="Permalink to this heading">¶</a></h2>
+<p>From the GeNN directory, the GeNN libraries and python package can be built
+with <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span></code>. If you wish to create an editable install
+(most useful if you are intending to modify GeNN yourself) you can also used
+<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">develop</span></code>. On Linux (or Windows if you have a debug version
+of the python libraries installed) you can build a debug version of GeNN with
+<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">build_ext</span> <span class="pre">--debug</span> <span class="pre">develop</span></code>.</p>
+</section>
+<section id="building-with-pip">
+<h2>Building with pip<a class="headerlink" href="#building-with-pip" title="Permalink to this heading">¶</a></h2>
+<p>From the GeNN directory, the GeNN libraries and python package can be built
+with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code>. If you wish to create an editable install
+(most useful if you are intending to modify GeNN yourself) you can also used
+<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">--editable</span> <span class="pre">.</span></code>.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Installation</a><ul>
+<li><a class="reference internal" href="#pre-installation">Pre-installation</a></li>
+<li><a class="reference internal" href="#building-with-setup-py">Building with setup.py</a></li>
+<li><a class="reference internal" href="#building-with-pip">Building with pip</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="index.html"
+                          title="previous chapter">PyGeNN documentation</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="upgrading.html"
+                          title="next chapter">Upgrading from GeNN 4</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/installation.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="upgrading.html" title="Upgrading from GeNN 4"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="PyGeNN documentation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">PyGeNN  documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2024, James Knight, Thomas Nowotny.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>

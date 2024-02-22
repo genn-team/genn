@@ -109,7 +109,7 @@ by passing the following keyword arguments to one of the snippet or model creati
 <dd><p>Creates a new variable initialisation snippet
 Within the <code class="docutils literal notranslate"><span class="pre">var_init_code</span></code>, the parameters, derived parameters and
 extra global parameters defined in this snippet can all be referred to be name.
-Additionally, the code may refer to the following built in read-only variables</p>
+Additionally, the code may refer to the following built-in read-only variables</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">dt</span></code> which represents the simulation time step (as specified via  <code class="xref py py-meth docutils literal notranslate"><span class="pre">GeNNModel.dt()</span></code>)</p></li>
 </ul>
@@ -172,7 +172,7 @@ New sparse connectivity initialisation snippets can be defined by calling:</p>
 <dd><p>Creates a new sparse connectivity initialisation snippet
 Within the code strings, the parameters, derived parameters and
 extra global parameters defined in this snippet can all be referred to be name.
-Additionally, the code may refer to the following built in read-only variables</p>
+Additionally, the code may refer to the following built-in read-only variables</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">dt</span></code> which represents the simulation time step (as specified via  <code class="xref py py-meth docutils literal notranslate"><span class="pre">GeNNModel.dt()</span></code>)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">num_pre</span></code> which represents the number of presynaptic neurons</p></li>
@@ -180,14 +180,16 @@ Additionally, the code may refer to the following built in read-only variables</
 <li><p><code class="docutils literal notranslate"><span class="pre">thread</span></code> when some procedural connectivity is used with multiple
 threads per presynaptic neuron, represents the index of thread</p></li>
 </ul>
-<p>and, in <code class="docutils literal notranslate"><span class="pre">row_build_code</span></code>:
-- <code class="docutils literal notranslate"><span class="pre">id_pre</span></code> represents the index of the presynaptic neuron (starting from zero)
-- <code class="docutils literal notranslate"><span class="pre">id_post_begin</span></code> when some procedural connectivity is used with multiple</p>
-<blockquote>
-<div><p>threads per presynaptic neuron, represents the index of the first postsynaptic neuron to connect.</p>
-</div></blockquote>
-<p>and, in <code class="docutils literal notranslate"><span class="pre">col_build_code</span></code>:
-- <code class="docutils literal notranslate"><span class="pre">id_post</span></code> which represents the index of the postsynaptic neuron (starting from zero)</p>
+<p>and, in <code class="docutils literal notranslate"><span class="pre">row_build_code</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">id_pre</span></code> represents the index of the presynaptic neuron (starting from zero)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">id_post_begin</span></code> when some procedural connectivity is used with multiple
+threads per presynaptic neuron, represents the index of the first postsynaptic neuron to connect.</p></li>
+</ul>
+<p>and, in <code class="docutils literal notranslate"><span class="pre">col_build_code</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">id_post</span></code> which represents the index of the postsynaptic neuron (starting from zero)</p></li>
+</ul>
 <p>Finally, the function <code class="docutils literal notranslate"><span class="pre">addSynapse(x)</span></code> can be used to add a new synapse to the connectivity
 where, in <code class="docutils literal notranslate"><span class="pre">row_build_code</span></code>, <code class="docutils literal notranslate"><span class="pre">x</span></code> is the index of the postsynaptic neuron to connect <cite>id_pre`</cite> to
 and, in <code class="docutils literal notranslate"><span class="pre">col_build_code</span></code>, <code class="docutils literal notranslate"><span class="pre">x</span></code> is the index of the presynaptic neuron to connect to <code class="docutils literal notranslate"><span class="pre">id_post</span></code></p>
@@ -251,7 +253,7 @@ Each <em>diagonal</em> of Toeplitz connectivity is initialised independently by 
 snippet of code specified using the <cite>diagonal_build_code`</cite>.
 Within the code strings, the parameters, derived parameters and
 extra global parameters defined in this snippet can all be referred to be name.
-Additionally, the code may refer to the following built in read-only variables</p>
+Additionally, the code may refer to the following built-in read-only variables</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">dt</span></code> which represents the simulation time step (as specified via  <code class="xref py py-meth docutils literal notranslate"><span class="pre">GeNNModel.dt()</span></code>)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">num_pre</span></code> which represents the number of presynaptic neurons</p></li>
@@ -326,7 +328,7 @@ New neuron models are defined by calling:</p>
 Within all of the code strings, the variables, parameters,
 derived parameters, additional input variables and extra global
 parameters defined in this model can all be referred to be name.
-Additionally, the code may refer to the following built in read-only variables</p>
+Additionally, the code may refer to the following built-in read-only variables</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">dt</span></code> which represents the simulation time step (as specified via  <code class="xref py py-meth docutils literal notranslate"><span class="pre">GeNNModel.dt()</span></code>)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">Isyn</span></code> which represents the total incoming synaptic input.</p></li>
@@ -580,7 +582,7 @@ New postsynaptic models are defined by calling:</p>
 Within all of the code strings, the variables, parameters,
 derived parameters and extra global parameters defined in this model
 can all be referred to be name. Additionally, the code may refer to the
-following built in read-only variables:</p>
+following built-in read-only variables:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">dt</span></code> which represents the simulation time step (as specified via  <code class="xref py py-meth docutils literal notranslate"><span class="pre">GeNNModel.dt()</span></code>)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">id</span></code> which represents a neurons index within a population (starting from zero)</p></li>
@@ -622,7 +624,7 @@ New current source models are defined by calling:</p>
 Within the <code class="docutils literal notranslate"><span class="pre">injection_code</span></code> code string, the variables, parameters,
 derived parameters, neuron variable references and extra global
 parameters defined in this model can all be referred to be name.
-Additionally, the code may refer to the following built in read-only variables</p>
+Additionally, the code may refer to the following built-in read-only variables</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">dt</span></code> which represents the simulation time step (as specified via  <code class="xref py py-meth docutils literal notranslate"><span class="pre">GeNNModel.dt()</span></code>)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">id</span></code> which represents a neurons index within a population (starting from zero)</p></li>
@@ -672,7 +674,7 @@ New custom update models are defined by calling:</p>
 Within the <code class="docutils literal notranslate"><span class="pre">update_code</span></code> code string, the variables, parameters,
 derived parameters, variable references, extra global parameters
 and extra global parameter references defined in this model can all be referred to be name.
-Additionally, the code may refer to the following built in read-only variables</p>
+Additionally, the code may refer to the following built-in read-only variables</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">dt</span></code> which represents the simulation time step (as specified via  <code class="xref py py-meth docutils literal notranslate"><span class="pre">GeNNModel.dt()</span></code>)</p></li>
 </ul>
@@ -764,7 +766,7 @@ the <a class="reference internal" href="source/pygenn.html#pygenn.VarAccessMode.
 New custom connectivity update models are defined by calling:</p>
 <dl class="py function">
 <dt class="sig sig-object py">
-<span class="sig-prename descclassname"><span class="pre">pygenn.</span></span><span class="sig-name descname"><span class="pre">create_custom_connectivity_update_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">class_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_vars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_vars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derived_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_refs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_var_refs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_var_refs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">row_update_code</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host_update_code</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_global_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<span class="sig-prename descclassname"><span class="pre">pygenn.</span></span><span class="sig-name descname"><span class="pre">create_custom_connectivity_update_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">class_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_vars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_vars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derived_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_refs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_var_refs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_var_refs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">row_update_code</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host_update_code</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_global_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_global_param_refs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
 <dd><p>Creates a new custom connectivity update model.</p>
 <p>Within host update code, you have full access to parameters, derived parameters,
 extra global parameters and pre and postsynaptic variables. By design you do
@@ -800,6 +802,8 @@ to be run when custom update is launched</p></li>
 on CPU when custom connectivity update is launched</p></li>
 <li><p><strong>extra_global_params</strong> – names and types of model
 extra global parameters</p></li>
+<li><p><strong>extra_global_param_refs</strong> – names and types of extra global
+parameter references</p></li>
 <li><p><strong>post_vars</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>, </em><a class="reference internal" href="source/pygenn.html#pygenn.VarAccess" title="pygenn._genn.VarAccess"><em>VarAccess</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – </p></li>
 <li><p><strong>pre_var_refs</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>, </em><a class="reference internal" href="source/pygenn.html#pygenn.VarAccessMode" title="pygenn._genn.VarAccessMode"><em>VarAccessMode</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – </p></li>
 <li><p><strong>post_var_refs</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>, </em><a class="reference internal" href="source/pygenn.html#pygenn.VarAccessMode" title="pygenn._genn.VarAccessMode"><em>VarAccessMode</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – </p></li>
