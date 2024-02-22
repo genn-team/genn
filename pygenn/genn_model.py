@@ -153,6 +153,18 @@ _var_upgrade = re.compile(r"\$\(([_a-zA-Z][_a-zA-Z0-9]*)\)")
 class GeNNModel(ModelSpecInternal):
     """This class provided for interface for 
     defining, building and running models
+    
+    Args:
+        precision:              Data type to use for ``scalar`` variables
+        model_name:             Name of the model
+        backend:                Name of backend module to use. Defaults to one to pick 'best' backend for your system
+        time_precision:         data type to use for representing time
+        genn_log_level:         Log level for GeNN
+        code_gen_log_level:     Log level for GeNN code-generator
+        transpiler_log_level:   Log level for GeNN transpiler
+        runtime_log_level:      Log level for GeNN runtime
+        backend_log_level:      Log level for backend
+        preference_kwargs:      Additional keyword arguments to set in backend preferences structure
     """
 
     def __init__(self, precision: TypeType = "float",
@@ -165,19 +177,6 @@ class GeNNModel(ModelSpecInternal):
                  runtime_log_level: PlogSeverity = PlogSeverity.WARNING,
                  backend_log_level: PlogSeverity = PlogSeverity.WARNING,
                  **preference_kwargs):
-        """Initialize GeNNModel
-        Args:
-            precision:              Data type to use for ``scalar`` variables
-            model_name:             Name of the model
-            backend:                Name of backend module to use. Defaults to one to pick 'best' backend for your system
-            time_precision:         data type to use for representing time
-            genn_log_level:         Log level for GeNN
-            code_gen_log_level:     Log level for GeNN code-generator
-            transpiler_log_level:   Log level for GeNN transpiler
-            runtime_log_level:      Log level for GeNN runtime
-            backend_log_level:      Log level for backend
-            preference_kwargs:      Additional keyword arguments to set in backend preferences structure
-        """
         # Superclass
         super(GeNNModel, self).__init__()
 
@@ -1992,11 +1991,13 @@ def create_sparse_connect_init_snippet(class_name: str, params=None,
       threads per presynaptic neuron, represents the index of thread
 
     and, in ``row_build_code``:
+
     - ``id_pre`` represents the index of the presynaptic neuron (starting from zero)
     - ``id_post_begin`` when some procedural connectivity is used with multiple 
       threads per presynaptic neuron, represents the index of the first postsynaptic neuron to connect.
     
     and, in ``col_build_code``:
+
     - ``id_post`` which represents the index of the postsynaptic neuron (starting from zero)
 
     Finally, the function ``addSynapse(x)`` can be used to add a new synapse to the connectivity 
