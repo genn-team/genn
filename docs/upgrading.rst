@@ -21,7 +21,11 @@ Syntax changes
 In order to streamline the modelling process and reduce the number of ways to achieve the same thing we have to maintain,
 several areas of GeNN syntax have changed:
 
-- single PSM code string
+- Postsynaptic models were previously implemented with two code strings: ``apply_input_code`` and
+  ``decay_code``. This was unnecessarily complex and the order these were evaluated in wasn't obvious.
+  Therefore, these have been replaced by a single ``sim_code`` code string from which input can be
+  delivered to the postsynaptic neuron using the ``injectCurrent(x)`` function.
+  
 - :meth:`.GeNNModel.add_synapse_population` was becoming rather cumbersome and this was only made worse by postsynaptic models and weight update models now taking variable references.
   To improve this:
 
@@ -30,5 +34,10 @@ several areas of GeNN syntax have changed:
 
 - The row build and diagonal build state variables in sparse/toeplitz connectivity building code were really ugly and confusing. Sparse connectivity init snippets now just let the user write whatever sort of loop they want and do the initialisation outside and toeplitz reuses the for_each_synapse structure described above to do similar.
 - ``GLOBALG`` and ``INDIVIDUALG`` confused almost all new users and were really only used with ``StaticPulse`` weight update models. Same functionality can be achieved with a ``StaticPulseConstantWeight`` version with the weight as a parameter. Then I've renamed all the 'obvious' :class:`.SynapseMatrixType` variants so you just chose :attr:`.SynapseMatrixType.SPARSE`, :attr:`.SynapseMatrixType.DENSE`, :attr:`.SynapseMatrixType.TOEPLITZ` or :attr:`.SynapseMatrixType.PROCEDURAL` (with :attr:`.SynapseMatrixType.DENSE_PROCEDURALG` and :attr:`.SynapseMatrixType.PROCEDURAL_KERNELG` for more unusual options)
-- Extra global parameters only support the 'pointer' form, awaiting a PR to implement settable parameters to replace the other sort
-- Removed implicit variable referneces
+- Extra global parameters used to be creatable with pointer types to allow models to access
+  arbitrary sized arrays and non-pointer types to create parameters that could be modified at runtime.
+  The latter use case is now handled much more efficiently using the `Dynamic parameters`_ system.
+- Weight update and postsynaptic models could previous refer to neuron variables via _implicit_
+  references. For example ``$(V_pre)`` would refer to a variable called ``V`` on the presynaptic
+  neuron population. This mechanism has been replaced by adding _explicit_ references to
+  weight update, postsynaptic and current source model (see `Variables references`_).
