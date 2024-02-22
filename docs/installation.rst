@@ -21,14 +21,14 @@ Pre-installation
 2.  If your machine has an NVIDIA GPU and you haven't installed CUDA already, 
     obtain a fresh installation of the NVIDIA CUDA toolkit from
     https://developer.nvidia.com/cuda-downloads
-    Again, be sure to pick CUDA and C++ compiler versions which are compatible
+    Be sure to pick CUDA and C++ compiler versions which are compatible
     with each other. The latest C++ compiler need not necessarily be
     compatible with the latest CUDA toolkit.
 3.  GeNN uses the ``CUDA_PATH`` environment variable to determine which 
     version of CUDA to build against. On Windows, this is set automatically when 
     installing CUDA. However, if you choose, you can verify which version is 
     selected by running ``echo %CUDA_PATH`` in a command prompt.
-    However, on Linux and Mac you need to set ``CUDA_PATH`` manually with:
+    However, on Linux, you need to set ``CUDA_PATH`` manually with:
     ```bash
     export CUDA_PATH=/usr/local/cuda
     ```
