@@ -136,7 +136,7 @@ public:
     unsigned int getMaxSourceConnections() const{ return m_MaxSourceConnections; }
     unsigned int getMaxDendriticDelayTimesteps() const{ return m_MaxDendriticDelayTimesteps; }
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
-    const std::vector<unsigned int> &getKernelSize() const { return m_KernelSize; }
+    const auto &getKernelSize() const { return m_KernelSize; }
     size_t getKernelSizeFlattened() const;
     
     //! Get variable mode used for outputs from this synapse group e.g. outPre and outPost
@@ -208,11 +208,11 @@ public:
     //! Are PREVIOUS postsynaptic spike-event times needed?
     bool isPrevPostSpikeEventTimeRequired() const;
 
-    const PostsynapticModels::Init &getPSInitialiser() const{ return m_PSInitialiser; }
-    const WeightUpdateModels::Init &getWUInitialiser() const{ return m_WUInitialiser; }
+    const auto &getPSInitialiser() const{ return m_PSInitialiser; }
+    const auto &getWUInitialiser() const{ return m_WUInitialiser; }
       
-    const InitSparseConnectivitySnippet::Init &getConnectivityInitialiser() const{ return m_SparseConnectivityInitialiser; }
-    const InitToeplitzConnectivitySnippet::Init &getToeplitzConnectivityInitialiser() const { return m_ToeplitzConnectivityInitialiser; }
+    const auto &getConnectivityInitialiser() const{ return m_SparseConnectivityInitialiser; }
+    const auto &getToeplitzConnectivityInitialiser() const { return m_ToeplitzConnectivityInitialiser; }
 
     bool isZeroCopyEnabled() const;
 
@@ -269,11 +269,11 @@ protected:
 
     //! Gets custom connectivity updates which reference this synapse group
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
-    const std::vector<CustomConnectivityUpdateInternal*> &getCustomConnectivityUpdateReferences() const{ return m_CustomConnectivityUpdateReferences; }
+    const auto &getCustomConnectivityUpdateReferences() const{ return m_CustomConnectivityUpdateReferences; }
 
     //! Gets custom updates which reference this synapse group
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
-    const std::vector<CustomUpdateWUInternal*> &getCustomUpdateReferences() const{ return m_CustomUpdateReferences; }
+    const auto &getCustomUpdateReferences() const{ return m_CustomUpdateReferences; }
     
     //! Can postsynaptic update component of this synapse group be safely fused with others whose hashes match so only one needs simulating at all?
     bool canPSBeFused(const NeuronGroup *ng) const;

@@ -665,7 +665,7 @@ void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash)
     Type::updateHash(e.type, hash);
 }
 //----------------------------------------------------------------------------
-void checkLocalVarReferences(const std::unordered_map<std::string, VarReference> &varRefs, const Base::VarRefVec &modelVarRefs,
+void checkLocalVarReferences(const std::map<std::string, VarReference> &varRefs, const Base::VarRefVec &modelVarRefs,
                              const NeuronGroupInternal *ng, const std::string &targetErrorDescription)
 {
     // Loop through all variable references
@@ -688,7 +688,7 @@ void checkLocalVarReferences(const std::unordered_map<std::string, VarReference>
     }
 }
 //----------------------------------------------------------------------------
-void checkEGPReferenceTypes(const std::unordered_map<std::string, EGPReference> &egpRefs,
+void checkEGPReferenceTypes(const std::map<std::string, EGPReference> &egpRefs,
                             const Base::EGPRefVec &modelEGPRefs)
 {
     // Loop through all extra global parameter references

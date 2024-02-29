@@ -38,8 +38,8 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
-                    const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
+void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues, 
+                    const std::map<std::string, InitVarSnippet::Init> &varValues,
                     const std::string &description) const
 {
     // Superclass

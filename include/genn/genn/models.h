@@ -447,11 +447,11 @@ GENN_EXPORT void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &h
 // Free functions
 //----------------------------------------------------------------------------
 //! Helper function to check if local variable references are configured correctly
-GENN_EXPORT void checkLocalVarReferences(const std::unordered_map<std::string, VarReference> &varRefs, const Base::VarRefVec &modelVarRefs,
+GENN_EXPORT void checkLocalVarReferences(const std::map<std::string, VarReference> &varRefs, const Base::VarRefVec &modelVarRefs,
                                          const NeuronGroupInternal *ng, const std::string &targetErrorDescription);
 //! Helper function to check if variable reference types match those specified in model
 template<typename V>
-void checkVarReferenceTypes(const std::unordered_map<std::string, V> &varRefs, const Base::VarRefVec &modelVarRefs)
+void checkVarReferenceTypes(const std::map<std::string, V> &varRefs, const Base::VarRefVec &modelVarRefs)
 {
     // Loop through all variable references
     for(const auto &modelVarRef : modelVarRefs) {
@@ -465,7 +465,7 @@ void checkVarReferenceTypes(const std::unordered_map<std::string, V> &varRefs, c
     }
 }
 
-GENN_EXPORT void checkEGPReferenceTypes(const std::unordered_map<std::string, EGPReference> &egpRefs,
+GENN_EXPORT void checkEGPReferenceTypes(const std::map<std::string, EGPReference> &egpRefs,
                                         const Base::EGPRefVec &modelEGPRefs);
 
 } // GeNN::Models

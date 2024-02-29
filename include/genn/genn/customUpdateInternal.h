@@ -15,9 +15,9 @@ public:
     using GroupExternal = CustomUpdate;
 
     CustomUpdateInternal(const std::string &name, const std::string &updateGroupName,
-                         const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, Type::NumericValue> &params, 
-                         const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences, 
-                         const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+                         const CustomUpdateModels::Base *customUpdateModel, const std::map<std::string, Type::NumericValue> &params, 
+                         const std::map<std::string, InitVarSnippet::Init> &varInitialisers, const std::map<std::string, Models::VarReference> &varReferences, 
+                         const std::map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   CustomUpdate(name, updateGroupName, customUpdateModel, params, varInitialisers, varReferences, 
                      egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation)
     {
@@ -53,9 +53,9 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    Models::Base::VarRefVec getDefs() const{ return m_CU.getModel()->getVarRefs(); }
+    auto getDefs() const{ return m_CU.getModel()->getVarRefs(); }
 
-    const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_CU.getVarReferences(); }
+    const auto &getInitialisers() const{ return m_CU.getVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -73,9 +73,9 @@ public:
     using GroupExternal = CustomUpdateWU;
 
     CustomUpdateWUInternal(const std::string &name, const std::string &updateGroupName,
-                           const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, Type::NumericValue> &params, 
-                           const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences, 
-                           const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+                           const CustomUpdateModels::Base *customUpdateModel, const std::map<std::string, Type::NumericValue> &params, 
+                           const std::map<std::string, InitVarSnippet::Init> &varInitialisers, const std::map<std::string, Models::WUVarReference> &varReferences, 
+                           const std::map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   CustomUpdateWU(name, updateGroupName, customUpdateModel, params, varInitialisers, varReferences, 
                        egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation)
     {
@@ -114,9 +114,9 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    Models::Base::VarRefVec getDefs() const{ return m_CU.getModel()->getVarRefs(); }
+    auto getDefs() const{ return m_CU.getModel()->getVarRefs(); }
 
-    const std::unordered_map<std::string, Models::WUVarReference> &getInitialisers() const{ return m_CU.getVarReferences(); }
+    const auto &getInitialisers() const{ return m_CU.getVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------

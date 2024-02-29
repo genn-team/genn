@@ -27,8 +27,8 @@
 #define SET_CALC_MAX_COL_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return FUNC; }
 #define SET_CALC_KERNEL_SIZE_FUNC(...) virtual CalcKernelSizeFunc getCalcKernelSizeFunc() const override{ return __VA_ARGS__; }
 
-#define SET_MAX_ROW_LENGTH(MAX_ROW_LENGTH) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return [](unsigned int, unsigned int, const std::unordered_map<std::string, Type::NumericValue> &){ return MAX_ROW_LENGTH; }; }
-#define SET_MAX_COL_LENGTH(MAX_COL_LENGTH) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return [](unsigned int, unsigned int, const std::unordered_map<std::string, Type::NumericValue> &){ return MAX_COL_LENGTH; }; }
+#define SET_MAX_ROW_LENGTH(MAX_ROW_LENGTH) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return [](unsigned int, unsigned int, const std::map<std::string, Type::NumericValue> &){ return MAX_ROW_LENGTH; }; }
+#define SET_MAX_COL_LENGTH(MAX_COL_LENGTH) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return [](unsigned int, unsigned int, const std::map<std::string, Type::NumericValue> &){ return MAX_COL_LENGTH; }; }
 
 //----------------------------------------------------------------------------
 // GeNN::InitSparseConnectivitySnippet::Base
@@ -62,7 +62,7 @@ public:
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues) const;
+    void validate(const std::map<std::string, Type::NumericValue> &paramValues) const;
 };
 
 //----------------------------------------------------------------------------
@@ -71,7 +71,7 @@ public:
 class GENN_EXPORT Init : public Snippet::Init<Base>
 {
 public:
-    Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params);
+    Init(const Base *snippet, const std::map<std::string, Type::NumericValue> &params);
 
     //------------------------------------------------------------------------
     // Public API
@@ -79,9 +79,9 @@ public:
     bool isRNGRequired() const;
     bool isHostRNGRequired() const;
     
-    const std::vector<Transpiler::Token> &getRowBuildCodeTokens() const{ return m_RowBuildCodeTokens; }
-    const std::vector<Transpiler::Token> &getColBuildCodeTokens() const{ return m_ColBuildCodeTokens; }
-    const std::vector<Transpiler::Token> &getHostInitCodeTokens() const{ return m_HostInitCodeTokens; }
+    const auto &getRowBuildCodeTokens() const{ return m_RowBuildCodeTokens; }
+    const auto &getColBuildCodeTokens() const{ return m_ColBuildCodeTokens; }
+    const auto &getHostInitCodeTokens() const{ return m_HostInitCodeTokens; }
 
 private:
     //------------------------------------------------------------------------

@@ -2,9 +2,7 @@
 
 // Standard includes
 #include <map>
-#include <set>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 // GeNN includes
@@ -54,9 +52,9 @@ public:
     //! Gets the current source model used by this group
     const CurrentSourceModels::Base *getModel() const{ return m_Model; }
 
-    const std::unordered_map<std::string, Type::NumericValue> &getParams() const{ return m_Params; }
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
-    const std::unordered_map<std::string, Models::VarReference> &getNeuronVarReferences() const{ return m_NeuronVarReferences;  }
+    const auto &getParams() const{ return m_Params; }
+    const auto &getVarInitialisers() const{ return m_VarInitialisers; }
+    const auto &getNeuronVarReferences() const{ return m_NeuronVarReferences;  }
 
     //! Get variable location for current source model state variable
     VarLocation getVarLocation(const std::string &varName) const{ return m_VarLocation.get(varName); }
@@ -73,8 +71,8 @@ public:
 
 protected:
     CurrentSource(const std::string &name, const CurrentSourceModels::Base *model,
-                  const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
-                  const std::unordered_map<std::string, Models::VarReference> &neuronVarReferences, const NeuronGroupInternal *trgNeuronGroup, 
+                  const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers,
+                  const std::map<std::string, Models::VarReference> &neuronVarReferences, const NeuronGroupInternal *trgNeuronGroup, 
                   VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
@@ -87,7 +85,7 @@ protected:
     //------------------------------------------------------------------------
     const NeuronGroupInternal *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
 
-    const std::unordered_map<std::string, Type::NumericValue> &getDerivedParams() const{ return m_DerivedParams; }
+    const auto &getDerivedParams() const{ return m_DerivedParams; }
 
     bool isZeroCopyEnabled() const;
 
@@ -113,10 +111,10 @@ private:
     std::string m_Name;
 
     const CurrentSourceModels::Base *m_Model;
-    std::unordered_map<std::string, Type::NumericValue> m_Params;
-    std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
-    std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
-    std::unordered_map<std::string, Models::VarReference> m_NeuronVarReferences;
+    std::map<std::string, Type::NumericValue> m_Params;
+    std::map<std::string, Type::NumericValue> m_DerivedParams;
+    std::map<std::string, InitVarSnippet::Init> m_VarInitialisers;
+    std::map<std::string, Models::VarReference> m_NeuronVarReferences;
 
     const NeuronGroupInternal *m_TrgNeuronGroup;
 

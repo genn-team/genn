@@ -14,7 +14,7 @@ public:
     using GroupExternal = NeuronGroup;
 
     NeuronGroupInternal(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                        const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
+                        const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers,
                         VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   NeuronGroup(name, numNeurons, neuronModel, params, varInitialisers,
                     defaultVarLocation, defaultExtraGlobalParamLocation)
@@ -70,9 +70,9 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_NG.getVarLocation(varName); }
     
-    std::vector<Models::Base::Var> getDefs() const{ return m_NG.getModel()->getVars(); }
+    auto getDefs() const{ return m_NG.getModel()->getVars(); }
 
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_NG.getVarInitialisers(); }
+    const auto &getInitialisers() const{ return m_NG.getVarInitialisers(); }
 
     bool isVarDelayed(const std::string &varName) const{ return m_NG.isDelayRequired() && m_NG.isVarQueueRequired(varName); }
 
@@ -101,7 +101,7 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_NG.getExtraGlobalParamLocation(varName); }
 
-    Snippet::Base::EGPVec getDefs() const{ return m_NG.getModel()->getExtraGlobalParams(); }
+    auto getDefs() const{ return m_NG.getModel()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------

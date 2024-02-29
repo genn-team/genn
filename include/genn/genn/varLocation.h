@@ -3,7 +3,7 @@
 // Standard C++ includes
 #include <algorithm>
 #include <string>
-#include <unordered_map>
+#include <map>
 
 // Standard C includes
 #include <cstdint>
@@ -82,6 +82,6 @@ private:
     //------------------------------------------------------------------------
     VarLocation m_DefaultLocation;
 
-    std::unordered_map<std::string, VarLocation> m_Locations;
+    std::map<std::string, VarLocation> m_Locations;
 };
 }   // namespace GeNN

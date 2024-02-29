@@ -45,9 +45,9 @@ public:
     }
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
-                  const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
-                  const std::unordered_map<std::string, Models::VarReference> &varRefTargets) const;
+    void validate(const std::map<std::string, Type::NumericValue> &paramValues, 
+                  const std::map<std::string, InitVarSnippet::Init> &varValues,
+                  const std::map<std::string, Models::VarReference> &varRefTargets) const;
 };
 
 //----------------------------------------------------------------------------
@@ -56,9 +56,9 @@ public:
 class GENN_EXPORT Init : public Snippet::Init<Base>
 {
 public:
-    Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params, 
-         const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, 
-         const std::unordered_map<std::string, Models::VarReference> &neuronVarReferences);
+    Init(const Base *snippet, const std::map<std::string, Type::NumericValue> &params, 
+         const std::map<std::string, InitVarSnippet::Init> &varInitialisers, 
+         const std::map<std::string, Models::VarReference> &neuronVarReferences);
 
     //------------------------------------------------------------------------
     // Public API
@@ -66,10 +66,10 @@ public:
     bool isRNGRequired() const;
     bool isVarInitRequired() const;
 
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
-    const std::unordered_map<std::string, Models::VarReference> &getNeuronVarReferences() const{ return m_NeuronVarReferences;  }
+    const auto &getVarInitialisers() const{ return m_VarInitialisers; }
+    const auto &getNeuronVarReferences() const{ return m_NeuronVarReferences;  }
     
-    const std::vector<Transpiler::Token> &getSimCodeTokens() const{ return m_SimCodeTokens; }
+    const auto &getSimCodeTokens() const{ return m_SimCodeTokens; }
 
     void finalise(double dt);
 
@@ -79,8 +79,8 @@ private:
     //------------------------------------------------------------------------
     std::vector<Transpiler::Token> m_SimCodeTokens;
 
-    std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
-    std::unordered_map<std::string, Models::VarReference> m_NeuronVarReferences;
+    std::map<std::string, InitVarSnippet::Init> m_VarInitialisers;
+    std::map<std::string, Models::VarReference> m_NeuronVarReferences;
 };
 
 //----------------------------------------------------------------------------

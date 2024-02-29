@@ -4,8 +4,6 @@
 #include <map>
 #include <set>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 // GeNN includes
@@ -91,8 +89,8 @@ public:
     //! Gets the neuron model used by this group
     const NeuronModels::Base *getModel() const{ return m_Model; }
 
-    const std::unordered_map<std::string, Type::NumericValue> &getParams() const{ return m_Params; }
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
+    const auto &getParams() const{ return m_Params; }
+    const auto &getVarInitialisers() const{ return m_VarInitialisers; }
 
     bool isSpikeTimeRequired() const;
     bool isPrevSpikeTimeRequired() const;
@@ -144,7 +142,7 @@ public:
 
 protected:
     NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
+                const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers,
                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
@@ -171,17 +169,17 @@ protected:
     // Protected const methods
     //------------------------------------------------------------------------
     //! Gets pointers to all synapse groups which provide input to this neuron group
-    const std::vector<SynapseGroupInternal*> &getInSyn() const{ return m_InSyn; }
-    const std::vector<SynapseGroupInternal*> &getFusedPSMInSyn() const{ return m_FusedPSMInSyn; }
-    const std::vector<SynapseGroupInternal *> &getFusedWUPostInSyn() const { return m_FusedWUPostInSyn; }
+    const auto &getInSyn() const{ return m_InSyn; }
+    const auto &getFusedPSMInSyn() const{ return m_FusedPSMInSyn; }
+    const auto &getFusedWUPostInSyn() const { return m_FusedWUPostInSyn; }
 
     //! Gets pointers to all synapse groups emanating from this neuron group
-    const std::vector<SynapseGroupInternal*> &getOutSyn() const{ return m_OutSyn; }
-    const std::vector<SynapseGroupInternal *> &getFusedWUPreOutSyn() const { return m_FusedWUPreOutSyn; }
-    const std::vector<SynapseGroupInternal *> &getFusedPreOutputOutSyn() const { return m_FusedPreOutputOutSyn; }
+    const auto &getOutSyn() const{ return m_OutSyn; }
+    const auto &getFusedWUPreOutSyn() const { return m_FusedWUPreOutSyn; }
+    const auto &getFusedPreOutputOutSyn() const { return m_FusedPreOutputOutSyn; }
 
-    const std::vector<SynapseGroupInternal*> &getFusedSpike() const{ return m_FusedSpike; }
-    const std::vector<SynapseGroupInternal*> &getFusedSpikeEvent() const{ return m_FusedSpikeEvent; }
+    const auto &getFusedSpike() const{ return m_FusedSpike; }
+    const auto &getFusedSpikeEvent() const{ return m_FusedSpikeEvent; }
     
     //! Does this neuron group require an RNG to simulate?
     bool isSimRNGRequired() const;
@@ -199,9 +197,9 @@ protected:
     bool isVarInitRequired() const;
 
     //! Gets pointers to all current sources which provide input to this neuron group
-    const std::vector<CurrentSourceInternal*> &getCurrentSources() const { return m_CurrentSourceGroups; }
+    const auto &getCurrentSources() const { return m_CurrentSourceGroups; }
 
-    const std::unordered_map<std::string, Type::NumericValue> &getDerivedParams() const{ return m_DerivedParams; }
+    const auto &getDerivedParams() const{ return m_DerivedParams; }
 
     //! Helper to get vector of incoming synapse groups which have postsynaptic update code
     std::vector<SynapseGroupInternal*> getFusedInSynWithPostCode() const;
@@ -216,13 +214,13 @@ protected:
     std::vector<SynapseGroupInternal *> getFusedOutSynWithPreVars() const;
 
     //! Tokens produced by scanner from simc ode
-    const std::vector<Transpiler::Token> &getSimCodeTokens() const { return m_SimCodeTokens; }
+    const auto &getSimCodeTokens() const { return m_SimCodeTokens; }
 
     //! Tokens produced by scanner from threshold condition code
-    const std::vector<Transpiler::Token> &getThresholdConditionCodeTokens() const { return m_ThresholdConditionCodeTokens; }
+    const auto &getThresholdConditionCodeTokens() const { return m_ThresholdConditionCodeTokens; }
     
     //! Tokens produced by scanner from reset code
-    const std::vector<Transpiler::Token> &getResetCodeTokens() const { return m_ResetCodeTokens; }
+    const auto &getResetCodeTokens() const { return m_ResetCodeTokens; }
 
     bool isVarQueueRequired(const std::string &var) const;
 
@@ -244,14 +242,14 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const std::string m_Name;
+    std::string m_Name;
 
-    const unsigned int m_NumNeurons;
+    unsigned int m_NumNeurons;
 
     const NeuronModels::Base *m_Model;
-    const std::unordered_map<std::string, Type::NumericValue> m_Params;
-    std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
-    std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
+    std::map<std::string, Type::NumericValue> m_Params;
+    std::map<std::string, Type::NumericValue> m_DerivedParams;
+    std::map<std::string, InitVarSnippet::Init> m_VarInitialisers;
     std::vector<SynapseGroupInternal*> m_InSyn;
     std::vector<SynapseGroupInternal*> m_OutSyn;
     std::vector<SynapseGroupInternal*> m_FusedPSMInSyn;
@@ -264,7 +262,7 @@ private:
     std::vector<CurrentSourceInternal*> m_CurrentSourceGroups;
 
     //! Set of names of variable requiring queueing
-    std::unordered_set<std::string> m_VarQueueRequired;
+    std::set<std::string> m_VarQueueRequired;
     
     //! Should zero-copy memory (if available) be used 
     //! for spike and spike-like event recording?

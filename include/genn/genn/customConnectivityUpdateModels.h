@@ -85,14 +85,14 @@ public:
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
-                  const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
-                  const std::unordered_map<std::string, InitVarSnippet::Init> &preVarValues,
-                  const std::unordered_map<std::string, InitVarSnippet::Init> &postVarValues,
-                  const std::unordered_map<std::string, Models::WUVarReference> &varRefTargets,
-                  const std::unordered_map<std::string, Models::VarReference> &preVarRefTargets,
-                  const std::unordered_map<std::string, Models::VarReference> &postVarRefTargets,
-                  const std::unordered_map<std::string, Models::EGPReference> &egpRefTargets,
+    void validate(const std::map<std::string, Type::NumericValue> &paramValues, 
+                  const std::map<std::string, InitVarSnippet::Init> &varValues,
+                  const std::map<std::string, InitVarSnippet::Init> &preVarValues,
+                  const std::map<std::string, InitVarSnippet::Init> &postVarValues,
+                  const std::map<std::string, Models::WUVarReference> &varRefTargets,
+                  const std::map<std::string, Models::VarReference> &preVarRefTargets,
+                  const std::map<std::string, Models::VarReference> &postVarRefTargets,
+                  const std::map<std::string, Models::EGPReference> &egpRefTargets,
                   const std::string &description) const;
 };
 }   // GeNN::CustomConnectivityUpdateModels

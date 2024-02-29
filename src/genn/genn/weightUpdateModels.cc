@@ -99,12 +99,12 @@ boost::uuids::detail::sha1::digest_type Base::getPostEventHashDigest() const
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
-                    const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
-                    const std::unordered_map<std::string, InitVarSnippet::Init> &preVarValues,
-                    const std::unordered_map<std::string, InitVarSnippet::Init> &postVarValues,
-                    const std::unordered_map<std::string, Models::VarReference> &preVarRefTargets,
-                    const std::unordered_map<std::string, Models::VarReference> &postVarRefTargets) const
+void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues, 
+                    const std::map<std::string, InitVarSnippet::Init> &varValues,
+                    const std::map<std::string, InitVarSnippet::Init> &preVarValues,
+                    const std::map<std::string, InitVarSnippet::Init> &postVarValues,
+                    const std::map<std::string, Models::VarReference> &preVarRefTargets,
+                    const std::map<std::string, Models::VarReference> &postVarRefTargets) const
 {
     // Superclass
     Snippet::Base::validate(paramValues, "Weight update model");
@@ -142,9 +142,9 @@ void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &p
 //----------------------------------------------------------------------------
 // GeNN::WeightUpdateModels::Init
 //----------------------------------------------------------------------------
-Init::Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, 
-           const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
-           const std::unordered_map<std::string, Models::VarReference> &preNeuronVarReferences, const std::unordered_map<std::string, Models::VarReference> &postNeuronVarReferences)
+Init::Init(const Base *snippet, const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers, 
+           const std::map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::map<std::string, InitVarSnippet::Init> &postVarInitialisers,
+           const std::map<std::string, Models::VarReference> &preNeuronVarReferences, const std::map<std::string, Models::VarReference> &postNeuronVarReferences)
 :   Snippet::Init<Base>(snippet, params), m_VarInitialisers(varInitialisers), m_PreVarInitialisers(preVarInitialisers), m_PostVarInitialisers(postVarInitialisers), 
     m_PreNeuronVarReferences(preNeuronVarReferences), m_PostNeuronVarReferences(postNeuronVarReferences)
 {

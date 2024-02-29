@@ -24,7 +24,7 @@ void Base::updateHash(boost::uuids::detail::sha1 &hash) const
     Utils::updateHash(getExtraGlobalParams(), hash);
 }
 //----------------------------------------------------------------------------
-void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, const std::string &description) const
+void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues, const std::string &description) const
 {
     const auto params = getParams();
     Utils::validateVecNames(params, "Parameters");

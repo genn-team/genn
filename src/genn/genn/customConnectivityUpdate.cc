@@ -20,7 +20,7 @@ using namespace GeNN;
 //------------------------------------------------------------------------
 namespace
 {
-void updateVarRefDelayHash(const NeuronGroup *delayGroup, const std::unordered_map<std::string, Models::VarReference> &varRefs, 
+void updateVarRefDelayHash(const NeuronGroup *delayGroup, const std::map<std::string, Models::VarReference> &varRefs, 
                            boost::uuids::detail::sha1 &hash)
 {
     // Update hash with whether delay is required
@@ -102,10 +102,10 @@ bool CustomConnectivityUpdate::isPostVarInitRequired() const
 //------------------------------------------------------------------------
 CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup,
                                                    const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel,
-                                                   const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
-                                                   const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
-                                                   const std::unordered_map<std::string, Models::WUVarReference> &varReferences, const std::unordered_map<std::string, Models::VarReference> &preVarReferences,
-                                                   const std::unordered_map<std::string, Models::VarReference> &postVarReferences, const std::unordered_map<std::string, Models::EGPReference> &egpReferences,
+                                                   const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers,
+                                                   const std::map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::map<std::string, InitVarSnippet::Init> &postVarInitialisers,
+                                                   const std::map<std::string, Models::WUVarReference> &varReferences, const std::map<std::string, Models::VarReference> &preVarReferences,
+                                                   const std::map<std::string, Models::VarReference> &postVarReferences, const std::map<std::string, Models::EGPReference> &egpReferences,
                                                    VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_UpdateGroupName(updateGroupName), m_SynapseGroup(synapseGroup), m_Model(customConnectivityUpdateModel),
     m_Params(params), m_VarInitialisers(varInitialisers), m_PreVarInitialisers(preVarInitialisers), m_PostVarInitialisers(postVarInitialisers),
@@ -363,7 +363,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getVarLocation
     return hash.get_digest();
 }
 //------------------------------------------------------------------------
-NeuronGroup *CustomConnectivityUpdate::getVarRefDelayGroup(const std::unordered_map<std::string, Models::VarReference> &varRefs, 
+NeuronGroup *CustomConnectivityUpdate::getVarRefDelayGroup(const std::map<std::string, Models::VarReference> &varRefs, 
                                                            const std::string &errorContext) const
 {
     // If any variable references have delays

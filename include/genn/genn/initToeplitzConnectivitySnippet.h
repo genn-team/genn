@@ -2,7 +2,6 @@
 
 // Standard C++ includes
 #include <functional>
-#include <unordered_map>
 #include <vector>
 
 // Standard C includes
@@ -24,7 +23,7 @@
 #define SET_CALC_MAX_ROW_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return FUNC; }
 #define SET_CALC_KERNEL_SIZE_FUNC(...) virtual CalcKernelSizeFunc getCalcKernelSizeFunc() const override{ return __VA_ARGS__; }
 
-#define SET_MAX_ROW_LENGTH(MAX_ROW_LENGTH) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return [](unsigned int, unsigned int, const std::unordered_map<std::string, Type::NumericValue> &){ return MAX_ROW_LENGTH; }; }
+#define SET_MAX_ROW_LENGTH(MAX_ROW_LENGTH) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return [](unsigned int, unsigned int, const std::map<std::string, Type::NumericValue> &){ return MAX_ROW_LENGTH; }; }
 
 //----------------------------------------------------------------------------
 // GeNN:::InitToeplitzConnectivitySnippet::Base
@@ -53,7 +52,7 @@ public:
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues) const;
+    void validate(const std::map<std::string, Type::NumericValue> &paramValues) const;
 };
 
 //----------------------------------------------------------------------------
@@ -62,14 +61,14 @@ public:
 class GENN_EXPORT Init : public Snippet::Init<InitToeplitzConnectivitySnippet::Base>
 {
 public:
-    Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params);
+    Init(const Base *snippet, const std::map<std::string, Type::NumericValue> &params);
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
     bool isRNGRequired() const;
     
-    const std::vector<Transpiler::Token> &getDiagonalBuildCodeTokens() const{ return m_DiagonalBuildCodeTokens; }
+    const auto &getDiagonalBuildCodeTokens() const{ return m_DiagonalBuildCodeTokens; }
 private:
     //------------------------------------------------------------------------
     // Members

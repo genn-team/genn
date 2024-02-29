@@ -52,16 +52,16 @@ public:
     //! Gets the custom connectivity update model used by this group
     const CustomConnectivityUpdateModels::Base *getModel() const { return m_Model; }
 
-    const std::unordered_map<std::string, Type::NumericValue> &getParams() const { return m_Params; }
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const { return m_VarInitialisers; }
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getPreVarInitialisers() const { return m_PreVarInitialisers; }
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getPostVarInitialisers() const { return m_PostVarInitialisers; }
+    const auto &getParams() const { return m_Params; }
+    const auto &getVarInitialisers() const { return m_VarInitialisers; }
+    const auto &getPreVarInitialisers() const { return m_PreVarInitialisers; }
+    const auto &getPostVarInitialisers() const { return m_PostVarInitialisers; }
 
-    const std::unordered_map<std::string, Models::WUVarReference> &getVarReferences() const{ return m_VarReferences;  }
-    const std::unordered_map<std::string, Models::VarReference> &getPreVarReferences() const{ return m_PreVarReferences;  }
-    const std::unordered_map<std::string, Models::VarReference> &getPostVarReferences() const{ return m_PostVarReferences;  }
+    const auto &getVarReferences() const{ return m_VarReferences;  }
+    const auto &getPreVarReferences() const{ return m_PreVarReferences;  }
+    const auto &getPostVarReferences() const{ return m_PostVarReferences;  }
 
-    const std::unordered_map<std::string, Models::EGPReference> &getEGPReferences() const{ return m_EGPReferences;  }
+    const auto &getEGPReferences() const{ return m_EGPReferences;  }
 
     //! Get variable location for synaptic state variable
     VarLocation getVarLocation(const std::string &varName) const{ return m_VarLocation.get(varName); }
@@ -90,10 +90,10 @@ public:
 protected:
     CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup,
                              const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel,
-                             const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
-                             const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
-                             const std::unordered_map<std::string, Models::WUVarReference> &varReferences, const std::unordered_map<std::string, Models::VarReference> &preVarReferences,
-                             const std::unordered_map<std::string, Models::VarReference> &postVarReferences, const std::unordered_map<std::string, Models::EGPReference> &egpReferences,
+                             const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers,
+                             const std::map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::map<std::string, InitVarSnippet::Init> &postVarInitialisers,
+                             const std::map<std::string, Models::WUVarReference> &varReferences, const std::map<std::string, Models::VarReference> &preVarReferences,
+                             const std::map<std::string, Models::VarReference> &postVarReferences, const std::map<std::string, Models::EGPReference> &egpReferences,
                              VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
@@ -104,7 +104,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
-    const std::unordered_map<std::string, Type::NumericValue> &getDerivedParams() const { return m_DerivedParams; }
+    const auto &getDerivedParams() const { return m_DerivedParams; }
 
     bool isZeroCopyEnabled() const;
 
@@ -125,9 +125,9 @@ protected:
 
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
 
-    const std::vector<Transpiler::Token> getRowUpdateCodeTokens() const{ return m_RowUpdateCodeTokens; }
+    const auto &getRowUpdateCodeTokens() const{ return m_RowUpdateCodeTokens; }
 
-    const std::vector<Transpiler::Token> getHostUpdateCodeTokens() const{ return m_HostUpdateCodeTokens; }
+    const auto &getHostUpdateCodeTokens() const{ return m_HostUpdateCodeTokens; }
 
     const NeuronGroup *getPreDelayNeuronGroup() const { return m_PreDelayNeuronGroup; }
     
@@ -137,22 +137,22 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    NeuronGroup *getVarRefDelayGroup(const std::unordered_map<std::string, Models::VarReference> &varRefs, 
+    NeuronGroup *getVarRefDelayGroup(const std::map<std::string, Models::VarReference> &varRefs, 
                                      const std::string &errorContext) const;
     
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const std::string m_Name;
-    const std::string m_UpdateGroupName;
+    std::string m_Name;
+    std::string m_UpdateGroupName;
     SynapseGroupInternal *m_SynapseGroup;
 
     const CustomConnectivityUpdateModels::Base *m_Model;
-    const std::unordered_map<std::string, Type::NumericValue> m_Params;
-    std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
-    std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
-    std::unordered_map<std::string, InitVarSnippet::Init> m_PreVarInitialisers;
-    std::unordered_map<std::string, InitVarSnippet::Init> m_PostVarInitialisers;
+    std::map<std::string, Type::NumericValue> m_Params;
+    std::map<std::string, Type::NumericValue> m_DerivedParams;
+    std::map<std::string, InitVarSnippet::Init> m_VarInitialisers;
+    std::map<std::string, InitVarSnippet::Init> m_PreVarInitialisers;
+    std::map<std::string, InitVarSnippet::Init> m_PostVarInitialisers;
 
     //! Location of individual state variables
     LocationContainer m_VarLocation;
@@ -165,11 +165,11 @@ private:
     //! Data structure tracking whether parameters are dynamic or not
     Snippet::DynamicParameterContainer m_DynamicParams;
 
-    const std::unordered_map<std::string, Models::WUVarReference> m_VarReferences;
-    const std::unordered_map<std::string, Models::VarReference> m_PreVarReferences;
-    const std::unordered_map<std::string, Models::VarReference> m_PostVarReferences;
+    std::map<std::string, Models::WUVarReference> m_VarReferences;
+    std::map<std::string, Models::VarReference> m_PreVarReferences;
+    std::map<std::string, Models::VarReference> m_PostVarReferences;
     
-    std::unordered_map<std::string, Models::EGPReference> m_EGPReferences;
+    std::map<std::string, Models::EGPReference> m_EGPReferences;
 
     const NeuronGroup *m_PreDelayNeuronGroup;
     const NeuronGroup *m_PostDelayNeuronGroup;

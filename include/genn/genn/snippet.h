@@ -4,9 +4,9 @@
 #include <algorithm>
 #include <functional>
 #include <optional>
+#include <set>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
+#include <map>
 #include <vector>
 
 // Standard C includes
@@ -45,7 +45,7 @@ public:                                                 \
 //! Base class for all code snippets
 namespace GeNN
 {
-using ParamValues = std::unordered_map<std::string, Type::NumericValue>;
+using ParamValues = std::map<std::string, Type::NumericValue>;
 
 namespace Snippet
 {
@@ -119,7 +119,7 @@ public:
     //! A derived parameter has a name and a function for obtaining its value
     struct GENN_EXPORT DerivedParam
     {
-        typedef std::function<Type::NumericValue(const std::unordered_map<std::string, Type::NumericValue>&, double)> Func;
+        typedef std::function<Type::NumericValue(const std::map<std::string, Type::NumericValue>&, double)> Func;
 
         DerivedParam(const std::string &n, Func f, const Type::ResolvedType &t) : name(n), func(f), type(t)
         {}
@@ -143,8 +143,8 @@ public:
     typedef std::vector<EGP> EGPVec;
     typedef std::vector<ParamVal> ParamValVec;
     typedef std::vector<DerivedParam> DerivedParamVec;
-    typedef std::function<unsigned int(unsigned int, unsigned int, const std::unordered_map<std::string, Type::NumericValue> &)> CalcMaxLengthFunc;
-    typedef std::function<std::vector<unsigned int>(const std::unordered_map<std::string, Type::NumericValue> &)> CalcKernelSizeFunc;
+    typedef std::function<unsigned int(unsigned int, unsigned int, const std::map<std::string, Type::NumericValue> &)> CalcMaxLengthFunc;
+    typedef std::function<std::vector<unsigned int>(const std::map<std::string, Type::NumericValue> &)> CalcKernelSizeFunc;
 
     //----------------------------------------------------------------------------
     // Declared virtuals
@@ -181,7 +181,7 @@ protected:
     void updateHash(boost::uuids::detail::sha1 &hash) const;
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, const std::string &description) const;
+    void validate(const std::map<std::string, Type::NumericValue> &paramValues, const std::string &description) const;
 
     //------------------------------------------------------------------------
     // Protected static helpers
@@ -210,7 +210,7 @@ template<typename SnippetBase>
 class Init
 {
 public:
-    Init(const SnippetBase *snippet, const std::unordered_map<std::string, Type::NumericValue> &params)
+    Init(const SnippetBase *snippet, const std::map<std::string, Type::NumericValue> &params)
         : m_Snippet(snippet), m_Params(params)
     {
     }
@@ -219,8 +219,8 @@ public:
     // Public API
     //----------------------------------------------------------------------------
     const SnippetBase *getSnippet() const{ return m_Snippet; }
-    const std::unordered_map<std::string, Type::NumericValue> &getParams() const{ return m_Params; }
-    const std::unordered_map<std::string, Type::NumericValue> &getDerivedParams() const{ return m_DerivedParams; }
+    const auto &getParams() const{ return m_Params; }
+    const auto &getDerivedParams() const{ return m_DerivedParams; }
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const
     {
@@ -242,8 +242,8 @@ private:
     // Members
     //----------------------------------------------------------------------------
     const SnippetBase *m_Snippet;
-    std::unordered_map<std::string, Type::NumericValue> m_Params;
-    std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
+    std::map<std::string, Type::NumericValue> m_Params;
+    std::map<std::string, Type::NumericValue> m_DerivedParams;
 };
 
 //----------------------------------------------------------------------------
@@ -265,7 +265,7 @@ private:
     // Members
     //------------------------------------------------------------------------
     const Base *m_Snippet;
-    std::unordered_set<std::string> m_Dynamic;
+    std::set<std::string> m_Dynamic;
 };
 
 //----------------------------------------------------------------------------

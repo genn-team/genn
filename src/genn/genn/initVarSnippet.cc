@@ -32,7 +32,7 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues) const
+void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues) const
 {
     // Superclass
     Snippet::Base::validate(paramValues, "Variable initialiser ");
@@ -42,7 +42,7 @@ void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &p
 //----------------------------------------------------------------------------
 // Init
 //----------------------------------------------------------------------------
-Init::Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params)
+Init::Init(const Base *snippet, const std::map<std::string, Type::NumericValue> &params)
 :   Snippet::Init<Base>(snippet, params)
 {
     // Validate

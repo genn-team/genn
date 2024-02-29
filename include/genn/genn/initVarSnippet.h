@@ -32,7 +32,7 @@ public:
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues) const;
+    void validate(const std::map<std::string, Type::NumericValue> &paramValues) const;
 };
 
 
@@ -45,7 +45,7 @@ public:
 class GENN_EXPORT Init : public Snippet::Init<Base>
 {
 public:
-    Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params);
+    Init(const Base *snippet, const std::map<std::string, Type::NumericValue> &params);
     Init(double constant);
 
     //------------------------------------------------------------------------
@@ -55,7 +55,7 @@ public:
 
     bool isKernelRequired() const;
     
-    const std::vector<Transpiler::Token> &getCodeTokens() const{ return m_CodeTokens; }
+    const auto &getCodeTokens() const{ return m_CodeTokens; }
 
 private:
     //------------------------------------------------------------------------

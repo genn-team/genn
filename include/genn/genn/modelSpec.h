@@ -28,7 +28,6 @@ Part of the code generation and generated code sections.
 #include <optional>
 #include <set>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 // GeNN includes
@@ -41,10 +40,10 @@ Part of the code generation and generated code sections.
 
 namespace GeNN
 {
-using VarValues = std::unordered_map<std::string, InitVarSnippet::Init>;
-using VarReferences = std::unordered_map<std::string, Models::VarReference>;
-using WUVarReferences = std::unordered_map<std::string, Models::WUVarReference>;
-using EGPReferences = std::unordered_map<std::string, Models::EGPReference>;
+using VarValues = std::map<std::string, InitVarSnippet::Init>;
+using VarReferences = std::map<std::string, Models::VarReference>;
+using WUVarReferences = std::map<std::string, Models::WUVarReference>;
+using EGPReferences = std::map<std::string, Models::EGPReference>;
 
 //! Initialise a variable using an initialisation snippet
 /*! \tparam S       type of variable initialisation snippet (derived from InitVarSnippet::Base).
@@ -577,20 +576,20 @@ protected:
     const Type::TypeContext &getTypeContext() const{ return m_TypeContext; }
 
     //! Get std::map containing local named NeuronGroup objects in model
-    const std::map<std::string, NeuronGroupInternal> &getNeuronGroups() const{ return m_LocalNeuronGroups; }
+    const auto &getNeuronGroups() const{ return m_LocalNeuronGroups; }
 
     //! Get std::map containing local named SynapseGroup objects in model
-    const std::map<std::string, SynapseGroupInternal> &getSynapseGroups() const{ return m_LocalSynapseGroups; }
+    const auto &getSynapseGroups() const{ return m_LocalSynapseGroups; }
 
     //! Get std::map containing local named CurrentSource objects in model
-    const std::map<std::string, CurrentSourceInternal> &getLocalCurrentSources() const{ return m_LocalCurrentSources; }
+    const auto &getLocalCurrentSources() const{ return m_LocalCurrentSources; }
 
     //! Get std::map containing named CustomUpdate objects in model
-    const std::map<std::string, CustomUpdateInternal> &getCustomUpdates() const { return m_CustomUpdates; }
-    const std::map<std::string, CustomUpdateWUInternal> &getCustomWUUpdates() const { return m_CustomWUUpdates; }
+    const auto &getCustomUpdates() const { return m_CustomUpdates; }
+    const auto &getCustomWUUpdates() const { return m_CustomWUUpdates; }
 
     //! Get std::map containing named CustomConnectivity objects in model
-    const std::map<std::string, CustomConnectivityUpdateInternal> &getCustomConnectivityUpdates() const { return m_CustomConnectivityUpdates; }
+    const auto &getCustomConnectivityUpdates() const { return m_CustomConnectivityUpdates; }
 
 private:
     //--------------------------------------------------------------------------

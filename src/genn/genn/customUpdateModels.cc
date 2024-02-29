@@ -25,10 +25,10 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues,
-                    const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
-                    const std::unordered_map<std::string, Models::VarReference> &varRefTargets,
-                    const std::unordered_map<std::string, Models::EGPReference> &egpRefTarget,
+void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues,
+                    const std::map<std::string, InitVarSnippet::Init> &varValues,
+                    const std::map<std::string, Models::VarReference> &varRefTargets,
+                    const std::map<std::string, Models::EGPReference> &egpRefTarget,
                     const std::string &description) const
 {
      // Superclass
@@ -50,10 +50,10 @@ void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &p
     Utils::validateInitialisers(egpRefs, egpRefTarget, "Extra Global Parameter reference", description);
 }
 //----------------------------------------------------------------------------
-void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues,
-                    const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
-                    const std::unordered_map<std::string, Models::WUVarReference> &varRefTargets,
-                    const std::unordered_map<std::string, Models::EGPReference> &egpRefTarget,
+void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues,
+                    const std::map<std::string, InitVarSnippet::Init> &varValues,
+                    const std::map<std::string, Models::WUVarReference> &varRefTargets,
+                    const std::map<std::string, Models::EGPReference> &egpRefTarget,
                     const std::string &description) const
 {
      // Superclass
