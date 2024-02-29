@@ -897,21 +897,21 @@ PYBIND11_MODULE(genn, m)
     // genn.SparseConnectivityInit
     //------------------------------------------------------------------------
     pybind11::class_<InitSparseConnectivitySnippet::Init>(m, "SparseConnectivityInit")
-        .def(pybind11::init<const InitSparseConnectivitySnippet::Base*, const std::unordered_map<std::string, Type::NumericValue>&>())
+        .def(pybind11::init<const InitSparseConnectivitySnippet::Base*, const ParamValues&>())
         .def_property_readonly("snippet", &InitSparseConnectivitySnippet::Init::getSnippet, pybind11::return_value_policy::reference);
         
     //------------------------------------------------------------------------
     // genn.ToeplitzConnectivityInit
     //------------------------------------------------------------------------
     pybind11::class_<InitToeplitzConnectivitySnippet::Init>(m, "ToeplitzConnectivityInit")
-        .def(pybind11::init<const InitToeplitzConnectivitySnippet::Base*, const std::unordered_map<std::string, Type::NumericValue>&>())
+        .def(pybind11::init<const InitToeplitzConnectivitySnippet::Base*, const ParamValues&>())
         .def_property_readonly("snippet", &InitToeplitzConnectivitySnippet::Init::getSnippet, pybind11::return_value_policy::reference);
     
     //------------------------------------------------------------------------
     // genn.VarInit
     //------------------------------------------------------------------------
     pybind11::class_<InitVarSnippet::Init>(m, "VarInit")
-        .def(pybind11::init<const InitVarSnippet::Base*, const std::unordered_map<std::string, Type::NumericValue>&>())
+        .def(pybind11::init<const InitVarSnippet::Base*, const ParamValues&>())
         .def(pybind11::init<double>())
         .def_property_readonly("snippet", &InitVarSnippet::Init::getSnippet, pybind11::return_value_policy::reference);
     
@@ -919,14 +919,14 @@ PYBIND11_MODULE(genn, m)
     // genn.WeightUpdateInit
     //------------------------------------------------------------------------
     pybind11::class_<WeightUpdateModels::Init>(m, "WeightUpdateInit")
-        .def(pybind11::init<const WeightUpdateModels::Base*, const std::unordered_map<std::string, Type::NumericValue>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, Models::VarReference>&, const std::unordered_map<std::string, Models::VarReference>&>())
+        .def(pybind11::init<const WeightUpdateModels::Base*, const ParamValues&, const VarValues&, const VarValues&, const VarValues&, const VarReferences&, const VarReferences&>())
         .def_property_readonly("snippet", &WeightUpdateModels::Init::getSnippet, pybind11::return_value_policy::reference);
     
     //------------------------------------------------------------------------
     // genn.PostsynapticInit
     //------------------------------------------------------------------------
     pybind11::class_<PostsynapticModels::Init>(m, "PostsynapticInit")
-        .def(pybind11::init<const PostsynapticModels::Base*, const std::unordered_map<std::string, Type::NumericValue>&, const std::unordered_map<std::string, InitVarSnippet::Init>&, const std::unordered_map<std::string, Models::VarReference>&>())
+        .def(pybind11::init<const PostsynapticModels::Base*, const ParamValues&, const VarValues&, const VarReferences&>())
         .def_property_readonly("snippet", &PostsynapticModels::Init::getSnippet, pybind11::return_value_policy::reference);
     
     //------------------------------------------------------------------------
