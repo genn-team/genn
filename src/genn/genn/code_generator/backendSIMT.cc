@@ -518,9 +518,34 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
 
             genSharedMemBarrier(groupEnv.getStream());
 
+            // If neuron update group produces spikes or spike like events
+            if(!ng.getMergedSpikeGroups().empty() || !ng.getMergedSpikeEventGroups().empty()) {
+                groupEnv.print("if(" + getThreadID() + " == 0)");
+                {
+                    CodeStream::Scope b(groupEnv.getStream());
+
+                    // Generate code to find insertion point for spikes emitted by this block in global array
+                    ng.generateSpikes(
+                        groupEnv,
+                        [batchSize, &ng, this](EnvironmentExternalBase &env)
+                        {
+                            genCopyEventToGlobal(env, ng, batchSize, 0, true);
+                        });
+
+                    // Generate code to find insertion point for spike events emitted by this block in global array
+                    ng.generateSpikeEvents(
+                        groupEnv,
+                        [batchSize, &ng, this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent &sg)
+                        {  
+                            genCopyEventToGlobal(env, ng, batchSize, sg.getIndex(), false);
+                        });
+                }
+
+                genSharedMemBarrier(groupEnv.getStream());
+            }
+
             // If neuron update group produces spikes or spikes times are required
-            if(!ng.getMergedSpikeGroups().empty() || ng.getArchetype().isSpikeTimeRequired()) 
-            {
+            if(!ng.getMergedSpikeGroups().empty() || ng.getArchetype().isSpikeTimeRequired()) {
                 // Use first $(_sh_spk_count) spikes to update spike data structures and 
                 // make pre and postsynaptic spike-triggered weight updates
                 groupEnv.print("if(" + getThreadID() + " < $(_sh_spk_count)[0])");
@@ -551,18 +576,20 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                         ng.generateWUVarUpdate(wuEnv, batchSize);
                     }
 
+                    const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
+                                                                        VarAccessDim::BATCH | VarAccessDim::ELEMENT, "");
+
                     // Update event time
                     if(ng.getArchetype().isSpikeTimeRequired()) {
-                        const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
-                                                                            VarAccessDim::BATCH | VarAccessDim::ELEMENT, "");
                         groupEnv.printLine("$(_st)[" + queueOffset + "n] = $(t);");
                     }
                    
+                    // Generate code to copy spikes into global memory
                     ng.generateSpikes(
                         groupEnv,
-                        [batchSize, &ng, this](EnvironmentExternalBase &env)
+                        [batchSize, &queueOffset, &ng, this](EnvironmentExternalBase &env)
                         {
-                            genCopyEventToGlobal(env, ng, batchSize, 0, true);
+                            env.printLine("$(_spk)[" + queueOffset + "$(_sh_spk_pos)[0] + " + getThreadID() + "] = $(id);");
                         });
                 }
             }
@@ -582,7 +609,9 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                             env.printLine("$(_set)[" + queueOffset + "n] = $(t);");
                         }
 
-                        genCopyEventToGlobal(env, ng, batchSize, sg.getIndex(), false);
+                        const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
+                                                                            VarAccessDim::BATCH | VarAccessDim::ELEMENT, "");
+                        env.printLine("$(_spk_event)[" + queueOffset + "$(_sh_spk_pos_event)[" + std::to_string(sg.getIndex()) + "] + " + getThreadID() + "] = n;");
                     }
                 });
 
@@ -1883,27 +1912,18 @@ void BackendSIMT::genCopyEventToGlobal(EnvironmentExternalBase &env, NeuronUpdat
 {
     const std::string indexStr = std::to_string(index);
     const std::string suffix = trueSpike ? "" : "_event";
-    env.getStream() << "if (" << getThreadID() << " == 0)";
-    {
-        CodeStream::Scope b(env.getStream());
-        env.print("$(_sh_spk_pos" + suffix + ")[" + indexStr + "] = " + getAtomic(Type::Uint32) + "(&$(_spk_cnt" + suffix + ")");
-        if(ng.getArchetype().isDelayRequired()) {
-            env.print("[*$(_spk_que_ptr)");
-            if(batchSize > 1) {
-                env.getStream() << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
-            }
-            env.printLine("], $(_sh_spk_count" + suffix + ")[" + indexStr + "]);");
-        }
-        else {
-            env.printLine("[$(batch)], $(_sh_spk_count" + suffix + ")[" + indexStr + "]);");
-        }
-    }
-                            
-    genSharedMemBarrier(env.getStream());
 
-    const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
-                                                        VarAccessDim::BATCH | VarAccessDim::ELEMENT, "");
-    env.printLine("$(_spk" + suffix + ")[" + queueOffset + "$(_sh_spk_pos" + suffix + ")[" + indexStr + "] + " + getThreadID() + "] = n;");
+    env.print("$(_sh_spk_pos" + suffix + ")[" + indexStr + "] = " + getAtomic(Type::Uint32) + "(&$(_spk_cnt" + suffix + ")");
+    if(ng.getArchetype().isDelayRequired()) {
+        env.print("[*$(_spk_que_ptr)");
+        if(batchSize > 1) {
+            env.getStream() << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
+        }
+        env.printLine("], $(_sh_spk_count" + suffix + ")[" + indexStr + "]);");
+    }
+    else {
+        env.printLine("[$(batch)], $(_sh_spk_count" + suffix + ")[" + indexStr + "]);");
+    }
 }
 //--------------------------------------------------------------------------
 const PresynapticUpdateStrategySIMT::Base *BackendSIMT::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg,
