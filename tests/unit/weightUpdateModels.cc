@@ -159,10 +159,10 @@ TEST(WeightUpdateModels, ValidateVarValues)
     const VarReferences preNeuronVarRefs{};
     const VarReferences postNeuronVarRefs{};
     
-    const std::unordered_map<std::string, InitVarSnippet::Init> varValsCorrect{{"g", uninitialisedVar()}};
-    const std::unordered_map<std::string, InitVarSnippet::Init> varValsMisSpelled{{"G", uninitialisedVar()}};
-    const std::unordered_map<std::string, InitVarSnippet::Init> varValsMissing{};
-    const std::unordered_map<std::string, InitVarSnippet::Init> varValsExtra{{"g", uninitialisedVar()}, {"d", uninitialisedVar()}};
+    const VarValues varValsCorrect{{"g", uninitialisedVar()}};
+    const VarValues varValsMisSpelled{{"G", uninitialisedVar()}};
+    const VarValues varValsMissing{};
+    const VarValues varValsExtra{{"g", uninitialisedVar()}, {"d", uninitialisedVar()}};
 
     STDPAdditive::getInstance()->validate(paramVals, varValsCorrect, preVarVals, postVarVals, 
                                           preNeuronVarRefs, postNeuronVarRefs);
@@ -195,15 +195,15 @@ TEST(WeightUpdateModels, ValidateVarValues)
 TEST(WeightUpdateModels, ValidatePreVarValues) 
 {
     const VarValues postVarVals{{"postTrace", 0.0}};
-    const std::unordered_map<std::string, InitVarSnippet::Init> varVals{{"g", uninitialisedVar()}};
+    const VarValues varVals{{"g", uninitialisedVar()}};
     const ParamValues paramVals{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
     const VarReferences preNeuronVarRefs{};
     const VarReferences postNeuronVarRefs{};
     
-    const std::unordered_map<std::string, InitVarSnippet::Init> preVarValsCorrect{{"preTrace", 0.0}};
-    const std::unordered_map<std::string, InitVarSnippet::Init> preVarValsMisSpelled{{"prETrace", 0.0}};
-    const std::unordered_map<std::string, InitVarSnippet::Init> preVarValsMissing{};
-    const std::unordered_map<std::string, InitVarSnippet::Init> preVarValsExtra{{"preTrace", 0.0}, {"postTrace", 0.0}};
+    const VarValues preVarValsCorrect{{"preTrace", 0.0}};
+    const VarValues preVarValsMisSpelled{{"prETrace", 0.0}};
+    const VarValues preVarValsMissing{};
+    const VarValues preVarValsExtra{{"preTrace", 0.0}, {"postTrace", 0.0}};
 
     STDPAdditive::getInstance()->validate(paramVals, varVals, preVarValsCorrect, postVarVals, 
                                           preNeuronVarRefs, postNeuronVarRefs);
@@ -236,15 +236,15 @@ TEST(WeightUpdateModels, ValidatePreVarValues)
 TEST(WeightUpdateModels, ValidatePostVarValues) 
 {
     const VarValues preVarVals{{"preTrace", 0.0}};
-    const std::unordered_map<std::string, InitVarSnippet::Init> varVals{{"g", uninitialisedVar()}};
+    const VarValues varVals{{"g", uninitialisedVar()}};
     const ParamValues paramVals{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
     const VarReferences preNeuronVarRefs{};
     const VarReferences postNeuronVarRefs{};
     
-    const std::unordered_map<std::string, InitVarSnippet::Init> postVarValsCorrect{{"postTrace", 0.0}};
-    const std::unordered_map<std::string, InitVarSnippet::Init> postVarValsMisSpelled{{"PostTrace", 0.0}};
-    const std::unordered_map<std::string, InitVarSnippet::Init> postVarValsMissing{};
-    const std::unordered_map<std::string, InitVarSnippet::Init> postVarValsExtra{{"postTrace", 0.0}, {"preTrace", 0.0}};
+    const VarValues postVarValsCorrect{{"postTrace", 0.0}};
+    const VarValues postVarValsMisSpelled{{"PostTrace", 0.0}};
+    const VarValues postVarValsMissing{};
+    const VarValues postVarValsExtra{{"postTrace", 0.0}, {"preTrace", 0.0}};
 
     STDPAdditive::getInstance()->validate(paramVals, varVals, preVarVals, postVarValsCorrect, 
                                           preNeuronVarRefs, postNeuronVarRefs);
