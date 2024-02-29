@@ -589,7 +589,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                         groupEnv,
                         [batchSize, &queueOffset, &ng, this](EnvironmentExternalBase &env)
                         {
-                            env.printLine("$(_spk)[" + queueOffset + "$(_sh_spk_pos)[0] + " + getThreadID() + "] = n);");
+                            env.printLine("$(_spk)[" + queueOffset + "$(_sh_spk_pos)[0] + " + getThreadID() + "] = n;");
                         });
                 }
             }
