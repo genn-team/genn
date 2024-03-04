@@ -129,11 +129,13 @@ inline VarAccessDim clearVarAccessDim(VarAccessDim a, VarAccessDim b)
     return static_cast<VarAccessDim>(static_cast<unsigned int>(a) & ~static_cast<unsigned int>(b));
 }
 
+//! Extract variable dimensions from its access enumeration
 inline VarAccessDim getVarAccessDim(VarAccess v)
 {
     return static_cast<VarAccessDim>(static_cast<unsigned int>(v) & ~0x1F);
 }
 
+//! Extract custom update variable dimensions from its access enumeration and dimensions of the custom update itself
 inline VarAccessDim getVarAccessDim(CustomUpdateVarAccess v, VarAccessDim popDims)
 {
     return clearVarAccessDim(popDims, static_cast<VarAccessDim>(static_cast<unsigned int>(v) & ~0x1F));

@@ -215,13 +215,11 @@ inline Models::EGPReference createEGPRef(CustomUpdateWU *cu, const std::string &
     return Models::EGPReference::createEGPRef(cu, egpName);
 }
 
-
-//! Creates a reference to a custom weight update extra global parameter
+//! Creates a reference to a custom connectivity update extra global parameter
 inline Models::EGPReference createEGPRef(CustomConnectivityUpdate *ccu, const std::string &egpName)
 {
     return Models::EGPReference::createEGPRef(ccu, egpName);
 }
-
 
 //! Creates a reference to a postsynaptic model extra global parameter
 inline Models::EGPReference createPSMEGPRef(SynapseGroup *sg, const std::string &egpName)

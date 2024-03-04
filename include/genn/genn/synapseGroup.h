@@ -37,10 +37,28 @@ public:
     //------------------------------------------------------------------------
     // Enumerations
     //------------------------------------------------------------------------
+    //! Hints to backends as to what parallelism strategy to use for this synapse group
     enum class ParallelismHint
     {
-        POSTSYNAPTIC,
+        //! GPU threads loop over spikes and handle all connectivity associated with
+        //! a postsynaptic neuron or column of sparse connectivity.
+        /*! Generally, this is the most efficient approach and memory accesses are
+            coalesced and, while atomic operations are used, there should be minimal 
+            conflicts between them. */
+        POSTSYNAPTIC,           
+
+        //! GPU threads
+        /*! If spike rates are high, this can extract more parallelism but there is an
+            overhead to launching numerous threads with no spike to process and this 
+            approach does not result in well-coalesced memory accesses. */
         PRESYNAPTIC,
+        
+        //! Rather than processing SynapseMatrixConnectivity::BITMASK connectivity
+        //! using one thread per postsynaptic neuron and doing nothing when a zero 
+        //! is encountered, process 32 bits of bitmask using each thread.
+        /*! On the single-threaded CPU backend and when simulating models with 
+            significantly more neurons than the target GPU has threads, 
+            this is likely to improve performance. */
         WORD_PACKED_BITMASK,
     };
 
