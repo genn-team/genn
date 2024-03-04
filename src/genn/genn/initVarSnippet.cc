@@ -10,7 +10,6 @@ namespace GeNN::InitVarSnippet
 // Implement value initialization snippets
 IMPLEMENT_SNIPPET(Uninitialised);
 IMPLEMENT_SNIPPET(Constant);
-IMPLEMENT_SNIPPET(Kernel);
 IMPLEMENT_SNIPPET(Uniform);
 IMPLEMENT_SNIPPET(Normal);
 IMPLEMENT_SNIPPET(NormalClipped);

@@ -38,7 +38,6 @@ PYBIND11_MODULE(init_var_snippets, m)
     //------------------------------------------------------------------------
     WRAP(Uninitialised);
     WRAP(Constant);
-    WRAP(Kernel);
     WRAP(Uniform);
     WRAP(Normal);
     WRAP(NormalClipped);
