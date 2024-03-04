@@ -1464,14 +1464,6 @@ static const char *__doc_InitVarSnippet_Init_isRNGRequired = R"doc()doc";
 
 static const char *__doc_InitVarSnippet_Init_m_CodeTokens = R"doc()doc";
 
-static const char *__doc_InitVarSnippet_Kernel = R"doc(Used to initialise synapse variables from a kernel)doc";
-
-static const char *__doc_InitVarSnippet_Kernel_getCode = R"doc()doc";
-
-static const char *__doc_InitVarSnippet_Kernel_getExtraGlobalParams = R"doc()doc";
-
-static const char *__doc_InitVarSnippet_Kernel_getInstance = R"doc()doc";
-
 static const char *__doc_InitVarSnippet_Normal =
 R"doc(Initialises variable by sampling from the normal distribution
 This snippet takes 2 parameters:
@@ -3364,13 +3356,28 @@ static const char *__doc_SynapseGroupInternal_5 = R"doc()doc";
 
 static const char *__doc_SynapseGroupInternal_SynapseGroupInternal = R"doc()doc";
 
-static const char *__doc_SynapseGroup_ParallelismHint = R"doc()doc";
+static const char *__doc_SynapseGroup_ParallelismHint = R"doc(Hints to backends as to what parallelism strategy to use for this synapse group)doc";
 
-static const char *__doc_SynapseGroup_ParallelismHint_POSTSYNAPTIC = R"doc()doc";
+static const char *__doc_SynapseGroup_ParallelismHint_POSTSYNAPTIC =
+R"doc(GPU threads loop over spikes and handle all connectivity associated with
+a postsynaptic neuron or column of sparse connectivity.
+Generally, this is the most efficient approach and memory accesses are
+coalesced and, while atomic operations are used, there should be minimal
+conflicts between them.)doc";
 
-static const char *__doc_SynapseGroup_ParallelismHint_PRESYNAPTIC = R"doc()doc";
+static const char *__doc_SynapseGroup_ParallelismHint_PRESYNAPTIC =
+R"doc(GPU threads
+If spike rates are high, this can extract more parallelism but there is an
+overhead to launching numerous threads with no spike to process and this
+approach does not result in well-coalesced memory accesses.)doc";
 
-static const char *__doc_SynapseGroup_ParallelismHint_WORD_PACKED_BITMASK = R"doc()doc";
+static const char *__doc_SynapseGroup_ParallelismHint_WORD_PACKED_BITMASK =
+R"doc(Rather than processing SynapseMatrixConnectivity::BITMASK connectivity
+using one thread per postsynaptic neuron and doing nothing when a zero
+is encountered, process 32 bits of bitmask using each thread.
+On the single-threaded CPU backend and when simulating models with
+significantly more neurons than the target GPU has threads,
+this is likely to improve performance.)doc";
 
 static const char *__doc_SynapseGroup_SynapseGroup = R"doc()doc";
 
@@ -3803,41 +3810,54 @@ static const char *__doc_SynapseGroup_setWUVarLocation =
 R"doc(Set location of weight update model state variable
 This is ignored for simulations on hardware with a single memory space)doc";
 
-static const char *__doc_SynapseMatrixConnectivity = R"doc(Flags defining differnet types of synaptic matrix connectivity)doc";
+static const char *__doc_SynapseMatrixConnectivity = R"doc(Flags defining how synaptic connectivity is represented)doc";
 
-static const char *__doc_SynapseMatrixConnectivity_BITMASK = R"doc()doc";
+static const char *__doc_SynapseMatrixConnectivity_BITMASK = R"doc(Connectivity is sparse and stored using a bitmask.)doc";
 
-static const char *__doc_SynapseMatrixConnectivity_DENSE = R"doc()doc";
+static const char *__doc_SynapseMatrixConnectivity_DENSE = R"doc(Connectivity is dense with a synapse between each pair or pre and postsynaptic neurons)doc";
 
-static const char *__doc_SynapseMatrixConnectivity_PROCEDURAL = R"doc()doc";
+static const char *__doc_SynapseMatrixConnectivity_PROCEDURAL = R"doc(Connectivity is generated on the fly using a sparse connectivity initialisation snippet)doc";
 
-static const char *__doc_SynapseMatrixConnectivity_SPARSE = R"doc()doc";
+static const char *__doc_SynapseMatrixConnectivity_SPARSE = R"doc(Connectivity is sparse and stored using a compressed sparse row data structure)doc";
 
-static const char *__doc_SynapseMatrixConnectivity_TOEPLITZ = R"doc()doc";
+static const char *__doc_SynapseMatrixConnectivity_TOEPLITZ = R"doc(Connectivity is generated on the fly using a Toeplitz connectivity initialisation snippet)doc";
 
 static const char *__doc_SynapseMatrixType = R"doc(Supported combinations of SynapticMatrixConnectivity and SynapticMatrixWeight)doc";
 
-static const char *__doc_SynapseMatrixType_BITMASK = R"doc()doc";
+static const char *__doc_SynapseMatrixType_BITMASK =
+R"doc(Connectivity is stored as a bitmask.
+For moderately sparse (>3%) connectivity, this uses the least memory. However, connectivity of this sort cannot
+have any accompanying state variables. Which algorithm is used for propagating spikes through BITMASK connectivity can be hinted via
+SynapseGroup::ParallelismHint.)doc";
 
-static const char *__doc_SynapseMatrixType_DENSE = R"doc()doc";
+static const char *__doc_SynapseMatrixType_DENSE = R"doc(Synaptic matrix is dense and synaptic state variables are stored individually in memory)doc";
 
-static const char *__doc_SynapseMatrixType_DENSE_PROCEDURALG = R"doc()doc";
+static const char *__doc_SynapseMatrixType_DENSE_PROCEDURALG = R"doc(Synaptic matrix is dense and all synaptic state variables must either be constant or generated on the fly using their variable initialisation snippets)doc";
 
-static const char *__doc_SynapseMatrixType_PROCEDURAL = R"doc()doc";
+static const char *__doc_SynapseMatrixType_PROCEDURAL =
+R"doc(Sparse synaptic connectivity is generated on the fly using a sparse connectivity initialisation snippet and
+all state variables must be either constant or generated on the fly using variable initialisation snippets.
+Synaptic connectivity of this sort requires very little memory allowing extremely large models to be simulated on a single GPU.)doc";
 
-static const char *__doc_SynapseMatrixType_PROCEDURAL_KERNELG = R"doc()doc";
+static const char *__doc_SynapseMatrixType_PROCEDURAL_KERNELG = R"doc(Sparse synaptic connectivity is generated on the fly using a sparse connectivity initialisation snippet and state variables are stored in a shared kernel)doc";
 
-static const char *__doc_SynapseMatrixType_SPARSE = R"doc()doc";
+static const char *__doc_SynapseMatrixType_SPARSE =
+R"doc(Connectivity is stored using a compressed sparse row data structure and synaptic state variables are stored individually in memory.
+This is the most efficient choice for very sparse unstructured connectivity or if synaptic state variables are required.)doc";
 
-static const char *__doc_SynapseMatrixType_TOEPLITZ = R"doc()doc";
+static const char *__doc_SynapseMatrixType_TOEPLITZ =
+R"doc(Sparse structured connectivity is generated on the fly a Toeplitz connectivity initialisation snippet and state variables are stored in a shared kernel
+This is the most efficient choice for convolution-like connectivity)doc";
 
-static const char *__doc_SynapseMatrixWeight = R"doc(Flags defining different types of synaptic matrix connectivity)doc";
+static const char *__doc_SynapseMatrixWeight = R"doc(Flags defining how synaptic state variables are stored)doc";
 
-static const char *__doc_SynapseMatrixWeight_INDIVIDUAL = R"doc()doc";
+static const char *__doc_SynapseMatrixWeight_INDIVIDUAL = R"doc(Synaptic state variables are stored individually in memory)doc";
 
-static const char *__doc_SynapseMatrixWeight_KERNEL = R"doc()doc";
+static const char *__doc_SynapseMatrixWeight_KERNEL =
+R"doc(Synaptic state variables are stored in a kernel which is shared between synapses in
+a manner defined by either a Toeplitz or sparse connectivity initialisation snippet)doc";
 
-static const char *__doc_SynapseMatrixWeight_PROCEDURAL = R"doc()doc";
+static const char *__doc_SynapseMatrixWeight_PROCEDURAL = R"doc(Synaptic state is generated on the fly using a sparse connectivity initialisation snippet)doc";
 
 static const char *__doc_SynapsePSMEGPAdapter = R"doc()doc";
 
@@ -4638,7 +4658,7 @@ static const char *__doc_createEGPRef_3 = R"doc(Creates a reference to a custom 
 
 static const char *__doc_createEGPRef_4 = R"doc(Creates a reference to a custom weight update extra global parameter)doc";
 
-static const char *__doc_createEGPRef_5 = R"doc(Creates a reference to a custom weight update extra global parameter)doc";
+static const char *__doc_createEGPRef_5 = R"doc(Creates a reference to a custom connectivity update extra global parameter)doc";
 
 static const char *__doc_createPSMEGPRef = R"doc(Creates a reference to a postsynaptic model extra global parameter)doc";
 
@@ -4670,9 +4690,9 @@ static const char *__doc_getSynapseMatrixConnectivity = R"doc()doc";
 
 static const char *__doc_getSynapseMatrixWeight = R"doc()doc";
 
-static const char *__doc_getVarAccessDim = R"doc()doc";
+static const char *__doc_getVarAccessDim = R"doc(Extract variable dimensions from its access enumeration)doc";
 
-static const char *__doc_getVarAccessDim_2 = R"doc()doc";
+static const char *__doc_getVarAccessDim_2 = R"doc(Extract custom update variable dimensions from its access enumeration and dimensions of the custom update itself)doc";
 
 static const char *__doc_getVarAccessMode = R"doc()doc";
 
