@@ -122,7 +122,7 @@ void genInitEventTime(const BackendBase &backend, EnvironmentExternalBase &env, 
 template<typename A, typename F, typename G>
 void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &env,
                           G &group, F &fieldGroup, const std::string &fieldSuffix, 
-                          const std::string &count, size_t numDelaySlots, unsigned int batchSize)
+                          const std::string &count, unsigned int numDelaySlots, unsigned int batchSize)
 {
     A adaptor(group.getArchetype());
     for (const auto &var : adaptor.getDefs()) {
@@ -196,7 +196,7 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
 template<typename A, typename G>
 void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &env,
                           G &group, const std::string &fieldSuffix, 
-                          const std::string &count, size_t numDelaySlots, unsigned int batchSize)
+                          const std::string &count, unsigned int numDelaySlots, unsigned int batchSize)
 {
     genInitNeuronVarCode<A, G, G>(backend, env, group, group, fieldSuffix, count, numDelaySlots, batchSize);
 }
