@@ -229,7 +229,7 @@ public:
     const auto &getPSInitialiser() const{ return m_PSInitialiser; }
     const auto &getWUInitialiser() const{ return m_WUInitialiser; }
       
-    const auto &getConnectivityInitialiser() const{ return m_SparseConnectivityInitialiser; }
+    const auto &getSparseConnectivityInitialiser() const{ return m_SparseConnectivityInitialiser; }
     const auto &getToeplitzConnectivityInitialiser() const { return m_ToeplitzConnectivityInitialiser; }
 
     bool isZeroCopyEnabled() const;

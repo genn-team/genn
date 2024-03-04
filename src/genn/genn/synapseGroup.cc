@@ -762,8 +762,8 @@ bool SynapseGroup::isSparseConnectivityInitRequired() const
     // Return true if the matrix type is sparse or bitmask 
     // and there is code to initialise sparse connectivity 
     return (((m_MatrixType & SynapseMatrixConnectivity::SPARSE) || (m_MatrixType & SynapseMatrixConnectivity::BITMASK))
-            && (!Utils::areTokensEmpty(getConnectivityInitialiser().getRowBuildCodeTokens()) 
-                || !Utils::areTokensEmpty(getConnectivityInitialiser().getColBuildCodeTokens())));
+            && (!Utils::areTokensEmpty(getSparseConnectivityInitialiser().getRowBuildCodeTokens()) 
+                || !Utils::areTokensEmpty(getSparseConnectivityInitialiser().getColBuildCodeTokens())));
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isPreTimeReferenced(const std::string &identifier) const
@@ -844,7 +844,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
 
     // If connectivity is procedural, include connectivitiy initialiser hash
     if(getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
-        Utils::updateHash(getConnectivityInitialiser().getHashDigest(), hash);
+        Utils::updateHash(getSparseConnectivityInitialiser().getHashDigest(), hash);
     }
 
     // If connectivity is Toepltiz, include Toeplitz connectivitiy initialiser hash
@@ -1173,7 +1173,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPreOutputHashDigest(con
 boost::uuids::detail::sha1::digest_type SynapseGroup::getConnectivityInitHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getConnectivityInitialiser().getHashDigest(), hash);
+    Utils::updateHash(getSparseConnectivityInitialiser().getHashDigest(), hash);
     Utils::updateHash(getMatrixType(), hash);
     Type::updateHash(getSparseIndType(), hash);
     return hash.get_digest();
@@ -1181,7 +1181,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getConnectivityInitHashDig
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type SynapseGroup::getConnectivityHostInitHashDigest() const
 {
-    return getConnectivityInitialiser().getHashDigest();
+    return getSparseConnectivityInitialiser().getHashDigest();
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type SynapseGroup::getVarLocationHashDigest() const

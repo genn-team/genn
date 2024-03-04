@@ -436,7 +436,7 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
 
         // If this connectivity requires an RNG for initialisation, make copy of connect Phillox RNG
         // and skip ahead to id that would have been used to initialize any variables associated with it
-        if(Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getRowBuildCodeTokens())
+        if(Utils::isRNGRequired(sg.getArchetype().getSparseConnectivityInitialiser().getRowBuildCodeTokens())
            || ((sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) && Utils::isRNGRequired(sg.getArchetype().getWUInitialiser().getVarInitialisers())))
         {
             std::ostringstream skipAhead;

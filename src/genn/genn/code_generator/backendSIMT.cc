@@ -102,7 +102,7 @@ bool BackendSIMT::isGlobalHostRNGRequired(const ModelSpecInternal &model) const
 {
     // Host RNG is required if any synapse groups or custom connectivity updates require a host RNG
     return (std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
-                        [](const ModelSpec::SynapseGroupValueType &s){ return s.second.getConnectivityInitialiser().isHostRNGRequired(); })
+                        [](const ModelSpec::SynapseGroupValueType &s){ return s.second.getSparseConnectivityInitialiser().isHostRNGRequired(); })
             || std::any_of(model.getCustomConnectivityUpdates().cbegin(), model.getCustomConnectivityUpdates().cend(),
                            [](const ModelSpec::CustomConnectivityUpdateValueType &c){ return Utils::isRNGRequired(c.second.getHostUpdateCodeTokens()); }));
 }
@@ -272,11 +272,11 @@ size_t BackendSIMT::getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg)
 size_t BackendSIMT::getNumConnectivityInitThreads(const SynapseGroupInternal &sg)
 {
     // If there's row building code, return number of source neurons i.e. rows
-    if(!Utils::areTokensEmpty(sg.getConnectivityInitialiser().getRowBuildCodeTokens())) {
+    if(!Utils::areTokensEmpty(sg.getSparseConnectivityInitialiser().getRowBuildCodeTokens())) {
         return sg.getSrcNeuronGroup()->getNumNeurons();
     }
     // Otherwise, if there's column building code, return number of target neurons i.e. columns
-    else if(!Utils::areTokensEmpty(sg.getConnectivityInitialiser().getColBuildCodeTokens())) {
+    else if(!Utils::areTokensEmpty(sg.getSparseConnectivityInitialiser().getColBuildCodeTokens())) {
         return sg.getTrgNeuronGroup()->getNumNeurons();
     }
     // Otherwise, give an error
@@ -1503,7 +1503,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
             buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
 
             // If there is row-building code in this snippet
-            const auto &connectInit = sg.getArchetype().getConnectivityInitialiser();
+            const auto &connectInit = sg.getArchetype().getSparseConnectivityInitialiser();
             if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
                 groupEnv.getStream() << "// only do this for existing presynaptic neurons" << std::endl;
                 groupEnv.print("if($(id) < $(num_pre))");

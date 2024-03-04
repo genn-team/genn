@@ -176,12 +176,12 @@ bool SynapseGroupMergedBase::isVarInitDerivedParamHeterogeneous(const std::strin
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isSparseConnectivityInitParamHeterogeneous(const std::string &paramName) const
 {
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); });
+    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getParams(); });
 }
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isSparseConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const
 {
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); });
+    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isToeplitzConnectivityInitParamHeterogeneous(const std::string &paramName) const
@@ -311,8 +311,8 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest() 
 
     // If we're updating a hash for a group with procedural connectivity or initialising connectivity
     if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
-        updateParamHash([](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); }, hash);
-        updateParamHash([](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); }, hash);
+        updateParamHash([](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getParams(); }, hash);
+        updateParamHash([](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getDerivedParams(); }, hash);
     }
 
     // If we're updating a hash for a group with Toeplitz connectivity
@@ -361,10 +361,10 @@ void PresynapticUpdateGroupMerged::generateProceduralConnectivity(EnvironmentExt
     EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(env, *this);
 
     // Substitute in parameters and derived parameters for initialising connectivity
-    const auto &connectInit = getArchetype().getConnectivityInitialiser();
-    groupEnv.addInitialiserParams("", &SynapseGroupInternal::getConnectivityInitialiser,
+    const auto &connectInit = getArchetype().getSparseConnectivityInitialiser();
+    groupEnv.addInitialiserParams("", &SynapseGroupInternal::getSparseConnectivityInitialiser,
                                   &PresynapticUpdateGroupMerged::isSparseConnectivityInitParamHeterogeneous);
-    groupEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getConnectivityInitialiser,
+    groupEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getSparseConnectivityInitialiser,
                                          &PresynapticUpdateGroupMerged::isSparseConnectivityInitDerivedParamHeterogeneous);
     groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "SparseConnect", "");
 

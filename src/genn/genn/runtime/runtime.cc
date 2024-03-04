@@ -332,7 +332,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         // If connectivity is bitmask
         const size_t numPre = s.second.getSrcNeuronGroup()->getNumNeurons();
         const size_t rowStride = m_Backend.get().getSynapticMatrixRowStride(s.second);
-        const auto &connectInit = s.second.getConnectivityInitialiser();
+        const auto &connectInit = s.second.getSparseConnectivityInitialiser();
         const bool uninitialized = (Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens()) 
                                     && Utils::areTokensEmpty(connectInit.getColBuildCodeTokens()));
 
@@ -399,7 +399,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 
         // Loop through sparse connectivity initialiser EGPs
         // **THINK** should any of these have locations? if they're not initialised in host code not much scope to do so
-        const auto &sparseConnectInit = s.second.getConnectivityInitialiser();
+        const auto &sparseConnectInit = s.second.getSparseConnectivityInitialiser();
         for(const auto &egp : sparseConnectInit.getSnippet()->getExtraGlobalParams()) {
             const auto resolvedEGPType = egp.type.resolve(getModel().getTypeContext());
             createArray(&s.second, egp.name + "SparseConnect", resolvedEGPType, 0, VarLocation::HOST_DEVICE);

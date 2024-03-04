@@ -1115,7 +1115,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     }
 
                     // If there is row-building code in this snippet
-                    const auto &connectInit = s.getArchetype().getConnectivityInitialiser();
+                    const auto &connectInit = s.getArchetype().getSparseConnectivityInitialiser();
                     if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
                         // Generate loop through source neurons
                         groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
@@ -1676,7 +1676,7 @@ bool Backend::isGlobalHostRNGRequired(const ModelSpecInternal &model) const
     if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
                    [](const ModelSpec::SynapseGroupValueType &s)
                    {
-                       return (s.second.isWUInitRNGRequired() || s.second.getConnectivityInitialiser().isHostRNGRequired());
+                       return (s.second.isWUInitRNGRequired() || s.second.getSparseConnectivityInitialiser().isHostRNGRequired());
                    }))
     {
         return true;

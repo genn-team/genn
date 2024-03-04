@@ -636,8 +636,8 @@ boost::uuids::detail::sha1::digest_type SynapseConnectivityInitGroupMerged::getH
     updateHash([](const SynapseGroupInternal &g) { return g.getMaxSourceConnections(); }, hash);
 
     // Update hash with connectivity parameters and derived parameters
-    updateParamHash([](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); }, hash);
-    updateParamHash([](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); }, hash);
+    updateParamHash([](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getParams(); }, hash);
+    updateParamHash([](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getDerivedParams(); }, hash);
 
     if(!getArchetype().getKernelSize().empty()) {
         updateHash([](const SynapseGroupInternal &g) { return g.getKernelSize(); }, hash);
@@ -698,12 +698,12 @@ bool SynapseConnectivityInitGroupMerged::isVarInitDerivedParamHeterogeneous(cons
 //----------------------------------------------------------------------------
 bool SynapseConnectivityInitGroupMerged::isSparseConnectivityInitParamHeterogeneous(const std::string &paramName) const
 {
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); });
+    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getParams(); });
 }
 //----------------------------------------------------------------------------
 bool SynapseConnectivityInitGroupMerged::isSparseConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const
 {
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); });
+    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
 void SynapseConnectivityInitGroupMerged::genInitConnectivity(EnvironmentExternalBase &env, bool rowNotColumns)
@@ -712,10 +712,10 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(EnvironmentExternal
     EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> groupEnv(env, *this);
 
     // Substitute in parameters and derived parameters for initialising connectivity
-    const auto &connectInit = getArchetype().getConnectivityInitialiser();
-    groupEnv.addInitialiserParams("", &SynapseGroupInternal::getConnectivityInitialiser,
+    const auto &connectInit = getArchetype().getSparseConnectivityInitialiser();
+    groupEnv.addInitialiserParams("", &SynapseGroupInternal::getSparseConnectivityInitialiser,
                                   &SynapseConnectivityInitGroupMerged::isSparseConnectivityInitParamHeterogeneous);
-    groupEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getConnectivityInitialiser,
+    groupEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getSparseConnectivityInitialiser,
                                          &SynapseConnectivityInitGroupMerged::isSparseConnectivityInitDerivedParamHeterogeneous);
     groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "SparseConnect", "");
 
@@ -754,7 +754,7 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
         
         // Create environment for group
         EnvironmentGroupMergedField<SynapseConnectivityHostInitGroupMerged> groupEnv(envAssert, *this);
-        const auto &connectInit = getArchetype().getConnectivityInitialiser();
+        const auto &connectInit = getArchetype().getSparseConnectivityInitialiser();
 
         // If matrix type is procedural then initialized connectivity init snippet will potentially be used with multiple threads per spike. 
         // Otherwise it will only ever be used for initialization which uses one thread per row
@@ -769,9 +769,9 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
                           [](const auto &, const SynapseGroupInternal &sg, size_t) { return sg.getTrgNeuronGroup()->getNumNeurons(); });
         groupEnv.add(Type::Uint32.addConst(), "num_threads", std::to_string(numThreads));
 
-        groupEnv.addInitialiserParams("", &SynapseGroupInternal::getConnectivityInitialiser,
+        groupEnv.addInitialiserParams("", &SynapseGroupInternal::getSparseConnectivityInitialiser,
                                       &SynapseConnectivityHostInitGroupMerged::isConnectivityInitParamHeterogeneous);
-        groupEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getConnectivityInitialiser,
+        groupEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getSparseConnectivityInitialiser,
                                              &SynapseConnectivityHostInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous);
 
         // Loop through EGPs
@@ -838,12 +838,12 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
 //----------------------------------------------------------------------------
 bool SynapseConnectivityHostInitGroupMerged::isConnectivityInitParamHeterogeneous(const std::string &paramName) const
 {
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg){ return sg.getConnectivityInitialiser().getParams(); });
+    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg){ return sg.getSparseConnectivityInitialiser().getParams(); });
 }
 //----------------------------------------------------------------------------
 bool SynapseConnectivityHostInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const
 {
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); });
+    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getDerivedParams(); });
 }
 
 // ----------------------------------------------------------------------------
