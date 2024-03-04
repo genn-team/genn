@@ -21,7 +21,7 @@ class ArrayBase:
         # Get numpy data type corresponding to type
         model = self.group._model
         resolved_type = (self.type if isinstance(self.type, ResolvedType)
-                         else self.type.resolve(model.type_context))
+                         else self.type.resolve(model._type_context))
         dtype = model.genn_types[resolved_type]
         
         # Get dtype view of host memoryview

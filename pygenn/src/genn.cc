@@ -412,72 +412,72 @@ PYBIND11_MODULE(_genn, m)
     //------------------------------------------------------------------------
     // genn.ModelSpec
     //------------------------------------------------------------------------
-    pybind11::class_<ModelSpecInternal>(m, "ModelSpecInternal")
+    pybind11::class_<ModelSpecInternal>(m, "ModelSpec")
         .def(pybind11::init<>())
         //--------------------------------------------------------------------
         // Properties
         //--------------------------------------------------------------------
-        .def_property("name", &ModelSpecInternal::getName, &ModelSpecInternal::setName)
-        .def_property("precision", &ModelSpecInternal::getPrecision, &ModelSpecInternal::setPrecision)
-        .def_property("time_precision", &ModelSpecInternal::getTimePrecision, &ModelSpecInternal::setTimePrecision)
-        .def_property("dt", &ModelSpecInternal::getDT, &ModelSpecInternal::setDT)
-        .def_property("timing_enabled", &ModelSpecInternal::isTimingEnabled, &ModelSpecInternal::setTiming)
-        .def_property("batch_size", &ModelSpecInternal::getBatchSize, &ModelSpecInternal::setBatchSize)
-        .def_property("seed", &ModelSpecInternal::getSeed, &ModelSpecInternal::setSeed)
+        WRAP_PROPERTY("name", ModelSpec, Name)
+        WRAP_PROPERTY("precision", ModelSpec, Precision)
+        WRAP_PROPERTY("time_precision", ModelSpec, TimePrecision)
+        WRAP_PROPERTY("dt", ModelSpec, DT)
+        .def_property("timing_enabled", &ModelSpec::isTimingEnabled, &ModelSpec::setTiming)
+        WRAP_PROPERTY("batch_size", ModelSpec, BatchSize)
+        WRAP_PROPERTY("seed", ModelSpec, Seed)
 
-        .def_property("default_var_location", nullptr, &ModelSpecInternal::setDefaultVarLocation)
-        .def_property("default_sparse_connectivity_location", nullptr, &ModelSpecInternal::setDefaultSparseConnectivityLocation)
-        .def_property("default_narrow_sparse_ind_enabled", nullptr, &ModelSpecInternal::setDefaultNarrowSparseIndEnabled)
-        .def_property("fuse_postsynaptic_models", nullptr, &ModelSpecInternal::setFusePostsynapticModels)
-        .def_property("fuse_pre_post_weight_update_models", nullptr, &ModelSpecInternal::setFusePrePostWeightUpdateModels)
+        .def_property("default_var_location", nullptr, &ModelSpec::setDefaultVarLocation)
+        .def_property("default_sparse_connectivity_location", nullptr, &ModelSpec::setDefaultSparseConnectivityLocation)
+        .def_property("default_narrow_sparse_ind_enabled", nullptr, &ModelSpec::setDefaultNarrowSparseIndEnabled)
+        .def_property("fuse_postsynaptic_models", nullptr, &ModelSpec::setFusePostsynapticModels)
+        .def_property("fuse_pre_post_weight_update_models", nullptr, &ModelSpec::setFusePrePostWeightUpdateModels)
 
-        .def_property_readonly("num_neurons", &ModelSpecInternal::getNumNeurons)
-        .def_property_readonly("recording_in_use", &ModelSpecInternal::isRecordingInUse)
-        .def_property_readonly("type_context", &ModelSpecInternal::getTypeContext)
+        .def_property_readonly("num_neurons", &ModelSpec::getNumNeurons, DOC(ModelSpec, getNumNeurons))
+        .def_property_readonly("_type_context", &ModelSpecInternal::getTypeContext)
+        .def_property_readonly("_recording_in_use", &ModelSpecInternal::isRecordingInUse)
     
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
-        .def("add_current_source",  
-             static_cast<CurrentSource* (ModelSpecInternal::*)(
+        .def("_add_current_source",  
+             static_cast<CurrentSource* (ModelSpec::*)(
                 const std::string&, const CurrentSourceModels::Base*, NeuronGroup*, 
-                const ParamValues&, const VarValues&, const VarReferences&)>(&ModelSpecInternal::addCurrentSource),
+                const ParamValues&, const VarValues&, const VarReferences&)>(&ModelSpec::addCurrentSource),
             pybind11::return_value_policy::reference)
-        .def("add_custom_connectivity_update",  
-             static_cast<CustomConnectivityUpdate* (ModelSpecInternal::*)(
+        .def("_add_custom_connectivity_update",  
+             static_cast<CustomConnectivityUpdate* (ModelSpec::*)(
                 const std::string&, const std::string&, SynapseGroup*, const CustomConnectivityUpdateModels::Base*, 
                 const ParamValues&, const VarValues&, const VarValues&, const VarValues&, 
-                const WUVarReferences&, const VarReferences&, const VarReferences&, const EGPReferences&)>(&ModelSpecInternal::addCustomConnectivityUpdate),
+                const WUVarReferences&, const VarReferences&, const VarReferences&, const EGPReferences&)>(&ModelSpec::addCustomConnectivityUpdate),
             pybind11::return_value_policy::reference)
-        .def("add_custom_update",  
-             static_cast<CustomUpdate* (ModelSpecInternal::*)(
+        .def("_add_custom_update",  
+             static_cast<CustomUpdate* (ModelSpec::*)(
                 const std::string&, const std::string&, const CustomUpdateModels::Base*, 
-                const ParamValues&, const VarValues&, const VarReferences&, const EGPReferences&)>(&ModelSpecInternal::addCustomUpdate),
+                const ParamValues&, const VarValues&, const VarReferences&, const EGPReferences&)>(&ModelSpec::addCustomUpdate),
             pybind11::return_value_policy::reference)
-        .def("add_custom_update",  
-             static_cast<CustomUpdateWU* (ModelSpecInternal::*)(
+        .def("_add_custom_update",  
+             static_cast<CustomUpdateWU* (ModelSpec::*)(
                 const std::string&, const std::string&, const CustomUpdateModels::Base*, 
-                const ParamValues&, const VarValues&, const WUVarReferences&, const EGPReferences&)>(&ModelSpecInternal::addCustomUpdate),
+                const ParamValues&, const VarValues&, const WUVarReferences&, const EGPReferences&)>(&ModelSpec::addCustomUpdate),
             pybind11::return_value_policy::reference)
-        .def("add_neuron_population",  
-             static_cast<NeuronGroup* (ModelSpecInternal::*)(
+        .def("_add_neuron_population",  
+             static_cast<NeuronGroup* (ModelSpec::*)(
                 const std::string&, unsigned int, const NeuronModels::Base*, 
-                const ParamValues&, const VarValues&)>(&ModelSpecInternal::addNeuronPopulation), 
+                const ParamValues&, const VarValues&)>(&ModelSpec::addNeuronPopulation), 
             pybind11::return_value_policy::reference)
-        .def("add_synapse_population",
-            static_cast<SynapseGroup* (ModelSpecInternal::*)(
+        .def("_add_synapse_population",
+            static_cast<SynapseGroup* (ModelSpec::*)(
                 const std::string&, SynapseMatrixType, NeuronGroup*, NeuronGroup*,
                 const WeightUpdateModels::Init&, const PostsynapticModels::Init&,
-                const InitSparseConnectivitySnippet::Init&)>(&ModelSpecInternal::addSynapsePopulation),
+                const InitSparseConnectivitySnippet::Init&)>(&ModelSpec::addSynapsePopulation),
             pybind11::return_value_policy::reference)
-        .def("add_synapse_population",
-            static_cast<SynapseGroup* (ModelSpecInternal::*)(
+        .def("_add_synapse_population",
+            static_cast<SynapseGroup* (ModelSpec::*)(
                 const std::string&, SynapseMatrixType, NeuronGroup*, NeuronGroup*,
                 const WeightUpdateModels::Init&, const PostsynapticModels::Init&,
-                const InitToeplitzConnectivitySnippet::Init&)>(&ModelSpecInternal::addSynapsePopulation), 
+                const InitToeplitzConnectivitySnippet::Init&)>(&ModelSpec::addSynapsePopulation), 
             pybind11::return_value_policy::reference)
 
-        .def("finalise", &ModelSpecInternal::finalise);
+        .def("_finalise", &ModelSpecInternal::finalise);
 
     //------------------------------------------------------------------------
     // genn.CurrentSource

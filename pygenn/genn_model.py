@@ -27,7 +27,7 @@ from ._genn import (generate_code, init_logging, CurrentSource,
                     CustomUpdateVarAccess, CustomUpdateWU, DerivedParam,
                     EGP, EGPRef, EGPReference, InitSparseConnectivitySnippetBase,
                     InitToeplitzConnectivitySnippetBase, InitVarSnippetBase,
-                    ModelSpecInternal, NeuronGroup, NeuronModelBase,
+                    ModelSpec, NeuronGroup, NeuronModelBase,
                     NumericValue, Param, ParamVal, PlogSeverity,
                     PostsynapticInit, PostsynapticModelBase, ResolvedType,
                     SparseConnectivityInit, SynapseGroup, SynapseMatrixType,
@@ -150,7 +150,7 @@ def _wrap_kernel_size_lambda(f):
 # Regular expression used for upgrading remaining variable references in code strings
 _var_upgrade = re.compile(r"\$\(([_a-zA-Z][_a-zA-Z0-9]*)\)")
 
-class GeNNModel(ModelSpecInternal):
+class GeNNModel(ModelSpec):
     """This class provided for interface for 
     defining, building and running models
     
@@ -371,9 +371,10 @@ class GeNNModel(ModelSpecInternal):
         var_init = _get_var_init(vars)
         
         # Use superclass to add population
-        n_group = super(GeNNModel, self).add_neuron_population(
-            pop_name, int(num_neurons), neuron, 
-            _prepare_param_vals(params), var_init)
+        n_group = self._add_neuron_population(pop_name,
+                                              int(num_neurons), neuron,
+                                              _prepare_param_vals(params),
+                                              var_init)
         
         # Initialise group, store group in dictionary and return
         n_group._init_group(self, vars)
@@ -431,10 +432,11 @@ class GeNNModel(ModelSpecInternal):
                 init_sparse_connectivity_snippets.Uninitialised(), {})
 
         # Use superclass to add population
-        s_group = super(GeNNModel, self).add_synapse_population(
-            pop_name, matrix_type, source, target, 
-            weight_update_init[0], postsynaptic_init[0],
-            connectivity_init)
+        s_group = self._add_synapse_population(pop_name, matrix_type,
+                                               source, target, 
+                                               weight_update_init[0],
+                                               postsynaptic_init[0],
+                                               connectivity_init)
 
         # Initialise group, store group in dictionary and return
         s_group._init_group(self, postsynaptic_init[1], weight_update_init[1],
@@ -482,9 +484,10 @@ class GeNNModel(ModelSpecInternal):
         var_init = _get_var_init(vars)
         
         # Use superclass to add population
-        c_source = super(GeNNModel, self).add_current_source(
-            cs_name, current_source_model, pop, 
-            _prepare_param_vals(params), var_init, var_refs)
+        c_source = self._add_current_source(cs_name,
+                                            current_source_model, pop,
+                                            _prepare_param_vals(params),
+                                            var_init, var_refs)
         
         # Initialise group, store group in dictionary and return
         c_source._init_group(self, vars, pop)
@@ -529,9 +532,10 @@ class GeNNModel(ModelSpecInternal):
         var_init = _get_var_init(vars)
 
         # Use superclass to add population
-        c_update = super(GeNNModel, self).add_custom_update(
-            cu_name, group_name, custom_update_model,
-            _prepare_param_vals(params), var_init, var_refs, egp_refs)
+        c_update = self._add_custom_update(cu_name, group_name,
+                                           custom_update_model,
+                                           _prepare_param_vals(params),
+                                           var_init, var_refs, egp_refs)
 
         # Setup back-reference, store group in dictionary and return
         c_update._init_group(self, vars)
@@ -591,7 +595,7 @@ class GeNNModel(ModelSpecInternal):
         post_var_init = _get_var_init(post_vars)
 
         # Use superclass to add population
-        c_update = super(GeNNModel, self).add_custom_connectivity_update(
+        c_update = self._add_custom_connectivity_update(
             cu_name, group_name, syn_group, custom_connectivity_update_model,
             _prepare_param_vals(params), var_init, pre_var_init, post_var_init,
             var_refs, pre_var_refs, post_var_refs, egp_refs)
@@ -624,7 +628,7 @@ class GeNNModel(ModelSpecInternal):
         share_path = path.join(path.split(__file__)[0], "share")
 
         # Finalize model
-        self.finalise()
+        self._finalise()
 
         # Create suitable preferences object for backend
         self._preferences = self._backend_module.Preferences()
@@ -670,7 +674,7 @@ class GeNNModel(ModelSpecInternal):
                                 self._backend)
         
         # If model uses recording system and recording timesteps is not set
-        if self.recording_in_use and num_recording_timesteps is None:
+        if self._recording_in_use and num_recording_timesteps is None:
             raise Exception("Cannot use recording system without passing "
                             "number of recording timesteps to GeNNModel.load")
 
