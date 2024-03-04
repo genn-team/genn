@@ -40,7 +40,7 @@ For example, the CUDA backend allows you to select which CUDA device to use via 
 .. code-block:: python
 
    model = GeNNModel("float", "YourModelName",
-                    backend="cuda", manual_device_id=0)
+                     backend="cuda", manual_device_id=0)
 
 -----------
 Populations
@@ -63,7 +63,31 @@ the population have the exact same parameter value.
 
 Extra global parameters
 -----------------------
-Often when b
+When building more complex models, it is sometimes useful to be able to access arbitarily
+sized arrays. In GeNN, these are called Extra Global Parameters (EGPs) and they need
+to be manually allocated and initialised before simulating the model. For example, the built 
+in :func:`.neuron_models.SpikeSourceArray` model has a ``spikeTimes`` EGP
+which is used to provide an array of spike times for the spike source to emit. Given two 
+two numpy arrays: ``spike_ids`` containing the ids of which neurons spike and
+``spike_times`` containing the time at which each spike occurs, a :func:`.neuron_models.SpikeSourceArray` 
+model can be configured as follows:
+
+..  code-block:: python
+    
+    # Calculate start and end index of each neurons spikes in sorted array
+    end_spike = np.cumsum(np.bincount(spike_ids, minlength=100))
+    start_spike = np.concatenate(([0], end_spike[0:-1]))
+
+    # Sort events first by neuron id and then 
+    # by time and use to order spike times
+    spike_times = poisson_times[np.lexsort((spike_times, spike_ids))]
+
+    model = GeNNModel("float", "spike_source_array")
+
+    ssa = model.add_neuron_population("SSA", 100, "SpikeSourceArray", {}, 
+                                      {"startSpike": start_spike, "endSpike": end_spike})
+    ssa.extra_global_params["spikeTimes"].set_init_values(spike_times)
+
 
 Extra global parameter references
 ---------------------------------
