@@ -371,27 +371,41 @@ PYBIND11_MODULE(_genn, m)
     //------------------------------------------------------------------------
     m.def("generate_code", &generateCode, pybind11::return_value_policy::take_ownership);
     m.def("init_logging", &initLogging);
-    m.def("create_var_ref", pybind11::overload_cast<NeuronGroup*, const std::string&>(&createVarRef), pybind11::return_value_policy::move);
-    m.def("create_var_ref", pybind11::overload_cast<CurrentSource*, const std::string&>(&createVarRef), pybind11::return_value_policy::move);
-    m.def("create_var_ref", pybind11::overload_cast<CustomUpdate*, const std::string&>(&createVarRef), pybind11::return_value_policy::move);
-    m.def("create_psm_var_ref", &createPSMVarRef, pybind11::return_value_policy::move);
-    m.def("create_wu_pre_var_ref", &createWUPreVarRef, pybind11::return_value_policy::move);
-    m.def("create_wu_post_var_ref", &createWUPostVarRef, pybind11::return_value_policy::move);
-    m.def("create_pre_var_ref", &createPreVarRef, pybind11::return_value_policy::move);
-    m.def("create_post_var_ref", &createPostVarRef, pybind11::return_value_policy::move);
+    m.def("create_var_ref", pybind11::overload_cast<NeuronGroup*, const std::string&>(&createVarRef), 
+          pybind11::return_value_policy::move, DOC(createVarRef));
+    m.def("create_var_ref", pybind11::overload_cast<CurrentSource*, const std::string&>(&createVarRef),
+          pybind11::return_value_policy::move, DOC(createVarRef, 2));
+    m.def("create_var_ref", pybind11::overload_cast<CustomUpdate*, const std::string&>(&createVarRef),
+          pybind11::return_value_policy::move, DOC(createVarRef, 3));
+    m.def("create_psm_var_ref", &createPSMVarRef, pybind11::return_value_policy::move, DOC(createPSMVarRef));
+    m.def("create_wu_pre_var_ref", &createWUPreVarRef, pybind11::return_value_policy::move, DOC(createWUPreVarRef));
+    m.def("create_wu_post_var_ref", &createWUPostVarRef, pybind11::return_value_policy::move, DOC(createWUPostVarRef));
+    m.def("create_pre_var_ref", &createPreVarRef, pybind11::return_value_policy::move, DOC(createPreVarRef));
+    m.def("create_post_var_ref", &createPostVarRef, pybind11::return_value_policy::move, DOC(createPostVarRef));
     m.def("create_wu_var_ref", pybind11::overload_cast<SynapseGroup*, const std::string&, SynapseGroup*, const std::string&>(&createWUVarRef),
-          "sg"_a, "var_name"_a, "transpose_sg"_a = nullptr, "transpose_var_name"_a = "", pybind11::return_value_policy::move);
-    m.def("create_wu_var_ref", pybind11::overload_cast<CustomUpdateWU*, const std::string&>(&createWUVarRef), pybind11::return_value_policy::move);
-    m.def("create_wu_var_ref", pybind11::overload_cast<CustomConnectivityUpdate*, const std::string&>(&createWUVarRef), pybind11::return_value_policy::move);
-    m.def("create_egp_ref", pybind11::overload_cast<NeuronGroup*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
-    m.def("create_egp_ref", pybind11::overload_cast<CurrentSource*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
-    m.def("create_egp_ref", pybind11::overload_cast<CustomUpdate*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
-    m.def("create_egp_ref", pybind11::overload_cast<CustomUpdateWU*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
-    m.def("create_egp_ref", pybind11::overload_cast<CustomConnectivityUpdate*, const std::string&>(&createEGPRef), pybind11::return_value_policy::move);
-    m.def("create_psm_egp_ref", pybind11::overload_cast<SynapseGroup*, const std::string&>(&createPSMEGPRef), pybind11::return_value_policy::move);
-    m.def("create_wu_egp_ref", pybind11::overload_cast<SynapseGroup*, const std::string&>(&createWUEGPRef), pybind11::return_value_policy::move);
-    m.def("get_var_access_dim", pybind11::overload_cast<VarAccess>(&getVarAccessDim));
-    m.def("get_var_access_dim", pybind11::overload_cast<CustomUpdateVarAccess, VarAccessDim>(&getVarAccessDim));
+          "sg"_a, "var_name"_a, "transpose_sg"_a = nullptr, "transpose_var_name"_a = "", 
+          pybind11::return_value_policy::move, DOC(createWUVarRef));
+    m.def("create_wu_var_ref", pybind11::overload_cast<CustomUpdateWU*, const std::string&>(&createWUVarRef),
+          pybind11::return_value_policy::move, DOC(createWUVarRef, 2));
+    m.def("create_wu_var_ref", pybind11::overload_cast<CustomConnectivityUpdate*, const std::string&>(&createWUVarRef),
+          pybind11::return_value_policy::move, DOC(createWUVarRef, 3));
+    m.def("create_egp_ref", pybind11::overload_cast<NeuronGroup*, const std::string&>(&createEGPRef),
+          pybind11::return_value_policy::move, DOC(createEGPRef));
+    m.def("create_egp_ref", pybind11::overload_cast<CurrentSource*, const std::string&>(&createEGPRef),
+          pybind11::return_value_policy::move, DOC(createEGPRef, 2));
+    m.def("create_egp_ref", pybind11::overload_cast<CustomUpdate*, const std::string&>(&createEGPRef),
+          pybind11::return_value_policy::move, DOC(createEGPRef, 3));
+    m.def("create_egp_ref", pybind11::overload_cast<CustomUpdateWU*, const std::string&>(&createEGPRef),
+          pybind11::return_value_policy::move, DOC(createEGPRef, 4));
+    m.def("create_egp_ref", pybind11::overload_cast<CustomConnectivityUpdate*, const std::string&>(&createEGPRef),
+          pybind11::return_value_policy::move, DOC(createEGPRef, 5));
+    m.def("create_psm_egp_ref", pybind11::overload_cast<SynapseGroup*, const std::string&>(&createPSMEGPRef),
+          pybind11::return_value_policy::move, DOC(createPSMEGPRef));
+    m.def("create_wu_egp_ref", pybind11::overload_cast<SynapseGroup*, const std::string&>(&createWUEGPRef),
+          pybind11::return_value_policy::move, DOC(createWUEGPRef));
+    m.def("get_var_access_dim", pybind11::overload_cast<VarAccess>(&getVarAccessDim), DOC(getVarAccessDim));
+    m.def("get_var_access_dim", pybind11::overload_cast<CustomUpdateVarAccess, VarAccessDim>(&getVarAccessDim),
+          DOC(getVarAccessDim, 2));
 
     //------------------------------------------------------------------------
     // genn.ModelSpec
