@@ -949,9 +949,10 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, params={}):
     
         init = init_toeplitz_connectivity("Conv2D", params))
 
-    note, this should be used to connect a presynaptic neuron population with 
-    :math:`64 \times 64 \times 1 = 4096` neurons to a postsynaptic neuron
-    population with :math:`62 \times 62 \times 1 = 3844` neurons.
+    .. note::
+        this should be used to connect a presynaptic neuron population with 
+        :math:`64 \times 64 \times 1 = 4096` neurons to a postsynaptic neuron
+        population with :math:`62 \times 62 \times 1 = 3844` neurons.
     """
     # Get snippet and wrap in InitToeplitzConnectivitySnippet object
     init_toeplitz_connect_snippet = _get_snippet(init_toeplitz_connect_snippet,

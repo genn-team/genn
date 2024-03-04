@@ -125,27 +125,26 @@ Variables references
 As well as variables and parameters, various types of models have variable references which are used to reference variables belonging to other populations.
 For example, postsynaptic update models can reference variables in the postsynaptic neuron model and custom updates are 'attached' to other populations based on their variable references.
 
-A variable reference called R could be assigned to various types of variable using the following syntax:
+Variable reference can be created to various types of per-neuron variable using:
 
-..  code-block:: python
+.. autofunction:: pygenn.create_var_ref
+    :noindex:
 
-    neuron_var_ref =  {"R": pygenn.create_var_ref(ng, "V")}
-    current_source_var_ref =  {"R": pygenn.create_var_ref(cs, "V")}
-    custom_update_var_ref = {"R": pygenn.create_var_ref(cu, "V")}
-    postsynaptic_model_var_ref =  {"R": pygenn.create_psm_var_ref(sg, "V")}
-    wu_pre_var_ref =  {"R": pygenn.create_wu_pre_var_ref(sg, "Pre")}
-    wu_post_var_ref =  {"R": pygenn.create_wu_post_var_ref(sg, "Post")}
+References can also be created to various types of per-neuron variable owned by synapse groups using: 
 
-where ``ng`` is a :class:`.NeuronGroup` (as returned by :meth:`.GeNNModel.add_neuron_population`), ``cs`` is a :class:`.CurrentSource` (as returned by :meth:`.GeNNModel.add_current_source`), ``cu`` is a :class:`.CustomUpdate` (as returned by :meth:`.GeNNModel.add_custom_update`) and ``sg`` is a :class:`.SynapseGroup` (as returned by :meth:`.GeNNModel.add_synapse_population`).
+.. autofunction:: pygenn.create_psm_var_ref
+    :noindex:
+
+.. autofunction:: pygenn.create_wu_pre_var_ref
+    :noindex:
+
+.. autofunction:: pygenn.create_wu_post_var_ref
+    :noindex:
 
 While references of these types can be used interchangably in the same custom update, as long as all referenced variables have the same delays and belong to populations of the same size, per-synapse weight update model variables must be referenced with slightly different syntax:
 
-..  code-block:: python
-
-    wu_var_ref = {"R": pygenn.create_wu_var_ref(sg, "g")}
-    cu_wu_var_ref = {"R": pygenn.create_wu_var_ref(cu, "g")}
-
-where ``sg`` is a :class:`.SynapseGroup` (as returned by :meth:`.GeNNModel.add_synapse_population`) and ``cu`` is a :class:`.CustomUpdateWU` (as returned by :meth:`.GeNNModel.add_custom_update`) which operates on another synapse group's state variables.
+.. autofunction:: pygenn.create_wu_var_ref
+    :noindex:
 
 These 'weight update variable references' also have the additional feature that they can be used to define a link to a 'transpose' variable:
 
@@ -167,9 +166,11 @@ However, the following alternative 'variable locations' are available:
 .. autoclass:: pygenn.VarLocation
     :noindex:
 
-Note, 'Zero copy' memory is only supported on newer embedded systems such as
- the Jetson TX1 where there is no physical seperation between GPU and host memory and 
- thus the same physical of memory can be shared between them. 
+.. note::
+
+    'Zero copy' memory is only supported on newer embedded systems such as
+    the Jetson TX1 where there is no physical seperation between GPU and host memory and 
+    thus the same physical of memory can be shared between them. 
 
 Neuron populations
 ------------------
