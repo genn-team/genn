@@ -819,7 +819,7 @@ Runtime::BatchEventArray Runtime::getRecordedEvents(unsigned int numNeurons, Arr
     }
 
     // Calculate number of words per-timestep
-    const size_t timestepWords = ceilDivide(numNeurons, 32);
+    const unsigned int timestepWords = ceilDivide(numNeurons, 32);
 
     if(m_Timestep < *m_NumRecordingTimesteps) {
         throw std::runtime_error("Event recording data can only be accessed once buffer is full");
@@ -838,7 +838,7 @@ Runtime::BatchEventArray Runtime::getRecordedEvents(unsigned int numNeurons, Arr
         for(size_t b = 0; b < getModel().getBatchSize(); b++) {
             // Loop through words representing timestep
             auto &batchEvents = events[b];
-            for(size_t w = 0; w < timestepWords; w++) {
+            for(unsigned int w = 0; w < timestepWords; w++) {
                 // Get word
                 uint32_t spikeWord = *spkRecordWords++;
             

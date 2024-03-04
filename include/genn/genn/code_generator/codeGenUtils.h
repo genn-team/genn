@@ -2,10 +2,11 @@
 
 // Standard includes
 #include <algorithm>
+#include <regex>
 #include <set>
 #include <string>
+#include <type_traits>
 #include <vector>
-#include <regex>
 
 // GeNN includes
 #include "gennExport.h"
@@ -41,13 +42,15 @@ class ErrorHandler;
 namespace GeNN::CodeGenerator
 {
 //! Divide two integers, rounding up i.e. effectively taking ceil
-inline size_t ceilDivide(size_t numerator, size_t denominator)
+template<typename A, typename B, typename = std::enable_if_t<std::is_integral_v<A> && std::is_integral_v<B>>>
+inline auto ceilDivide(A numerator, B denominator)
 {
     return ((numerator + denominator - 1) / denominator);
 }
 
 //! Pad an integer to a multiple of another
-inline size_t padSize(size_t size, size_t blockSize)
+template<typename A, typename B, typename = std::enable_if_t<std::is_integral_v<A>&& std::is_integral_v<B>>>
+inline auto padSize(A size, B blockSize)
 {
     return ceilDivide(size, blockSize) * blockSize;
 }

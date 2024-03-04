@@ -98,7 +98,7 @@ template<class... Ts> struct Overload : Ts... { using Ts::operator()...; };
 template<class... Ts> Overload(Ts...) -> Overload<Ts...>; // line not needed in
 
 //! Hash arithmetic types and enums
-template<typename T, typename std::enable_if<std::is_arithmetic<T>::value || std::is_enum<T>::value>::type* = nullptr>
+template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T> || std::is_enum_v<T>>>
 inline void updateHash(const T& value, boost::uuids::detail::sha1& hash)
 {
     hash.process_bytes(&value, sizeof(T));
