@@ -785,7 +785,7 @@ class GeNNModel(ModelSpec):
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before pulling recording buffers")
 
-        if not self.recording_in_use:
+        if not self._recording_in_use:
             raise Exception("Cannot pull recording buffer if recording system is not in use")
 
         # Pull recording buffers from device
