@@ -572,13 +572,13 @@ static const char *__doc_CurrentSource_m_ExtraGlobalParamLocation = R"doc(Locati
 
 static const char *__doc_CurrentSource_m_InjectionCodeTokens = R"doc(Tokens produced by scanner from injection code)doc";
 
-static const char *__doc_CurrentSource_m_Model = R"doc()doc";
+static const char *__doc_CurrentSource_m_Model = R"doc(Current source model used for this source)doc";
 
-static const char *__doc_CurrentSource_m_Name = R"doc()doc";
+static const char *__doc_CurrentSource_m_Name = R"doc(Unique name of current source)doc";
 
 static const char *__doc_CurrentSource_m_NeuronVarReferences = R"doc()doc";
 
-static const char *__doc_CurrentSource_m_Params = R"doc()doc";
+static const char *__doc_CurrentSource_m_Params = R"doc(Values of current source parameters)doc";
 
 static const char *__doc_CurrentSource_m_TargetVar =
 R"doc(Name of neuron input variable current source will inject into
@@ -586,7 +586,7 @@ This should either be 'Isyn' or the name of one of the target neuron's additiona
 
 static const char *__doc_CurrentSource_m_TrgNeuronGroup = R"doc()doc";
 
-static const char *__doc_CurrentSource_m_VarInitialisers = R"doc()doc";
+static const char *__doc_CurrentSource_m_VarInitialisers = R"doc(Initialisers for current source variables)doc";
 
 static const char *__doc_CurrentSource_m_VarLocation = R"doc(Location of individual state variables)doc";
 
@@ -1172,10 +1172,29 @@ static const char *__doc_InitSparseConnectivitySnippet_Base_getRowBuildCode = R"
 static const char *__doc_InitSparseConnectivitySnippet_Base_validate = R"doc(Validate names of parameters etc)doc";
 
 static const char *__doc_InitSparseConnectivitySnippet_Conv2D =
-R"doc(Initialises convolutional connectivity
+R"doc(Initialises 2D convolutional connectivity
 Row build state variables are used to convert presynaptic neuron index to rows, columns and channels and,
 from these, to calculate the range of postsynaptic rows, columns and channels connections will be made within.
-This sparse connectivity snippet does not support multiple threads per neuron)doc";
+This sparse connectivity snippet does not support multiple threads per neuron
+This snippet takes 12 parameter:
+
+- ``conv_kh`` - height of 2D convolution kernel.
+- ``conv_kw`` - width of 2D convolution kernel.
+- ``conv_sh`` - height of convolution stride
+- ``conv_sw`` - width of convolution stride
+- ``conv_padh`` - width of padding around input
+- ``conv_padw`` - height of padding around input
+- ``conv_ih`` - width of input to this convolution
+- ``conv_iw`` - height of input to this convolution
+- ``conv_ic`` - number of input channels to this convolution
+- ``conv_oh`` - width of output from this convolution
+- ``conv_ow`` - height of output from this convolution
+- ``conv_oc`` - number of output channels from this convolution
+
+\note
+``conv_ih * conv_iw * conv_ic`` should equal the number of neurons in the presynaptic
+neuron population and ``conv_oh * conv_ow * conv_oc`` should equal the number of
+neurons in the postsynaptic neuron population.)doc";
 
 static const char *__doc_InitSparseConnectivitySnippet_Conv2D_getCalcKernelSizeFunc = R"doc()doc";
 
@@ -1192,7 +1211,10 @@ R"doc(Initialises connectivity with a fixed number of random synapses per row.
 The postsynaptic targets of the synapses can be initialised in parallel by sampling from the discrete
 uniform distribution. However, to sample connections in ascending order, we sample from the 1st order statistic
 of the uniform distribution -- Beta[1, Npost] -- essentially the next smallest value. In this special case
-this is equivalent to the exponential distribution which can be sampled in constant time using the inversion method.)doc";
+this is equivalent to the exponential distribution which can be sampled in constant time using the inversion method.
+This snippet takes 1 parameter:
+
+- ``num`` - number of postsynaptic neurons to connect each presynaptic neuron to.)doc";
 
 static const char *__doc_InitSparseConnectivitySnippet_FixedNumberPostWithReplacement_getCalcMaxColLengthFunc = R"doc()doc";
 
@@ -1206,7 +1228,10 @@ static const char *__doc_InitSparseConnectivitySnippet_FixedNumberPostWithReplac
 
 static const char *__doc_InitSparseConnectivitySnippet_FixedNumberPreWithReplacement =
 R"doc(Initialises connectivity with a fixed number of random synapses per column.
-No need for ordering here so fine to sample directly from uniform distribution)doc";
+No need for ordering here so fine to sample directly from uniform distribution
+This snippet takes 1 parameter:
+
+- ``num`` - number of presynaptic neurons to connect each postsynaptic neuron to.)doc";
 
 static const char *__doc_InitSparseConnectivitySnippet_FixedNumberPreWithReplacement_getCalcMaxColLengthFunc = R"doc()doc";
 
@@ -1226,7 +1251,10 @@ efficiently parallelised so must be performed on the host and the result passed 
 Once the length of each row is determined, the postsynaptic targets of the synapses can be initialised in parallel
 by sampling from the discrete uniform distribution. However, to sample connections in ascending order, we sample
 from the 1st order statistic of the uniform distribution -- Beta[1, Npost] -- essentially the next smallest value.
-In this special case this is equivalent to the exponential distribution which can be sampled in constant time using the inversion method.)doc";
+In this special case this is equivalent to the exponential distribution which can be sampled in constant time using the inversion method.
+This snippet takes 1 parameter:
+
+- ``num`` - total number of synapses to distribute throughout synaptic matrix.)doc";
 
 static const char *__doc_InitSparseConnectivitySnippet_FixedNumberTotalWithReplacement_getCalcMaxColLengthFunc = R"doc()doc";
 
@@ -1253,7 +1281,10 @@ which describes "the probability distribution of the number of Bernoulli
 trials needed to get one success" -- essentially the distribution of the
 'gaps' between synapses. We do this using the "inversion method"
 described by Devroye (1986) -- essentially inverting the CDF of the
-equivalent continuous distribution (in this case the exponential distribution))doc";
+equivalent continuous distribution (in this case the exponential distribution)
+This snippet takes 1 parameter:
+
+- ``prob`` - probability of connection in [0, 1])doc";
 
 static const char *__doc_InitSparseConnectivitySnippet_FixedProbabilityBase =
 R"doc(Base class for snippets which initialise connectivity with a fixed probability
@@ -1282,7 +1313,10 @@ which describes "the probability distribution of the number of Bernoulli
 trials needed to get one success" -- essentially the distribution of the
 'gaps' between synapses. We do this using the "inversion method"
 described by Devroye (1986) -- essentially inverting the CDF of the
-equivalent continuous distribution (in this case the exponential distribution))doc";
+equivalent continuous distribution (in this case the exponential distribution)
+This snippet takes 1 parameter:
+
+- ``prob`` - probability of connection in [0, 1])doc";
 
 static const char *__doc_InitSparseConnectivitySnippet_FixedProbabilityNoAutapse_getInstance = R"doc()doc";
 
@@ -1312,7 +1346,9 @@ static const char *__doc_InitSparseConnectivitySnippet_Init_m_HostInitCodeTokens
 
 static const char *__doc_InitSparseConnectivitySnippet_Init_m_RowBuildCodeTokens = R"doc()doc";
 
-static const char *__doc_InitSparseConnectivitySnippet_OneToOne = R"doc(Initialises connectivity to a 'one-to-one' diagonal matrix)doc";
+static const char *__doc_InitSparseConnectivitySnippet_OneToOne =
+R"doc(Initialises connectivity to a 'one-to-one' diagonal matrix
+This snippet has no parameters)doc";
 
 static const char *__doc_InitSparseConnectivitySnippet_OneToOne_getCalcMaxColLengthFunc = R"doc()doc";
 
@@ -1327,9 +1363,23 @@ static const char *__doc_InitSparseConnectivitySnippet_Uninitialised = R"doc(Use
 static const char *__doc_InitSparseConnectivitySnippet_Uninitialised_getInstance = R"doc()doc";
 
 static const char *__doc_InitToeplitzConnectivitySnippet_AvgPoolConv2D =
-R"doc(Initialises convolutional connectivity preceded by averaging pooling
+R"doc(Initialises 2D convolutional connectivity preceded by averaging pooling
 Row build state variables are used to convert presynaptic neuron index to rows, columns and channels and,
-from these, to calculate the range of postsynaptic rows, columns and channels connections will be made within.)doc";
+from these, to calculate the range of postsynaptic rows, columns and channels connections will be made within.
+This snippet takes 12 parameter:
+
+- ``conv_kh`` - height of 2D convolution kernel.
+- ``conv_kw`` - width of 2D convolution kernel.
+- ``pool_kh`` - height of 2D average pooling kernel.
+- ``pool_kw`` - width of 2D average pooling kernel.
+- ``pool_sh`` - height of average pooling stride
+- ``pool_sw`` - width of average pooling stride
+- ``pool_ih`` - width of input to the average pooling
+- ``pool_iw`` - height of input to the average pooling
+- ``pool_ic`` - number of input channels to the average pooling
+- ``conv_oh`` - width of output from the convolution
+- ``conv_ow`` - height of output from the convolution
+- ``conv_oc`` - number of output channels the this convolution)doc";
 
 static const char *__doc_InitToeplitzConnectivitySnippet_AvgPoolConv2D_getCalcKernelSizeFunc = R"doc()doc";
 
@@ -1356,9 +1406,19 @@ static const char *__doc_InitToeplitzConnectivitySnippet_Base_getHashDigest = R"
 static const char *__doc_InitToeplitzConnectivitySnippet_Base_validate = R"doc(Validate names of parameters etc)doc";
 
 static const char *__doc_InitToeplitzConnectivitySnippet_Conv2D =
-R"doc(Initialises convolutional connectivity
+R"doc(Initialises 2D convolutional connectivity
 Row build state variables are used to convert presynaptic neuron index to rows, columns and channels and,
-from these, to calculate the range of postsynaptic rows, columns and channels connections will be made within.)doc";
+from these, to calculate the range of postsynaptic rows, columns and channels connections will be made within.
+This snippet takes 8 parameter:
+
+- ``conv_kh`` - height of 2D convolution kernel.
+- ``conv_kw`` - width of 2D convolution kernel.
+- ``conv_ih`` - width of input to this convolution
+- ``conv_iw`` - height of input to this convolution
+- ``conv_ic`` - number of input channels to this convolution
+- ``conv_oh`` - width of output from this convolution
+- ``conv_ow`` - height of output from this convolution
+- ``conv_oc`` - number of output channels from this convolution)doc";
 
 static const char *__doc_InitToeplitzConnectivitySnippet_Conv2D_getCalcKernelSizeFunc = R"doc()doc";
 
@@ -1464,7 +1524,10 @@ static const char *__doc_InitVarSnippet_Init_isRNGRequired = R"doc()doc";
 
 static const char *__doc_InitVarSnippet_Init_m_CodeTokens = R"doc()doc";
 
-static const char *__doc_InitVarSnippet_Kernel = R"doc(Used to initialise synapse variables from a kernel)doc";
+static const char *__doc_InitVarSnippet_Kernel =
+R"doc(Used to initialise synapse variables from a kernel. This snippet type is used
+if you wish to initialise sparse connectivity using a sparse connectivity
+initialisation snippet with a kernel such as InitSparseConnectivitySnippet::Conv2D.)doc";
 
 static const char *__doc_InitVarSnippet_Kernel_getCode = R"doc()doc";
 
@@ -3522,7 +3585,7 @@ static const char *__doc_SynapseGroup_getTrgNeuronGroup_2 = R"doc()doc";
 
 static const char *__doc_SynapseGroup_getVarLocationHashDigest = R"doc()doc";
 
-static const char *__doc_SynapseGroup_getWUExtraGlobalParamLocation = R"doc(Get location of weight update model extra global parameter by name)doc";
+static const char *__doc_SynapseGroup_getWUExtraGlobalParamLocation = R"doc(Get location of weight update model extra global parameter)doc";
 
 static const char *__doc_SynapseGroup_getWUHashDigest =
 R"doc(Generate hash of weight update component of this synapse group
@@ -3534,7 +3597,7 @@ NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getWUInitialiser = R"doc()doc";
 
-static const char *__doc_SynapseGroup_getWUPostVarLocation = R"doc(Get location of weight update model postsynaptic state variable by name)doc";
+static const char *__doc_SynapseGroup_getWUPostVarLocation = R"doc(Get location of weight update model postsynaptic state variable)doc";
 
 static const char *__doc_SynapseGroup_getWUPreInitHashDigest =
 R"doc(Generate hash of presynaptic variable initialisation component of this synapse group
@@ -3553,7 +3616,7 @@ static const char *__doc_SynapseGroup_getWUPrePostInitHashDigest =
 R"doc(Generate hash of presynaptic or postsynaptic variable initialisation component of this synapse group
 NOTE: this can only be called after model is finalized)doc";
 
-static const char *__doc_SynapseGroup_getWUPreVarLocation = R"doc(Get location of weight update model presynaptic state variable by name)doc";
+static const char *__doc_SynapseGroup_getWUPreVarLocation = R"doc(Get location of weight update model presynaptic state variable)doc";
 
 static const char *__doc_SynapseGroup_getWUSpikeEventFuseHashDigest =
 R"doc(Generate hash of presynaptic or postsynaptic spike event generation of this synapse group with additional components to ensure PSMs
@@ -3564,7 +3627,7 @@ static const char *__doc_SynapseGroup_getWUSpikeEventHashDigest =
 R"doc(Generate hash of presynaptic or postsynaptic spike event generation component of this synapse group
 NOTE: this can only be called after model is finalized)doc";
 
-static const char *__doc_SynapseGroup_getWUVarLocation = R"doc(Get location of weight update model per-synapse state variable by name)doc";
+static const char *__doc_SynapseGroup_getWUVarLocation = R"doc(Get location of weight update model synaptic state variable)doc";
 
 static const char *__doc_SynapseGroup_isDendriticDelayRequired = R"doc(Does this synapse group require dendritic delay?)doc";
 
@@ -3598,7 +3661,7 @@ static const char *__doc_SynapseGroup_isPreSpikeEventTimeRequired = R"doc(Are pr
 
 static const char *__doc_SynapseGroup_isPreSpikeFused = R"doc(Has this synapse group's presynaptic spike generation been fused with those from other synapse groups?)doc";
 
-static const char *__doc_SynapseGroup_isPreSpikeRequired = R"doc(Does synapse group need to handle 'true' spikes/)doc";
+static const char *__doc_SynapseGroup_isPreSpikeRequired = R"doc(Does synapse group need to handle 'true' spikes?)doc";
 
 static const char *__doc_SynapseGroup_isPreSpikeTimeRequired = R"doc(Are presynaptic spike times needed?)doc";
 
@@ -3640,7 +3703,7 @@ static const char *__doc_SynapseGroup_isZeroCopyEnabled = R"doc()doc";
 
 static const char *__doc_SynapseGroup_m_AxonalDelaySteps = R"doc(Global synaptic conductance delay for the group (in time steps))doc";
 
-static const char *__doc_SynapseGroup_m_BackPropDelaySteps = R"doc(Global backpropagation delay for postsynaptic spikes to synapse (in time)doc";
+static const char *__doc_SynapseGroup_m_BackPropDelaySteps = R"doc(Global backpropagation delay for postsynaptic spikes to synapse (in time steps))doc";
 
 static const char *__doc_SynapseGroup_m_CustomConnectivityUpdateReferences =
 R"doc(Custom connectivity updates which reference this synapse group
@@ -3650,7 +3713,9 @@ static const char *__doc_SynapseGroup_m_CustomUpdateReferences =
 R"doc(Custom updates which reference this synapse group
 Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes.)doc";
 
-static const char *__doc_SynapseGroup_m_DendriticDelayLocation = R"doc(Variable mode used for this synapse group's dendritic delay buffers)doc";
+static const char *__doc_SynapseGroup_m_DendriticDelayLocation =
+R"doc(Location of this synapse group's dendritic delay buffers
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_m_FusedPSTarget =
 R"doc(Synapse group postsynaptic model has been fused with
@@ -3698,9 +3763,11 @@ static const char *__doc_SynapseGroup_m_Name = R"doc(Name of the synapse group)d
 
 static const char *__doc_SynapseGroup_m_NarrowSparseIndEnabled = R"doc(Should narrow i.e. less than 32-bit types be used for sparse matrix indices)doc";
 
-static const char *__doc_SynapseGroup_m_NumThreadsPerSpike = R"doc(How many threads CUDA implementation uses to process each spike when span type is PRESYNAPTIC)doc";
+static const char *__doc_SynapseGroup_m_NumThreadsPerSpike = R"doc(How many threads GPU implementation use to process each spike when parallelised presynaptically)doc";
 
-static const char *__doc_SynapseGroup_m_OutputLocation = R"doc(Variable mode used for outputs from this synapse group e.g. outPre and outPost)doc";
+static const char *__doc_SynapseGroup_m_OutputLocation =
+R"doc(Location of outputs from this synapse group e.g. outPre and outPost
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_m_PSDynamicParams = R"doc(Data structure tracking whether postsynaptic model parameters are dynamic or not)doc";
 
@@ -3758,64 +3825,60 @@ static const char *__doc_SynapseGroup_setFusedSpikeTarget = R"doc()doc";
 
 static const char *__doc_SynapseGroup_setFusedWUPrePostTarget = R"doc()doc";
 
-static const char *__doc_SynapseGroup_setMaxConnections =
-R"doc(Sets the maximum number of target neurons any source neurons can connect to
-Use with synaptic matrix types with SynapseMatrixConnectivity::SPARSE to optimise CUDA implementation)doc";
+static const char *__doc_SynapseGroup_setMaxConnections = R"doc(Sets the maximum number of target neurons any source neurons can connect to)doc";
 
 static const char *__doc_SynapseGroup_setMaxDendriticDelayTimesteps = R"doc(Sets the maximum dendritic delay for synapses in this synapse group)doc";
 
-static const char *__doc_SynapseGroup_setMaxSourceConnections =
-R"doc(Sets the maximum number of source neurons any target neuron can connect to
-Use with synaptic matrix types with SynapseMatrixConnectivity::SPARSE and postsynaptic learning to optimise CUDA implementation)doc";
+static const char *__doc_SynapseGroup_setMaxSourceConnections = R"doc(Sets the maximum number of source neurons any target neuron can connect to)doc";
 
 static const char *__doc_SynapseGroup_setNarrowSparseIndEnabled = R"doc(Enables or disables using narrow i.e. less than 32-bit types for sparse matrix indices)doc";
 
 static const char *__doc_SynapseGroup_setNumThreadsPerSpike = R"doc(Provide hint as to how many threads SIMT backend might use to process each spike if PRESYNAPTIC parallelism is selected)doc";
 
 static const char *__doc_SynapseGroup_setOutputLocation =
-R"doc(Set location of variables used for outputs from this synapse group e.g. outPre and outPost
+R"doc(Set location of variables used for outputs from this synapse group e.g. outPre and outPost.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_setPSExtraGlobalParamLocation =
-R"doc(Set location of postsynaptic model extra global parameter
+R"doc(Set location of postsynaptic model extra global parameter.
 This is ignored for simulations on hardware with a single memory space.)doc";
 
 static const char *__doc_SynapseGroup_setPSParamDynamic = R"doc(Set whether weight update model parameter is dynamic or not i.e. it can be changed at runtime)doc";
 
 static const char *__doc_SynapseGroup_setPSVarLocation =
-R"doc(Set location of postsynaptic model state variable
+R"doc(Set location of postsynaptic model state variable.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_setParallelismHint = R"doc(Provide a hint as to how this synapse group should be parallelised)doc";
 
 static const char *__doc_SynapseGroup_setPostTargetVar =
-R"doc(Set name of neuron input variable postsynaptic model will target
+R"doc(Set name of neuron input variable postsynaptic model will target.
 This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables.)doc";
 
 static const char *__doc_SynapseGroup_setPreTargetVar =
-R"doc(Set name of neuron input variable $(addToPre, . ) commands will target
+R"doc(Set name of neuron input variable addToPost(..) commands will target.
 This should either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables.)doc";
 
 static const char *__doc_SynapseGroup_setSparseConnectivityLocation =
-R"doc(Set variable mode used for sparse connectivity
+R"doc(Set variable mode used for sparse connectivity.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_setWUExtraGlobalParamLocation =
-R"doc(Set location of weight update model extra global parameter
+R"doc(Set location of weight update model extra global parameter.
 This is ignored for simulations on hardware with a single memory space.)doc";
 
 static const char *__doc_SynapseGroup_setWUParamDynamic = R"doc(Set whether weight update model parameter is dynamic or not i.e. it can be changed at runtime)doc";
 
 static const char *__doc_SynapseGroup_setWUPostVarLocation =
-R"doc(Set location of weight update model postsynaptic state variable
+R"doc(Set location of weight update model postsynaptic state variable.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_setWUPreVarLocation =
-R"doc(Set location of weight update model presynaptic state variable
+R"doc(Set location of weight update model presynaptic state variable.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_setWUVarLocation =
-R"doc(Set location of weight update model state variable
+R"doc(Set location of weight update model state variable.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseMatrixConnectivity = R"doc(Flags defining how synaptic connectivity is represented)doc";
@@ -4557,25 +4620,14 @@ The model has 1 variable:
 
 - ``g:`` conductance of ``scalar`` type
 
+The model also has 1 presynaptic neuron variable reference:
+
+- ``V:`` Presynaptic membrane potential
+
 The parameters are:
 
 - ``Epre:`` Presynaptic threshold potential
-- ``Vslope:`` Activation slope of graded release
-
-``event`` code is:
-```
-addToPost(fmax(0.0, g * tanh((V_pre - Epre) / Vslope) * dt));
-```
-
-
-``event`` threshold condition code is:
-
-```
-V_pre > Epre
-```
-
-\note The pre-synaptic variables are referenced with the suffix `_pre` in synapse related code
-such as an the event threshold test. Users can also access post-synaptic neuron variables using the suffix `_post`.)doc";
+- ``Vslope:`` Activation slope of graded release)doc";
 
 static const char *__doc_WeightUpdateModels_StaticGraded_getInstance = R"doc()doc";
 
@@ -4590,34 +4642,24 @@ static const char *__doc_WeightUpdateModels_StaticGraded_getPreNeuronVarRefs = R
 static const char *__doc_WeightUpdateModels_StaticGraded_getVars = R"doc()doc";
 
 static const char *__doc_WeightUpdateModels_StaticPulse =
-R"doc(Pulse-coupled, static synapse.
+R"doc(Pulse-coupled, static synapse with heterogeneous weight.
 No learning rule is applied to the synapse and for each pre-synaptic spikes,
 the synaptic conductances are simply added to the postsynaptic input variable.
 The model has 1 variable:
-- g - conductance of scalar type
-and no other parameters.
 
-``sim`` code is:
+- ``g`` - conductance of scalar type
 
-```
-"addToPost(g);\n"
-```)doc";
+and no other parameters.)doc";
 
 static const char *__doc_WeightUpdateModels_StaticPulseConstantWeight =
-R"doc(Pulse-coupled, static synapse.
+R"doc(Pulse-coupled, static synapse with homogeneous weight.
 No learning rule is applied to the synapse and for each pre-synaptic spikes,
 the synaptic conductances are simply added to the postsynaptic input variable.
 The model has 1 parameter:
 
-- g - conductance
+- ``g`` - conductance of scalar type
 
-and no other variables.
-
-``sim`` code is:
-
-```
-"addToPost(g);"
-```)doc";
+and no other variables.)doc";
 
 static const char *__doc_WeightUpdateModels_StaticPulseConstantWeight_getInstance = R"doc()doc";
 
@@ -4626,7 +4668,7 @@ static const char *__doc_WeightUpdateModels_StaticPulseConstantWeight_getParams 
 static const char *__doc_WeightUpdateModels_StaticPulseConstantWeight_getPreSpikeSynCode = R"doc()doc";
 
 static const char *__doc_WeightUpdateModels_StaticPulseDendriticDelay =
-R"doc(Pulse-coupled, static synapse with heterogenous dendritic delays
+R"doc(Pulse-coupled, static synapse with heterogenous weight and dendritic delays
 No learning rule is applied to the synapse and for each pre-synaptic spikes,
 the synaptic conductances are simply added to the postsynaptic input variable.
 The model has 2 variables:
@@ -4634,13 +4676,7 @@ The model has 2 variables:
 - ``g`` - conductance of scalar type
 - ``d`` - dendritic delay in timesteps
 
-and no other parameters.
-
-``sim`` code is:
-
-```
-"addToPostDelay(g, d);"
-```)doc";
+and no other parameters.)doc";
 
 static const char *__doc_WeightUpdateModels_StaticPulseDendriticDelay_getInstance = R"doc()doc";
 
