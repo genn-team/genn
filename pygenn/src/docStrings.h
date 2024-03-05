@@ -949,7 +949,7 @@ static const char *__doc_CustomUpdateBase_m_Model = R"doc(Custom update model us
 
 static const char *__doc_CustomUpdateBase_m_Name = R"doc(Unique name of custom update)doc";
 
-static const char *__doc_CustomUpdateBase_m_Params = R"doc()doc";
+static const char *__doc_CustomUpdateBase_m_Params = R"doc(Values of custom connectivity update parameters)doc";
 
 static const char *__doc_CustomUpdateBase_m_UpdateCodeTokens = R"doc(Tokens produced by scanner from update code)doc";
 
@@ -1119,7 +1119,7 @@ static const char *__doc_CustomUpdateWU_isBatchReduction = R"doc()doc";
 
 static const char *__doc_CustomUpdateWU_isTransposeOperation = R"doc()doc";
 
-static const char *__doc_CustomUpdateWU_m_SynapseGroup = R"doc()doc";
+static const char *__doc_CustomUpdateWU_m_SynapseGroup = R"doc(Synapse group all variables referenced by custom update are associated with)doc";
 
 static const char *__doc_CustomUpdateWU_m_VarReferences = R"doc()doc";
 
@@ -1137,7 +1137,9 @@ static const char *__doc_CustomUpdate_getInitHashDigest =
 R"doc(Updates hash with custom update
 NOTE: this can only be called after model is finalized)doc";
 
-static const char *__doc_CustomUpdate_getNumNeurons = R"doc()doc";
+static const char *__doc_CustomUpdate_getNumNeurons =
+R"doc(Get number of neurons custom update operates over
+This must be the same for all groups whose variables are referenced)doc";
 
 static const char *__doc_CustomUpdate_getReferencedCustomUpdates = R"doc(Get vector of other custom updates referenced by this custom update)doc";
 
@@ -1149,7 +1151,9 @@ static const char *__doc_CustomUpdate_isNeuronReduction = R"doc()doc";
 
 static const char *__doc_CustomUpdate_m_DelayNeuronGroup = R"doc()doc";
 
-static const char *__doc_CustomUpdate_m_NumNeurons = R"doc()doc";
+static const char *__doc_CustomUpdate_m_NumNeurons =
+R"doc(Number of neurons custom update operates over
+This must be the same for all groups whose variables are referenced)doc";
 
 static const char *__doc_CustomUpdate_m_VarReferences = R"doc()doc";
 
