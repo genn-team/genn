@@ -38,9 +38,9 @@ __all__ = ["create_current_source_model", "create_custom_update_model",
            "init_toeplitz_connectivity", "init_var", "init_weight_update",
            "CurrentSource", "CustomConnectivityUpdate", "CustomUpdate",
            "CustomUpdateWU", "CustomUpdateVarAccess", "GeNNModel", 
-           "NeuronGroup", "ParallelismHint", "PlogSeverity", "SynapseGroup",
-           "SynapseMatrixType", "SynapseMatrixConnectivity",
-           "SynapseMatrixWeight", "VarAccess", "VarAccessDim",
+           "ModelSpec", "NeuronGroup", "ParallelismHint", "PlogSeverity", 
+           "SynapseGroup", "SynapseMatrixType", "SynapseMatrixConnectivity",
+           "SynapseMatrixWeight", "VarAccess", "VarAccessDim", 
            "VarAccessMode", "VarAccessModeAttribute",
            "VarLocation", "VarLocationAttribute"]
 
