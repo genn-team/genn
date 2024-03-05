@@ -1,3 +1,5 @@
+from typing import List, Sequence, Tuple, Union
+
 from deprecated import deprecated
 from warnings import warn
 from weakref import proxy
@@ -11,6 +13,10 @@ from ._genn import get_var_access_dim
 from .model_preprocessor import (_prepare_egps, _prepare_vars, Array,
                                  ExtraGlobalParameter, SynapseVariable,
                                  Variable)
+
+# Type aliases
+RecordedEventsType = List[Tuple[np.ndarray, np.ndarray]]
+IndexArrayType = Union[Sequence[int], np.ndarray]
 
 def _get_num_var_copies(var_dims, batch_size):
     if (var_dims & VarAccessDim.BATCH):
@@ -52,18 +58,18 @@ class GroupMixin(object):
         """Init Group
 
         Args:
-        model   -- pygenn.genn_model.GeNNModel this group is part of
+            model:  model this group is part of
         """
         self._model = proxy(model)
         self.vars = {}
         self.extra_global_params = {}
 
-    def set_dynamic_param_value(self, name, value):
+    def set_dynamic_param_value(self, name: str, value: Union[float, int]):
         """Set the value of a dynamic parameter at runtime
 
         Args:
-        name    --  string with the name of the parameter
-        value   --  numeric parameter value
+            name:   name of the parameter
+            value:  numeric value to assign to parameters
         """
         self._model._runtime.set_dynamic_param_value(self, name,
                                                      NumericValue(value))
@@ -74,7 +80,7 @@ class GroupMixin(object):
         """Pull variable from the device for a given population
 
         Args:
-        var_name    --  string with the name of the variable
+            var_name:   name of the variable
         """
         self.vars[var_name].pull_from_device()
 
@@ -84,7 +90,7 @@ class GroupMixin(object):
         """Pull extra global parameter from device
 
         Args:
-        egp_name    --  string with the name of the variable
+            egp_name:   name of the extra global parameter
         """
         self.extra_global_params[egp_name].pull_from_device()
 
@@ -94,7 +100,7 @@ class GroupMixin(object):
         """Push population state variable to the device
 
         Args:
-        var_name    --  string with the name of the variable
+            var_name:   name of the variable
         """
         self.vars[var_name].push_to_device()
 
@@ -104,7 +110,7 @@ class GroupMixin(object):
         """Push extra global parameter to device
 
         Args:
-        egp_name    --  string with the name of the variable
+            egp_name:   name of the extra global parameter
         """
         self.extra_global_params[egp_name].push_to_device()
 
@@ -112,9 +118,9 @@ class GroupMixin(object):
         """Assign a variable to an external numpy array
 
         Args:
-        var_name    --  string a fully qualified name of the variable to assign
-        var_type    --  ResolvedType object
-
+            array_name: name of the array in the runtime
+            array_type: ResolvedType object
+            shape:      ss
         Returns numpy array of type var_type
 
         Raises ValueError if variable type is not supported
@@ -219,7 +225,7 @@ class NeuronGroupMixin(GroupMixin):
         """Init NeuronGroupMixin
 
         Args:
-        model   -- pygenn.genn_model.GeNNModel this neuron group is part of
+            model:  model this neuron group is part of
         """
         super(NeuronGroupMixin, self)._init_group(model)
 
@@ -236,10 +242,16 @@ class NeuronGroupMixin(GroupMixin):
         self._neuron_model = self.model
 
     @property
-    def spike_recording_data(self):
+    def spike_recording_data(self) -> RecordedEventsType:
+        """Spike recording data associated with this neuron group.
+        
+        Before accessing this property,
+        :meth:`.GeNNModel.pull_recording_buffers_from_device`
+        must be called to copy spike recording data from device
+        """
         return self._model._runtime.get_recorded_spikes(self)
 
-    def _load(self, num_recording_timesteps):
+    def _load(self):
         """Loads neuron group"""
         batch_size = self._model.batch_size
         delay_group = self if self.num_delay_slots > 1 else None
@@ -295,7 +307,7 @@ class SynapseGroupMixin(GroupMixin):
         """Init SynapseGroupMixin
 
         Args:
-        model   -- pygenn.GeNNModel this neuron group is part of
+            model:  model this neuron group is part of
         """
         super(SynapseGroupMixin, self)._init_group(model)
         
@@ -336,15 +348,29 @@ class SynapseGroupMixin(GroupMixin):
         self._wu_model = self.wu_initialiser.snippet
 
     @property
-    def pre_spike_event_recording_data(self):
+    def pre_spike_event_recording_data(self) -> RecordedEventsType:
+        """Presynaptic spike-event recording data associated with this 
+        synapse group.
+        
+        Before accessing this property,
+        :meth:`.GeNNModel.pull_recording_buffers_from_device`
+        must be called to copy spike recording data from device
+        """
         return self._model._runtime.get_recorded_pre_spike_events(self)
     
     @property
-    def post_spike_event_recording_data(self):
+    def post_spike_event_recording_data(self) -> RecordedEventsType:
+        """Postsynaptic spike-event recording data associated with this 
+        synapse group.
+        
+        Before accessing this property,
+        :meth:`.GeNNModel.pull_recording_buffers_from_device`
+        must be called to copy spike recording data from device
+        """
         return self._model._runtime.get_recorded_post_spike_events(self)
 
     @property
-    def weight_update_var_size(self):
+    def weight_update_var_size(self) -> int:
         """Size of each weight update variable"""
         if self.matrix_type & SynapseMatrixConnectivity.DENSE:
             return self.trg.num_neurons * self.src.num_neurons
@@ -360,14 +386,19 @@ class SynapseGroupMixin(GroupMixin):
     def get_var_values(self, var_name):
         return self.vars[var_name].values
 
-    def set_sparse_connections(self, pre_indices, post_indices):
-        """Set ragged format connections between two groups of neurons
+    def set_sparse_connections(self, pre_indices: IndexArrayType,
+                               post_indices: IndexArrayType):
+        """Manually provide indices of sparse synapses between two groups of neurons
 
         Args:
-        pre_indices     --  ndarray of presynaptic indices
-        post_indices    --  ndarray of postsynaptic indices
+            pre_indices:  presynaptic indices
+            post_indices:  postsynaptic indices
         """
         if self.matrix_type & SynapseMatrixConnectivity.SPARSE:
+            # Cast index arrays to numpy arrays if necessary
+            pre_indices = np.asarray(pre_indices)
+            post_indices = np.asarray(post_indices)
+
             # Lexically sort indices
             self.synapse_order = np.lexsort((post_indices, pre_indices))
 
@@ -393,11 +424,11 @@ class SynapseGroupMixin(GroupMixin):
 
         self.connections_set = True
 
-    def get_sparse_pre_inds(self):
+    def get_sparse_pre_inds(self) -> np.ndarray:
         """Get presynaptic indices of synapse group connections
 
         Returns:
-        ndarray of presynaptic indices
+            presynaptic indices
         """
         if self.matrix_type & SynapseMatrixConnectivity.SPARSE:
             rl = (self._row_lengths.view if self._connectivity_initialiser_provided
@@ -414,11 +445,11 @@ class SynapseGroupMixin(GroupMixin):
             raise Exception("get_sparse_pre_inds only supports"
                             "ragged format sparse connectivity")
 
-    def get_sparse_post_inds(self):
+    def get_sparse_post_inds(self) -> np.ndarray:
         """Get postsynaptic indices of synapse group connections
 
         Returns:
-        ndarrays of postsynaptic indices
+            postsynaptic indices
         """
         if (self.matrix_type & SynapseMatrixConnectivity.SPARSE):
             if not self._connectivity_initialiser_provided:
@@ -442,13 +473,13 @@ class SynapseGroupMixin(GroupMixin):
                             "ragged format sparse connectivity")
 
     def pull_connectivity_from_device(self):
-        """Pull extra variables associated with connectivity from device"""
+        """Pull connectivity from device"""
         if (self.matrix_type & SynapseMatrixConnectivity.SPARSE):
             self._ind.pull_from_device()
             self._row_lengths.pull_from_device()
 
     def push_connectivity_to_device(self):
-        """Push extra variables associated with connectivity to device"""
+        """Push connectivity to device"""
         if (self.matrix_type & SynapseMatrixConnectivity.SPARSE):
             self._ind.push_to_device()
             self._row_lengths.push_to_device()

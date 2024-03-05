@@ -269,12 +269,12 @@ class GeNNModel(ModelSpec):
         return self._runtime.time
 
     @property
-    def timestep(self):
+    def timestep(self) -> int:
         """Simulation time step"""
         return self._runtime.timestep
 
     @timestep.setter
-    def timestep(self, timestep):
+    def timestep(self, timestep: int):
         """Simulation time in timesteps"""
         self._runtime.timestep = timestep
 
@@ -708,7 +708,7 @@ class GeNNModel(ModelSpec):
 
         # Loop through neuron populations
         for pop_data in self.neuron_populations.values():
-            pop_data._load(num_recording_timesteps)
+            pop_data._load()
 
         # Loop through synapse populations
         for pop_data in self.synapse_populations.values():
