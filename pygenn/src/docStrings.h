@@ -829,11 +829,11 @@ static const char *__doc_CustomConnectivityUpdate_m_ExtraGlobalParamLocation = R
 
 static const char *__doc_CustomConnectivityUpdate_m_HostUpdateCodeTokens = R"doc(Tokens produced by scanner from host update code)doc";
 
-static const char *__doc_CustomConnectivityUpdate_m_Model = R"doc()doc";
+static const char *__doc_CustomConnectivityUpdate_m_Model = R"doc(Custom connectivity update model used for this update)doc";
 
-static const char *__doc_CustomConnectivityUpdate_m_Name = R"doc()doc";
+static const char *__doc_CustomConnectivityUpdate_m_Name = R"doc(Unique name of custom connectivity update)doc";
 
-static const char *__doc_CustomConnectivityUpdate_m_Params = R"doc()doc";
+static const char *__doc_CustomConnectivityUpdate_m_Params = R"doc(Values of custom connectivity update parameters)doc";
 
 static const char *__doc_CustomConnectivityUpdate_m_PostDelayNeuronGroup = R"doc()doc";
 
@@ -853,9 +853,9 @@ static const char *__doc_CustomConnectivityUpdate_m_PreVarReferences = R"doc()do
 
 static const char *__doc_CustomConnectivityUpdate_m_RowUpdateCodeTokens = R"doc(Tokens produced by scanner from row update code)doc";
 
-static const char *__doc_CustomConnectivityUpdate_m_SynapseGroup = R"doc()doc";
+static const char *__doc_CustomConnectivityUpdate_m_SynapseGroup = R"doc(Synapse group this custom connectivity update is associated with)doc";
 
-static const char *__doc_CustomConnectivityUpdate_m_UpdateGroupName = R"doc()doc";
+static const char *__doc_CustomConnectivityUpdate_m_UpdateGroupName = R"doc(Name of the update group this custom connectivity update is part of)doc";
 
 static const char *__doc_CustomConnectivityUpdate_m_VarInitialisers = R"doc()doc";
 
@@ -945,15 +945,15 @@ static const char *__doc_CustomUpdateBase_m_EGPReferences = R"doc()doc";
 
 static const char *__doc_CustomUpdateBase_m_ExtraGlobalParamLocation = R"doc(Location of extra global parameters)doc";
 
-static const char *__doc_CustomUpdateBase_m_Model = R"doc()doc";
+static const char *__doc_CustomUpdateBase_m_Model = R"doc(Custom update model used for this update)doc";
 
-static const char *__doc_CustomUpdateBase_m_Name = R"doc()doc";
+static const char *__doc_CustomUpdateBase_m_Name = R"doc(Unique name of custom update)doc";
 
 static const char *__doc_CustomUpdateBase_m_Params = R"doc()doc";
 
 static const char *__doc_CustomUpdateBase_m_UpdateCodeTokens = R"doc(Tokens produced by scanner from update code)doc";
 
-static const char *__doc_CustomUpdateBase_m_UpdateGroupName = R"doc()doc";
+static const char *__doc_CustomUpdateBase_m_UpdateGroupName = R"doc(Name of the update group this custom connectivity update is part of)doc";
 
 static const char *__doc_CustomUpdateBase_m_VarInitialisers = R"doc()doc";
 
@@ -2728,13 +2728,15 @@ static const char *__doc_NeuronGroup_m_FusedWUPreOutSyn = R"doc()doc";
 
 static const char *__doc_NeuronGroup_m_InSyn = R"doc()doc";
 
-static const char *__doc_NeuronGroup_m_Model = R"doc()doc";
+static const char *__doc_NeuronGroup_m_Model = R"doc(Neuron model used for this group)doc";
 
-static const char *__doc_NeuronGroup_m_Name = R"doc()doc";
+static const char *__doc_NeuronGroup_m_Name = R"doc(Unique name of neuron group)doc";
 
-static const char *__doc_NeuronGroup_m_NumDelaySlots = R"doc()doc";
+static const char *__doc_NeuronGroup_m_NumDelaySlots =
+R"doc(Number of delay slots this group required
+This is the maximum required by any incoming or outgoing synapse group)doc";
 
-static const char *__doc_NeuronGroup_m_NumNeurons = R"doc()doc";
+static const char *__doc_NeuronGroup_m_NumNeurons = R"doc(Number of neurons in group)doc";
 
 static const char *__doc_NeuronGroup_m_OutSyn = R"doc()doc";
 
