@@ -2234,6 +2234,14 @@ static const char *__doc_ModelSpec_m_DefaultSparseConnectivityLocation = R"doc(W
 
 static const char *__doc_ModelSpec_m_DefaultVarLocation = R"doc(What is the default location for model state variables? Historically, everything was allocated on both host AND device)doc";
 
+static const char *__doc_ModelSpec_m_FusePostsynapticModels =
+R"doc(Should compatible postsynaptic models and dendritic delay buffers be fused?
+This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved)doc";
+
+static const char *__doc_ModelSpec_m_FusePrePostWeightUpdateModels =
+R"doc(Should compatible pre and postsynaptic weight update model variables and updates be fused?
+This can significantly reduce the cost of updating neuron populations but means that per-synaptic group per and postsynaptic variables cannot be retrieved)doc";
+
 static const char *__doc_ModelSpec_m_LocalCurrentSources = R"doc(Named local current sources)doc";
 
 static const char *__doc_ModelSpec_m_LocalNeuronGroups = R"doc(Named local neuron groups)doc";
@@ -2245,14 +2253,6 @@ static const char *__doc_ModelSpec_m_Name = R"doc(Name of the neuronal newtwork 
 static const char *__doc_ModelSpec_m_Precision = R"doc(Type of floating point variables (float, double, ...; default: float))doc";
 
 static const char *__doc_ModelSpec_m_Seed = R"doc(RNG seed)doc";
-
-static const char *__doc_ModelSpec_m_ShouldFusePostsynapticModels =
-R"doc(Should compatible postsynaptic models and dendritic delay buffers be fused?
-This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved)doc";
-
-static const char *__doc_ModelSpec_m_ShouldFusePrePostWeightUpdateModels =
-R"doc(Should compatible pre and postsynaptic weight update model variables and updates be fused?
-This can significantly reduce the cost of updating neuron populations but means that per-synaptic group per and postsynaptic variables cannot be retrieved)doc";
 
 static const char *__doc_ModelSpec_m_TimePrecision = R"doc(Type of floating point variables used to store time)doc";
 
@@ -2288,10 +2288,6 @@ static const char *__doc_ModelSpec_setFusePrePostWeightUpdateModels =
 R"doc(Should compatible pre and postsynaptic weight update model variables and updates be fused?
 This can significantly reduce the cost of updating neuron populations but means that per-synaptic group per and postsynaptic variables cannot be retrieved)doc";
 
-static const char *__doc_ModelSpec_setMergePostsynapticModels =
-R"doc(Should compatible postsynaptic models and dendritic delay buffers be fused?
-This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved)doc";
-
 static const char *__doc_ModelSpec_setName = R"doc(Method to set the neuronal network model name)doc";
 
 static const char *__doc_ModelSpec_setPrecision = R"doc(Set numerical precision for scalar type)doc";
@@ -2300,7 +2296,7 @@ static const char *__doc_ModelSpec_setSeed = R"doc(Set the random seed (disables
 
 static const char *__doc_ModelSpec_setTimePrecision = R"doc(Set numerical precision for time type)doc";
 
-static const char *__doc_ModelSpec_setTiming = R"doc(Set whether timers and timing commands are to be included)doc";
+static const char *__doc_ModelSpec_setTimingEnabled = R"doc(Set whether timers and timing commands are to be included)doc";
 
 static const char *__doc_ModelSpec_zeroCopyInUse = R"doc(Are any variables in any populations in this model using zero-copy memory?)doc";
 
