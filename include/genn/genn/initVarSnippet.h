@@ -95,6 +95,19 @@ public:
 };
 
 //----------------------------------------------------------------------------
+// GeNN::InitVarSnippet::Kernel
+//----------------------------------------------------------------------------
+//! Used to initialise synapse variables from a kernel
+class Kernel : public Base
+{
+    DECLARE_SNIPPET(InitVarSnippet::Kernel);
+
+    SET_CODE("value = kernel[id_kernel];");
+
+    SET_EXTRA_GLOBAL_PARAMS({{"kernel", "scalar*"}});
+};
+
+//----------------------------------------------------------------------------
 // GeNN::InitVarSnippet::Uniform
 //----------------------------------------------------------------------------
 //! Initialises variable by sampling from the uniform distribution
