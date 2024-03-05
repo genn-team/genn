@@ -211,18 +211,14 @@ private:
 //----------------------------------------------------------------------------
 // GeNN::WeightUpdateModels::StaticPulse
 //----------------------------------------------------------------------------
-//! Pulse-coupled, static synapse.
+//! Pulse-coupled, static synapse with heterogeneous weight.
 /*! No learning rule is applied to the synapse and for each pre-synaptic spikes,
     the synaptic conductances are simply added to the postsynaptic input variable.
     The model has 1 variable:
-    - g - conductance of scalar type
-    and no other parameters.
 
-    \c sim code is:
+    - \c g - conductance of scalar type
 
-    \code
-    "addToPost(g);\n"
-    \endcode*/
+    and no other parameters.*/
 class StaticPulse : public Base
 {
 public:
@@ -236,20 +232,14 @@ public:
 //----------------------------------------------------------------------------
 // GeNN::WeightUpdateModels::StaticPulseConstantWeight
 //----------------------------------------------------------------------------
-//! Pulse-coupled, static synapse.
+//! Pulse-coupled, static synapse with homogeneous weight.
 /*! No learning rule is applied to the synapse and for each pre-synaptic spikes,
     the synaptic conductances are simply added to the postsynaptic input variable.
     The model has 1 parameter:
 
-    - g - conductance
+    - \c g - conductance of scalar type
 
-    and no other variables.
-
-    \c sim code is:
-
-    \code
-    "addToPost(g);"
-    \endcode*/
+    and no other variables.*/
 class StaticPulseConstantWeight : public Base
 {
 public:
@@ -263,7 +253,7 @@ public:
 //----------------------------------------------------------------------------
 // GeNN::WeightUpdateModels::StaticPulseDendriticDelay
 //----------------------------------------------------------------------------
-//! Pulse-coupled, static synapse with heterogenous dendritic delays
+//! Pulse-coupled, static synapse with heterogenous weight and dendritic delays
 /*! No learning rule is applied to the synapse and for each pre-synaptic spikes,
     the synaptic conductances are simply added to the postsynaptic input variable.
     The model has 2 variables:
@@ -271,13 +261,7 @@ public:
     - \c g - conductance of scalar type
     - \c d - dendritic delay in timesteps
 
-    and no other parameters.
-
-    \c sim code is:
-
-    \code
-    "addToPostDelay(g, d);"
-    \endcode*/
+    and no other parameters.*/
 class StaticPulseDendriticDelay : public Base
 {
 public:
@@ -298,24 +282,15 @@ public:
     The model has 1 variable:
 
     - \c g: conductance of \c scalar type
+    
+    The model also has 1 presynaptic neuron variable reference:
+
+    - \c V: Presynaptic membrane potential
 
     The parameters are:
 
     - \c Epre: Presynaptic threshold potential
-    - \c Vslope: Activation slope of graded release
-
-    \c event code is:
-    \code
-    addToPost(fmax(0.0, g * tanh((V_pre - Epre) / Vslope) * dt));
-    \endcode
-
-    \c event threshold condition code is:
-
-    \code
-    V_pre > Epre
-    \endcode
-    \note The pre-synaptic variables are referenced with the suffix `_pre` in synapse related code
-    such as an the event threshold test. Users can also access post-synaptic neuron variables using the suffix `_post`.*/
+    - \c Vslope: Activation slope of graded release*/
 class StaticGraded : public Base
 {
 public:

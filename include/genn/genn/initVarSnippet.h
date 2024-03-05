@@ -79,7 +79,7 @@ public:
 //----------------------------------------------------------------------------
 //! Initialises variable to a constant value
 /*! This snippet takes 1 parameter:
- *
+
     - \c value - The value to intialise the variable to
 
     \note This snippet type is seldom used directly - InitVarSnippet::Init
@@ -97,7 +97,9 @@ public:
 //----------------------------------------------------------------------------
 // GeNN::InitVarSnippet::Kernel
 //----------------------------------------------------------------------------
-//! Used to initialise synapse variables from a kernel
+//! Used to initialise synapse variables from a kernel. This snippet type is used 
+//! if you wish to initialise sparse connectivity using a sparse connectivity
+//! initialisation snippet with a kernel such as InitSparseConnectivitySnippet::Conv2D.
 class Kernel : public Base
 {
     DECLARE_SNIPPET(InitVarSnippet::Kernel);

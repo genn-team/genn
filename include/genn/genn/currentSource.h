@@ -108,11 +108,17 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
+    //! Unique name of current source
     std::string m_Name;
 
+    //! Current source model used for this source
     const CurrentSourceModels::Base *m_Model;
+
+    //! Values of current source parameters
     std::map<std::string, Type::NumericValue> m_Params;
     std::map<std::string, Type::NumericValue> m_DerivedParams;
+
+    //! Initialisers for current source variables
     std::map<std::string, InitVarSnippet::Init> m_VarInitialisers;
     std::map<std::string, Models::VarReference> m_NeuronVarReferences;
 

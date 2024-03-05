@@ -106,6 +106,7 @@ public:
 // InitSparseConnectivitySnippet::OneToOne
 //----------------------------------------------------------------------------
 //! Initialises connectivity to a 'one-to-one' diagonal matrix
+/*! This snippet has no parameters */
 class OneToOne : public Base
 {
 public:
@@ -162,7 +163,10 @@ public:
     trials needed to get one success" -- essentially the distribution of the
     'gaps' between synapses. We do this using the "inversion method"
     described by Devroye (1986) -- essentially inverting the CDF of the
-    equivalent continuous distribution (in this case the exponential distribution)*/
+    equivalent continuous distribution (in this case the exponential distribution)
+    This snippet takes 1 parameter:
+
+    - \c prob - probability of connection in [0, 1]*/
 class FixedProbability : public FixedProbabilityBase
 {
 public:
@@ -197,7 +201,10 @@ public:
     trials needed to get one success" -- essentially the distribution of the 
     'gaps' between synapses. We do this using the "inversion method"
     described by Devroye (1986) -- essentially inverting the CDF of the
-    equivalent continuous distribution (in this case the exponential distribution)*/
+    equivalent continuous distribution (in this case the exponential distribution)
+    This snippet takes 1 parameter: 
+
+    - \c prob - probability of connection in [0, 1]*/
 class FixedProbabilityNoAutapse : public FixedProbabilityBase
 {
 public:
@@ -228,7 +235,10 @@ public:
 /*! The postsynaptic targets of the synapses can be initialised in parallel by sampling from the discrete
     uniform distribution. However, to sample connections in ascending order, we sample from the 1st order statistic
     of the uniform distribution -- Beta[1, Npost] -- essentially the next smallest value. In this special case
-    this is equivalent to the exponential distribution which can be sampled in constant time using the inversion method.*/
+    this is equivalent to the exponential distribution which can be sampled in constant time using the inversion method.
+    This snippet takes 1 parameter:
+
+    - \c num - number of postsynaptic neurons to connect each presynaptic neuron to.*/
 class FixedNumberPostWithReplacement : public Base
 {
 public:
@@ -275,7 +285,10 @@ public:
 /*! Once the length of each row is determined, the postsynaptic targets of the synapses can be initialised in parallel
     by sampling from the discrete uniform distribution. However, to sample connections in ascending order, we sample
     from the 1st order statistic of the uniform distribution -- Beta[1, Npost] -- essentially the next smallest value.
-    In this special case this is equivalent to the exponential distribution which can be sampled in constant time using the inversion method.*/
+    In this special case this is equivalent to the exponential distribution which can be sampled in constant time using the inversion method.
+    This snippet takes 1 parameter:
+
+    - \c num - total number of synapses to distribute throughout synaptic matrix.*/
 class FixedNumberTotalWithReplacement : public Base
 {
 public:
@@ -360,7 +373,10 @@ public:
 // InitSparseConnectivitySnippet::FixedNumberPreWithReplacement
 //----------------------------------------------------------------------------
 //! Initialises connectivity with a fixed number of random synapses per column.
-/*! No need for ordering here so fine to sample directly from uniform distribution */
+/*! No need for ordering here so fine to sample directly from uniform distribution 
+    This snippet takes 1 parameter:
+
+    - \c num - number of presynaptic neurons to connect each postsynaptic neuron to.*/
 class FixedNumberPreWithReplacement : public Base
 {
 public:
@@ -396,10 +412,29 @@ public:
 //----------------------------------------------------------------------------
 // InitSparseConnectivitySnippet::Conv2D
 //----------------------------------------------------------------------------
-//! Initialises convolutional connectivity
+//! Initialises 2D convolutional connectivity
 //! Row build state variables are used to convert presynaptic neuron index to rows, columns and channels and, 
 //! from these, to calculate the range of postsynaptic rows, columns and channels connections will be made within.
-/*! This sparse connectivity snippet does not support multiple threads per neuron */
+/*! This sparse connectivity snippet does not support multiple threads per neuron 
+    This snippet takes 12 parameter:
+
+    - \c conv_kh - height of 2D convolution kernel.
+    - \c conv_kw - width of 2D convolution kernel.
+    - \c conv_sh - height of convolution stride
+    - \c conv_sw - width of convolution stride
+    - \c conv_padh - width of padding around input
+    - \c conv_padw - height of padding around input
+    - \c conv_ih - width of input to this convolution
+    - \c conv_iw - height of input to this convolution
+    - \c conv_ic - number of input channels to this convolution
+    - \c conv_oh - width of output from this convolution
+    - \c conv_ow - height of output from this convolution
+    - \c conv_oc - number of output channels from this convolution
+
+    \note
+    ``conv_ih * conv_iw * conv_ic`` should equal the number of neurons in the presynaptic
+    neuron population and ``conv_oh * conv_ow * conv_oc`` should equal the number of 
+    neurons in the postsynaptic neuron population.*/
 class Conv2D : public Base
 {
 public:

@@ -90,9 +90,19 @@ public:
 //----------------------------------------------------------------------------
 // GeNN::InitToeplitzConnectivitySnippet::Conv2D
 //----------------------------------------------------------------------------
-//! Initialises convolutional connectivity
-//! Row build state variables are used to convert presynaptic neuron index to rows, columns and channels and, 
-//! from these, to calculate the range of postsynaptic rows, columns and channels connections will be made within.
+//! Initialises 2D convolutional connectivity
+/*! Row build state variables are used to convert presynaptic neuron index to rows, columns and channels and,
+    from these, to calculate the range of postsynaptic rows, columns and channels connections will be made within.
+    This snippet takes 8 parameter:
+
+    - \c conv_kh - height of 2D convolution kernel.
+    - \c conv_kw - width of 2D convolution kernel.
+    - \c conv_ih - width of input to this convolution
+    - \c conv_iw - height of input to this convolution
+    - \c conv_ic - number of input channels to this convolution
+    - \c conv_oh - width of output from this convolution
+    - \c conv_ow - height of output from this convolution
+    - \c conv_oc - number of output channels from this convolution*/
 class Conv2D : public Base
 {
 public:
@@ -143,9 +153,23 @@ public:
 //----------------------------------------------------------------------------
 // GeNN::InitToeplitzConnectivitySnippet::AvgPoolConv2D
 //----------------------------------------------------------------------------
-//! Initialises convolutional connectivity preceded by averaging pooling
-//! Row build state variables are used to convert presynaptic neuron index to rows, columns and channels and, 
-//! from these, to calculate the range of postsynaptic rows, columns and channels connections will be made within.
+//! Initialises 2D convolutional connectivity preceded by averaging pooling
+/*! Row build state variables are used to convert presynaptic neuron index to rows, columns and channels and,
+    from these, to calculate the range of postsynaptic rows, columns and channels connections will be made within.
+     This snippet takes 12 parameter:
+
+    - \c conv_kh - height of 2D convolution kernel.
+    - \c conv_kw - width of 2D convolution kernel.
+    - \c pool_kh - height of 2D average pooling kernel.
+    - \c pool_kw - width of 2D average pooling kernel.
+    - \c pool_sh - height of average pooling stride
+    - \c pool_sw - width of average pooling stride
+    - \c pool_ih - width of input to the average pooling
+    - \c pool_iw - height of input to the average pooling
+    - \c pool_ic - number of input channels to the average pooling
+    - \c conv_oh - width of output from the convolution
+    - \c conv_ow - height of output from the convolution
+    - \c conv_oc - number of output channels the this convolution*/
 class AvgPoolConv2D : public Base
 {
 public:

@@ -65,27 +65,27 @@ public:
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
-    //! Set location of weight update model state variable
+    //! Set location of weight update model state variable.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setWUVarLocation(const std::string &varName, VarLocation loc);
 
-    //! Set location of weight update model presynaptic state variable
+    //! Set location of weight update model presynaptic state variable.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setWUPreVarLocation(const std::string &varName, VarLocation loc);
     
-    //! Set location of weight update model postsynaptic state variable
+    //! Set location of weight update model postsynaptic state variable.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setWUPostVarLocation(const std::string &varName, VarLocation loc);
     
-    //! Set location of weight update model extra global parameter
+    //! Set location of weight update model extra global parameter.
     /*! This is ignored for simulations on hardware with a single memory space. */
     void setWUExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
-    //! Set location of postsynaptic model state variable
+    //! Set location of postsynaptic model state variable.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setPSVarLocation(const std::string &varName, VarLocation loc);
 
-    //! Set location of postsynaptic model extra global parameter
+    //! Set location of postsynaptic model extra global parameter.
     /*! This is ignored for simulations on hardware with a single memory space. */
     void setPSExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
@@ -95,19 +95,19 @@ public:
     //! Set whether weight update model parameter is dynamic or not i.e. it can be changed at runtime
     void setPSParamDynamic(const std::string &paramName, bool dynamic = true);
 
-    //! Set name of neuron input variable postsynaptic model will target
+    //! Set name of neuron input variable postsynaptic model will target.
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
     void setPostTargetVar(const std::string &varName);
     
-    //! Set name of neuron input variable $(addToPre, . ) commands will target
+    //! Set name of neuron input variable addToPost(..) commands will target.
     /*! This should either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */
     void setPreTargetVar(const std::string &varName);
 
-    //! Set location of variables used for outputs from this synapse group e.g. outPre and outPost
+    //! Set location of variables used for outputs from this synapse group e.g. outPre and outPost.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setOutputLocation(VarLocation loc) { m_OutputLocation = loc; }
 
-    //! Set variable mode used for sparse connectivity
+    //! Set variable mode used for sparse connectivity.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setSparseConnectivityLocation(VarLocation loc) { m_SparseConnectivityLocation = loc; }
 
@@ -115,11 +115,9 @@ public:
     void setDendriticDelayLocation(VarLocation loc) { m_DendriticDelayLocation = loc; }
 
     //! Sets the maximum number of target neurons any source neurons can connect to
-    /*! Use with synaptic matrix types with SynapseMatrixConnectivity::SPARSE to optimise CUDA implementation */
     void setMaxConnections(unsigned int maxConnections);
 
     //! Sets the maximum number of source neurons any target neuron can connect to
-    /*! Use with synaptic matrix types with SynapseMatrixConnectivity::SPARSE and postsynaptic learning to optimise CUDA implementation */
     void setMaxSourceConnections(unsigned int maxPostConnections);
     
     //! Sets the maximum dendritic delay for synapses in this synapse group
@@ -166,16 +164,16 @@ public:
     //! Get variable mode used for this synapse group's dendritic delay buffers
     VarLocation getDendriticDelayLocation() const{ return m_DendriticDelayLocation; }
 
-    //! Get location of weight update model per-synapse state variable by name
+    //! Get location of weight update model synaptic state variable
     VarLocation getWUVarLocation(const std::string &varName) const{ return m_WUVarLocation.get(varName); }
 
-    //! Get location of weight update model presynaptic state variable by name
+    //! Get location of weight update model presynaptic state variable
     VarLocation getWUPreVarLocation(const std::string &varName) const{ return m_WUPreVarLocation.get(varName); }
 
-    //! Get location of weight update model postsynaptic state variable by name
+    //! Get location of weight update model postsynaptic state variable
     VarLocation getWUPostVarLocation(const std::string &varName) const{ return m_WUPostVarLocation.get(varName); }
 
-    //! Get location of weight update model extra global parameter by name
+    //! Get location of weight update model extra global parameter
     VarLocation getWUExtraGlobalParamLocation(const std::string &paramName) const{ return m_WUExtraGlobalParamLocation.get(paramName); }
 
     //! Get location of postsynaptic model state variable
@@ -190,7 +188,7 @@ public:
     //! Is weight update model parameter dynamic i.e. it can be changed at runtime
     bool isWUParamDynamic(const std::string &paramName) const{ return m_WUDynamicParams.get(paramName); }
 
-    //! Does synapse group need to handle 'true' spikes/
+    //! Does synapse group need to handle 'true' spikes?
     bool isPreSpikeRequired() const;
 
     //! Does synapse group need to handle presynaptic spike-like events?
@@ -451,13 +449,13 @@ private:
     //! Hint as to how synapse group should be parallelised
     ParallelismHint m_ParallelismHint;
 
-    //! How many threads CUDA implementation uses to process each spike when span type is PRESYNAPTIC
+    //! How many threads GPU implementation use to process each spike when parallelised presynaptically
     unsigned int m_NumThreadsPerSpike;
 
     //! Global synaptic conductance delay for the group (in time steps)
     unsigned int m_AxonalDelaySteps;
 
-    //! Global backpropagation delay for postsynaptic spikes to synapse (in time
+    //! Global backpropagation delay for postsynaptic spikes to synapse (in time steps)
     unsigned int m_BackPropDelaySteps;
 
     //! Maximum number of target neurons any source neuron can connect to
@@ -484,10 +482,12 @@ private:
     //! Should narrow i.e. less than 32-bit types be used for sparse matrix indices
     bool m_NarrowSparseIndEnabled;
 
-    //! Variable mode used for outputs from this synapse group e.g. outPre and outPost
+    //! Location of outputs from this synapse group e.g. outPre and outPost
+    /*! This is ignored for simulations on hardware with a single memory space */
     VarLocation m_OutputLocation;
 
-    //! Variable mode used for this synapse group's dendritic delay buffers
+    //! Location of this synapse group's dendritic delay buffers
+    /*! This is ignored for simulations on hardware with a single memory space */
     VarLocation m_DendriticDelayLocation;
 
     //! Initialiser used for creating weight update model
