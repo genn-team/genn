@@ -1020,8 +1020,8 @@ static const char *__doc_CustomUpdateModels_Transpose_getInstance = R"doc()doc";
 static const char *__doc_CustomUpdateModels_Transpose_getVarRefs = R"doc()doc";
 
 static const char *__doc_CustomUpdateVarAccess =
-R"doc(Supported combinations of access mode and dimension for custom update variables
-The axes are defined 'subtractively' ie VarAccessDim::BATCH indicates that this axis should be removed)doc";
+R"doc(Supported combinations of access mode and dimension for custom update variables.
+The axes are defined 'subtractively' ie VarAccessDim::BATCH indicates that this axis should be removed.)doc";
 
 static const char *__doc_CustomUpdateVarAccess_READ_ONLY = R"doc(This variable can be only be read from and has the same dimensions as whatever the custom update is attached to)doc";
 
@@ -1152,7 +1152,7 @@ static const char *__doc_CustomUpdate_isNeuronReduction = R"doc()doc";
 static const char *__doc_CustomUpdate_m_DelayNeuronGroup = R"doc()doc";
 
 static const char *__doc_CustomUpdate_m_NumNeurons =
-R"doc(Number of neurons custom update operates over
+R"doc(Number of neurons custom update operates over.
 This must be the same for all groups whose variables are referenced)doc";
 
 static const char *__doc_CustomUpdate_m_VarReferences = R"doc()doc";
@@ -2230,13 +2230,16 @@ static const char *__doc_ModelSpec_m_CustomWUUpdates = R"doc()doc";
 
 static const char *__doc_ModelSpec_m_DT = R"doc(The integration time step of the model)doc";
 
-static const char *__doc_ModelSpec_m_DefaultExtraGlobalParamLocation = R"doc(What is the default location for model extra global parameters? Historically, this was just left up to the user to handle)doc";
+static const char *__doc_ModelSpec_m_DefaultExtraGlobalParamLocation = R"doc(The default location for model extra global parameters)doc";
 
-static const char *__doc_ModelSpec_m_DefaultNarrowSparseIndEnabled = R"doc(The default for whether narrow i.e. less than 32-bit types are used for sparse matrix indices)doc";
+static const char *__doc_ModelSpec_m_DefaultNarrowSparseIndEnabled =
+R"doc(Should 'narrow' i.e. less than 32-bit types be used to store postsyanptic neuron indices in SynapseMatrixConnectivity::SPARSE connectivity?
+If this is true and postsynaptic population has < 256 neurons, 8-bit indices will be used and,
+if it has < 65536 neurons, 16-bit indices will be used.)doc";
 
-static const char *__doc_ModelSpec_m_DefaultSparseConnectivityLocation = R"doc(What is the default location for sparse synaptic connectivity? Historically, everything was allocated on both the host AND device)doc";
+static const char *__doc_ModelSpec_m_DefaultSparseConnectivityLocation = R"doc(The default location for sparse synaptic connectivity)doc";
 
-static const char *__doc_ModelSpec_m_DefaultVarLocation = R"doc(What is the default location for model state variables? Historically, everything was allocated on both host AND device)doc";
+static const char *__doc_ModelSpec_m_DefaultVarLocation = R"doc(The default location for model state variables?)doc";
 
 static const char *__doc_ModelSpec_m_FusePostsynapticModels =
 R"doc(Should compatible postsynaptic models and dendritic delay buffers be fused?
@@ -2740,7 +2743,7 @@ static const char *__doc_NeuronGroup_m_NumNeurons = R"doc(Number of neurons in g
 
 static const char *__doc_NeuronGroup_m_OutSyn = R"doc()doc";
 
-static const char *__doc_NeuronGroup_m_Params = R"doc()doc";
+static const char *__doc_NeuronGroup_m_Params = R"doc(Values of neuron parameters)doc";
 
 static const char *__doc_NeuronGroup_m_PrevSpikeEventTimeLocation = R"doc(Location of previous spike-like-event times)doc";
 
@@ -4342,7 +4345,7 @@ static const char *__doc_VarAccessMode = R"doc(Supported combination of VarAcces
 
 static const char *__doc_VarAccessModeAttribute =
 R"doc(Flags defining attributes of var access models
-**NOTE** Read-only and read-write are seperate flags rather than read and write so you can test mode & VarAccessMode::READ_ONLY)doc";
+Read-only and read-write are seperate flags rather than read and write so you can test mode & VarAccessMode::READ_ONLY)doc";
 
 static const char *__doc_VarAccessModeAttribute_MAX = R"doc(This variable's reduction operation is a maximum)doc";
 
