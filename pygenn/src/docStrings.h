@@ -1464,6 +1464,14 @@ static const char *__doc_InitVarSnippet_Init_isRNGRequired = R"doc()doc";
 
 static const char *__doc_InitVarSnippet_Init_m_CodeTokens = R"doc()doc";
 
+static const char *__doc_InitVarSnippet_Kernel = R"doc(Used to initialise synapse variables from a kernel)doc";
+
+static const char *__doc_InitVarSnippet_Kernel_getCode = R"doc()doc";
+
+static const char *__doc_InitVarSnippet_Kernel_getExtraGlobalParams = R"doc()doc";
+
+static const char *__doc_InitVarSnippet_Kernel_getInstance = R"doc()doc";
+
 static const char *__doc_InitVarSnippet_Normal =
 R"doc(Initialises variable by sampling from the normal distribution
 This snippet takes 2 parameters:
@@ -3413,8 +3421,6 @@ static const char *__doc_SynapseGroup_getConnectivityInitHashDigest =
 R"doc(Generate hash of connectivity initialisation of this synapse group
 NOTE: this can only be called after model is finalized)doc";
 
-static const char *__doc_SynapseGroup_getConnectivityInitialiser = R"doc()doc";
-
 static const char *__doc_SynapseGroup_getCustomConnectivityUpdateReferences =
 R"doc(Gets custom connectivity updates which reference this synapse group
 Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes.)doc";
@@ -3493,6 +3499,8 @@ NOTE: this can only be called after model is finalized)doc";
 static const char *__doc_SynapseGroup_getPreTargetVar =
 R"doc(Get name of neuron input variable which a presynaptic output specified with $(addToPre) will target
 This will either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables.)doc";
+
+static const char *__doc_SynapseGroup_getSparseConnectivityInitialiser = R"doc()doc";
 
 static const char *__doc_SynapseGroup_getSparseConnectivityLocation = R"doc(Get variable mode used for sparse connectivity)doc";
 
