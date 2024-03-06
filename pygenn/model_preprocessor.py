@@ -1,14 +1,26 @@
 from copy import copy
 from deprecated import deprecated
 from numbers import Number
+from typing import Union
 from weakref import proxy, ref, ProxyTypes
 import numpy as np
 from ._genn import (NumericValue, ResolvedType, SynapseMatrixConnectivity,
-                    SynapseMatrixWeight, VarInit)
+                    SynapseMatrixWeight, UnresolvedType, VarInit)
 from .init_var_snippets import Uninitialised
 
+# Type aliases
+VarTypeType = Union[ResolvedType, UnresolvedType]
+
 class ArrayBase:
-    def __init__(self, variable_type, group):
+    """Base class for classes which access
+    arrays of memory in running model
+    
+    Args:
+        variable_type:  data type of array elements
+        group:          group array belongs to
+        
+    """
+    def __init__(self, variable_type: VarTypeType, group):
         # Make copy of type as e.g. a reference to model.precision would result in circular dependency
         self.type = copy(variable_type)
         self.group = group if type(group) in ProxyTypes else proxy(group)
@@ -16,6 +28,12 @@ class ArrayBase:
         self._array = None
     
     def set_array(self, array, view_shape=None):
+        """Assign an array obtained from runtime to object
+        
+        Args:
+            array:      array object obtained from runtime
+            view_shape: shape to reshape array with
+        """
         self._array = array
         
         # Get numpy data type corresponding to type
@@ -33,9 +51,11 @@ class ArrayBase:
             self._view = np.reshape(self._view, view_shape)
 
     def push_to_device(self):
+        """Copy array from host to device"""
         self._array.push_to_device()
 
     def pull_from_device(self):
+        """Copy array device to host"""
         self._array.pull_from_device()
 
     def _unload(self):
@@ -44,23 +64,24 @@ class ArrayBase:
 
 
 class Array(ArrayBase):
+    """Array class used for exposing internal GeNN state"""
+
     @property
-    def view(self):
+    def view(self) -> np.ndarray:
+        """Memory view of array"""
         return self._view
 
 class VariableBase(ArrayBase):
+    """Base class for arrays used to expose GeNN variables"""
 
-    """Base class holding information about GeNN variables"""
-
-    def __init__(self, variable_name, variable_type, init_values, group):
-        """Init Variable
-
+    def __init__(self, variable_name: str, variable_type: VarTypeType,
+                 init_values, group):
+        """
         Args:
-        variable_name   -- string name of the variable
-        variable_type   -- string type of the variable
-        init_values     -- iterable, single value or VarInit instance
-        group           -- pygenn.genn_groups.Group this  
-                           variable is associated with
+            variable_name:  name of the variable
+            variable_type:  data type of the variable
+            init_values:    values to initialise variable with
+            group:          group variable belongs to
         """
         super(VariableBase, self).__init__(variable_type, group)
         
@@ -68,6 +89,14 @@ class VariableBase(ArrayBase):
         self.set_init_values(init_values)
     
     def set_array(self, array, view_shape, delay_group):
+        """Assign an array obtained from runtime to object
+        
+        Args:
+            array:          array object obtained from runtime
+            view_shape:     shape to reshape array with
+            delay_group:    neuron group which defines this array's delays
+        """
+    
         super(VariableBase, self).set_array(array, view_shape)
         self._delay_group = (None if delay_group is None 
                              else ref(delay_group))
@@ -81,7 +110,7 @@ class VariableBase(ArrayBase):
         """Set values variable is initialised with
 
         Args:
-        valinit_valuesues -- iterable, single value or VarInit instance
+            init_values:    values to initialise variable with
 
         """
         # By default variable doesn't need initialising
@@ -115,15 +144,17 @@ class VariableBase(ArrayBase):
             e._unload()
 
 class Variable(VariableBase):
-
-    """Class holding information about per-neuron GeNN variables"""
+    """Array class used for exposing per-neuron GeNN variables"""
 
     @property
-    def view(self):
+    def view(self) -> np.ndarray:
+        """Memory view of entire variable. If variable is 
+        delayed this will contain multiple delayed values."""
         return self._view
     
     @property
-    def current_view(self):
+    def current_view(self) -> np.ndarray:
+        """Memory view of variable's values written in last timestep"""
         # If there's no delay group, return full view
         if self._delay_group is None:
             return self._view
@@ -142,22 +173,29 @@ class Variable(VariableBase):
                 return self._view[:,delay_ptr,:]
 
     @property
-    def values(self):
+    def values(self) -> np.ndarray:
+        """Copy of entire variable. If variable is 
+        delayed this will contain multiple delayed values."""
         return np.copy(self._view)
     
     @values.setter
-    def values(self, vals):
+    def values(self, vals: np.ndarray):
         self._view[:] = vals
 
     @property
-    def current_values(self):
+    def current_values(self) -> np.ndarray:
+        """Copy of variable's values written in last timestep"""
         return np.copy(self.current_view)
 
 class SynapseVariable(VariableBase):
+    """Array class used for exposing per-synapse GeNN variables"""
 
-    """Class holding information about per-synapse GeNN variables"""
     @property
-    def view(self):
+    def view(self) -> np.ndarray:
+        """Memory view of variable. This operation is not supported for
+        variables associated with :attr:`SynapseMatrixConnectivity.SPARSE`
+        connectivity.
+        """
         sg = self.group.synapse_group
         if ((sg.matrix_type & SynapseMatrixConnectivity.DENSE) or
             (sg.matrix_type & SynapseMatrixWeight.KERNEL)):
@@ -168,11 +206,17 @@ class SynapseVariable(VariableBase):
                             "via 'view'. Please use 'values' instead.")
 
     @property
-    def current_view(self):
+    def current_view(self) -> np.ndarray:
+        """Memory view of variable. This operation is not supported for
+        variables associated with :attr:`SynapseMatrixConnectivity.SPARSE`
+        connectivity.
+        """
         return self.view
 
     @property
-    def values(self):
+    def values(self) -> np.ndarray:
+        """Copy of variable's values. Variables associated with 
+        :attr:`SynapseMatrixConnectivity.SPARSE`"""
         sg = self.group.synapse_group
         if sg.matrix_type & SynapseMatrixConnectivity.DENSE:
             return np.copy(self._view)
@@ -201,7 +245,7 @@ class SynapseVariable(VariableBase):
             raise Exception("Matrix format not supported")
     
     @values.setter
-    def values(self, vals):
+    def values(self, vals: np.ndarray):
         # If connectivity is dense,
         # copy variables  directly into view
         # **NOTE** we assume order is row-major
@@ -234,25 +278,20 @@ class SynapseVariable(VariableBase):
             raise Exception("Matrix format not supported")
 
     @property
-    def current_values(self):
+    def current_values(self) -> np.ndarray:
         return self.values
 
 class ExtraGlobalParameter(Array):
-
-    """Class holding information about GeNN extra global parameter"""
-
-    def __init__(self, variable_name, variable_type, group, init_values=None):
-        """Init Variable
-
-        Args:
-        variable_name   --  string name of the variable
-        variable_type   --  string type of the variable
-        group           --  pygenn.genn_groups.Group this
-                            variable is associated with
-
-        Keyword args:
-        init_values     --  iterable
-        """
+    """Array class used for exposing GeNN extra global parameters
+    
+    Args:
+        variable_name:  name of the extra global parameter
+        variable_type:  data type of the extra global parameter
+        group:          group extra global parameter belongs to
+        init_values:    values to initialise extra global parameter with
+    """
+    def __init__(self, variable_name: str, variable_type: VarTypeType,
+                 group, init_values=None):
         super(ExtraGlobalParameter, self).__init__(variable_type, group)
         self.name = variable_name
         self.set_init_values(init_values)
@@ -263,10 +302,11 @@ class ExtraGlobalParameter(Array):
         self.set_init_values(values)
 
     def set_init_values(self, init_values):
-        """Set Variable's values
+        """Set values extra global parameter is initialised with
 
         Args:
-        values -- iterable or None
+            init_values:    values to initialise extra global parameter with
+
         """
         if init_values is None:
             self.init_values = None
@@ -281,15 +321,17 @@ class ExtraGlobalParameter(Array):
                                  "initialised with iterables")
     
     @property
-    def view(self):
+    def view(self) -> np.ndarray:
+        """Memory view of extra global parameter"""
         return self._view
     
     @property
-    def values(self):
+    def values(self) -> np.ndarray:
+        """Copy of extra global parameter values"""
         return np.copy(self._view)
     
     @values.setter
-    def values(self, vals):
+    def values(self, vals: np.ndarray):
         self._view[:] = vals
 
 def _prepare_param_vals(params):
