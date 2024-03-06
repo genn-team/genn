@@ -251,6 +251,7 @@ private:
     //! Neuron model used for this group
     const NeuronModels::Base *m_Model;
 
+    //! Values of neuron parameters
     std::map<std::string, Type::NumericValue> m_Params;
     std::map<std::string, Type::NumericValue> m_DerivedParams;
     std::map<std::string, InitVarSnippet::Init> m_VarInitialisers;

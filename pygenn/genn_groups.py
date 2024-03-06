@@ -33,7 +33,7 @@ def _get_num_neuron_var_elements(var_dims, num_elements):
 def _get_neuron_var_shape(var_dims, num_elements, batch_size, 
                           delay_neuron_group=None):
     num_delay_slots = (() if delay_neuron_group is None
-                       else (delay_neuron_group.num_delay_slots,))
+                       else (delay_neuron_group._num_delay_slots,))
     return (_get_num_var_copies(var_dims, batch_size)
             + num_delay_slots
             + _get_num_neuron_var_elements(var_dims, num_elements))
@@ -271,10 +271,10 @@ class NeuronGroupMixin(GroupMixin):
     def _load(self):
         """Loads neuron group"""
         batch_size = self._model.batch_size
-        delay_group = self if self.num_delay_slots > 1 else None
+        delay_group = self if self._num_delay_slots > 1 else None
         
         # If spike time is available and accessible on host, get array
-        if (self.spike_time_required 
+        if (self._spike_time_required 
             and (self.spike_time_location & VarLocationAttribute.HOST)):
             self.spike_times = self._get_array(
                 "sT", self._model.time_precision,
@@ -283,7 +283,7 @@ class NeuronGroupMixin(GroupMixin):
                     self.num_neurons, self._model.batch_size, delay_group))
         
         # If previos spike time is availabel and accessible on host, get array
-        if (self.prev_spike_time_required
+        if (self._prev_spike_time_required
             and (self.prev_spike_time_location & VarLocationAttribute.HOST)):
             self.prev_spike_times = self._get_array(
                 "prevST", self._model.time_precision,

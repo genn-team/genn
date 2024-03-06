@@ -632,16 +632,18 @@ private:
     //! RNG seed
     unsigned int m_Seed;
 
-    //! What is the default location for model state variables? Historically, everything was allocated on both host AND device
+    //! The default location for model state variables?
     VarLocation m_DefaultVarLocation;
 
-    //! What is the default location for model extra global parameters? Historically, this was just left up to the user to handle
+    //! The default location for model extra global parameters
     VarLocation m_DefaultExtraGlobalParamLocation;
 
-    //! What is the default location for sparse synaptic connectivity? Historically, everything was allocated on both the host AND device
+    //! The default location for sparse synaptic connectivity
     VarLocation m_DefaultSparseConnectivityLocation; 
 
-    //! The default for whether narrow i.e. less than 32-bit types are used for sparse matrix indices
+    //! Should 'narrow' i.e. less than 32-bit types be used to store postsyanptic neuron indices in SynapseMatrixConnectivity::SPARSE connectivity?
+    /*! If this is true and postsynaptic population has < 256 neurons, 8-bit indices will be used and, 
+        if it has < 65536 neurons, 16-bit indices will be used. */
     bool m_DefaultNarrowSparseIndEnabled;
 
     //! Should compatible postsynaptic models and dendritic delay buffers be fused?

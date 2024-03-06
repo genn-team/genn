@@ -285,42 +285,42 @@ class GeNNModel(ModelSpec):
     @property
     def neuron_update_time(self) -> float:
         """Time in seconds spent in neuron update kernel.
-        Only available if :attr:`.ModelSpecInternal.kernel_timing` is set """
+        Only available if :attr:`.ModelSpec.timing_enabled` is set """
         return self._runtime.neuron_update_time
 
     @property
     def init_time(self) -> float:
         """Time in seconds spent initialisation kernel.
-        Only available if :attr:`.ModelSpecInternal.kernel_timing` is set """
+        Only available if :attr:`.ModelSpec.timing_enabled` is set """
         return self._runtime.init_time
 
     @property
     def presynaptic_update_time(self) -> float:
         """Time in seconds spent in presynaptic update kernel.
-        Only available if :attr:`.ModelSpecInternal.kernel_timing` is set """
+        Only available if :attr:`.ModelSpec.timing_enabled` is set """
         return self._runtime.presynaptic_update_time
 
     @property
     def postsynaptic_update_time(self) -> float:
         """Time in seconds spent in postsynaptic update kernel.
-        Only available if :attr:`.ModelSpecInternal.kernel_timing` is set """
+        Only available if :attr:`.ModelSpec.timing_enabled` is set """
         return self._runtime.postsynaptic_update_time
 
     @property
     def synapse_dynamics_time(self) -> float:
         """Time in seconds spent in synapse dynamics kernel.
-        Only available if :attr:`.ModelSpecInternal.kernel_timing` is set """
+        Only available if :attr:`.ModelSpec.timing_enabled` is set """
         return self._runtime.synapse_dynamics_time
 
     @property
     def init_sparse_time(self) -> float:
         """Time in seconds spent in sparse initialisation kernel.
-        Only available if :attr:`.ModelSpecInternal.kernel_timing` is set """
+        Only available if :attr:`.ModelSpec.timing_enabled` is set """
         return self._runtime.init_sparse_time
 
     def get_custom_update_time(self, name: str) -> float:
         """Get time in seconds spent in custom update.
-        Only available if :attr:`.ModelSpecInternal.kernel_timing` is set.
+        Only available if :attr:`.ModelSpec.timing_enabled` is set.
     
         Args:
             name:   Name of custom update
@@ -329,7 +329,7 @@ class GeNNModel(ModelSpec):
 
     def get_custom_update_transpose_time(self, name: str) -> float:
         """Get time in seconds spent in transpose custom update.
-        Only available if :attr:`.ModelSpecInternal.kernel_timing` is set.
+        Only available if :attr:`.ModelSpec.timing_enabled` is set.
     
         Args:
             name:   Name of custom update
@@ -773,7 +773,13 @@ class GeNNModel(ModelSpec):
         self._runtime.step_time()
     
     def custom_update(self, name: str):
-        """Perform custom update"""
+        """Perform custom update
+
+        Args:
+            name:   Name of custom update. Corresponds to the ``group_name``
+                    parameter passed to :meth:`.add_custom_update` and
+                    :meth:`.add_custom_connectivity_update`.
+        """
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before performing custom update")
             
@@ -848,7 +854,7 @@ def init_postsynaptic(snippet: Union[PostsynapticModelBase, str],
 
     Args:
         snippet:        postsynaptic model either as a string referencing a built-in model 
-                        (see :mod:`.postsynaptic_models_models`) or an instance of 
+                        (see :mod:`.postsynaptic_models`) or an instance of 
                         :class:`.PostsynapticModelBase` (for example returned 
                         by :func:`.create_postsynaptic_model`)
         params:         parameter values for the postsynaptic model (see `Parameters`_)

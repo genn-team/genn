@@ -48,7 +48,11 @@ using namespace pybind11::literals;
 #define WRAP_NS_METHOD(NAME, NS, CLASS, METH) .def(NAME, &NS::CLASS::METH, DOC(NS, CLASS, METH))
 #define WRAP_NS_ATTR(NAME, NS, CLASS, ATTR) .def_readwrite(NAME, &NS::CLASS::ATTR, DOC(NS, CLASS, ATTR))
 #define WRAP_PROPERTY(NAME, CLASS, METH_STEM) .def_property(NAME, &CLASS::get##METH_STEM, &CLASS::set##METH_STEM, DOC(CLASS, m_##METH_STEM))
+#define WRAP_PROPERTY_IS(NAME, CLASS, METH_STEM) .def_property(NAME, &CLASS::is##METH_STEM, &CLASS::set##METH_STEM, DOC(CLASS, m_##METH_STEM))
+#define WRAP_PROPERTY_WO(NAME, CLASS, METH_STEM) .def_property(NAME, nullptr, &CLASS::set##METH_STEM, DOC(CLASS, m_##METH_STEM))
 #define WRAP_PROPERTY_RO(NAME, CLASS, METH_STEM) .def_property_readonly(NAME, &CLASS::get##METH_STEM, DOC(CLASS, m_##METH_STEM))
+#define WRAP_PROPERTY_RO_IS(NAME, CLASS, METH_STEM) .def_property_readonly(NAME, &CLASS::is##METH_STEM, DOC(CLASS, m_##METH_STEM))
+#define WRAP_PROPERTY_RO_REF(NAME, CLASS, METH_STEM) .def_property_readonly(NAME, &CLASS::get##METH_STEM, pybind11::return_value_policy::reference, DOC(CLASS, m_##METH_STEM))
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -421,19 +425,19 @@ PYBIND11_MODULE(_genn, m)
         WRAP_PROPERTY("precision", ModelSpec, Precision)
         WRAP_PROPERTY("time_precision", ModelSpec, TimePrecision)
         WRAP_PROPERTY("dt", ModelSpec, DT)
-        .def_property("timing_enabled", &ModelSpec::isTimingEnabled, &ModelSpec::setTiming)
         WRAP_PROPERTY("batch_size", ModelSpec, BatchSize)
         WRAP_PROPERTY("seed", ModelSpec, Seed)
-
-        .def_property("default_var_location", nullptr, &ModelSpec::setDefaultVarLocation)
-        .def_property("default_sparse_connectivity_location", nullptr, &ModelSpec::setDefaultSparseConnectivityLocation)
-        .def_property("default_narrow_sparse_ind_enabled", nullptr, &ModelSpec::setDefaultNarrowSparseIndEnabled)
-        .def_property("fuse_postsynaptic_models", nullptr, &ModelSpec::setFusePostsynapticModels)
-        .def_property("fuse_pre_post_weight_update_models", nullptr, &ModelSpec::setFusePrePostWeightUpdateModels)
+        WRAP_PROPERTY_IS("timing_enabled", ModelSpec, TimingEnabled)
+        
+        WRAP_PROPERTY_WO("default_var_location", ModelSpec, DefaultVarLocation)
+        WRAP_PROPERTY_WO("default_sparse_connectivity_location", ModelSpec, DefaultSparseConnectivityLocation)
+        WRAP_PROPERTY_WO("default_narrow_sparse_ind_enabled", ModelSpec, DefaultNarrowSparseIndEnabled)
+        WRAP_PROPERTY_WO("fuse_postsynaptic_models", ModelSpec, FusePostsynapticModels)
+        WRAP_PROPERTY_WO("fuse_pre_post_weight_update_models", ModelSpec, FusePrePostWeightUpdateModels)
 
         .def_property_readonly("num_neurons", &ModelSpec::getNumNeurons, DOC(ModelSpec, getNumNeurons))
-        .def_property_readonly("_type_context", &ModelSpecInternal::getTypeContext)
         .def_property_readonly("_recording_in_use", &ModelSpecInternal::isRecordingInUse)
+        .def_property_readonly("_type_context", &ModelSpecInternal::getTypeContext)
     
         //--------------------------------------------------------------------
         // Methods
@@ -487,7 +491,7 @@ PYBIND11_MODULE(_genn, m)
         // Properties
         //--------------------------------------------------------------------
         WRAP_PROPERTY_RO("name", CurrentSource, Name)
-        .def_property_readonly("model", &CurrentSource::getModel, pybind11::return_value_policy::reference)
+        WRAP_PROPERTY_RO_REF("model", CurrentSource, Model)
         WRAP_PROPERTY_RO("params", CurrentSource, Params)
 
         //--------------------------------------------------------------------
@@ -508,7 +512,7 @@ PYBIND11_MODULE(_genn, m)
         //--------------------------------------------------------------------
         WRAP_PROPERTY_RO("name", CustomConnectivityUpdate, Name)
         WRAP_PROPERTY_RO("update_group_name", CustomConnectivityUpdate, UpdateGroupName)
-        .def_property_readonly("model", &CustomConnectivityUpdate::getModel, pybind11::return_value_policy::reference)
+        WRAP_PROPERTY_RO_REF("model", CustomConnectivityUpdate, Model)
         WRAP_PROPERTY_RO("params", CustomConnectivityUpdate, Params)
 
         .def_property_readonly("synapse_group", 
@@ -516,7 +520,8 @@ PYBIND11_MODULE(_genn, m)
             {
                 const auto &cuInternal = static_cast<const CustomConnectivityUpdateInternal&>(cu);
                 return static_cast<const SynapseGroup*>(cuInternal.getSynapseGroup());
-            })
+            },
+            DOC(CustomConnectivityUpdate, m_SynapseGroup))
 
         //--------------------------------------------------------------------
         // Methods
@@ -541,14 +546,15 @@ PYBIND11_MODULE(_genn, m)
         //--------------------------------------------------------------------
         WRAP_PROPERTY_RO("name", CustomUpdateBase, Name)
         WRAP_PROPERTY_RO("update_group_name", CustomUpdateBase, UpdateGroupName)
-        .def_property_readonly("model", &CustomUpdateBase::getModel, pybind11::return_value_policy::reference)
+        WRAP_PROPERTY_RO_REF("model", CustomUpdateBase, Model)
         WRAP_PROPERTY_RO("params", CustomUpdateBase, Params)
 
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
         .def("set_param_dynamic", &CustomUpdateBase::setParamDynamic,
-             pybind11::arg("param_name"), pybind11::arg("dynamic") = true)
+             pybind11::arg("param_name"), pybind11::arg("dynamic") = true,
+             DOC(CustomUpdateBase, setParamDynamic))
         WRAP_METHOD("set_var_location", CustomUpdateBase, setVarLocation)
         WRAP_METHOD("get_var_location", CustomUpdateBase, getVarLocation);
     
@@ -556,7 +562,7 @@ PYBIND11_MODULE(_genn, m)
     // genn.CustomUpdate
     //------------------------------------------------------------------------
     pybind11::class_<CustomUpdate, CustomUpdateBase>(m, "CustomUpdate", pybind11::dynamic_attr())
-        .def_property_readonly("num_neurons", &CustomUpdate::getNumNeurons)
+        WRAP_PROPERTY_RO("num_neurons", CustomUpdate, NumNeurons)
 
         // **NOTE** we use the 'publicist' pattern to expose some protected properties
         .def_property_readonly("_dims", &CustomUpdateInternal::getDims);
@@ -584,18 +590,18 @@ PYBIND11_MODULE(_genn, m)
         //--------------------------------------------------------------------
         WRAP_PROPERTY_RO("name", NeuronGroup, Name)
         WRAP_PROPERTY_RO("num_neurons", NeuronGroup, NumNeurons)
-        .def_property_readonly("model", &NeuronGroup::getModel, pybind11::return_value_policy::reference)
+        WRAP_PROPERTY_RO_REF("model", NeuronGroup, Model)
         WRAP_PROPERTY_RO("params", NeuronGroup, Params)
 
-        WRAP_PROPERTY_RO("num_delay_slots", NeuronGroup, NumDelaySlots)
-        .def_property_readonly("spike_time_required", &NeuronGroup::isSpikeTimeRequired)
-        .def_property_readonly("prev_spike_time_required", &NeuronGroup::isPrevSpikeTimeRequired)
-
-        .def_property("recording_zero_copy_enabled", &NeuronGroup::isRecordingZeroCopyEnabled, &NeuronGroup::setRecordingZeroCopyEnabled)
-        .def_property("spike_recording_enabled", &NeuronGroup::isSpikeRecordingEnabled, &NeuronGroup::setSpikeRecordingEnabled)
-        .def_property("spike_event_recording_enabled", &NeuronGroup::isSpikeEventRecordingEnabled, &NeuronGroup::setSpikeEventRecordingEnabled)
+        WRAP_PROPERTY_IS("recording_zero_copy_enabled", NeuronGroup, RecordingZeroCopyEnabled)
+        WRAP_PROPERTY_IS("spike_recording_enabled", NeuronGroup, SpikeRecordingEnabled)
+        WRAP_PROPERTY_IS("spike_event_recording_enabled", NeuronGroup, SpikeEventRecordingEnabled)
         WRAP_PROPERTY("spike_time_location", NeuronGroup, SpikeTimeLocation)
         WRAP_PROPERTY("prev_spike_time_location", NeuronGroup, PrevSpikeTimeLocation)
+
+        .def_property_readonly("_num_delay_slots", &NeuronGroup::getNumDelaySlots)
+        .def_property_readonly("_spike_time_required", &NeuronGroup::isSpikeTimeRequired)
+        .def_property_readonly("_prev_spike_time_required", &NeuronGroup::isPrevSpikeTimeRequired)
 
         //--------------------------------------------------------------------
         // Methods
@@ -636,7 +642,8 @@ PYBIND11_MODULE(_genn, m)
         WRAP_PROPERTY("num_threads_per_spike", SynapseGroup, NumThreadsPerSpike)
         WRAP_PROPERTY("back_prop_delay_steps", SynapseGroup, BackPropDelaySteps)
         WRAP_PROPERTY("axonal_delay_steps", SynapseGroup, AxonalDelaySteps)
-        .def_property("narrow_sparse_ind_enabled",nullptr, &SynapseGroup::setNarrowSparseIndEnabled)
+        WRAP_PROPERTY_WO("narrow_sparse_ind_enabled", SynapseGroup, NarrowSparseIndEnabled)
+
         // **NOTE** we use the 'publicist' pattern to expose some protected properties
         .def_property_readonly("_ps_model_fused", &SynapseGroupInternal::isPSModelFused)
         .def_property_readonly("_wu_pre_model_fused", &SynapseGroupInternal::isWUPreModelFused)

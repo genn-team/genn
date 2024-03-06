@@ -13,7 +13,7 @@
 namespace GeNN
 {
 //! Flags defining attributes of var access models
-//! **NOTE** Read-only and read-write are seperate flags rather than read and write so you can test mode & VarAccessMode::READ_ONLY
+//! Read-only and read-write are seperate flags rather than read and write so you can test mode & VarAccessMode::READ_ONLY
 enum class VarAccessModeAttribute : unsigned int
 {
     READ_ONLY   = (1 << 0), //!< This variable can only be read from
@@ -62,8 +62,8 @@ enum class VarAccess : unsigned int
     READ_ONLY_SHARED_NEURON = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::BATCH),
 };
 
-//! Supported combinations of access mode and dimension for custom update variables
-/*! The axes are defined 'subtractively' ie VarAccessDim::BATCH indicates that this axis should be removed */
+//! Supported combinations of access mode and dimension for custom update variables.
+/*! The axes are defined 'subtractively' ie VarAccessDim::BATCH indicates that this axis should be removed. */
 enum class CustomUpdateVarAccess : unsigned int
 {
     //! This variable can be read from and written to and has the same dimensions as whatever the custom update is attached to

@@ -324,7 +324,7 @@ private:
     //------------------------------------------------------------------------
     std::map<std::string, Models::VarReference> m_VarReferences;
 
-    //! Number of neurons custom update operates over
+    //! Number of neurons custom update operates over.
     /*! This must be the same for all groups whose variables are referenced */
     unsigned int m_NumNeurons;
 
