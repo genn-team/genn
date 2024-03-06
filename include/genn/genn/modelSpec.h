@@ -269,7 +269,7 @@ public:
     void setDT(double dt){ m_DT = dt; }
 
     //! Set whether timers and timing commands are to be included
-    void setTiming(bool timingEnabled){ m_TimingEnabled = timingEnabled; }
+    void setTimingEnabled(bool timingEnabled){ m_TimingEnabled = timingEnabled; }
 
     //! Set the random seed (disables automatic seeding if argument not 0).
     void setSeed(unsigned int rngSeed){ m_Seed = rngSeed; }
@@ -291,15 +291,11 @@ public:
 
     //! Should compatible postsynaptic models and dendritic delay buffers be fused?
     /*! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */
-    void setMergePostsynapticModels(bool merge){ m_ShouldFusePostsynapticModels = merge; }
-
-    //! Should compatible postsynaptic models and dendritic delay buffers be fused?
-    /*! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */
-    void setFusePostsynapticModels(bool fuse) { m_ShouldFusePostsynapticModels = fuse; }
+    void setFusePostsynapticModels(bool fuse) { m_FusePostsynapticModels = fuse; }
     
     //! Should compatible pre and postsynaptic weight update model variables and updates be fused?
     /*! This can significantly reduce the cost of updating neuron populations but means that per-synaptic group per and postsynaptic variables cannot be retrieved */
-    void setFusePrePostWeightUpdateModels(bool fuse){ m_ShouldFusePrePostWeightUpdateModels = fuse; }
+    void setFusePrePostWeightUpdateModels(bool fuse){ m_FusePrePostWeightUpdateModels = fuse; }
 
     void setBatchSize(unsigned int batchSize) { m_BatchSize = batchSize;  }
 
@@ -650,11 +646,11 @@ private:
 
     //! Should compatible postsynaptic models and dendritic delay buffers be fused?
     /*! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */
-    bool m_ShouldFusePostsynapticModels; 
+    bool m_FusePostsynapticModels; 
     
     //! Should compatible pre and postsynaptic weight update model variables and updates be fused?
     /*! This can significantly reduce the cost of updating neuron populations but means that per-synaptic group per and postsynaptic variables cannot be retrieved */
-    bool m_ShouldFusePrePostWeightUpdateModels;
+    bool m_FusePrePostWeightUpdateModels;
 
     //! Batch size of this model - efficiently duplicates model
     unsigned int m_BatchSize;

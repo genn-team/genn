@@ -105,7 +105,7 @@ ModelSpec::ModelSpec()
 :   m_Precision(Type::Float), m_TimePrecision(std::nullopt), m_DT(0.5), m_TimingEnabled(false), m_Seed(0),
     m_DefaultVarLocation(VarLocation::HOST_DEVICE), m_DefaultExtraGlobalParamLocation(VarLocation::HOST_DEVICE),
     m_DefaultSparseConnectivityLocation(VarLocation::HOST_DEVICE), m_DefaultNarrowSparseIndEnabled(false),
-    m_ShouldFusePostsynapticModels(false), m_ShouldFusePrePostWeightUpdateModels(false), m_BatchSize(1)
+    m_FusePostsynapticModels(false), m_FusePrePostWeightUpdateModels(false), m_BatchSize(1)
 {
 }
 // ---------------------------------------------------------------------------
@@ -376,7 +376,7 @@ void ModelSpec::finalise()
 
     // Merge incoming postsynaptic models
     for(auto &n : m_LocalNeuronGroups) {
-        n.second.fusePrePostSynapses(m_ShouldFusePostsynapticModels, m_ShouldFusePrePostWeightUpdateModels);
+        n.second.fusePrePostSynapses(m_FusePostsynapticModels, m_FusePrePostWeightUpdateModels);
     }
 }
 // ---------------------------------------------------------------------------
