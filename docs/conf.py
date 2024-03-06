@@ -32,10 +32,12 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx_gallery.gen_gallery",
+    "sphinx_rtd_theme",
     "sphinxarg.ext"]
 
 napoleon_use_param = True
 napoleon_use_ivar = True
+napoleon_use_rtype = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -50,12 +52,15 @@ autodoc_mock_imports = []
 
 autodoc_typehints = "description"
 
+# Combine __init__ documentation with class to remove need to duplicate in derived
+autoclass_content = "both"
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "classic"
+html_theme = "sphinx_rtd_theme"
 
 html_theme_options = {
     "sidebarwidth": 450,
