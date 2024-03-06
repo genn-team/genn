@@ -242,11 +242,15 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
+    //! Unique name of neuron group
     std::string m_Name;
 
+    //! Number of neurons in group
     unsigned int m_NumNeurons;
 
+    //! Neuron model used for this group
     const NeuronModels::Base *m_Model;
+
     std::map<std::string, Type::NumericValue> m_Params;
     std::map<std::string, Type::NumericValue> m_DerivedParams;
     std::map<std::string, InitVarSnippet::Init> m_VarInitialisers;
@@ -258,7 +262,11 @@ private:
     std::vector<SynapseGroupInternal*> m_FusedWUPostInSyn;
     std::vector<SynapseGroupInternal*> m_FusedWUPreOutSyn;
     std::vector<SynapseGroupInternal*> m_FusedPreOutputOutSyn;
+
+    //! Number of delay slots this group required
+    /*! This is the maximum required by any incoming or outgoing synapse group */
     unsigned int m_NumDelaySlots;
+
     std::vector<CurrentSourceInternal*> m_CurrentSourceGroups;
 
     //! Set of names of variable requiring queueing

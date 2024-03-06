@@ -143,11 +143,19 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
+    //! Unique name of custom connectivity update
     std::string m_Name;
+
+    //! Name of the update group this custom connectivity update is part of
     std::string m_UpdateGroupName;
+
+    //! Synapse group this custom connectivity update is associated with
     SynapseGroupInternal *m_SynapseGroup;
 
+    //! Custom connectivity update model used for this update
     const CustomConnectivityUpdateModels::Base *m_Model;
+
+    //! Values of custom connectivity update parameters
     std::map<std::string, Type::NumericValue> m_Params;
     std::map<std::string, Type::NumericValue> m_DerivedParams;
     std::map<std::string, InitVarSnippet::Init> m_VarInitialisers;

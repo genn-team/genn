@@ -181,10 +181,15 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
+    //! Unique name of custom update
     std::string m_Name;
+
+    //! Name of the update group this custom connectivity update is part of
     std::string m_UpdateGroupName;
 
+    //! Custom update model used for this update
     const CustomUpdateModels::Base *m_Model;
+
     std::map<std::string, Type::NumericValue> m_Params;
     std::map<std::string, Type::NumericValue> m_DerivedParams;
     std::map<std::string, InitVarSnippet::Init> m_VarInitialisers;
