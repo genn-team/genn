@@ -151,7 +151,7 @@ def _wrap_kernel_size_lambda(f):
 _var_upgrade = re.compile(r"\$\(([_a-zA-Z][_a-zA-Z0-9]*)\)")
 
 class GeNNModel(ModelSpec):
-    """This class provided for interface for 
+    """This class provides an interface for 
     defining, building and running models
     
     Args:

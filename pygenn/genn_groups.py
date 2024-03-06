@@ -50,9 +50,17 @@ def _get_synapse_var_shape(var_dims, sg, batch_size):
         return num_copies + (1,)
 
 class GroupMixin(object):
-
-    """Parent class of NeuronGroupMixin, 
-    SynapseGroupMixin and CurrentSourceMixin"""
+    """This is the base class for the mixins added to all types of groups.
+    It provides basic functionality for handling variables, 
+    extra global parameters and dynamic parameters
+    
+    Attributes:
+        vars:                   Dictionary mapping variable names to objects derived from
+                                :class:`pygenn.model_preprocessor.VariableBase`
+        extra_global_params:    Dictionary mapping extra global parameters names
+                                to :class:`pygenn.model_preprocessor.ExtraGlobalParameter`
+                                objects
+    """
 
     def _init_group(self, model):
         """Init Group
@@ -218,8 +226,17 @@ class GroupMixin(object):
             e._unload()
 
 class NeuronGroupMixin(GroupMixin):
-
-    """Class representing a group of neurons"""
+    """Mixin added to neuron group objects
+    It provides additional functionality for recording spikes
+    
+    Attributes:
+        spike_times:         :class:`pygenn.model_preprocessor.Array` that,
+                             if spike tikes are required, will provide
+                             interface for pushing, pulling and accessing them
+        prev_spike_times:    :class:`pygenn.model_preprocessor.Array` that,
+                             if previous spike tikes are required, will provide
+                             interface for pushing, pulling and accessing them
+    """
 
     def _init_group(self, model, var_space):
         """Init NeuronGroupMixin
@@ -299,9 +316,24 @@ class NeuronGroupMixin(GroupMixin):
         self._load_var_init_egps()
 
 class SynapseGroupMixin(GroupMixin):
-
-    """Class representing synaptic connection between two groups of neurons"""
+    """Mixin added to synapse group objects
+    It provides additional functionality for recording spike events 
+    and handling connectivity
     
+    Attributes:
+        pre_vars:                   Dictionary mapping presynapatic weight
+                                    update model variable names to 
+                                    :class:`pygenn.model_preprocessor.Variable` objects
+        post_vars:                  Dictionary mapping postsynapatic weight
+                                    update model variable names to
+                                    :class:`pygenn.model_preprocessor.Variable` objects
+        psm_vars:                   Dictionary mapping postsynaptic model variable names to
+                                    :class:`pygenn.model_preprocessor.Variable` objects
+        psm_extra_global_params:    Dictionary mapping postsynaptic model
+                                    extra global parameters names to
+                                    :class:`pygenn.model_preprocessor.ExtraGlobalParameter`
+                                    objects
+    """
     def _init_group(self, model, ps_vars, wu_vars, wu_pre_vars, wu_post_vars,
                     source, target):
         """Init SynapseGroupMixin
@@ -656,9 +688,7 @@ class SynapseGroupMixin(GroupMixin):
         self._unload_egps(self.connectivity_extra_global_params)
 
 class CurrentSourceMixin(GroupMixin):
-
-    """Class representing a current injection into a group of neurons"""
-
+    """Mixin added to current source objects"""
     def _init_group(self, model, var_space, target_pop):
         """Init NeuronGroup
 
@@ -698,7 +728,7 @@ class CurrentSourceMixin(GroupMixin):
 
 
 class CustomUpdateMixin(GroupMixin):
-    """Class representing a custom update"""
+    """Mixin added to custom update objects"""
     def _init_group(self, model, var_space):
         """Init CustomUpdate
 
@@ -736,7 +766,7 @@ class CustomUpdateMixin(GroupMixin):
 
 
 class CustomUpdateWUMixin(GroupMixin):
-    """Class representing a custom weight update"""
+    """Mixin added to custom update WU objects"""
     def _init_group(self, model, var_space):
         """Init CustomUpdateWUMixin
 
@@ -788,7 +818,14 @@ class CustomUpdateWUMixin(GroupMixin):
 
 
 class CustomConnectivityUpdateMixin(GroupMixin):
-    """Class representing a custom connectivity update"""
+    """Mixin added to custom connectivity update objects
+    
+    Attributes:
+        pre_vars:   Dictionary mapping custom connectivity update model variable
+                    names to :class:`pygenn.model_preprocessor.Variable` objects
+        post_vars:  Dictionary mapping custom connectivity update model variable
+                    names to :class:`pygenn.model_preprocessor.Variable` objects
+    """
     def _init_group(self, model, var_space, pre_var_space, 
                     post_var_space):
         """Init CustomConnectivityUpdateGroup
