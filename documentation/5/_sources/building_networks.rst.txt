@@ -40,12 +40,11 @@ For example, the CUDA backend allows you to select which CUDA device to use via 
 .. code-block:: python
 
    model = GeNNModel("float", "YourModelName",
-                    backend="cuda", manual_device_id=0)
+                     backend="cuda", manual_device_id=0)
 
 -----------
 Populations
 -----------
-
 Populations formalise the concept of groups of neurons or synapses that are functionally related or a practical grouping, e.g. a brain region in a neuroscience model or a layer in a machine learning context.
 
 Parameters
@@ -63,11 +62,31 @@ the population have the exact same parameter value.
 
 Extra global parameters
 -----------------------
-Often when b
+When building more complex models, it is sometimes useful to be able to access arbitarily
+sized arrays. In GeNN, these are called Extra Global Parameters (EGPs) and they need
+to be manually allocated and initialised before simulating the model. For example, the built 
+in :func:`.neuron_models.SpikeSourceArray` model has a ``spikeTimes`` EGP
+which is used to provide an array of spike times for the spike source to emit. Given two 
+two numpy arrays: ``spike_ids`` containing the ids of which neurons spike and
+``spike_times`` containing the time at which each spike occurs, a :func:`.neuron_models.SpikeSourceArray` 
+model can be configured as follows:
 
-Extra global parameter references
----------------------------------
-TODO
+..  code-block:: python
+    
+    # Calculate start and end index of each neurons spikes in sorted array
+    end_spike = np.cumsum(np.bincount(spike_ids, minlength=100))
+    start_spike = np.concatenate(([0], end_spike[0:-1]))
+
+    # Sort events first by neuron id and then 
+    # by time and use to order spike times
+    spike_times = poisson_times[np.lexsort((spike_times, spike_ids))]
+
+    model = GeNNModel("float", "spike_source_array")
+
+    ssa = model.add_neuron_population("SSA", 100, "SpikeSourceArray", {}, 
+                                      {"startSpike": start_spike, "endSpike": end_spike})
+    ssa.extra_global_params["spikeTimes"].set_init_values(spike_times)
+
 
 Variables
 ----------
@@ -101,27 +120,26 @@ Variables references
 As well as variables and parameters, various types of models have variable references which are used to reference variables belonging to other populations.
 For example, postsynaptic update models can reference variables in the postsynaptic neuron model and custom updates are 'attached' to other populations based on their variable references.
 
-A variable reference called R could be assigned to various types of variable using the following syntax:
+Variable reference can be created to various types of per-neuron variable using:
 
-..  code-block:: python
+.. autofunction:: pygenn.create_var_ref
+    :noindex:
 
-    neuron_var_ref =  {"R": pygenn.create_var_ref(ng, "V")}
-    current_source_var_ref =  {"R": pygenn.create_var_ref(cs, "V")}
-    custom_update_var_ref = {"R": pygenn.create_var_ref(cu, "V")}
-    postsynaptic_model_var_ref =  {"R": pygenn.create_psm_var_ref(sg, "V")}
-    wu_pre_var_ref =  {"R": pygenn.create_wu_pre_var_ref(sg, "Pre")}
-    wu_post_var_ref =  {"R": pygenn.create_wu_post_var_ref(sg, "Post")}
+References can also be created to various types of per-neuron variable owned by synapse groups using: 
 
-where ``ng`` is a :class:`.NeuronGroup` (as returned by :meth:`.GeNNModel.add_neuron_population`), ``cs`` is a :class:`.CurrentSource` (as returned by :meth:`.GeNNModel.add_current_source`), ``cu`` is a :class:`.CustomUpdate` (as returned by :meth:`.GeNNModel.add_custom_update`) and ``sg`` is a :class:`.SynapseGroup` (as returned by :meth:`.GeNNModel.add_synapse_population`).
+.. autofunction:: pygenn.create_psm_var_ref
+    :noindex:
+
+.. autofunction:: pygenn.create_wu_pre_var_ref
+    :noindex:
+
+.. autofunction:: pygenn.create_wu_post_var_ref
+    :noindex:
 
 While references of these types can be used interchangably in the same custom update, as long as all referenced variables have the same delays and belong to populations of the same size, per-synapse weight update model variables must be referenced with slightly different syntax:
 
-..  code-block:: python
-
-    wu_var_ref = {"R": pygenn.create_wu_var_ref(sg, "g")}
-    cu_wu_var_ref = {"R": pygenn.create_wu_var_ref(cu, "g")}
-
-where ``sg`` is a :class:`.SynapseGroup` (as returned by :meth:`.GeNNModel.add_synapse_population`) and ``cu`` is a :class:`.CustomUpdateWU` (as returned by :meth:`.GeNNModel.add_custom_update`) which operates on another synapse group's state variables.
+.. autofunction:: pygenn.create_wu_var_ref
+    :noindex:
 
 These 'weight update variable references' also have the additional feature that they can be used to define a link to a 'transpose' variable:
 
@@ -143,9 +161,28 @@ However, the following alternative 'variable locations' are available:
 .. autoclass:: pygenn.VarLocation
     :noindex:
 
-Note, 'Zero copy' memory is only supported on newer embedded systems such as
- the Jetson TX1 where there is no physical seperation between GPU and host memory and 
- thus the same physical of memory can be shared between them. 
+.. note::
+
+    'Zero copy' memory is only supported on newer embedded systems such as
+    the Jetson TX1 where there is no physical seperation between GPU and host memory and 
+    thus the same physical of memory can be shared between them. 
+
+
+Extra global parameter references
+---------------------------------
+When building models with complex `Custom updates`_ and `Custom Connectivity updates`_, 
+it is often useful to share data stored in extra global parameters between different groups.
+Similarly to variable references, such links are made using extra global parameter references.
+These can be created using:
+
+.. autofunction:: pygenn.create_egp_ref
+    :noindex:
+
+.. autofunction:: pygenn.create_psm_egp_ref
+    :noindex:
+
+.. autofunction:: pygenn.create_wu_egp_ref
+    :noindex:
 
 Neuron populations
 ------------------

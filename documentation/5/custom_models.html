@@ -1,63 +1,96 @@
-
 <!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Custom models &mdash; PyGeNN  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css" />
 
-    <title>Custom models &#8212; PyGeNN  documentation</title>
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
-    <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css" />
-    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css" />
-    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css" />
-    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css" />
-    
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-    <script src="_static/doctools.js"></script>
-    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Bibliography" href="bibliography.html" />
     <link rel="prev" title="Simulating networks" href="simulating_networks.html" /> 
-  </head><body>
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="bibliography.html" title="Bibliography"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="simulating_networks.html" title="Simulating networks"
-             accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">PyGeNN  documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Custom models</a></li> 
-      </ul>
-    </div>  
+</head>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          <div class="body" role="main">
-            
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            PyGeNN
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="upgrading.html">Upgrading from GeNN 4</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building_networks.html">Building networks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="simulating_networks.html">Simulating networks</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Custom models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bibliography.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userproject/index.html">User projects</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/pygenn.html">Reference documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">PyGeNN</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Custom models</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/custom_models.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
   <section id="custom-models">
-<h1>Custom models<a class="headerlink" href="#custom-models" title="Permalink to this heading">¶</a></h1>
+<h1>Custom models<a class="headerlink" href="#custom-models" title="Permalink to this heading"></a></h1>
 <p>One of the main things that makes GeNN different than other SNN simulators is that all the
 models and snippets  used to describe the behaviour of your model (see <a href="#id4"><span class="problematic" id="id5">`Building networks`_</span></a>)
 can be easily customised by the user using strings containing a C-like language called GeNNCode.</p>
 <section id="genncode">
-<h2>GeNNCode<a class="headerlink" href="#genncode" title="Permalink to this heading">¶</a></h2>
+<h2>GeNNCode<a class="headerlink" href="#genncode" title="Permalink to this heading"></a></h2>
 <p>GeNN model functionality is implemented using strings of C-like code which we call GeNNCode.
 This is essentially C99 (<a class="reference external" href="https://en.cppreference.com/w/c/language">https://en.cppreference.com/w/c/language</a>) with the following differences:</p>
 <ul class="simple">
@@ -73,7 +106,7 @@ This is essentially C99 (<a class="reference external" href="https://en.cpprefer
 <li><p>Only the following standard library functions are supported: <code class="docutils literal notranslate"><span class="pre">cos</span></code>, <code class="docutils literal notranslate"><span class="pre">sin`,</span> <span class="pre">``tan</span></code>, <code class="docutils literal notranslate"><span class="pre">acos</span></code>, <code class="docutils literal notranslate"><span class="pre">asin</span></code>, <code class="docutils literal notranslate"><span class="pre">atan</span></code>, <code class="docutils literal notranslate"><span class="pre">atan2</span></code>, <code class="docutils literal notranslate"><span class="pre">cosh</span></code>, <code class="docutils literal notranslate"><span class="pre">sinh</span></code>, <code class="docutils literal notranslate"><span class="pre">tanh</span></code>, <code class="docutils literal notranslate"><span class="pre">acosh</span></code>, <code class="docutils literal notranslate"><span class="pre">asinh</span></code>, <code class="docutils literal notranslate"><span class="pre">atanh</span></code>, <code class="docutils literal notranslate"><span class="pre">exp</span></code>, <code class="docutils literal notranslate"><span class="pre">expm1</span></code>, <code class="docutils literal notranslate"><span class="pre">exp2</span></code>, <code class="docutils literal notranslate"><span class="pre">pow</span></code>, <code class="docutils literal notranslate"><span class="pre">scalbn</span></code>, <code class="docutils literal notranslate"><span class="pre">log</span></code>, <code class="docutils literal notranslate"><span class="pre">log1p</span></code>, <code class="docutils literal notranslate"><span class="pre">log2</span></code>, <code class="docutils literal notranslate"><span class="pre">log10</span></code>, <code class="docutils literal notranslate"><span class="pre">ldexp</span></code>, <code class="docutils literal notranslate"><span class="pre">ilogb</span></code>, <code class="docutils literal notranslate"><span class="pre">sqrt</span></code>, <code class="docutils literal notranslate"><span class="pre">cbrt</span></code>, <code class="docutils literal notranslate"><span class="pre">hypot</span></code>, <code class="docutils literal notranslate"><span class="pre">ceil</span></code>, <code class="docutils literal notranslate"><span class="pre">floor</span></code>, <code class="docutils literal notranslate"><span class="pre">fmod</span></code>, <code class="docutils literal notranslate"><span class="pre">round</span></code>, <code class="docutils literal notranslate"><span class="pre">rint</span></code>, <code class="docutils literal notranslate"><span class="pre">trunc</span></code>, <code class="docutils literal notranslate"><span class="pre">nearbyint</span></code>, <code class="docutils literal notranslate"><span class="pre">nextafter</span></code>, <code class="docutils literal notranslate"><span class="pre">remainder</span></code>, <code class="docutils literal notranslate"><span class="pre">fabs</span></code>, <code class="docutils literal notranslate"><span class="pre">fdim</span></code>, <code class="docutils literal notranslate"><span class="pre">fmax</span></code>, <code class="docutils literal notranslate"><span class="pre">fmin</span></code>, <code class="docutils literal notranslate"><span class="pre">erf</span></code>, <code class="docutils literal notranslate"><span class="pre">erfc</span></code>, <code class="docutils literal notranslate"><span class="pre">tgamma</span></code>, <code class="docutils literal notranslate"><span class="pre">lgamma</span></code>, <code class="docutils literal notranslate"><span class="pre">copysign</span></code>, <code class="docutils literal notranslate"><span class="pre">fma</span></code>, <code class="docutils literal notranslate"><span class="pre">min</span></code>, <code class="docutils literal notranslate"><span class="pre">max</span></code>, <code class="docutils literal notranslate"><span class="pre">abs</span></code>,``printf``</p></li>
 </ul>
 <section id="random-number-generation">
-<h3>Random number generation<a class="headerlink" href="#random-number-generation" title="Permalink to this heading">¶</a></h3>
+<h3>Random number generation<a class="headerlink" href="#random-number-generation" title="Permalink to this heading"></a></h3>
 <p>Random numbers are useful in many forms of custom model. For example as a source of noise or a probabilistic spiking mechanism.
 In GeNN this can be implemented by using the following functions within GeNNCode:</p>
 <ul class="simple">
@@ -87,7 +120,7 @@ In GeNN this can be implemented by using the following functions within GeNNCode
 </section>
 </section>
 <section id="initialisation-snippets">
-<h2>Initialisation snippets<a class="headerlink" href="#initialisation-snippets" title="Permalink to this heading">¶</a></h2>
+<h2>Initialisation snippets<a class="headerlink" href="#initialisation-snippets" title="Permalink to this heading"></a></h2>
 <p>Initialisation snippets are use GeNNCode to initialise various parts of a GeNN model.
 They are configurable by the user with parameters, derived parameters and extra global parameters.
 Parameters have a homogeneous numeric value across the population being initialised.
@@ -101,7 +134,7 @@ by passing the following keyword arguments to one of the snippet or model creati
 </pre></div>
 </div>
 <section id="variable-initialisation">
-<h3>Variable initialisation<a class="headerlink" href="#variable-initialisation" title="Permalink to this heading">¶</a></h3>
+<h3>Variable initialisation<a class="headerlink" href="#variable-initialisation" title="Permalink to this heading"></a></h3>
 <p>New variable initialisation snippets can be defined by calling:</p>
 <dl class="py function">
 <dt class="sig sig-object py">
@@ -161,7 +194,7 @@ redrawing if the value is negative (which could be useful to ensure delays remai
 
 </section>
 <section id="sparse-connectivity-initialisation">
-<h3>Sparse connectivity initialisation<a class="headerlink" href="#sparse-connectivity-initialisation" title="Permalink to this heading">¶</a></h3>
+<h3>Sparse connectivity initialisation<a class="headerlink" href="#sparse-connectivity-initialisation" title="Permalink to this heading"></a></h3>
 <p>Sparse connectivity initialisation snippets can be used to initialise connectivity when using
 <a class="reference internal" href="source/pygenn.html#pygenn.SynapseMatrixType.SPARSE" title="pygenn.SynapseMatrixType.SPARSE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SynapseMatrixType.SPARSE</span></code></a> or <a class="reference internal" href="source/pygenn.html#pygenn.SynapseMatrixType.BITMASK" title="pygenn.SynapseMatrixType.BITMASK"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SynapseMatrixType.BITMASK</span></code></a> connectivity; and to
 generate connectivity on the fly when using <a class="reference internal" href="source/pygenn.html#pygenn.SynapseMatrixType.PROCEDURAL" title="pygenn.SynapseMatrixType.PROCEDURAL"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SynapseMatrixType.PROCEDURAL</span></code></a> connectivity.
@@ -221,16 +254,16 @@ with replacement, we could define a snippet as follows:</p>
     <span class="s2">&quot;fixed_number_post&quot;</span><span class="p">,</span>
     <span class="n">params</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;num&quot;</span><span class="p">,</span> <span class="s2">&quot;unsigned int&quot;</span><span class="p">)],</span>
     <span class="n">row_build_code</span><span class="o">=</span>
-        \<span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">        for(unsigned int c = num; c != 0; c--) {</span>
-<span class="s2">           const unsigned int idPost = (unsigned int)ceil(gennrand_uniform() * num_post) - 1;</span>
-<span class="s2">           addSynapse(idPost + id_post_begin);</span>
-<span class="s2">        }</span>
-<span class="s2">        </span><span class="se">\&quot;</span><span class="s2">&quot;&quot;,</span>
-<span class="s2">    calc_max_row_len_func=lambda num_pre, num_post, pars: pars[&quot;num&quot;],</span>
-<span class="s2">    calc_max_col_len_func=lambda num_pre, num_post, pars: binom.ppf(0.9999 ** (1.0 / num_post),</span>
-<span class="s2">                                                                    pars[&quot;num&quot;] * num_pre,</span>
-<span class="s2">                                                                    1.0 / num_post))</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        for(unsigned int c = num; c != 0; c--) {</span>
+<span class="sd">           const unsigned int idPost = (unsigned int)ceil(gennrand_uniform() * num_post) - 1;</span>
+<span class="sd">           addSynapse(idPost + id_post_begin);</span>
+<span class="sd">        }</span>
+<span class="sd">        &quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="n">calc_max_row_len_func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">num_pre</span><span class="p">,</span> <span class="n">num_post</span><span class="p">,</span> <span class="n">pars</span><span class="p">:</span> <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;num&quot;</span><span class="p">],</span>
+    <span class="n">calc_max_col_len_func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">num_pre</span><span class="p">,</span> <span class="n">num_post</span><span class="p">,</span> <span class="n">pars</span><span class="p">:</span> <span class="n">binom</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="mf">0.9999</span> <span class="o">**</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">num_post</span><span class="p">),</span>
+                                                                    <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;num&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">num_pre</span><span class="p">,</span>
+                                                                    <span class="mf">1.0</span> <span class="o">/</span> <span class="n">num_post</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>For full details of how maximum column lengths are calculated, you should refer to our paper <a class="reference internal" href="bibliography.html#knight2018" id="id1"><span>[Knight2018]</span></a> but,
@@ -241,7 +274,7 @@ looking at the point in the inverse CDF where there is a 0.9999 chance of the bo
 
 </section>
 <section id="toeplitz-connectivity-initialisation">
-<h3>Toeplitz connectivity initialisation<a class="headerlink" href="#toeplitz-connectivity-initialisation" title="Permalink to this heading">¶</a></h3>
+<h3>Toeplitz connectivity initialisation<a class="headerlink" href="#toeplitz-connectivity-initialisation" title="Permalink to this heading"></a></h3>
 <p>Toeplitz connectivity initialisation snippets are used to generate convolution-like connectivity
 on the fly when using <a class="reference internal" href="source/pygenn.html#pygenn.SynapseMatrixType.TOEPLITZ" title="pygenn.SynapseMatrixType.TOEPLITZ"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SynapseMatrixType.TOEPLITZ</span></code></a> connectivity.
 New toeplitz connectivity initialisation snippets can be defined by calling:</p>
@@ -281,31 +314,31 @@ row length of synaptic matrix created using this snippet</p></li>
 </dd>
 </dl>
 <p>For example, the following Toeplitz connectivity initialisation snippet could be used to
-convolve a <span class="math notranslate nohighlight">\(\text{kern_dim} \times \text{kern_dim}\)</span> square kernel with the spikes from a populations of <span class="math notranslate nohighlight">\(\text{pop_dim} \times \text{pop_dim}\)</span> neurons.</p>
+convolve a :math:`  ext{kern_dim}   imes    ext{kern_dim}` square kernel with the spikes from a populations of :math:`      ext{pop_dim}    imes    ext{pop_dim}` neurons.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">simple_conv2d_model</span> <span class="o">=</span> <span class="n">pynn</span><span class="o">.</span><span class="n">create_toeplitz_connect_init_snippet</span><span class="p">(</span>
     <span class="s2">&quot;simple_conv2d&quot;</span><span class="p">,</span>
     <span class="n">params</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;kern_size&quot;</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;pop_dim&quot;</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">)],</span>
     <span class="n">diagonal_build_code</span><span class="o">=</span>
-        \<span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">        const int kernRow = id_diag / kern_dim;</span>
-<span class="s2">        const int kernCol = id_diag % kern_dim;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        const int kernRow = id_diag / kern_dim;</span>
+<span class="sd">        const int kernCol = id_diag % kern_dim;</span>
 
-<span class="s2">        for_each_synapse {</span>
-<span class="s2">            const int preRow = id_pre / pop_dim;</span>
-<span class="s2">            const int preCol = id_pre % pop_dim;</span>
-<span class="s2">            // If we haven&#39;t gone off edge of output</span>
-<span class="s2">            const int postRow = preRow + kernRow - 1;</span>
-<span class="s2">            const int postCol = preCol + kernCol - 1;</span>
-<span class="s2">            if(postRow &gt;= 0 &amp;&amp; postCol &gt;= 0 &amp;&amp; postRow &lt; pop_dim &amp;&amp; postCol &lt; pop_dim) {</span>
-<span class="s2">                // Calculate postsynaptic index</span>
-<span class="s2">                const int postInd = (postRow * pop_dim) + postCol;</span>
-<span class="s2">                addSynapse(postInd,  kernRow, kernCol);</span>
-<span class="s2">            }</span>
-<span class="s2">        }</span>
-<span class="s2">        </span><span class="se">\&quot;</span><span class="s2">&quot;&quot;,</span>
+<span class="sd">        for_each_synapse {</span>
+<span class="sd">            const int preRow = id_pre / pop_dim;</span>
+<span class="sd">            const int preCol = id_pre % pop_dim;</span>
+<span class="sd">            // If we haven&#39;t gone off edge of output</span>
+<span class="sd">            const int postRow = preRow + kernRow - 1;</span>
+<span class="sd">            const int postCol = preCol + kernCol - 1;</span>
+<span class="sd">            if(postRow &gt;= 0 &amp;&amp; postCol &gt;= 0 &amp;&amp; postRow &lt; pop_dim &amp;&amp; postCol &lt; pop_dim) {</span>
+<span class="sd">                // Calculate postsynaptic index</span>
+<span class="sd">                const int postInd = (postRow * pop_dim) + postCol;</span>
+<span class="sd">                addSynapse(postInd,  kernRow, kernCol);</span>
+<span class="sd">            }</span>
+<span class="sd">        }</span>
+<span class="sd">        &quot;&quot;&quot;</span><span class="p">,</span>
 
-<span class="s2">    calc_max_row_len_func=lambda num_pre, num_post, pars: pars[&quot;kern_size&quot;] * pars[&quot;kern_size&quot;],</span>
-<span class="s2">    calc_kernel_size_func=lambda pars: [pars[&quot;kern_size&quot;], pars[&quot;kern_size&quot;]])</span>
+    <span class="n">calc_max_row_len_func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">num_pre</span><span class="p">,</span> <span class="n">num_post</span><span class="p">,</span> <span class="n">pars</span><span class="p">:</span> <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;kern_size&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;kern_size&quot;</span><span class="p">],</span>
+    <span class="n">calc_kernel_size_func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">pars</span><span class="p">:</span> <span class="p">[</span><span class="n">pars</span><span class="p">[</span><span class="s2">&quot;kern_size&quot;</span><span class="p">],</span> <span class="n">pars</span><span class="p">[</span><span class="s2">&quot;kern_size&quot;</span><span class="p">]])</span>
 </pre></div>
 </div>
 <p>For full details of how convolution-like connectivity is expressed in this way, please see our paper <a class="reference internal" href="bibliography.html#turner2022" id="id2"><span>[Turner2022]</span></a>.</p>
@@ -314,11 +347,63 @@ convolve a <span class="math notranslate nohighlight">\(\text{kern_dim} \times \
 </section>
 </section>
 <section id="models">
-<h2>Models<a class="headerlink" href="#models" title="Permalink to this heading">¶</a></h2>
+<h2>Models<a class="headerlink" href="#models" title="Permalink to this heading"></a></h2>
 <p>Models extend the snippets describe above by adding state.
 They are used to define the behaviour of neurons, synapses and custom updates.</p>
+<section id="variable-access">
+<h3>Variable access<a class="headerlink" href="#variable-access" title="Permalink to this heading"></a></h3>
+<p>When defining custom models intended to work in batched simulations, it is important to
+consider the ‘variable access’ of state variables which determines if they can contain
+different values in each batch or whether the same values are shared between batches.
+Because simulations are assumed to run in parallel, if variables are shared they must be
+be read-only.
+Therefore the following modes are available for variables defined in neuron, weight update,
+current source and custom connectivity update models:</p>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenn.</span></span><span class="sig-name descname"><span class="pre">VarAccess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="source/pygenn.html#pygenn.VarAccess" title="pygenn._genn.VarAccess"><span class="pre">pygenn._genn.VarAccess</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Supported combinations of access mode and dimension for neuron and synapse variables</p>
+<p>Members:</p>
+<blockquote>
+<div><p>READ_WRITE : This variable can be read from and written to and stores seperate values for each element and each batch</p>
+<p>READ_ONLY : This variable can only be read from and stores seperate values for each element but these are shared across batches</p>
+<p>READ_ONLY_DUPLICATE : This variable can only be read from and stores seperate values for each element and each batch</p>
+<p>READ_ONLY_SHARED_NEURON : This variable can only be read from and stores seperate values for each batch but these are shared across neurons</p>
+</div></blockquote>
+</dd></dl>
+
+<p>The situation is further complicated when considering custom update models as not
+only do these support operations such as reductions but whether the update itself
+is batched or not depends on the types of variables it is attached to via
+its variable references. Therefore, so that custom update models can be re-used in
+different circumstances, their variables can have the following modes:</p>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenn.</span></span><span class="sig-name descname"><span class="pre">CustomUpdateVarAccess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="source/pygenn.html#pygenn.CustomUpdateVarAccess" title="pygenn._genn.CustomUpdateVarAccess"><span class="pre">pygenn._genn.CustomUpdateVarAccess</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Supported combinations of access mode and dimension for custom update variables.
+The axes are defined ‘subtractively’ ie VarAccessDim::BATCH indicates that this axis should be removed.</p>
+<p>Members:</p>
+<blockquote>
+<div><p>READ_WRITE : This variable can be read from and written to and has the same dimensions as whatever the custom update is attached to</p>
+<p>READ_ONLY : This variable can be only be read from and has the same dimensions as whatever the custom update is attached to</p>
+<p>READ_ONLY_SHARED : This variable can be only be read from and has the same dimensions as whatever</p>
+</div></blockquote>
+<p>the custom update is attached to aside from being shared across batches</p>
+<blockquote>
+<div><p>READ_ONLY_SHARED_NEURON : This variable can be only be read from and has the same dimensions as whatever</p>
+</div></blockquote>
+<p>the custom update is attached to aside from being shared across neurons</p>
+<blockquote>
+<div><p>REDUCE_BATCH_SUM : This variable is a target for a reduction across batches using a sum operation</p>
+<p>REDUCE_BATCH_MAX : This variable is a target for a reduction across batches using a max operation</p>
+<p>REDUCE_NEURON_SUM : This variable is a target for a reduction across neurons using a sum operation</p>
+<p>REDUCE_NEURON_MAX : This variable is a target for a reduction across neurons using a max operation</p>
+</div></blockquote>
+</dd></dl>
+
+</section>
 <section id="neuron-models">
-<h3>Neuron models<a class="headerlink" href="#neuron-models" title="Permalink to this heading">¶</a></h3>
+<h3>Neuron models<a class="headerlink" href="#neuron-models" title="Permalink to this heading"></a></h3>
 <p>Neuron models define the dynamics and spiking behaviour of populations of neurons.
 New neuron models are defined by calling:</p>
 <dl class="py function">
@@ -366,17 +451,17 @@ logic to be generated?</p></li>
     <span class="s2">&quot;leaky_integrator&quot;</span><span class="p">,</span>
 
     <span class="n">sim_code</span><span class="o">=</span>
-        \<span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">        V += (-V + Isyn) * (dt / tau);</span>
-<span class="s2">        </span><span class="se">\&quot;</span><span class="s2">&quot;&quot;,</span>
-<span class="s2">    threshold_condition_code=&quot;V &gt;= 1.0&quot;,</span>
-<span class="s2">    reset_code=</span>
-<span class="s2">        </span><span class="se">\&quot;</span><span class="s2">&quot;&quot;</span>
-<span class="s2">        V = 0.0;</span>
-<span class="s2">        </span><span class="se">\&quot;</span><span class="s2">&quot;&quot;,</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        V += (-V + Isyn) * (dt / tau);</span>
+<span class="sd">        &quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="n">threshold_condition_code</span><span class="o">=</span><span class="s2">&quot;V &gt;= 1.0&quot;</span><span class="p">,</span>
+    <span class="n">reset_code</span><span class="o">=</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        V = 0.0;</span>
+<span class="sd">        &quot;&quot;&quot;</span><span class="p">,</span>
 
-<span class="s2">    params=[&quot;tau&quot;],</span>
-<span class="s2">    vars=[(&quot;V&quot;, &quot;scalar&quot;, pygenn.VarAccess.READ_WRITE)])</span>
+    <span class="n">params</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tau&quot;</span><span class="p">],</span>
+    <span class="nb">vars</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">,</span> <span class="n">pygenn</span><span class="o">.</span><span class="n">VarAccess</span><span class="o">.</span><span class="n">READ_WRITE</span><span class="p">)])</span>
 </pre></div>
 </div>
 <p>Normally, neuron models receive the linear sum of the inputs coming from all of their synaptic inputs through the <code class="docutils literal notranslate"><span class="pre">Isyn</span></code> variable.
@@ -384,17 +469,17 @@ However neuron models can define additional input variables - allowing input fro
 For example, if we wanted our leaky integrator to operate on the the product of two input currents, we could modify our model as follows:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">additional_input_vars</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;Isyn2&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)],</span>
 <span class="n">sim_code</span><span class="o">=</span>
-    \<span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">    const scalar input = Isyn * Isyn2;</span>
-<span class="s2">    sim_code=&quot;V += (-V + input) * (dt / tau);</span>
-<span class="s2">    </span><span class="se">\&quot;</span><span class="s2">&quot;&quot;,</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    const scalar input = Isyn * Isyn2;</span>
+<span class="sd">    sim_code=&quot;V += (-V + input) * (dt / tau);</span>
+<span class="sd">    &quot;&quot;&quot;</span><span class="p">,</span>
 </pre></div>
 </div>
 </dd></dl>
 
 </section>
 <section id="weight-update-models">
-<h3>Weight update models<a class="headerlink" href="#weight-update-models" title="Permalink to this heading">¶</a></h3>
+<h3>Weight update models<a class="headerlink" href="#weight-update-models" title="Permalink to this heading"></a></h3>
 <p>Weight update models define the event-driven and time-driven behaviour of synapses and what output they deliver to postsynaptic (and presynaptic) neurons.
 New weight update models are defined by calling:</p>
 <dl class="py function">
@@ -482,8 +567,7 @@ extra global parameters</p></li>
 </dl>
 <p>For example, we can define a simple additive STDP rule with nearest-neighbour spike pairing and the following time-dependence:</p>
 <div class="math notranslate nohighlight">
-\[\begin{split}\Delta w_{ij} &amp; = \
-    \begin{cases}
+\[\begin{split}\Delta w_{ij} &amp; =             \begin{cases}
         A_{+}\exp\left(-\frac{\Delta t}{\tau_{+}}\right) &amp; if\, \Delta t&gt;0\\
         A_{-}\exp\left(\frac{\Delta t}{\tau_{-}}\right) &amp; if\, \Delta t\leq0
     \end{cases}\end{split}\]</div>
@@ -494,24 +578,24 @@ extra global parameters</p></li>
     <span class="nb">vars</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">)],</span>
 
     <span class="n">pre_spike_syn_code</span><span class="o">=</span>
-        \<span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">        addToPost(g);</span>
-<span class="s2">        const scalar dt = t - st_post;</span>
-<span class="s2">        if (dt &gt; 0) {</span>
-<span class="s2">            const scalar timing = exp(-dt / tauMinus);</span>
-<span class="s2">            const scalar newWeight = g - (Aminus * timing);</span>
-<span class="s2">            g = fmax(Wmin, fmin(Wmax, newWeight));</span>
-<span class="s2">        }</span>
-<span class="s2">        </span><span class="se">\&quot;</span><span class="s2">&quot;&quot;,</span>
-<span class="s2">    post_spike_syn_code=</span>
-<span class="s2">        </span><span class="se">\&quot;</span><span class="s2">&quot;&quot;</span>
-<span class="s2">        const scalar dt = t - st_pre;</span>
-<span class="s2">        if (dt &gt; 0) {</span>
-<span class="s2">            const scalar timing = exp(-dt / tauPlus);</span>
-<span class="s2">            const scalar newWeight = g + (Aplus * timing);</span>
-<span class="s2">            g = fmax(Wmin, fmin(Wmax, newWeight));</span>
-<span class="s2">        }</span>
-<span class="s2">        </span><span class="se">\&quot;</span><span class="s2">&quot;&quot;)</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        addToPost(g);</span>
+<span class="sd">        const scalar dt = t - st_post;</span>
+<span class="sd">        if (dt &gt; 0) {</span>
+<span class="sd">            const scalar timing = exp(-dt / tauMinus);</span>
+<span class="sd">            const scalar newWeight = g - (Aminus * timing);</span>
+<span class="sd">            g = fmax(Wmin, fmin(Wmax, newWeight));</span>
+<span class="sd">        }</span>
+<span class="sd">        &quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="n">post_spike_syn_code</span><span class="o">=</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        const scalar dt = t - st_pre;</span>
+<span class="sd">        if (dt &gt; 0) {</span>
+<span class="sd">            const scalar timing = exp(-dt / tauPlus);</span>
+<span class="sd">            const scalar newWeight = g + (Aplus * timing);</span>
+<span class="sd">            g = fmax(Wmin, fmin(Wmax, newWeight));</span>
+<span class="sd">        }</span>
+<span class="sd">        &quot;&quot;&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The memory required for synapse variables and the computational cost of updating them tends to grow with <span class="math notranslate nohighlight">\(O(N^2)\)</span> with the number of neurons.
@@ -526,27 +610,27 @@ For example, using pre and postsynaptic variables, our event-driven STDP rule ca
     <span class="n">post_vars</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;postTrace&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">)],</span>
 
     <span class="n">pre_spike_syn_code</span><span class="o">=</span>
-        \<span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">        addToPost(g);</span>
-<span class="s2">        const scalar dt = t - st_post;</span>
-<span class="s2">        if(dt &gt; 0) {</span>
-<span class="s2">            const scalar newWeight = g - (aMinus * postTrace);</span>
-<span class="s2">            g = fmin(wMax, fmax(wMin, newWeight));</span>
-<span class="s2">        }</span>
-<span class="s2">        </span><span class="se">\&quot;</span><span class="s2">&quot;&quot;,</span>
-<span class="s2">    post_spike_syn_code=</span>
-<span class="s2">        </span><span class="se">\&quot;</span><span class="s2">&quot;&quot;</span>
-<span class="s2">        const scalar dt = t - st_pre;</span>
-<span class="s2">        if(dt &gt; 0) {</span>
-<span class="s2">            const scalar newWeight = g + (aPlus * preTrace);</span>
-<span class="s2">            g = fmin(wMax, fmax(wMin, newWeight));</span>
-<span class="s2">        }</span>
-<span class="s2">        </span><span class="se">\&quot;</span><span class="s2">&quot;&quot;,</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        addToPost(g);</span>
+<span class="sd">        const scalar dt = t - st_post;</span>
+<span class="sd">        if(dt &gt; 0) {</span>
+<span class="sd">            const scalar newWeight = g - (aMinus * postTrace);</span>
+<span class="sd">            g = fmin(wMax, fmax(wMin, newWeight));</span>
+<span class="sd">        }</span>
+<span class="sd">        &quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="n">post_spike_syn_code</span><span class="o">=</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        const scalar dt = t - st_pre;</span>
+<span class="sd">        if(dt &gt; 0) {</span>
+<span class="sd">            const scalar newWeight = g + (aPlus * preTrace);</span>
+<span class="sd">            g = fmin(wMax, fmax(wMin, newWeight));</span>
+<span class="sd">        }</span>
+<span class="sd">        &quot;&quot;&quot;</span><span class="p">,</span>
 
-<span class="s2">    pre_spike_code=&quot;preTrace += 1.0;&quot;,</span>
-<span class="s2">    pre_dynamics_code=&quot;preTrace *= tauPlusDecay;&quot;,</span>
-<span class="s2">    post_spike_code=&quot;postTrace += 1.0;&quot;,</span>
-<span class="s2">    post_dynamics_code=&quot;postTrace *= tauMinusDecay;&quot;)</span>
+    <span class="n">pre_spike_code</span><span class="o">=</span><span class="s2">&quot;preTrace += 1.0;&quot;</span><span class="p">,</span>
+    <span class="n">pre_dynamics_code</span><span class="o">=</span><span class="s2">&quot;preTrace *= tauPlusDecay;&quot;</span><span class="p">,</span>
+    <span class="n">post_spike_code</span><span class="o">=</span><span class="s2">&quot;postTrace += 1.0;&quot;</span><span class="p">,</span>
+    <span class="n">post_dynamics_code</span><span class="o">=</span><span class="s2">&quot;postTrace *= tauMinusDecay;&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Unlike the event-driven updates previously described, synapse dynamics code is run for each synapse, each timestep i.e. unlike the others it is time-driven.
@@ -571,7 +655,7 @@ This typically involves pre or postsynaptic weight update model variables or var
 
 </section>
 <section id="postsynaptic-models">
-<h3>Postsynaptic models<a class="headerlink" href="#postsynaptic-models" title="Permalink to this heading">¶</a></h3>
+<h3>Postsynaptic models<a class="headerlink" href="#postsynaptic-models" title="Permalink to this heading"></a></h3>
 <p>The postsynaptic models defines how synaptic input translates into an input current (or other input term for models that are not current based).
 They can contain equations defining dynamics that are applied to the (summed) synaptic activation, e.g. an exponential decay over time.
 New postsynaptic models are defined by calling:</p>
@@ -614,7 +698,7 @@ extra global parameters</p></li>
 
 </section>
 <section id="current-source-models">
-<h3>Current source models<a class="headerlink" href="#current-source-models" title="Permalink to this heading">¶</a></h3>
+<h3>Current source models<a class="headerlink" href="#current-source-models" title="Permalink to this heading"></a></h3>
 <p>Current source models allow input currents to be injected into neuron models.
 New current source models are defined by calling:</p>
 <dl class="py function">
@@ -664,7 +748,7 @@ injects uniformly-distributed noise as follows:</p>
 
 </section>
 <section id="custom-update-models">
-<h3>Custom update models<a class="headerlink" href="#custom-update-models" title="Permalink to this heading">¶</a></h3>
+<h3>Custom update models<a class="headerlink" href="#custom-update-models" title="Permalink to this heading"></a></h3>
 <p>Custom update models define operations on model variables that can be triggered on demand by the user.
 New custom update models are defined by calling:</p>
 <dl class="py function">
@@ -761,7 +845,7 @@ the <a class="reference internal" href="source/pygenn.html#pygenn.VarAccessMode.
 
 </section>
 <section id="custom-connectivity-update-models">
-<h3>Custom connectivity update models<a class="headerlink" href="#custom-connectivity-update-models" title="Permalink to this heading">¶</a></h3>
+<h3>Custom connectivity update models<a class="headerlink" href="#custom-connectivity-update-models" title="Permalink to this heading"></a></h3>
 <p>Custom update models define operations on model connectivity that can be triggered on demand by the user.
 New custom connectivity update models are defined by calling:</p>
 <dl class="py function">
@@ -774,7 +858,22 @@ not have access to per-synapse variables or variable references and, currently,
 you can not access pre and post synaptic variable references as there are issues regarding delays.
 Each variable has an accompanying push and pull function to copy it to and from the device,
 for variables this has no parameters as illustrated in the above example and for
-extra global parameters it has a single parameter specifying the size of the array.</p>
+extra global parameters it has a single parameter specifying the size of the array.
+Within the row update code you have full access to parameters, derived parameters,
+extra global parameters, presynaptic variables and presynaptic variables references.
+Postsynaptic and synaptic variables and variables references can only be accessed
+from within one of the <code class="docutils literal notranslate"><span class="pre">for_each_synapse</span></code> loops illustrated below.
+Additionally, both the host and row update code cam refer to the following built-in
+read-only variables:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">dt</span></code> which represents the simulation time step (as specified via  <code class="xref py py-meth docutils literal notranslate"><span class="pre">GeNNModel.dt()</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">row_stride</span></code> which represents the maximum number of synapses which each presynaptic neuron can have (this can be increased via <a class="reference internal" href="source/pygenn.html#pygenn.SynapseGroup.max_connections" title="pygenn.SynapseGroup.max_connections"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SynapseGroup.max_connections</span></code></a>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">num_pre</span></code> which represents the number of presynaptic neurons</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">num_post</span></code> which represents the number of postsynaptic neurons</p></li>
+</ul>
+<p>Host code can also access the current number of synapses emanating from each presynaptic
+neuron using the <code class="docutils literal notranslate"><span class="pre">row_length</span></code> array whereas, in row-update code, this contains the number of
+synapses emanating from the current presynaptic neuron (identified by <code class="docutils literal notranslate"><span class="pre">id_pre</span></code>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -872,93 +971,34 @@ parameter references</p></li>
 </section>
 
 
-            <div class="clearer"></div>
+           </div>
           </div>
-        </div>
-      </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-  <div>
-    <h3><a href="index.html">Table of Contents</a></h3>
-    <ul>
-<li><a class="reference internal" href="#">Custom models</a><ul>
-<li><a class="reference internal" href="#genncode">GeNNCode</a><ul>
-<li><a class="reference internal" href="#random-number-generation">Random number generation</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#initialisation-snippets">Initialisation snippets</a><ul>
-<li><a class="reference internal" href="#variable-initialisation">Variable initialisation</a></li>
-<li><a class="reference internal" href="#sparse-connectivity-initialisation">Sparse connectivity initialisation</a></li>
-<li><a class="reference internal" href="#toeplitz-connectivity-initialisation">Toeplitz connectivity initialisation</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#models">Models</a><ul>
-<li><a class="reference internal" href="#neuron-models">Neuron models</a></li>
-<li><a class="reference internal" href="#weight-update-models">Weight update models</a></li>
-<li><a class="reference internal" href="#postsynaptic-models">Postsynaptic models</a></li>
-<li><a class="reference internal" href="#current-source-models">Current source models</a></li>
-<li><a class="reference internal" href="#custom-update-models">Custom update models</a></li>
-<li><a class="reference internal" href="#custom-connectivity-update-models">Custom connectivity update models</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="simulating_networks.html" class="btn btn-neutral float-left" title="Simulating networks" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="bibliography.html" class="btn btn-neutral float-right" title="Bibliography" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
 
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, James Knight, Thomas Nowotny.</p>
   </div>
-  <div>
-    <h4>Previous topic</h4>
-    <p class="topless"><a href="simulating_networks.html"
-                          title="previous chapter">Simulating networks</a></p>
-  </div>
-  <div>
-    <h4>Next topic</h4>
-    <p class="topless"><a href="bibliography.html"
-                          title="next chapter">Bibliography</a></p>
-  </div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/custom_models.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>document.getElementById('searchbox').style.display = "block"</script>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
         </div>
       </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="genindex.html" title="General Index"
-             >index</a></li>
-        <li class="right" >
-          <a href="py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li class="right" >
-          <a href="bibliography.html" title="Bibliography"
-             >next</a> |</li>
-        <li class="right" >
-          <a href="simulating_networks.html" title="Simulating networks"
-             >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">PyGeNN  documentation</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Custom models</a></li> 
-      </ul>
-    </div>
-    <div class="footer" role="contentinfo">
-        &#169; Copyright 2024, James Knight, Thomas Nowotny.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
-    </div>
-  </body>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
 </html>

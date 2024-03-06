@@ -86,6 +86,29 @@ Models
 Models extend the snippets describe above by adding state. 
 They are used to define the behaviour of neurons, synapses and custom updates.
 
+Variable access
+---------------
+When defining custom models intended to work in batched simulations, it is important to
+consider the 'variable access' of state variables which determines if they can contain
+different values in each batch or whether the same values are shared between batches.
+Because simulations are assumed to run in parallel, if variables are shared they must be
+be read-only.
+Therefore the following modes are available for variables defined in neuron, weight update,
+current source and custom connectivity update models:
+
+.. autoclass:: pygenn.VarAccess
+    :noindex:
+
+The situation is further complicated when considering custom update models as not
+only do these support operations such as reductions but whether the update itself
+is batched or not depends on the types of variables it is attached to via
+its variable references. Therefore, so that custom update models can be re-used in
+different circumstances, their variables can have the following modes:
+
+.. autoclass:: pygenn.CustomUpdateVarAccess
+    :noindex:
+
+
 Neuron models
 -------------
 Neuron models define the dynamics and spiking behaviour of populations of neurons.

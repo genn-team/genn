@@ -28,10 +28,11 @@ Spike recording
 Because recording spikes and spike-like events is a common requirement and their sparse nature can make them inefficient to access,
 GeNN has a dedicated events recording system which collects events, emitted over a number of timesteps, in GPU memory before transferring to the host. 
 Spike recording can be enabled on chosen neuron groups by setting the :attr:`.NeuronGroup.spike_recording_enabled` and :attr:`.NeuronGroup.spike_event_recording_enabled` properties. 
-Memory can then be allocated at runtime for spike recording by using the ``num_recording_timesteps`` keyword argument to :meth:`.GeNNModel.load``.
+Memory can then be allocated at runtime for spike recording by using the ``num_recording_timesteps`` keyword argument to :meth:`.GeNNModel.load`.
 Spikes can then be copied from the GPU to the host using the :meth:`.GeNNModel.pull_recording_buffers_from_device` method and the spikes emitted by a population 
-can be accessed via the :attr:`.NeuronGroup.spike_recording_data` property. Similarly, spike-like events emitted by a population can be accessed via the 
-:attr:`.NeuronGroup.spike_event_recording_data` property. For example, the previous example could be extended to record spikes from a :class:`.NeuronGroup` ``pop`` as follows:
+can be accessed via the :attr:`.NeuronGroupMixin.spike_recording_data` property. Similarly, pre and postsynaptic spike-like events used by a synapse group
+can be accessed via the :attr:`.SynapseGroupMixin.pre_spike_event_recording_data` and :attr:`.SynapseGroupMixin.post_spike_event_recording_data` properties respectively.
+For example, the previous example could be extended to record spikes from a :class:`.NeuronGroup` ``pop`` as follows:
 
 ..  code-block:: python
 
@@ -54,8 +55,7 @@ Variables
 ---------
 In real simulations, as well as spikes, you often want to interact with model state variables as the simulation runs.
 State variables are encapsulated in :class:`pygenn.model_preprocessor.VariableBase` objects and all populations own dictionaries of these, accessible by variable name.
-For example :class:`.NeuronGroup` has :attr:`.NeuronGroup.vars` whereas, :class:`.SynapseGroup` has :attr:`.SynapseGroup.vars`, 
-:attr:`.SynapseGroup.pre_vars` and :attr:`.SynapseGroup.post_vars`.
+For example all groups have :attr:`.GroupMixin.vars` whereas, synapse groups additionally have :attr:`.SynapseGroupMixin.pre_vars` and :attr:`.SynapseGroupMixin.post_vars`.
 By default, copies of GeNN variables are allocated both on the GPU device and the host from where they can be accessed from Python.
 However, if variable's location is set to :attr:`.VarLocation.DEVICE`, they cannot be accessed from Python.
 
