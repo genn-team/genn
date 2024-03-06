@@ -30,17 +30,18 @@ public:
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
-    //! Set location of current source state variable
+    //! Set location of current source state variable.
+    /*! This is ignored for simulations on hardware with a single memory space. */
     void setVarLocation(const std::string &varName, VarLocation loc);
 
-    //! Set location of extra global parameter
+    //! Set location of extra global parameter.
     /*! This is ignored for simulations on hardware with a single memory space. */
     void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
     //! Set whether parameter is dynamic or not i.e. it can be changed at runtime
     void setParamDynamic(const std::string &paramName, bool dynamic = true);
 
-    //! Set name of neuron input variable current source model will inject into
+    //! Set name of neuron input variable current source model will inject into.
     /*! This should either be 'Isyn' or the name of one of the target neuron's additional input variables. */
     void setTargetVar(const std::string &varName);
 
@@ -65,7 +66,7 @@ public:
     //! Is parameter dynamic i.e. it can be changed at runtime
     bool isParamDynamic(const std::string &paramName) const{ return m_DynamicParams.get(paramName); }
 
-    //! Get name of neuron input variable current source model will inject into
+    //! Get name of neuron input variable current source model will inject into.
     /*! This will either be 'Isyn' or the name of one of the target neuron's additional input variables. */
     const std::string &getTargetVar() const { return m_TargetVar; }
 
@@ -92,12 +93,12 @@ protected:
     //! Is var init code required for any variables in this current source?
     bool isVarInitRequired() const;
 
-    //! Updates hash with current source
-    /*! NOTE: this can only be called after model is finalized */
+    //! Updates hash with current source.
+    /*! \note this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getHashDigest(const NeuronGroup *ng) const;
 
-    //! Updates hash with current source initialisation
-    /*! NOTE: this can only be called after model is finalized */
+    //! Updates hash with current source initialisation.
+    /*! \note this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getInitHashDigest(const NeuronGroup *ng) const;
 
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
@@ -124,7 +125,8 @@ private:
 
     const NeuronGroupInternal *m_TrgNeuronGroup;
 
-    //! Location of individual state variables
+    //! Location of individual state variables.
+    /*! This is ignored for simulations on hardware with a single memory space. */
     LocationContainer m_VarLocation;
 
     //! Location of extra global parameters
@@ -133,7 +135,7 @@ private:
     //! Data structure tracking whether parameters are dynamic or not
     Snippet::DynamicParameterContainer m_DynamicParams;
 
-    //! Name of neuron input variable current source will inject into
+    //! Name of neuron input variable current source will inject into.
     /*! This should either be 'Isyn' or the name of one of the target neuron's additional input variables. */
     std::string m_TargetVar;
 

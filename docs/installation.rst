@@ -29,9 +29,7 @@ Pre-installation
     installing CUDA. However, if you choose, you can verify which version is 
     selected by running ``echo %CUDA_PATH`` in a command prompt.
     However, on Linux, you need to set ``CUDA_PATH`` manually with:
-    ```bash
-    export CUDA_PATH=/usr/local/cuda
-    ```
+    ``export CUDA_PATH=/usr/local/cuda``
     assuming CUDA is installed in /usr/local/cuda (the standard location 
     on Ubuntu Linux). Again, to make this change persistent, this can
     be added to your login script (e.g. ``.profile`` or ``.bashrc``)

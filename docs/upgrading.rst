@@ -41,3 +41,9 @@ several areas of GeNN syntax have changed:
   references. For example ``$(V_pre)`` would refer to a variable called ``V`` on the presynaptic
   neuron population. This mechanism has been replaced by adding _explicit_ references to
   weight update, postsynaptic and current source model (see `Variables references`_).
+- It used to be possible to interact directly with the underlying spike data structures 
+  used by GeNN to inject or record spikes. However, this was very innefficient and is no
+  longer supported. Even if you need to access recorded spikes every timestep, using the 
+  `Spike recording`_ system is still more efficient and to inject spikes we recommend using
+  either the built in ``SpikeSourceArray`` model (as described in `Extra global parameters`_) 
+  or custom `Neuron models`_.

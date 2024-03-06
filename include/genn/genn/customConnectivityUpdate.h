@@ -24,19 +24,19 @@ public:
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
-    //! Set location of synaptic state variable
+    //! Set location of synaptic state variable.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setVarLocation(const std::string &varName, VarLocation loc);
 
-    //! Set location of presynaptic state variable
+    //! Set location of presynaptic state variable.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setPreVarLocation(const std::string &varName, VarLocation loc);
 
-    //! Set location of postsynaptic state variable
+    //! Set location of postsynaptic state variable.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setPostVarLocation(const std::string &varName, VarLocation loc);
 
-    //! Set location of extra global parameter
+    //! Set location of extra global parameter.
     /*! This is ignored for simulations on hardware with a single memory space. */
     void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
@@ -115,12 +115,12 @@ protected:
     //! custom connectivty update will update and thus will need modifying when we add and remove synapses
     std::vector<Models::WUVarReference> getDependentVariables() const;
 
-    //! Updates hash with custom update
-    /*! NOTE: this can only be called after model is finalized */
+    //! Updates hash with custom update.
+    /*! \note this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    //! Updates hash with custom update
-    /*! NOTE: this can only be called after model is finalized */
+    //! Updates hash with custom update.
+    /*! \note this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getInitHashDigest() const;
 
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;

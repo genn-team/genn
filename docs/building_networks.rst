@@ -45,7 +45,6 @@ For example, the CUDA backend allows you to select which CUDA device to use via 
 -----------
 Populations
 -----------
-
 Populations formalise the concept of groups of neurons or synapses that are functionally related or a practical grouping, e.g. a brain region in a neuroscience model or a layer in a machine learning context.
 
 Parameters
@@ -88,10 +87,6 @@ model can be configured as follows:
                                       {"startSpike": start_spike, "endSpike": end_spike})
     ssa.extra_global_params["spikeTimes"].set_init_values(spike_times)
 
-
-Extra global parameter references
----------------------------------
-TODO
 
 Variables
 ----------
@@ -171,6 +166,23 @@ However, the following alternative 'variable locations' are available:
     'Zero copy' memory is only supported on newer embedded systems such as
     the Jetson TX1 where there is no physical seperation between GPU and host memory and 
     thus the same physical of memory can be shared between them. 
+
+
+Extra global parameter references
+---------------------------------
+When building models with complex `Custom updates`_ and `Custom Connectivity updates`_, 
+it is often useful to share data stored in extra global parameters between different groups.
+Similarly to variable references, such links are made using extra global parameter references.
+These can be created using:
+
+.. autofunction:: pygenn.create_egp_ref
+    :noindex:
+
+.. autofunction:: pygenn.create_psm_egp_ref
+    :noindex:
+
+.. autofunction:: pygenn.create_wu_egp_ref
+    :noindex:
 
 Neuron populations
 ------------------

@@ -612,15 +612,15 @@ private:
     //! Named custom connectivity updates
     std::map<std::string, CustomConnectivityUpdateInternal> m_CustomConnectivityUpdates;
 
-    //! Name of the neuronal newtwork model
+    //! Name of the network model
     std::string m_Name;
 
-    //! Type of floating point variables (float, double, ...; default: float)
+    //! Type of floating point variables used for 'scalar' types
     Type::ResolvedType m_Precision;
 
     Type::TypeContext m_TypeContext;
 
-    //! Type of floating point variables used to store time
+    //! Type of floating point variables used for 'timepoint' types
     std::optional<Type::ResolvedType> m_TimePrecision;
 
     //! The integration time step of the model

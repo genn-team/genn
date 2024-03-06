@@ -482,11 +482,11 @@ private:
     //! Should narrow i.e. less than 32-bit types be used for sparse matrix indices
     bool m_NarrowSparseIndEnabled;
 
-    //! Location of outputs from this synapse group e.g. outPre and outPost
+    //! Location of outputs from this synapse group e.g. outPre and outPost.
     /*! This is ignored for simulations on hardware with a single memory space */
     VarLocation m_OutputLocation;
 
-    //! Location of this synapse group's dendritic delay buffers
+    //! Location of this synapse group's dendritic delay buffers.
     /*! This is ignored for simulations on hardware with a single memory space */
     VarLocation m_DendriticDelayLocation;
 
@@ -502,25 +502,32 @@ private:
     //! Initialiser used for creating toeplitz connectivity
     InitToeplitzConnectivitySnippet::Init m_ToeplitzConnectivityInitialiser;
 
-    //! Location of individual per-synapse state variables
+    //! Location of individual per-synapse state variables.
+    /*! This is ignored for simulations on hardware with a single memory space */
     LocationContainer m_WUVarLocation;
 
-    //! Location of individual presynaptic state variables
+    //! Location of individual presynaptic state variables.
+    /*! This is ignored for simulations on hardware with a single memory space */
     LocationContainer m_WUPreVarLocation;
 
-    //! Location of individual postsynaptic state variables
+    //! Location of individual postsynaptic state variables.
+    /*! This is ignored for simulations on hardware with a single memory space */
     LocationContainer m_WUPostVarLocation;
 
-    //! Location of weight update model extra global parameters
+    //! Location of weight update model extra global parameters.
+    /*! This is ignored for simulations on hardware with a single memory space */
     LocationContainer m_WUExtraGlobalParamLocation;
 
-    //! Whether indidividual state variables of post synapse should use zero-copied memory
+    //! Location of postsynaptic model variables.
+    /*! This is ignored for simulations on hardware with a single memory space */
     LocationContainer m_PSVarLocation;
 
-    //! Location of postsynaptic model extra global parameters
+    //! Location of postsynaptic model extra global parameters.
+    /*! This is ignored for simulations on hardware with a single memory space */
     LocationContainer m_PSExtraGlobalParamLocation;
 
-    //! Location of sparse connectivity
+    //! Location of sparse connectivity.
+    /*! This is ignored for simulations on hardware with a single memory space */
     VarLocation m_SparseConnectivityLocation;
 
     //! Data structure tracking whether postsynaptic model parameters are dynamic or not
@@ -529,51 +536,51 @@ private:
     //! Data structure tracking whether weight update model parameters are dynamic or not
     Snippet::DynamicParameterContainer m_WUDynamicParams;
 
-    //! Synapse group postsynaptic model has been fused with
+    //! Synapse group postsynaptic model has been fused with.
     /*! If this is nullptr, postsynaptic model has not been fused */
     const SynapseGroup *m_FusedPSTarget;
 
-    //! Synapse group presynaptic spike generation has been fused with
+    //! Synapse group presynaptic spike generation has been fused with.
     /*! If this is nullptr, presynaptic spike generation has not been fused */
     const SynapseGroup *m_FusedPreSpikeTarget;
 
-    //! Synapse group postsynaptic spike generation has been fused with
+    //! Synapse group postsynaptic spike generation has been fused with.
     /*! If this is nullptr, presynaptic spike generation has not been fused */
     const SynapseGroup *m_FusedPostSpikeTarget;
 
-    //! Synapse group presynaptic spike event generation has been fused with
+    //! Synapse group presynaptic spike event generation has been fused with.
     /*! If this is nullptr, presynaptic spike event generation has not been fused */
     const SynapseGroup *m_FusedPreSpikeEventTarget;
 
-    //! Synapse group postsynaptic spike event generation has been fused with
+    //! Synapse group postsynaptic spike event generation has been fused with.
     /*! If this is nullptr, postsynaptic spike event generation has not been fused */
     const SynapseGroup *m_FusedPostSpikeEventTarget;
 
-    //! Synapse group presynaptic weight update has been fused with
+    //! Synapse group presynaptic weight update has been fused with.
     /*! If this is nullptr, presynaptic weight update has not been fused */
     const SynapseGroup *m_FusedWUPreTarget;
     
-    //! Synapse group postsynaptic weight update has been fused with
+    //! Synapse group postsynaptic weight update has been fused with.
     /*! If this is nullptr, postsynaptic weight update  has not been fused */
     const SynapseGroup *m_FusedWUPostTarget;
 
-    //! Synapse group presynaptic output has been fused with
+    //! Synapse group presynaptic output has been fused with.
     /*! If this is nullptr, presynaptic output has not been fused */
     const SynapseGroup *m_FusedPreOutputTarget;
 
-    //! Name of neuron input variable postsynaptic model will target
+    //! Name of neuron input variable postsynaptic model will target.
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
     std::string m_PostTargetVar;
 
-    //! Name of neuron input variable a presynaptic output specified with $(addToPre) will target
+    //! Name of neuron input variable a presynaptic output specified with $(addToPre) will target.
     /*! This will either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */
     std::string m_PreTargetVar;
 
-    //! Custom connectivity updates which reference this synapse group
+    //! Custom connectivity updates which reference this synapse group.
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
     std::vector<CustomConnectivityUpdateInternal*> m_CustomConnectivityUpdateReferences;
 
-    //! Custom updates which reference this synapse group
+    //! Custom updates which reference this synapse group.
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
     std::vector<CustomUpdateWUInternal*> m_CustomUpdateReferences;
     

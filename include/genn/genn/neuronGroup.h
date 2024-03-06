@@ -33,39 +33,39 @@ public:
     // Public methods
     //------------------------------------------------------------------------
     //! Set whether zero-copy memory (if available) should be   
-    //! used for spike and spike-like event recording
+    //! used for spike and spike-like event recording.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setRecordingZeroCopyEnabled(bool enabled) { m_RecordingZeroCopyEnabled = enabled; }
-    
-    //! Set location of this neuron group's output spikes
+
+    //! Set location of this neuron group's output spikes.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setSpikeLocation(VarLocation loc) { m_SpikeLocation = loc; }
 
-     //! Set location of this neuron group's output spike events
+     //! Set location of this neuron group's output spike events.
      /*! This is ignored for simulations on hardware with a single memory space */
     void setSpikeEventLocation(VarLocation loc) { m_SpikeEventLocation = loc; }
 
-    //! Set location of this neuron group's output spike times
+    //! Set location of this neuron group's output spike times.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setSpikeTimeLocation(VarLocation loc) { m_SpikeTimeLocation = loc; }
     
-    //! Set location of this neuron group's previous output spike times
+    //! Set location of this neuron group's previous output spike times.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setPrevSpikeTimeLocation(VarLocation loc) { m_PrevSpikeTimeLocation = loc; }
     
-    //! Set location of this neuron group's output spike-like-event times
+    //! Set location of this neuron group's output spike-like-event times.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setSpikeEventTimeLocation(VarLocation loc) { m_SpikeEventTimeLocation = loc; }
     
-    //! Set location of this neuron group's previous output spike-like-event times
+    //! Set location of this neuron group's previous output spike-like-event times.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setPrevSpikeEventTimeLocation(VarLocation loc) { m_PrevSpikeEventTimeLocation = loc; }
 
-    //! Set variable location of neuron model state variable
+    //! Set variable location of neuron model state variable.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setVarLocation(const std::string &varName, VarLocation loc);
 
-    //! Set location of neuron model extra global parameter
+    //! Set location of neuron model extra global parameter.
     /*! This is ignored for simulations on hardware with a single memory space. */
     void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
@@ -264,7 +264,7 @@ private:
     std::vector<SynapseGroupInternal*> m_FusedWUPreOutSyn;
     std::vector<SynapseGroupInternal*> m_FusedPreOutputOutSyn;
 
-    //! Number of delay slots this group required
+    //! Number of delay slots this group required.
     /*! This is the maximum required by any incoming or outgoing synapse group */
     unsigned int m_NumDelaySlots;
 
@@ -277,28 +277,36 @@ private:
     //! for spike and spike-like event recording?
     bool m_RecordingZeroCopyEnabled;
     
-    //! Location of spikes from neuron group
+    //! Location of spikes from neuron group.
+    /*! This is ignored for simulations on hardware with a single memory space */
     VarLocation m_SpikeLocation;
 
-    //! Location of spike-like events from neuron group
+    //! Location of spike-like events from neuron group.
+    /*! This is ignored for simulations on hardware with a single memory space */
     VarLocation m_SpikeEventLocation;
 
-    //! Location of spike times from neuron group
+    //! Location of spike times from neuron group.
+    /*! This is ignored for simulations on hardware with a single memory space */
     VarLocation m_SpikeTimeLocation;
 
-    //! Location of previous spike times
+    //! Location of previous spike times.
+    /*! This is ignored for simulations on hardware with a single memory space */
     VarLocation m_PrevSpikeTimeLocation;
 
-    //! Location of spike-like-event times
+    //! Location of spike-like-event times.
+    /*! This is ignored for simulations on hardware with a single memory space */
     VarLocation m_SpikeEventTimeLocation;
 
-    //! Location of previous spike-like-event times
+    //! Location of previous spike-like-event times.
+    /*! This is ignored for simulations on hardware with a single memory space */
     VarLocation m_PrevSpikeEventTimeLocation;
     
-    //! Location of individual state variables
+    //! Location of individual state variables.
+    /*! This is ignored for simulations on hardware with a single memory space */
     LocationContainer m_VarLocation;
 
-    //! Location of extra global parameters
+    //! Location of extra global parameters.
+    /*! This is ignored for simulations on hardware with a single memory space */
     LocationContainer m_ExtraGlobalParamLocation;
 
     //! Data structure tracking whether parameters are dynamic or not

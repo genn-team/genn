@@ -519,6 +519,22 @@ class GeNNModel(ModelSpec):
             egp_refs:               references to extra global parameters in other populations
                                     to access from this update, typically created using
                                     :func:`.create_egp_ref` (see `Extra global parameter references`_).
+        
+        For example, a custom update to calculate transpose weights could be added to a model as follows:
+
+        ..  code-block:: python
+
+            cu = model.add_custom_update("tranpose_pop", "transpose", "Transpose",
+                                         var_refs={"variable": create_wu_var_ref(fwd_sg, "g",
+                                                                                 back_sg, "g")})
+
+        where ``fwd_sg`` and ``back_sg`` are references to synapse populations
+        (as returned by :meth:`.GeNNModel.add_synapse_population`). This update
+        could then subsequently be triggered using the name of it's update group with:
+        
+        ..  code-block:: python
+
+            model.custom_update("transpose")
 
         """
         if self._built:
@@ -937,7 +953,7 @@ def init_connectivity(init_sparse_connect_snippet, params={}):
     return init_sparse_connectivity(init_sparse_connect_snippet, params)
 
 def init_toeplitz_connectivity(init_toeplitz_connect_snippet, params={}):
-    r"""Initialises a toeplitz connectivity 
+    """Initialises a toeplitz connectivity 
     initialisation snippet with parameter values
      
     Args:
@@ -948,8 +964,8 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, params={}):
         params:         parameter values for the toeplitz connectivity init snippet (see `Parameters`_)
     
     For example, the built-in model could be initialised to generate 2D convolutional 
-    connectivity with a :math:`3 \times 3` kernel, a :math:`64 \times 64 \times 1` input
-    and a :math:`62 \times 62 \times 1` input:
+    connectivity with a :math:`3 \\times 3` kernel, a :math:`64 \\times 64 \\times 1` input
+    and a :math:`62 \\times 62 \\times 1` input:
 
     ..  code-block:: python
 
@@ -961,8 +977,8 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, params={}):
 
     .. note::
         this should be used to connect a presynaptic neuron population with 
-        :math:`64 \times 64 \times 1 = 4096` neurons to a postsynaptic neuron
-        population with :math:`62 \times 62 \times 1 = 3844` neurons.
+        :math:`64 \\times 64 \\times 1 = 4096` neurons to a postsynaptic neuron
+        population with :math:`62 \\times 62 \\times 1 = 3844` neurons.
     """
     # Get snippet and wrap in InitToeplitzConnectivitySnippet object
     init_toeplitz_connect_snippet = _get_snippet(init_toeplitz_connect_snippet,
@@ -1057,7 +1073,7 @@ def create_neuron_model(class_name: str, params: ModelParamsType = None,
                         extra_global_params: ModelEGPType = None,
                         additional_input_vars=None,
                         auto_refractory_required: bool = False):
-    r"""Creates a new neuron model.
+    """Creates a new neuron model.
     Within all of the code strings, the variables, parameters,
     derived parameters, additional input variables and extra global
     parameters defined in this model can all be referred to be name.
@@ -1090,7 +1106,7 @@ def create_neuron_model(class_name: str, params: ModelParamsType = None,
         auto_refractory_required:   does this model require auto-refractory
                                     logic to be generated?
     
-    For example, we can define a leaky integrator :math:`\tau\frac{dV}{dt}= -V + I_{{\rm syn}}` solved using Euler's method:
+    For example, we can define a leaky integrator :math:`\\tau\\frac{dV}{dt}= -V + I_{{\\rm syn}}` solved using Euler's method:
 
     ..  code-block:: python
 
@@ -1248,7 +1264,7 @@ def create_weight_update_model(
         pre_dynamics_code: Optional[str] = None,
         post_dynamics_code: Optional[str] = None,
         extra_global_params: ModelEGPType  = None):
-    r"""Creates a new weight update model.
+    """Creates a new weight update model.
     GeNN operates on the assumption that the postsynaptic output of the synapses are added linearly at the postsynaptic neuron.
     Within all of the synaptic code strings (``pre_spike_syn_code``, ``pre_event_syn_code``,
     ``post_event_syn_code``, ``post_spike_syn_code`` and ``synapse_dynamics_code`` ) these currents are delivered using the ``addToPost(inc)`` function.
@@ -1335,11 +1351,11 @@ def create_weight_update_model(
 
     ..  math::
 
-        \Delta w_{ij} & = \
-            \begin{cases}
-                A_{+}\exp\left(-\frac{\Delta t}{\tau_{+}}\right) & if\, \Delta t>0\\
-                A_{-}\exp\left(\frac{\Delta t}{\tau_{-}}\right) & if\, \Delta t\leq0
-            \end{cases}
+        \\Delta w_{ij} & = \
+            \\begin{cases}
+                A_{+}\\exp\\left(-\\frac{\\Delta t}{\\tau_{+}}\\right) & if\\, \\Delta t>0\\\\
+                A_{-}\\exp\\left(\\frac{\\Delta t}{\\tau_{-}}\\right) & if\\, \\Delta t\\leq0
+            \\end{cases}
 
     in a fully event-driven manner as follows:
 
@@ -1771,6 +1787,21 @@ def create_custom_connectivity_update_model(class_name: str,
     Each variable has an accompanying push and pull function to copy it to and from the device, 
     for variables this has no parameters as illustrated in the above example and for 
     extra global parameters it has a single parameter specifying the size of the array.
+    Within the row update code you have full access to parameters, derived parameters,
+    extra global parameters, presynaptic variables and presynaptic variables references.
+    Postsynaptic and synaptic variables and variables references can only be accessed 
+    from within one of the ``for_each_synapse`` loops illustrated below.
+    Additionally, both the host and row update code cam refer to the following built-in 
+    read-only variables:
+
+    - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
+    - ``row_stride`` which represents the maximum number of synapses which each presynaptic neuron can have (this can be increased via :attr:`.SynapseGroup.max_connections`).
+    - ``num_pre`` which represents the number of presynaptic neurons
+    - ``num_post`` which represents the number of postsynaptic neurons
+    
+    Host code can also access the current number of synapses emanating from each presynaptic
+    neuron using the ``row_length`` array whereas, in row-update code, this contains the number of
+    synapses emanating from the current presynaptic neuron (identified by ``id_pre``).
 
     Args:
         class_name:                 name of the new class (only for debugging)
@@ -1990,7 +2021,7 @@ def create_sparse_connect_init_snippet(class_name: str, params=None,
                                        calc_max_col_len_func: Optional[Callable] = None,
                                        calc_kernel_size_func: Optional[Callable] = None,
                                        extra_global_params: ModelEGPType = None):
-    r"""Creates a new sparse connectivity initialisation snippet
+    """Creates a new sparse connectivity initialisation snippet
     Within the code strings, the parameters, derived parameters and
     extra global parameters defined in this snippet can all be referred to be name.
     Additionally, the code may refer to the following built-in read-only variables
@@ -2053,7 +2084,7 @@ def create_sparse_connect_init_snippet(class_name: str, params=None,
                                                                             1.0 / num_post))
 
     For full details of how maximum column lengths are calculated, you should refer to our paper [Knight2018]_ but, 
-    in short, the number of connections that end up in a column are distributed binomially with :math:`n=\text{num}` and :math:`p=\frac{1}{\text{num_post}}`
+    in short, the number of connections that end up in a column are distributed binomially with :math:`n=\\text{num}` and :math:`p=\\frac{1}{\\text{num_post}}`
     Therefore, we can calculate the maximum column length by looking at the inverse cummulative distribution function (CDF) for the binomial distribution,
     looking at the point in the inverse CDF where there is a 0.9999 chance of the bound being correct when drawing synapses from ``num_post`` columns.
     """
@@ -2093,7 +2124,7 @@ def create_toeplitz_connect_init_snippet(class_name: str, params: ModelParamsTyp
                                          calc_max_row_len_func: Optional[Callable] = None,
                                          calc_kernel_size_func: Optional[Callable] = None,
                                          extra_global_params: ModelEGPType = None):
-    r"""Creates a new toeplitz connectivity initialisation snippet
+    """Creates a new toeplitz connectivity initialisation snippet
     Each *diagonal* of Toeplitz connectivity is initialised independently by running the 
     snippet of code specified using the `diagonal_build_code``.
     Within the code strings, the parameters, derived parameters and
