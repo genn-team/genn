@@ -190,6 +190,7 @@ private:
     //! Custom update model used for this update
     const CustomUpdateModels::Base *m_Model;
 
+    //! Values of custom connectivity update parameters
     std::map<std::string, Type::NumericValue> m_Params;
     std::map<std::string, Type::NumericValue> m_DerivedParams;
     std::map<std::string, InitVarSnippet::Init> m_VarInitialisers;
@@ -279,6 +280,9 @@ public:
     // Public const methods
     //------------------------------------------------------------------------
     const auto &getVarReferences() const{ return m_VarReferences;  }
+
+    //! Get number of neurons custom update operates over
+    /*! This must be the same for all groups whose variables are referenced */
     unsigned int getNumNeurons() const { return m_NumNeurons; }
 
 protected:
@@ -319,7 +323,11 @@ private:
     // Members
     //------------------------------------------------------------------------
     std::map<std::string, Models::VarReference> m_VarReferences;
+
+    //! Number of neurons custom update operates over
+    /*! This must be the same for all groups whose variables are referenced */
     unsigned int m_NumNeurons;
+
     const NeuronGroup *m_DelayNeuronGroup;
 };
 
@@ -374,6 +382,8 @@ private:
     // Members
     //------------------------------------------------------------------------
     std::map<std::string, Models::WUVarReference> m_VarReferences;
+
+    //! Synapse group all variables referenced by custom update are associated with
     SynapseGroupInternal *m_SynapseGroup;
 };
 }   // namespace GeNN
