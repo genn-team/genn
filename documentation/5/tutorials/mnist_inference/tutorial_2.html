@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Classification of the entire test set &mdash; PyGeNN  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css?v=61a4c737" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css?v=f4aeca0c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js?v=b3ba4146"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=4825356b"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.0/dist/embed-amd.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Faster classification of the whole test set" href="tutorial_3.html" />
+    <link rel="prev" title="Classification of a single digit" href="tutorial_1.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            PyGeNN
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../upgrading.html">Upgrading from GeNN 4</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../building_networks.html">Building networks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../simulating_networks.html">Simulating networks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../custom_models.html">Custom models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bibliography.html">Bibliography</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../comp_neuro_101/1_neurons.html">Defining populations of neurons</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../comp_neuro_101/2_synapses.html">Adding synapses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_1.html">Classification of a single digit</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Classification of the entire test set</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_3.html">Faster classification of the whole test set</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mushroom_body/1_first_layer.html">Presenting latency-coded inputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mushroom_body/2_second_layer.html">Adding Kenyon Cells</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mushroom_body/3_second_layer_gain_control.html">Feedback-inhibition based gain control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mushroom_body/4_third_layer.html">Output neurons and learning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mushroom_body/5_testing.html">Testing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../userproject/index.html">User projects</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../source/pygenn.html">Reference documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">PyGeNN</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Classification of the entire test set</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/tutorials/mnist_inference/tutorial_2.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="Classification-of-the-entire-test-set">
+<h1>Classification of the entire test set<a class="headerlink" href="#Classification-of-the-entire-test-set" title="Permalink to this heading"></a></h1>
+<p>In this tutorial we’re going to take the model we developed in the previous tutorial, run it on the entire MNIST testing set and calculate the overall classification accuracy.</p>
+<section id="Install-PyGeNN-wheel-from-Google-Drive">
+<h2>Install PyGeNN wheel from Google Drive<a class="headerlink" href="#Install-PyGeNN-wheel-from-Google-Drive" title="Permalink to this heading"></a></h2>
+<p>Download wheel file</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">get_ipython</span><span class="p">()):</span>
+    <span class="c1">#import IPython</span>
+    <span class="c1">#IPython.core.magics.execution.ExecutionMagics.run.func_defaults[2] = lambda a: a</span>
+    <span class="c1">#%run &quot;../install_collab.ipynb&quot;</span>
+    <span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>gdown<span class="w"> </span>--upgrade
+    <span class="o">!</span>gdown<span class="w"> </span>1V_GzXUDzcFz9QDIpxAD8QNEglcSipssW
+    <span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>pygenn-5.0.0-cp310-cp310-linux_x86_64.whl
+    <span class="o">%</span><span class="k">env</span> CUDA_PATH=/usr/local/cuda
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Requirement already satisfied: gdown in /usr/local/lib/python3.10/dist-packages (5.1.0)
+Requirement already satisfied: beautifulsoup4 in /usr/local/lib/python3.10/dist-packages (from gdown) (4.12.3)
+Requirement already satisfied: filelock in /usr/local/lib/python3.10/dist-packages (from gdown) (3.13.1)
+Requirement already satisfied: requests[socks] in /usr/local/lib/python3.10/dist-packages (from gdown) (2.31.0)
+Requirement already satisfied: tqdm in /usr/local/lib/python3.10/dist-packages (from gdown) (4.66.2)
+Requirement already satisfied: soupsieve&gt;1.2 in /usr/local/lib/python3.10/dist-packages (from beautifulsoup4-&gt;gdown) (2.5)
+Requirement already satisfied: charset-normalizer&lt;4,&gt;=2 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (3.3.2)
+Requirement already satisfied: idna&lt;4,&gt;=2.5 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (3.6)
+Requirement already satisfied: urllib3&lt;3,&gt;=1.21.1 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (2.0.7)
+Requirement already satisfied: certifi&gt;=2017.4.17 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (2024.2.2)
+Requirement already satisfied: PySocks!=1.5.7,&gt;=1.5.6 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (1.7.1)
+Downloading...
+From: https://drive.google.com/uc?id=1V_GzXUDzcFz9QDIpxAD8QNEglcSipssW
+To: /content/pygenn-5.0.0-cp310-cp310-linux_x86_64.whl
+100% 8.29M/8.29M [00:00&lt;00:00, 149MB/s]
+Processing ./pygenn-5.0.0-cp310-cp310-linux_x86_64.whl
+Requirement already satisfied: numpy&gt;=1.17 in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (1.25.2)
+Requirement already satisfied: deprecated in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (1.2.14)
+Requirement already satisfied: psutil in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (5.9.5)
+Requirement already satisfied: wrapt&lt;2,&gt;=1.10 in /usr/local/lib/python3.10/dist-packages (from deprecated-&gt;pygenn==5.0.0) (1.14.1)
+pygenn is already installed with the same version as the provided wheel. Use --force-reinstall to force an installation of the wheel.
+env: CUDA_PATH=/usr/local/cuda
+</pre></div></div>
+</div>
+</section>
+<section id="Download-pre-trained-weights-and-MNIST-test-data">
+<h2>Download pre-trained weights and MNIST test data<a class="headerlink" href="#Download-pre-trained-weights-and-MNIST-test-data" title="Permalink to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>gdown<span class="w"> </span>1cmNL8W0QZZtn3dPHiOQnVjGAYTk6Rhpc
+<span class="o">!</span>gdown<span class="w"> </span>131lCXLEH6aTXnBZ9Nh4eJLSy5DQ6LKSF
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Downloading...
+From: https://drive.google.com/uc?id=1cmNL8W0QZZtn3dPHiOQnVjGAYTk6Rhpc
+To: /content/weights_0_1.npy
+100% 402k/402k [00:00&lt;00:00, 127MB/s]
+Downloading...
+From: https://drive.google.com/uc?id=131lCXLEH6aTXnBZ9Nh4eJLSy5DQ6LKSF
+To: /content/weights_1_2.npy
+100% 5.25k/5.25k [00:00&lt;00:00, 23.6MB/s]
+</pre></div></div>
+</div>
+</section>
+<section id="Install-MNIST-package">
+<h2>Install MNIST package<a class="headerlink" href="#Install-MNIST-package" title="Permalink to this heading"></a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>mnist
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Collecting mnist
+  Downloading mnist-0.2.2-py2.py3-none-any.whl (3.5 kB)
+Requirement already satisfied: numpy in /usr/local/lib/python3.10/dist-packages (from mnist) (1.25.2)
+Installing collected packages: mnist
+Successfully installed mnist-0.2.2
+</pre></div></div>
+</div>
+</section>
+<section id="Build-model">
+<h2>Build model<a class="headerlink" href="#Build-model" title="Permalink to this heading"></a></h2>
+<p>As well as the standard modules and required PyGeNN functions and classes we used in the first tutorial, also import <code class="docutils literal notranslate"><span class="pre">time.perf_counter</span></code> for measuring the performance of our classifier and <code class="docutils literal notranslate"><span class="pre">tqdm.tqdm</span></code> for drawing progress bars</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mnist</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">pygenn</span> <span class="kn">import</span> <span class="p">(</span><span class="n">create_neuron_model</span><span class="p">,</span> <span class="n">create_current_source_model</span><span class="p">,</span>
+                    <span class="n">init_postsynaptic</span><span class="p">,</span> <span class="n">init_weight_update</span><span class="p">,</span> <span class="n">GeNNModel</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">perf_counter</span>
+<span class="kn">from</span> <span class="nn">tqdm.auto</span> <span class="kn">import</span> <span class="n">tqdm</span>
+</pre></div>
+</div>
+</div>
+<p>As before, define some simulation parameters</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">TIMESTEP</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">PRESENT_TIMESTEPS</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">INPUT_CURRENT_SCALE</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="mf">100.0</span>
+</pre></div>
+</div>
+</div>
+<p>Create very similar neuron and current source models. However, to avoid having to download every spike and count them on the CPU, here, we add an additional state variable <code class="docutils literal notranslate"><span class="pre">SpikeCount</span></code> to each neuron which gets incremented in the reset code to count spikes.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Very simple integrate-and-fire neuron model</span>
+<span class="n">if_model</span> <span class="o">=</span> <span class="n">create_neuron_model</span><span class="p">(</span>
+    <span class="s2">&quot;if_model&quot;</span><span class="p">,</span>
+    <span class="n">params</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Vthr&quot;</span><span class="p">],</span>
+    <span class="nb">vars</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;SpikeCount&quot;</span><span class="p">,</span> <span class="s2">&quot;unsigned int&quot;</span><span class="p">)],</span>
+    <span class="n">sim_code</span><span class="o">=</span><span class="s2">&quot;V += Isyn * dt;&quot;</span><span class="p">,</span>
+    <span class="n">reset_code</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    V = 0.0;</span>
+<span class="s2">    SpikeCount++;</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="n">threshold_condition_code</span><span class="o">=</span><span class="s2">&quot;V &gt;= Vthr&quot;</span><span class="p">)</span>
+
+<span class="n">cs_model</span> <span class="o">=</span> <span class="n">create_current_source_model</span><span class="p">(</span>
+    <span class="s2">&quot;cs_model&quot;</span><span class="p">,</span>
+    <span class="nb">vars</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;magnitude&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">)],</span>
+    <span class="n">injection_code</span><span class="o">=</span><span class="s2">&quot;injectCurrent(magnitude);&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Build model, load weights and create neuron, synapse and current source populations as before</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">GeNNModel</span><span class="p">(</span><span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="s2">&quot;tutorial_2&quot;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="n">TIMESTEP</span>
+
+<span class="c1"># Load weights</span>
+<span class="n">weights_0_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;weights_0_1.npy&quot;</span><span class="p">)</span>
+<span class="n">weights_1_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;weights_1_2.npy&quot;</span><span class="p">)</span>
+
+<span class="n">if_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Vthr&quot;</span><span class="p">:</span> <span class="mf">5.0</span><span class="p">}</span>
+<span class="n">if_init</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;V&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;SpikeCount&quot;</span><span class="p">:</span><span class="mi">0</span><span class="p">}</span>
+<span class="n">neurons</span> <span class="o">=</span> <span class="p">[</span><span class="n">model</span><span class="o">.</span><span class="n">add_neuron_population</span><span class="p">(</span><span class="s2">&quot;neuron0&quot;</span><span class="p">,</span> <span class="n">weights_0_1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                       <span class="n">if_model</span><span class="p">,</span> <span class="n">if_params</span><span class="p">,</span> <span class="n">if_init</span><span class="p">),</span>
+           <span class="n">model</span><span class="o">.</span><span class="n">add_neuron_population</span><span class="p">(</span><span class="s2">&quot;neuron1&quot;</span><span class="p">,</span> <span class="n">weights_0_1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                                       <span class="n">if_model</span><span class="p">,</span> <span class="n">if_params</span><span class="p">,</span> <span class="n">if_init</span><span class="p">),</span>
+           <span class="n">model</span><span class="o">.</span><span class="n">add_neuron_population</span><span class="p">(</span><span class="s2">&quot;neuron2&quot;</span><span class="p">,</span> <span class="n">weights_1_2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                                       <span class="n">if_model</span><span class="p">,</span> <span class="n">if_params</span><span class="p">,</span> <span class="n">if_init</span><span class="p">)]</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_synapse_population</span><span class="p">(</span>
+        <span class="s2">&quot;synapse_0_1&quot;</span><span class="p">,</span> <span class="s2">&quot;DENSE&quot;</span><span class="p">,</span>
+        <span class="n">neurons</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">neurons</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">init_weight_update</span><span class="p">(</span><span class="s2">&quot;StaticPulse&quot;</span><span class="p">,</span> <span class="p">{},</span> <span class="p">{</span><span class="s2">&quot;g&quot;</span><span class="p">:</span> <span class="n">weights_0_1</span><span class="o">.</span><span class="n">flatten</span><span class="p">()}),</span>
+        <span class="n">init_postsynaptic</span><span class="p">(</span><span class="s2">&quot;DeltaCurr&quot;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add_synapse_population</span><span class="p">(</span>
+        <span class="s2">&quot;synapse_1_2&quot;</span><span class="p">,</span> <span class="s2">&quot;DENSE&quot;</span><span class="p">,</span>
+        <span class="n">neurons</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">neurons</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+        <span class="n">init_weight_update</span><span class="p">(</span><span class="s2">&quot;StaticPulse&quot;</span><span class="p">,</span> <span class="p">{},</span> <span class="p">{</span><span class="s2">&quot;g&quot;</span><span class="p">:</span> <span class="n">weights_1_2</span><span class="o">.</span><span class="n">flatten</span><span class="p">()}),</span>
+        <span class="n">init_postsynaptic</span><span class="p">(</span><span class="s2">&quot;DeltaCurr&quot;</span><span class="p">));</span>
+
+<span class="n">current_input</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_current_source</span><span class="p">(</span><span class="s2">&quot;current_input&quot;</span><span class="p">,</span> <span class="n">cs_model</span><span class="p">,</span>
+                                         <span class="n">neurons</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">{},</span> <span class="p">{</span><span class="s2">&quot;magnitude&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<p>Run code generator to generate simulation code for model and load it into PyGeNN as before but, here, we don’t want to record any spikes so no need to specify a recording buffer size.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>Just like in the previous tutorial, load testing images and labels and verify their dimensions</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">testing_images</span> <span class="o">=</span> <span class="n">mnist</span><span class="o">.</span><span class="n">test_images</span><span class="p">()</span>
+<span class="n">testing_labels</span> <span class="o">=</span> <span class="n">mnist</span><span class="o">.</span><span class="n">test_labels</span><span class="p">()</span>
+
+<span class="n">testing_images</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">testing_images</span><span class="p">,</span> <span class="p">(</span><span class="n">testing_images</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+<span class="k">assert</span> <span class="n">testing_images</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">weights_0_1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">testing_labels</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="n">weights_1_2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Simulate-model">
+<h2>Simulate model<a class="headerlink" href="#Simulate-model" title="Permalink to this heading"></a></h2>
+<p>In this tutorial we’re going to not only inject current but also access the new spike count variable in the output population and reset the voltages throughout the model. Therefore we need to create some additional memory views</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">current_input_magnitude</span> <span class="o">=</span> <span class="n">current_input</span><span class="o">.</span><span class="n">vars</span><span class="p">[</span><span class="s2">&quot;magnitude&quot;</span><span class="p">]</span>
+<span class="n">output_spike_count</span> <span class="o">=</span> <span class="n">neurons</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">vars</span><span class="p">[</span><span class="s2">&quot;SpikeCount&quot;</span><span class="p">]</span>
+<span class="n">neuron_voltages</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">vars</span><span class="p">[</span><span class="s2">&quot;V&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">neurons</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<p>Now, we define our inference loop. We loop through all of the testing images and for each one:</p>
+<ol class="arabic simple">
+<li><p>Copy the (scaled) image data into the current input memory view and copy it to the GPU</p></li>
+<li><p>Loop through all the neuron populations, zero their membrance voltages and copy these to the GPU</p></li>
+<li><p>Zero the output spike count and copy that to the GPU</p></li>
+<li><p>Simulate the model for <code class="docutils literal notranslate"><span class="pre">PRESENT_TIMESTEPS</span></code></p></li>
+<li><p>Download the spike counts from the output layer</p></li>
+<li><p>If highest spike count corresponds to correct label, increment <code class="docutils literal notranslate"><span class="pre">num_correct</span></code></p></li>
+</ol>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simulate</span>
+<span class="n">num_correct</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">start_time</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">testing_images</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])):</span>
+    <span class="n">current_input_magnitude</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">testing_images</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">INPUT_CURRENT_SCALE</span>
+    <span class="n">current_input_magnitude</span><span class="o">.</span><span class="n">push_to_device</span><span class="p">()</span>
+
+    <span class="c1"># Loop through all voltage variables</span>
+    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">neuron_voltages</span><span class="p">:</span>
+        <span class="c1"># Manually &#39;reset&#39; voltage</span>
+        <span class="n">v</span><span class="o">.</span><span class="n">view</span><span class="p">[:]</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="c1"># Upload</span>
+        <span class="n">v</span><span class="o">.</span><span class="n">push_to_device</span><span class="p">()</span>
+
+    <span class="c1"># Zero spike count</span>
+    <span class="n">output_spike_count</span><span class="o">.</span><span class="n">view</span><span class="p">[:]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">output_spike_count</span><span class="o">.</span><span class="n">push_to_device</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">PRESENT_TIMESTEPS</span><span class="p">):</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">step_time</span><span class="p">()</span>
+
+    <span class="c1"># Download spike count from last layer</span>
+    <span class="n">output_spike_count</span><span class="o">.</span><span class="n">pull_from_device</span><span class="p">()</span>
+
+    <span class="c1"># Find which neuron spiked the most to get prediction</span>
+    <span class="n">predicted_label</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">output_spike_count</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+    <span class="n">true_label</span> <span class="o">=</span> <span class="n">testing_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">predicted_label</span> <span class="o">==</span> <span class="n">true_label</span><span class="p">:</span>
+        <span class="n">num_correct</span> <span class="o">+=</span> <span class="mi">1</span>
+
+<span class="n">end_time</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Accuracy </span><span class="si">{</span><span class="p">((</span><span class="n">num_correct</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb">float</span><span class="p">(</span><span class="n">testing_images</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mf">100.0</span><span class="p">)</span><span class="si">}</span><span class="s2">%%&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Time </span><span class="si">{</span><span class="n">end_time</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_time</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "e2a5b2d7a928414c921ef1945e969ff2"}</script></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Accuracy 97.44%%
+Time 11.930175114999997 seconds
+</pre></div></div>
+</div>
+<script type="application/vnd.jupyter.widget-state+json">
+{"e2a5b2d7a928414c921ef1945e969ff2": {"model_module": "@jupyter-widgets/controls", "model_name": "HBoxModel", "model_module_version": "1.5.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_3822016801b34d7c91f7973ce35b7918", "IPY_MODEL_07ddfc013d83495fa87c3fc1df6a8870", "IPY_MODEL_2659dd42699542deac2a7dadbe9eca61"], "layout": "IPY_MODEL_9f19ea2e563f40409e23389b5dc4a0a8"}}, "3822016801b34d7c91f7973ce35b7918": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "model_module_version": "1.5.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HTMLView", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_0e560bce941d4b28847ce2e58bf19bff", "placeholder": "\u200b", "style": "IPY_MODEL_8c69c9171dae42d2a8fc3867c092ece1", "value": "100%"}}, "07ddfc013d83495fa87c3fc1df6a8870": {"model_module": "@jupyter-widgets/controls", "model_name": "FloatProgressModel", "model_module_version": "1.5.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "FloatProgressModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "ProgressView", "bar_style": "success", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_3d4d8e0017d648bfabd8fcf0c89f4ec8", "max": 10000, "min": 0, "orientation": "horizontal", "style": "IPY_MODEL_2e72f36403e6469c8670f67a3dffb5ef", "value": 10000}}, "2659dd42699542deac2a7dadbe9eca61": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "model_module_version": "1.5.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HTMLView", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_098d0a4e89024f8fa8c61ff3f5c477d5", "placeholder": "\u200b", "style": "IPY_MODEL_bb812d858cf746be9e33b71e67fc04f6", "value": "\u200710000/10000\u2007[00:11&lt;00:00,\u2007901.53it/s]"}}, "9f19ea2e563f40409e23389b5dc4a0a8": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "0e560bce941d4b28847ce2e58bf19bff": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "8c69c9171dae42d2a8fc3867c092ece1": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "model_module_version": "1.5.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "description_width": ""}}, "3d4d8e0017d648bfabd8fcf0c89f4ec8": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "2e72f36403e6469c8670f67a3dffb5ef": {"model_module": "@jupyter-widgets/controls", "model_name": "ProgressStyleModel", "model_module_version": "1.5.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "ProgressStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "bar_color": null, "description_width": ""}}, "098d0a4e89024f8fa8c61ff3f5c477d5": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "bb812d858cf746be9e33b71e67fc04f6": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "model_module_version": "1.5.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "description_width": ""}}}
+</script></section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="tutorial_1.html" class="btn btn-neutral float-left" title="Classification of a single digit" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tutorial_3.html" class="btn btn-neutral float-right" title="Faster classification of the whole test set" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, James Knight, Thomas Nowotny.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

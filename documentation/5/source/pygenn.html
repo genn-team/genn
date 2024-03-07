@@ -1,28 +1,31 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>pygenn package &mdash; PyGeNN  documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
-      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css" />
-      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css" />
-      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=61a4c737" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
 
   
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../_static/doctools.js"></script>
-        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=b3ba4146"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.0/dist/embed-amd.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -55,6 +58,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../simulating_networks.html">Simulating networks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../custom_models.html">Custom models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../bibliography.html">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../userproject/index.html">User projects</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Reference documentation</a></li>
 </ul>
@@ -365,10 +369,10 @@ defining, building and running models</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>precision</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em>) – Data type to use for <code class="docutils literal notranslate"><span class="pre">scalar</span></code> variables</p></li>
+<li><p><strong>precision</strong> (<em>str</em><em> | </em><em>ResolvedType</em>) – Data type to use for <code class="docutils literal notranslate"><span class="pre">scalar</span></code> variables</p></li>
 <li><p><strong>model_name</strong> (<em>str</em>) – Name of the model</p></li>
-<li><p><strong>backend</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Name of backend module to use. Defaults to one to pick ‘best’ backend for your system</p></li>
-<li><p><strong>time_precision</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em>) – data type to use for representing time</p></li>
+<li><p><strong>backend</strong> (<em>str</em><em> | </em><em>None</em>) – Name of backend module to use. Defaults to one to pick ‘best’ backend for your system</p></li>
+<li><p><strong>time_precision</strong> (<em>str</em><em> | </em><em>ResolvedType</em><em> | </em><em>None</em>) – data type to use for representing time</p></li>
 <li><p><strong>genn_log_level</strong> (<a class="reference internal" href="#pygenn.PlogSeverity" title="pygenn._genn.PlogSeverity"><em>PlogSeverity</em></a>) – Log level for GeNN</p></li>
 <li><p><strong>code_gen_log_level</strong> (<a class="reference internal" href="#pygenn.PlogSeverity" title="pygenn._genn.PlogSeverity"><em>PlogSeverity</em></a>) – Log level for GeNN code-generator</p></li>
 <li><p><strong>transpiler_log_level</strong> (<a class="reference internal" href="#pygenn.PlogSeverity" title="pygenn._genn.PlogSeverity"><em>PlogSeverity</em></a>) – Log level for GeNN transpiler</p></li>
@@ -386,12 +390,12 @@ defining, building and running models</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>cs_name</strong> (<em>str</em>) – unique name</p></li>
-<li><p><strong>current_source_model</strong> (<em>Union</em><em>[</em><em>CurrentSourceModelBase</em><em>, </em><em>str</em><em>]</em>) – current source model either as a string referencing a built-in model
+<li><p><strong>current_source_model</strong> (<em>CurrentSourceModelBase</em><em> | </em><em>str</em>) – current source model either as a string referencing a built-in model
 (see <a class="reference internal" href="#module-pygenn.current_source_models" title="pygenn.current_source_models"><code class="xref py py-mod docutils literal notranslate"><span class="pre">current_source_models</span></code></a>) or an instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">CurrentSourceModelBase</span></code>
 (for example returned by <a class="reference internal" href="#pygenn.create_current_source_model" title="pygenn.create_current_source_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_current_source_model()</span></code></a>)</p></li>
 <li><p><strong>pop</strong> (<a class="reference internal" href="#pygenn.NeuronGroup" title="pygenn._genn.NeuronGroup"><em>NeuronGroup</em></a>) – neuron population to inject current into</p></li>
-<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – parameter values for the current source model (see <a href="#id12"><span class="problematic" id="id13">`Parameters`_</span></a>)</p></li>
-<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – initial variable values or initialisers
+<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>) – parameter values for the current source model (see <a href="#id12"><span class="problematic" id="id13">`Parameters`_</span></a>)</p></li>
+<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial variable values or initialisers
 for the current source model (see <a href="#id14"><span class="problematic" id="id15">`Variables`_</span></a>)</p></li>
 <li><p><strong>var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarReference</em><em>]</em>) – variables references to neuron variables in <code class="docutils literal notranslate"><span class="pre">pop</span></code>,
 typically created using <a class="reference internal" href="#pygenn.create_var_ref" title="pygenn.create_var_ref"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_var_ref()</span></code></a>
@@ -422,16 +426,16 @@ typically created using <a class="reference internal" href="#pygenn.create_var_r
 <li><p><strong>group_name</strong> (<em>str</em>) – name of the ‘custom update group’ to include this update in.
 All custom updates in the same group are executed simultaneously.</p></li>
 <li><p><strong>syn_group</strong> (<a class="reference internal" href="#pygenn.SynapseGroup" title="pygenn._genn.SynapseGroup"><em>SynapseGroup</em></a>) – Synapse group to attach custom connectivity update to</p></li>
-<li><p><strong>custom_conn_update_model</strong> (<em>Union</em><em>[</em><em>CustomConnectivityUpdateModelBase</em><em>, </em><em>str</em><em>]</em>) – custom connectivity update model either as a string referencing a built-in model
+<li><p><strong>custom_conn_update_model</strong> (<em>CustomConnectivityUpdateModelBase</em><em> | </em><em>str</em>) – custom connectivity update model either as a string referencing a built-in model
 (see <a class="reference internal" href="#module-pygenn.custom_connectivity_update_models" title="pygenn.custom_connectivity_update_models"><code class="xref py py-mod docutils literal notranslate"><span class="pre">custom_connectivity_update_models</span></code></a>) or an instance of
 <code class="xref py py-class docutils literal notranslate"><span class="pre">CustomConnectivityUpdateModelBaseUpdateModelBase</span></code>
 (for example returned by <a class="reference internal" href="#pygenn.create_custom_connectivity_update_model" title="pygenn.create_custom_connectivity_update_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_custom_connectivity_update_model()</span></code></a>)</p></li>
-<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – parameter values for the custom connectivity model (see <a href="#id18"><span class="problematic" id="id19">`Parameters`_</span></a>)</p></li>
-<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – initial synaptic variable values or
+<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>) – parameter values for the custom connectivity model (see <a href="#id18"><span class="problematic" id="id19">`Parameters`_</span></a>)</p></li>
+<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial synaptic variable values or
 initialisers (see <a href="#id20"><span class="problematic" id="id21">`Variables`_</span></a>)</p></li>
-<li><p><strong>pre_vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – initial presynaptic variable values or
+<li><p><strong>pre_vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial presynaptic variable values or
 initialisers (see <a href="#id22"><span class="problematic" id="id23">`Variables`_</span></a>)</p></li>
-<li><p><strong>post_vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – initial postsynaptic variable values or initialisers
+<li><p><strong>post_vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial postsynaptic variable values or initialisers
 (see <a href="#id24"><span class="problematic" id="id25">`Variables`_</span></a>)</p></li>
 <li><p><strong>var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>WUVarReference</em><em>]</em>) – references to synaptic variables,
 typically created using <a class="reference internal" href="#pygenn.create_wu_var_ref" title="pygenn.create_wu_var_ref"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_wu_var_ref()</span></code></a>
@@ -460,14 +464,14 @@ to access from this update, typically created using
 <li><p><strong>cu_name</strong> (<em>str</em>) – unique name</p></li>
 <li><p><strong>group_name</strong> (<em>str</em>) – name of the ‘custom update group’ to include this update in.
 All custom updates in the same group are executed simultaneously.</p></li>
-<li><p><strong>custom_update_model</strong> (<em>Union</em><em>[</em><em>CustomUpdateModelBase</em><em>, </em><em>str</em><em>]</em>) – custom update model either as a string referencing a built-in model
+<li><p><strong>custom_update_model</strong> (<em>CustomUpdateModelBase</em><em> | </em><em>str</em>) – custom update model either as a string referencing a built-in model
 (see <a class="reference internal" href="#module-pygenn.custom_update_models" title="pygenn.custom_update_models"><code class="xref py py-mod docutils literal notranslate"><span class="pre">custom_update_models</span></code></a>) or an instance of
 <code class="xref py py-class docutils literal notranslate"><span class="pre">CustomUpdateModelBase</span></code>
 (for example returned by <a class="reference internal" href="#pygenn.create_custom_update_model" title="pygenn.create_custom_update_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_custom_update_model()</span></code></a>)</p></li>
-<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – parameter values for the custom update model (see <a href="#id34"><span class="problematic" id="id35">`Parameters`_</span></a>)</p></li>
-<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – initial variable values or initialisers
+<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>) – parameter values for the custom update model (see <a href="#id34"><span class="problematic" id="id35">`Parameters`_</span></a>)</p></li>
+<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial variable values or initialisers
 for the custom update model (see <a href="#id36"><span class="problematic" id="id37">`Variables`_</span></a>)</p></li>
-<li><p><strong>var_refs</strong> (<em>Union</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarReference</em><em>]</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>WUVarReference</em><em>]</em><em>]</em>) – references to variables in other populations to
+<li><p><strong>var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarReference</em><em>] </em><em>| </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>WUVarReference</em><em>]</em>) – references to variables in other populations to
 access from this update, typically created using either
 <a class="reference internal" href="#pygenn.create_var_ref" title="pygenn.create_var_ref"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_var_ref()</span></code></a> or <a class="reference internal" href="#pygenn.create_wu_var_ref" title="pygenn.create_wu_var_ref"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_wu_var_ref()</span></code></a>
 (see <a href="#id38"><span class="problematic" id="id39">`Variables references`_</span></a>).</p></li>
@@ -500,11 +504,11 @@ could then subsequently be triggered using the name of it’s update group with:
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>pop_name</strong> (<em>str</em>) – unique name</p></li>
 <li><p><strong>num_neurons</strong> (<em>int</em>) – number of neurons</p></li>
-<li><p><strong>neuron</strong> (<em>Union</em><em>[</em><em>NeuronModelBase</em><em>, </em><em>str</em><em>]</em>) – neuron model either as a string referencing a built-in model
+<li><p><strong>neuron</strong> (<em>NeuronModelBase</em><em> | </em><em>str</em>) – neuron model either as a string referencing a built-in model
 (see <a class="reference internal" href="#module-pygenn.neuron_models" title="pygenn.neuron_models"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neuron_models</span></code></a>) or an instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronModelBase</span></code>
 (for example returned by <a class="reference internal" href="#pygenn.create_neuron_model" title="pygenn.create_neuron_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_neuron_model()</span></code></a>)</p></li>
-<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – parameter values for the neuron model (see <a href="#id42"><span class="problematic" id="id43">`Parameters`_</span></a>)</p></li>
-<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – initial variable values or initialisers
+<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>) – parameter values for the neuron model (see <a href="#id42"><span class="problematic" id="id43">`Parameters`_</span></a>)</p></li>
+<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial variable values or initialisers
 for the neuron model (see <a href="#id44"><span class="problematic" id="id45">`Variables`_</span></a>)</p></li>
 </ul>
 </dd>
@@ -529,14 +533,14 @@ the standard set of ‘tonic spiking’ parameters could be added to a model as 
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>pop_name</strong> (<em>str</em>) – unique name</p></li>
-<li><p><strong>matrix_type</strong> (<em>Union</em><em>[</em><a class="reference internal" href="#pygenn.SynapseMatrixType" title="pygenn._genn.SynapseMatrixType"><em>SynapseMatrixType</em></a><em>, </em><em>str</em><em>]</em>) – type of connectivity to use</p></li>
+<li><p><strong>matrix_type</strong> (<a class="reference internal" href="#pygenn.SynapseMatrixType" title="pygenn._genn.SynapseMatrixType"><em>SynapseMatrixType</em></a><em> | </em><em>str</em>) – type of connectivity to use</p></li>
 <li><p><strong>source</strong> (<a class="reference internal" href="#pygenn.NeuronGroup" title="pygenn._genn.NeuronGroup"><em>NeuronGroup</em></a>) – source neuron group</p></li>
 <li><p><strong>target</strong> (<a class="reference internal" href="#pygenn.NeuronGroup" title="pygenn._genn.NeuronGroup"><em>NeuronGroup</em></a>) – target neuron group</p></li>
 <li><p><strong>weight_update_init</strong> – initialiser for weight update model, typically
 created using <a class="reference internal" href="#pygenn.init_weight_update" title="pygenn.init_weight_update"><code class="xref py py-func docutils literal notranslate"><span class="pre">init_weight_update()</span></code></a></p></li>
 <li><p><strong>postsynaptic_init</strong> – initialiser for postsynaptic model, typically
 created using <a class="reference internal" href="#pygenn.init_postsynaptic" title="pygenn.init_postsynaptic"><code class="xref py py-func docutils literal notranslate"><span class="pre">init_postsynaptic()</span></code></a></p></li>
-<li><p><strong>connectivity_init</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>SparseConnectivityInit</em><em>, </em><em>ToeplitzConnectivityInit</em><em>]</em>) – initialiser for connectivity, typically created
+<li><p><strong>connectivity_init</strong> (<em>None</em><em> | </em><em>SparseConnectivityInit</em><em> | </em><em>ToeplitzConnectivityInit</em>) – initialiser for connectivity, typically created
 using <a class="reference internal" href="#pygenn.init_sparse_connectivity" title="pygenn.init_sparse_connectivity"><code class="xref py py-func docutils literal notranslate"><span class="pre">init_sparse_connectivity()</span></code></a> when
 <code class="docutils literal notranslate"><span class="pre">matrix_type</span></code> is <a class="reference internal" href="#pygenn.SynapseMatrixType.BITMASK" title="pygenn.SynapseMatrixType.BITMASK"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SynapseMatrixType.BITMASK</span></code></a>,
 <a class="reference internal" href="#pygenn.SynapseMatrixType.SPARSE" title="pygenn.SynapseMatrixType.SPARSE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SynapseMatrixType.SPARSE</span></code></a>,
@@ -655,7 +659,7 @@ Only available if <a class="reference internal" href="#pygenn.ModelSpec.timing_e
 <dd><p>Load the previously built model into memory;</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>num_recording_timesteps</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Number of timesteps to record spikes
+<dd class="field-odd"><p><strong>num_recording_timesteps</strong> (<em>int</em><em> | </em><em>None</em>) – Number of timesteps to record spikes
 for. <a class="reference internal" href="#pygenn.GeNNModel.pull_recording_buffers_from_device" title="pygenn.GeNNModel.pull_recording_buffers_from_device"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pull_recording_buffers_from_device()</span></code></a>
 must be called after this number of timesteps</p>
 </dd>
@@ -1631,17 +1635,17 @@ configured using the <code class="xref py py-attr docutils literal notranslate">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>class_name</strong> (<em>str</em>) – name of the new class (only for debugging)</p></li>
-<li><p><strong>params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em><em>]</em>) – name and optional types of model parameters</p></li>
-<li><p><strong>vars</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>, </em><a class="reference internal" href="#pygenn.VarAccess" title="pygenn._genn.VarAccess"><em>VarAccess</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and optional variable access
+<li><p><strong>params</strong> (<em>Sequence</em><em>[</em><em>str</em><em> | </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – name and optional types of model parameters</p></li>
+<li><p><strong>vars</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>] </em><em>| </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>, </em><a class="reference internal" href="#pygenn.VarAccess" title="pygenn._genn.VarAccess"><em>VarAccess</em></a><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and optional variable access
 modifiers of model variables</p></li>
-<li><p><strong>neuron_var_refs</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>, </em><a class="reference internal" href="#pygenn.VarAccessMode" title="pygenn._genn.VarAccessMode"><em>VarAccessMode</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and optional variable access
+<li><p><strong>neuron_var_refs</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>] </em><em>| </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>, </em><a class="reference internal" href="#pygenn.VarAccessMode" title="pygenn._genn.VarAccessMode"><em>VarAccessMode</em></a><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and optional variable access
 of references to be assigned to variables
 in neuron population current source is attached to</p></li>
-<li><p><strong>derived_params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and callables to calculate
+<li><p><strong>derived_params</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and callables to calculate
 derived parameter values from params</p></li>
-<li><p><strong>injection_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – string containing the simulation code
+<li><p><strong>injection_code</strong> (<em>str</em><em> | </em><em>None</em>) – string containing the simulation code
 statements to be run every timestep</p></li>
-<li><p><strong>extra_global_params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em>) – names and types of model
+<li><p><strong>extra_global_params</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – names and types of model
 extra global parameters</p></li>
 </ul>
 </dd>
@@ -1686,16 +1690,16 @@ synapses emanating from the current presynaptic neuron (identified by <code clas
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>class_name</strong> (<em>str</em>) – name of the new class (only for debugging)</p></li>
-<li><p><strong>params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em><em>]</em>) – name and optional types of model parameters</p></li>
-<li><p><strong>vars</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>, </em><a class="reference internal" href="#pygenn.VarAccess" title="pygenn._genn.VarAccess"><em>VarAccess</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and optional variable access
+<li><p><strong>params</strong> (<em>Sequence</em><em>[</em><em>str</em><em> | </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – name and optional types of model parameters</p></li>
+<li><p><strong>vars</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>] </em><em>| </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>, </em><a class="reference internal" href="#pygenn.VarAccess" title="pygenn._genn.VarAccess"><em>VarAccess</em></a><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and optional variable access
 modifiers of per-synapse model variables</p></li>
-<li><p><strong>pre_vars</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>, </em><a class="reference internal" href="#pygenn.VarAccess" title="pygenn._genn.VarAccess"><em>VarAccess</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and optional variable access
+<li><p><strong>pre_vars</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>] </em><em>| </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>, </em><a class="reference internal" href="#pygenn.VarAccess" title="pygenn._genn.VarAccess"><em>VarAccess</em></a><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and optional variable access
 modifiers of per-presynaptic neuron model variables</p></li>
 <li><p><strong>names</strong> (<em>post_vars</em>) – modifiers of per-postsynaptic neuron model variables</p></li>
 <li><p><strong>access</strong> (<em>types and optional variable</em>) – modifiers of per-postsynaptic neuron model variables</p></li>
-<li><p><strong>derived_params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and callables to calculate
+<li><p><strong>derived_params</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and callables to calculate
 derived parameter values from params</p></li>
-<li><p><strong>var_refs</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>, </em><a class="reference internal" href="#pygenn.VarAccessMode" title="pygenn._genn.VarAccessMode"><em>VarAccessMode</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and optional variable access
+<li><p><strong>var_refs</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>] </em><em>| </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>, </em><a class="reference internal" href="#pygenn.VarAccessMode" title="pygenn._genn.VarAccessMode"><em>VarAccessMode</em></a><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and optional variable access
 of references to be assigned to synaptic variables</p></li>
 <li><p><strong>pre_neuron_var_refs</strong> – names, types and optional variable access
 of references to be assigned to presynaptic
@@ -1703,20 +1707,22 @@ neuron variables</p></li>
 <li><p><strong>post_neuron_var_refs</strong> – names, types and optional variable access
 of references to be assigned to postsynaptic
 neuron variables</p></li>
-<li><p><strong>row_update_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – string containing the code statements
+<li><p><strong>row_update_code</strong> (<em>str</em><em> | </em><em>None</em>) – string containing the code statements
 to be run when custom update is launched</p></li>
-<li><p><strong>host_update_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – string containing the code statements to be run
+<li><p><strong>host_update_code</strong> (<em>str</em><em> | </em><em>None</em>) – string containing the code statements to be run
 on CPU when custom connectivity update is launched</p></li>
 <li><p><strong>extra_global_params</strong> – names and types of model
 extra global parameters</p></li>
 <li><p><strong>extra_global_param_refs</strong> – names and types of extra global
 parameter references</p></li>
-<li><p><strong>post_vars</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>, </em><a class="reference internal" href="#pygenn.VarAccess" title="pygenn._genn.VarAccess"><em>VarAccess</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>pre_var_refs</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>, </em><a class="reference internal" href="#pygenn.VarAccessMode" title="pygenn._genn.VarAccessMode"><em>VarAccessMode</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>post_var_refs</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>, </em><a class="reference internal" href="#pygenn.VarAccessMode" title="pygenn._genn.VarAccessMode"><em>VarAccessMode</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>post_vars</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>] </em><em>| </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>, </em><a class="reference internal" href="#pygenn.VarAccess" title="pygenn._genn.VarAccess"><em>VarAccess</em></a><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>pre_var_refs</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>] </em><em>| </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>, </em><a class="reference internal" href="#pygenn.VarAccessMode" title="pygenn._genn.VarAccessMode"><em>VarAccessMode</em></a><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
+<li><p><strong>post_var_refs</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>] </em><em>| </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>, </em><a class="reference internal" href="#pygenn.VarAccessMode" title="pygenn._genn.VarAccessMode"><em>VarAccessMode</em></a><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 </dl>
+<section id="parallel-synapse-iteration-and-removal">
+<h2>Parallel synapse iteration and removal<a class="headerlink" href="#parallel-synapse-iteration-and-removal" title="Permalink to this heading"></a></h2>
 <p>The main GPU operation that custom connectivity updates expose is the ability to generate per-presynaptic neuron update code. This can be used to implement a very simple model which removes ‘diagonals’ from the connection matrix:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">remove_diagonal_model</span> <span class="o">=</span> <span class="n">pygenn</span><span class="o">.</span><span class="n">create_custom_connectivity_update_model</span><span class="p">(</span>
     <span class="s2">&quot;remove_diagonal&quot;</span><span class="p">,</span>
@@ -1731,6 +1737,9 @@ parameter references</p></li>
 <span class="sd">        &quot;&quot;&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+</section>
+<section id="parallel-synapse-creation">
+<h2>Parallel synapse creation<a class="headerlink" href="#parallel-synapse-creation" title="Permalink to this heading"></a></h2>
 <p>Similarly you could implement a custom connectivity model which adds diagonals back into the connection matrix like this:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_diagonal_model</span> <span class="o">=</span> <span class="n">pygenn</span><span class="o">.</span><span class="n">create_custom_connectivity_update_model</span><span class="p">(</span>
     <span class="s2">&quot;add_diagonal&quot;</span><span class="p">,</span>
@@ -1750,6 +1759,9 @@ parameter references</p></li>
 <span class="sd">        &quot;&quot;&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+</section>
+<section id="host-updates">
+<h2>Host updates<a class="headerlink" href="#host-updates" title="Permalink to this heading"></a></h2>
 <p>Some common connectivity update scenarios involve some computation which can’t be easily parallelized. If, for example you wanted to determine which elements on each row you wanted to remove on the host, you can include <code class="docutils literal notranslate"><span class="pre">host_update_code</span></code> which gets run before the row update code:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">remove_diagonal_model</span> <span class="o">=</span> <span class="n">pygenn</span><span class="o">.</span><span class="n">create_custom_connectivity_update_model</span><span class="p">(</span>
     <span class="s2">&quot;remove_diagonal&quot;</span><span class="p">,</span>
@@ -1772,6 +1784,7 @@ parameter references</p></li>
 <span class="sd">        &quot;&quot;&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+</section>
 </dd></dl>
 
 <dl class="py function">
@@ -1803,17 +1816,17 @@ Additionally, the code may refer to the following built-in read-only variables</
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>class_name</strong> (<em>str</em>) – name of the new class (only for debugging)</p></li>
-<li><p><strong>params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em><em>]</em>) – name and optional types of model parameters</p></li>
-<li><p><strong>vars</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>, </em><a class="reference internal" href="#pygenn.CustomUpdateVarAccess" title="pygenn._genn.CustomUpdateVarAccess"><em>CustomUpdateVarAccess</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and optional variable access
+<li><p><strong>params</strong> (<em>Sequence</em><em>[</em><em>str</em><em> | </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – name and optional types of model parameters</p></li>
+<li><p><strong>vars</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>] </em><em>| </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>, </em><a class="reference internal" href="#pygenn.CustomUpdateVarAccess" title="pygenn._genn.CustomUpdateVarAccess"><em>CustomUpdateVarAccess</em></a><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and optional variable access
 modifiers of model variables</p></li>
-<li><p><strong>var_refs</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>, </em><a class="reference internal" href="#pygenn.VarAccessMode" title="pygenn._genn.VarAccessMode"><em>VarAccessMode</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and optional variable access
+<li><p><strong>var_refs</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>] </em><em>| </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>, </em><a class="reference internal" href="#pygenn.VarAccessMode" title="pygenn._genn.VarAccessMode"><em>VarAccessMode</em></a><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and optional variable access
 of references to be assigned to variables
 in population(s) custom update is attached to</p></li>
-<li><p><strong>derived_params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and callables to calculate
+<li><p><strong>derived_params</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and callables to calculate
 derived parameter values from params</p></li>
-<li><p><strong>update_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – string containing the code statements
+<li><p><strong>update_code</strong> (<em>str</em><em> | </em><em>None</em>) – string containing the code statements
 to be run when custom update is launched</p></li>
-<li><p><strong>extra_global_params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em>) – names and types of model
+<li><p><strong>extra_global_params</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – names and types of model
 extra global parameters</p></li>
 <li><p><strong>extra_global_param_refs</strong> – names and types of extra global
 parameter references</p></li>
@@ -1831,6 +1844,8 @@ parameter references</p></li>
 <p>When used in a model with batch size &gt; 1, whether custom updates of this sort are batched or not depends on the variables their references point to.
 If any referenced variables have <a class="reference internal" href="#pygenn.VarAccess.READ_ONLY_DUPLICATE" title="pygenn.VarAccess.READ_ONLY_DUPLICATE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">VarAccess.READ_ONLY_DUPLICATE</span></code></a> or <a class="reference internal" href="#pygenn.VarAccess.READ_WRITE" title="pygenn.VarAccess.READ_WRITE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">VarAccess.READ_WRITE</span></code></a> access modes, then the update will be batched
 and any variables associated with the custom update with <a class="reference internal" href="#pygenn.VarAccess.READ_ONLY_DUPLICATE" title="pygenn.VarAccess.READ_ONLY_DUPLICATE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">VarAccess.READ_ONLY_DUPLICATE</span></code></a> or <a class="reference internal" href="#pygenn.VarAccess.READ_WRITE" title="pygenn.VarAccess.READ_WRITE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">VarAccess.READ_WRITE</span></code></a> access modes will be duplicated across the batches.</p>
+<section id="batch-reduction">
+<h2>Batch reduction<a class="headerlink" href="#batch-reduction" title="Permalink to this heading"></a></h2>
 <p>As well as the standard variable access modes described previously, custom updates support variables with ‘batch reduction’ access modes
 such as <a class="reference internal" href="#pygenn.CustomUpdateVarAccess.REDUCE_BATCH_SUM" title="pygenn.CustomUpdateVarAccess.REDUCE_BATCH_SUM"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CustomUpdateVarAccess.REDUCE_BATCH_SUM</span></code></a> and <a class="reference internal" href="#pygenn.CustomUpdateVarAccess.REDUCE_BATCH_MAX" title="pygenn.CustomUpdateVarAccess.REDUCE_BATCH_MAX"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CustomUpdateVarAccess.REDUCE_BATCH_MAX</span></code></a>.
 These access modes allow values read from variables duplicated across batches to be reduced into variables that are shared across batches.
@@ -1848,6 +1863,9 @@ For example, in a gradient-based learning scenario, a model like this could be u
 </div>
 <p>Batch reductions can also be performed into variable references with
 the <a class="reference internal" href="#pygenn.VarAccessMode.REDUCE_SUM" title="pygenn.VarAccessMode.REDUCE_SUM"><code class="xref py py-attr docutils literal notranslate"><span class="pre">VarAccessMode.REDUCE_SUM</span></code></a> or <a class="reference internal" href="#pygenn.VarAccessMode.REDUCE_MAX" title="pygenn.VarAccessMode.REDUCE_MAX"><code class="xref py py-attr docutils literal notranslate"><span class="pre">VarAccessMode.REDUCE_MAX</span></code></a> access modes.</p>
+</section>
+<section id="neuron-reduction">
+<h2>Neuron reduction<a class="headerlink" href="#neuron-reduction" title="Permalink to this heading"></a></h2>
 <p>Similarly to the batch reduction modes discussed previously, custom updates also support variables with several ‘neuron reduction’ access modes
 such as <a class="reference internal" href="#pygenn.CustomUpdateVarAccess.REDUCE_NEURON_SUM" title="pygenn.CustomUpdateVarAccess.REDUCE_NEURON_SUM"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CustomUpdateVarAccess.REDUCE_NEURON_SUM</span></code></a> and <a class="reference internal" href="#pygenn.CustomUpdateVarAccess.REDUCE_NEURON_MAX" title="pygenn.CustomUpdateVarAccess.REDUCE_NEURON_MAX"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CustomUpdateVarAccess.REDUCE_NEURON_MAX</span></code></a>.</p>
 <p>These access modes allow values read from per-neuron variables to be reduced into variables that are shared across neurons.
@@ -1864,6 +1882,7 @@ For example, a model like this could be used to calculate the maximum value of a
 </div>
 <p>Again, like batch reductions, neuron reductions can also be performed into variable references with
 the <a class="reference internal" href="#pygenn.VarAccessMode.REDUCE_SUM" title="pygenn.VarAccessMode.REDUCE_SUM"><code class="xref py py-attr docutils literal notranslate"><span class="pre">VarAccessMode.REDUCE_SUM</span></code></a> or <a class="reference internal" href="#pygenn.VarAccessMode.REDUCE_MAX" title="pygenn.VarAccessMode.REDUCE_MAX"><code class="xref py py-attr docutils literal notranslate"><span class="pre">VarAccessMode.REDUCE_MAX</span></code></a> access modes.</p>
+</section>
 </dd></dl>
 
 <dl class="py function">
@@ -1910,19 +1929,19 @@ Additionally, the code may refer to the following built-in read-only variables</
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>class_name</strong> (<em>str</em>) – name of the new class (only for debugging)</p></li>
-<li><p><strong>params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em><em>]</em>) – name and optional types of model parameters</p></li>
-<li><p><strong>vars</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>, </em><a class="reference internal" href="#pygenn.VarAccess" title="pygenn._genn.VarAccess"><em>VarAccess</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and optional variable access
+<li><p><strong>params</strong> (<em>Sequence</em><em>[</em><em>str</em><em> | </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – name and optional types of model parameters</p></li>
+<li><p><strong>vars</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>] </em><em>| </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>, </em><a class="reference internal" href="#pygenn.VarAccess" title="pygenn._genn.VarAccess"><em>VarAccess</em></a><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and optional variable access
 modifiers of model variables</p></li>
-<li><p><strong>derived_params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and callables to calculate
+<li><p><strong>derived_params</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and callables to calculate
 derived parameter values from params</p></li>
-<li><p><strong>sim_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – string containing the simulation code
+<li><p><strong>sim_code</strong> (<em>str</em><em> | </em><em>None</em>) – string containing the simulation code
 statements to be run every timestep</p></li>
-<li><p><strong>threshold_condition_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – string containing a threshold condition
+<li><p><strong>threshold_condition_code</strong> (<em>str</em><em> | </em><em>None</em>) – string containing a threshold condition
 expression to test whether a spike
 should be emitted</p></li>
-<li><p><strong>reset_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – string containing the reset code
+<li><p><strong>reset_code</strong> (<em>str</em><em> | </em><em>None</em>) – string containing the reset code
 statements to run after emitting a spike</p></li>
-<li><p><strong>extra_global_params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em>) – names and types of model
+<li><p><strong>extra_global_params</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – names and types of model
 extra global parameters</p></li>
 <li><p><strong>additional_input_vars</strong> – list of tuples with names and types as
 strings and initial values of additional
@@ -1950,6 +1969,8 @@ logic to be generated?</p></li>
     <span class="nb">vars</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">,</span> <span class="n">pygenn</span><span class="o">.</span><span class="n">VarAccess</span><span class="o">.</span><span class="n">READ_WRITE</span><span class="p">)])</span>
 </pre></div>
 </div>
+<section id="additional-input-variables">
+<h2>Additional input variables<a class="headerlink" href="#additional-input-variables" title="Permalink to this heading"></a></h2>
 <p>Normally, neuron models receive the linear sum of the inputs coming from all of their synaptic inputs through the <code class="docutils literal notranslate"><span class="pre">Isyn</span></code> variable.
 However neuron models can define additional input variables - allowing input from different synaptic inputs to be combined non-linearly.
 For example, if we wanted our leaky integrator to operate on the the product of two input currents, we could modify our model as follows:</p>
@@ -1961,6 +1982,7 @@ For example, if we wanted our leaky integrator to operate on the the product of 
 <span class="sd">    &quot;&quot;&quot;</span><span class="p">,</span>
 </pre></div>
 </div>
+</section>
 </dd></dl>
 
 <dl class="py function">
@@ -1992,14 +2014,14 @@ configured using the <a class="reference internal" href="#pygenn.SynapseGroup.po
 <li><p><strong>params</strong> – name and optional types of model parameters</p></li>
 <li><p><strong>vars</strong> – names, types and optional variable access
 modifiers of model variables</p></li>
-<li><p><strong>neuron_var_refs</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>, </em><a class="reference internal" href="#pygenn.VarAccessMode" title="pygenn._genn.VarAccessMode"><em>VarAccessMode</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and optional variable access
+<li><p><strong>neuron_var_refs</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>] </em><em>| </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>, </em><a class="reference internal" href="#pygenn.VarAccessMode" title="pygenn._genn.VarAccessMode"><em>VarAccessMode</em></a><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and optional variable access
 of references to be assigned to postsynaptic
 neuron variables</p></li>
-<li><p><strong>derived_params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and callables to calculate
+<li><p><strong>derived_params</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and callables to calculate
 derived parameter values from params</p></li>
-<li><p><strong>sim_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – string containing the simulation code
+<li><p><strong>sim_code</strong> (<em>str</em><em> | </em><em>None</em>) – string containing the simulation code
 statements to be run every timestep</p></li>
-<li><p><strong>extra_global_params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em>) – names and types of model
+<li><p><strong>extra_global_params</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – names and types of model
 extra global parameters</p></li>
 </ul>
 </dd>
@@ -2056,17 +2078,17 @@ and, in <code class="docutils literal notranslate"><span class="pre">col_build_c
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>class_name</strong> (<em>str</em>) – name of the snippet (only for debugging)</p></li>
 <li><p><strong>params</strong> – name and optional types of model parameters</p></li>
-<li><p><strong>derived_params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and callables to calculate
+<li><p><strong>derived_params</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and callables to calculate
 derived parameter values from paramss</p></li>
-<li><p><strong>row_build_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – code for building connectivity row by row</p></li>
-<li><p><strong>col_build_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – code for building connectivity column by column</p></li>
-<li><p><strong>calc_max_row_len_func</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>) – used to calculate the maximum
+<li><p><strong>row_build_code</strong> (<em>str</em><em> | </em><em>None</em>) – code for building connectivity row by row</p></li>
+<li><p><strong>col_build_code</strong> (<em>str</em><em> | </em><em>None</em>) – code for building connectivity column by column</p></li>
+<li><p><strong>calc_max_row_len_func</strong> (<em>Callable</em><em> | </em><em>None</em>) – used to calculate the maximum
 row length of synaptic matrix created using this snippet</p></li>
-<li><p><strong>calc_max_col_len_func</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>) – used to calculate the maximum
+<li><p><strong>calc_max_col_len_func</strong> (<em>Callable</em><em> | </em><em>None</em>) – used to calculate the maximum
 column length of synaptic matrix created using this snippet</p></li>
-<li><p><strong>calc_kernel_size_func</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>) – used to calculate the size of the kernel if snippet requires one</p></li>
-<li><p><strong>extra_global_params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em>) – names and types of snippet extra global parameters</p></li>
-<li><p><strong>param_names</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>calc_kernel_size_func</strong> (<em>Callable</em><em> | </em><em>None</em>) – used to calculate the size of the kernel if snippet requires one</p></li>
+<li><p><strong>extra_global_params</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – names and types of snippet extra global parameters</p></li>
+<li><p><strong>param_names</strong> (<em>Sequence</em><em>[</em><em>str</em><em> | </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -2121,14 +2143,14 @@ and, inside this, <cite>id_pre`</cite> will represent the index of the spiking p
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>class_name</strong> (<em>str</em>) – name of the snippet (only for debugging)</p></li>
-<li><p><strong>params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em><em>]</em>) – name and optional types of model parameters</p></li>
-<li><p><strong>derived_params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and callables to calculate
+<li><p><strong>params</strong> (<em>Sequence</em><em>[</em><em>str</em><em> | </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – name and optional types of model parameters</p></li>
+<li><p><strong>derived_params</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and callables to calculate
 derived parameter values from paramss</p></li>
-<li><p><strong>diagonal_build_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – code for building connectivity row by row</p></li>
-<li><p><strong>calc_max_row_len_func</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>) – used to calculate the maximum
+<li><p><strong>diagonal_build_code</strong> (<em>str</em><em> | </em><em>None</em>) – code for building connectivity row by row</p></li>
+<li><p><strong>calc_max_row_len_func</strong> (<em>Callable</em><em> | </em><em>None</em>) – used to calculate the maximum
 row length of synaptic matrix created using this snippet</p></li>
-<li><p><strong>calc_kernel_size_func</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>) – used to calculate the size of the kernel</p></li>
-<li><p><strong>extra_global_params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em>) – names and types of snippet extra global parameters</p></li>
+<li><p><strong>calc_kernel_size_func</strong> (<em>Callable</em><em> | </em><em>None</em>) – used to calculate the size of the kernel</p></li>
+<li><p><strong>extra_global_params</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – names and types of snippet extra global parameters</p></li>
 </ul>
 </dd>
 </dl>
@@ -2191,10 +2213,10 @@ the write-only <code class="docutils literal notranslate"><span class="pre">valu
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>class_name</strong> (<em>str</em>) – name of the new model (only for debugging)</p></li>
-<li><p><strong>params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em><em>]</em>) – name and optional types of model parameters</p></li>
-<li><p><strong>derived_params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and callables to calculate
+<li><p><strong>params</strong> (<em>Sequence</em><em>[</em><em>str</em><em> | </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – name and optional types of model parameters</p></li>
+<li><p><strong>derived_params</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and callables to calculate
 derived parameter values from paramss</p></li>
-<li><p><strong>var_init_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – string containing the code statements
+<li><p><strong>var_init_code</strong> (<em>str</em><em> | </em><em>None</em>) – string containing the code statements
 required to initialise the variable</p></li>
 <li><p><strong>extra_global_params</strong> – names and types of model
 extra global parameters</p></li>
@@ -2273,50 +2295,50 @@ a post-synaptic model but added directly into the indicated presynaptic target i
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>class_name</strong> (<em>str</em>) – name of the new class (only for debugging)</p></li>
-<li><p><strong>params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em><em>]</em>) – name and optional types of model parameters</p></li>
-<li><p><strong>vars</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>, </em><a class="reference internal" href="#pygenn.VarAccess" title="pygenn._genn.VarAccess"><em>VarAccess</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and optional variable access
+<li><p><strong>params</strong> (<em>Sequence</em><em>[</em><em>str</em><em> | </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – name and optional types of model parameters</p></li>
+<li><p><strong>vars</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>] </em><em>| </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>, </em><a class="reference internal" href="#pygenn.VarAccess" title="pygenn._genn.VarAccess"><em>VarAccess</em></a><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and optional variable access
 modifiers of per-synapse model variables</p></li>
-<li><p><strong>pre_vars</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>, </em><a class="reference internal" href="#pygenn.VarAccess" title="pygenn._genn.VarAccess"><em>VarAccess</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and optional variable access
+<li><p><strong>pre_vars</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>] </em><em>| </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>, </em><a class="reference internal" href="#pygenn.VarAccess" title="pygenn._genn.VarAccess"><em>VarAccess</em></a><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and optional variable access
 modifiers of per-presynaptic neuron model variables</p></li>
 <li><p><strong>names</strong> (<em>post_vars</em>) – modifiers of per-postsynaptic neuron model variables</p></li>
 <li><p><strong>access</strong> (<em>types and optional variable</em>) – modifiers of per-postsynaptic neuron model variables</p></li>
-<li><p><strong>pre_neuron_var_refs</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>, </em><a class="reference internal" href="#pygenn.VarAccessMode" title="pygenn._genn.VarAccessMode"><em>VarAccessMode</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and optional variable access
+<li><p><strong>pre_neuron_var_refs</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>] </em><em>| </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>, </em><a class="reference internal" href="#pygenn.VarAccessMode" title="pygenn._genn.VarAccessMode"><em>VarAccessMode</em></a><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and optional variable access
 of references to be assigned to presynaptic
 neuron variables</p></li>
-<li><p><strong>post_neuron_var_refs</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>, </em><a class="reference internal" href="#pygenn.VarAccessMode" title="pygenn._genn.VarAccessMode"><em>VarAccessMode</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and optional variable access
+<li><p><strong>post_neuron_var_refs</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>] </em><em>| </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>, </em><a class="reference internal" href="#pygenn.VarAccessMode" title="pygenn._genn.VarAccessMode"><em>VarAccessMode</em></a><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and optional variable access
 of references to be assigned to postsynaptic
 neuron variables</p></li>
-<li><p><strong>derived_params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em>) – names, types and callables to calculate
+<li><p><strong>derived_params</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and callables to calculate
 derived parameter values from params</p></li>
-<li><p><strong>pre_spike_syn_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – string with the presynaptic spike code</p></li>
-<li><p><strong>pre_event_syn_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – string with the presynaptic event code</p></li>
-<li><p><strong>post_event_syn_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – string with the postsynaptic event code</p></li>
-<li><p><strong>post_spike_syn_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – string with the postsynaptic spike code</p></li>
-<li><p><strong>synapse_dynamics_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – string with the synapse dynamics code</p></li>
-<li><p><strong>pre_event_threshold_condition_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – string with the presynaptic event threshold
+<li><p><strong>pre_spike_syn_code</strong> (<em>str</em><em> | </em><em>None</em>) – string with the presynaptic spike code</p></li>
+<li><p><strong>pre_event_syn_code</strong> (<em>str</em><em> | </em><em>None</em>) – string with the presynaptic event code</p></li>
+<li><p><strong>post_event_syn_code</strong> (<em>str</em><em> | </em><em>None</em>) – string with the postsynaptic event code</p></li>
+<li><p><strong>post_spike_syn_code</strong> (<em>str</em><em> | </em><em>None</em>) – string with the postsynaptic spike code</p></li>
+<li><p><strong>synapse_dynamics_code</strong> (<em>str</em><em> | </em><em>None</em>) – string with the synapse dynamics code</p></li>
+<li><p><strong>pre_event_threshold_condition_code</strong> (<em>str</em><em> | </em><em>None</em>) – string with the presynaptic event threshold
 condition code</p></li>
-<li><p><strong>post_event_threshold_condition_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – string with the postsynaptic event threshold
+<li><p><strong>post_event_threshold_condition_code</strong> (<em>str</em><em> | </em><em>None</em>) – string with the postsynaptic event threshold
 condition code</p></li>
-<li><p><strong>pre_spike_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – string with the code run once per
+<li><p><strong>pre_spike_code</strong> (<em>str</em><em> | </em><em>None</em>) – string with the code run once per
 spiking presynaptic neuron. Only
 presynaptic variables and
 variable references can be
 referenced from this code.</p></li>
-<li><p><strong>post_spike_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – string with the code run once per
+<li><p><strong>post_spike_code</strong> (<em>str</em><em> | </em><em>None</em>) – string with the code run once per
 spiking postsynaptic neuron</p></li>
-<li><p><strong>pre_dynamics_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – string with the code run every
+<li><p><strong>pre_dynamics_code</strong> (<em>str</em><em> | </em><em>None</em>) – string with the code run every
 timestep on presynaptic neuron.
 Only presynaptic variables and
 variable references can be
 referenced from this code.</p></li>
-<li><p><strong>post_dynamics_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – string with the code run every
+<li><p><strong>post_dynamics_code</strong> (<em>str</em><em> | </em><em>None</em>) – string with the code run every
 timestep on postsynaptic neuron.
 Only postsynaptic variables and
 variable references can be
 referenced from this code.</p></li>
-<li><p><strong>extra_global_params</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>]</em><em>]</em>) – names and types of model
+<li><p><strong>extra_global_params</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – names and types of model
 extra global parameters</p></li>
-<li><p><strong>post_vars</strong> (<em>Optional</em><em>[</em><em>Sequence</em><em>[</em><em>Union</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>]</em><em>, </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>str</em><em>, </em><em>ResolvedType</em><em>]</em><em>, </em><a class="reference internal" href="#pygenn.VarAccess" title="pygenn._genn.VarAccess"><em>VarAccess</em></a><em>]</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>post_vars</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>] </em><em>| </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>, </em><a class="reference internal" href="#pygenn.VarAccess" title="pygenn._genn.VarAccess"><em>VarAccess</em></a><em>]</em><em>] </em><em>| </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -2353,6 +2375,8 @@ extra global parameters</p></li>
 <span class="sd">        &quot;&quot;&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+<section id="pre-and-postsynaptic-dynamics">
+<h2>Pre and postsynaptic dynamics<a class="headerlink" href="#pre-and-postsynaptic-dynamics" title="Permalink to this heading"></a></h2>
 <p>The memory required for synapse variables and the computational cost of updating them tends to grow with <span class="math notranslate nohighlight">\(O(N^2)\)</span> with the number of neurons.
 Therefore, if it is possible, implementing synapse variables on a per-neuron rather than per-synapse basis is a good idea.
 The <code class="docutils literal notranslate"><span class="pre">pre_var_name_types</span></code> and <code class="docutils literal notranslate"><span class="pre">post_var_name_types</span></code> keyword arguments} are used to define any pre or postsynaptic state variables.
@@ -2388,6 +2412,9 @@ For example, using pre and postsynaptic variables, our event-driven STDP rule ca
     <span class="n">post_dynamics_code</span><span class="o">=</span><span class="s2">&quot;postTrace *= tauMinusDecay;&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+</section>
+<section id="synapse-dynamics">
+<h2>Synapse dynamics<a class="headerlink" href="#synapse-dynamics" title="Permalink to this heading"></a></h2>
 <p>Unlike the event-driven updates previously described, synapse dynamics code is run for each synapse, each timestep i.e. unlike the others it is time-driven.
 This can be used where synapses have internal variables and dynamics that are described in continuous time, e.g. by ODEs.
 However using this mechanism is typically computationally very costly because of the large number of synapses in a typical network.
@@ -2397,6 +2424,9 @@ For example a continous synapse which multiplies a presynaptic neuron variable b
 <span class="n">synapse_dynamics_code</span><span class="o">=</span><span class="s2">&quot;addToPost(g * V_pre);&quot;</span><span class="p">,</span>
 </pre></div>
 </div>
+</section>
+<section id="spike-like-events">
+<h2>Spike-like events<a class="headerlink" href="#spike-like-events" title="Permalink to this heading"></a></h2>
 <p>As well as time-driven synapse dynamics and spike event-driven updates, GeNN weight update models also support “spike-like events”.
 These can be triggered by a threshold condition evaluated on the pre or postsynaptic neuron.
 This typically involves pre or postsynaptic weight update model variables or variable references respectively.</p>
@@ -2406,6 +2436,7 @@ This typically involves pre or postsynaptic weight update model variables or var
 </pre></div>
 </div>
 <p>Whenever this expression evaluates to true, the event code in <code class="docutils literal notranslate"><span class="pre">pre_event_code</span></code> will be executed.</p>
+</section>
 </dd></dl>
 
 <dl class="py function">
@@ -2466,14 +2497,14 @@ variable initialisers and variable references</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>snippet</strong> (<em>Union</em><em>[</em><em>PostsynapticModelBase</em><em>, </em><em>str</em><em>]</em>) – postsynaptic model either as a string referencing a built-in model
+<li><p><strong>snippet</strong> (<em>PostsynapticModelBase</em><em> | </em><em>str</em>) – postsynaptic model either as a string referencing a built-in model
 (see <a class="reference internal" href="#module-pygenn.postsynaptic_models" title="pygenn.postsynaptic_models"><code class="xref py py-mod docutils literal notranslate"><span class="pre">postsynaptic_models</span></code></a>) or an instance of
 <code class="xref py py-class docutils literal notranslate"><span class="pre">PostsynapticModelBase</span></code> (for example returned
 by <a class="reference internal" href="#pygenn.create_postsynaptic_model" title="pygenn.create_postsynaptic_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_postsynaptic_model()</span></code></a>)</p></li>
-<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – parameter values for the postsynaptic model (see <a href="#id46"><span class="problematic" id="id47">`Parameters`_</span></a>)</p></li>
-<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – initial synaptic variable values or initialisers
+<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>) – parameter values for the postsynaptic model (see <a href="#id46"><span class="problematic" id="id47">`Parameters`_</span></a>)</p></li>
+<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial synaptic variable values or initialisers
 for the postsynaptic model (see <a href="#id48"><span class="problematic" id="id49">`Variables`_</span></a>)</p></li>
-<li><p><strong>var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – references to postsynaptic neuron variables,
+<li><p><strong>var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – references to postsynaptic neuron variables,
 typically created using <a class="reference internal" href="#pygenn.create_var_ref" title="pygenn.create_var_ref"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_var_ref()</span></code></a>
 (see <a href="#id50"><span class="problematic" id="id51">`Variables references`_</span></a>)</p></li>
 </ul>
@@ -2497,11 +2528,11 @@ initialisation snippet with parameter values</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>snippet</strong> (<em>Union</em><em>[</em><em>InitSparseConnectivitySnippetBase</em><em>, </em><em>str</em><em>]</em>) – sparse connectivity init snippet, either as a string referencing
+<li><p><strong>snippet</strong> (<em>InitSparseConnectivitySnippetBase</em><em> | </em><em>str</em>) – sparse connectivity init snippet, either as a string referencing
 a built-in snippet (see <a class="reference internal" href="#module-pygenn.init_sparse_connectivity_snippets" title="pygenn.init_sparse_connectivity_snippets"><code class="xref py py-mod docutils literal notranslate"><span class="pre">init_sparse_connectivity_snippets</span></code></a>)
 or an instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">InitSparseConnectivitySnippetBase</span></code>
 (for example returned by <a class="reference internal" href="#pygenn.create_sparse_connect_init_snippet" title="pygenn.create_sparse_connect_init_snippet"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_sparse_connect_init_snippet()</span></code></a>)</p></li>
-<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – parameter values for the sparse connectivity init snippet (see <a href="#id52"><span class="problematic" id="id53">`Parameters`_</span></a>)</p></li>
+<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>) – parameter values for the sparse connectivity init snippet (see <a href="#id52"><span class="problematic" id="id53">`Parameters`_</span></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -2553,11 +2584,11 @@ population with <span class="math notranslate nohighlight">\(62 \times 62 \times
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>snippet</strong> (<em>Union</em><em>[</em><em>InitVarSnippetBase</em><em>, </em><em>str</em><em>]</em>) – variable init snippet, either as a string referencing
+<li><p><strong>snippet</strong> (<em>InitVarSnippetBase</em><em> | </em><em>str</em>) – variable init snippet, either as a string referencing
 a built-in snippet (see <a class="reference internal" href="#module-pygenn.init_var_snippets" title="pygenn.init_var_snippets"><code class="xref py py-mod docutils literal notranslate"><span class="pre">init_var_snippets</span></code></a>)
 or an instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">InitVarSnippetBase</span></code>
 (for example returned by <a class="reference internal" href="#pygenn.create_var_init_snippet" title="pygenn.create_var_init_snippet"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_var_init_snippet()</span></code></a>)</p></li>
-<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – parameter values for the variable init snippet (see <a href="#id56"><span class="problematic" id="id57">`Parameters`_</span></a>)</p></li>
+<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>) – parameter values for the variable init snippet (see <a href="#id56"><span class="problematic" id="id57">`Parameters`_</span></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -2580,12 +2611,12 @@ variable initialisers and variable references</p>
 (see <a class="reference internal" href="#module-pygenn.weight_update_models" title="pygenn.weight_update_models"><code class="xref py py-mod docutils literal notranslate"><span class="pre">weight_update_models</span></code></a>) or an instance of
 <code class="xref py py-class docutils literal notranslate"><span class="pre">WeightUpdateModelBase</span></code> (for example returned
 by <a class="reference internal" href="#pygenn.create_weight_update_model" title="pygenn.create_weight_update_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_weight_update_model()</span></code></a>)</p></li>
-<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – parameter values (see <a href="#id58"><span class="problematic" id="id59">`Parameters`_</span></a>)</p></li>
-<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – initial synaptic variable values or
+<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>) – parameter values (see <a href="#id58"><span class="problematic" id="id59">`Parameters`_</span></a>)</p></li>
+<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial synaptic variable values or
 initialisers (see <a href="#id60"><span class="problematic" id="id61">`Variables`_</span></a>)</p></li>
-<li><p><strong>pre_vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – initial presynaptic variable values or
+<li><p><strong>pre_vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial presynaptic variable values or
 initialisers (see <a href="#id62"><span class="problematic" id="id63">`Variables`_</span></a>)</p></li>
-<li><p><strong>post_vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – initial postsynaptic variable values or initialisers
+<li><p><strong>post_vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial postsynaptic variable values or initialisers
 (see <a href="#id64"><span class="problematic" id="id65">`Variables`_</span></a>)</p></li>
 <li><p><strong>pre_var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarReference</em><em>]</em>) – references to presynaptic neuron variables,
 typically created using <a class="reference internal" href="#pygenn.create_var_ref" title="pygenn.create_var_ref"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_var_ref()</span></code></a>
@@ -2906,7 +2937,7 @@ objects</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> (<em>str</em>) – name of the parameter</p></li>
-<li><p><strong>value</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>int</em><em>]</em>) – numeric value to assign to parameters</p></li>
+<li><p><strong>value</strong> (<em>float</em><em> | </em><em>int</em>) – numeric value to assign to parameters</p></li>
 </ul>
 </dd>
 </dl>
@@ -3068,8 +3099,8 @@ egp_name    –  string with the name of the variable</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>pre_indices</strong> (<em>Union</em><em>[</em><em>Sequence</em><em>[</em><em>int</em><em>]</em><em>, </em><em>ndarray</em><em>]</em>) – presynaptic indices</p></li>
-<li><p><strong>post_indices</strong> (<em>Union</em><em>[</em><em>Sequence</em><em>[</em><em>int</em><em>]</em><em>, </em><em>ndarray</em><em>]</em>) – postsynaptic indices</p></li>
+<li><p><strong>pre_indices</strong> (<em>Sequence</em><em>[</em><em>int</em><em>] </em><em>| </em><em>ndarray</em>) – presynaptic indices</p></li>
+<li><p><strong>post_indices</strong> (<em>Sequence</em><em>[</em><em>int</em><em>] </em><em>| </em><em>ndarray</em>) – postsynaptic indices</p></li>
 </ul>
 </dd>
 </dl>
@@ -3390,7 +3421,7 @@ This snippet takes 2 parameters:</p>
 <p>Array class used for exposing internal GeNN state</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>variable_type</strong> (<em>Union</em><em>[</em><em>ResolvedType</em><em>, </em><em>UnresolvedType</em><em>]</em>) – </p>
+<dd class="field-odd"><p><strong>variable_type</strong> (<em>ResolvedType</em><em> | </em><em>UnresolvedType</em>) – </p>
 </dd>
 </dl>
 <dl class="py property">
@@ -3410,7 +3441,7 @@ arrays of memory in running model</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>variable_type</strong> (<em>Union</em><em>[</em><em>ResolvedType</em><em>, </em><em>UnresolvedType</em><em>]</em>) – data type of array elements</p></li>
+<li><p><strong>variable_type</strong> (<em>ResolvedType</em><em> | </em><em>UnresolvedType</em>) – data type of array elements</p></li>
 <li><p><strong>group</strong> – group array belongs to</p></li>
 </ul>
 </dd>
@@ -3452,7 +3483,7 @@ arrays of memory in running model</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>variable_name</strong> (<em>str</em>) – name of the extra global parameter</p></li>
-<li><p><strong>variable_type</strong> (<em>Union</em><em>[</em><em>ResolvedType</em><em>, </em><em>UnresolvedType</em><em>]</em>) – data type of the extra global parameter</p></li>
+<li><p><strong>variable_type</strong> (<em>ResolvedType</em><em> | </em><em>UnresolvedType</em>) – data type of the extra global parameter</p></li>
 <li><p><strong>group</strong> – group extra global parameter belongs to</p></li>
 <li><p><strong>init_values</strong> – values to initialise extra global parameter with</p></li>
 </ul>
@@ -3497,7 +3528,7 @@ arrays of memory in running model</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>variable_name</strong> (<em>str</em>) – name of the variable</p></li>
-<li><p><strong>variable_type</strong> (<em>Union</em><em>[</em><em>ResolvedType</em><em>, </em><em>UnresolvedType</em><em>]</em>) – data type of the variable</p></li>
+<li><p><strong>variable_type</strong> (<em>ResolvedType</em><em> | </em><em>UnresolvedType</em>) – data type of the variable</p></li>
 <li><p><strong>init_values</strong> – values to initialise variable with</p></li>
 <li><p><strong>group</strong> – group variable belongs to</p></li>
 </ul>
@@ -3542,7 +3573,7 @@ connectivity.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>variable_name</strong> (<em>str</em>) – name of the variable</p></li>
-<li><p><strong>variable_type</strong> (<em>Union</em><em>[</em><em>ResolvedType</em><em>, </em><em>UnresolvedType</em><em>]</em>) – data type of the variable</p></li>
+<li><p><strong>variable_type</strong> (<em>ResolvedType</em><em> | </em><em>UnresolvedType</em>) – data type of the variable</p></li>
 <li><p><strong>init_values</strong> – values to initialise variable with</p></li>
 <li><p><strong>group</strong> – group variable belongs to</p></li>
 </ul>
@@ -3585,7 +3616,7 @@ delayed this will contain multiple delayed values.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>variable_name</strong> (<em>str</em>) – name of the variable</p></li>
-<li><p><strong>variable_type</strong> (<em>Union</em><em>[</em><em>ResolvedType</em><em>, </em><em>UnresolvedType</em><em>]</em>) – data type of the variable</p></li>
+<li><p><strong>variable_type</strong> (<em>ResolvedType</em><em> | </em><em>UnresolvedType</em>) – data type of the variable</p></li>
 <li><p><strong>init_values</strong> – values to initialise variable with</p></li>
 <li><p><strong>group</strong> – group variable belongs to</p></li>
 </ul>

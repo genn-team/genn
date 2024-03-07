@@ -20,6 +20,7 @@ Note, this documentation is under construction. If you cannot find what you are 
     custom_models
     bibliography
 
+    tutorials/index
     userproject/index
 
     Reference documentation <source/pygenn>

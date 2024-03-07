@@ -1,0 +1,888 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "lGa0_oLb61zz"
+      },
+      "source": [
+        "# Faster classification of the whole test set\n",
+        "The model we developed in the previous tutorial classified MNIST successfully but was rather slow. Like ANNs, to maximise performance when simulating small SNNs like this on a GPU, we need to simulate multiple copies of the model at once and run them on **batches** of input images.\n",
+        "In this tutorial we will modify our model to do just that as well as off-loading further computation to the GPU to improve performance.\n",
+        "\n",
+        "## Install PyGeNN wheel from Google Drive\n",
+        "Download wheel file"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "if \"google.colab\" in str(get_ipython()):\n",
+        "    #import IPython\n",
+        "    #IPython.core.magics.execution.ExecutionMagics.run.func_defaults[2] = lambda a: a\n",
+        "    #%run \"../install_collab.ipynb\"\n",
+        "    !pip install gdown --upgrade\n",
+        "    !gdown 1V_GzXUDzcFz9QDIpxAD8QNEglcSipssW\n",
+        "    !pip install pygenn-5.0.0-cp310-cp310-linux_x86_64.whl\n",
+        "    %env CUDA_PATH=/usr/local/cuda"
+      ],
+      "metadata": {
+        "id": "qWqAJtsiejvU",
+        "outputId": "8d659e2f-0fe0-4c97-e61f-46023ef5df18",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Requirement already satisfied: gdown in /usr/local/lib/python3.10/dist-packages (5.1.0)\n",
+            "Requirement already satisfied: beautifulsoup4 in /usr/local/lib/python3.10/dist-packages (from gdown) (4.12.3)\n",
+            "Requirement already satisfied: filelock in /usr/local/lib/python3.10/dist-packages (from gdown) (3.13.1)\n",
+            "Requirement already satisfied: requests[socks] in /usr/local/lib/python3.10/dist-packages (from gdown) (2.31.0)\n",
+            "Requirement already satisfied: tqdm in /usr/local/lib/python3.10/dist-packages (from gdown) (4.66.2)\n",
+            "Requirement already satisfied: soupsieve>1.2 in /usr/local/lib/python3.10/dist-packages (from beautifulsoup4->gdown) (2.5)\n",
+            "Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.10/dist-packages (from requests[socks]->gdown) (3.3.2)\n",
+            "Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.10/dist-packages (from requests[socks]->gdown) (3.6)\n",
+            "Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.10/dist-packages (from requests[socks]->gdown) (2.0.7)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.10/dist-packages (from requests[socks]->gdown) (2024.2.2)\n",
+            "Requirement already satisfied: PySocks!=1.5.7,>=1.5.6 in /usr/local/lib/python3.10/dist-packages (from requests[socks]->gdown) (1.7.1)\n",
+            "Downloading...\n",
+            "From: https://drive.google.com/uc?id=1V_GzXUDzcFz9QDIpxAD8QNEglcSipssW\n",
+            "To: /content/pygenn-5.0.0-cp310-cp310-linux_x86_64.whl\n",
+            "100% 8.29M/8.29M [00:00<00:00, 182MB/s]\n",
+            "Processing ./pygenn-5.0.0-cp310-cp310-linux_x86_64.whl\n",
+            "Requirement already satisfied: numpy>=1.17 in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (1.25.2)\n",
+            "Requirement already satisfied: deprecated in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (1.2.14)\n",
+            "Requirement already satisfied: psutil in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (5.9.5)\n",
+            "Requirement already satisfied: wrapt<2,>=1.10 in /usr/local/lib/python3.10/dist-packages (from deprecated->pygenn==5.0.0) (1.14.1)\n",
+            "pygenn is already installed with the same version as the provided wheel. Use --force-reinstall to force an installation of the wheel.\n",
+            "env: CUDA_PATH=/usr/local/cuda\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "8tqbF5GldF0o"
+      },
+      "source": [
+        "## Download pre-trained weights and MNIST test data"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "N-2PV7LcdFg_",
+        "outputId": "b7d8e21f-45e9-408a-c840-e6a2992f4ea7"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Downloading...\n",
+            "From: https://drive.google.com/uc?id=1cmNL8W0QZZtn3dPHiOQnVjGAYTk6Rhpc\n",
+            "To: /content/weights_0_1.npy\n",
+            "100% 402k/402k [00:00<00:00, 50.3MB/s]\n",
+            "Downloading...\n",
+            "From: https://drive.google.com/uc?id=131lCXLEH6aTXnBZ9Nh4eJLSy5DQ6LKSF\n",
+            "To: /content/weights_1_2.npy\n",
+            "100% 5.25k/5.25k [00:00<00:00, 23.2MB/s]\n"
+          ]
+        }
+      ],
+      "source": [
+        "!gdown 1cmNL8W0QZZtn3dPHiOQnVjGAYTk6Rhpc\n",
+        "!gdown 131lCXLEH6aTXnBZ9Nh4eJLSy5DQ6LKSF"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## Install MNIST package"
+      ],
+      "metadata": {
+        "id": "KVRtXVzIg07T"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!pip install mnist"
+      ],
+      "metadata": {
+        "id": "AikBc4sfg1b-",
+        "outputId": "1cc89063-bcd7-4d47-afd8-5968008ac3ca",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Requirement already satisfied: mnist in /usr/local/lib/python3.10/dist-packages (0.2.2)\n",
+            "Requirement already satisfied: numpy in /usr/local/lib/python3.10/dist-packages (from mnist) (1.25.2)\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "jBVpqi2k5mNb"
+      },
+      "source": [
+        "## Build model\n",
+        "Import standard module and PyGeNN functionality as before and configure simulation parameters"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "agqWFZjickfU"
+      },
+      "outputs": [],
+      "source": [
+        "import mnist\n",
+        "import numpy as np\n",
+        "import matplotlib.pyplot as plt\n",
+        "from pygenn import (create_neuron_model, create_current_source_model, create_custom_update_model,\n",
+        "                    create_var_ref, init_postsynaptic, init_weight_update, GeNNModel)\n",
+        "from time import perf_counter\n",
+        "from tqdm.auto import tqdm\n",
+        "\n",
+        "TIMESTEP = 1.0\n",
+        "PRESENT_TIMESTEPS = 100\n",
+        "INPUT_CURRENT_SCALE = 1.0 / 100.0"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "OTkuiEAx5qMG"
+      },
+      "source": [
+        "As we're going to use it in a few places, we add an additional simulation parameter to define the batch size."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "ejMfqnhAkrye"
+      },
+      "outputs": [],
+      "source": [
+        "BATCH_SIZE = 128"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "fojA3yl_6KU9"
+      },
+      "source": [
+        "Define the custom neuron and synapse models in exactly the same way as before"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "-7lzXzmQcgbt"
+      },
+      "outputs": [],
+      "source": [
+        "# Very simple integrate-and-fire neuron model\n",
+        "if_model = create_neuron_model(\n",
+        "    \"if_model\",\n",
+        "    params=[\"Vthr\"],\n",
+        "    vars=[(\"V\", \"scalar\"), (\"SpikeCount\", \"unsigned int\")],\n",
+        "    sim_code=\"V += Isyn * dt;\",\n",
+        "    reset_code=\"\"\"\n",
+        "    V = 0.0;\n",
+        "    SpikeCount++;\n",
+        "    \"\"\",\n",
+        "    threshold_condition_code=\"V >= Vthr\")\n",
+        "\n",
+        "cs_model = create_current_source_model(\n",
+        "    \"cs_model\",\n",
+        "    vars=[(\"magnitude\", \"scalar\")],\n",
+        "    injection_code=\"injectCurrent(magnitude);\")\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "93YuiQG7qzG3"
+      },
+      "source": [
+        "As we increase the batch size of our model, the cost of resetting the spike counts and membrane voltages will increase. To counteract this, we can offload tasks like this to the GPU using a *custom update* model. These are defined using very similar syntax to neuron and synapse models but have one additional feature - variable references. These allow custom updates to be *attached* to existing neuron or synapse populations to modify their variables outside of the standard neuron and synapse updates."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "I8KZoiK1nQlK"
+      },
+      "outputs": [],
+      "source": [
+        "reset_model = create_custom_update_model(\n",
+        "    \"reset\",\n",
+        "    var_refs=[(\"V\", \"scalar\"), (\"SpikeCount\", \"unsigned int\")],\n",
+        "    update_code=\"\"\"\n",
+        "    V = 0.0;\n",
+        "    SpikeCount = 0;\n",
+        "    \"\"\")"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "kDWkDTCWqwt3"
+      },
+      "source": [
+        "Create a new model in exactly the same way as before"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "BSSdg6ckl6im"
+      },
+      "outputs": [],
+      "source": [
+        "model = GeNNModel(\"float\", \"tutorial_3\")\n",
+        "model.dt = TIMESTEP"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "njWcYaZk5w7G"
+      },
+      "source": [
+        "Set the model batch size"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "iOyB3Z6qkVBM"
+      },
+      "outputs": [],
+      "source": [
+        "model.batch_size = BATCH_SIZE"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "enyL8xum-OpC"
+      },
+      "source": [
+        "Build model, load weights and create neuron, synapse and current source populations as before"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "Sx1VOU5udixG"
+      },
+      "outputs": [],
+      "source": [
+        "# Load weights\n",
+        "weights_0_1 = np.load(\"weights_0_1.npy\")\n",
+        "weights_1_2 = np.load(\"weights_1_2.npy\")\n",
+        "\n",
+        "if_params = {\"Vthr\": 5.0}\n",
+        "if_init = {\"V\": 0.0, \"SpikeCount\":0}\n",
+        "neurons = [model.add_neuron_population(\"neuron0\", weights_0_1.shape[0],\n",
+        "                                       if_model, if_params, if_init),\n",
+        "           model.add_neuron_population(\"neuron1\", weights_0_1.shape[1],\n",
+        "                                       if_model, if_params, if_init),\n",
+        "           model.add_neuron_population(\"neuron2\", weights_1_2.shape[1],\n",
+        "                                       if_model, if_params, if_init)]\n",
+        "model.add_synapse_population(\n",
+        "        \"synapse_0_1\", \"DENSE\",\n",
+        "        neurons[0], neurons[1],\n",
+        "        init_weight_update(\"StaticPulse\", {}, {\"g\": weights_0_1.flatten()}),\n",
+        "        init_postsynaptic(\"DeltaCurr\"))\n",
+        "model.add_synapse_population(\n",
+        "        \"synapse_1_2\", \"DENSE\",\n",
+        "        neurons[1], neurons[2],\n",
+        "        init_weight_update(\"StaticPulse\", {}, {\"g\": weights_1_2.flatten()}),\n",
+        "        init_postsynaptic(\"DeltaCurr\"));\n",
+        "\n",
+        "current_input = model.add_current_source(\"current_input\", cs_model,\n",
+        "                                         neurons[0], {}, {\"magnitude\": 0.0})"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "3S_ZASOdrnj3"
+      },
+      "source": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "7PW3c8ibpx9x"
+      },
+      "outputs": [],
+      "source": [
+        "for n in neurons:\n",
+        "    reset_var_refs = {\"V\": create_var_ref(n, \"V\"),\n",
+        "                      \"SpikeCount\": create_var_ref(n, \"SpikeCount\")}\n",
+        "    model.add_custom_update(f\"{n.name}_reset\", \"Reset\", reset_model,\n",
+        "                            {}, {}, reset_var_refs)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "vv-XOushroKw"
+      },
+      "source": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "muUbvSHOooev"
+      },
+      "outputs": [],
+      "source": [
+        "# Build and load our model\n",
+        "model.build()\n",
+        "model.load()\n",
+        "\n",
+        "testing_images = mnist.test_images()\n",
+        "testing_labels = mnist.test_labels()\n",
+        "\n",
+        "testing_images = np.reshape(testing_images, (testing_images.shape[0], -1))\n",
+        "assert testing_images.shape[1] == weights_0_1.shape[0]\n",
+        "assert np.max(testing_labels) == (weights_1_2.shape[1] - 1)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "awF6vfLX-TVM"
+      },
+      "source": [
+        "First of all, we determine where to split our test data to achieve our batch size and then use `np.split` to perform the splitting operation (the last batch will contain < `BATCH_SIZE` stimuli as 128 does not divide 10000 evenly)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "BB0kXBmQkwCX"
+      },
+      "outputs": [],
+      "source": [
+        "batch_splits = range(BATCH_SIZE, testing_images.shape[0] + 1, BATCH_SIZE)\n",
+        "\n",
+        "testing_image_batches = np.split(testing_images, batch_splits, axis=0)\n",
+        "testing_label_batches = np.split(testing_labels, batch_splits, axis=0)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "pd4BBHjtur5E"
+      },
+      "source": [
+        "## Simulate model\n",
+        "Our batched simulation loop looks very similar to the loop we defined in the previous tutorial however:\n",
+        "*   We now loop over *batches* of images and labels rather than individual ones\n",
+        "*   When we copy images into the input current view, we only copy as many images as are present in this batch to handle the remainder in the final batch\n",
+        "*   We specify an axis for `np.argmax` so that we get the neuron with the largest spike count in each batch\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 101,
+          "referenced_widgets": [
+            "15e7a28075234a688d35420b0d90cd3a",
+            "f9f0f9264cab41e28e8d566a8a8fa580",
+            "777c9f0e53bd4ef1b6fd2d73ad5306c9",
+            "1767b26843a0422fafe61c5dc2817cf5",
+            "b586c61e42c64631ac79e44e5e716f94",
+            "673a35933b934bbf8688e720f829045a",
+            "0e8ec39043cf45a19c0e2d8ae180ef8b",
+            "559829b46976432c8e21a11b7a6fddcb",
+            "fdf6330a16a94010ad46847e57aa8dbf",
+            "0eefe97369fa4e91b591ee1ac2568a16",
+            "514826e392cc400796831ac477a1d9c3"
+          ]
+        },
+        "id": "4qSoinT4etKq",
+        "outputId": "1d566ed4-7151-4fdc-a67d-770d2b7d5958"
+      },
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "  0%|          | 0/79 [00:00<?, ?it/s]"
+            ],
+            "application/vnd.jupyter.widget-view+json": {
+              "version_major": 2,
+              "version_minor": 0,
+              "model_id": "15e7a28075234a688d35420b0d90cd3a"
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "\n",
+            "Accuracy 97.54%%\n",
+            "Time 0.34431284400000095 seconds\n"
+          ]
+        }
+      ],
+      "source": [
+        "current_input_magnitude = current_input.vars[\"magnitude\"]\n",
+        "output_spike_count = neurons[-1].vars[\"SpikeCount\"]\n",
+        "neuron_voltages = [n.vars[\"V\"] for n in neurons]\n",
+        "\n",
+        "# Simulate\n",
+        "num_correct = 0\n",
+        "start_time = perf_counter()\n",
+        "for img, lab in tqdm(zip(testing_image_batches, testing_label_batches),\n",
+        "                     total=len(testing_image_batches)):\n",
+        "    current_input_magnitude.view[:img.shape[0],:] = img * INPUT_CURRENT_SCALE\n",
+        "    current_input_magnitude.push_to_device()\n",
+        "\n",
+        "    # Run reset custom update\n",
+        "    model.custom_update(\"Reset\")\n",
+        "\n",
+        "    for t in range(PRESENT_TIMESTEPS):\n",
+        "        model.step_time()\n",
+        "\n",
+        "    # Download spike count from last layer\n",
+        "    output_spike_count.pull_from_device()\n",
+        "\n",
+        "    # Find which neuron spiked most in each batch to get prediction\n",
+        "    predicted_lab = np.argmax(output_spike_count.view, axis=1)\n",
+        "\n",
+        "    # Add number of\n",
+        "    num_correct += np.sum(predicted_lab[:lab.shape[0]] == lab)\n",
+        "\n",
+        "end_time = perf_counter()\n",
+        "print(f\"\\nAccuracy {((num_correct / float(testing_images.shape[0])) * 100.0)}%%\")\n",
+        "print(f\"Time {end_time - start_time} seconds\")\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "y34o04ucAUjJ"
+      },
+      "source": [
+        "And...we get a speed up of over 30x compared to the previous tutorial"
+      ]
+    }
+  ],
+  "metadata": {
+    "accelerator": "GPU",
+    "colab": {
+      "name": "tutorial_3",
+      "provenance": []
+    },
+    "kernelspec": {
+      "display_name": "Python 3",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.7.7"
+    },
+    "widgets": {
+      "application/vnd.jupyter.widget-state+json": {
+        "15e7a28075234a688d35420b0d90cd3a": {
+          "model_module": "@jupyter-widgets/controls",
+          "model_name": "HBoxModel",
+          "model_module_version": "1.5.0",
+          "state": {
+            "_dom_classes": [],
+            "_model_module": "@jupyter-widgets/controls",
+            "_model_module_version": "1.5.0",
+            "_model_name": "HBoxModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/controls",
+            "_view_module_version": "1.5.0",
+            "_view_name": "HBoxView",
+            "box_style": "",
+            "children": [
+              "IPY_MODEL_f9f0f9264cab41e28e8d566a8a8fa580",
+              "IPY_MODEL_777c9f0e53bd4ef1b6fd2d73ad5306c9",
+              "IPY_MODEL_1767b26843a0422fafe61c5dc2817cf5"
+            ],
+            "layout": "IPY_MODEL_b586c61e42c64631ac79e44e5e716f94"
+          }
+        },
+        "f9f0f9264cab41e28e8d566a8a8fa580": {
+          "model_module": "@jupyter-widgets/controls",
+          "model_name": "HTMLModel",
+          "model_module_version": "1.5.0",
+          "state": {
+            "_dom_classes": [],
+            "_model_module": "@jupyter-widgets/controls",
+            "_model_module_version": "1.5.0",
+            "_model_name": "HTMLModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/controls",
+            "_view_module_version": "1.5.0",
+            "_view_name": "HTMLView",
+            "description": "",
+            "description_tooltip": null,
+            "layout": "IPY_MODEL_673a35933b934bbf8688e720f829045a",
+            "placeholder": "​",
+            "style": "IPY_MODEL_0e8ec39043cf45a19c0e2d8ae180ef8b",
+            "value": "100%"
+          }
+        },
+        "777c9f0e53bd4ef1b6fd2d73ad5306c9": {
+          "model_module": "@jupyter-widgets/controls",
+          "model_name": "FloatProgressModel",
+          "model_module_version": "1.5.0",
+          "state": {
+            "_dom_classes": [],
+            "_model_module": "@jupyter-widgets/controls",
+            "_model_module_version": "1.5.0",
+            "_model_name": "FloatProgressModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/controls",
+            "_view_module_version": "1.5.0",
+            "_view_name": "ProgressView",
+            "bar_style": "success",
+            "description": "",
+            "description_tooltip": null,
+            "layout": "IPY_MODEL_559829b46976432c8e21a11b7a6fddcb",
+            "max": 79,
+            "min": 0,
+            "orientation": "horizontal",
+            "style": "IPY_MODEL_fdf6330a16a94010ad46847e57aa8dbf",
+            "value": 79
+          }
+        },
+        "1767b26843a0422fafe61c5dc2817cf5": {
+          "model_module": "@jupyter-widgets/controls",
+          "model_name": "HTMLModel",
+          "model_module_version": "1.5.0",
+          "state": {
+            "_dom_classes": [],
+            "_model_module": "@jupyter-widgets/controls",
+            "_model_module_version": "1.5.0",
+            "_model_name": "HTMLModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/controls",
+            "_view_module_version": "1.5.0",
+            "_view_name": "HTMLView",
+            "description": "",
+            "description_tooltip": null,
+            "layout": "IPY_MODEL_0eefe97369fa4e91b591ee1ac2568a16",
+            "placeholder": "​",
+            "style": "IPY_MODEL_514826e392cc400796831ac477a1d9c3",
+            "value": " 79/79 [00:00&lt;00:00, 245.92it/s]"
+          }
+        },
+        "b586c61e42c64631ac79e44e5e716f94": {
+          "model_module": "@jupyter-widgets/base",
+          "model_name": "LayoutModel",
+          "model_module_version": "1.2.0",
+          "state": {
+            "_model_module": "@jupyter-widgets/base",
+            "_model_module_version": "1.2.0",
+            "_model_name": "LayoutModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/base",
+            "_view_module_version": "1.2.0",
+            "_view_name": "LayoutView",
+            "align_content": null,
+            "align_items": null,
+            "align_self": null,
+            "border": null,
+            "bottom": null,
+            "display": null,
+            "flex": null,
+            "flex_flow": null,
+            "grid_area": null,
+            "grid_auto_columns": null,
+            "grid_auto_flow": null,
+            "grid_auto_rows": null,
+            "grid_column": null,
+            "grid_gap": null,
+            "grid_row": null,
+            "grid_template_areas": null,
+            "grid_template_columns": null,
+            "grid_template_rows": null,
+            "height": null,
+            "justify_content": null,
+            "justify_items": null,
+            "left": null,
+            "margin": null,
+            "max_height": null,
+            "max_width": null,
+            "min_height": null,
+            "min_width": null,
+            "object_fit": null,
+            "object_position": null,
+            "order": null,
+            "overflow": null,
+            "overflow_x": null,
+            "overflow_y": null,
+            "padding": null,
+            "right": null,
+            "top": null,
+            "visibility": null,
+            "width": null
+          }
+        },
+        "673a35933b934bbf8688e720f829045a": {
+          "model_module": "@jupyter-widgets/base",
+          "model_name": "LayoutModel",
+          "model_module_version": "1.2.0",
+          "state": {
+            "_model_module": "@jupyter-widgets/base",
+            "_model_module_version": "1.2.0",
+            "_model_name": "LayoutModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/base",
+            "_view_module_version": "1.2.0",
+            "_view_name": "LayoutView",
+            "align_content": null,
+            "align_items": null,
+            "align_self": null,
+            "border": null,
+            "bottom": null,
+            "display": null,
+            "flex": null,
+            "flex_flow": null,
+            "grid_area": null,
+            "grid_auto_columns": null,
+            "grid_auto_flow": null,
+            "grid_auto_rows": null,
+            "grid_column": null,
+            "grid_gap": null,
+            "grid_row": null,
+            "grid_template_areas": null,
+            "grid_template_columns": null,
+            "grid_template_rows": null,
+            "height": null,
+            "justify_content": null,
+            "justify_items": null,
+            "left": null,
+            "margin": null,
+            "max_height": null,
+            "max_width": null,
+            "min_height": null,
+            "min_width": null,
+            "object_fit": null,
+            "object_position": null,
+            "order": null,
+            "overflow": null,
+            "overflow_x": null,
+            "overflow_y": null,
+            "padding": null,
+            "right": null,
+            "top": null,
+            "visibility": null,
+            "width": null
+          }
+        },
+        "0e8ec39043cf45a19c0e2d8ae180ef8b": {
+          "model_module": "@jupyter-widgets/controls",
+          "model_name": "DescriptionStyleModel",
+          "model_module_version": "1.5.0",
+          "state": {
+            "_model_module": "@jupyter-widgets/controls",
+            "_model_module_version": "1.5.0",
+            "_model_name": "DescriptionStyleModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/base",
+            "_view_module_version": "1.2.0",
+            "_view_name": "StyleView",
+            "description_width": ""
+          }
+        },
+        "559829b46976432c8e21a11b7a6fddcb": {
+          "model_module": "@jupyter-widgets/base",
+          "model_name": "LayoutModel",
+          "model_module_version": "1.2.0",
+          "state": {
+            "_model_module": "@jupyter-widgets/base",
+            "_model_module_version": "1.2.0",
+            "_model_name": "LayoutModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/base",
+            "_view_module_version": "1.2.0",
+            "_view_name": "LayoutView",
+            "align_content": null,
+            "align_items": null,
+            "align_self": null,
+            "border": null,
+            "bottom": null,
+            "display": null,
+            "flex": null,
+            "flex_flow": null,
+            "grid_area": null,
+            "grid_auto_columns": null,
+            "grid_auto_flow": null,
+            "grid_auto_rows": null,
+            "grid_column": null,
+            "grid_gap": null,
+            "grid_row": null,
+            "grid_template_areas": null,
+            "grid_template_columns": null,
+            "grid_template_rows": null,
+            "height": null,
+            "justify_content": null,
+            "justify_items": null,
+            "left": null,
+            "margin": null,
+            "max_height": null,
+            "max_width": null,
+            "min_height": null,
+            "min_width": null,
+            "object_fit": null,
+            "object_position": null,
+            "order": null,
+            "overflow": null,
+            "overflow_x": null,
+            "overflow_y": null,
+            "padding": null,
+            "right": null,
+            "top": null,
+            "visibility": null,
+            "width": null
+          }
+        },
+        "fdf6330a16a94010ad46847e57aa8dbf": {
+          "model_module": "@jupyter-widgets/controls",
+          "model_name": "ProgressStyleModel",
+          "model_module_version": "1.5.0",
+          "state": {
+            "_model_module": "@jupyter-widgets/controls",
+            "_model_module_version": "1.5.0",
+            "_model_name": "ProgressStyleModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/base",
+            "_view_module_version": "1.2.0",
+            "_view_name": "StyleView",
+            "bar_color": null,
+            "description_width": ""
+          }
+        },
+        "0eefe97369fa4e91b591ee1ac2568a16": {
+          "model_module": "@jupyter-widgets/base",
+          "model_name": "LayoutModel",
+          "model_module_version": "1.2.0",
+          "state": {
+            "_model_module": "@jupyter-widgets/base",
+            "_model_module_version": "1.2.0",
+            "_model_name": "LayoutModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/base",
+            "_view_module_version": "1.2.0",
+            "_view_name": "LayoutView",
+            "align_content": null,
+            "align_items": null,
+            "align_self": null,
+            "border": null,
+            "bottom": null,
+            "display": null,
+            "flex": null,
+            "flex_flow": null,
+            "grid_area": null,
+            "grid_auto_columns": null,
+            "grid_auto_flow": null,
+            "grid_auto_rows": null,
+            "grid_column": null,
+            "grid_gap": null,
+            "grid_row": null,
+            "grid_template_areas": null,
+            "grid_template_columns": null,
+            "grid_template_rows": null,
+            "height": null,
+            "justify_content": null,
+            "justify_items": null,
+            "left": null,
+            "margin": null,
+            "max_height": null,
+            "max_width": null,
+            "min_height": null,
+            "min_width": null,
+            "object_fit": null,
+            "object_position": null,
+            "order": null,
+            "overflow": null,
+            "overflow_x": null,
+            "overflow_y": null,
+            "padding": null,
+            "right": null,
+            "top": null,
+            "visibility": null,
+            "width": null
+          }
+        },
+        "514826e392cc400796831ac477a1d9c3": {
+          "model_module": "@jupyter-widgets/controls",
+          "model_name": "DescriptionStyleModel",
+          "model_module_version": "1.5.0",
+          "state": {
+            "_model_module": "@jupyter-widgets/controls",
+            "_model_module_version": "1.5.0",
+            "_model_name": "DescriptionStyleModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/base",
+            "_view_module_version": "1.2.0",
+            "_view_name": "StyleView",
+            "description_width": ""
+          }
+        }
+      }
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}

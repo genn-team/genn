@@ -1,0 +1,1081 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "lGa0_oLb61zz"
+      },
+      "source": [
+        "# Output neurons and learning\n",
+        "In this tutorial we add Mushroom Body Output Neurons (MBONS) to the model and train the weights connecting them to the Kenyon Cells using a simple event-driven STDP rule.\n",
+        "\n",
+        "## Install PyGeNN wheel from Google Drive\n",
+        "Download wheel file"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "if \"google.colab\" in str(get_ipython()):\n",
+        "    #import IPython\n",
+        "    #IPython.core.magics.execution.ExecutionMagics.run.func_defaults[2] = lambda a: a\n",
+        "    #%run \"../install_collab.ipynb\"\n",
+        "    !pip install gdown --upgrade\n",
+        "    !gdown 1V_GzXUDzcFz9QDIpxAD8QNEglcSipssW\n",
+        "    !pip install pygenn-5.0.0-cp310-cp310-linux_x86_64.whl\n",
+        "    %env CUDA_PATH=/usr/local/cuda"
+      ],
+      "metadata": {
+        "id": "H6PHF3xTkMOD",
+        "outputId": "fb700b27-ffc5-4c6d-daae-84818f3137fe",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Requirement already satisfied: gdown in /usr/local/lib/python3.10/dist-packages (5.1.0)\n",
+            "Requirement already satisfied: beautifulsoup4 in /usr/local/lib/python3.10/dist-packages (from gdown) (4.12.3)\n",
+            "Requirement already satisfied: filelock in /usr/local/lib/python3.10/dist-packages (from gdown) (3.13.1)\n",
+            "Requirement already satisfied: requests[socks] in /usr/local/lib/python3.10/dist-packages (from gdown) (2.31.0)\n",
+            "Requirement already satisfied: tqdm in /usr/local/lib/python3.10/dist-packages (from gdown) (4.66.2)\n",
+            "Requirement already satisfied: soupsieve>1.2 in /usr/local/lib/python3.10/dist-packages (from beautifulsoup4->gdown) (2.5)\n",
+            "Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.10/dist-packages (from requests[socks]->gdown) (3.3.2)\n",
+            "Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.10/dist-packages (from requests[socks]->gdown) (3.6)\n",
+            "Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.10/dist-packages (from requests[socks]->gdown) (2.0.7)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.10/dist-packages (from requests[socks]->gdown) (2024.2.2)\n",
+            "Requirement already satisfied: PySocks!=1.5.7,>=1.5.6 in /usr/local/lib/python3.10/dist-packages (from requests[socks]->gdown) (1.7.1)\n",
+            "Downloading...\n",
+            "From: https://drive.google.com/uc?id=1V_GzXUDzcFz9QDIpxAD8QNEglcSipssW\n",
+            "To: /content/pygenn-5.0.0-cp310-cp310-linux_x86_64.whl\n",
+            "100% 8.29M/8.29M [00:00<00:00, 101MB/s]\n",
+            "Processing ./pygenn-5.0.0-cp310-cp310-linux_x86_64.whl\n",
+            "Requirement already satisfied: numpy>=1.17 in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (1.25.2)\n",
+            "Requirement already satisfied: deprecated in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (1.2.14)\n",
+            "Requirement already satisfied: psutil in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (5.9.5)\n",
+            "Requirement already satisfied: wrapt<2,>=1.10 in /usr/local/lib/python3.10/dist-packages (from deprecated->pygenn==5.0.0) (1.14.1)\n",
+            "pygenn is already installed with the same version as the provided wheel. Use --force-reinstall to force an installation of the wheel.\n",
+            "env: CUDA_PATH=/usr/local/cuda\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## Install MNIST package"
+      ],
+      "metadata": {
+        "id": "KVRtXVzIg07T"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!pip install mnist"
+      ],
+      "metadata": {
+        "id": "AikBc4sfg1b-",
+        "outputId": "3f2967bb-fa35-4599-a5d1-8e52a630a715",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Collecting mnist\n",
+            "  Downloading mnist-0.2.2-py2.py3-none-any.whl (3.5 kB)\n",
+            "Requirement already satisfied: numpy in /usr/local/lib/python3.10/dist-packages (from mnist) (1.25.2)\n",
+            "Installing collected packages: mnist\n",
+            "Successfully installed mnist-0.2.2\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "yV0JrchrfQKR"
+      },
+      "source": [
+        "## Build tutorial model\n",
+        "Import modules"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "Hl53yKXi9LiV"
+      },
+      "outputs": [],
+      "source": [
+        "import mnist\n",
+        "import numpy as np\n",
+        "from copy import copy\n",
+        "from matplotlib import pyplot as plt\n",
+        "from pygenn import (create_current_source_model, create_neuron_model, create_weight_update_model,\n",
+        "                    init_postsynaptic, init_sparse_connectivity, init_weight_update, GeNNModel)\n",
+        "\n",
+        "# Reshape and normalise training data\n",
+        "training_images = mnist.train_images()\n",
+        "training_images = np.reshape(training_images, (training_images.shape[0], -1)).astype(np.float32)\n",
+        "training_images /= np.sum(training_images, axis=1)[:, np.newaxis]\n",
+        "training_labels = mnist.train_labels()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "ZfxsGYr5kVv-"
+      },
+      "outputs": [],
+      "source": [
+        "from tqdm.auto import tqdm"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "g0IfyML59Lif"
+      },
+      "source": [
+        "## Parameters\n",
+        "Define some model parameters"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "oncGyriW9Lif"
+      },
+      "outputs": [],
+      "source": [
+        "# Simulation time step\n",
+        "DT = 0.1\n",
+        "\n",
+        "# Scaling factor for converting normalised image pixels to input currents (nA)\n",
+        "INPUT_SCALE = 80.0\n",
+        "\n",
+        "# Number of Projection Neurons in model (should match image size)\n",
+        "NUM_PN = 784\n",
+        "\n",
+        "# Number of Kenyon Cells in model (defines memory capacity)\n",
+        "NUM_KC = 20000\n",
+        "\n",
+        "# How long to present each image to model\n",
+        "PRESENT_TIME_MS = 20.0\n",
+        "\n",
+        "# Standard LIF neurons parameters\n",
+        "LIF_PARAMS = {\n",
+        "    \"C\": 0.2,\n",
+        "    \"TauM\": 20.0,\n",
+        "    \"Vrest\": -60.0,\n",
+        "    \"Vreset\": -60.0,\n",
+        "    \"Vthresh\": -50.0,\n",
+        "    \"Ioffset\": 0.0,\n",
+        "    \"TauRefrac\": 2.0}\n",
+        "\n",
+        "# We only want PNs to spike once\n",
+        "PN_PARAMS = copy(LIF_PARAMS)\n",
+        "PN_PARAMS[\"TauRefrac\"] = 100.0\n",
+        "\n",
+        "# Weight of each synaptic connection\n",
+        "PN_KC_WEIGHT = 0.2\n",
+        "\n",
+        "# Time constant of synaptic integration\n",
+        "PN_KC_TAU_SYN = 3.0\n",
+        "\n",
+        "# How many projection neurons should be connected to each Kenyon Cell\n",
+        "PN_KC_FAN_IN = 20\n",
+        "\n",
+        "# We will use weights of 1.0 for KC->GGN connections and\n",
+        "# want the GGN to inhibit the KCs after 200 spikes\n",
+        "GGN_PARAMS = {\n",
+        "    \"Vthresh\": 200.0}"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "KldVFE9dJdv8"
+      },
+      "source": [
+        "As we're now going to be adding our synaptic connections between the Projection Neurons and a new population of Kenyon Cells, also define some parameter for these"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "ZvNwgTphJeM9"
+      },
+      "outputs": [],
+      "source": [
+        "NUM_MBON = 10\n",
+        "MBON_STIMULUS_CURRENT = 5.0"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "-CKgGZHBjKl2"
+      },
+      "outputs": [],
+      "source": [
+        "KC_MBON_TAU_SYN = 3.0\n",
+        "KC_MBON_PARAMS = {\"tau\": 15.0,\n",
+        "                  \"rho\": 0.01,\n",
+        "                  \"eta\": 0.00002,\n",
+        "                  \"wMin\": 0.0,\n",
+        "                  \"wMax\": 0.0233}"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "pCYjAoJf9Lig"
+      },
+      "source": [
+        "## Custom models\n",
+        "As well as the models we defined before:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "IR8PXBg69Lih"
+      },
+      "outputs": [],
+      "source": [
+        "# Current source model, allowing current to be injected into neuron from variable\n",
+        "cs_model = create_current_source_model(\n",
+        "    \"cs_model\",\n",
+        "    vars=[(\"magnitude\", \"scalar\")],\n",
+        "    injection_code=\"injectCurrent(magnitude);\")\n",
+        "\n",
+        "# Minimal integrate and fire neuron model\n",
+        "if_model = create_neuron_model(\n",
+        "    \"IF\",\n",
+        "    params=[\"Vthresh\"],\n",
+        "    vars=[(\"V\", \"scalar\")],\n",
+        "    sim_code=\n",
+        "    \"\"\"\n",
+        "    V += Isyn;\n",
+        "    \"\"\",\n",
+        "    threshold_condition_code=\n",
+        "    \"\"\"\n",
+        "    V >= Vthresh\n",
+        "    \"\"\",\n",
+        "    reset_code=\n",
+        "    \"\"\"\n",
+        "    V = 0.0;\n",
+        "    \"\"\")"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "cfKeAMLBjZ6u"
+      },
+      "source": [
+        "We now also need an STDP learning rule!"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "pe-5DQ9hezIs"
+      },
+      "outputs": [],
+      "source": [
+        "symmetric_stdp = create_weight_update_model(\n",
+        "    \"symmetric_stdp\",\n",
+        "    params=[\"tau\", \"rho\", \"eta\", \"wMin\", \"wMax\"],\n",
+        "    vars=[(\"g\", \"scalar\")],\n",
+        "    pre_spike_syn_code=\n",
+        "    \"\"\"\n",
+        "    const scalar dt = t - st_post;\n",
+        "    const scalar timing = exp(-dt / tau) - rho;\n",
+        "    const scalar newWeight = g + (eta * timing);\n",
+        "    g = fmin(wMax, fmax(wMin, newWeight));\n",
+        "    \"\"\",\n",
+        "    post_spike_syn_code=\n",
+        "    \"\"\"\n",
+        "    const scalar dt = t - st_pre;\n",
+        "    const scalar timing = fmax(exp(-dt / tau) - rho, -0.1*rho);\n",
+        "    const scalar newWeight = g + (eta * timing);\n",
+        "    g = fmin(wMax, fmax(wMin, newWeight));\n",
+        "    \"\"\")\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Gn4DpkPQ9Lii"
+      },
+      "source": [
+        "## Model definition\n",
+        "Create a new model called \"mnist_mb_second_layer_gain_control\" as before although we no longer need to record spikes from individual neurons:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "Gx-GsJhD9Lik"
+      },
+      "outputs": [],
+      "source": [
+        "# Create model\n",
+        "model = GeNNModel(\"float\", \"mnist_mb_third_layer\")\n",
+        "model.dt = DT\n",
+        "\n",
+        "# Create neuron populations\n",
+        "lif_init = {\"V\": PN_PARAMS[\"Vreset\"], \"RefracTime\": 0.0}\n",
+        "if_init = {\"V\": 0.0}\n",
+        "pn = model.add_neuron_population(\"pn\", NUM_PN, \"LIF\", PN_PARAMS, lif_init)\n",
+        "kc = model.add_neuron_population(\"kc\", NUM_KC, \"LIF\", LIF_PARAMS, lif_init)\n",
+        "ggn = model.add_neuron_population(\"ggn\", 1, if_model, GGN_PARAMS, if_init)\n",
+        "\n",
+        "# Turn on spike recording\n",
+        "pn.spike_recording_enabled = True\n",
+        "kc.spike_recording_enabled = True\n",
+        "\n",
+        "# Create current sources to deliver input to network\n",
+        "pn_input = model.add_current_source(\"pn_input\", cs_model, pn , {}, {\"magnitude\": 0.0})\n",
+        "\n",
+        "# Create synapse populations\n",
+        "pn_kc = model.add_synapse_population(\"pn_kc\", \"SPARSE\",\n",
+        "                                     pn, kc,\n",
+        "                                     init_weight_update(\"StaticPulseConstantWeight\", {\"g\": PN_KC_WEIGHT}),\n",
+        "                                     init_postsynaptic(\"ExpCurr\", {\"tau\": PN_KC_TAU_SYN}),\n",
+        "                                     init_sparse_connectivity(\"FixedNumberPreWithReplacement\", {\"num\": PN_KC_FAN_IN}))\n",
+        "\n",
+        "kc_ggn = model.add_synapse_population(\"kc_ggn\", \"DENSE\",\n",
+        "                                      kc, ggn,\n",
+        "                                      init_weight_update(\"StaticPulseConstantWeight\", {\"g\": 1.0}),\n",
+        "                                      init_postsynaptic(\"DeltaCurr\"))\n",
+        "\n",
+        "ggn_kc = model.add_synapse_population(\"ggn_kc\", \"DENSE\",\n",
+        "                                      ggn, kc,\n",
+        "                                      init_weight_update(\"StaticPulseConstantWeight\", {\"g\": -5.0}),\n",
+        "                                      init_postsynaptic(\"ExpCurr\", {\"tau\": 5.0}))"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "sdYo9umiH06S"
+      },
+      "source": [
+        "Add a current source to inject current into `pn` using our newly-defined custom model with the initial magnitude set to zero."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "kiitnN5HjlNc"
+      },
+      "outputs": [],
+      "source": [
+        "mbon = model.add_neuron_population(\"mbon\", NUM_MBON, \"LIF\", LIF_PARAMS, lif_init)\n",
+        "\n",
+        "mbon.spike_recording_enabled = True\n",
+        "\n",
+        "# Create current sources to deliver input and supervision to network\n",
+        "mbon_input = model.add_current_source(\"mbon_input\", cs_model, mbon , {}, {\"magnitude\": 0.0})"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "0BQ2LzsPjvlv"
+      },
+      "source": [
+        "Add a new synapse group connecting ``kc`` into ``mbon`` with initially zeroed weights and our newly-defined STDP rule."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "5hq70tYRjqZq"
+      },
+      "outputs": [],
+      "source": [
+        "kc_mbon = model.add_synapse_population(\"kc_mbon\", \"DENSE\",\n",
+        "                                       kc, mbon,\n",
+        "                                       init_weight_update(symmetric_stdp, KC_MBON_PARAMS, {\"g\": 0.0}),\n",
+        "                                       init_postsynaptic(\"ExpCurr\", {\"tau\": KC_MBON_TAU_SYN}))"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "-GU4oXOS9Lil"
+      },
+      "source": [
+        "## Build model\n",
+        "Generate code and load it into PyGeNN (as we're no longer recording spikes, we don't need to allocate a recording buffer)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "-FE02Zoz9Lim"
+      },
+      "outputs": [],
+      "source": [
+        "# Convert present time into timesteps\n",
+        "present_timesteps = int(round(PRESENT_TIME_MS / DT))\n",
+        "\n",
+        "# Build model and load it\n",
+        "model.build()\n",
+        "model.load(num_recording_timesteps=present_timesteps)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "CcpTaaB39Lim"
+      },
+      "source": [
+        "## Simulate tutorial model\n",
+        "As well as resetting the state of every neuron after presenting each stimuli, because we have now added synapses with their own dynamics, these also need to be reset.\n",
+        " This function resets neuron state variables selected by the keys of a dictionary to the values specifed in the dictionary values and pushes the new values to the GPU."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "DfcqDTVXdoRq"
+      },
+      "source": [
+        "Now, like before, we loop through 4 stimuli and simulate the model. However, now we need to reset the Projection Neuron and Kenyon Cell populations; **and** the synapses between them. Additionally, we want to show spikes from the Kenyon Cells as well as the Projection Neurons."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "hQV_X3IGkIQm"
+      },
+      "outputs": [],
+      "source": [
+        "def reset_spike_times(pop):\n",
+        "    pop.spike_times.view[:] = -np.finfo(np.float32).max\n",
+        "    pop.spike_times.push_to_device()"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 49,
+          "referenced_widgets": [
+            "e4a549fa740647a9a4c257b70347b6dc",
+            "9331ce4de0d845d7bdba6eaf19733e3b",
+            "e98cca67c6dd4268b7fea6f8136b31cd",
+            "5456c8d419f1474cbe8cf0c3eca6fddc",
+            "007cd41dc27e40aeb84f65b26c870a7c",
+            "7ed5e1c9a13142939fcd1f7cf78243a1",
+            "4f077d3f032f4a169a5f7eedf15f421c",
+            "7b2a461efd354bba8e96b6ed7b6c5f2d",
+            "a0225294218b49cfa976eb59639f2f22",
+            "7c55bec89f144381b8f495e3aba48699",
+            "e0ed35f603ed483abb7d79c569d45fd2"
+          ]
+        },
+        "id": "K9pAP8OrJUub",
+        "outputId": "fa63fb73-6484-4c47-b5b5-5011bdf4f58c"
+      },
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "  0%|          | 0/60000 [00:00<?, ?it/s]"
+            ],
+            "application/vnd.jupyter.widget-view+json": {
+              "version_major": 2,
+              "version_minor": 0,
+              "model_id": "e4a549fa740647a9a4c257b70347b6dc"
+            }
+          },
+          "metadata": {}
+        }
+      ],
+      "source": [
+        "def reset_out_post(pop):\n",
+        "    pop.out_post.view[:] = 0.0\n",
+        "    pop.out_post.push_to_device()\n",
+        "\n",
+        "def reset_neuron(pop, var_init):\n",
+        "    # Reset variables\n",
+        "    for var_name, var_val in var_init.items():\n",
+        "        pop.vars[var_name].view[:] = var_val\n",
+        "\n",
+        "        # Push the new values to GPU\n",
+        "        pop.vars[var_name].push_to_device()\n",
+        "\n",
+        "# Convert present time into timesteps\n",
+        "present_timesteps = int(round(PRESENT_TIME_MS / DT))\n",
+        "\n",
+        "for s in tqdm(range(training_images.shape[0])):\n",
+        "    # Set training image\n",
+        "    pn_input.vars[\"magnitude\"].view[:] = training_images[s] * INPUT_SCALE\n",
+        "    pn_input.vars[\"magnitude\"].push_to_device()\n",
+        "\n",
+        "    # Turn on correct output neuron\n",
+        "    mbon_input.vars[\"magnitude\"].view[:] = 0\n",
+        "    mbon_input.vars[\"magnitude\"].view[training_labels[s]] = MBON_STIMULUS_CURRENT\n",
+        "    mbon_input.vars[\"magnitude\"].push_to_device()\n",
+        "\n",
+        "    # Simulate present timesteps\n",
+        "    for i in range(present_timesteps):\n",
+        "        model.step_time()\n",
+        "\n",
+        "    # Reset neuron state\n",
+        "    reset_neuron(pn, lif_init)\n",
+        "    reset_neuron(kc, lif_init)\n",
+        "    reset_neuron(ggn, if_init)\n",
+        "    reset_neuron(mbon, lif_init)\n",
+        "\n",
+        "    # Reset spike times\n",
+        "    reset_spike_times(kc)\n",
+        "    reset_spike_times(mbon)\n",
+        "\n",
+        "    # Reset synapse state\n",
+        "    reset_out_post(pn_kc)\n",
+        "    reset_out_post(ggn_kc)\n",
+        "    reset_out_post(kc_mbon)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "KqM0qyChlzhP"
+      },
+      "source": [
+        "## Visualise and save learned weights\n",
+        "First of all we download the learned weights from device and get the memory view to access them through (in the same way as we used to access current source state variables)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "s4lAfhkdkuHY"
+      },
+      "outputs": [],
+      "source": [
+        "kc_mbon.vars[\"g\"].pull_from_device()\n",
+        "kc_mbon_g_view = kc_mbon.vars[\"g\"].view"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "FINPVXN5mr5C"
+      },
+      "source": [
+        "now we plot a histogram of the weight distribution - as is typical when using STDP rules whose learning rate is independent of the current magnitude of the weight it is bimodal"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 465
+        },
+        "id": "OHD_SzOsmF1Z",
+        "outputId": "404ba978-42b9-4273-d2a0-07791d2c664a"
+      },
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<Figure size 1000x500 with 1 Axes>"
+            ],
+            "image/png": "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VW87PDy83rcNALhwBDYAQJOSkZGhli1bqrKy0lx36tQpBQUF6aabbvKqrQ5hX3755Y9u97rrrtOxY8fkdDrrtd+bbrpJU6ZMqVXt7NmzL7iHb775Rg6HQz169Khx/NixY3rppZfqvF0AQMMisAEAmpTBgwfr1KlT2rZtm7nuk08+UWRkpHJzc1VaWmquX7dunTp27KjLL7/8R7frcDgUGRkpm83WIH3XRsuWLS+4hyVLluiOO+6Q2+1Wbm7uOeORkZH1HkYBABePwAYAaFK6du2q9u3ba/369ea69evX6+c//7liY2P12Wefea0fPHiwJMnj8WjOnDmKjY1VaGioevXqpb///e9etf99O+Lrr7+u6OhoNWvWTLfffrvmz59f4y2Ff/nLXxQTEyOn06nRo0fr5MmTkqRf/epX2rBhgxYsWGDeknj48OFaH+uSJUsUHh6uDz/8UN27d1eLFi00bNgwHTt2zKvOMAy99dZbuvvuu3XnnXfqjTfeqPU+AAC+RWADADQ5gwcP1rp168yf161bp5tuukmDBg0y1585c0a5ublmYJszZ47+/Oc/KyMjQ3v27NHUqVN11113acOGDTXuY9OmTXrggQc0efJk5efn65ZbbtGzzz57Tt2XX36plStXatWqVVq1apU2bNiguXPnSpIWLFighIQETZgwQceOHdOxY8cUHR1dp2M9ffq0fv/73+svf/mLNm7cqCNHjuiRRx7xqlm3bp1Onz6txMRE3XXXXXr77bdVUlJSp/0AAHwj0NcNAABQ3wYPHqwpU6aosrJSZ86c0Y4dOzRo0CBVVFQoIyNDkpSTk6OysjINHjxYZWVleu655/Txxx8rISFBktS5c2d9+umn+sMf/qBBgwads4+XX35ZP/3pT81wdOWVV2rz5s1atWqVV53H49GSJUvUsmVLSdLdd9+t7OxsPfvss3I6nXI4HGrWrJkiIyMv6Firj6n6ts7U1FTNnj3bq+aNN97Q6NGjFRAQoB49eqhz585asWKFfvWrX13QPgEAjYcrbACAJuemm25SSUmJtm7dqk8++URXXnmlLrvsMg0aNMj8Htv69evVuXNndezYUV988YVOnz6tW265RS1atDBff/7zn887IcmBAwfUv39/r3X//bP0/eyO1WFNktq3b6/jx4/X27E2a9bM6zt4/739oqIivfvuu7rrrrvMdXfddRe3RQKAn+AKGwCgyenSpYs6dOigdevW6cSJE+YVsqioKEVHR2vz5s1at26dbr75ZknfzyIpSatXr9ZPfvITr20FBwdfVC9BQUFeP9tsNnk8nova5o9t3zAM8+dly5aptLRU8fHx5jrDMOTxePSvf/1LV155Zb31AgCof1xhAwA0SYMHD9b69eu1fv16r+n8Bw4cqA8++EBbtmwxv78WFxen4OBgHTlyRF26dPF6ne87ZV27dtXWrVu91v33z7XhcDhUVVVV5/fV1htvvKGHH35Y+fn55uvzzz/XjTfeqDfffLPB9gsAqB9cYQMANEmDBw9WSkqKKioqvL6DNmjQIKWmpqq8vNwMbC1bttQjjzyiqVOnyuPx6IYbblBxcbE2bdqksLAwjRs37pztT5o0SQMHDtT8+fN16623au3atfrggw/qPOV+TEyMcnNzdfjwYbVo0UKtW7eW3V4/f0/Nz8/X9u3btXTpUnXr1s1rbMyYMZo9e7aeeeYZBQbycQAArIorbACAJmnw4ME6c+aMunTpooiICHP9oEGDdPLkSXP6/2pPP/20Zs6cqTlz5qh79+4aNmyYVq9erdjY2Bq3f/311ysjI0Pz589Xr169lJmZqalTpyokJKROfT7yyCMKCAhQXFycLrvsMh05cuTCDrgGb7zxhuLi4s4Ja5J0++236/jx41qzZk297Q8AUP9sxtk3ugMAgAs2YcIE7d+/X5988km9bzsmJkZTpkzRlClT6n3b1ZYsWaIpU6Z4PWsOAOBbBDYAAC7Q73//e91yyy1q3ry5PvjgAz388MN69dVXdd9999X7vmJiYnTs2DEFBQXp22+/ldPprNftt2jRQpWVlQoJCSGwAYCFENgAALhAd9xxh9avX6+TJ0+qc+fOmjRpkh544IEG2ddXX32liooKSd8/I66+vudW7YsvvpAkBQQEnPc2UABA4yOwAQAAAIBFMekIAAAAAFgUgQ0AAAAALIrABgAAAAAWRWADAAAAAIsisAEAAACARRHYAAAAAMCiCGwAAAAAYFEENgAAAACwKAIbAAAAAFjU/wdvGsiXeoCrTQAAAABJRU5ErkJggg==\n"
+          },
+          "metadata": {}
+        }
+      ],
+      "source": [
+        "fig, axis = plt.subplots(figsize=(10, 5))\n",
+        "axis.hist(kc_mbon_g_view, bins=100)\n",
+        "axis.axvline(np.average(kc_mbon_g_view), linestyle=\"--\")\n",
+        "axis.set_xlabel(\"Weight [nA]\")\n",
+        "axis.set_ylabel(\"Count\");"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "bi2A8qZWAASt"
+      },
+      "source": [
+        "So we can reproduce exactly the same PN->KC connectivity again and reuse the weights we've learnt we want to save them back to YOUR google drive. First mount the drive"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "DMyS30_Rm-oe",
+        "outputId": "be763ffc-cfc1-43f0-b49f-bf68070c25d4",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Mounted at /content/drive\n"
+          ]
+        }
+      ],
+      "source": [
+        "from google.colab import drive\n",
+        "drive.mount(\"/content/drive\")"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "JTZrJsB4AQH5"
+      },
+      "source": [
+        "Save the learnt weights"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "kFQtm-CVmT20"
+      },
+      "outputs": [],
+      "source": [
+        "np.save(\"/content/drive/MyDrive/kc_mbon_g.npy\", kc_mbon_g_view)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "iqF9kWhEATFL"
+      },
+      "source": [
+        "Download the PN->KC connectivity from the GPU and save the sparse connectivity."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "6xNyJgiGmR9Y"
+      },
+      "outputs": [],
+      "source": [
+        "pn_kc.pull_connectivity_from_device()\n",
+        "np.save(\"/content/drive/MyDrive/pn_kc_ind.npy\", np.vstack((pn_kc.get_sparse_pre_inds(), pn_kc.get_sparse_post_inds())))"
+      ]
+    }
+  ],
+  "metadata": {
+    "accelerator": "GPU",
+    "colab": {
+      "name": "4_third_layer",
+      "provenance": []
+    },
+    "kernelspec": {
+      "display_name": "Python 3",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.7.7"
+    },
+    "widgets": {
+      "application/vnd.jupyter.widget-state+json": {
+        "e4a549fa740647a9a4c257b70347b6dc": {
+          "model_module": "@jupyter-widgets/controls",
+          "model_name": "HBoxModel",
+          "model_module_version": "1.5.0",
+          "state": {
+            "_dom_classes": [],
+            "_model_module": "@jupyter-widgets/controls",
+            "_model_module_version": "1.5.0",
+            "_model_name": "HBoxModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/controls",
+            "_view_module_version": "1.5.0",
+            "_view_name": "HBoxView",
+            "box_style": "",
+            "children": [
+              "IPY_MODEL_9331ce4de0d845d7bdba6eaf19733e3b",
+              "IPY_MODEL_e98cca67c6dd4268b7fea6f8136b31cd",
+              "IPY_MODEL_5456c8d419f1474cbe8cf0c3eca6fddc"
+            ],
+            "layout": "IPY_MODEL_007cd41dc27e40aeb84f65b26c870a7c"
+          }
+        },
+        "9331ce4de0d845d7bdba6eaf19733e3b": {
+          "model_module": "@jupyter-widgets/controls",
+          "model_name": "HTMLModel",
+          "model_module_version": "1.5.0",
+          "state": {
+            "_dom_classes": [],
+            "_model_module": "@jupyter-widgets/controls",
+            "_model_module_version": "1.5.0",
+            "_model_name": "HTMLModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/controls",
+            "_view_module_version": "1.5.0",
+            "_view_name": "HTMLView",
+            "description": "",
+            "description_tooltip": null,
+            "layout": "IPY_MODEL_7ed5e1c9a13142939fcd1f7cf78243a1",
+            "placeholder": "​",
+            "style": "IPY_MODEL_4f077d3f032f4a169a5f7eedf15f421c",
+            "value": "100%"
+          }
+        },
+        "e98cca67c6dd4268b7fea6f8136b31cd": {
+          "model_module": "@jupyter-widgets/controls",
+          "model_name": "FloatProgressModel",
+          "model_module_version": "1.5.0",
+          "state": {
+            "_dom_classes": [],
+            "_model_module": "@jupyter-widgets/controls",
+            "_model_module_version": "1.5.0",
+            "_model_name": "FloatProgressModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/controls",
+            "_view_module_version": "1.5.0",
+            "_view_name": "ProgressView",
+            "bar_style": "success",
+            "description": "",
+            "description_tooltip": null,
+            "layout": "IPY_MODEL_7b2a461efd354bba8e96b6ed7b6c5f2d",
+            "max": 60000,
+            "min": 0,
+            "orientation": "horizontal",
+            "style": "IPY_MODEL_a0225294218b49cfa976eb59639f2f22",
+            "value": 60000
+          }
+        },
+        "5456c8d419f1474cbe8cf0c3eca6fddc": {
+          "model_module": "@jupyter-widgets/controls",
+          "model_name": "HTMLModel",
+          "model_module_version": "1.5.0",
+          "state": {
+            "_dom_classes": [],
+            "_model_module": "@jupyter-widgets/controls",
+            "_model_module_version": "1.5.0",
+            "_model_name": "HTMLModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/controls",
+            "_view_module_version": "1.5.0",
+            "_view_name": "HTMLView",
+            "description": "",
+            "description_tooltip": null,
+            "layout": "IPY_MODEL_7c55bec89f144381b8f495e3aba48699",
+            "placeholder": "​",
+            "style": "IPY_MODEL_e0ed35f603ed483abb7d79c569d45fd2",
+            "value": " 60000/60000 [02:55&lt;00:00, 260.92it/s]"
+          }
+        },
+        "007cd41dc27e40aeb84f65b26c870a7c": {
+          "model_module": "@jupyter-widgets/base",
+          "model_name": "LayoutModel",
+          "model_module_version": "1.2.0",
+          "state": {
+            "_model_module": "@jupyter-widgets/base",
+            "_model_module_version": "1.2.0",
+            "_model_name": "LayoutModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/base",
+            "_view_module_version": "1.2.0",
+            "_view_name": "LayoutView",
+            "align_content": null,
+            "align_items": null,
+            "align_self": null,
+            "border": null,
+            "bottom": null,
+            "display": null,
+            "flex": null,
+            "flex_flow": null,
+            "grid_area": null,
+            "grid_auto_columns": null,
+            "grid_auto_flow": null,
+            "grid_auto_rows": null,
+            "grid_column": null,
+            "grid_gap": null,
+            "grid_row": null,
+            "grid_template_areas": null,
+            "grid_template_columns": null,
+            "grid_template_rows": null,
+            "height": null,
+            "justify_content": null,
+            "justify_items": null,
+            "left": null,
+            "margin": null,
+            "max_height": null,
+            "max_width": null,
+            "min_height": null,
+            "min_width": null,
+            "object_fit": null,
+            "object_position": null,
+            "order": null,
+            "overflow": null,
+            "overflow_x": null,
+            "overflow_y": null,
+            "padding": null,
+            "right": null,
+            "top": null,
+            "visibility": null,
+            "width": null
+          }
+        },
+        "7ed5e1c9a13142939fcd1f7cf78243a1": {
+          "model_module": "@jupyter-widgets/base",
+          "model_name": "LayoutModel",
+          "model_module_version": "1.2.0",
+          "state": {
+            "_model_module": "@jupyter-widgets/base",
+            "_model_module_version": "1.2.0",
+            "_model_name": "LayoutModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/base",
+            "_view_module_version": "1.2.0",
+            "_view_name": "LayoutView",
+            "align_content": null,
+            "align_items": null,
+            "align_self": null,
+            "border": null,
+            "bottom": null,
+            "display": null,
+            "flex": null,
+            "flex_flow": null,
+            "grid_area": null,
+            "grid_auto_columns": null,
+            "grid_auto_flow": null,
+            "grid_auto_rows": null,
+            "grid_column": null,
+            "grid_gap": null,
+            "grid_row": null,
+            "grid_template_areas": null,
+            "grid_template_columns": null,
+            "grid_template_rows": null,
+            "height": null,
+            "justify_content": null,
+            "justify_items": null,
+            "left": null,
+            "margin": null,
+            "max_height": null,
+            "max_width": null,
+            "min_height": null,
+            "min_width": null,
+            "object_fit": null,
+            "object_position": null,
+            "order": null,
+            "overflow": null,
+            "overflow_x": null,
+            "overflow_y": null,
+            "padding": null,
+            "right": null,
+            "top": null,
+            "visibility": null,
+            "width": null
+          }
+        },
+        "4f077d3f032f4a169a5f7eedf15f421c": {
+          "model_module": "@jupyter-widgets/controls",
+          "model_name": "DescriptionStyleModel",
+          "model_module_version": "1.5.0",
+          "state": {
+            "_model_module": "@jupyter-widgets/controls",
+            "_model_module_version": "1.5.0",
+            "_model_name": "DescriptionStyleModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/base",
+            "_view_module_version": "1.2.0",
+            "_view_name": "StyleView",
+            "description_width": ""
+          }
+        },
+        "7b2a461efd354bba8e96b6ed7b6c5f2d": {
+          "model_module": "@jupyter-widgets/base",
+          "model_name": "LayoutModel",
+          "model_module_version": "1.2.0",
+          "state": {
+            "_model_module": "@jupyter-widgets/base",
+            "_model_module_version": "1.2.0",
+            "_model_name": "LayoutModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/base",
+            "_view_module_version": "1.2.0",
+            "_view_name": "LayoutView",
+            "align_content": null,
+            "align_items": null,
+            "align_self": null,
+            "border": null,
+            "bottom": null,
+            "display": null,
+            "flex": null,
+            "flex_flow": null,
+            "grid_area": null,
+            "grid_auto_columns": null,
+            "grid_auto_flow": null,
+            "grid_auto_rows": null,
+            "grid_column": null,
+            "grid_gap": null,
+            "grid_row": null,
+            "grid_template_areas": null,
+            "grid_template_columns": null,
+            "grid_template_rows": null,
+            "height": null,
+            "justify_content": null,
+            "justify_items": null,
+            "left": null,
+            "margin": null,
+            "max_height": null,
+            "max_width": null,
+            "min_height": null,
+            "min_width": null,
+            "object_fit": null,
+            "object_position": null,
+            "order": null,
+            "overflow": null,
+            "overflow_x": null,
+            "overflow_y": null,
+            "padding": null,
+            "right": null,
+            "top": null,
+            "visibility": null,
+            "width": null
+          }
+        },
+        "a0225294218b49cfa976eb59639f2f22": {
+          "model_module": "@jupyter-widgets/controls",
+          "model_name": "ProgressStyleModel",
+          "model_module_version": "1.5.0",
+          "state": {
+            "_model_module": "@jupyter-widgets/controls",
+            "_model_module_version": "1.5.0",
+            "_model_name": "ProgressStyleModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/base",
+            "_view_module_version": "1.2.0",
+            "_view_name": "StyleView",
+            "bar_color": null,
+            "description_width": ""
+          }
+        },
+        "7c55bec89f144381b8f495e3aba48699": {
+          "model_module": "@jupyter-widgets/base",
+          "model_name": "LayoutModel",
+          "model_module_version": "1.2.0",
+          "state": {
+            "_model_module": "@jupyter-widgets/base",
+            "_model_module_version": "1.2.0",
+            "_model_name": "LayoutModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/base",
+            "_view_module_version": "1.2.0",
+            "_view_name": "LayoutView",
+            "align_content": null,
+            "align_items": null,
+            "align_self": null,
+            "border": null,
+            "bottom": null,
+            "display": null,
+            "flex": null,
+            "flex_flow": null,
+            "grid_area": null,
+            "grid_auto_columns": null,
+            "grid_auto_flow": null,
+            "grid_auto_rows": null,
+            "grid_column": null,
+            "grid_gap": null,
+            "grid_row": null,
+            "grid_template_areas": null,
+            "grid_template_columns": null,
+            "grid_template_rows": null,
+            "height": null,
+            "justify_content": null,
+            "justify_items": null,
+            "left": null,
+            "margin": null,
+            "max_height": null,
+            "max_width": null,
+            "min_height": null,
+            "min_width": null,
+            "object_fit": null,
+            "object_position": null,
+            "order": null,
+            "overflow": null,
+            "overflow_x": null,
+            "overflow_y": null,
+            "padding": null,
+            "right": null,
+            "top": null,
+            "visibility": null,
+            "width": null
+          }
+        },
+        "e0ed35f603ed483abb7d79c569d45fd2": {
+          "model_module": "@jupyter-widgets/controls",
+          "model_name": "DescriptionStyleModel",
+          "model_module_version": "1.5.0",
+          "state": {
+            "_model_module": "@jupyter-widgets/controls",
+            "_model_module_version": "1.5.0",
+            "_model_name": "DescriptionStyleModel",
+            "_view_count": null,
+            "_view_module": "@jupyter-widgets/base",
+            "_view_module_version": "1.2.0",
+            "_view_name": "StyleView",
+            "description_width": ""
+          }
+        }
+      }
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}

@@ -1,0 +1,9 @@
+Insect-inspired MNIST classification
+====================================
+Train a model of the insect mushroom body using an STDP learning rule to classify MNIST.
+
+.. nbgallery::
+    :name: rst-gallery
+    :glob:
+    
+    *.ipynb
