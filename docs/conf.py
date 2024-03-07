@@ -33,7 +33,8 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_gallery.gen_gallery",
     "sphinx_rtd_theme",
-    "sphinxarg.ext"]
+    "sphinxarg.ext",
+    "nbsphinx"]
 
 napoleon_use_param = True
 napoleon_use_ivar = True
@@ -70,6 +71,10 @@ sphinx_gallery_conf = {
      "examples_dirs": "../userproject",   # path to your example scripts
      "gallery_dirs": "userproject",  # path to where to save gallery generated output
 }
+
+# Never actually run tutorial notebooks
+nbsphinx_execute = "never"
+
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

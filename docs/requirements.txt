@@ -2,3 +2,4 @@ sphinx_autodoc_typehints>=1.19,<2.0
 sphinx_rtd_theme
 numpy
 tqdm
+nbsphinx
