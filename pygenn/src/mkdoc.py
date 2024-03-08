@@ -193,7 +193,13 @@ def process_comment(comment):
                 + "\n    \\end{" + match.group(1) + "}\n")
     s = re.sub(r'[@\\]f\{([\w*]+)\}\s*{?\s*(.*?)\s*[@\\]f\}',
                replace_math_env, s, flags=re.DOTALL)
-
+    
+    def replace_note(match):
+        return ("\n.. note::\n\n" 
+                + textwrap.indent(match.group(1), "    ") 
+                + "\n")
+    s = re.sub(r'[@\\]note\s*(.*?)(?=(?:\n\n)|(?:\\[a-zA-Z]+)|$)',
+               replace_note, s, flags=re.DOTALL)
     s = s.replace('``true``', '``True``')
     s = s.replace('``false``', '``False``')
 

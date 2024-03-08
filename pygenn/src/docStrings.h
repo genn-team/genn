@@ -533,14 +533,14 @@ R"doc(Updates hash with current source.
 
 .. note::
 
-        this can only be called after model is finalized)doc";
+    this can only be called after model is finalized)doc";
 
 static const char *__doc_CurrentSource_getInitHashDigest =
 R"doc(Updates hash with current source initialisation.
 
 .. note::
 
-        this can only be called after model is finalized)doc";
+    this can only be called after model is finalized)doc";
 
 static const char *__doc_CurrentSource_getInjectionCodeTokens = R"doc()doc";
 
@@ -776,7 +776,7 @@ R"doc(Updates hash with custom update.
 
 .. note::
 
-        this can only be called after model is finalized)doc";
+    this can only be called after model is finalized)doc";
 
 static const char *__doc_CustomConnectivityUpdate_getHostUpdateCodeTokens = R"doc()doc";
 
@@ -785,7 +785,7 @@ R"doc(Updates hash with custom update.
 
 .. note::
 
-        this can only be called after model is finalized)doc";
+    this can only be called after model is finalized)doc";
 
 static const char *__doc_CustomConnectivityUpdate_getModel = R"doc(Gets the custom connectivity update model used by this group)doc";
 
@@ -987,11 +987,17 @@ This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_CustomUpdateBase_updateHash =
 R"doc(Updates hash with custom update
-NOTE: this can only be called after model is finalized)doc";
+
+.. note::
+
+    this can only be called after model is finalized)doc";
 
 static const char *__doc_CustomUpdateBase_updateInitHash =
 R"doc(Updates hash with custom update
-NOTE: this can only be called after model is finalized)doc";
+
+.. note::
+
+    this can only be called after model is finalized)doc";
 
 static const char *__doc_CustomUpdateEGPAdapter = R"doc()doc";
 
@@ -1117,11 +1123,17 @@ static const char *__doc_CustomUpdateWU_finalise = R"doc()doc";
 
 static const char *__doc_CustomUpdateWU_getHashDigest =
 R"doc(Updates hash with custom update
-NOTE: this can only be called after model is finalized)doc";
+
+.. note::
+
+    this can only be called after model is finalized)doc";
 
 static const char *__doc_CustomUpdateWU_getInitHashDigest =
 R"doc(Updates hash with custom update
-NOTE: this can only be called after model is finalized)doc";
+
+.. note::
+
+    this can only be called after model is finalized)doc";
 
 static const char *__doc_CustomUpdateWU_getKernelSize = R"doc()doc";
 
@@ -1147,11 +1159,17 @@ static const char *__doc_CustomUpdate_getDelayNeuronGroup = R"doc()doc";
 
 static const char *__doc_CustomUpdate_getHashDigest =
 R"doc(Updates hash with custom update
-NOTE: this can only be called after model is finalized)doc";
+
+.. note::
+
+    this can only be called after model is finalized)doc";
 
 static const char *__doc_CustomUpdate_getInitHashDigest =
 R"doc(Updates hash with custom update
-NOTE: this can only be called after model is finalized)doc";
+
+.. note::
+
+    this can only be called after model is finalized)doc";
 
 static const char *__doc_CustomUpdate_getNumNeurons =
 R"doc(Get number of neurons custom update operates over
@@ -1214,7 +1232,7 @@ This snippet takes 12 parameter:
 
 .. note::
 
-        ``conv_ih * conv_iw * conv_ic`` should equal the number of neurons in the presynaptic
+    ``conv_ih * conv_iw * conv_ic`` should equal the number of neurons in the presynaptic
     neuron population and ``conv_oh * conv_ow * conv_oc`` should equal the number of
     neurons in the postsynaptic neuron population.)doc";
 
@@ -1498,7 +1516,7 @@ This snippet takes 1 parameter:
 
 .. note::
 
-        This snippet type is seldom used directly - InitVarSnippet::Init
+    This snippet type is seldom used directly - InitVarSnippet::Init
     has an implicit constructor that, internally, creates one of these snippets)doc";
 
 static const char *__doc_InitVarSnippet_Constant_getCode = R"doc()doc";
@@ -2640,13 +2658,19 @@ static const char *__doc_NeuronGroup_getFusedWUPreOutSyn = R"doc()doc";
 
 static const char *__doc_NeuronGroup_getHashDigest =
 R"doc(Updates hash with neuron group
-NOTE: this can only be called after model is finalized)doc";
+
+.. note::
+
+    this can only be called after model is finalized)doc";
 
 static const char *__doc_NeuronGroup_getInSyn = R"doc(Gets pointers to all synapse groups which provide input to this neuron group)doc";
 
 static const char *__doc_NeuronGroup_getInitHashDigest =
 R"doc(Updates hash with neuron group initialisation
-NOTE: this can only be called after model is finalized)doc";
+
+.. note::
+
+    this can only be called after model is finalized)doc";
 
 static const char *__doc_NeuronGroup_getModel = R"doc(Gets the neuron model used by this group)doc";
 
@@ -2985,14 +3009,14 @@ and 4 parameters:
 
 .. note::
 
-        The initial values array for the `Poisson` type needs two entries
+    The initial values array for the `Poisson` type needs two entries
     for `V`, and `spikeTime` and the parameter array needs four entries for
     `trefract`, `tspike`, `Vspike` and `Vrest`,  *in that order*.
 
 
 .. note::
 
-        The refractory period and the spike duration both start at the beginning of the spike. That means that the refractory period should be longer or equal to the spike duration. If this is not the case, undefined model behaviour occurs.
+    The refractory period and the spike duration both start at the beginning of the spike. That means that the refractory period should be longer or equal to the spike duration. If this is not the case, undefined model behaviour occurs.
 
 
 It has two extra global parameters:
@@ -3003,7 +3027,7 @@ It has two extra global parameters:
 
 .. note::
 
-        This model uses a linear approximation for the probability
+    This model uses a linear approximation for the probability
     of firing a spike in a given time step of size `DT`, i.e. the
     probability of firing is :math:`
 \lambda` times `DT`: :math:` p = \lambda \Delta t`,
@@ -3028,7 +3052,7 @@ and 1 parameter:
 
 .. note::
 
-        Internally this samples from the exponential distribution using
+    Internally this samples from the exponential distribution using
     the C++ 11 \<random\> library on the CPU and by transforming the
     uniform distribution, generated using cuRAND, with a natural log on the GPU.)doc";
 
@@ -3078,7 +3102,7 @@ the 1-dimensional map form used in \cite nowotny2005self :
 
 .. note::
 
-        The `RulkovMap` type only works as intended for the single time step size of `DT`= 0.5.
+    The `RulkovMap` type only works as intended for the single time step size of `DT`= 0.5.
 
 
 The `RulkovMap` type has 2 variables:
@@ -3096,7 +3120,7 @@ and it has 4 parameters:
 
 .. note::
 
-        The initial values array for the `RulkovMap` type needs two entries for `V` and `preV` and the
+    The initial values array for the `RulkovMap` type needs two entries for `V` and `preV` and the
     parameter array needs four entries for `Vspike`, `alpha`, `y` and `beta`,  *in that order*.)doc";
 
 static const char *__doc_NeuronModels_RulkovMap_getDerivedParams = R"doc()doc";
@@ -3201,7 +3225,7 @@ and 7 parameters:
 
 .. note::
 
-        Internally, the ordinary differential equations defining the model are integrated with a
+    Internally, the ordinary differential equations defining the model are integrated with a
     linear Euler algorithm and GeNN integrates 25 internal time steps for each neuron for each
     network time step. I.e., if the network is simulated at `DT= 0.1` ms, then the neurons are
     integrated with a linear Euler algorithm with `lDT= 0.004` ms.
@@ -3214,7 +3238,7 @@ Using a workaround to avoid singularity: adding the munimum numerical value of t
 
 .. note::
 
-        See NeuronModels::TraubMiles for variable and parameter names.)doc";
+    See NeuronModels::TraubMiles for variable and parameter names.)doc";
 
 static const char *__doc_NeuronModels_TraubMilesAlt_getInstance = R"doc()doc";
 
@@ -3226,7 +3250,7 @@ There are singularities in this model, which can be easily hit in float precisio
 
 .. note::
 
-        See NeuronModels::TraubMiles for variable and parameter names.)doc";
+    See NeuronModels::TraubMiles for variable and parameter names.)doc";
 
 static const char *__doc_NeuronModels_TraubMilesFast_getInstance = R"doc()doc";
 
@@ -3238,7 +3262,7 @@ Same as standard TraubMiles model but number of inner loops can be set using a p
 
 .. note::
 
-        See NeuronModels::TraubMiles for variable and parameter names.)doc";
+    See NeuronModels::TraubMiles for variable and parameter names.)doc";
 
 static const char *__doc_NeuronModels_TraubMilesNStep_getInstance = R"doc()doc";
 
@@ -4634,19 +4658,19 @@ The STDP curve is applied to the raw synaptic conductance `gRaw`, which is then 
 
 .. note::
 
-        The STDP curve implies that unpaired pre- and post-synaptic spikes incur a negative increment in `gRaw` (and hence in `g`).
+    The STDP curve implies that unpaired pre- and post-synaptic spikes incur a negative increment in `gRaw` (and hence in `g`).
 
 
 
 .. note::
 
-        The time of the last spike in each neuron, "sTXX", where XX is the name of a neuron population is (somewhat arbitrarily) initialised to -10.0 ms. If neurons never spike, these spike times are used.
+    The time of the last spike in each neuron, "sTXX", where XX is the name of a neuron population is (somewhat arbitrarily) initialised to -10.0 ms. If neurons never spike, these spike times are used.
 
 
 
 .. note::
 
-        It is the raw synaptic conductance `gRaw` that is subject to the STDP rule. The resulting synaptic conductance is a sigmoid filter of `gRaw`. This implies that `g` is initialised but not `gRaw`, the synapse will revert to the value that corresponds to `gRaw`.
+    It is the raw synaptic conductance `gRaw` that is subject to the STDP rule. The resulting synaptic conductance is a sigmoid filter of `gRaw`. This implies that `g` is initialised but not `gRaw`, the synapse will revert to the value that corresponds to `gRaw`.
 
 
 An example how to use this synapse correctly is given in `map_classol.cc` (MBody1 userproject):
@@ -4667,7 +4691,7 @@ cerr << "Total number of low value corrections: " << cnt << endl;
 
 .. note::
 
-        One cannot set values of `g` fully to `0`, as this leads to `gRaw`= -infinity and this is not support. I.e., 'g' needs to be some nominal value > 0 (but can be extremely small so that it acts like it's 0).
+    One cannot set values of `g` fully to `0`, as this leads to `gRaw`= -infinity and this is not support. I.e., 'g' needs to be some nominal value > 0 (but can be extremely small so that it acts like it's 0).
 
 
 <!--
