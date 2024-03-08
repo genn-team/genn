@@ -441,7 +441,7 @@ TEST(NeuronGroup, FuseWUMPrePost)
 TEST(NeuronGroup, FusePSM)
 {
     ModelSpecInternal model;
-    model.setMergePostsynapticModels(true);
+    model.setFusePostsynapticModels(true);
     
    
     ParamValues paramVals{{"C", 0.25}, {"TauM", 10.0}, {"Vrest", 0.0}, {"Vreset", 0.0}, {"Vthresh", 20.0}, {"Ioffset", 0.0}, {"TauRefrac", 5.0}};
@@ -523,7 +523,7 @@ TEST(NeuronGroup, FusePSM)
 TEST(NeuronGroup, FuseVarPSM)
 {
     ModelSpecInternal model;
-    model.setMergePostsynapticModels(true);
+    model.setFusePostsynapticModels(true);
     
     ParamValues paramVals{{"C", 0.25}, {"TauM", 10.0}, {"Vrest", 0.0}, {"Vreset", 0.0}, {"Vthresh", 20.0}, {"Ioffset", 0.0}, {"TauRefrac", 5.0}};
     VarValues varVals{{"V", 0.0}, {"RefracTime", 0.0}};
@@ -594,7 +594,7 @@ TEST(NeuronGroup, FuseVarPSM)
 TEST(NeuronGroup, FusePreOutput)
 {
     ModelSpecInternal model;
-    model.setMergePostsynapticModels(true);
+    model.setFusePostsynapticModels(true);
     
     ParamValues paramVals{{"C", 0.25}, {"TauM", 10.0}, {"Vrest", 0.0}, {"Vreset", 0.0}, {"Vthresh", 20.0}, {"Ioffset", 0.0}, {"TauRefrac", 5.0}};
     VarValues varVals{{"V", 0.0}, {"RefracTime", 0.0}};
@@ -1241,7 +1241,7 @@ TEST(NeuronGroup, CompareWUPostUpdate)
     ModelSpecInternal model;
 
     // **NOTE** we make sure merging is on so last test doesn't fail on that basis
-    model.setMergePostsynapticModels(true);
+    model.setFusePostsynapticModels(true);
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
