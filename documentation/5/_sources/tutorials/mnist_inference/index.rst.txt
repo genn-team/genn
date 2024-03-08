@@ -1,9 +1,0 @@
-MNIST inference
-===============
-Perform MNIST inference by converting a pre-trained ANN to an SNN
-
-.. nbgallery::
-    :name: rst-gallery
-    :glob:
-    
-    *.ipynb

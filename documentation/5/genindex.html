@@ -4,24 +4,25 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Index &mdash; PyGeNN  documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
-      <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css?v=61a4c737" />
-      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css?v=f4aeca0c" />
-      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css?v=2082cf3c" />
-      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css" />
 
   
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=b3ba4146"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
-        <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="#" />
     <link rel="search" title="Search" href="search.html" /> 
@@ -282,6 +283,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="source/pygenn.html#pygenn.SynapseMatrixType.DENSE_PROCEDURALG">DENSE_PROCEDURALG (pygenn.SynapseMatrixType attribute)</a>
 </li>
+      <li><a href="source/pygenn.html#pygenn.deprecated.deprecated">deprecated() (in module pygenn.deprecated)</a>
+</li>
       <li><a href="source/pygenn.html#pygenn.VarLocation.DEVICE">DEVICE (pygenn.VarLocation attribute)</a>
 
       <ul>
@@ -368,10 +371,10 @@
 </li>
       <li><a href="source/pygenn.html#pygenn.genn_groups.SynapseGroupMixin.get_sparse_post_inds">get_sparse_post_inds() (pygenn.genn_groups.SynapseGroupMixin method)</a>
 </li>
-      <li><a href="source/pygenn.html#pygenn.genn_groups.SynapseGroupMixin.get_sparse_pre_inds">get_sparse_pre_inds() (pygenn.genn_groups.SynapseGroupMixin method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="source/pygenn.html#pygenn.genn_groups.SynapseGroupMixin.get_sparse_pre_inds">get_sparse_pre_inds() (pygenn.genn_groups.SynapseGroupMixin method)</a>
+</li>
       <li><a href="source/pygenn.html#pygenn.get_var_access_dim">get_var_access_dim() (in module pygenn)</a>
 </li>
       <li><a href="source/pygenn.html#pygenn.CurrentSource.get_var_location">get_var_location() (pygenn.CurrentSource method)</a>
@@ -382,14 +385,6 @@
         <li><a href="source/pygenn.html#pygenn.CustomUpdateBase.get_var_location">(pygenn.CustomUpdateBase method)</a>
 </li>
         <li><a href="source/pygenn.html#pygenn.NeuronGroup.get_var_location">(pygenn.NeuronGroup method)</a>
-</li>
-      </ul></li>
-      <li><a href="source/pygenn.html#pygenn.genn_groups.CustomConnectivityUpdateMixin.get_var_values">get_var_values() (pygenn.genn_groups.CustomConnectivityUpdateMixin method)</a>
-
-      <ul>
-        <li><a href="source/pygenn.html#pygenn.genn_groups.CustomUpdateWUMixin.get_var_values">(pygenn.genn_groups.CustomUpdateWUMixin method)</a>
-</li>
-        <li><a href="source/pygenn.html#pygenn.genn_groups.SynapseGroupMixin.get_var_values">(pygenn.genn_groups.SynapseGroupMixin method)</a>
 </li>
       </ul></li>
       <li><a href="source/pygenn.html#pygenn.SynapseGroup.get_wu_post_var_location">get_wu_post_var_location() (pygenn.SynapseGroup method)</a>
@@ -521,6 +516,8 @@
         <li><a href="source/pygenn.html#module-pygenn.custom_connectivity_update_models">pygenn.custom_connectivity_update_models</a>
 </li>
         <li><a href="source/pygenn.html#module-pygenn.custom_update_models">pygenn.custom_update_models</a>
+</li>
+        <li><a href="source/pygenn.html#module-pygenn.deprecated">pygenn.deprecated</a>
 </li>
         <li><a href="source/pygenn.html#module-pygenn.genn_groups">pygenn.genn_groups</a>
 </li>
@@ -709,31 +706,15 @@
 </li>
       <li><a href="source/pygenn.html#pygenn.genn_groups.SynapseGroupMixin.pull_connectivity_from_device">pull_connectivity_from_device() (pygenn.genn_groups.SynapseGroupMixin method)</a>
 </li>
-      <li><a href="source/pygenn.html#pygenn.genn_groups.GroupMixin.pull_extra_global_param_from_device">pull_extra_global_param_from_device() (pygenn.genn_groups.GroupMixin method)</a>
-</li>
       <li><a href="source/pygenn.html#pygenn.model_preprocessor.ArrayBase.pull_from_device">pull_from_device() (pygenn.model_preprocessor.ArrayBase method)</a>
-</li>
-      <li><a href="source/pygenn.html#pygenn.genn_groups.SynapseGroupMixin.pull_in_syn_from_device">pull_in_syn_from_device() (pygenn.genn_groups.SynapseGroupMixin method)</a>
-</li>
-      <li><a href="source/pygenn.html#pygenn.genn_groups.SynapseGroupMixin.pull_psm_extra_global_param_from_device">pull_psm_extra_global_param_from_device() (pygenn.genn_groups.SynapseGroupMixin method)</a>
 </li>
       <li><a href="source/pygenn.html#pygenn.GeNNModel.pull_recording_buffers_from_device">pull_recording_buffers_from_device() (pygenn.GeNNModel method)</a>
 </li>
-      <li><a href="source/pygenn.html#pygenn.genn_groups.GroupMixin.pull_var_from_device">pull_var_from_device() (pygenn.genn_groups.GroupMixin method)</a>
+      <li><a href="source/pygenn.html#pygenn.genn_groups.SynapseGroupMixin.push_connectivity_to_device">push_connectivity_to_device() (pygenn.genn_groups.SynapseGroupMixin method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="source/pygenn.html#pygenn.genn_groups.SynapseGroupMixin.push_connectivity_to_device">push_connectivity_to_device() (pygenn.genn_groups.SynapseGroupMixin method)</a>
-</li>
-      <li><a href="source/pygenn.html#pygenn.genn_groups.GroupMixin.push_extra_global_param_to_device">push_extra_global_param_to_device() (pygenn.genn_groups.GroupMixin method)</a>
-</li>
-      <li><a href="source/pygenn.html#pygenn.genn_groups.SynapseGroupMixin.push_in_syn_to_device">push_in_syn_to_device() (pygenn.genn_groups.SynapseGroupMixin method)</a>
-</li>
-      <li><a href="source/pygenn.html#pygenn.genn_groups.SynapseGroupMixin.push_psm_extra_global_param_to_device">push_psm_extra_global_param_to_device() (pygenn.genn_groups.SynapseGroupMixin method)</a>
-</li>
       <li><a href="source/pygenn.html#pygenn.model_preprocessor.ArrayBase.push_to_device">push_to_device() (pygenn.model_preprocessor.ArrayBase method)</a>
-</li>
-      <li><a href="source/pygenn.html#pygenn.genn_groups.GroupMixin.push_var_to_device">push_var_to_device() (pygenn.genn_groups.GroupMixin method)</a>
 </li>
       <li>
     pygenn
@@ -768,6 +749,13 @@
 
       <ul>
         <li><a href="source/pygenn.html#module-pygenn.custom_update_models">module</a>
+</li>
+      </ul></li>
+      <li>
+    pygenn.deprecated
+
+      <ul>
+        <li><a href="source/pygenn.html#module-pygenn.deprecated">module</a>
 </li>
       </ul></li>
       <li>
@@ -938,12 +926,6 @@
 </li>
       <li><a href="source/pygenn.html#pygenn.genn_groups.SynapseGroupMixin.set_sparse_connections">set_sparse_connections() (pygenn.genn_groups.SynapseGroupMixin method)</a>
 </li>
-      <li><a href="source/pygenn.html#pygenn.model_preprocessor.ExtraGlobalParameter.set_values">set_values() (pygenn.model_preprocessor.ExtraGlobalParameter method)</a>
-
-      <ul>
-        <li><a href="source/pygenn.html#pygenn.model_preprocessor.VariableBase.set_values">(pygenn.model_preprocessor.VariableBase method)</a>
-</li>
-      </ul></li>
       <li><a href="source/pygenn.html#pygenn.CurrentSource.set_var_location">set_var_location() (pygenn.CurrentSource method)</a>
 
       <ul>
@@ -964,14 +946,14 @@
 </li>
       <li><a href="source/pygenn.html#pygenn.cuda_backend.Preferences.show_ptx_info">show_ptx_info (pygenn.cuda_backend.Preferences property)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="source/pygenn.html#pygenn.SynapseMatrixConnectivity.SPARSE">SPARSE (pygenn.SynapseMatrixConnectivity attribute)</a>
 
       <ul>
         <li><a href="source/pygenn.html#pygenn.SynapseMatrixType.SPARSE">(pygenn.SynapseMatrixType attribute)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="source/pygenn.html#pygenn.SynapseGroup.sparse_connectivity_initialiser">sparse_connectivity_initialiser (pygenn.SynapseGroup property)</a>
 </li>
       <li><a href="source/pygenn.html#pygenn.SynapseGroup.sparse_connectivity_location">sparse_connectivity_location (pygenn.SynapseGroup property)</a>

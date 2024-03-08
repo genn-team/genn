@@ -41,6 +41,14 @@ pygenn.custom\_update\_models module
    :undoc-members:
    :show-inheritance:
 
+pygenn.deprecated module
+------------------------
+
+.. automodule:: pygenn.deprecated
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pygenn.genn\_groups module
 --------------------------
 

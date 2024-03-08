@@ -1,9 +1,0 @@
-CompNeuro 101
-=============
-Building spiking neural network models in GeNN
-
-.. nbgallery::
-    :name: rst-gallery
-    :glob:
-    
-    *.ipynb
