@@ -10,6 +10,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+from inspect import isfunction, ismethod
 import os
 import sys
 
@@ -108,14 +109,14 @@ def remove_deprecated_arguments(app, what, name, obj, options, signature, return
         return (signature, return_annotation)
 
 def skip_deprecated_decorator(app, what, name, obj, skip, options):
-    # If object is wrapped, skip
-    # **YUCK** this is a poor test - we don't CURRENTLY use decorators
-    # for anything other than deprecating but we easily could
-    if hasattr(obj, "__wrapped__"):
+    # If object is method or function and it has the "is_deprecated" 
+    # attribute (put there my our decorator), skip it
+    if (ismethod(obj) or isfunction(obj)) and hasattr(obj, "is_deprecated"):
+        assert hasattr(obj, "__wrapped__")
         return True
     else:
         return skip
 
 def setup(app):
     app.connect("autodoc-process-signature", remove_deprecated_arguments)
-    #app.connect("autodoc-skip-member", skip_deprecated_decorator)
+    app.connect("autodoc-skip-member", skip_deprecated_decorator)
