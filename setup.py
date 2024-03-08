@@ -288,7 +288,7 @@ setup(
     ext_modules=ext_modules,
     zip_safe=False,
     python_requires=">=3.6",
-    install_requires=["numpy>=1.17", "deprecated", "psutil",
+    install_requires=["numpy>=1.17", "psutil",
                       "importlib-metadata>=1.0;python_version<'3.8'"],
     extras_require={
         "doc": ["sphinx", "sphinx-gallery", "sphinx-argparse"],

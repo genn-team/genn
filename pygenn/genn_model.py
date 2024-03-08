@@ -1,29 +1,17 @@
-# python imports
-from collections import OrderedDict
-from deprecated import deprecated
-from distutils.spawn import find_executable
-from importlib import import_module
-from os import path, environ
-from platform import system
-from psutil import cpu_count
-from setuptools import msvc
-from subprocess import check_call  # to call make
-from typing import Callable, Dict, Optional, List, Sequence, Tuple, Union
-
 import re
 import sys
-from textwrap import dedent
-from warnings import warn
-from weakref import proxy
-
-# 3rd party imports
 import numpy as np
+from . import (current_source_models, custom_connectivity_update_models,
+               custom_update_models, init_sparse_connectivity_snippets, 
+               init_toeplitz_connectivity_snippets, init_var_snippets,
+               neuron_models, postsynaptic_models, types, weight_update_models)
 
-# pygenn imports
-from ._genn import (generate_code, init_logging, CurrentSource,
-                    CurrentSourceModelBase, CustomConnectivityUpdate,
-                    CustomConnectivityUpdateModelBase, CustomUpdate,
-                    CustomUpdateModelBase, CustomUpdateVar, 
+
+from collections import OrderedDict
+from typing import Callable, Dict, Optional, List, Sequence, Tuple, Union
+from ._genn import (CurrentSource, CurrentSourceModelBase,
+                    CustomConnectivityUpdate, CustomConnectivityUpdateModelBase,
+                    CustomUpdate, CustomUpdateModelBase, CustomUpdateVar,
                     CustomUpdateVarAccess, CustomUpdateWU, DerivedParam,
                     EGP, EGPRef, EGPReference, InitSparseConnectivitySnippetBase,
                     InitToeplitzConnectivitySnippetBase, InitVarSnippetBase,
@@ -34,16 +22,24 @@ from ._genn import (generate_code, init_logging, CurrentSource,
                     ToeplitzConnectivityInit, UnresolvedType, Var, VarAccess,
                     VarAccessMode, VarInit, VarLocation, VarRef, VarReference,
                     WeightUpdateInit, WeightUpdateModelBase, WUVarReference)
-
 from ._runtime import Runtime
 from .genn_groups import (CurrentSourceMixin, CustomConnectivityUpdateMixin,
                           CustomUpdateMixin, CustomUpdateWUMixin,
                           NeuronGroupMixin, SynapseGroupMixin)
+
+from distutils.spawn import find_executable
+from importlib import import_module
+from os import path, environ
+from platform import system
+from psutil import cpu_count
+from setuptools import msvc
+from subprocess import check_call  # to call make
+from textwrap import dedent
+from warnings import warn
+from weakref import proxy
+from ._genn import generate_code, init_logging
+from .deprecated import deprecated
 from .model_preprocessor import _get_snippet, _get_var_init, _prepare_param_vals
-from . import (current_source_models, custom_connectivity_update_models,
-               custom_update_models, init_sparse_connectivity_snippets, 
-               init_toeplitz_connectivity_snippets, init_var_snippets,
-               neuron_models, postsynaptic_models, types, weight_update_models)
 
 # Type aliases used in model creation functions
 TypeType = Union[str, ResolvedType]
@@ -252,14 +248,12 @@ class GeNNModel(ModelSpec):
             self._backend_module = backend_modules[backend_name]
     
     @property
-    @deprecated("The name of this property was inconsistent, use dt instead",
-                category=FutureWarning)
+    @deprecated("The name of this property was inconsistent, use dt instead")
     def dT(self):
         return self.dt
     
     @dT.setter
-    @deprecated("The name of this property was inconsistent, use dt instead",
-                category=FutureWarning)
+    @deprecated("The name of this property was inconsistent, use dt instead")
     def dT(self, dt):
         self.dt = dt
     
@@ -947,8 +941,7 @@ def init_weight_update(snippet, params: PopParamVals = {}, vars: PopVarVals = {}
                              pre_var_refs, post_var_refs),
             vars, pre_vars, post_vars)
 
-@deprecated("The name of this function was ambiguous, use init_sparse_connectivity instead",
-            category=FutureWarning)
+@deprecated("The name of this function was ambiguous, use init_sparse_connectivity instead")
 def init_connectivity(init_sparse_connect_snippet, params={}):
     return init_sparse_connectivity(init_sparse_connect_snippet, params)
 
@@ -2205,8 +2198,7 @@ def create_toeplitz_connect_init_snippet(class_name: str, params: ModelParamsTyp
                          params, param_names, derived_params,
                          extra_global_params, body)
 
-@deprecated("This wrapper is now unnecessary - use callables directly",
-            category=FutureWarning)
+@deprecated("This wrapper is now unnecessary - use callables directly")
 def create_dpf_class(dp_func):
     """Helper function to create derived parameter function class
 
@@ -2216,8 +2208,7 @@ def create_dpf_class(dp_func):
     """
     return lambda: dp_func
 
-@deprecated("This wrapper is now unnecessary - use callables directly",
-            category=FutureWarning)
+@deprecated("This wrapper is now unnecessary - use callables directly")
 def create_cmlf_class(cml_func):
     """Helper function to create function class for calculating sizes of
     matrices initialised with sparse connectivity initialisation snippet
@@ -2229,8 +2220,7 @@ def create_cmlf_class(cml_func):
     """
     return lambda: cml_func
 
-@deprecated("This wrapper is now unnecessary - use callables directly",
-            category=FutureWarning)
+@deprecated("This wrapper is now unnecessary - use callables directly")
 def create_cksf_class(cks_func):
     """Helper function to create function class for calculating sizes 
     of kernels from connectivity initialiser parameters 

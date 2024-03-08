@@ -1,12 +1,15 @@
-from copy import copy
-from deprecated import deprecated
+import numpy as np
+
 from numbers import Number
 from typing import Union
-from weakref import proxy, ref, ProxyTypes
-import numpy as np
+from weakref import ProxyTypes
 from ._genn import (NumericValue, ResolvedType, SynapseMatrixConnectivity,
                     SynapseMatrixWeight, UnresolvedType, VarInit)
 from .init_var_snippets import Uninitialised
+
+from copy import copy
+from weakref import proxy, ref
+from .deprecated import deprecated
 
 # Type aliases
 VarTypeType = Union[ResolvedType, UnresolvedType]
@@ -101,8 +104,7 @@ class VariableBase(ArrayBase):
         self._delay_group = (None if delay_group is None 
                              else ref(delay_group))
 
-    @deprecated("Please use set_init_values method instead",
-                category=FutureWarning)
+    @deprecated("Please use set_init_values method instead")
     def set_values(self, values):
         self.set_init_values(values)
 
@@ -296,8 +298,7 @@ class ExtraGlobalParameter(Array):
         self.name = variable_name
         self.set_init_values(init_values)
 
-    @deprecated("Please use set_init_values method instead",
-                category=FutureWarning)
+    @deprecated("Please use set_init_values method instead")
     def set_values(self, values):
         self.set_init_values(values)
 
