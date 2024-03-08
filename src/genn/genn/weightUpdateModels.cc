@@ -11,7 +11,7 @@ IMPLEMENT_SNIPPET(StaticPulse);
 IMPLEMENT_SNIPPET(StaticPulseConstantWeight);
 IMPLEMENT_SNIPPET(StaticPulseDendriticDelay);
 IMPLEMENT_SNIPPET(StaticGraded);
-IMPLEMENT_SNIPPET(PiecewiseSTDP);
+IMPLEMENT_SNIPPET(STDP);
 
 //----------------------------------------------------------------------------
 // GeNN::WeightUpdateModels::Base

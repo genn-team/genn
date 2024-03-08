@@ -12,14 +12,9 @@ IMPLEMENT_SNIPPET(RulkovMap);
 IMPLEMENT_SNIPPET(Izhikevich);
 IMPLEMENT_SNIPPET(IzhikevichVariable);
 IMPLEMENT_SNIPPET(LIF);
-IMPLEMENT_SNIPPET(SpikeSource);
 IMPLEMENT_SNIPPET(SpikeSourceArray);
 IMPLEMENT_SNIPPET(Poisson);
-IMPLEMENT_SNIPPET(PoissonNew);
 IMPLEMENT_SNIPPET(TraubMiles);
-IMPLEMENT_SNIPPET(TraubMilesFast);
-IMPLEMENT_SNIPPET(TraubMilesAlt);
-IMPLEMENT_SNIPPET(TraubMilesNStep);
 
 //----------------------------------------------------------------------------
 // GeNN::NeuronModels::Base

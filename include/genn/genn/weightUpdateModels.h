@@ -305,106 +305,39 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// GeNN::PiecewiseSTDP
+// GeNN::AdditiveSTDP
 //----------------------------------------------------------------------------
 //! This is a simple STDP rule including a time delay for the finite transmission speed of the synapse.
-/*! The STDP window is defined as a piecewise function:
-    \image html LEARN1SYNAPSE_explain_html.png
-    \image latex LEARN1SYNAPSE_explain.png width=10cm
-
-    The STDP curve is applied to the raw synaptic conductance `gRaw`, which is then filtered through the sugmoidal filter displayed above to obtain the value of `g`.
-
-    \note
-    The STDP curve implies that unpaired pre- and post-synaptic spikes incur a negative increment in `gRaw` (and hence in `g`).
-
-    \note
-    The time of the last spike in each neuron, "sTXX", where XX is the name of a neuron population is (somewhat arbitrarily) initialised to -10.0 ms. If neurons never spike, these spike times are used.
-
-    \note
-    It is the raw synaptic conductance `gRaw` that is subject to the STDP rule. The resulting synaptic conductance is a sigmoid filter of `gRaw`. This implies that `g` is initialised but not `gRaw`, the synapse will revert to the value that corresponds to `gRaw`.
-
-    An example how to use this synapse correctly is given in `map_classol.cc` (MBody1 userproject):
-    \code
-    for (int i= 0; i < model.neuronN[1]*model.neuronN[3]; i++) {
-            if (gKCDN[i] < 2.0*SCALAR_MIN){
-                cnt++;
-                fprintf(stdout, "Too low conductance value %e detected and set to 2*SCALAR_MIN= %e, at index %d \n", gKCDN[i], 2*SCALAR_MIN, i);
-                gKCDN[i] = 2.0*SCALAR_MIN; //to avoid log(0)/0 below
-            }
-            scalar tmp = gKCDN[i] / myKCDN_p[5]*2.0 ;
-            gRawKCDN[i]=  0.5 * log( tmp / (2.0 - tmp)) /myKCDN_p[7] + myKCDN_p[6];
-    }
-    cerr << "Total number of low value corrections: " << cnt << endl;
-    \endcode
-
-    \note
-    One cannot set values of `g` fully to `0`, as this leads to `gRaw`= -infinity and this is not support. I.e., 'g' needs to be some nominal value > 0 (but can be extremely small so that it acts like it's 0).
-
-    <!--
-    If no spikes at t: \f$ g_{raw}(t+dt) = g_0 + (g_{raw}(t)-g_0)*\exp(-dt/\tau_{decay}) \f$
-    If pre or postsynaptic spike at t: \f$ g_{raw}(t+dt) = g_0 + (g_{raw}(t)-g_0)*\exp(-dt/\tau_{decay})
-    +A(t_{post}-t_{pre}-\tau_{decay}) \f$
-    -->
-
-    The model has 2 variables:
-
-    - \c g: conductance of \c scalar type
-    - \c gRaw: raw conductance of \c scalar type
-
-    Parameters are (compare to the figure above):
-
-    - \c tLrn: Time scale of learning changes
-    - \c tChng: Width of learning window
-    - \c tDecay: Time scale of synaptic strength decay
-    - \c tPunish10: Time window of suppression in response to 1/0
-    - \c tPunish01: Time window of suppression in response to 0/1
-    - \c gMax: Maximal conductance achievable
-    - \c gMid: Midpoint of sigmoid g filter curve
-    - \c gSlope: Slope of sigmoid g filter curve
-    - \c tauShift: Shift of learning curve
-    - \c gSyn0: Value of syn conductance g decays to */
-class PiecewiseSTDP : public Base
+/*!
+"tauPlus",  // 0 - Potentiation time constant (ms)
+      "tauMinus", // 1 - Depression time constant (ms)
+      "Aplus",    // 2 - Rate of potentiation
+      "Aminus",   // 3 - Rate of depression
+      "Wmin",     // 4 - Minimum weight
+      "Wmax",     // 5 - Maximum weight*/
+class STDP : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_SNIPPET(PiecewiseSTDP);
+    DECLARE_SNIPPET(STDP);
 
-    SET_PARAMS({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
-                "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
-    SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
+    SET_PARAMS({"tauPlus", "tauMinus", "Aplus", "Aminus", "Wmin", "Wmax"});
+
+    SET_VARS({ {"g", "scalar"} });
 
     SET_PRE_SPIKE_SYN_CODE(
         "addToPost(g);\n"
-        "scalar dt = st_post - t - tauShift; \n"
-        "scalar dg = 0;\n"
-        "if (dt > lim0)  \n"
-        "    dg = -off0 ; \n"
-        "else if (dt > 0)  \n"
-        "    dg = slope0 * dt + off1; \n"
-        "else if (dt > lim1)  \n"
-        "    dg = slope1 * dt + (off1); \n"
-        "else dg = - (off2) ; \n"
-        "gRaw += dg; \n"
-        "g=gMax/2 *(tanh(gSlope*(gRaw - (gMid)))+1); \n");
+        "scalar dt = t - st_post; \n"
+        "if (dt > 0) {\n"
+        "    scalar timing = exp(-dt / tauMinus);\n"
+        "    scalar newWeight = g - (Aminus * timing);\n"
+        "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
+        "}\n");
     SET_POST_SPIKE_SYN_CODE(
-        "scalar dt = t - st_pre - (tauShift); \n"
-        "scalar dg =0; \n"
-        "if (dt > lim0)  \n"
-        "    dg = -(off0) ; \n"
-        "else if (dt > 0)  \n"
-        "    dg = slope0 * dt + (off1); \n"
-        "else if (dt > lim1)  \n"
-        "    dg = slope1 * dt + (off1); \n"
-        "else dg = -(off2) ; \n"
-        "gRaw += dg; \n"
-        "g=gMax/2.0 *(tanh(gSlope*(gRaw - (gMid)))+1); \n");
-
-    SET_DERIVED_PARAMS({
-        {"lim0", [](const ParamValues &pars, double){ return (1/pars.at("tPunish01").cast<double>() + 1 / pars.at("tChng").cast<double>()) * pars.at("tLrn").cast<double>() / (2/pars.at("tChng").cast<double>()); }},
-        {"lim1", [](const ParamValues &pars, double){ return  -((1/pars.at("tPunish10").cast<double>() + 1 / pars.at("tChng").cast<double>()) * pars.at("tLrn").cast<double>() / (2/pars.at("tChng").cast<double>())); }},
-        {"slope0", [](const ParamValues &pars, double){ return  -2*pars.at("gMax").cast<double>() /(pars.at("tChng").cast<double>()*pars.at("tLrn").cast<double>()); }},
-        {"slope1", [](const ParamValues &pars, double){ return  2*pars.at("gMax").cast<double>() / (pars.at("tChng").cast<double>() * pars.at("tLrn").cast<double>()); }},
-        {"off0", [](const ParamValues &pars, double){ return  pars.at("gMax").cast<double>() / pars.at("tPunish01").cast<double>(); }},
-        {"off1", [](const ParamValues &pars, double){ return  pars.at("gMax").cast<double>() / pars.at("tChng").cast<double>(); }},
-        {"off2", [](const ParamValues &pars, double){ return  pars.at("gMax").cast<double>() / pars.at("tPunish10").cast<double>(); }}});
+        "scalar dt = $(t) - $(sT_pre);\n"
+        "if (dt > 0) {\n"
+        "    scalar timing = exp(-dt / tauPlus);\n"
+        "    scalar newWeight = g + (Aplus * timing);\n"
+        "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
+        "}\n");
 };
 }   //namespace GeNN::WeightUpdateModels
