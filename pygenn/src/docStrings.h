@@ -529,12 +529,18 @@ static const char *__doc_CurrentSource_getDerivedParams = R"doc()doc";
 static const char *__doc_CurrentSource_getExtraGlobalParamLocation = R"doc(Get location of neuron model extra global parameter by name)doc";
 
 static const char *__doc_CurrentSource_getHashDigest =
-R"doc(Updates hash with current source
-NOTE: this can only be called after model is finalized)doc";
+R"doc(Updates hash with current source.
+
+.. note::
+
+        this can only be called after model is finalized)doc";
 
 static const char *__doc_CurrentSource_getInitHashDigest =
-R"doc(Updates hash with current source initialisation
-NOTE: this can only be called after model is finalized)doc";
+R"doc(Updates hash with current source initialisation.
+
+.. note::
+
+        this can only be called after model is finalized)doc";
 
 static const char *__doc_CurrentSource_getInjectionCodeTokens = R"doc()doc";
 
@@ -547,7 +553,7 @@ static const char *__doc_CurrentSource_getNeuronVarReferences = R"doc()doc";
 static const char *__doc_CurrentSource_getParams = R"doc()doc";
 
 static const char *__doc_CurrentSource_getTargetVar =
-R"doc(Get name of neuron input variable current source model will inject into
+R"doc(Get name of neuron input variable current source model will inject into.
 This will either be 'Isyn' or the name of one of the target neuron's additional input variables.)doc";
 
 static const char *__doc_CurrentSource_getTrgNeuronGroup = R"doc()doc";
@@ -581,26 +587,30 @@ static const char *__doc_CurrentSource_m_NeuronVarReferences = R"doc()doc";
 static const char *__doc_CurrentSource_m_Params = R"doc(Values of current source parameters)doc";
 
 static const char *__doc_CurrentSource_m_TargetVar =
-R"doc(Name of neuron input variable current source will inject into
+R"doc(Name of neuron input variable current source will inject into.
 This should either be 'Isyn' or the name of one of the target neuron's additional input variables.)doc";
 
 static const char *__doc_CurrentSource_m_TrgNeuronGroup = R"doc()doc";
 
 static const char *__doc_CurrentSource_m_VarInitialisers = R"doc(Initialisers for current source variables)doc";
 
-static const char *__doc_CurrentSource_m_VarLocation = R"doc(Location of individual state variables)doc";
+static const char *__doc_CurrentSource_m_VarLocation =
+R"doc(Location of individual state variables.
+This is ignored for simulations on hardware with a single memory space.)doc";
 
 static const char *__doc_CurrentSource_setExtraGlobalParamLocation =
-R"doc(Set location of extra global parameter
+R"doc(Set location of extra global parameter.
 This is ignored for simulations on hardware with a single memory space.)doc";
 
 static const char *__doc_CurrentSource_setParamDynamic = R"doc(Set whether parameter is dynamic or not i.e. it can be changed at runtime)doc";
 
 static const char *__doc_CurrentSource_setTargetVar =
-R"doc(Set name of neuron input variable current source model will inject into
+R"doc(Set name of neuron input variable current source model will inject into.
 This should either be 'Isyn' or the name of one of the target neuron's additional input variables.)doc";
 
-static const char *__doc_CurrentSource_setVarLocation = R"doc(Set location of current source state variable)doc";
+static const char *__doc_CurrentSource_setVarLocation =
+R"doc(Set location of current source state variable.
+This is ignored for simulations on hardware with a single memory space.)doc";
 
 static const char *__doc_CustomConnectivityUpdate = R"doc()doc";
 
@@ -762,14 +772,20 @@ static const char *__doc_CustomConnectivityUpdate_getEGPReferences = R"doc()doc"
 static const char *__doc_CustomConnectivityUpdate_getExtraGlobalParamLocation = R"doc(Get location of neuron model extra global parameter by name)doc";
 
 static const char *__doc_CustomConnectivityUpdate_getHashDigest =
-R"doc(Updates hash with custom update
-NOTE: this can only be called after model is finalized)doc";
+R"doc(Updates hash with custom update.
+
+.. note::
+
+        this can only be called after model is finalized)doc";
 
 static const char *__doc_CustomConnectivityUpdate_getHostUpdateCodeTokens = R"doc()doc";
 
 static const char *__doc_CustomConnectivityUpdate_getInitHashDigest =
-R"doc(Updates hash with custom update
-NOTE: this can only be called after model is finalized)doc";
+R"doc(Updates hash with custom update.
+
+.. note::
+
+        this can only be called after model is finalized)doc";
 
 static const char *__doc_CustomConnectivityUpdate_getModel = R"doc(Gets the custom connectivity update model used by this group)doc";
 
@@ -864,21 +880,21 @@ static const char *__doc_CustomConnectivityUpdate_m_VarLocation = R"doc(Location
 static const char *__doc_CustomConnectivityUpdate_m_VarReferences = R"doc()doc";
 
 static const char *__doc_CustomConnectivityUpdate_setExtraGlobalParamLocation =
-R"doc(Set location of extra global parameter
+R"doc(Set location of extra global parameter.
 This is ignored for simulations on hardware with a single memory space.)doc";
 
 static const char *__doc_CustomConnectivityUpdate_setParamDynamic = R"doc(Set whether parameter is dynamic or not i.e. it can be changed at runtime)doc";
 
 static const char *__doc_CustomConnectivityUpdate_setPostVarLocation =
-R"doc(Set location of postsynaptic state variable
+R"doc(Set location of postsynaptic state variable.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_CustomConnectivityUpdate_setPreVarLocation =
-R"doc(Set location of presynaptic state variable
+R"doc(Set location of presynaptic state variable.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_CustomConnectivityUpdate_setVarLocation =
-R"doc(Set location of synaptic state variable
+R"doc(Set location of synaptic state variable.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_CustomUpdate = R"doc()doc";
@@ -960,13 +976,13 @@ static const char *__doc_CustomUpdateBase_m_VarInitialisers = R"doc()doc";
 static const char *__doc_CustomUpdateBase_m_VarLocation = R"doc(Location of individual state variables)doc";
 
 static const char *__doc_CustomUpdateBase_setExtraGlobalParamLocation =
-R"doc(Set location of extra global parameter
+R"doc(Set location of extra global parameter.
 This is ignored for simulations on hardware with a single memory space.)doc";
 
 static const char *__doc_CustomUpdateBase_setParamDynamic = R"doc(Set whether parameter is dynamic or not i.e. it can be changed at runtime)doc";
 
 static const char *__doc_CustomUpdateBase_setVarLocation =
-R"doc(Set location of state variable
+R"doc(Set location of state variable.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_CustomUpdateBase_updateHash =
@@ -1195,10 +1211,12 @@ This snippet takes 12 parameter:
 - ``conv_ow`` - height of output from this convolution
 - ``conv_oc`` - number of output channels from this convolution
 
-\note
-``conv_ih * conv_iw * conv_ic`` should equal the number of neurons in the presynaptic
-neuron population and ``conv_oh * conv_ow * conv_oc`` should equal the number of
-neurons in the postsynaptic neuron population.)doc";
+
+.. note::
+
+        ``conv_ih * conv_iw * conv_ic`` should equal the number of neurons in the presynaptic
+    neuron population and ``conv_oh * conv_ow * conv_oc`` should equal the number of
+    neurons in the postsynaptic neuron population.)doc";
 
 static const char *__doc_InitSparseConnectivitySnippet_Conv2D_getCalcKernelSizeFunc = R"doc()doc";
 
@@ -1477,8 +1495,11 @@ This snippet takes 1 parameter:
 
 - ``value`` - The value to intialise the variable to
 
-\note This snippet type is seldom used directly - InitVarSnippet::Init
-has an implicit constructor that, internally, creates one of these snippets)doc";
+
+.. note::
+
+        This snippet type is seldom used directly - InitVarSnippet::Init
+    has an implicit constructor that, internally, creates one of these snippets)doc";
 
 static const char *__doc_InitVarSnippet_Constant_getCode = R"doc()doc";
 
@@ -2255,13 +2276,13 @@ static const char *__doc_ModelSpec_m_LocalNeuronGroups = R"doc(Named local neuro
 
 static const char *__doc_ModelSpec_m_LocalSynapseGroups = R"doc(Named local synapse groups)doc";
 
-static const char *__doc_ModelSpec_m_Name = R"doc(Name of the neuronal newtwork model)doc";
+static const char *__doc_ModelSpec_m_Name = R"doc(Name of the network model)doc";
 
-static const char *__doc_ModelSpec_m_Precision = R"doc(Type of floating point variables (float, double, ...; default: float))doc";
+static const char *__doc_ModelSpec_m_Precision = R"doc(Type of floating point variables used for 'scalar' types)doc";
 
 static const char *__doc_ModelSpec_m_Seed = R"doc(RNG seed)doc";
 
-static const char *__doc_ModelSpec_m_TimePrecision = R"doc(Type of floating point variables used to store time)doc";
+static const char *__doc_ModelSpec_m_TimePrecision = R"doc(Type of floating point variables used for 'timepoint' types)doc";
 
 static const char *__doc_ModelSpec_m_TimingEnabled = R"doc(Whether timing code should be inserted into model)doc";
 
@@ -2715,7 +2736,9 @@ static const char *__doc_NeuronGroup_m_DerivedParams = R"doc()doc";
 
 static const char *__doc_NeuronGroup_m_DynamicParams = R"doc(Data structure tracking whether parameters are dynamic or not)doc";
 
-static const char *__doc_NeuronGroup_m_ExtraGlobalParamLocation = R"doc(Location of extra global parameters)doc";
+static const char *__doc_NeuronGroup_m_ExtraGlobalParamLocation =
+R"doc(Location of extra global parameters.
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_m_FusedPSMInSyn = R"doc()doc";
 
@@ -2736,7 +2759,7 @@ static const char *__doc_NeuronGroup_m_Model = R"doc(Neuron model used for this 
 static const char *__doc_NeuronGroup_m_Name = R"doc(Unique name of neuron group)doc";
 
 static const char *__doc_NeuronGroup_m_NumDelaySlots =
-R"doc(Number of delay slots this group required
+R"doc(Number of delay slots this group required.
 This is the maximum required by any incoming or outgoing synapse group)doc";
 
 static const char *__doc_NeuronGroup_m_NumNeurons = R"doc(Number of neurons in group)doc";
@@ -2745,9 +2768,13 @@ static const char *__doc_NeuronGroup_m_OutSyn = R"doc()doc";
 
 static const char *__doc_NeuronGroup_m_Params = R"doc(Values of neuron parameters)doc";
 
-static const char *__doc_NeuronGroup_m_PrevSpikeEventTimeLocation = R"doc(Location of previous spike-like-event times)doc";
+static const char *__doc_NeuronGroup_m_PrevSpikeEventTimeLocation =
+R"doc(Location of previous spike-like-event times.
+This is ignored for simulations on hardware with a single memory space)doc";
 
-static const char *__doc_NeuronGroup_m_PrevSpikeTimeLocation = R"doc(Location of previous spike times)doc";
+static const char *__doc_NeuronGroup_m_PrevSpikeTimeLocation =
+R"doc(Location of previous spike times.
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_m_RecordingZeroCopyEnabled =
 R"doc(Should zero-copy memory (if available) be used
@@ -2757,67 +2784,77 @@ static const char *__doc_NeuronGroup_m_ResetCodeTokens = R"doc(Tokens produced b
 
 static const char *__doc_NeuronGroup_m_SimCodeTokens = R"doc(Tokens produced by scanner from simc ode)doc";
 
-static const char *__doc_NeuronGroup_m_SpikeEventLocation = R"doc(Location of spike-like events from neuron group)doc";
+static const char *__doc_NeuronGroup_m_SpikeEventLocation =
+R"doc(Location of spike-like events from neuron group.
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_m_SpikeEventRecordingEnabled = R"doc(Is spike event recording enabled?)doc";
 
-static const char *__doc_NeuronGroup_m_SpikeEventTimeLocation = R"doc(Location of spike-like-event times)doc";
+static const char *__doc_NeuronGroup_m_SpikeEventTimeLocation =
+R"doc(Location of spike-like-event times.
+This is ignored for simulations on hardware with a single memory space)doc";
 
-static const char *__doc_NeuronGroup_m_SpikeLocation = R"doc(Location of spikes from neuron group)doc";
+static const char *__doc_NeuronGroup_m_SpikeLocation =
+R"doc(Location of spikes from neuron group.
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_m_SpikeRecordingEnabled = R"doc(Is spike recording enabled for this population?)doc";
 
-static const char *__doc_NeuronGroup_m_SpikeTimeLocation = R"doc(Location of spike times from neuron group)doc";
+static const char *__doc_NeuronGroup_m_SpikeTimeLocation =
+R"doc(Location of spike times from neuron group.
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_m_ThresholdConditionCodeTokens = R"doc(Tokens produced by scanner from threshold condition code)doc";
 
 static const char *__doc_NeuronGroup_m_VarInitialisers = R"doc()doc";
 
-static const char *__doc_NeuronGroup_m_VarLocation = R"doc(Location of individual state variables)doc";
+static const char *__doc_NeuronGroup_m_VarLocation =
+R"doc(Location of individual state variables.
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_m_VarQueueRequired = R"doc(Set of names of variable requiring queueing)doc";
 
 static const char *__doc_NeuronGroup_setExtraGlobalParamLocation =
-R"doc(Set location of neuron model extra global parameter
+R"doc(Set location of neuron model extra global parameter.
 This is ignored for simulations on hardware with a single memory space.)doc";
 
 static const char *__doc_NeuronGroup_setParamDynamic = R"doc(Set whether parameter is dynamic or not i.e. it can be changed at runtime)doc";
 
 static const char *__doc_NeuronGroup_setPrevSpikeEventTimeLocation =
-R"doc(Set location of this neuron group's previous output spike-like-event times
+R"doc(Set location of this neuron group's previous output spike-like-event times.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_setPrevSpikeTimeLocation =
-R"doc(Set location of this neuron group's previous output spike times
+R"doc(Set location of this neuron group's previous output spike times.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_setRecordingZeroCopyEnabled =
 R"doc(Set whether zero-copy memory (if available) should be
-used for spike and spike-like event recording
+used for spike and spike-like event recording.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_setSpikeEventLocation =
-R"doc(Set location of this neuron group's output spike events
+R"doc(Set location of this neuron group's output spike events.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_setSpikeEventRecordingEnabled = R"doc(Enables and disable spike event recording for this population)doc";
 
 static const char *__doc_NeuronGroup_setSpikeEventTimeLocation =
-R"doc(Set location of this neuron group's output spike-like-event times
+R"doc(Set location of this neuron group's output spike-like-event times.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_setSpikeLocation =
-R"doc(Set location of this neuron group's output spikes
+R"doc(Set location of this neuron group's output spikes.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_setSpikeRecordingEnabled = R"doc(Enables and disable spike recording for this population)doc";
 
 static const char *__doc_NeuronGroup_setSpikeTimeLocation =
-R"doc(Set location of this neuron group's output spike times
+R"doc(Set location of this neuron group's output spike times.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_setVarLocation =
-R"doc(Set variable location of neuron model state variable
+R"doc(Set variable location of neuron model state variable.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_NeuronGroup_setVarQueueRequired = R"doc()doc";
@@ -2945,19 +2982,31 @@ and 4 parameters:
 - ``Vspike`` - Membrane potential at spike (mV)
 - ``Vrest`` - Membrane potential at rest (mV)
 
-\note The initial values array for the `Poisson` type needs two entries
-for `V`, and `spikeTime` and the parameter array needs four entries for
-`trefract`, `tspike`, `Vspike` and `Vrest`,  *in that order*.
-\note The refractory period and the spike duration both start at the beginning of the spike. That means that the refractory period should be longer or equal to the spike duration. If this is not the case, undefined model behaviour occurs.
+
+.. note::
+
+        The initial values array for the `Poisson` type needs two entries
+    for `V`, and `spikeTime` and the parameter array needs four entries for
+    `trefract`, `tspike`, `Vspike` and `Vrest`,  *in that order*.
+
+
+.. note::
+
+        The refractory period and the spike duration both start at the beginning of the spike. That means that the refractory period should be longer or equal to the spike duration. If this is not the case, undefined model behaviour occurs.
+
 
 It has two extra global parameters:
 
 - ``firingProb`` - an array of firing probabilities/ average rates; this can extend to :math:`n \cdot N`, where :math:`N` is the number of neurons, for :math:`n > 0` firing patterns
 - ``offset`` - an unsigned integer that points to the start of the currently used input pattern; typically taking values of :math:`i \cdot N`, :math:`0 \leq i < n`.
 
-\note This model uses a linear approximation for the probability
-of firing a spike in a given time step of size `DT`, i.e. the
-probability of firing is :math:`\lambda` times `DT`: :math:` p = \lambda \Delta t`,
+
+.. note::
+
+        This model uses a linear approximation for the probability
+    of firing a spike in a given time step of size `DT`, i.e. the
+    probability of firing is :math:`
+\lambda` times `DT`: :math:` p = \lambda \Delta t`,
 where $\lambda$ corresponds to the value of the relevant entry of `firingProb`.
 This approximation is usually very good, especially for typical,
 quite small time steps and moderate firing rates. However, it is worth
@@ -2976,9 +3025,12 @@ and 1 parameter:
 
 - ``rate`` - Mean firing rate (Hz)
 
-\note Internally this samples from the exponential distribution using
-the C++ 11 \<random\> library on the CPU and by transforming the
-uniform distribution, generated using cuRAND, with a natural log on the GPU.)doc";
+
+.. note::
+
+        Internally this samples from the exponential distribution using
+    the C++ 11 \<random\> library on the CPU and by transforming the
+    uniform distribution, generated using cuRAND, with a natural log on the GPU.)doc";
 
 static const char *__doc_NeuronModels_PoissonNew_getDerivedParams = R"doc()doc";
 
@@ -3023,8 +3075,11 @@ the 1-dimensional map form used in \cite nowotny2005self :
     \right.
     \end{eqnarray*}
 
-\note
-The `RulkovMap` type only works as intended for the single time step size of `DT`= 0.5.
+
+.. note::
+
+        The `RulkovMap` type only works as intended for the single time step size of `DT`= 0.5.
+
 
 The `RulkovMap` type has 2 variables:
 
@@ -3038,9 +3093,11 @@ and it has 4 parameters:
 - ``y`` - "shift / excitation" parameter, also determines the iteration function,originally, y= -2.468
 - ``beta`` - roughly speaking equivalent to the input resistance, i.e. it regulates the scale of the input into the neuron, typically :math:`\beta`= 2.64 :math:`{\rm M}\Omega`.
 
-\note
-The initial values array for the `RulkovMap` type needs two entries for `V` and `preV` and the
-parameter array needs four entries for `Vspike`, `alpha`, `y` and `beta`,  *in that order*.)doc";
+
+.. note::
+
+        The initial values array for the `RulkovMap` type needs two entries for `V` and `preV` and the
+    parameter array needs four entries for `Vspike`, `alpha`, `y` and `beta`,  *in that order*.)doc";
 
 static const char *__doc_NeuronModels_RulkovMap_getDerivedParams = R"doc()doc";
 
@@ -3141,18 +3198,23 @@ and 7 parameters:
 - ``El`` - Leak equi potential in mV
 - ``C`` - Membrane capacity density in muF/cm^2
 
-\note
-Internally, the ordinary differential equations defining the model are integrated with a
-linear Euler algorithm and GeNN integrates 25 internal time steps for each neuron for each
-network time step. I.e., if the network is simulated at `DT= 0.1` ms, then the neurons are
-integrated with a linear Euler algorithm with `lDT= 0.004` ms.
-This variant uses IF statements to check for a value at which a singularity would be hit.
-If so, value calculated by L'Hospital rule is used.)doc";
+
+.. note::
+
+        Internally, the ordinary differential equations defining the model are integrated with a
+    linear Euler algorithm and GeNN integrates 25 internal time steps for each neuron for each
+    network time step. I.e., if the network is simulated at `DT= 0.1` ms, then the neurons are
+    integrated with a linear Euler algorithm with `lDT= 0.004` ms.
+    This variant uses IF statements to check for a value at which a singularity would be hit.
+    If so, value calculated by L'Hospital rule is used.)doc";
 
 static const char *__doc_NeuronModels_TraubMilesAlt =
 R"doc(Hodgkin-Huxley neurons with Traub & Miles algorithm
 Using a workaround to avoid singularity: adding the munimum numerical value of the floating point precision used.
-\note See NeuronModels::TraubMiles for variable and parameter names.)doc";
+
+.. note::
+
+        See NeuronModels::TraubMiles for variable and parameter names.)doc";
 
 static const char *__doc_NeuronModels_TraubMilesAlt_getInstance = R"doc()doc";
 
@@ -3161,7 +3223,10 @@ static const char *__doc_NeuronModels_TraubMilesAlt_getSimCode = R"doc()doc";
 static const char *__doc_NeuronModels_TraubMilesFast =
 R"doc(Hodgkin-Huxley neurons with Traub & Miles algorithm: Original fast implementation, using 25 inner iterations.
 There are singularities in this model, which can be easily hit in float precision
-\note See NeuronModels::TraubMiles for variable and parameter names.)doc";
+
+.. note::
+
+        See NeuronModels::TraubMiles for variable and parameter names.)doc";
 
 static const char *__doc_NeuronModels_TraubMilesFast_getInstance = R"doc()doc";
 
@@ -3170,7 +3235,10 @@ static const char *__doc_NeuronModels_TraubMilesFast_getSimCode = R"doc()doc";
 static const char *__doc_NeuronModels_TraubMilesNStep =
 R"doc(Hodgkin-Huxley neurons with Traub & Miles algorithm.
 Same as standard TraubMiles model but number of inner loops can be set using a parameter
-\note See NeuronModels::TraubMiles for variable and parameter names.)doc";
+
+.. note::
+
+        See NeuronModels::TraubMiles for variable and parameter names.)doc";
 
 static const char *__doc_NeuronModels_TraubMilesNStep_getInstance = R"doc()doc";
 
@@ -3711,47 +3779,47 @@ static const char *__doc_SynapseGroup_m_AxonalDelaySteps = R"doc(Global synaptic
 static const char *__doc_SynapseGroup_m_BackPropDelaySteps = R"doc(Global backpropagation delay for postsynaptic spikes to synapse (in time steps))doc";
 
 static const char *__doc_SynapseGroup_m_CustomConnectivityUpdateReferences =
-R"doc(Custom connectivity updates which reference this synapse group
+R"doc(Custom connectivity updates which reference this synapse group.
 Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes.)doc";
 
 static const char *__doc_SynapseGroup_m_CustomUpdateReferences =
-R"doc(Custom updates which reference this synapse group
+R"doc(Custom updates which reference this synapse group.
 Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes.)doc";
 
 static const char *__doc_SynapseGroup_m_DendriticDelayLocation =
-R"doc(Location of this synapse group's dendritic delay buffers
+R"doc(Location of this synapse group's dendritic delay buffers.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_m_FusedPSTarget =
-R"doc(Synapse group postsynaptic model has been fused with
+R"doc(Synapse group postsynaptic model has been fused with.
 If this is nullptr, postsynaptic model has not been fused)doc";
 
 static const char *__doc_SynapseGroup_m_FusedPostSpikeEventTarget =
-R"doc(Synapse group postsynaptic spike event generation has been fused with
+R"doc(Synapse group postsynaptic spike event generation has been fused with.
 If this is nullptr, postsynaptic spike event generation has not been fused)doc";
 
 static const char *__doc_SynapseGroup_m_FusedPostSpikeTarget =
-R"doc(Synapse group postsynaptic spike generation has been fused with
+R"doc(Synapse group postsynaptic spike generation has been fused with.
 If this is nullptr, presynaptic spike generation has not been fused)doc";
 
 static const char *__doc_SynapseGroup_m_FusedPreOutputTarget =
-R"doc(Synapse group presynaptic output has been fused with
+R"doc(Synapse group presynaptic output has been fused with.
 If this is nullptr, presynaptic output has not been fused)doc";
 
 static const char *__doc_SynapseGroup_m_FusedPreSpikeEventTarget =
-R"doc(Synapse group presynaptic spike event generation has been fused with
+R"doc(Synapse group presynaptic spike event generation has been fused with.
 If this is nullptr, presynaptic spike event generation has not been fused)doc";
 
 static const char *__doc_SynapseGroup_m_FusedPreSpikeTarget =
-R"doc(Synapse group presynaptic spike generation has been fused with
+R"doc(Synapse group presynaptic spike generation has been fused with.
 If this is nullptr, presynaptic spike generation has not been fused)doc";
 
 static const char *__doc_SynapseGroup_m_FusedWUPostTarget =
-R"doc(Synapse group postsynaptic weight update has been fused with
+R"doc(Synapse group postsynaptic weight update has been fused with.
 If this is nullptr, postsynaptic weight update  has not been fused)doc";
 
 static const char *__doc_SynapseGroup_m_FusedWUPreTarget =
-R"doc(Synapse group presynaptic weight update has been fused with
+R"doc(Synapse group presynaptic weight update has been fused with.
 If this is nullptr, presynaptic weight update has not been fused)doc";
 
 static const char *__doc_SynapseGroup_m_KernelSize = R"doc(Kernel size)doc";
@@ -3771,30 +3839,36 @@ static const char *__doc_SynapseGroup_m_NarrowSparseIndEnabled = R"doc(Should na
 static const char *__doc_SynapseGroup_m_NumThreadsPerSpike = R"doc(How many threads GPU implementation use to process each spike when parallelised presynaptically)doc";
 
 static const char *__doc_SynapseGroup_m_OutputLocation =
-R"doc(Location of outputs from this synapse group e.g. outPre and outPost
+R"doc(Location of outputs from this synapse group e.g. outPre and outPost.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_m_PSDynamicParams = R"doc(Data structure tracking whether postsynaptic model parameters are dynamic or not)doc";
 
-static const char *__doc_SynapseGroup_m_PSExtraGlobalParamLocation = R"doc(Location of postsynaptic model extra global parameters)doc";
+static const char *__doc_SynapseGroup_m_PSExtraGlobalParamLocation =
+R"doc(Location of postsynaptic model extra global parameters.
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_m_PSInitialiser = R"doc(Initialiser used for creating postsynaptic update model)doc";
 
-static const char *__doc_SynapseGroup_m_PSVarLocation = R"doc(Whether indidividual state variables of post synapse should use zero-copied memory)doc";
+static const char *__doc_SynapseGroup_m_PSVarLocation =
+R"doc(Location of postsynaptic model variables.
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_m_ParallelismHint = R"doc(Hint as to how synapse group should be parallelised)doc";
 
 static const char *__doc_SynapseGroup_m_PostTargetVar =
-R"doc(Name of neuron input variable postsynaptic model will target
+R"doc(Name of neuron input variable postsynaptic model will target.
 This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables.)doc";
 
 static const char *__doc_SynapseGroup_m_PreTargetVar =
-R"doc(Name of neuron input variable a presynaptic output specified with $(addToPre) will target
+R"doc(Name of neuron input variable a presynaptic output specified with $(addToPre) will target.
 This will either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables.)doc";
 
 static const char *__doc_SynapseGroup_m_SparseConnectivityInitialiser = R"doc(Initialiser used for creating sparse connectivity)doc";
 
-static const char *__doc_SynapseGroup_m_SparseConnectivityLocation = R"doc(Location of sparse connectivity)doc";
+static const char *__doc_SynapseGroup_m_SparseConnectivityLocation =
+R"doc(Location of sparse connectivity.
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_m_SrcNeuronGroup = R"doc(Pointer to presynaptic neuron group)doc";
 
@@ -3804,15 +3878,23 @@ static const char *__doc_SynapseGroup_m_TrgNeuronGroup = R"doc(Pointer to postsy
 
 static const char *__doc_SynapseGroup_m_WUDynamicParams = R"doc(Data structure tracking whether weight update model parameters are dynamic or not)doc";
 
-static const char *__doc_SynapseGroup_m_WUExtraGlobalParamLocation = R"doc(Location of weight update model extra global parameters)doc";
+static const char *__doc_SynapseGroup_m_WUExtraGlobalParamLocation =
+R"doc(Location of weight update model extra global parameters.
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_m_WUInitialiser = R"doc(Initialiser used for creating weight update model)doc";
 
-static const char *__doc_SynapseGroup_m_WUPostVarLocation = R"doc(Location of individual postsynaptic state variables)doc";
+static const char *__doc_SynapseGroup_m_WUPostVarLocation =
+R"doc(Location of individual postsynaptic state variables.
+This is ignored for simulations on hardware with a single memory space)doc";
 
-static const char *__doc_SynapseGroup_m_WUPreVarLocation = R"doc(Location of individual presynaptic state variables)doc";
+static const char *__doc_SynapseGroup_m_WUPreVarLocation =
+R"doc(Location of individual presynaptic state variables.
+This is ignored for simulations on hardware with a single memory space)doc";
 
-static const char *__doc_SynapseGroup_m_WUVarLocation = R"doc(Location of individual per-synapse state variables)doc";
+static const char *__doc_SynapseGroup_m_WUVarLocation =
+R"doc(Location of individual per-synapse state variables.
+This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_setAxonalDelaySteps = R"doc(Sets the number of delay steps used to delay events and variables between presynaptic neuron and synapse)doc";
 
@@ -4549,14 +4631,23 @@ The STDP window is defined as a piecewise function:
 
 The STDP curve is applied to the raw synaptic conductance `gRaw`, which is then filtered through the sugmoidal filter displayed above to obtain the value of `g`.
 
-\note
-The STDP curve implies that unpaired pre- and post-synaptic spikes incur a negative increment in `gRaw` (and hence in `g`).
 
-\note
-The time of the last spike in each neuron, "sTXX", where XX is the name of a neuron population is (somewhat arbitrarily) initialised to -10.0 ms. If neurons never spike, these spike times are used.
+.. note::
 
-\note
-It is the raw synaptic conductance `gRaw` that is subject to the STDP rule. The resulting synaptic conductance is a sigmoid filter of `gRaw`. This implies that `g` is initialised but not `gRaw`, the synapse will revert to the value that corresponds to `gRaw`.
+        The STDP curve implies that unpaired pre- and post-synaptic spikes incur a negative increment in `gRaw` (and hence in `g`).
+
+
+
+.. note::
+
+        The time of the last spike in each neuron, "sTXX", where XX is the name of a neuron population is (somewhat arbitrarily) initialised to -10.0 ms. If neurons never spike, these spike times are used.
+
+
+
+.. note::
+
+        It is the raw synaptic conductance `gRaw` that is subject to the STDP rule. The resulting synaptic conductance is a sigmoid filter of `gRaw`. This implies that `g` is initialised but not `gRaw`, the synapse will revert to the value that corresponds to `gRaw`.
+
 
 An example how to use this synapse correctly is given in `map_classol.cc` (MBody1 userproject):
 ```
@@ -4573,8 +4664,11 @@ cerr << "Total number of low value corrections: " << cnt << endl;
 ```
 
 
-\note
-One cannot set values of `g` fully to `0`, as this leads to `gRaw`= -infinity and this is not support. I.e., 'g' needs to be some nominal value > 0 (but can be extremely small so that it acts like it's 0).
+
+.. note::
+
+        One cannot set values of `g` fully to `0`, as this leads to `gRaw`= -infinity and this is not support. I.e., 'g' needs to be some nominal value > 0 (but can be extremely small so that it acts like it's 0).
+
 
 <!--
 If no spikes at t: :math:` g_{raw}(t+dt) = g_0 + (g_{raw}(t)-g_0)*\exp(-dt/\tau_{decay}) `
