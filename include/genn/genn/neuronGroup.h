@@ -225,11 +225,11 @@ protected:
     bool isVarQueueRequired(const std::string &var) const;
 
     //! Updates hash with neuron group
-    /*! NOTE: this can only be called after model is finalized */
+    /*! \note this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Updates hash with neuron group initialisation
-    /*! NOTE: this can only be called after model is finalized */
+    /*! \note this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getInitHashDigest() const;
 
     boost::uuids::detail::sha1::digest_type getSpikeQueueUpdateHashDigest() const;
