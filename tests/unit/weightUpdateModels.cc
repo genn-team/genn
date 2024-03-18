@@ -106,8 +106,8 @@ TEST(WeightUpdateModels, CompareCopyPasted)
 {
     using namespace WeightUpdateModels;
 
-    PiecewiseSTDPCopy pwSTDPCopy;
-    ASSERT_EQ(PiecewiseSTDP::getInstance()->getHashDigest(), pwSTDPCopy.getHashDigest());
+    STDP stdpCopy;
+    ASSERT_EQ(STDP::getInstance()->getHashDigest(), stdpCopy.getHashDigest());
 }
 //--------------------------------------------------------------------------
 TEST(WeightUpdateModels, ValidateParamValues) 

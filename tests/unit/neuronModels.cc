@@ -55,7 +55,7 @@ TEST(NeuronModels, CompareBuiltIn)
     ASSERT_EQ(NeuronModels::LIF::getInstance()->getHashDigest(), NeuronModels::LIF::getInstance()->getHashDigest());
     ASSERT_NE(NeuronModels::LIF::getInstance()->getHashDigest(), NeuronModels::Izhikevich::getInstance()->getHashDigest());
     ASSERT_NE(NeuronModels::Izhikevich::getInstance()->getHashDigest(), NeuronModels::IzhikevichVariable::getInstance()->getHashDigest());
-    ASSERT_NE(NeuronModels::TraubMilesAlt::getInstance()->getHashDigest(), NeuronModels::TraubMiles::getInstance()->getHashDigest());
+    ASSERT_NE(NeuronModels::TraubMiles::getInstance()->getHashDigest(), NeuronModels::Izhikevich::getInstance()->getHashDigest());
 }
 
 TEST(NeuronModels, CompareCopyPasted)

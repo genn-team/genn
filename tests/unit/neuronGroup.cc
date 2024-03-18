@@ -103,6 +103,15 @@ public:
 };
 IMPLEMENT_SNIPPET(AlphaCurr);
 
+class EmptyNeuron : public NeuronModels::Base
+{
+public:
+    DECLARE_SNIPPET(EmptyNeuron);
+
+    SET_THRESHOLD_CONDITION_CODE("false");
+};
+IMPLEMENT_SNIPPET(EmptyNeuron);
+
 class LIFAdditional : public NeuronModels::Base
 {
 public:
@@ -224,7 +233,7 @@ TEST(NeuronGroup, InvalidName)
 {
     ModelSpec model;
     try {
-        model.addNeuronPopulation<NeuronModels::SpikeSource>("Neurons-0", 10);
+        model.addNeuronPopulation<EmptyNeuron>("Neurons-0", 10);
      FAIL();
     }
     catch(const std::runtime_error &) {
@@ -301,7 +310,7 @@ TEST(NeuronGroup, Poisson)
 
     ParamValues paramVals{{"rate", 20.0}};
     VarValues varVals{{"timeStepToSpike", 0.0}};
-    NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::PoissonNew>("Neurons0", 10, paramVals, varVals);
+    NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Poisson>("Neurons0", 10, paramVals, varVals);
 
     model.finalise();
 
@@ -922,7 +931,7 @@ TEST(NeuronGroup, ComparePostsynapticModels)
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    auto *spikeSource = model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 10, {}, {});
+    auto *spikeSource = model.addNeuronPopulation<EmptyNeuron>("SpikeSource", 10, {}, {});
     auto *ng0 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
     auto *ng2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons2", 10, paramVals, varVals);

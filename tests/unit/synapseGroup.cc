@@ -214,6 +214,15 @@ class Sum : public CustomUpdateModels::Base
 };
 IMPLEMENT_SNIPPET(Sum);
 
+class EmptyNeuron : public NeuronModels::Base
+{
+public:
+    DECLARE_SNIPPET(EmptyNeuron);
+
+    SET_THRESHOLD_CONDITION_CODE("false");
+};
+IMPLEMENT_SNIPPET(EmptyNeuron);
+
 class LIFAdditional : public NeuronModels::Base
 {
 public:
@@ -986,7 +995,7 @@ TEST(SynapseGroup, InvalidName)
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     
     ModelSpec model;
-    auto *pre = model.addNeuronPopulation<NeuronModels::SpikeSource>("Pre", 10, {}, {});
+    auto *pre = model.addNeuronPopulation<EmptyNeuron>("Pre", 10, {}, {});
     auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
     try {
         model.addSynapsePopulation(
@@ -1126,7 +1135,7 @@ TEST(SynapseGroup, InvalidPSOutputVar)
     VarValues varVals{{"V", 0.0}, {"RefracTime", 0.0}};
 
     ModelSpec model;
-    auto *pre = model.addNeuronPopulation<NeuronModels::SpikeSource>("Pre", 10, {}, {});
+    auto *pre = model.addNeuronPopulation<EmptyNeuron>("Pre", 10, {}, {});
     auto *post = model.addNeuronPopulation<LIFAdditional>("Post", 10, paramVals, varVals);
     auto *prePost = model.addSynapsePopulation(
         "PrePost", SynapseMatrixType::SPARSE,

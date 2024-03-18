@@ -775,12 +775,9 @@ TEST(ModelSpecMerged, ComparePSMVarLocationChanges)
 TEST(ModelSpecMerged, CompareWUMParamChanges)
 {
     // Weight update model parameters
-    const ParamValues paramVals1{{"tLrn", 50.0}, {"tChng", 50.0}, {"tDecay", 50000.0}, {"tPunish10", 100000.0}, {"tPunish01", 200.0}, 
-                                          {"gMax", 0.015}, {"gMid", 0.0075}, {"gSlope", 33.33}, {"tauShift", 10.0}, {"gSyn0", 0.00006}};
-    const ParamValues paramVals2{{"tLrn", 100.0}, {"tChng", 100.0}, {"tDecay", 50000.0}, {"tPunish10", 100000.0}, {"tPunish01", 200.0}, 
-                                          {"gMax", 0.015}, {"gMid", 0.0075}, {"gSlope", 33.33}, {"tauShift", 10.0}, {"gSyn0", 0.00006}};
-    const ParamValues paramVals3{{"tLrn", 50.0}, {"tChng", 50.0}, {"tDecay", 50000.0}, {"tPunish10", 100000.0}, {"tPunish01", 200.0}, 
-                                          {"gMax", 0.1}, {"gMid", 0.0075}, {"gSlope", 33.33}, {"tauShift", 10.0}, {"gSyn0", 0.00006}};
+    const ParamValues paramVals1{{"tauPlus", 10.0}, {"tauMinus", 20.0}, {"Aplus", 1.0}, {"Aminus", 1.0}, {"Wmin", 0.0}, {"Wmax", 1.0}};
+    const ParamValues paramVals2{{"tauPlus", 20.0}, {"tauMinus", 20.0}, {"Aplus", 1.0}, {"Aminus", 1.0}, {"Wmin", 0.0}, {"Wmax", 1.0}};
+    const ParamValues paramVals3{{"tauPlus", 10.0}, {"tauMinus", 20.0}, {"Aplus", 1.0}, {"Aminus", 2.0}, {"Wmin", 0.0}, {"Wmax", 1.0}};
 
     // Make array of population parameters to build model with and flags determining whether the hashes should match baseline
     const std::pair<std::vector<ParamValues>, bool> modelModifiers[] = {
@@ -804,11 +801,11 @@ TEST(ModelSpecMerged, CompareWUMParamChanges)
                  auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
                                                                                   neuronParamVals, neuronVarVals);
 
-                 VarValues varInit{{"g", 0.0}, {"gRaw", uninitialisedVar()}};
+                 VarValues varInit{{"g", 0.0}};
                  model.addSynapsePopulation(
                     "Synapse" + std::to_string(p), SynapseMatrixType::DENSE,
                     pre, post,
-                    initWeightUpdate<WeightUpdateModels::PiecewiseSTDP>(wumParams[p], varInit),
+                    initWeightUpdate<WeightUpdateModels::STDP>(wumParams[p], varInit),
                     initPostsynaptic<PostsynapticModels::DeltaCurr>());
              }
          });
@@ -857,12 +854,12 @@ TEST(ModelSpecMerged, CompareWUMDynamicParamChanges)
 {
     // Make array of population parameters to build model with and flags determining whether the hashes should match baseline
     const std::pair<std::vector<std::string>, bool> modelModifiers[] = {
-        {{"tLrn", "tauShift"},      true},
-        {{"tLrn", "tauShift"},      true},
-        {{"tLrn", "tDecay"},        false},
-        {{"tPunish01", "tauShift"}, false},
+        {{"tauPlus", "tauMinus"},   true},
+        {{"tauPlus", "tauMinus"},   true},
+        {{"tauPlus", "Aplus"},      false},
+        {{"Aminus", "Aminus"},      false},
         {{},                        false},
-        {{"tDecay"},                false}};
+        {{"Aplus"},                 false}};
 
     test(modelModifiers, 
          [](const std::vector<std::string> &dynamicParams, ModelSpecInternal &model)
@@ -874,13 +871,12 @@ TEST(ModelSpecMerged, CompareWUMDynamicParamChanges)
 
              auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 100, neuronParamVals, neuronVarVals);
 
-             VarValues varInit{{"g", 0.0}, {"gRaw", uninitialisedVar()}};
-             ParamValues paramVals{{"tLrn", 50.0}, {"tChng", 50.0}, {"tDecay", 50000.0}, {"tPunish10", 100000.0}, {"tPunish01", 200.0}, 
-                                   {"gMax", 0.015}, {"gMid", 0.0075}, {"gSlope", 33.33}, {"tauShift", 10.0}, {"gSyn0", 0.00006}};
+             VarValues varInit{{"g", 0.0}};
+             ParamValues paramVals{{"tauPlus", 10.0}, {"tauMinus", 20.0}, {"Aplus", 1.0}, {"Aminus", 1.0}, {"Wmin", 0.0}, {"Wmax", 1.0}};
              auto *sg = model.addSynapsePopulation(
                 "Synapse", SynapseMatrixType::DENSE,
                 pre, post,
-                initWeightUpdate<WeightUpdateModels::PiecewiseSTDP>(paramVals, varInit),
+                initWeightUpdate<WeightUpdateModels::STDP>(paramVals, varInit),
                 initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
              for(const auto &d : dynamicParams) {
