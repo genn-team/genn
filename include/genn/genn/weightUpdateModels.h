@@ -216,7 +216,7 @@ private:
     the synaptic conductances are simply added to the postsynaptic input variable.
     The model has 1 variable:
 
-    - \c g - conductance of scalar type
+    - \c g - synaptic weight
 
     and no other parameters.*/
 class StaticPulse : public Base
@@ -237,7 +237,7 @@ public:
     the synaptic conductances are simply added to the postsynaptic input variable.
     The model has 1 parameter:
 
-    - \c g - conductance of scalar type
+    - \c g - synaptic weight
 
     and no other variables.*/
 class StaticPulseConstantWeight : public Base
@@ -258,7 +258,7 @@ public:
     the synaptic conductances are simply added to the postsynaptic input variable.
     The model has 2 variables:
 
-    - \c g - conductance of scalar type
+    - \c g - synaptic weight
     - \c d - dendritic delay in timesteps
 
     and no other parameters.*/
@@ -281,7 +281,7 @@ public:
     whenever the membrane potential \f$V\f$ is larger than the threshold \f$E_{pre}\f$.
     The model has 1 variable:
 
-    - \c g: conductance of \c scalar type
+    - \c g: synaptic weight
     
     The model also has 1 presynaptic neuron variable reference:
 
@@ -308,13 +308,18 @@ public:
 // GeNN::AdditiveSTDP
 //----------------------------------------------------------------------------
 //! This is a simple STDP rule including a time delay for the finite transmission speed of the synapse.
-/*!
-"tauPlus",  // 0 - Potentiation time constant (ms)
-      "tauMinus", // 1 - Depression time constant (ms)
-      "Aplus",    // 2 - Rate of potentiation
-      "Aminus",   // 3 - Rate of depression
-      "Wmin",     // 4 - Minimum weight
-      "Wmax",     // 5 - Maximum weight*/
+/*!  The model has 1 variable:
+
+    - \c g - conductance of scalar type
+
+    and 6 parameters:
+
+    - \c tauPlus - Potentiation time constant (ms)
+    - \c tauMinus - Depression time constant (ms)
+    - \c Aplus - Rate of potentiation
+    - \c Aminus - Rate of depression
+    - \c Wmin - Minimum weight
+    - \c Wmax - Maximum weight*/
 class STDP : public WeightUpdateModels::Base
 {
 public:
@@ -322,7 +327,7 @@ public:
 
     SET_PARAMS({"tauPlus", "tauMinus", "Aplus", "Aminus", "Wmin", "Wmax"});
 
-    SET_VARS({ {"g", "scalar"} });
+    SET_VARS({{"g", "scalar"}});
 
     SET_PRE_SPIKE_SYN_CODE(
         "addToPost(g);\n"
@@ -333,7 +338,7 @@ public:
         "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
         "}\n");
     SET_POST_SPIKE_SYN_CODE(
-        "scalar dt = $(t) - $(sT_pre);\n"
+        "scalar dt = t - st_pre;\n"
         "if (dt > 0) {\n"
         "    scalar timing = exp(-dt / tauPlus);\n"
         "    scalar newWeight = g + (Aplus * timing);\n"
