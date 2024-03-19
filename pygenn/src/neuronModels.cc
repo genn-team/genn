@@ -40,12 +40,7 @@ PYBIND11_MODULE(neuron_models, m)
     WRAP(Izhikevich);
     WRAP(IzhikevichVariable);
     WRAP(LIF);
-    WRAP(SpikeSource);
     WRAP(SpikeSourceArray);
     WRAP(Poisson);
-    WRAP(PoissonNew);
     WRAP(TraubMiles);
-    WRAP(TraubMilesFast);
-    WRAP(TraubMilesAlt);
-    WRAP(TraubMilesNStep);
 }
