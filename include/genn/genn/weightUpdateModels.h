@@ -281,16 +281,16 @@ public:
     whenever the membrane potential \f$V\f$ is larger than the threshold \f$E_{pre}\f$.
     The model has 1 variable:
 
-    - \c g: synaptic weight
+    - \c g - synaptic weight
     
     The model also has 1 presynaptic neuron variable reference:
 
-    - \c V: Presynaptic membrane potential
+    - \c V - Presynaptic membrane potential
 
     The parameters are:
 
-    - \c Epre: Presynaptic threshold potential
-    - \c Vslope: Activation slope of graded release*/
+    - \c Epre - Presynaptic threshold potential
+    - \c Vslope - Activation slope of graded release*/
 class StaticGraded : public Base
 {
 public:
@@ -312,13 +312,13 @@ public:
     \f[
         \Delta w_{ij} = \
             \begin{cases}
-                A_{+}\exp\left(-\frac{\Delta t}{\tau_{+}}\right) & if\, \Delta t>0\
+                A_{+}\exp\left(-\frac{\Delta t}{\tau_{+}}\right) & if\, \Delta t>0\\
                 A_{-}\exp\left(\frac{\Delta t}{\tau_{-}}\right) & if\, \Delta t\leq0
             \end{cases}  
     \f]
 The model has 1 variable:
 
-    - \c g - conductance of scalar type
+    - \c g - synaptic weight
 
     and 6 parameters:
 
