@@ -310,7 +310,7 @@ public:
 //! Simply asymmetrical STDP rule.
 /*! This rule makes purely additive weight updates within hard bounds and uses nearest-neighbour spike pairing and the following time-dependence:
     \f[
-        \Delta w_{ij} & = \
+        \Delta w_{ij} = \
             \begin{cases}
                 A_{+}\exp\left(-\frac{\Delta t}{\tau_{+}}\right) & if\, \Delta t>0\
                 A_{-}\exp\left(\frac{\Delta t}{\tau_{-}}\right) & if\, \Delta t\leq0

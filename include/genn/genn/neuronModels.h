@@ -301,7 +301,9 @@ public:
 
     \note Internally this samples from the exponential distribution using
     the C++ 11 \<random\> library on the CPU and by transforming the
-    uniform distribution, generated using cuRAND, with a natural log on the GPU. */
+    uniform distribution, generated using cuRAND, with a natural log on the GPU.
+    \note If you are connecting Poisson neurons one-to-one to another neuron population, 
+    it is more efficient to add a CurrentSourceModels::PoissonExp instead. */
 class Poisson : public Base
 {
 public:
