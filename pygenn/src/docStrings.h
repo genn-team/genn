@@ -2991,54 +2991,6 @@ static const char *__doc_NeuronModels_LIF_isAutoRefractoryRequired = R"doc()doc"
 
 static const char *__doc_NeuronModels_Poisson =
 R"doc(Poisson neurons
-Poisson neurons have constant membrane potential (``Vrest``) unless they are
-activated randomly to the ``Vspike`` value if (t- ``spikeTime`` ) > ``trefract``.
-
-It has 2 variables:
-
-- ``V`` - Membrane potential (mV)
-- ``spikeTime`` - Time at which the neuron spiked for the last time (ms)
-
-and 4 parameters:
-
-- ``trefract`` - Refractory period (ms)
-- ``tspike`` - duration of spike (ms)
-- ``Vspike`` - Membrane potential at spike (mV)
-- ``Vrest`` - Membrane potential at rest (mV)
-
-
-.. note::
-
-    The initial values array for the `Poisson` type needs two entries
-    for `V`, and `spikeTime` and the parameter array needs four entries for
-    `trefract`, `tspike`, `Vspike` and `Vrest`,  *in that order*.
-
-
-.. note::
-
-    The refractory period and the spike duration both start at the beginning of the spike. That means that the refractory period should be longer or equal to the spike duration. If this is not the case, undefined model behaviour occurs.
-
-
-It has two extra global parameters:
-
-- ``firingProb`` - an array of firing probabilities/ average rates; this can extend to :math:`n \cdot N`, where :math:`N` is the number of neurons, for :math:`n > 0` firing patterns
-- ``offset`` - an unsigned integer that points to the start of the currently used input pattern; typically taking values of :math:`i \cdot N`, :math:`0 \leq i < n`.
-
-
-.. note::
-
-    This model uses a linear approximation for the probability
-    of firing a spike in a given time step of size `DT`, i.e. the
-    probability of firing is :math:`
-\lambda` times `DT`: :math:` p = \lambda \Delta t`,
-where $\lambda$ corresponds to the value of the relevant entry of `firingProb`.
-This approximation is usually very good, especially for typical,
-quite small time steps and moderate firing rates. However, it is worth
-noting that the approximation becomes poor for very high firing rates
-and large time steps.)doc";
-
-static const char *__doc_NeuronModels_PoissonNew =
-R"doc(Poisson neurons
 This neuron model emits spikes according to the Poisson distribution with a mean firing
 rate as determined by its single parameter.
 It has 1 state variable:
@@ -3056,21 +3008,7 @@ and 1 parameter:
     the C++ 11 \<random\> library on the CPU and by transforming the
     uniform distribution, generated using cuRAND, with a natural log on the GPU.)doc";
 
-static const char *__doc_NeuronModels_PoissonNew_getDerivedParams = R"doc()doc";
-
-static const char *__doc_NeuronModels_PoissonNew_getInstance = R"doc()doc";
-
-static const char *__doc_NeuronModels_PoissonNew_getParams = R"doc()doc";
-
-static const char *__doc_NeuronModels_PoissonNew_getSimCode = R"doc()doc";
-
-static const char *__doc_NeuronModels_PoissonNew_getThresholdConditionCode = R"doc()doc";
-
-static const char *__doc_NeuronModels_PoissonNew_getVars = R"doc()doc";
-
-static const char *__doc_NeuronModels_PoissonNew_isAutoRefractoryRequired = R"doc()doc";
-
-static const char *__doc_NeuronModels_Poisson_getExtraGlobalParams = R"doc()doc";
+static const char *__doc_NeuronModels_Poisson_getDerivedParams = R"doc()doc";
 
 static const char *__doc_NeuronModels_Poisson_getInstance = R"doc()doc";
 
@@ -3081,6 +3019,8 @@ static const char *__doc_NeuronModels_Poisson_getSimCode = R"doc()doc";
 static const char *__doc_NeuronModels_Poisson_getThresholdConditionCode = R"doc()doc";
 
 static const char *__doc_NeuronModels_Poisson_getVars = R"doc()doc";
+
+static const char *__doc_NeuronModels_Poisson_isAutoRefractoryRequired = R"doc()doc";
 
 static const char *__doc_NeuronModels_RulkovMap =
 R"doc(Rulkov Map neuron
@@ -3135,11 +3075,6 @@ static const char *__doc_NeuronModels_RulkovMap_getThresholdConditionCode = R"do
 
 static const char *__doc_NeuronModels_RulkovMap_getVars = R"doc()doc";
 
-static const char *__doc_NeuronModels_SpikeSource =
-R"doc(Empty neuron which allows setting spikes from external sources
-This model does not contain any update code and can be used to implement
-the equivalent of a SpikeGeneratorGroup in Brian or a SpikeSourceArray in PyNN.)doc";
-
 static const char *__doc_NeuronModels_SpikeSourceArray =
 R"doc(Spike source array
 A neuron which reads spike times from a global spikes array.
@@ -3165,12 +3100,6 @@ static const char *__doc_NeuronModels_SpikeSourceArray_getThresholdConditionCode
 static const char *__doc_NeuronModels_SpikeSourceArray_getVars = R"doc()doc";
 
 static const char *__doc_NeuronModels_SpikeSourceArray_isAutoRefractoryRequired = R"doc()doc";
-
-static const char *__doc_NeuronModels_SpikeSource_getInstance = R"doc()doc";
-
-static const char *__doc_NeuronModels_SpikeSource_getThresholdConditionCode = R"doc()doc";
-
-static const char *__doc_NeuronModels_SpikeSource_isAutoRefractoryRequired = R"doc()doc";
 
 static const char *__doc_NeuronModels_TraubMiles =
 R"doc(Hodgkin-Huxley neurons with Traub & Miles algorithm.
@@ -3231,44 +3160,6 @@ and 7 parameters:
     integrated with a linear Euler algorithm with `lDT= 0.004` ms.
     This variant uses IF statements to check for a value at which a singularity would be hit.
     If so, value calculated by L'Hospital rule is used.)doc";
-
-static const char *__doc_NeuronModels_TraubMilesAlt =
-R"doc(Hodgkin-Huxley neurons with Traub & Miles algorithm
-Using a workaround to avoid singularity: adding the munimum numerical value of the floating point precision used.
-
-.. note::
-
-    See NeuronModels::TraubMiles for variable and parameter names.)doc";
-
-static const char *__doc_NeuronModels_TraubMilesAlt_getInstance = R"doc()doc";
-
-static const char *__doc_NeuronModels_TraubMilesAlt_getSimCode = R"doc()doc";
-
-static const char *__doc_NeuronModels_TraubMilesFast =
-R"doc(Hodgkin-Huxley neurons with Traub & Miles algorithm: Original fast implementation, using 25 inner iterations.
-There are singularities in this model, which can be easily hit in float precision
-
-.. note::
-
-    See NeuronModels::TraubMiles for variable and parameter names.)doc";
-
-static const char *__doc_NeuronModels_TraubMilesFast_getInstance = R"doc()doc";
-
-static const char *__doc_NeuronModels_TraubMilesFast_getSimCode = R"doc()doc";
-
-static const char *__doc_NeuronModels_TraubMilesNStep =
-R"doc(Hodgkin-Huxley neurons with Traub & Miles algorithm.
-Same as standard TraubMiles model but number of inner loops can be set using a parameter
-
-.. note::
-
-    See NeuronModels::TraubMiles for variable and parameter names.)doc";
-
-static const char *__doc_NeuronModels_TraubMilesNStep_getInstance = R"doc()doc";
-
-static const char *__doc_NeuronModels_TraubMilesNStep_getParams = R"doc()doc";
-
-static const char *__doc_NeuronModels_TraubMilesNStep_getSimCode = R"doc()doc";
 
 static const char *__doc_NeuronModels_TraubMiles_getInstance = R"doc()doc";
 
@@ -4647,88 +4538,40 @@ static const char *__doc_WeightUpdateModels_Init_m_SynapseDynamicsCodeTokens = R
 
 static const char *__doc_WeightUpdateModels_Init_m_VarInitialisers = R"doc()doc";
 
-static const char *__doc_WeightUpdateModels_PiecewiseSTDP =
-R"doc(This is a simple STDP rule including a time delay for the finite transmission speed of the synapse.
-The STDP window is defined as a piecewise function:
-\image html LEARN1SYNAPSE_explain_html.png
-\image latex LEARN1SYNAPSE_explain.png width=10cm
+static const char *__doc_WeightUpdateModels_STDP =
+R"doc(Simply asymmetrical STDP rule.
+This rule makes purely additive weight updates within hard bounds and uses nearest-neighbour spike pairing and the following time-dependence:
 
-The STDP curve is applied to the raw synaptic conductance `gRaw`, which is then filtered through the sugmoidal filter displayed above to obtain the value of `g`.
+.. math::
 
+    \Delta w_{ij} & = \
+    \begin{cases}
+    A_{+}\exp\left(-\frac{\Delta t}{\tau_{+}}\right) & if\, \Delta t>0\
+    A_{-}\exp\left(\frac{\Delta t}{\tau_{-}}\right) & if\, \Delta t\leq0
+    \end{cases}
 
-.. note::
+The model has 1 variable:
 
-    The STDP curve implies that unpaired pre- and post-synaptic spikes incur a negative increment in `gRaw` (and hence in `g`).
+- ``g`` - conductance of scalar type
 
+and 6 parameters:
 
+- ``tauPlus`` - Potentiation time constant (ms)
+- ``tauMinus`` - Depression time constant (ms)
+- ``Aplus`` - Rate of potentiation
+- ``Aminus`` - Rate of depression
+- ``Wmin`` - Minimum weight
+- ``Wmax`` - Maximum weight)doc";
 
-.. note::
+static const char *__doc_WeightUpdateModels_STDP_getInstance = R"doc()doc";
 
-    The time of the last spike in each neuron, "sTXX", where XX is the name of a neuron population is (somewhat arbitrarily) initialised to -10.0 ms. If neurons never spike, these spike times are used.
+static const char *__doc_WeightUpdateModels_STDP_getParams = R"doc()doc";
 
+static const char *__doc_WeightUpdateModels_STDP_getPostSpikeSynCode = R"doc()doc";
 
+static const char *__doc_WeightUpdateModels_STDP_getPreSpikeSynCode = R"doc()doc";
 
-.. note::
-
-    It is the raw synaptic conductance `gRaw` that is subject to the STDP rule. The resulting synaptic conductance is a sigmoid filter of `gRaw`. This implies that `g` is initialised but not `gRaw`, the synapse will revert to the value that corresponds to `gRaw`.
-
-
-An example how to use this synapse correctly is given in `map_classol.cc` (MBody1 userproject):
-```
-for (int i= 0; i < model.neuronN[1]*model.neuronN[3]; i++) {
-if (gKCDN[i] < 2.0*SCALAR_MIN){
-cnt++;
-fprintf(stdout, "Too low conductance value %e detected and set to 2*SCALAR_MIN= %e, at index %d \n", gKCDN[i], 2*SCALAR_MIN, i);
-gKCDN[i] = 2.0*SCALAR_MIN; //to avoid log(0)/0 below
-}
-scalar tmp = gKCDN[i] / myKCDN_p[5]*2.0 ;
-gRawKCDN[i]=  0.5 * log( tmp / (2.0 - tmp)) /myKCDN_p[7] + myKCDN_p[6];
-}
-cerr << "Total number of low value corrections: " << cnt << endl;
-```
-
-
-
-.. note::
-
-    One cannot set values of `g` fully to `0`, as this leads to `gRaw`= -infinity and this is not support. I.e., 'g' needs to be some nominal value > 0 (but can be extremely small so that it acts like it's 0).
-
-
-<!--
-If no spikes at t: :math:` g_{raw}(t+dt) = g_0 + (g_{raw}(t)-g_0)*\exp(-dt/\tau_{decay}) `
-If pre or postsynaptic spike at t: :math:` g_{raw}(t+dt) = g_0 + (g_{raw}(t)-g_0)*\exp(-dt/\tau_{decay})
-+A(t_{post}-t_{pre}-\tau_{decay}) `
--->
-
-The model has 2 variables:
-
-- ``g:`` conductance of ``scalar`` type
-- ``gRaw:`` raw conductance of ``scalar`` type
-
-Parameters are (compare to the figure above):
-
-- ``tLrn:`` Time scale of learning changes
-- ``tChng:`` Width of learning window
-- ``tDecay:`` Time scale of synaptic strength decay
-- ``tPunish10:`` Time window of suppression in response to 1/0
-- ``tPunish01:`` Time window of suppression in response to 0/1
-- ``gMax:`` Maximal conductance achievable
-- ``gMid:`` Midpoint of sigmoid g filter curve
-- ``gSlope:`` Slope of sigmoid g filter curve
-- ``tauShift:`` Shift of learning curve
-- ``gSyn0:`` Value of syn conductance g decays to)doc";
-
-static const char *__doc_WeightUpdateModels_PiecewiseSTDP_getDerivedParams = R"doc()doc";
-
-static const char *__doc_WeightUpdateModels_PiecewiseSTDP_getInstance = R"doc()doc";
-
-static const char *__doc_WeightUpdateModels_PiecewiseSTDP_getParams = R"doc()doc";
-
-static const char *__doc_WeightUpdateModels_PiecewiseSTDP_getPostSpikeSynCode = R"doc()doc";
-
-static const char *__doc_WeightUpdateModels_PiecewiseSTDP_getPreSpikeSynCode = R"doc()doc";
-
-static const char *__doc_WeightUpdateModels_PiecewiseSTDP_getVars = R"doc()doc";
+static const char *__doc_WeightUpdateModels_STDP_getVars = R"doc()doc";
 
 static const char *__doc_WeightUpdateModels_StaticGraded =
 R"doc(Graded-potential, static synapse
@@ -4741,7 +4584,7 @@ In a graded synapse, the conductance is updated gradually with the rule:
 whenever the membrane potential :math:`V` is larger than the threshold :math:`E_{pre}`.
 The model has 1 variable:
 
-- ``g:`` conductance of ``scalar`` type
+- ``g:`` synaptic weight
 
 The model also has 1 presynaptic neuron variable reference:
 
@@ -4770,7 +4613,7 @@ No learning rule is applied to the synapse and for each pre-synaptic spikes,
 the synaptic conductances are simply added to the postsynaptic input variable.
 The model has 1 variable:
 
-- ``g`` - conductance of scalar type
+- ``g`` - synaptic weight
 
 and no other parameters.)doc";
 
@@ -4780,7 +4623,7 @@ No learning rule is applied to the synapse and for each pre-synaptic spikes,
 the synaptic conductances are simply added to the postsynaptic input variable.
 The model has 1 parameter:
 
-- ``g`` - conductance of scalar type
+- ``g`` - synaptic weight
 
 and no other variables.)doc";
 
@@ -4796,7 +4639,7 @@ No learning rule is applied to the synapse and for each pre-synaptic spikes,
 the synaptic conductances are simply added to the postsynaptic input variable.
 The model has 2 variables:
 
-- ``g`` - conductance of scalar type
+- ``g`` - synaptic weight
 - ``d`` - dendritic delay in timesteps
 
 and no other parameters.)doc";
