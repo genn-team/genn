@@ -4,8 +4,6 @@
 #include <map>
 #include <set>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 // GeNN includes
@@ -34,35 +32,40 @@ public:
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
-    //! Set location of this neuron group's output spikes
+    //! Set whether zero-copy memory (if available) should be   
+    //! used for spike and spike-like event recording.
+    /*! This is ignored for simulations on hardware with a single memory space */
+    void setRecordingZeroCopyEnabled(bool enabled) { m_RecordingZeroCopyEnabled = enabled; }
+
+    //! Set location of this neuron group's output spikes.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setSpikeLocation(VarLocation loc) { m_SpikeLocation = loc; }
 
-     //! Set location of this neuron group's output spike events
+     //! Set location of this neuron group's output spike events.
      /*! This is ignored for simulations on hardware with a single memory space */
     void setSpikeEventLocation(VarLocation loc) { m_SpikeEventLocation = loc; }
 
-    //! Set location of this neuron group's output spike times
+    //! Set location of this neuron group's output spike times.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setSpikeTimeLocation(VarLocation loc) { m_SpikeTimeLocation = loc; }
     
-    //! Set location of this neuron group's previous output spike times
+    //! Set location of this neuron group's previous output spike times.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setPrevSpikeTimeLocation(VarLocation loc) { m_PrevSpikeTimeLocation = loc; }
     
-    //! Set location of this neuron group's output spike-like-event times
+    //! Set location of this neuron group's output spike-like-event times.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setSpikeEventTimeLocation(VarLocation loc) { m_SpikeEventTimeLocation = loc; }
     
-    //! Set location of this neuron group's previous output spike-like-event times
+    //! Set location of this neuron group's previous output spike-like-event times.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setPrevSpikeEventTimeLocation(VarLocation loc) { m_PrevSpikeEventTimeLocation = loc; }
 
-    //! Set variable location of neuron model state variable
+    //! Set variable location of neuron model state variable.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setVarLocation(const std::string &varName, VarLocation loc);
 
-    //! Set location of neuron model extra global parameter
+    //! Set location of neuron model extra global parameter.
     /*! This is ignored for simulations on hardware with a single memory space. */
     void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
@@ -84,10 +87,10 @@ public:
     unsigned int getNumNeurons() const{ return m_NumNeurons; }
 
     //! Gets the neuron model used by this group
-    const NeuronModels::Base *getNeuronModel() const{ return m_NeuronModel; }
+    const NeuronModels::Base *getModel() const{ return m_Model; }
 
-    const std::unordered_map<std::string, Type::NumericValue> &getParams() const{ return m_Params; }
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
+    const auto &getParams() const{ return m_Params; }
+    const auto &getVarInitialisers() const{ return m_VarInitialisers; }
 
     bool isSpikeTimeRequired() const;
     bool isPrevSpikeTimeRequired() const;
@@ -99,7 +102,11 @@ public:
     unsigned int getNumDelaySlots() const{ return m_NumDelaySlots; }
     bool isDelayRequired() const{ return (m_NumDelaySlots > 1); }
     bool isZeroCopyEnabled() const;
-
+    
+    //! Get whether zero-copy memory (if available) should 
+    //! be used for spike and spike-like event recording
+    bool isRecordingZeroCopyEnabled() const { return m_RecordingZeroCopyEnabled; }
+    
     //! Get location of this neuron group's output spikes
     VarLocation getSpikeLocation() const{ return m_SpikeLocation; }
 
@@ -135,7 +142,7 @@ public:
 
 protected:
     NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
+                const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers,
                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
@@ -162,17 +169,17 @@ protected:
     // Protected const methods
     //------------------------------------------------------------------------
     //! Gets pointers to all synapse groups which provide input to this neuron group
-    const std::vector<SynapseGroupInternal*> &getInSyn() const{ return m_InSyn; }
-    const std::vector<SynapseGroupInternal*> &getFusedPSMInSyn() const{ return m_FusedPSMInSyn; }
-    const std::vector<SynapseGroupInternal *> &getFusedWUPostInSyn() const { return m_FusedWUPostInSyn; }
+    const auto &getInSyn() const{ return m_InSyn; }
+    const auto &getFusedPSMInSyn() const{ return m_FusedPSMInSyn; }
+    const auto &getFusedWUPostInSyn() const { return m_FusedWUPostInSyn; }
 
     //! Gets pointers to all synapse groups emanating from this neuron group
-    const std::vector<SynapseGroupInternal*> &getOutSyn() const{ return m_OutSyn; }
-    const std::vector<SynapseGroupInternal *> &getFusedWUPreOutSyn() const { return m_FusedWUPreOutSyn; }
-    const std::vector<SynapseGroupInternal *> &getFusedPreOutputOutSyn() const { return m_FusedPreOutputOutSyn; }
+    const auto &getOutSyn() const{ return m_OutSyn; }
+    const auto &getFusedWUPreOutSyn() const { return m_FusedWUPreOutSyn; }
+    const auto &getFusedPreOutputOutSyn() const { return m_FusedPreOutputOutSyn; }
 
-    const std::vector<SynapseGroupInternal*> &getFusedSpike() const{ return m_FusedSpike; }
-    const std::vector<SynapseGroupInternal*> &getFusedSpikeEvent() const{ return m_FusedSpikeEvent; }
+    const auto &getFusedSpike() const{ return m_FusedSpike; }
+    const auto &getFusedSpikeEvent() const{ return m_FusedSpikeEvent; }
     
     //! Does this neuron group require an RNG to simulate?
     bool isSimRNGRequired() const;
@@ -190,9 +197,9 @@ protected:
     bool isVarInitRequired() const;
 
     //! Gets pointers to all current sources which provide input to this neuron group
-    const std::vector<CurrentSourceInternal*> &getCurrentSources() const { return m_CurrentSourceGroups; }
+    const auto &getCurrentSources() const { return m_CurrentSourceGroups; }
 
-    const std::unordered_map<std::string, Type::NumericValue> &getDerivedParams() const{ return m_DerivedParams; }
+    const auto &getDerivedParams() const{ return m_DerivedParams; }
 
     //! Helper to get vector of incoming synapse groups which have postsynaptic update code
     std::vector<SynapseGroupInternal*> getFusedInSynWithPostCode() const;
@@ -207,22 +214,22 @@ protected:
     std::vector<SynapseGroupInternal *> getFusedOutSynWithPreVars() const;
 
     //! Tokens produced by scanner from simc ode
-    const std::vector<Transpiler::Token> &getSimCodeTokens() const { return m_SimCodeTokens; }
+    const auto &getSimCodeTokens() const { return m_SimCodeTokens; }
 
     //! Tokens produced by scanner from threshold condition code
-    const std::vector<Transpiler::Token> &getThresholdConditionCodeTokens() const { return m_ThresholdConditionCodeTokens; }
+    const auto &getThresholdConditionCodeTokens() const { return m_ThresholdConditionCodeTokens; }
     
     //! Tokens produced by scanner from reset code
-    const std::vector<Transpiler::Token> &getResetCodeTokens() const { return m_ResetCodeTokens; }
+    const auto &getResetCodeTokens() const { return m_ResetCodeTokens; }
 
     bool isVarQueueRequired(const std::string &var) const;
 
     //! Updates hash with neuron group
-    /*! NOTE: this can only be called after model is finalized */
+    /*! \note this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Updates hash with neuron group initialisation
-    /*! NOTE: this can only be called after model is finalized */
+    /*! \note this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getInitHashDigest() const;
 
     boost::uuids::detail::sha1::digest_type getSpikeQueueUpdateHashDigest() const;
@@ -235,14 +242,19 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const std::string m_Name;
+    //! Unique name of neuron group
+    std::string m_Name;
 
-    const unsigned int m_NumNeurons;
+    //! Number of neurons in group
+    unsigned int m_NumNeurons;
 
-    const NeuronModels::Base *m_NeuronModel;
-    const std::unordered_map<std::string, Type::NumericValue> m_Params;
-    std::unordered_map<std::string, Type::NumericValue> m_DerivedParams;
-    std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
+    //! Neuron model used for this group
+    const NeuronModels::Base *m_Model;
+
+    //! Values of neuron parameters
+    std::map<std::string, Type::NumericValue> m_Params;
+    std::map<std::string, Type::NumericValue> m_DerivedParams;
+    std::map<std::string, InitVarSnippet::Init> m_VarInitialisers;
     std::vector<SynapseGroupInternal*> m_InSyn;
     std::vector<SynapseGroupInternal*> m_OutSyn;
     std::vector<SynapseGroupInternal*> m_FusedPSMInSyn;
@@ -251,34 +263,50 @@ private:
     std::vector<SynapseGroupInternal*> m_FusedWUPostInSyn;
     std::vector<SynapseGroupInternal*> m_FusedWUPreOutSyn;
     std::vector<SynapseGroupInternal*> m_FusedPreOutputOutSyn;
+
+    //! Number of delay slots this group required.
+    /*! This is the maximum required by any incoming or outgoing synapse group */
     unsigned int m_NumDelaySlots;
+
     std::vector<CurrentSourceInternal*> m_CurrentSourceGroups;
 
     //! Set of names of variable requiring queueing
-    std::unordered_set<std::string> m_VarQueueRequired;
-
-    //! Location of spikes from neuron group
+    std::set<std::string> m_VarQueueRequired;
+    
+    //! Should zero-copy memory (if available) be used 
+    //! for spike and spike-like event recording?
+    bool m_RecordingZeroCopyEnabled;
+    
+    //! Location of spikes from neuron group.
+    /*! This is ignored for simulations on hardware with a single memory space */
     VarLocation m_SpikeLocation;
 
-    //! Location of spike-like events from neuron group
+    //! Location of spike-like events from neuron group.
+    /*! This is ignored for simulations on hardware with a single memory space */
     VarLocation m_SpikeEventLocation;
 
-    //! Location of spike times from neuron group
+    //! Location of spike times from neuron group.
+    /*! This is ignored for simulations on hardware with a single memory space */
     VarLocation m_SpikeTimeLocation;
 
-    //! Location of previous spike times
+    //! Location of previous spike times.
+    /*! This is ignored for simulations on hardware with a single memory space */
     VarLocation m_PrevSpikeTimeLocation;
 
-    //! Location of spike-like-event times
+    //! Location of spike-like-event times.
+    /*! This is ignored for simulations on hardware with a single memory space */
     VarLocation m_SpikeEventTimeLocation;
 
-    //! Location of previous spike-like-event times
+    //! Location of previous spike-like-event times.
+    /*! This is ignored for simulations on hardware with a single memory space */
     VarLocation m_PrevSpikeEventTimeLocation;
     
-    //! Location of individual state variables
+    //! Location of individual state variables.
+    /*! This is ignored for simulations on hardware with a single memory space */
     LocationContainer m_VarLocation;
 
-    //! Location of extra global parameters
+    //! Location of extra global parameters.
+    /*! This is ignored for simulations on hardware with a single memory space */
     LocationContainer m_ExtraGlobalParamLocation;
 
     //! Data structure tracking whether parameters are dynamic or not

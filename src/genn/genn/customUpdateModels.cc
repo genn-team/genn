@@ -25,49 +25,53 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues,
-                    const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
-                    const std::unordered_map<std::string, Models::VarReference> &varRefTargets,
+void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues,
+                    const std::map<std::string, InitVarSnippet::Init> &varValues,
+                    const std::map<std::string, Models::VarReference> &varRefTargets,
+                    const std::map<std::string, Models::EGPReference> &egpRefTarget,
                     const std::string &description) const
 {
      // Superclass
     Snippet::Base::validate(paramValues, description);
 
-    // Validate variable names
+    // Validate variables
     const auto vars = getVars();
     Utils::validateVecNames(vars, "Variable");
-
-    // Validate variable initialisers
     Utils::validateInitialisers(vars, varValues, "variable", description);
 
+    // Validate variable references
     const auto varRefs = getVarRefs();
     Utils::validateVecNames(varRefs, "Variable reference");
-
-    // Validate variable reference initialisers
     Utils::validateInitialisers(varRefs, varRefTargets, "Variable reference", description);
-    Utils::validateVecNames(getExtraGlobalParamRefs(), "Extra global parameter reference");
+
+    // Validate EGP references
+    const auto egpRefs = getExtraGlobalParamRefs();
+    Utils::validateVecNames(egpRefs, "Extra global parameter reference");
+    Utils::validateInitialisers(egpRefs, egpRefTarget, "Extra Global Parameter reference", description);
 }
 //----------------------------------------------------------------------------
-void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues,
-                    const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
-                    const std::unordered_map<std::string, Models::WUVarReference> &varRefTargets,
+void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues,
+                    const std::map<std::string, InitVarSnippet::Init> &varValues,
+                    const std::map<std::string, Models::WUVarReference> &varRefTargets,
+                    const std::map<std::string, Models::EGPReference> &egpRefTarget,
                     const std::string &description) const
 {
      // Superclass
     Snippet::Base::validate(paramValues, description);
 
-    // Validate variable names
+    // Validate variables
     const auto vars = getVars();
     Utils::validateVecNames(vars, "Variable");
-
-    // Validate variable initialisers
     Utils::validateInitialisers(vars, varValues, "variable", description);
 
+    // Validate variable references
     const auto varRefs = getVarRefs();
     Utils::validateVecNames(varRefs, "Variable reference");
-
-    // Validate variable reference initialisers
     Utils::validateInitialisers(varRefs, varRefTargets, "Variable reference", description);
-    Utils::validateVecNames(getExtraGlobalParamRefs(), "Extra global parameter reference");
+    
+    // Validate EGP references
+    const auto egpRefs = getExtraGlobalParamRefs();
+    Utils::validateVecNames(egpRefs, "Extra global parameter reference");
+    Utils::validateInitialisers(egpRefs, egpRefTarget, "Extra Global Parameter reference", description);
 }
 }   // namespace GeNN::CustomUpdateModels

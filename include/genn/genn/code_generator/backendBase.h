@@ -6,7 +6,6 @@
 #include <map>
 #include <optional>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 // Filesystem includes
@@ -55,6 +54,8 @@ class CustomConnectivityUpdateGroupMerged;
 class CustomUpdateGroupMerged;
 class CustomUpdateWUGroupMerged;
 class CustomUpdateTransposeWUGroupMerged;
+class CustomUpdateHostReductionGroupMerged;
+class CustomWUUpdateHostReductionGroupMerged;
 class NeuronInitGroupMerged;
 class CustomUpdateInitGroupMerged;
 class CustomWUUpdateInitGroupMerged;
@@ -70,6 +71,8 @@ class SynapseSparseInitGroupMerged;
 namespace Runtime
 {
 class ArrayBase;
+class Runtime;
+class StateBase;
 }
 }
 
@@ -86,10 +89,6 @@ struct PreferencesBase
 
     //! Generate code with debug symbols
     bool debugCode = false;
-
-    //! New optimizations made to kernels for simulating synapse groups with BITMASK connectivity
-    //! Improve performance but break backward compatibility due to word-padding each row
-    bool enableBitmaskOptimisations = false;
 
     //! C++ compiler options to be used for building all host side code (used for unix based platforms)
     std::string userCxxFlagsGNU = "";
@@ -112,84 +111,11 @@ struct PreferencesBase
     //! Logging level to use for backend
     plog::Severity backendLogLevel = plog::info;
 
-    void updateHash(boost::uuids::detail::sha1 &hash) const
+    void updateHash(boost::uuids::detail::sha1&) const
     {
         // **NOTE** optimizeCode, debugCode and various compiler flags only affect makefiles/msbuild 
-
-        //! Update hash with preferences
-        Utils::updateHash(enableBitmaskOptimisations, hash);
     }
 };
-
-
-//--------------------------------------------------------------------------
-// GeNN::CodeGenerator::MemAlloc
-//--------------------------------------------------------------------------
-class MemAlloc
-{
-public:
-    //--------------------------------------------------------------------------
-    // Public API
-    //--------------------------------------------------------------------------
-    size_t getHostBytes() const{ return m_HostBytes; }
-    size_t getDeviceBytes() const{ return m_DeviceBytes; }
-    size_t getZeroCopyBytes() const{ return m_ZeroCopyBytes; }
-    size_t getHostMBytes() const{ return m_HostBytes / (1024 * 1024); }
-    size_t getDeviceMBytes() const{ return m_DeviceBytes / (1024 * 1024); }
-    size_t getZeroCopyMBytes() const{ return m_ZeroCopyBytes / (1024 * 1024); }
-
-    //--------------------------------------------------------------------------
-    // Operators
-    //--------------------------------------------------------------------------
-    MemAlloc &operator+=(const MemAlloc& rhs){
-        m_HostBytes += rhs.m_HostBytes;
-        m_DeviceBytes += rhs.m_DeviceBytes;
-        m_ZeroCopyBytes += rhs.m_ZeroCopyBytes;
-        return *this;
-    }
-
-    //--------------------------------------------------------------------------
-    // Static API
-    //--------------------------------------------------------------------------
-    static MemAlloc zero(){ return MemAlloc(0, 0, 0); }
-    static MemAlloc host(size_t hostBytes){ return MemAlloc(hostBytes, 0, 0); }
-    static MemAlloc hostDevice(size_t bytes) { return MemAlloc(bytes, bytes, 0); }
-    static MemAlloc device(size_t deviceBytes){ return MemAlloc(0, deviceBytes, 0); }
-    static MemAlloc zeroCopy(size_t zeroCopyBytes){ return MemAlloc(0, 0, zeroCopyBytes); }
-
-private:
-    MemAlloc(size_t hostBytes, size_t deviceBytes, size_t zeroCopyBytes)
-    :   m_HostBytes(hostBytes), m_DeviceBytes(deviceBytes), m_ZeroCopyBytes(zeroCopyBytes)
-    {
-    }
-
-    //--------------------------------------------------------------------------
-    // Members
-    //--------------------------------------------------------------------------
-    size_t m_HostBytes;
-    size_t m_DeviceBytes;
-    size_t m_ZeroCopyBytes;
-
-    //--------------------------------------------------------------------------
-    // Friend operators
-    //--------------------------------------------------------------------------
-    friend std::ostream& operator << (std::ostream &out, const MemAlloc &m);
-    friend std::istream& operator >> (std::istream &in,  MemAlloc &m);
-};
-
-inline std::ostream & operator << (std::ostream &out, const MemAlloc &m)
-{
-    out << m.m_HostBytes << " " << m.m_DeviceBytes << " " << m.m_ZeroCopyBytes;
-    return out;
-}
- 
-inline std::istream & operator >> (std::istream &in,  MemAlloc &m)
-{
-    in >> m.m_HostBytes;
-    in >> m.m_DeviceBytes;
-    in >> m.m_ZeroCopyBytes;
-    return in;
-}
 
 //--------------------------------------------------------------------------
 // CodeGenerator::BackendBase
@@ -263,6 +189,10 @@ public:
 
     //! After all timestep logic is complete
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
+
+    //! Create backend-specific runtime state object
+    /*! \param runtime  runtime object */
+    virtual std::unique_ptr<GeNN::Runtime::StateBase> createState(const Runtime::Runtime &runtime) const = 0;
 
     //! Create backend-specific array object
     /*! \param type         data type of array
@@ -393,9 +323,11 @@ public:
     Type::ResolvedType getSynapseIndexType(const GroupMerged<CustomConnectivityUpdateInternal> &cg) const;
 
     void buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env) const;
+    void buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateHostReductionGroupMerged> &env) const;
     void buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env) const;
     void buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env) const;
-    
+    void buildSizeEnvironment(EnvironmentGroupMergedField<CustomWUUpdateHostReductionGroupMerged> &env) const;
+
     void buildStandardEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env, unsigned int batchSize) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<NeuronPrevSpikeTimeUpdateGroupMerged> &env, unsigned int batchSize) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<NeuronSpikeQueueUpdateGroupMerged> &env, unsigned int batchSize) const;
@@ -476,7 +408,7 @@ private:
     {
         // Loop through variables
         std::vector<ReductionTarget> reductionTargets;
-        const auto *cm = cg.getArchetype().getCustomUpdateModel();
+        const auto *cm = cg.getArchetype().getModel();
         for (const auto &v : cm->getVars()) {
             // If variable is a reduction target, define variable initialised to correct initial value for reduction
             if (v.access & VarAccessModeAttribute::REDUCE) {

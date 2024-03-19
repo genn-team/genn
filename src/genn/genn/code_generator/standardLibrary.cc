@@ -127,6 +127,7 @@ const auto libraryTypes = initLibraryTypes(
 }
 
 const EnvironmentLibrary::Library floatRandomFunctions = {
+    {"gennrand", {Type::ResolvedType::createFunction(Type::Uint32, {}), "hostRNG()"}},
     {"gennrand_uniform", {Type::ResolvedType::createFunction(Type::Float, {}), "standardUniformDistribution(hostRNG)"}},
     {"gennrand_normal", {Type::ResolvedType::createFunction(Type::Float, {}), "standardNormalDistribution(hostRNG)"}},
     {"gennrand_exponential", {Type::ResolvedType::createFunction(Type::Float, {}), "standardExponentialDistribution(hostRNG)"}},
@@ -136,6 +137,7 @@ const EnvironmentLibrary::Library floatRandomFunctions = {
 };
 
 const EnvironmentLibrary::Library doubleRandomFunctions = {
+    {"gennrand", {Type::ResolvedType::createFunction(Type::Uint32, {}), "hostRNG()"}},
     {"gennrand_uniform", {Type::ResolvedType::createFunction(Type::Double, {}), "standardUniformDistribution(hostRNG)"}},
     {"gennrand_normal", {Type::ResolvedType::createFunction(Type::Double, {}), "standardNormalDistribution(hostRNG)"}},
     {"gennrand_exponential", {Type::ResolvedType::createFunction(Type::Double, {}), "standardExponentialDistribution(hostRNG)"}},
@@ -143,16 +145,6 @@ const EnvironmentLibrary::Library doubleRandomFunctions = {
     {"gennrand_gamma", {Type::ResolvedType::createFunction(Type::Double, {Type::Double}), "std::gamma_distribution<double>($(0), 1.0)(hostRNG)"}},
     {"gennrand_binomial", {Type::ResolvedType::createFunction(Type::Uint32, {Type::Uint32, Type::Double}), "std::binomial_distribution<unsigned int>($(0), $(1))(hostRNG)"}},
 };
-
-/*{,
-{"frexp", "frexpf"},    // pointer arguments
-{"modf", "modff"},      // pointer arguments
-{"scalbln", "scalblnf"},    // long type
-{"lround", "lroundf"},  // long return type
-{"lrint", "lrintf"},    // long return type
-{"remquo", "remquof"},  // pointer arguments
-*/
-//min, max, printf
 
 //---------------------------------------------------------------------------
 // GeNN::CodeGenerator::StandardLibrary::FunctionTypes

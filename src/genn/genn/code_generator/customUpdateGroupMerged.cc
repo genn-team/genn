@@ -33,7 +33,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
     Utils::updateHash(getArchetype().getHashDigest(), hash);
 
     // Update hash with each group's custom update size
-    updateHash([](const auto &cg) { return cg.getSize(); }, hash);
+    updateHash([](const auto &cg) { return cg.getNumNeurons(); }, hash);
 
     // Update hash with each group's parameters, derived parameters and variable references
     updateHash([](const auto &cg) { return cg.getParams(); }, hash);
@@ -51,7 +51,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(EnvironmentExternalBase &env,
     EnvironmentGroupMergedField<CustomUpdateGroupMerged> cuEnv(env, *this);
 
     // Substitute parameter and derived parameter names
-    const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
+    const CustomUpdateModels::Base *cm = getArchetype().getModel();
     cuEnv.addParams(cm->getParams(), "", &CustomUpdateInternal::getParams, 
                     &CustomUpdateGroupMerged::isParamHeterogeneous,
                     &CustomUpdateInternal::isParamDynamic);
@@ -184,7 +184,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(EnvironmentExternalBase
     EnvironmentGroupMergedField<CustomUpdateWUGroupMergedBase> cuEnv(env, *this);
 
     // Substitute parameter and derived parameter names
-    const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
+    const CustomUpdateModels::Base *cm = getArchetype().getModel();
     cuEnv.addParams(cm->getParams(), "", &CustomUpdateWUInternal::getParams, 
                     &CustomUpdateWUGroupMergedBase::isParamHeterogeneous,
                     &CustomUpdateWUInternal::isParamDynamic);
@@ -245,7 +245,7 @@ const std::string CustomUpdateTransposeWUGroupMerged::name = "CustomUpdateTransp
 std::string CustomUpdateTransposeWUGroupMerged::addTransposeField(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env)
 {
     // Loop through variable references
-    const auto varRefs = getArchetype().getCustomUpdateModel()->getVarRefs();
+    const auto varRefs = getArchetype().getModel()->getVarRefs();
     for(const auto &v : varRefs) {
         // If variable has a transpose, add field with transpose suffix, pointing to transpose var
         if(getArchetype().getVarReferences().at(v.name).getTransposeSynapseGroup() != nullptr) {
@@ -271,7 +271,7 @@ const std::string CustomUpdateHostReductionGroupMerged::name = "CustomUpdateHost
 void CustomUpdateHostReductionGroupMerged::generateCustomUpdate(EnvironmentGroupMergedField<CustomUpdateHostReductionGroupMerged> &env)
 {
     env.addField(Type::Uint32, "_size", "size",
-                 [](const auto &, const auto &c, size_t) { return c.getSize(); });
+                 [](const auto &, const auto &c, size_t) { return c.getNumNeurons(); });
     
     // If some variables are delayed, add delay pointer
     if(getArchetype().getDelayNeuronGroup() != nullptr) {

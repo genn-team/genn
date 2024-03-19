@@ -32,7 +32,7 @@ Backend createBackend(const ModelSpecInternal &model, const std::string &outputP
 //----------------------------------------------------------------------------
 PYBIND11_MODULE(single_threaded_cpu_backend, m)
 {
-    pybind11::module_::import("pygenn.genn");
+    pybind11::module_::import("pygenn._genn");
 
     //------------------------------------------------------------------------
     // single_threaded_cpu_backend.Preferences
@@ -43,10 +43,10 @@ PYBIND11_MODULE(single_threaded_cpu_backend, m)
     //------------------------------------------------------------------------
     // single_threaded_cpu_backend.Backend
     //------------------------------------------------------------------------
-    pybind11::class_<Backend, CodeGenerator::BackendBase>(m, "Backend");
+    pybind11::class_<Backend, CodeGenerator::BackendBase>(m, "_Backend");
     
     //------------------------------------------------------------------------
     // Free functions
     //------------------------------------------------------------------------
-    m.def("create_backend", &createBackend, pybind11::return_value_policy::move);
+    m.def("_create_backend", &createBackend, pybind11::return_value_policy::move);
 }

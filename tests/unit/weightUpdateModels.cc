@@ -19,7 +19,7 @@ public:
                      "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
     SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
 
-    SET_SIM_CODE(
+    SET_PRE_SPIKE_SYN_CODE(
         "addToPost(g);\n"
         "scalar dt = st_post - t - tauShift; \n"
         "scalar dg = 0;\n"
@@ -32,7 +32,7 @@ public:
         "else dg = - (off2) ; \n"
         "gRaw += dg; \n"
         "g=gMax/2 *(tanh(gSlope*(gRaw - (gMid)))+1); \n");
-    SET_LEARN_POST_CODE(
+    SET_POST_SPIKE_SYN_CODE(
         "scalar dt = t - st_pre - (tauShift); \n"
         "scalar dg =0; \n"
         "if (dt > lim0)  \n"
@@ -69,14 +69,14 @@ public:
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});
     
-    SET_SIM_CODE(
+    SET_PRE_SPIKE_SYN_CODE(
         "addToPost(g);\n"
         "const scalar dt = t - sT_post; \n"
         "if (dt > 0) {\n"
         "    const scalar newWeight = g - (Aminus * postTrace);\n"
         "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
         "}\n");
-    SET_LEARN_POST_CODE(
+    SET_POST_SPIKE_SYN_CODE(
         "const scalar dt = t - sT_pre;\n"
         "if (dt > 0) {\n"
         "    const scalar newWeight = g + (Aplus * preTrace);\n"
@@ -106,8 +106,8 @@ TEST(WeightUpdateModels, CompareCopyPasted)
 {
     using namespace WeightUpdateModels;
 
-    PiecewiseSTDPCopy pwSTDPCopy;
-    ASSERT_EQ(PiecewiseSTDP::getInstance()->getHashDigest(), pwSTDPCopy.getHashDigest());
+    STDP stdpCopy;
+    ASSERT_EQ(STDP::getInstance()->getHashDigest(), stdpCopy.getHashDigest());
 }
 //--------------------------------------------------------------------------
 TEST(WeightUpdateModels, ValidateParamValues) 
@@ -159,10 +159,10 @@ TEST(WeightUpdateModels, ValidateVarValues)
     const VarReferences preNeuronVarRefs{};
     const VarReferences postNeuronVarRefs{};
     
-    const std::unordered_map<std::string, InitVarSnippet::Init> varValsCorrect{{"g", uninitialisedVar()}};
-    const std::unordered_map<std::string, InitVarSnippet::Init> varValsMisSpelled{{"G", uninitialisedVar()}};
-    const std::unordered_map<std::string, InitVarSnippet::Init> varValsMissing{};
-    const std::unordered_map<std::string, InitVarSnippet::Init> varValsExtra{{"g", uninitialisedVar()}, {"d", uninitialisedVar()}};
+    const VarValues varValsCorrect{{"g", uninitialisedVar()}};
+    const VarValues varValsMisSpelled{{"G", uninitialisedVar()}};
+    const VarValues varValsMissing{};
+    const VarValues varValsExtra{{"g", uninitialisedVar()}, {"d", uninitialisedVar()}};
 
     STDPAdditive::getInstance()->validate(paramVals, varValsCorrect, preVarVals, postVarVals, 
                                           preNeuronVarRefs, postNeuronVarRefs);
@@ -195,15 +195,15 @@ TEST(WeightUpdateModels, ValidateVarValues)
 TEST(WeightUpdateModels, ValidatePreVarValues) 
 {
     const VarValues postVarVals{{"postTrace", 0.0}};
-    const std::unordered_map<std::string, InitVarSnippet::Init> varVals{{"g", uninitialisedVar()}};
+    const VarValues varVals{{"g", uninitialisedVar()}};
     const ParamValues paramVals{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
     const VarReferences preNeuronVarRefs{};
     const VarReferences postNeuronVarRefs{};
     
-    const std::unordered_map<std::string, InitVarSnippet::Init> preVarValsCorrect{{"preTrace", 0.0}};
-    const std::unordered_map<std::string, InitVarSnippet::Init> preVarValsMisSpelled{{"prETrace", 0.0}};
-    const std::unordered_map<std::string, InitVarSnippet::Init> preVarValsMissing{};
-    const std::unordered_map<std::string, InitVarSnippet::Init> preVarValsExtra{{"preTrace", 0.0}, {"postTrace", 0.0}};
+    const VarValues preVarValsCorrect{{"preTrace", 0.0}};
+    const VarValues preVarValsMisSpelled{{"prETrace", 0.0}};
+    const VarValues preVarValsMissing{};
+    const VarValues preVarValsExtra{{"preTrace", 0.0}, {"postTrace", 0.0}};
 
     STDPAdditive::getInstance()->validate(paramVals, varVals, preVarValsCorrect, postVarVals, 
                                           preNeuronVarRefs, postNeuronVarRefs);
@@ -236,15 +236,15 @@ TEST(WeightUpdateModels, ValidatePreVarValues)
 TEST(WeightUpdateModels, ValidatePostVarValues) 
 {
     const VarValues preVarVals{{"preTrace", 0.0}};
-    const std::unordered_map<std::string, InitVarSnippet::Init> varVals{{"g", uninitialisedVar()}};
+    const VarValues varVals{{"g", uninitialisedVar()}};
     const ParamValues paramVals{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
     const VarReferences preNeuronVarRefs{};
     const VarReferences postNeuronVarRefs{};
     
-    const std::unordered_map<std::string, InitVarSnippet::Init> postVarValsCorrect{{"postTrace", 0.0}};
-    const std::unordered_map<std::string, InitVarSnippet::Init> postVarValsMisSpelled{{"PostTrace", 0.0}};
-    const std::unordered_map<std::string, InitVarSnippet::Init> postVarValsMissing{};
-    const std::unordered_map<std::string, InitVarSnippet::Init> postVarValsExtra{{"postTrace", 0.0}, {"preTrace", 0.0}};
+    const VarValues postVarValsCorrect{{"postTrace", 0.0}};
+    const VarValues postVarValsMisSpelled{{"PostTrace", 0.0}};
+    const VarValues postVarValsMissing{};
+    const VarValues postVarValsExtra{{"postTrace", 0.0}, {"preTrace", 0.0}};
 
     STDPAdditive::getInstance()->validate(paramVals, varVals, preVarVals, postVarValsCorrect, 
                                           preNeuronVarRefs, postNeuronVarRefs);

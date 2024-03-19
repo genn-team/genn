@@ -179,7 +179,7 @@
       <OptimizeReferences Condition=" $(Configuration.Contains('Debug')) ">true</OptimizeReferences>
       <AdditionalDependencies Condition=" '$(Configuration)'=='Release_DLL' ">libffi_Release_DLL.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalDependencies Condition=" '$(Configuration)'=='Debug_DLL' ">libffi_Debug_DLL.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories Condition=" $(Configuration.Contains('DLL')) ">..\..\..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition=" $(Configuration.Contains('DLL')) ">$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

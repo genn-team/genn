@@ -3,7 +3,7 @@ import pytest
 from pygenn import types
 from scipy import stats
 
-from pygenn.genn import VarAccess, VarAccessMode
+from pygenn import VarAccess, VarAccessMode
 from pygenn import (create_neuron_model, create_var_ref,
                     create_weight_update_model,
                     init_postsynaptic,
@@ -17,7 +17,7 @@ pre_learn_post_weight_update_model = create_weight_update_model(
     var_name_types=[("w", "scalar")],
     pre_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
     
-    learn_post_code=
+    post_spike_syn_code=
     """
     w = s;
     """)
@@ -27,7 +27,7 @@ pre_sim_weight_update_model = create_weight_update_model(
     var_name_types=[("w", "scalar")],
     pre_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
 
-    sim_code=
+    pre_spike_syn_code=
     """
     w = s;
     """)
@@ -37,11 +37,11 @@ pre_event_weight_update_model = create_weight_update_model(
     var_name_types=[("w", "scalar")],
     pre_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
 
-    event_code=
+    pre_event_syn_code=
     """
     w = s;
     """,
-    event_threshold_condition_code=
+    pre_event_threshold_condition_code=
     """
     t >= (scalar)id && fmod(t - (scalar)id, 10.0) < 1e-4
     """)
@@ -52,8 +52,8 @@ post_sim_weight_update_model = create_weight_update_model(
     "post_sim_weight_update",
     var_name_types=[("w", "scalar")],
     post_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
-    
-    sim_code=
+
+    pre_spike_syn_code=
     """
     w = s;
     """)
@@ -62,8 +62,8 @@ post_learn_post_weight_update_model = create_weight_update_model(
     "post_learn_post_weight_update",
     var_name_types=[("w", "scalar")],
     post_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
-    
-    learn_post_code=
+
+    post_spike_syn_code=
     """
     w = s;
     """)
@@ -73,11 +73,11 @@ post_event_weight_update_model = create_weight_update_model(
     var_name_types=[("w", "scalar")],
     post_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
 
-    event_code=
+    pre_event_syn_code=
     """
     w = s;
     """,
-    event_threshold_condition_code=
+    pre_event_threshold_condition_code=
     """
     t >= (scalar)id && fmod(t - (scalar)id, 10.0) < 1e-4
     """)
@@ -122,30 +122,35 @@ def test_pre_post_neuron_var(make_model, backend, precision, delay):
 
     # Add synapse models testing various ways of reading presynaptic WU vars
     s_pre_learn_post_sparse_pop = model.add_synapse_population(
-        "PreLearnPostSparseSynapses", "SPARSE", delay,
+        "PreLearnPostSparseSynapses", "SPARSE",
         post_n_pop, pre_n_pop,
         init_weight_update(pre_learn_post_weight_update_model, {}, {"w": float_min},
                            pre_var_refs={"s": create_var_ref(post_n_pop, "s")}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
+    s_pre_learn_post_sparse_pop.axonal_delay_steps = delay
+
     s_pre_sim_sparse_pop = model.add_synapse_population(
-        "PreSimSparseSynapses", "SPARSE", delay,
+        "PreSimSparseSynapses", "SPARSE",
         pre_n_pop, post_n_pop,
         init_weight_update(pre_sim_weight_update_model, {}, {"w": float_min},
                            pre_var_refs={"s": create_var_ref(pre_n_pop, "s")}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
+    s_pre_sim_sparse_pop.axonal_delay_steps = delay
+
     s_pre_event_sparse_pop = model.add_synapse_population(
-        "PreEventSparseSynapses", "SPARSE", delay,
+        "PreEventSparseSynapses", "SPARSE",
         pre_n_pop, post_n_pop,
         init_weight_update(pre_event_weight_update_model, {}, {"w": float_min},
                            pre_var_refs={"s": create_var_ref(pre_n_pop, "s")}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
+    s_pre_event_sparse_pop.axonal_delay_steps = delay
         
     # Add synapse models testing various ways of reading post WU vars
     s_post_learn_post_sparse_pop = model.add_synapse_population(
-        "PostLearnPostSparseSynapses", "SPARSE", 0,
+        "PostLearnPostSparseSynapses", "SPARSE",
         post_n_pop, pre_n_pop,
         init_weight_update(post_learn_post_weight_update_model, {}, {"w": float_min},
                            post_var_refs={"s": create_var_ref(pre_n_pop, "s")}),
@@ -153,7 +158,7 @@ def test_pre_post_neuron_var(make_model, backend, precision, delay):
         init_sparse_connectivity("OneToOne"))
     s_post_learn_post_sparse_pop.back_prop_delay_steps = delay
     s_post_sim_sparse_pop = model.add_synapse_population(
-        "PostSimSparseSynapses", "SPARSE", 0,
+        "PostSimSparseSynapses", "SPARSE",
         pre_n_pop, post_n_pop,
         init_weight_update(post_sim_weight_update_model, {}, {"w": float_min},
                            post_var_refs={"s": create_var_ref(post_n_pop, "s")}),
@@ -162,7 +167,7 @@ def test_pre_post_neuron_var(make_model, backend, precision, delay):
     s_post_sim_sparse_pop.back_prop_delay_steps = delay
     
     s_post_event_sparse_pop = model.add_synapse_population(
-        "PostEventSparseSynapses", "SPARSE", 0,
+        "PostEventSparseSynapses", "SPARSE",
         pre_n_pop, post_n_pop,
         init_weight_update(post_event_weight_update_model, {}, {"w": float_min},
                            post_var_refs={"s": create_var_ref(post_n_pop, "s")}),

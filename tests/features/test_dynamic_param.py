@@ -32,7 +32,7 @@ def test_dynamic_param(make_model, backend, precision):
         """
         injectCurrent(inSyn);
         psmX = t + psmShift + psmInput;
-        $(inSyn) = 0;
+        inSyn = 0;
         """,
         params=["psmInput"],
         var_name_types=[("psmX", "scalar"), ("psmShift", "scalar")])
@@ -82,8 +82,8 @@ def test_dynamic_param(make_model, backend, precision):
         pushxHostToDevice();
         """,
         params=["input"],
-        pre_var_name_types=[("xDevice", "scalar"), ("xHost", "scalar"),
-                            ("shift", "scalar")])
+        pre_vars=[("xDevice", "scalar"), ("xHost", "scalar"),
+                  ("shift", "scalar")])
 
     model = make_model(precision, "test_dynamic_param", backend=backend)
     model.dt = 1.0
@@ -111,7 +111,7 @@ def test_dynamic_param(make_model, backend, precision):
     cu.set_param_dynamic("input")
 
     s_pop = model.add_synapse_population(
-        "Synapse", "SPARSE", 0,
+        "Synapse", "SPARSE",
         pre_n_pop, post_n_pop,
         init_weight_update(weight_update_model, {"input": 0.0}, {"x": 0.0, "shift": shift}),
         init_postsynaptic(postsynaptic_model, {"psmInput": 0.0}, {"psmX": 0.0, "psmShift": shift}))

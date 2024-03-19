@@ -4,12 +4,12 @@
 #include <array>
 #include <iomanip>
 #include <limits>
+#include <map>
 #include <optional>
+#include <set>
 #include <sstream>
 #include <string>
 #include <type_traits>
-#include <unordered_map>
-#include <unordered_set>
 #include <variant>
 #include <vector>
 
@@ -50,7 +50,7 @@ GENN_EXPORT bool isIdentifierReferenced(const std::string &identifierName, const
 GENN_EXPORT bool isRNGRequired(const std::vector<Transpiler::Token> &tokens);
 
 //! Checks whether any of the variable initialisers in the vector require an RNG for initialisation
-GENN_EXPORT bool isRNGRequired(const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers);
+GENN_EXPORT bool isRNGRequired(const std::map<std::string, InitVarSnippet::Init> &varInitialisers);
 
 //! Checks variable name is valid? GeNN variable names must obey C variable naming rules
 GENN_EXPORT void validateVarName(const std::string &name, const std::string &description);
@@ -67,7 +67,7 @@ GENN_EXPORT int clz(unsigned int value);
 
 //! Checks that initialisers provided for all of the the item names in the vector?
 template<typename T, typename V>
-void validateInitialisers(const std::vector<T> &vec, const std::unordered_map<std::string, V> &values, 
+void validateInitialisers(const std::vector<T> &vec, const std::map<std::string, V> &values, 
                           const std::string &type, const std::string description)
 {
     // If there are a different number of sizes than values, give error
@@ -98,7 +98,7 @@ template<class... Ts> struct Overload : Ts... { using Ts::operator()...; };
 template<class... Ts> Overload(Ts...) -> Overload<Ts...>; // line not needed in
 
 //! Hash arithmetic types and enums
-template<typename T, typename std::enable_if<std::is_arithmetic<T>::value || std::is_enum<T>::value>::type* = nullptr>
+template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T> || std::is_enum_v<T>>>
 inline void updateHash(const T& value, boost::uuids::detail::sha1& hash)
 {
     hash.process_bytes(&value, sizeof(T));
@@ -148,8 +148,9 @@ inline void updateHash(const std::vector<bool> &vector, boost::uuids::detail::sh
 
 //! Hash unordered maps of types which can, themselves, be hashed
 template<typename K, typename V>
-inline void updateHash(const std::unordered_map<K, V> &map, boost::uuids::detail::sha1 &hash)
+inline void updateHash(const std::map<K, V> &map, boost::uuids::detail::sha1 &hash)
 {
+    updateHash(map.size(), hash);
     for(const auto &v : map) {
         updateHash(v.first, hash);
         updateHash(v.second, hash);
@@ -158,8 +159,9 @@ inline void updateHash(const std::unordered_map<K, V> &map, boost::uuids::detail
 
 //! Hash unordered sets of types which can, themselves, be hashed
 template<typename V>
-inline void updateHash(const std::unordered_set<V> set, boost::uuids::detail::sha1 &hash)
+inline void updateHash(const std::set<V> set, boost::uuids::detail::sha1 &hash)
 {
+    updateHash(set.size(), hash);
     for(const auto &v : set) {
         updateHash(v, hash);
     }

@@ -82,11 +82,11 @@ TEST(ModelSpec, CurrentSourceZeroCopy)
 
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 10, paramVals, varVals);
+    auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 10, paramVals, varVals);
 
     ParamValues csParamVals{{"weight", 0.1}, {"tauSyn", 5.0}, {"rate", 10.0}};
     VarValues csVarVals{{"current", 0.0}};
-    CurrentSource *cs = model.addCurrentSource<CurrentSourceModels::PoissonExp>("CS", "Neurons", csParamVals, csVarVals);
+    auto *cs = model.addCurrentSource<CurrentSourceModels::PoissonExp>("CS", pop, csParamVals, csVarVals);
     cs->setVarLocation("current", VarLocation::HOST_DEVICE_ZERO_COPY);
 
     ASSERT_TRUE(model.zeroCopyInUse());
@@ -98,12 +98,12 @@ TEST(ModelSpec, PSMZeroCopy)
 
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
     SynapseGroup *sg = model.addSynapsePopulation(
-        "Synapse", SynapseMatrixType::DENSE, NO_DELAY,
-        "Neurons0", "Neurons1",
+        "Synapse", SynapseMatrixType::DENSE,
+        pre, post,
         initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
         initPostsynaptic<AlphaCurr>({{"tau", 5.0}}, {{"x", 0.0}}));
     sg->setPSVarLocation("x", VarLocation::HOST_DEVICE_ZERO_COPY);
@@ -117,12 +117,12 @@ TEST(ModelSpec, WUZeroCopy)
 
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
     SynapseGroup *sg = model.addSynapsePopulation(
-        "Synapse", SynapseMatrixType::DENSE, NO_DELAY,
-        "Neurons0", "Neurons1",
+        "Synapse", SynapseMatrixType::DENSE,
+        pre, post,
         initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     sg->setWUVarLocation("g", VarLocation::HOST_DEVICE_ZERO_COPY);
@@ -151,16 +151,16 @@ TEST(ModelSpec, CustomConnectivityUpdateZeroCopy)
 
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
-    model.addSynapsePopulation(
-        "Synapse", SynapseMatrixType::SPARSE, NO_DELAY,
-        "Neurons0", "Neurons1",
+    auto *syn = model.addSynapsePopulation(
+        "Synapse", SynapseMatrixType::SPARSE,
+        pre, post,
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, {{"g", 1.0}, {"d", 1}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
-    CustomConnectivityUpdate *cu = model.addCustomConnectivityUpdate<RemoveSynapse>("RemoveSynapse", "Test", "Synapse",
+    CustomConnectivityUpdate *cu = model.addCustomConnectivityUpdate<RemoveSynapse>("RemoveSynapse", "Test", syn,
                                                                                     {}, {{"a", 0.0}}, {}, {},
                                                                                     {}, {}, {});
     cu->setVarLocation("a", VarLocation::HOST_DEVICE_ZERO_COPY);

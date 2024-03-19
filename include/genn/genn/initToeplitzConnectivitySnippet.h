@@ -2,7 +2,6 @@
 
 // Standard C++ includes
 #include <functional>
-#include <unordered_map>
 #include <vector>
 
 // Standard C includes
@@ -24,7 +23,7 @@
 #define SET_CALC_MAX_ROW_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return FUNC; }
 #define SET_CALC_KERNEL_SIZE_FUNC(...) virtual CalcKernelSizeFunc getCalcKernelSizeFunc() const override{ return __VA_ARGS__; }
 
-#define SET_MAX_ROW_LENGTH(MAX_ROW_LENGTH) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return [](unsigned int, unsigned int, const std::unordered_map<std::string, Type::NumericValue> &){ return MAX_ROW_LENGTH; }; }
+#define SET_MAX_ROW_LENGTH(MAX_ROW_LENGTH) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return [](unsigned int, unsigned int, const std::map<std::string, Type::NumericValue> &){ return MAX_ROW_LENGTH; }; }
 
 //----------------------------------------------------------------------------
 // GeNN:::InitToeplitzConnectivitySnippet::Base
@@ -53,7 +52,7 @@ public:
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues) const;
+    void validate(const std::map<std::string, Type::NumericValue> &paramValues) const;
 };
 
 //----------------------------------------------------------------------------
@@ -62,14 +61,14 @@ public:
 class GENN_EXPORT Init : public Snippet::Init<InitToeplitzConnectivitySnippet::Base>
 {
 public:
-    Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params);
+    Init(const Base *snippet, const std::map<std::string, Type::NumericValue> &params);
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
     bool isRNGRequired() const;
     
-    const std::vector<Transpiler::Token> &getDiagonalBuildCodeTokens() const{ return m_DiagonalBuildCodeTokens; }
+    const auto &getDiagonalBuildCodeTokens() const{ return m_DiagonalBuildCodeTokens; }
 private:
     //------------------------------------------------------------------------
     // Members
@@ -91,9 +90,19 @@ public:
 //----------------------------------------------------------------------------
 // GeNN::InitToeplitzConnectivitySnippet::Conv2D
 //----------------------------------------------------------------------------
-//! Initialises convolutional connectivity
-//! Row build state variables are used to convert presynaptic neuron index to rows, columns and channels and, 
-//! from these, to calculate the range of postsynaptic rows, columns and channels connections will be made within.
+//! Initialises 2D convolutional connectivity
+/*! Row build state variables are used to convert presynaptic neuron index to rows, columns and channels and,
+    from these, to calculate the range of postsynaptic rows, columns and channels connections will be made within.
+    This snippet takes 8 parameter:
+
+    - \c conv_kh - height of 2D convolution kernel.
+    - \c conv_kw - width of 2D convolution kernel.
+    - \c conv_ih - width of input to this convolution
+    - \c conv_iw - height of input to this convolution
+    - \c conv_ic - number of input channels to this convolution
+    - \c conv_oh - width of output from this convolution
+    - \c conv_ow - height of output from this convolution
+    - \c conv_oc - number of output channels from this convolution*/
 class Conv2D : public Base
 {
 public:
@@ -144,9 +153,23 @@ public:
 //----------------------------------------------------------------------------
 // GeNN::InitToeplitzConnectivitySnippet::AvgPoolConv2D
 //----------------------------------------------------------------------------
-//! Initialises convolutional connectivity preceded by averaging pooling
-//! Row build state variables are used to convert presynaptic neuron index to rows, columns and channels and, 
-//! from these, to calculate the range of postsynaptic rows, columns and channels connections will be made within.
+//! Initialises 2D convolutional connectivity preceded by averaging pooling
+/*! Row build state variables are used to convert presynaptic neuron index to rows, columns and channels and,
+    from these, to calculate the range of postsynaptic rows, columns and channels connections will be made within.
+     This snippet takes 12 parameter:
+
+    - \c conv_kh - height of 2D convolution kernel.
+    - \c conv_kw - width of 2D convolution kernel.
+    - \c pool_kh - height of 2D average pooling kernel.
+    - \c pool_kw - width of 2D average pooling kernel.
+    - \c pool_sh - height of average pooling stride
+    - \c pool_sw - width of average pooling stride
+    - \c pool_ih - width of input to the average pooling
+    - \c pool_iw - height of input to the average pooling
+    - \c pool_ic - number of input channels to the average pooling
+    - \c conv_oh - width of output from the convolution
+    - \c conv_ow - height of output from the convolution
+    - \c conv_oc - number of output channels the this convolution*/
 class AvgPoolConv2D : public Base
 {
 public:

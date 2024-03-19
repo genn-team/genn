@@ -82,6 +82,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateGroupMerged::get
     updateHash([](const auto &cg) { return cg.getVarReferences(); }, hash);
     updateHash([](const auto &cg) { return cg.getPreVarReferences(); }, hash);
     updateHash([](const auto &cg) { return cg.getPostVarReferences(); }, hash);
+    updateHash([](const auto& cg) { return cg.getEGPReferences(); }, hash);
 
     return hash.get_digest();
 }
@@ -100,20 +101,25 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     updateEnv.add(indexType.addConst(), "_syn_stride", "synStride",
                   {updateEnv.addInitialiser("const " + indexTypeName + " synStride = (" + indexTypeName + ")$(num_pre) * $(_row_stride);")});
 
+    // Expose row length and row stride
+    updateEnv.add(Type::Uint32.addConst(), "row_length", "$(_row_length)[$(id_pre)]");
+    updateEnv.add(Type::Uint32.addConst(), "row_stride", "$(_row_stride)");
+
     // Substitute parameter and derived parameter names
-    const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
+    const auto *cm = getArchetype().getModel();
     updateEnv.addParams(cm->getParams(), "", &CustomConnectivityUpdateInternal::getParams, 
                         &CustomConnectivityUpdateGroupMerged::isParamHeterogeneous,
                         &CustomConnectivityUpdateInternal::isParamDynamic);
     updateEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomConnectivityUpdateInternal::getDerivedParams, 
                                &CustomConnectivityUpdateGroupMerged::isDerivedParamHeterogeneous);
     updateEnv.addExtraGlobalParams(cm->getExtraGlobalParams());
+    updateEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs());
     
     // Add presynaptic variables
     updateEnv.addVars<CustomConnectivityUpdatePreVarAdapter>("$(id_pre)");
 
     // Loop through presynaptic variable references
-    for(const auto &v : getArchetype().getCustomConnectivityUpdateModel()->getPreVarRefs()) {
+    for(const auto &v : getArchetype().getModel()->getPreVarRefs()) {
         // If model isn't batched or variable isn't duplicated
         const auto &varRef = getArchetype().getPreVarReferences().at(v.name);
         if(batchSize == 1 || !(varRef.getVarDims() & VarAccessDim::BATCH)) {
@@ -158,7 +164,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     const auto ccuVarRefs = cm->getVarRefs();
     const auto &dependentVars = getSortedArchetypeDependentVars();
     std::vector<Type::ResolvedType> addSynapseTypes{Type::Uint32};
-    addSynapseTypes.reserve(1 + ccuVars.size() + ccuVarRefs.size() + dependentVars.size());
+    addSynapseTypes.reserve(1 + ccuVars.size() + ccuVarRefs.size());
 
     // Generate code to add a synapse to this row
     std::stringstream addSynapseStream;
@@ -217,8 +223,6 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
             else {
                 addSynapse << "$(_dependent_var_" << i << ")[newIdx] = 0;" << std::endl;
             }
-
-            addSynapseTypes.push_back(dependentVars.at(i).getVarType().resolve(getTypeContext()));
         }
 
         // Increment row length
@@ -305,11 +309,11 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                               env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_syn", 0}, indexType.addConst(), errorHandler);
 
                               // Add types for variables and variable references accessible within loop
-                              // **TODO** filter
-                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getVars(), errorHandler);
-                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getPostVars(), errorHandler);
-                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getVarRefs(), errorHandler);
-                              addTypes(env, getArchetype().getCustomConnectivityUpdateModel()->getPostVarRefs(), errorHandler);
+                              // **NOTE** postsynaptic variables and variable references are read-only as many rows will access simultaneously
+                              addTypes(env, getArchetype().getModel()->getVars(), errorHandler);
+                              addTypes(env, getArchetype().getModel()->getPostVars(), errorHandler, true);
+                              addTypes(env, getArchetype().getModel()->getVarRefs(), errorHandler);
+                              addTypes(env, getArchetype().getModel()->getPostVarRefs(), errorHandler, true);
                           },
                           [batchSize, &backend, &indexType, &indexTypeName, &removeSynapseStream, this](auto &env, auto generateBody)
                           {
@@ -398,9 +402,49 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
                               return sgInternal->getSrcNeuronGroup()->getNumNeurons();
                           });
 
+        // Expose row stride        
+        groupEnv.addField(Type::Uint32.addConst(), "row_stride",
+                          Type::Uint32, "rowStride", 
+                          [&backend](const auto&, const auto &cg, size_t) { return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup()); });
+
+        // If synapse group connectivity is accessible from the host
+        // **TODO** variable locations probably need hashing in host update group hash
+        const auto loc = getArchetype().getSynapseGroup()->getSparseConnectivityLocation();
+        if(loc & VarLocationAttribute::HOST) {
+            // Add host pointer field for row length
+            groupEnv.addField(Type::Uint32.createPointer(), "_row_length", "rowLength",
+                              [](const auto &runtime, const auto &cg, size_t) 
+                              { 
+                                  return runtime.getArray(*cg.getSynapseGroup(), "rowLength");
+                              },
+                              "", GroupMergedFieldType::HOST);
+
+            // Add substitution for direct access to field
+            groupEnv.add(Type::Uint32.addConst().createPointer(), "row_length", "$(_row_length)");
+
+            // If backend requires seperate device objects, add additional (private) field)
+            if(backend.isArrayDeviceObjectRequired()) {
+                groupEnv.addField(Type::Uint32.createPointer(), "_d_row_length", "d_rowLength",
+                                  [](const auto &runtime, const auto &cg, size_t)
+                                  {
+                                      return runtime.getArray(*cg.getSynapseGroup(), "rowLength");
+                                  });
+            }
+
+            // Generate code to pull this variable
+            std::stringstream pullStream;
+            CodeStream pull(pullStream);
+            backend.genLazyVariableDynamicPull(pull, Type::Uint32, "row_length",
+                                               loc, "$(num_pre)");
+
+            // Add substitution
+            groupEnv.add(Type::PushPull, "pullRowLengthFromDevice", pullStream.str());
+        }
+
+
 
         // Substitute parameter and derived parameter names
-        const auto *cm = getArchetype().getCustomConnectivityUpdateModel();
+        const auto *cm = getArchetype().getModel();
         groupEnv.addParams(cm->getParams(), "", &CustomConnectivityUpdateInternal::getParams, 
                            &CustomConnectivityHostUpdateGroupMerged::isParamHeterogeneous,
                            &CustomConnectivityUpdateInternal::isParamDynamic);
@@ -411,7 +455,7 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
         for(const auto &egp : cm->getExtraGlobalParams()) {
             // If EGP is located on the host
             const auto loc = getArchetype().getExtraGlobalParamLocation(egp.name);
-            if(loc & VarLocation::HOST) {
+            if(loc & VarLocationAttribute::HOST) {
                 // Add pointer field to allow user code to access
                 const auto resolvedType = egp.type.resolve(getTypeContext());
                 assert(!resolvedType.isPointer());

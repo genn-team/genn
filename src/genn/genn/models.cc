@@ -67,7 +67,7 @@ const std::string &VarReference::getVarName() const
         m_Detail);
 }
 //----------------------------------------------------------------------------
-unsigned int VarReference::getSize() const
+unsigned int VarReference::getNumNeurons() const
 {
     return std::visit(
             Utils::Overload{
@@ -76,7 +76,7 @@ unsigned int VarReference::getSize() const
             [](const WUPreRef &ref) { return ref.group->getSrcNeuronGroup()->getNumNeurons(); },
             [](const WUPostRef &ref) { return ref.group->getTrgNeuronGroup()->getNumNeurons(); },
             [](const CSRef &ref) { return ref.group->getTrgNeuronGroup()->getNumNeurons(); },
-            [](const CURef &ref) { return ref.group->getSize(); },
+            [](const CURef &ref) { return ref.group->getNumNeurons(); },
             [](const CCUPreRef &ref) { return ref.group->getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); },
             [](const CCUPostRef &ref) { return ref.group->getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); }},
         m_Detail);
@@ -99,7 +99,7 @@ NeuronGroup *VarReference::getDelayNeuronGroup() const
                 return (ref.group->isDelayRequired() && ref.group->isVarQueueRequired(ref.var.name)) ? ref.group : nullptr;
             },
             [](const WUPreRef &ref)->NeuronGroup* {
-                return (ref.group->getDelaySteps() > 0) ? ref.group->getSrcNeuronGroup() : nullptr;
+                return (ref.group->getAxonalDelaySteps() > 0) ? ref.group->getSrcNeuronGroup() : nullptr;
             },
             [](const WUPostRef &ref)->NeuronGroup* {
                 return (ref.group->getBackPropDelaySteps() > 0) ? ref.group->getTrgNeuronGroup() : nullptr;
@@ -142,7 +142,7 @@ bool VarReference::operator < (const VarReference &other) const
 //----------------------------------------------------------------------------
 VarReference VarReference::createVarRef(NeuronGroup *ng, const std::string &varName)
 {
-    const auto *nm = ng->getNeuronModel();
+    const auto *nm = ng->getModel();
     try {
         return VarReference(NGRef{static_cast<NeuronGroupInternal*>(ng), nm->getVar(varName).value()});
     }
@@ -153,7 +153,7 @@ VarReference VarReference::createVarRef(NeuronGroup *ng, const std::string &varN
 //----------------------------------------------------------------------------
 VarReference VarReference::createVarRef(CurrentSource *cs, const std::string &varName)
 {
-    const auto *csm = cs->getCurrentSourceModel();
+    const auto *csm = cs->getModel();
     try {
         return VarReference(CSRef{static_cast<CurrentSourceInternal*>(cs), csm->getVar(varName).value()});
     }
@@ -164,7 +164,7 @@ VarReference VarReference::createVarRef(CurrentSource *cs, const std::string &va
 //----------------------------------------------------------------------------
 VarReference VarReference::createVarRef(CustomUpdate *cu, const std::string &varName)
 {
-    const auto *cum = cu->getCustomUpdateModel();
+    const auto *cum = cu->getModel();
     try {
         return VarReference(CURef{static_cast<CustomUpdateInternal*>(cu), cum->getVar(varName).value()});
     }
@@ -175,7 +175,7 @@ VarReference VarReference::createVarRef(CustomUpdate *cu, const std::string &var
 //----------------------------------------------------------------------------
 VarReference VarReference::createPreVarRef(CustomConnectivityUpdate *ccu, const std::string &varName)
 {
-    const auto *ccum = ccu->getCustomConnectivityUpdateModel();
+    const auto *ccum = ccu->getModel();
     try {
         return VarReference(CCUPreRef{static_cast<CustomConnectivityUpdateInternal*>(ccu), ccum->getPreVar(varName).value()});
     }
@@ -186,7 +186,7 @@ VarReference VarReference::createPreVarRef(CustomConnectivityUpdate *ccu, const 
 //----------------------------------------------------------------------------
 VarReference VarReference::createPostVarRef(CustomConnectivityUpdate *ccu, const std::string &varName)
 {
-    const auto *ccum = ccu->getCustomConnectivityUpdateModel();
+    const auto *ccum = ccu->getModel();
     try {
         return VarReference(CCUPostRef{static_cast<CustomConnectivityUpdateInternal*>(ccu), ccum->getPostVar(varName).value()});
     }
@@ -404,7 +404,7 @@ WUVarReference WUVarReference::createWUVarReference(SynapseGroup *sg, const std:
 //------------------------------------------------------------------------
 WUVarReference WUVarReference::createWUVarReference(CustomUpdateWU *cu, const std::string &varName)
 {
-    const auto *cum = cu->getCustomUpdateModel();
+    const auto *cum = cu->getModel();
     try {
         return WUVarReference(CURef{static_cast<CustomUpdateWUInternal*>(cu), cum->getVar(varName).value()});
     }
@@ -415,7 +415,7 @@ WUVarReference WUVarReference::createWUVarReference(CustomUpdateWU *cu, const st
 //------------------------------------------------------------------------
 WUVarReference WUVarReference::createWUVarReference(CustomConnectivityUpdate *ccu, const std::string &varName)
 {
-    const auto *ccum = ccu->getCustomConnectivityUpdateModel();
+    const auto *ccum = ccu->getModel();
     try {
         return WUVarReference(CCURef{static_cast<CustomConnectivityUpdateInternal*>(ccu), ccum->getVar(varName).value()});
     }
@@ -546,7 +546,7 @@ const Runtime::ArrayBase *EGPReference::getTargetArray(const Runtime::Runtime &r
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createEGPRef(NeuronGroup *ng, const std::string &egpName)
 {
-    const auto *nm = ng->getNeuronModel();
+    const auto *nm = ng->getModel();
     try {
         return EGPReference(NGRef{ng, nm->getExtraGlobalParam(egpName).value()});
     }
@@ -557,7 +557,7 @@ EGPReference EGPReference::createEGPRef(NeuronGroup *ng, const std::string &egpN
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createEGPRef(CurrentSource *cs, const std::string &egpName)
 {
-    const auto *cm = cs->getCurrentSourceModel();
+    const auto *cm = cs->getModel();
     try {
         return EGPReference(CSRef{cs, cm->getExtraGlobalParam(egpName).value()});
     }
@@ -568,7 +568,7 @@ EGPReference EGPReference::createEGPRef(CurrentSource *cs, const std::string &eg
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createEGPRef(CustomUpdate *cu, const std::string &egpName)
 {
-    const auto *cm = cu->getCustomUpdateModel();
+    const auto *cm = cu->getModel();
     try {
         return EGPReference(CURef{cu, cm->getExtraGlobalParam(egpName).value()});
     }
@@ -579,9 +579,20 @@ EGPReference EGPReference::createEGPRef(CustomUpdate *cu, const std::string &egp
 //----------------------------------------------------------------------------
 EGPReference EGPReference::createEGPRef(CustomUpdateWU *cu, const std::string &egpName)
 {
-    const auto *cm = cu->getCustomUpdateModel();
+    const auto *cm = cu->getModel();
     try {
         return EGPReference(CUWURef{cu, cm->getExtraGlobalParam(egpName).value()});
+    }
+    catch(std::bad_optional_access&) {
+        throw std::runtime_error("Extra global parameter '" + egpName + "' not found");
+    }
+}
+//----------------------------------------------------------------------------
+EGPReference EGPReference::createEGPRef(CustomConnectivityUpdate *ccu, const std::string &egpName)
+{
+    const auto *ccm = ccu->getModel();
+    try {
+        return EGPReference(CCURef{ccu, ccm->getExtraGlobalParam(egpName).value()});
     }
     catch(std::bad_optional_access&) {
         throw std::runtime_error("Extra global parameter '" + egpName + "' not found");
@@ -654,7 +665,7 @@ void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash)
     Type::updateHash(e.type, hash);
 }
 //----------------------------------------------------------------------------
-void checkLocalVarReferences(const std::unordered_map<std::string, VarReference> &varRefs, const Base::VarRefVec &modelVarRefs,
+void checkLocalVarReferences(const std::map<std::string, VarReference> &varRefs, const Base::VarRefVec &modelVarRefs,
                              const NeuronGroupInternal *ng, const std::string &targetErrorDescription)
 {
     // Loop through all variable references
@@ -673,6 +684,21 @@ void checkLocalVarReferences(const std::unordered_map<std::string, VarReference>
         // If variable reference target doesn't belong to neuron group, give error
         if(!varRef.isTargetNeuronGroup(ng)) {
             throw std::runtime_error(targetErrorDescription);
+        }
+    }
+}
+//----------------------------------------------------------------------------
+void checkEGPReferenceTypes(const std::map<std::string, EGPReference> &egpRefs,
+                            const Base::EGPRefVec &modelEGPRefs)
+{
+    // Loop through all extra global parameter references
+    for (const auto &modelEGPRef : modelEGPRefs) {
+        const auto egpRef = egpRefs.at(modelEGPRef.name);
+
+        // Check types of extra global parameter references against those specified in model
+        // **THINK** this is rather conservative but I think not allowing "scalar" and whatever happens to be scalar type is ok
+        if (egpRef.getEGP().type != modelEGPRef.type) {
+            throw std::runtime_error("Incompatible type for extra global parameter reference '" + modelEGPRef.name + "'");
         }
     }
 }

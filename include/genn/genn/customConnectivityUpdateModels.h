@@ -14,6 +14,8 @@
 #define SET_PRE_VAR_REFS(...) virtual VarRefVec getPreVarRefs() const override{ return __VA_ARGS__; }
 #define SET_POST_VAR_REFS(...) virtual VarRefVec getPostVarRefs() const override{ return __VA_ARGS__; }
 
+#define SET_EXTRA_GLOBAL_PARAM_REFS(...) virtual EGPRefVec getExtraGlobalParamRefs() const override{ return __VA_ARGS__; }
+
 #define SET_ROW_UPDATE_CODE(ROW_UPDATE_CODE) virtual std::string getRowUpdateCode() const override{ return ROW_UPDATE_CODE; }
 #define SET_HOST_UPDATE_CODE(HOST_UPDATE_CODE) virtual std::string getHostUpdateCode() const override{ return HOST_UPDATE_CODE; }
 
@@ -49,6 +51,9 @@ public:
     //! Gets names and types (as strings) of postsynaptic variable references
     virtual VarRefVec getPostVarRefs() const { return {}; }
 
+    //! Gets names and types of model extra global parameter references
+    virtual EGPRefVec getExtraGlobalParamRefs() const { return {}; }
+
     //! Gets the code that performs a row-wise update 
     virtual std::string getRowUpdateCode() const { return ""; }
 
@@ -80,13 +85,14 @@ public:
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
-                  const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
-                  const std::unordered_map<std::string, InitVarSnippet::Init> &preVarValues,
-                  const std::unordered_map<std::string, InitVarSnippet::Init> &postVarValues,
-                  const std::unordered_map<std::string, Models::WUVarReference> &varRefTargets,
-                  const std::unordered_map<std::string, Models::VarReference> &preVarRefTargets,
-                  const std::unordered_map<std::string, Models::VarReference> &postVarRefTargets,
+    void validate(const std::map<std::string, Type::NumericValue> &paramValues, 
+                  const std::map<std::string, InitVarSnippet::Init> &varValues,
+                  const std::map<std::string, InitVarSnippet::Init> &preVarValues,
+                  const std::map<std::string, InitVarSnippet::Init> &postVarValues,
+                  const std::map<std::string, Models::WUVarReference> &varRefTargets,
+                  const std::map<std::string, Models::VarReference> &preVarRefTargets,
+                  const std::map<std::string, Models::VarReference> &postVarRefTargets,
+                  const std::map<std::string, Models::EGPReference> &egpRefTargets,
                   const std::string &description) const;
 };
 }   // GeNN::CustomConnectivityUpdateModels

@@ -92,9 +92,6 @@ public:
         //----------------------------------------------------------------------------
         void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                       BackendBase::HandlerEnv genUpdate);
-
-        void genCopyDelayedSpikeTimes(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, 
-                                      unsigned int batchSize);
     };
 
     //----------------------------------------------------------------------------
@@ -124,6 +121,11 @@ public:
 
         //! Should the current source derived parameter be implemented heterogeneously?
         bool isDerivedParamHeterogeneous(const std::string &paramName) const;
+    private:
+        void generateEventConditionInternal(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+                                            unsigned int batchSize, BackendBase::GroupHandlerEnv<SynSpikeEvent> genEmitSpikeLikeEvent,
+                                            const std::vector<Transpiler::Token> &conditionTokens, const std::string &errorContext);
+
     };
 
 

@@ -14,8 +14,8 @@ public:
     using GroupExternal = CurrentSource;
 
     CurrentSourceInternal(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
-                          const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
-                          const std::unordered_map<std::string, Models::VarReference> &neuronVarReferences, const NeuronGroupInternal *targetNeuronGroup, 
+                          const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers,
+                          const std::map<std::string, Models::VarReference> &neuronVarReferences, const NeuronGroupInternal *targetNeuronGroup, 
                           VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   CurrentSource(name, currentSourceModel, params, varInitialisers, neuronVarReferences, 
                       targetNeuronGroup, defaultVarLocation, defaultExtraGlobalParamLocation)
@@ -47,13 +47,13 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CS.getVarLocation(varName); }
 
-    std::vector<Models::Base::Var> getDefs() const{ return m_CS.getCurrentSourceModel()->getVars(); }
+    auto getDefs() const{ return m_CS.getModel()->getVars(); }
 
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CS.getVarInitialisers(); }
+    const auto &getInitialisers() const{ return m_CS.getVarInitialisers(); }
 
     bool isVarDelayed(const std::string&) const{ return false; }
 
-    const CurrentSource &getTarget() const{ return m_CS; }
+    const auto &getTarget() const{ return m_CS; }
 
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 
@@ -78,9 +78,9 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    Models::Base::VarRefVec getDefs() const{ return m_CS.getCurrentSourceModel()->getNeuronVarRefs(); }
+    auto getDefs() const{ return m_CS.getModel()->getNeuronVarRefs(); }
 
-    const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_CS.getNeuronVarReferences(); }
+    const auto &getInitialisers() const{ return m_CS.getNeuronVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -103,7 +103,7 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CS.getExtraGlobalParamLocation(varName); }
 
-    Snippet::Base::EGPVec getDefs() const{ return m_CS.getCurrentSourceModel()->getExtraGlobalParams(); }
+    auto getDefs() const{ return m_CS.getModel()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------

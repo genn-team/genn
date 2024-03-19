@@ -105,7 +105,7 @@ ModelSpec::ModelSpec()
 :   m_Precision(Type::Float), m_TimePrecision(std::nullopt), m_DT(0.5), m_TimingEnabled(false), m_Seed(0),
     m_DefaultVarLocation(VarLocation::HOST_DEVICE), m_DefaultExtraGlobalParamLocation(VarLocation::HOST_DEVICE),
     m_DefaultSparseConnectivityLocation(VarLocation::HOST_DEVICE), m_DefaultNarrowSparseIndEnabled(false),
-    m_ShouldFusePostsynapticModels(false), m_ShouldFusePrePostWeightUpdateModels(false), m_BatchSize(1)
+    m_FusePostsynapticModels(false), m_FusePrePostWeightUpdateModels(false), m_BatchSize(1)
 {
 }
 // ---------------------------------------------------------------------------
@@ -155,6 +155,32 @@ unsigned int ModelSpec::getNumNeurons() const
                            });
 }
 // ---------------------------------------------------------------------------
+NeuronGroup *ModelSpec::findNeuronGroup(const std::string &name)
+{
+    // If a matching local neuron group is found, return it
+    auto localNeuronGroup = m_LocalNeuronGroups.find(name);
+    if(localNeuronGroup != m_LocalNeuronGroups.cend()) {
+        return &localNeuronGroup->second;
+    }
+    // Otherwise, error
+    else {
+        throw std::runtime_error("Neuron group '" + name + "' not found");
+    }
+}
+// ---------------------------------------------------------------------------
+const NeuronGroup *ModelSpec::findNeuronGroup(const std::string &name) const
+{
+    // If a matching local neuron group is found, return it
+    auto localNeuronGroup = m_LocalNeuronGroups.find(name);
+    if(localNeuronGroup != m_LocalNeuronGroups.cend()) {
+        return &localNeuronGroup->second;
+    }
+    // Otherwise, error
+    else {
+        throw std::runtime_error("Neuron group '" + name + "' not found");
+    }
+}
+// ---------------------------------------------------------------------------
 NeuronGroup *ModelSpec::addNeuronPopulation(const std::string &name, unsigned int size, const NeuronModels::Base *model,
                                             const ParamValues &paramValues, const VarValues &varInitialisers)
 {
@@ -173,6 +199,32 @@ NeuronGroup *ModelSpec::addNeuronPopulation(const std::string &name, unsigned in
     }
 }
 // ---------------------------------------------------------------------------
+SynapseGroup *ModelSpec::findSynapseGroup(const std::string &name)
+{
+    // If a matching local synapse group is found, return it
+    auto synapseGroup = m_LocalSynapseGroups.find(name);
+    if(synapseGroup != m_LocalSynapseGroups.cend()) {
+        return &synapseGroup->second;
+    }
+    // Otherwise, error
+    else {
+        throw std::runtime_error("Synapse group '" + name + "' not found");
+    }
+}
+// ---------------------------------------------------------------------------
+const SynapseGroup *ModelSpec::findSynapseGroup(const std::string &name) const
+{
+    // If a matching local synapse group is found, return it
+    auto synapseGroup = m_LocalSynapseGroups.find(name);
+    if(synapseGroup != m_LocalSynapseGroups.cend()) {
+        return &synapseGroup->second;
+    }
+    // Otherwise, error
+    else {
+        throw std::runtime_error("Synapse group '" + name + "' not found");
+    }
+}
+// ---------------------------------------------------------------------------
 CurrentSource *ModelSpec::findCurrentSource(const std::string &name)
 {
     // If a matching local current source is found, return it
@@ -182,27 +234,26 @@ CurrentSource *ModelSpec::findCurrentSource(const std::string &name)
     }
     // Otherwise, error
     else {
-        throw std::runtime_error("current source " + name + " not found, aborting ...");
+        throw std::runtime_error("Current source " + name + " not found, aborting ...");
     }
 }
 // ---------------------------------------------------------------------------
-CurrentSource *ModelSpec::addCurrentSource(const std::string &currentSourceName, const CurrentSourceModels::Base *model, const std::string &targetNeuronGroupName, 
+CurrentSource *ModelSpec::addCurrentSource(const std::string &currentSourceName, const CurrentSourceModels::Base *model, NeuronGroup *neuronGroup, 
                                            const ParamValues &paramValues, const VarValues &varInitialisers, const VarReferences &neuronVarReferences)
 {
-    auto targetGroup = findNeuronGroupInternal(targetNeuronGroupName);
-
     // Add current source to map
+    auto *neuronGroupInternal = static_cast<NeuronGroupInternal*>(neuronGroup);
     auto result = m_LocalCurrentSources.try_emplace(
         currentSourceName,
         currentSourceName, model, paramValues,
-        varInitialisers, neuronVarReferences, targetGroup, 
+        varInitialisers, neuronVarReferences, neuronGroupInternal, 
         m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation);
 
     if(!result.second) {
         throw std::runtime_error("Cannot add a current source with duplicate name:" + currentSourceName);
     }
     else {
-        targetGroup->injectCurrent(&result.first->second);
+        neuronGroupInternal->injectCurrent(&result.first->second);
         return &result.first->second;
     }
 }
@@ -227,21 +278,18 @@ CustomUpdate *ModelSpec::addCustomUpdate(const std::string &name, const std::str
 }
 // ---------------------------------------------------------------------------
 CustomConnectivityUpdate *ModelSpec::addCustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, 
-                                                                 const std::string &targetSynapseGroupName, const CustomConnectivityUpdateModels::Base *model, 
+                                                                 SynapseGroup *synapseGroup, const CustomConnectivityUpdateModels::Base *model, 
                                                                  const ParamValues &paramValues, const VarValues &varInitialisers,
                                                                  const VarValues &preVarInitialisers, const VarValues &postVarInitialisers,
                                                                  const WUVarReferences &varReferences, const VarReferences &preVarReferences,
-                                                                 const VarReferences &postVarReferences)
+                                                                 const VarReferences &postVarReferences, const EGPReferences &egpReferences)
 {
-    // Find target synapse group
-    auto targetSynapseGroup = findSynapseGroupInternal(targetSynapseGroupName);
-
-    // Add neuron group to map
+    // Add custom connectivity update to 
     auto result = m_CustomConnectivityUpdates.try_emplace(
         name,
-        name, updateGroupName, targetSynapseGroup, model,
+        name, updateGroupName, static_cast<SynapseGroupInternal*>(synapseGroup), model,
         paramValues, varInitialisers, preVarInitialisers, postVarInitialisers, 
-        varReferences, preVarReferences, postVarReferences, 
+        varReferences, preVarReferences, postVarReferences, egpReferences,
         m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation);
 
     if(!result.second) {
@@ -328,7 +376,7 @@ void ModelSpec::finalise()
 
     // Merge incoming postsynaptic models
     for(auto &n : m_LocalNeuronGroups) {
-        n.second.fusePrePostSynapses(m_ShouldFusePostsynapticModels, m_ShouldFusePrePostWeightUpdateModels);
+        n.second.fusePrePostSynapses(m_FusePostsynapticModels, m_FusePrePostWeightUpdateModels);
     }
 }
 // ---------------------------------------------------------------------------
@@ -400,73 +448,17 @@ boost::uuids::detail::sha1::digest_type ModelSpec::getHashDigest() const
     return hash.get_digest();
 }
 // ---------------------------------------------------------------------------
-NeuronGroupInternal *ModelSpec::findNeuronGroupInternal(const std::string &name)
-{
-    // If a matching local neuron group is found, return it
-    auto localNeuronGroup = m_LocalNeuronGroups.find(name);
-    if(localNeuronGroup != m_LocalNeuronGroups.cend()) {
-        return &localNeuronGroup->second;
-    }
-    // Otherwise, error
-    else {
-        throw std::runtime_error("neuron group '" + name + "' not found");
-    }
-}
-// ---------------------------------------------------------------------------
-const NeuronGroupInternal *ModelSpec::findNeuronGroupInternal(const std::string &name) const
-{
-    // If a matching local neuron group is found, return it
-    auto localNeuronGroup = m_LocalNeuronGroups.find(name);
-    if(localNeuronGroup != m_LocalNeuronGroups.cend()) {
-        return &localNeuronGroup->second;
-    }
-    // Otherwise, error
-    else {
-        throw std::runtime_error("neuron group '" + name + "' not found");
-    }
-}
-// ---------------------------------------------------------------------------
-SynapseGroupInternal *ModelSpec::findSynapseGroupInternal(const std::string &name)
-{
-    // If a matching local synapse group is found, return it
-    auto synapseGroup = m_LocalSynapseGroups.find(name);
-    if(synapseGroup != m_LocalSynapseGroups.cend()) {
-        return &synapseGroup->second;
-    }
-    // Otherwise, error
-    else {
-        throw std::runtime_error("synapse group '" + name + "' not found");
-    }
-}
-// ---------------------------------------------------------------------------
-const SynapseGroupInternal *ModelSpec::findSynapseGroupInternal(const std::string &name) const
-{
-    // If a matching local synapse group is found, return it
-    auto synapseGroup = m_LocalSynapseGroups.find(name);
-    if(synapseGroup != m_LocalSynapseGroups.cend()) {
-        return &synapseGroup->second;
-    }
-    // Otherwise, error
-    else {
-        throw std::runtime_error("synapse group '" + name + "' not found");
-    }
-}
-// ---------------------------------------------------------------------------
-SynapseGroup *ModelSpec::addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
+SynapseGroup *ModelSpec::addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, NeuronGroup *src, NeuronGroup *trg,
                                               const WeightUpdateModels::Init &wumInitialiser, const PostsynapticModels::Init &psmInitialiser, 
                                               const InitSparseConnectivitySnippet::Init &connectivityInitialiser, 
                                               const InitToeplitzConnectivitySnippet::Init &toeplitzConnectivityInitialiser)
 {
-    // Get source and target neuron groups
-    auto srcNeuronGrp = findNeuronGroupInternal(src);
-    auto trgNeuronGrp = findNeuronGroupInternal(trg);
-
     // Add synapse group to map
     auto result = m_LocalSynapseGroups.try_emplace(
         name,
-        name, mtype, delaySteps,
+        name, mtype,
         wumInitialiser, psmInitialiser, 
-        srcNeuronGrp, trgNeuronGrp,
+        static_cast<NeuronGroupInternal*>(src), static_cast<NeuronGroupInternal*>(trg),
         connectivityInitialiser, toeplitzConnectivityInitialiser, 
         m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation,
         m_DefaultSparseConnectivityLocation, m_DefaultNarrowSparseIndEnabled);

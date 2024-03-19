@@ -5,7 +5,17 @@
 // GeNN includes
 #include "currentSourceModels.h"
 
+// Doc strings
+#include "docStrings.h"
+
 using namespace GeNN::CurrentSourceModels;
+
+//----------------------------------------------------------------------------
+// Macros
+//----------------------------------------------------------------------------
+#define WRAP(NAME) m.def(#NAME, &getBaseInstance<NAME>,\
+                         pybind11::return_value_policy::reference,\
+                         DOC(CurrentSourceModels, NAME))
 
 namespace
 {
@@ -21,14 +31,12 @@ const Base *getBaseInstance()
 //----------------------------------------------------------------------------
 PYBIND11_MODULE(current_source_models, m) 
 {
-    pybind11::module_::import("pygenn.genn");
+    pybind11::module_::import("pygenn._genn");
 
     //------------------------------------------------------------------------
     // Free functions
     //------------------------------------------------------------------------
-    // **THINK** with some cunning, standard macros could maybe populate
-    // an array with instance pointers that we could loop over
-    m.def("DC", &getBaseInstance<DC>, pybind11::return_value_policy::reference);
-    m.def("GaussianNoise", &getBaseInstance<GaussianNoise>, pybind11::return_value_policy::reference);
-    m.def("PoissonExp", &getBaseInstance<PoissonExp>, pybind11::return_value_policy::reference);
+    WRAP(DC);
+    WRAP(GaussianNoise);
+    WRAP(PoissonExp);
 }

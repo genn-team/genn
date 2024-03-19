@@ -12,14 +12,9 @@ IMPLEMENT_SNIPPET(RulkovMap);
 IMPLEMENT_SNIPPET(Izhikevich);
 IMPLEMENT_SNIPPET(IzhikevichVariable);
 IMPLEMENT_SNIPPET(LIF);
-IMPLEMENT_SNIPPET(SpikeSource);
 IMPLEMENT_SNIPPET(SpikeSourceArray);
 IMPLEMENT_SNIPPET(Poisson);
-IMPLEMENT_SNIPPET(PoissonNew);
 IMPLEMENT_SNIPPET(TraubMiles);
-IMPLEMENT_SNIPPET(TraubMilesFast);
-IMPLEMENT_SNIPPET(TraubMilesAlt);
-IMPLEMENT_SNIPPET(TraubMilesNStep);
 
 //----------------------------------------------------------------------------
 // GeNN::NeuronModels::Base
@@ -38,8 +33,8 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void Base::validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
-                    const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
+void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues, 
+                    const std::map<std::string, InitVarSnippet::Init> &varValues,
                     const std::string &description) const
 {
     // Superclass

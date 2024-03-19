@@ -37,36 +37,55 @@ public:
     //------------------------------------------------------------------------
     // Enumerations
     //------------------------------------------------------------------------
-    enum class SpanType
+    //! Hints to backends as to what parallelism strategy to use for this synapse group
+    enum class ParallelismHint
     {
-        POSTSYNAPTIC,
-        PRESYNAPTIC
+        //! GPU threads loop over spikes and handle all connectivity associated with
+        //! a postsynaptic neuron or column of sparse connectivity.
+        /*! Generally, this is the most efficient approach and memory accesses are
+            coalesced and, while atomic operations are used, there should be minimal 
+            conflicts between them. */
+        POSTSYNAPTIC,           
+
+        //! GPU threads
+        /*! If spike rates are high, this can extract more parallelism but there is an
+            overhead to launching numerous threads with no spike to process and this 
+            approach does not result in well-coalesced memory accesses. */
+        PRESYNAPTIC,
+        
+        //! Rather than processing SynapseMatrixConnectivity::BITMASK connectivity
+        //! using one thread per postsynaptic neuron and doing nothing when a zero 
+        //! is encountered, process 32 bits of bitmask using each thread.
+        /*! On the single-threaded CPU backend and when simulating models with 
+            significantly more neurons than the target GPU has threads, 
+            this is likely to improve performance. */
+        WORD_PACKED_BITMASK,
     };
 
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
-    //! Set location of weight update model state variable
+    //! Set location of weight update model state variable.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setWUVarLocation(const std::string &varName, VarLocation loc);
 
-    //! Set location of weight update model presynaptic state variable
+    //! Set location of weight update model presynaptic state variable.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setWUPreVarLocation(const std::string &varName, VarLocation loc);
     
-    //! Set location of weight update model postsynaptic state variable
+    //! Set location of weight update model postsynaptic state variable.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setWUPostVarLocation(const std::string &varName, VarLocation loc);
     
-    //! Set location of weight update model extra global parameter
+    //! Set location of weight update model extra global parameter.
     /*! This is ignored for simulations on hardware with a single memory space. */
     void setWUExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
-    //! Set location of postsynaptic model state variable
+    //! Set location of postsynaptic model state variable.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setPSVarLocation(const std::string &varName, VarLocation loc);
 
-    //! Set location of postsynaptic model extra global parameter
+    //! Set location of postsynaptic model extra global parameter.
     /*! This is ignored for simulations on hardware with a single memory space. */
     void setPSExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
@@ -76,23 +95,19 @@ public:
     //! Set whether weight update model parameter is dynamic or not i.e. it can be changed at runtime
     void setPSParamDynamic(const std::string &paramName, bool dynamic = true);
 
-    //! Set name of neuron input variable postsynaptic model will target
+    //! Set name of neuron input variable postsynaptic model will target.
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
     void setPostTargetVar(const std::string &varName);
     
-    //! Set name of neuron input variable $(addToPre, . ) commands will target
+    //! Set name of neuron input variable addToPost(..) commands will target.
     /*! This should either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */
     void setPreTargetVar(const std::string &varName);
 
-    //! Set location of sparse connectivity initialiser extra global parameter
-    /*! This is ignored for simulations on hardware with a single memory space. */
-    void setSparseConnectivityExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
-
-    //! Set location of variables used to combine input from this synapse group
+    //! Set location of variables used for outputs from this synapse group e.g. outPre and outPost.
     /*! This is ignored for simulations on hardware with a single memory space */
-    void setInSynVarLocation(VarLocation loc) { m_InSynLocation = loc; }
+    void setOutputLocation(VarLocation loc) { m_OutputLocation = loc; }
 
-    //! Set variable mode used for sparse connectivity
+    //! Set variable mode used for sparse connectivity.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setSparseConnectivityLocation(VarLocation loc) { m_SparseConnectivityLocation = loc; }
 
@@ -100,25 +115,25 @@ public:
     void setDendriticDelayLocation(VarLocation loc) { m_DendriticDelayLocation = loc; }
 
     //! Sets the maximum number of target neurons any source neurons can connect to
-    /*! Use with synaptic matrix types with SynapseMatrixConnectivity::SPARSE to optimise CUDA implementation */
     void setMaxConnections(unsigned int maxConnections);
 
     //! Sets the maximum number of source neurons any target neuron can connect to
-    /*! Use with synaptic matrix types with SynapseMatrixConnectivity::SPARSE and postsynaptic learning to optimise CUDA implementation */
     void setMaxSourceConnections(unsigned int maxPostConnections);
     
     //! Sets the maximum dendritic delay for synapses in this synapse group
     void setMaxDendriticDelayTimesteps(unsigned int maxDendriticDelay);
-    
-    //! Set how CUDA implementation is parallelised
-    /*! with a thread per target neuron (default) or a thread per source spike */
-    void setSpanType(SpanType spanType);
 
-    //! Set how many threads CUDA implementation uses to process each spike when span type is PRESYNAPTIC
+    //! Sets the number of delay steps used to delay events and variables between presynaptic neuron and synapse
+    void setAxonalDelaySteps(unsigned int timesteps);
+
+    //! Provide a hint as to how this synapse group should be parallelised
+    void setParallelismHint(ParallelismHint parallelismHint){ m_ParallelismHint = parallelismHint; }
+
+    //! Provide hint as to how many threads SIMT backend might use to process each spike if PRESYNAPTIC parallelism is selected
     // **TODO** this shouldn't be in SynapseGroup - it's backend-specific
-    void setNumThreadsPerSpike(unsigned int numThreadsPerSpike);
-
-    //! Sets the number of delay steps used to delay postsynaptic spikes travelling back along dendrites to synapses
+    void setNumThreadsPerSpike(unsigned int numThreadsPerSpike){ m_NumThreadsPerSpike = numThreadsPerSpike; }
+ 
+    //! Sets the number of delay steps used to delay events and variables between postsynaptic neuron and synapse
     void setBackPropDelaySteps(unsigned int timesteps);
 
     //! Enables or disables using narrow i.e. less than 32-bit types for sparse matrix indices
@@ -129,19 +144,19 @@ public:
     //------------------------------------------------------------------------
     const std::string &getName() const{ return m_Name; }
 
-    SpanType getSpanType() const{ return m_SpanType; }
+    ParallelismHint getParallelismHint() const{ return m_ParallelismHint; }
     unsigned int getNumThreadsPerSpike() const{ return m_NumThreadsPerSpike; }
-    unsigned int getDelaySteps() const{ return m_DelaySteps; }
     unsigned int getBackPropDelaySteps() const{ return m_BackPropDelaySteps; }
+    unsigned int getAxonalDelaySteps() const{ return m_AxonalDelaySteps; }
     unsigned int getMaxConnections() const{ return m_MaxConnections; }
     unsigned int getMaxSourceConnections() const{ return m_MaxSourceConnections; }
     unsigned int getMaxDendriticDelayTimesteps() const{ return m_MaxDendriticDelayTimesteps; }
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
-    const std::vector<unsigned int> &getKernelSize() const { return m_KernelSize; }
+    const auto &getKernelSize() const { return m_KernelSize; }
     size_t getKernelSizeFlattened() const;
     
-    //! Get variable mode used for variables used to combine input from this synapse group
-    VarLocation getInSynLocation() const { return m_InSynLocation; }
+    //! Get variable mode used for outputs from this synapse group e.g. outPre and outPost
+    VarLocation getOutputLocation() const { return m_OutputLocation; }
 
     //! Get variable mode used for sparse connectivity
     VarLocation getSparseConnectivityLocation() const{ return m_SparseConnectivityLocation; }
@@ -149,16 +164,16 @@ public:
     //! Get variable mode used for this synapse group's dendritic delay buffers
     VarLocation getDendriticDelayLocation() const{ return m_DendriticDelayLocation; }
 
-    //! Get location of weight update model per-synapse state variable by name
+    //! Get location of weight update model synaptic state variable
     VarLocation getWUVarLocation(const std::string &varName) const{ return m_WUVarLocation.get(varName); }
 
-    //! Get location of weight update model presynaptic state variable by name
+    //! Get location of weight update model presynaptic state variable
     VarLocation getWUPreVarLocation(const std::string &varName) const{ return m_WUPreVarLocation.get(varName); }
 
-    //! Get location of weight update model postsynaptic state variable by name
+    //! Get location of weight update model postsynaptic state variable
     VarLocation getWUPostVarLocation(const std::string &varName) const{ return m_WUPostVarLocation.get(varName); }
 
-    //! Get location of weight update model extra global parameter by name
+    //! Get location of weight update model extra global parameter
     VarLocation getWUExtraGlobalParamLocation(const std::string &paramName) const{ return m_WUExtraGlobalParamLocation.get(paramName); }
 
     //! Get location of postsynaptic model state variable
@@ -173,7 +188,7 @@ public:
     //! Is weight update model parameter dynamic i.e. it can be changed at runtime
     bool isWUParamDynamic(const std::string &paramName) const{ return m_WUDynamicParams.get(paramName); }
 
-    //! Does synapse group need to handle 'true' spikes/
+    //! Does synapse group need to handle 'true' spikes?
     bool isPreSpikeRequired() const;
 
     //! Does synapse group need to handle presynaptic spike-like events?
@@ -209,11 +224,11 @@ public:
     //! Are PREVIOUS postsynaptic spike-event times needed?
     bool isPrevPostSpikeEventTimeRequired() const;
 
-    const PostsynapticModels::Init &getPSInitialiser() const{ return m_PSInitialiser; }
-    const WeightUpdateModels::Init &getWUInitialiser() const{ return m_WUInitialiser; }
+    const auto &getPSInitialiser() const{ return m_PSInitialiser; }
+    const auto &getWUInitialiser() const{ return m_WUInitialiser; }
       
-    const InitSparseConnectivitySnippet::Init &getConnectivityInitialiser() const{ return m_SparseConnectivityInitialiser; }
-    const InitToeplitzConnectivitySnippet::Init &getToeplitzConnectivityInitialiser() const { return m_ToeplitzConnectivityInitialiser; }
+    const auto &getSparseConnectivityInitialiser() const{ return m_SparseConnectivityInitialiser; }
+    const auto &getToeplitzConnectivityInitialiser() const { return m_ToeplitzConnectivityInitialiser; }
 
     bool isZeroCopyEnabled() const;
 
@@ -227,7 +242,7 @@ public:
     const std::string &getPreTargetVar() const{ return m_PreTargetVar; }
     
 protected:
-    SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
+    SynapseGroup(const std::string &name, SynapseMatrixType matrixType,
                  const WeightUpdateModels::Init &wumInitialiser, const PostsynapticModels::Init &psmInitialiser,
                  NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                  const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
@@ -262,7 +277,7 @@ protected:
     const NeuronGroupInternal *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
 
     const SynapseGroup &getFusedPSTarget() const{ return m_FusedPSTarget ? *m_FusedPSTarget : *this; }
-    const SynapseGroup &getFusedWUPreTarget() const { return m_FusedWUPreTarget ? *m_FusedPSTarget : *this; }
+    const SynapseGroup &getFusedWUPreTarget() const { return m_FusedWUPreTarget ? *m_FusedWUPreTarget : *this; }
     const SynapseGroup &getFusedWUPostTarget() const { return m_FusedWUPostTarget ? *m_FusedWUPostTarget : *this; }
     const SynapseGroup &getFusedPreOutputTarget() const { return m_FusedPreOutputTarget ? *m_FusedPreOutputTarget : *this; }
     const SynapseGroup &getFusedSpikeTarget(const NeuronGroup *ng) const;
@@ -270,11 +285,11 @@ protected:
 
     //! Gets custom connectivity updates which reference this synapse group
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
-    const std::vector<CustomConnectivityUpdateInternal*> &getCustomConnectivityUpdateReferences() const{ return m_CustomConnectivityUpdateReferences; }
+    const auto &getCustomConnectivityUpdateReferences() const{ return m_CustomConnectivityUpdateReferences; }
 
     //! Gets custom updates which reference this synapse group
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
-    const std::vector<CustomUpdateWUInternal*> &getCustomUpdateReferences() const{ return m_CustomUpdateReferences; }
+    const auto &getCustomUpdateReferences() const{ return m_CustomUpdateReferences; }
     
     //! Can postsynaptic update component of this synapse group be safely fused with others whose hashes match so only one needs simulating at all?
     bool canPSBeFused(const NeuronGroup *ng) const;
@@ -431,16 +446,16 @@ private:
     //! Name of the synapse group
     const std::string m_Name;
 
-    //! Execution order of synapses in the kernel. It determines whether synapses are executed in parallel for every postsynaptic neuron, or for every presynaptic neuron.
-    SpanType m_SpanType;
+    //! Hint as to how synapse group should be parallelised
+    ParallelismHint m_ParallelismHint;
 
-    //! How many threads CUDA implementation uses to process each spike when span type is PRESYNAPTIC
+    //! How many threads GPU implementation use to process each spike when parallelised presynaptically
     unsigned int m_NumThreadsPerSpike;
 
     //! Global synaptic conductance delay for the group (in time steps)
-    unsigned int m_DelaySteps;
+    unsigned int m_AxonalDelaySteps;
 
-    //! Global backpropagation delay for postsynaptic spikes to synapse (in time
+    //! Global backpropagation delay for postsynaptic spikes to synapse (in time steps)
     unsigned int m_BackPropDelaySteps;
 
     //! Maximum number of target neurons any source neuron can connect to
@@ -467,10 +482,12 @@ private:
     //! Should narrow i.e. less than 32-bit types be used for sparse matrix indices
     bool m_NarrowSparseIndEnabled;
 
-    //! Variable mode used for variables used to combine input from this synapse group
-    VarLocation m_InSynLocation;
+    //! Location of outputs from this synapse group e.g. outPre and outPost.
+    /*! This is ignored for simulations on hardware with a single memory space */
+    VarLocation m_OutputLocation;
 
-    //! Variable mode used for this synapse group's dendritic delay buffers
+    //! Location of this synapse group's dendritic delay buffers.
+    /*! This is ignored for simulations on hardware with a single memory space */
     VarLocation m_DendriticDelayLocation;
 
     //! Initialiser used for creating weight update model
@@ -485,25 +502,32 @@ private:
     //! Initialiser used for creating toeplitz connectivity
     InitToeplitzConnectivitySnippet::Init m_ToeplitzConnectivityInitialiser;
 
-    //! Location of individual per-synapse state variables
+    //! Location of individual per-synapse state variables.
+    /*! This is ignored for simulations on hardware with a single memory space */
     LocationContainer m_WUVarLocation;
 
-    //! Location of individual presynaptic state variables
+    //! Location of individual presynaptic state variables.
+    /*! This is ignored for simulations on hardware with a single memory space */
     LocationContainer m_WUPreVarLocation;
 
-    //! Location of individual postsynaptic state variables
+    //! Location of individual postsynaptic state variables.
+    /*! This is ignored for simulations on hardware with a single memory space */
     LocationContainer m_WUPostVarLocation;
 
-    //! Location of weight update model extra global parameters
+    //! Location of weight update model extra global parameters.
+    /*! This is ignored for simulations on hardware with a single memory space */
     LocationContainer m_WUExtraGlobalParamLocation;
 
-    //! Whether indidividual state variables of post synapse should use zero-copied memory
+    //! Location of postsynaptic model variables.
+    /*! This is ignored for simulations on hardware with a single memory space */
     LocationContainer m_PSVarLocation;
 
-    //! Location of postsynaptic model extra global parameters
+    //! Location of postsynaptic model extra global parameters.
+    /*! This is ignored for simulations on hardware with a single memory space */
     LocationContainer m_PSExtraGlobalParamLocation;
 
-    //! Location of sparse connectivity
+    //! Location of sparse connectivity.
+    /*! This is ignored for simulations on hardware with a single memory space */
     VarLocation m_SparseConnectivityLocation;
 
     //! Data structure tracking whether postsynaptic model parameters are dynamic or not
@@ -512,51 +536,51 @@ private:
     //! Data structure tracking whether weight update model parameters are dynamic or not
     Snippet::DynamicParameterContainer m_WUDynamicParams;
 
-    //! Synapse group postsynaptic model has been fused with
+    //! Synapse group postsynaptic model has been fused with.
     /*! If this is nullptr, postsynaptic model has not been fused */
     const SynapseGroup *m_FusedPSTarget;
 
-    //! Synapse group presynaptic spike generation has been fused with
+    //! Synapse group presynaptic spike generation has been fused with.
     /*! If this is nullptr, presynaptic spike generation has not been fused */
     const SynapseGroup *m_FusedPreSpikeTarget;
 
-    //! Synapse group postsynaptic spike generation has been fused with
+    //! Synapse group postsynaptic spike generation has been fused with.
     /*! If this is nullptr, presynaptic spike generation has not been fused */
     const SynapseGroup *m_FusedPostSpikeTarget;
 
-    //! Synapse group presynaptic spike event generation has been fused with
+    //! Synapse group presynaptic spike event generation has been fused with.
     /*! If this is nullptr, presynaptic spike event generation has not been fused */
     const SynapseGroup *m_FusedPreSpikeEventTarget;
 
-    //! Synapse group postsynaptic spike event generation has been fused with
+    //! Synapse group postsynaptic spike event generation has been fused with.
     /*! If this is nullptr, postsynaptic spike event generation has not been fused */
     const SynapseGroup *m_FusedPostSpikeEventTarget;
 
-    //! Synapse group presynaptic weight update has been fused with
+    //! Synapse group presynaptic weight update has been fused with.
     /*! If this is nullptr, presynaptic weight update has not been fused */
     const SynapseGroup *m_FusedWUPreTarget;
     
-    //! Synapse group postsynaptic weight update has been fused with
+    //! Synapse group postsynaptic weight update has been fused with.
     /*! If this is nullptr, postsynaptic weight update  has not been fused */
     const SynapseGroup *m_FusedWUPostTarget;
 
-    //! Synapse group presynaptic output has been fused with
+    //! Synapse group presynaptic output has been fused with.
     /*! If this is nullptr, presynaptic output has not been fused */
     const SynapseGroup *m_FusedPreOutputTarget;
 
-    //! Name of neuron input variable postsynaptic model will target
+    //! Name of neuron input variable postsynaptic model will target.
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
     std::string m_PostTargetVar;
 
-    //! Name of neuron input variable a presynaptic output specified with $(addToPre) will target
+    //! Name of neuron input variable a presynaptic output specified with $(addToPre) will target.
     /*! This will either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */
     std::string m_PreTargetVar;
 
-    //! Custom connectivity updates which reference this synapse group
+    //! Custom connectivity updates which reference this synapse group.
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
     std::vector<CustomConnectivityUpdateInternal*> m_CustomConnectivityUpdateReferences;
 
-    //! Custom updates which reference this synapse group
+    //! Custom updates which reference this synapse group.
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
     std::vector<CustomUpdateWUInternal*> m_CustomUpdateReferences;
     

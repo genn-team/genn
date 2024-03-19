@@ -16,13 +16,13 @@ public:
 
     CustomConnectivityUpdateInternal(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup, 
                                      const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel, 
-                                     const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
-                                     const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
-                                     const std::unordered_map<std::string, Models::WUVarReference> &varReferences, const std::unordered_map<std::string, Models::VarReference> &preVarReferences,
-                                     const std::unordered_map<std::string, Models::VarReference> &postVarReferences, VarLocation defaultVarLocation,
-                                     VarLocation defaultExtraGlobalParamLocation)
+                                     const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers,
+                                     const std::map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::map<std::string, InitVarSnippet::Init> &postVarInitialisers,
+                                     const std::map<std::string, Models::WUVarReference> &varReferences, const std::map<std::string, Models::VarReference> &preVarReferences,
+                                     const std::map<std::string, Models::VarReference> &postVarReferences, const std::map<std::string, Models::EGPReference> &egpReferences,
+                                     VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   CustomConnectivityUpdate(name, updateGroupName, synapseGroup, customConnectivityUpdateModel, params, varInitialisers, preVarInitialisers, postVarInitialisers,
-                                 varReferences, preVarReferences, postVarReferences, defaultVarLocation, defaultExtraGlobalParamLocation)
+                                 varReferences, preVarReferences, postVarReferences, egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation)
     {
         getSynapseGroup()->addCustomUpdateReference(this);
     }
@@ -55,11 +55,11 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
 
-    std::vector<Models::Base::Var> getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getVars(); }
+    auto getDefs() const{ return m_CU.getModel()->getVars(); }
 
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getVarInitialisers(); }
+    const auto &getInitialisers() const{ return m_CU.getVarInitialisers(); }
 
-    const CustomConnectivityUpdate &getTarget() const{ return m_CU; }
+    const auto &getTarget() const{ return m_CU; }
 
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
      
@@ -84,9 +84,9 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CU.getPreVarLocation(varName); }
 
-    std::vector<Models::Base::Var> getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPreVars(); }
+    std::vector<Models::Base::Var> getDefs() const{ return m_CU.getModel()->getPreVars(); }
 
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getPreVarInitialisers(); }
+    const std::map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getPreVarInitialisers(); }
 
     bool isVarDelayed(const std::string &) const { return false; }
 
@@ -115,9 +115,9 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CU.getPostVarLocation(varName); }
 
-    std::vector<Models::Base::Var> getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPostVars(); }
+    std::vector<Models::Base::Var> getDefs() const{ return m_CU.getModel()->getPostVars(); }
 
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getPostVarInitialisers(); }
+    const std::map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getPostVarInitialisers(); }
 
     bool isVarDelayed(const std::string &) const { return false; }
 
@@ -147,7 +147,7 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CU.getExtraGlobalParamLocation(varName); }
 
-    Snippet::Base::EGPVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getExtraGlobalParams(); }
+    Snippet::Base::EGPVec getDefs() const{ return m_CU.getModel()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -170,9 +170,9 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    Models::Base::VarRefVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getVarRefs(); }
+    auto getDefs() const{ return m_CU.getModel()->getVarRefs(); }
 
-    const std::unordered_map<std::string, Models::WUVarReference> &getInitialisers() const{ return m_CU.getVarReferences(); }
+    const auto &getInitialisers() const{ return m_CU.getVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -195,9 +195,9 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    Models::Base::VarRefVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPreVarRefs(); }
+    auto getDefs() const{ return m_CU.getModel()->getPreVarRefs(); }
 
-    const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_CU.getPreVarReferences(); }
+    const auto &getInitialisers() const{ return m_CU.getPreVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -220,9 +220,9 @@ public:
     //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    Models::Base::VarRefVec getDefs() const{ return m_CU.getCustomConnectivityUpdateModel()->getPostVarRefs(); }
+    auto getDefs() const{ return m_CU.getModel()->getPostVarRefs(); }
 
-    const std::unordered_map<std::string, Models::VarReference> &getInitialisers() const{ return m_CU.getPostVarReferences(); }
+    const auto &getInitialisers() const{ return m_CU.getPostVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------

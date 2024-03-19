@@ -15,6 +15,12 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#if __has_include(<nccl.h>)
+    #include <nccl.h>
+
+    #define NCCL_AVAILABLE
+#endif
+
 // GeNN includes
 #include "backendExport.h"
 
@@ -72,7 +78,7 @@ struct Preferences : public PreferencesBase
     bool enableNCCLReductions = false;
     
     //! How to select GPU device
-    DeviceSelect deviceSelectMethod = DeviceSelect::OPTIMAL;
+    DeviceSelect deviceSelectMethod = DeviceSelect::MANUAL;
 
     //! If device select method is set to DeviceSelect::MANUAL, id of device to use
     unsigned int manualDeviceID = 0;
@@ -108,64 +114,45 @@ struct Preferences : public PreferencesBase
     }
 };
 
-
 //--------------------------------------------------------------------------
-// CodeGenerator::CUDA::Pointer
+// CodeGenerator::CUDA::Backend
 //--------------------------------------------------------------------------
-class BACKEND_EXPORT Array : public Runtime::ArrayBase
+class BACKEND_EXPORT State : public Runtime::StateBase
 {
 public:
-    Array(const Type::ResolvedType &type, size_t count, 
-          VarLocation location, bool uninitialized);
-    virtual ~Array();
-    
-    //------------------------------------------------------------------------
-    // ArrayBase virtuals
-    //------------------------------------------------------------------------
-    //! Allocate array
-    virtual void allocate(size_t count) final;
-
-    //! Free array
-    virtual void free() final;
-
-    //! Copy entire array to device
-    virtual void pushToDevice() final;
-
-    //! Copy entire array from device
-    virtual void pullFromDevice() final;
-
-    //! Copy a 1D slice of elements to device 
-    /*! \param offset   Offset in elements to start copying from
-        \param count    Number of elements to copy*/
-    virtual void pushSlice1DToDevice(size_t offset, size_t count) final;
-
-    //! Copy a 1D slice of elements from device 
-    /*! \param offset   Offset in elements to start copying from
-        \param count    Number of elements to copy*/
-    virtual void pullSlice1DFromDevice(size_t offset, size_t count) final;
-
-    //! Memset the host pointer
-    virtual void memsetDeviceObject(int value) final;
-
-    //! Serialise backend-specific device object to bytes
-    virtual void serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToPointer) const final;
-
-    //! Serialise backend-specific host object to bytes
-    virtual void serialiseHostObject(std::vector<std::byte>&, bool) const
-    {
-        throw std::runtime_error("CUDA arrays have no host objects");
-    }
+    State(const Runtime::Runtime &base);
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    std::byte *getDevicePointer() const{ return m_DevicePointer; }
+    //! To be called on one rank to generate ID before creating communicator
+    void ncclGenerateUniqueID();
+    
+    //! Get pointer to unique ID
+    unsigned char *ncclGetUniqueID();
+    
+    //! Get size of unique ID in bytes
+    size_t ncclGetUniqueIDSize() const;
+
+    //! Initialise communicator
+    void ncclInitCommunicator(int rank, int numRanks);
 
 private:
+    //----------------------------------------------------------------------------
+    // Type defines
+    //----------------------------------------------------------------------------
+    typedef void (*VoidFunction)(void);
+    typedef unsigned char* (*BytePtrFunction)(void);
+    typedef void (*NCCLInitCommunicatorFunction)(int, int);
+
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::byte *m_DevicePointer;
+    bool m_EnableNCCLReductions;
+    VoidFunction m_NCCLGenerateUniqueID;
+    BytePtrFunction m_NCCLGetUniqueID;
+    NCCLInitCommunicatorFunction m_NCCLInitCommunicator;
+    const size_t *m_NCCLUniqueIDSize;
 };
 
 //--------------------------------------------------------------------------
@@ -239,6 +226,10 @@ public:
     virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+
+    //! Create backend-specific runtime state object
+    /*! \param runtime  runtime object */
+    virtual std::unique_ptr<GeNN::Runtime::StateBase> createState(const Runtime::Runtime &runtime) const final;
 
     //! Create backend-specific array object
     /*! \param type         data type of array
@@ -382,9 +373,10 @@ private:
             // Get reference to group
             env.getStream() << "const auto *group = &merged" << G::name << "Group" << cg.getIndex() << "[g]; " << std::endl;
             EnvironmentGroupMergedField<G> groupEnv(env, cg);
-
+            buildSizeEnvironment(groupEnv);
+        
             // Loop through variables
-            const auto *cm = cg.getArchetype().getCustomUpdateModel();
+            const auto *cm = cg.getArchetype().getModel();
             for(const auto &v : cm->getVars()) {
                 // If variable is reduction target
                 if(v.access & VarAccessModeAttribute::REDUCE) {

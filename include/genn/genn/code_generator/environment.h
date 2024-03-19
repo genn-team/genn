@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <functional>
+#include <map>
 #include <unordered_map>
 #include <variant>
 
@@ -408,7 +409,7 @@ class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<Enviro
     using IsHeterogeneousFn = bool (G::*)(const std::string&) const;
     using IsDynamicFn = bool (GroupInternal::*)(const std::string&) const;
     using IsVarInitHeterogeneousFn = bool (G::*)(const std::string&, const std::string&) const;
-    using GetParamValuesFn = const std::unordered_map<std::string, Type::NumericValue> &(GroupInternal::*)(void) const;
+    using GetParamValuesFn = const std::map<std::string, Type::NumericValue> &(GroupInternal::*)(void) const;
 
     template<typename A>
     using AdapterDef = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;

@@ -3,7 +3,6 @@ import pytest
 from pygenn import types
 
 from pygenn import (create_current_source_model, 
-                    create_custom_connectivity_update_model,
                     create_custom_update_model,
                     create_egp_ref,
                     create_neuron_model,
@@ -14,6 +13,9 @@ from pygenn import (create_current_source_model,
                     init_postsynaptic,
                     init_sparse_connectivity,
                     init_weight_update, init_var)
+
+# Neuron model which does nothing
+empty_neuron_model = create_neuron_model("empty")
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
@@ -65,7 +67,7 @@ def test_egp_var_init(make_model, backend, precision):
     
     model = make_model(precision, "test_egp_var_init", backend=backend)
 
-    ss_pop = model.add_neuron_population("SpikeSource", 20, "SpikeSource", {}, {});
+    ss_pop = model.add_neuron_population("SpikeSource", 20, empty_neuron_model);
     
     # Create populations with randomly-initialised variables
     correct = np.arange(10.0)
@@ -77,7 +79,7 @@ def test_egp_var_init(make_model, backend, precision):
     cs.vars["repeat"].extra_global_params["values"].set_init_values(correct)
     
     dense_s_pop = model.add_synapse_population(
-        "DenseSynapses", "DENSE", 0,
+        "DenseSynapses", "DENSE",
         ss_pop, n_pop,
         init_weight_update(nop_weight_update_model, {}, {"repeat": init_var(pre_repeat_var_init_snippet)}, {"pre_repeat": init_var(repeat_var_init_snippet)}, {"post_repeat": init_var(repeat_var_init_snippet)}),
         init_postsynaptic(nop_postsynaptic_update_model, {}, {"psm_repeat": init_var(repeat_var_init_snippet)}))
@@ -87,7 +89,7 @@ def test_egp_var_init(make_model, backend, precision):
     dense_s_pop.psm_vars["psm_repeat"].extra_global_params["values"].set_init_values(correct)
     
     sparse_s_pop = model.add_synapse_population(
-        "SparseSynapses", "SPARSE", 0,
+        "SparseSynapses", "SPARSE",
         ss_pop, n_pop,
         init_weight_update(nop_weight_update_model, {}, {"repeat": init_var(post_repeat_var_init_snippet)}, {"pre_repeat": init_var(repeat_var_init_snippet)}, {"post_repeat": init_var(repeat_var_init_snippet)}),
         init_postsynaptic("DeltaCurr"),

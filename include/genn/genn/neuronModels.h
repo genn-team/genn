@@ -69,8 +69,8 @@ public:
     }
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
-                  const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
+    void validate(const std::map<std::string, Type::NumericValue> &paramValues, 
+                  const std::map<std::string, InitVarSnippet::Init> &varValues,
                   const std::string &description) const;
 };
 
@@ -92,10 +92,12 @@ public:
     The `RulkovMap` type only works as intended for the single time step size of `DT`= 0.5.
 
     The `RulkovMap` type has 2 variables:
+
     - \c V - the membrane potential
     - \c preV - the membrane potential at the previous time step
 
     and it has 4 parameters:
+
     - \c Vspike - determines the amplitude of spikes, typically -60mV
     - \c alpha - determines the shape of the iteration function, typically \f$\alpha \f$= 3
     - \c y - "shift / excitation" parameter, also determines the iteration function,originally, y= -2.468
@@ -153,6 +155,7 @@ public:
     - \c U - Membrane recovery variable
 
     Parameters are:
+
     - \c a - time scale of U
     - \c b - sensitivity of U
     - \c c - after-spike reset value of V
@@ -190,7 +193,8 @@ public:
     "variables" in order to allow users to provide individual values for each
     individual neuron instead of fixed values for all neurons across the population.
 
-    Accordingly, the model has the Variables:
+    Accordingly, the model has the variables:
+
     - \c V - Membrane potential
     - \c U - Membrane recovery variable
     - \c a - time scale of U
@@ -253,21 +257,6 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// GeNN::NeuronModels::SpikeSource
-//----------------------------------------------------------------------------
-//! Empty neuron which allows setting spikes from external sources
-/*! This model does not contain any update code and can be used to implement
-    the equivalent of a SpikeGeneratorGroup in Brian or a SpikeSourceArray in PyNN. */
-class SpikeSource : public Base
-{
-public:
-    DECLARE_SNIPPET(NeuronModels::SpikeSource);
-
-    SET_THRESHOLD_CONDITION_CODE("0");
-    SET_NEEDS_AUTO_REFRACTORY(false);
-};
-
-//----------------------------------------------------------------------------
 // GeNN::NeuronModels::SpikeSourceArray
 //----------------------------------------------------------------------------
 //! Spike source array
@@ -300,65 +289,6 @@ public:
 // GeNN::NeuronModels::Poisson
 //----------------------------------------------------------------------------
 //! Poisson neurons
-/*! Poisson neurons have constant membrane potential (\c Vrest) unless they are
-    activated randomly to the \c Vspike value if (t- \c spikeTime ) > \c trefract.
-
-    It has 2 variables:
-
-    - \c V - Membrane potential (mV)
-    - \c spikeTime - Time at which the neuron spiked for the last time (ms)
-
-    and 4 parameters:
-
-    - \c trefract - Refractory period (ms)
-    - \c tspike - duration of spike (ms)
-    - \c Vspike - Membrane potential at spike (mV)
-    - \c Vrest - Membrane potential at rest (mV)
-
-    \note The initial values array for the `Poisson` type needs two entries
-    for `V`, and `spikeTime` and the parameter array needs four entries for
-    `trefract`, `tspike`, `Vspike` and `Vrest`,  *in that order*.
-    \note The refractory period and the spike duration both start at the beginning of the spike. That means that the refractory period should be longer or equal to the spike duration. If this is not the case, undefined model behaviour occurs.
-
-    It has two extra global parameters:
-
-    - \c firingProb - an array of firing probabilities/ average rates; this can extend to \f$n \cdot N\f$, where \f$N\f$ is the number of neurons, for \f$n > 0\f$ firing patterns
-    - \c offset - an unsigned integer that points to the start of the currently used input pattern; typically taking values of \f$i \cdot N\f$, \f$0 \leq i < n\f$. 
-
-    \note This model uses a linear approximation for the probability
-    of firing a spike in a given time step of size `DT`, i.e. the
-    probability of firing is \f$\lambda\f$ times `DT`: \f$ p = \lambda \Delta t
-    \f$, where $\lambda$ corresponds to the value of the relevant entry of `firingProb`. 
-    This approximation is usually very good, especially for typical,
-    quite small time steps and moderate firing rates. However, it is worth
-    noting that the approximation becomes poor for very high firing rates
-    and large time steps.*/
-class Poisson : public Base
-{
-public:
-    DECLARE_SNIPPET(NeuronModels::Poisson);
-
-    SET_SIM_CODE(
-        "if((t - spikeTime) > tspike && V > Vrest){\n"
-        "   V = Vrest;\n"
-        "}"
-        "else if((t - spikeTime) > trefract){\n"
-        "   if(gennrand_uniform < firingProb[offset + id]){\n"
-        "       V = Vspike;\n"
-        "       spikeTime = t;\n"
-        "   }\n"
-        "}\n");
-    SET_THRESHOLD_CONDITION_CODE("V >= Vspike");
-
-    SET_PARAMS({"trefract", "tspike", "Vspike", "Vrest"});
-    SET_VARS({{"V", "scalar"}, {"spikeTime", "scalar"}});
-    SET_EXTRA_GLOBAL_PARAMS({{"firingProb", "scalar*"}, {"offset", "unsigned int"}});
-};
-
-//----------------------------------------------------------------------------
-// GeNN::NeuronModels::PoissonNew
-//----------------------------------------------------------------------------
-//! Poisson neurons
 /*! This neuron model emits spikes according to the Poisson distribution with a mean firing
   rate as determined by its single parameter. 
   It has 1 state variable:
@@ -371,15 +301,17 @@ public:
 
     \note Internally this samples from the exponential distribution using
     the C++ 11 \<random\> library on the CPU and by transforming the
-    uniform distribution, generated using cuRAND, with a natural log on the GPU. */
-class PoissonNew : public Base
+    uniform distribution, generated using cuRAND, with a natural log on the GPU.
+    \note If you are connecting Poisson neurons one-to-one to another neuron population, 
+    it is more efficient to add a CurrentSourceModels::PoissonExp instead. */
+class Poisson : public Base
 {
 public:
-    DECLARE_SNIPPET(NeuronModels::PoissonNew);
+    DECLARE_SNIPPET(NeuronModels::Poisson);
 
     SET_SIM_CODE(
         "if(timeStepToSpike <= 0.0f) {\n"
-        "    timeStepToSpike += isi * gennrand_exponential;\n"
+        "    timeStepToSpike += isi * gennrand_exponential();\n"
         "}\n"
         "timeStepToSpike -= 1.0;\n"
     );
@@ -446,11 +378,9 @@ public:
     DECLARE_SNIPPET(NeuronModels::TraubMiles);
 
     SET_SIM_CODE(
-        "scalar Imem;\n"
-        "unsigned int mt;\n"
-        "scalar mdt= dt/25.0;\n"
-        "for (mt=0; mt < 25; mt++) {\n"
-        "   Imem= -(m*m*m*h*gNa*(V-(ENa))+\n"
+        "const scalar mdt= dt/25.0;\n"
+        "for (unsigned int mt=0; mt < 25; mt++) {\n"
+        "   const scalar Imem= -(m*m*m*h*gNa*(V-(ENa))+\n"
         "       n*n*n*n*gK*(V-(EK))+\n"
         "       gl*(V-(El))-Isyn);\n"
         "   scalar a;\n"
@@ -486,126 +416,5 @@ public:
 
     SET_PARAMS({"gNa", "ENa", "gK", "EK", "gl", "El", "C"});
     SET_VARS({{"V", "scalar"}, {"m", "scalar"}, {"h", "scalar"}, {"n", "scalar"}});
-};
-
-//----------------------------------------------------------------------------
-// GeNN::NeuronModels::TraubMilesFast
-//----------------------------------------------------------------------------
-//! Hodgkin-Huxley neurons with Traub & Miles algorithm: Original fast implementation, using 25 inner iterations.
-/*! There are singularities in this model, which can be easily hit in float precision
-  \note See NeuronModels::TraubMiles for variable and parameter names.
-*/
-class TraubMilesFast : public TraubMiles
-{
-public:
-    DECLARE_SNIPPET(NeuronModels::TraubMilesFast);
-
-    SET_SIM_CODE(
-        "scalar Imem;\n"
-        "unsigned int mt;\n"
-        "scalar mdt= dt/25.0;\n"
-        "for (mt=0; mt < 25; mt++) {\n"
-        "   Imem= -(m*m*m*h*gNa*(V-(ENa))+\n"
-        "       n*n*n*n*gK*(V-(EK))+\n"
-        "       gl*(V-(El))-Isyn);\n"
-        "   scalar a= 0.32*(-52.0-V)/(exp((-52.0-V)/4.0)-1.0);\n"
-        "   scalar b= 0.28*(V+25.0)/(exp((V+25.0)/5.0)-1.0);\n"
-        "   m+= (a*(1.0-m)-b*m)*mdt;\n"
-        "   a= 0.128*exp((-48.0-V)/18.0);\n"
-        "   b= 4.0 / (exp((-25.0-V)/5.0)+1.0);\n"
-        "   h+= (a*(1.0-h)-b*h)*mdt;\n"
-        "   a= 0.032*(-50.0-V)/(exp((-50.0-V)/5.0)-1.0);\n"
-        "   b= 0.5*exp((-55.0-V)/40.0);\n"
-        "   n+= (a*(1.0-n)-b*n)*mdt;\n"
-        "   V+= Imem/C*mdt;\n"
-        "}\n");
-};
-
-//----------------------------------------------------------------------------
-// GeNN::NeuronModels::TraubMilesAlt
-//----------------------------------------------------------------------------
-//! Hodgkin-Huxley neurons with Traub & Miles algorithm
-/*! Using a workaround to avoid singularity: adding the munimum numerical value of the floating point precision used.
-  \note See NeuronModels::TraubMiles for variable and parameter names.
-*/
-class TraubMilesAlt : public TraubMiles
-{
-public:
-    DECLARE_SNIPPET(NeuronModels::TraubMilesAlt);
-
-    SET_SIM_CODE(
-        "scalar Imem;\n"
-        "unsigned int mt;\n"
-        "scalar mdt= dt/25.0;\n"
-        "for (mt=0; mt < 25; mt++) {\n"
-        "   Imem= -(m*m*m*h*gNa*(V-(ENa))+\n"
-        "       n*n*n*n*gK*(V-(EK))+\n"
-        "       gl*(V-(El))-Isyn);\n"
-        "   scalar tmp= abs(exp((-52.0-V)/4.0)-1.0);\n"
-        "   scalar a= 0.32*abs(-52.0-V)/(tmp+SCALAR_MIN);\n"
-        "   tmp= abs(exp((V+25.0)/5.0)-1.0);\n"
-        "   scalar b= 0.28*abs(V+25.0)/(tmp+SCALAR_MIN);\n"
-        "   m+= (a*(1.0-m)-b*m)*mdt;\n"
-        "   a= 0.128*exp((-48.0-V)/18.0);\n"
-        "   b= 4.0 / (exp((-25.0-V)/5.0)+1.0);\n"
-        "   h+= (a*(1.0-h)-b*h)*mdt;\n"
-        "   tmp= abs(exp((-50.0-V)/5.0)-1.0);\n"
-        "   a= 0.032*abs(-50.0-V)/(tmp+SCALAR_MIN);\n"
-        "   b= 0.5*exp((-55.0-V)/40.0);\n"
-        "   n+= (a*(1.0-n)-b*n)*mdt;\n"
-        "   V+= Imem/C*mdt;\n"
-        "}\n");
-};
-
-//----------------------------------------------------------------------------
-// GeNN::NeuronModels::TraubMilesNStep
-//----------------------------------------------------------------------------
-//! Hodgkin-Huxley neurons with Traub & Miles algorithm.
-/*! Same as standard TraubMiles model but number of inner loops can be set using a parameter
-  \note See NeuronModels::TraubMiles for variable and parameter names.
-*/
-class TraubMilesNStep : public TraubMiles
-{
-public:
-    DECLARE_SNIPPET(NeuronModels::TraubMilesNStep);
-
-    SET_SIM_CODE(
-        "scalar Imem;\n"
-        "unsigned int mt;\n"
-        "scalar mdt= DT/scalar(ntimes);\n"
-        "for (mt=0; mt < ntimes; mt++) {\n"
-        "   Imem= -(m*m*m*h*gNa*(V-(ENa))+\n"
-        "       n*n*n*n*gK*(V-(EK))+\n"
-        "       gl*(V-(El))-Isyn);\n"
-        "   scalar a;\n"
-        "   if (V == -52.0) {\n"
-        "       a= 1.28;\n"
-        "   }\n"
-        "   else {\n"
-        "       a= 0.32*(-52.0-V)/(exp((-52.0-V)/4.0)-1.0);\n"
-        "   }\n"
-        "   scalar b;\n"
-        "   if (V == -25.0) {\n"
-        "       b= 1.4;\n"
-        "   }\n"
-        "   else {\n"
-        "       b= 0.28*(V+25.0)/(exp((V+25.0)/5.0)-1.0);\n"
-        "   }\n"
-        "   m+= (a*(1.0-m)-b*m)*mdt;\n"
-        "   a= 0.128*exp((-48.0-V)/18.0);\n"
-        "   b= 4.0 / (exp((-25.0-V)/5.0)+1.0);\n"
-        "   h+= (a*(1.0-h)-b*h)*mdt;\n"
-        "   if (lV == -50.0) {\n"
-        "       a= 0.16;\n"
-        "   }\n"
-        "   else {\n"
-        "       a= 0.032*(-50.0-V)/(exp((-50.0-V)/5.0)-1.0);\n"
-        "   }\n"
-        "   b= 0.5*exp((-55.0-V)/40.0);\n"
-        "   n+= (a*(1.0-n)-b*n)*mdt;\n"
-        "   V+= Imem/C*mdt;\n"
-        "}\n");
-
-    SET_PARAMS({"gNa", "ENa", "gK", "EK", "gl", "El", "C", "ntimes"});
 };
 } // GeNN::NeuronModels

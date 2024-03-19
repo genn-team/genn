@@ -27,8 +27,8 @@
 #define SET_CALC_MAX_COL_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return FUNC; }
 #define SET_CALC_KERNEL_SIZE_FUNC(...) virtual CalcKernelSizeFunc getCalcKernelSizeFunc() const override{ return __VA_ARGS__; }
 
-#define SET_MAX_ROW_LENGTH(MAX_ROW_LENGTH) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return [](unsigned int, unsigned int, const std::unordered_map<std::string, Type::NumericValue> &){ return MAX_ROW_LENGTH; }; }
-#define SET_MAX_COL_LENGTH(MAX_COL_LENGTH) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return [](unsigned int, unsigned int, const std::unordered_map<std::string, Type::NumericValue> &){ return MAX_COL_LENGTH; }; }
+#define SET_MAX_ROW_LENGTH(MAX_ROW_LENGTH) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return [](unsigned int, unsigned int, const std::map<std::string, Type::NumericValue> &){ return MAX_ROW_LENGTH; }; }
+#define SET_MAX_COL_LENGTH(MAX_COL_LENGTH) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return [](unsigned int, unsigned int, const std::map<std::string, Type::NumericValue> &){ return MAX_COL_LENGTH; }; }
 
 //----------------------------------------------------------------------------
 // GeNN::InitSparseConnectivitySnippet::Base
@@ -62,7 +62,7 @@ public:
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues) const;
+    void validate(const std::map<std::string, Type::NumericValue> &paramValues) const;
 };
 
 //----------------------------------------------------------------------------
@@ -71,7 +71,7 @@ public:
 class GENN_EXPORT Init : public Snippet::Init<Base>
 {
 public:
-    Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params);
+    Init(const Base *snippet, const std::map<std::string, Type::NumericValue> &params);
 
     //------------------------------------------------------------------------
     // Public API
@@ -79,9 +79,9 @@ public:
     bool isRNGRequired() const;
     bool isHostRNGRequired() const;
     
-    const std::vector<Transpiler::Token> &getRowBuildCodeTokens() const{ return m_RowBuildCodeTokens; }
-    const std::vector<Transpiler::Token> &getColBuildCodeTokens() const{ return m_ColBuildCodeTokens; }
-    const std::vector<Transpiler::Token> &getHostInitCodeTokens() const{ return m_HostInitCodeTokens; }
+    const auto &getRowBuildCodeTokens() const{ return m_RowBuildCodeTokens; }
+    const auto &getColBuildCodeTokens() const{ return m_ColBuildCodeTokens; }
+    const auto &getHostInitCodeTokens() const{ return m_HostInitCodeTokens; }
 
 private:
     //------------------------------------------------------------------------
@@ -106,6 +106,7 @@ public:
 // InitSparseConnectivitySnippet::OneToOne
 //----------------------------------------------------------------------------
 //! Initialises connectivity to a 'one-to-one' diagonal matrix
+/*! This snippet has no parameters */
 class OneToOne : public Base
 {
 public:
@@ -162,7 +163,10 @@ public:
     trials needed to get one success" -- essentially the distribution of the
     'gaps' between synapses. We do this using the "inversion method"
     described by Devroye (1986) -- essentially inverting the CDF of the
-    equivalent continuous distribution (in this case the exponential distribution)*/
+    equivalent continuous distribution (in this case the exponential distribution)
+    This snippet takes 1 parameter:
+
+    - \c prob - probability of connection in [0, 1]*/
 class FixedProbability : public FixedProbabilityBase
 {
 public:
@@ -197,7 +201,10 @@ public:
     trials needed to get one success" -- essentially the distribution of the 
     'gaps' between synapses. We do this using the "inversion method"
     described by Devroye (1986) -- essentially inverting the CDF of the
-    equivalent continuous distribution (in this case the exponential distribution)*/
+    equivalent continuous distribution (in this case the exponential distribution)
+    This snippet takes 1 parameter: 
+
+    - \c prob - probability of connection in [0, 1]*/
 class FixedProbabilityNoAutapse : public FixedProbabilityBase
 {
 public:
@@ -228,7 +235,10 @@ public:
 /*! The postsynaptic targets of the synapses can be initialised in parallel by sampling from the discrete
     uniform distribution. However, to sample connections in ascending order, we sample from the 1st order statistic
     of the uniform distribution -- Beta[1, Npost] -- essentially the next smallest value. In this special case
-    this is equivalent to the exponential distribution which can be sampled in constant time using the inversion method.*/
+    this is equivalent to the exponential distribution which can be sampled in constant time using the inversion method.
+    This snippet takes 1 parameter:
+
+    - \c num - number of postsynaptic neurons to connect each presynaptic neuron to.*/
 class FixedNumberPostWithReplacement : public Base
 {
 public:
@@ -236,7 +246,7 @@ public:
 
     SET_ROW_BUILD_CODE(
         "scalar x = 0.0;\n"
-        "for(unsigned int c = (unsigned int)rowLength; c != 0; c--) {\n"
+        "for(unsigned int c = num; c != 0; c--) {\n"
         "   const scalar u = gennrand_uniform();\n"
         "   x += (1.0 - x) * (1.0 - pow(u, 1.0 / (scalar)c));\n"
         "   unsigned int postIdx = (unsigned int)(x * num_post);\n"
@@ -244,12 +254,12 @@ public:
         "   addSynapse(postIdx + id_post_begin);\n"
         "}\n");
 
-    SET_PARAMS({{"rowLength", "unsigned int"}});
+    SET_PARAMS({{"num", "unsigned int"}});
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int, unsigned int, const ParamValues &pars)
         {
-            return pars.at("rowLength").cast<unsigned int>();
+            return pars.at("num").cast<unsigned int>();
         });
 
     SET_CALC_MAX_COL_LENGTH_FUNC(
@@ -261,7 +271,7 @@ public:
             // In each row the number of connections that end up in a column are distributed
             // binomially with n=numConnections and p=1.0 / numPost. As there are numPre rows the total number
             // of connections that end up in each column are distributed binomially with n=numConnections * numPre and p=1.0 / numPost
-            return binomialInverseCDF(quantile, pars.at("rowLength").cast<unsigned int>() * numPre, 1.0 / (double)numPost);
+            return binomialInverseCDF(quantile, pars.at("num").cast<unsigned int>() * numPre, 1.0 / (double)numPost);
         });
 };
 
@@ -275,7 +285,10 @@ public:
 /*! Once the length of each row is determined, the postsynaptic targets of the synapses can be initialised in parallel
     by sampling from the discrete uniform distribution. However, to sample connections in ascending order, we sample
     from the 1st order statistic of the uniform distribution -- Beta[1, Npost] -- essentially the next smallest value.
-    In this special case this is equivalent to the exponential distribution which can be sampled in constant time using the inversion method.*/
+    In this special case this is equivalent to the exponential distribution which can be sampled in constant time using the inversion method.
+    This snippet takes 1 parameter:
+
+    - \c num - total number of synapses to distribute throughout synaptic matrix.*/
 class FixedNumberTotalWithReplacement : public Base
 {
 public:
@@ -291,7 +304,7 @@ public:
         "   addSynapse(postIdx + id_post_begin);\n"
         "}\n");
 
-    SET_PARAMS({{"total", "unsigned int"}});
+    SET_PARAMS({{"num", "unsigned int"}});
     SET_EXTRA_GLOBAL_PARAMS({{"preCalcRowLength", "uint16_t*"}})
 
     SET_HOST_INIT_CODE(
@@ -300,7 +313,7 @@ public:
         "// Calculate row lengths\n"
         "const size_t numPostPerThread = (num_post + num_threads - 1) / num_threads;\n"
         "const size_t leftOverNeurons = num_post % numPostPerThread;\n"
-        "size_t remainingConnections = total;\n"
+        "size_t remainingConnections = num;\n"
         "size_t matrixSize = (size_t)num_pre * (size_t)num_post;\n"
         "uint16_t *subRowLengths = preCalcRowLength;\n"
         "// Loop through rows\n"
@@ -340,7 +353,7 @@ public:
             // There are numConnections connections amongst the numPre*numPost possible connections.
             // Each of the numConnections connections has an independent p=float(numPost)/(numPre*numPost)
             // probability of being selected and the number of synapses in the sub-row is binomially distributed
-            return binomialInverseCDF(quantile, pars.at("total").cast<unsigned int>(), (double)numPost / ((double)numPre * (double)numPost));
+            return binomialInverseCDF(quantile, pars.at("num").cast<unsigned int>(), (double)numPost / ((double)numPre * (double)numPost));
         });
 
     SET_CALC_MAX_COL_LENGTH_FUNC(
@@ -352,7 +365,7 @@ public:
             // There are numConnections connections amongst the numPre*numPost possible connections.
             // Each of the numConnections connections has an independent p=float(numPre)/(numPre*numPost)
             // probability of being selected and the number of synapses in the sub-row is binomially distributed
-            return binomialInverseCDF(quantile, pars.at("total").cast<unsigned int>(), (double)numPre / ((double)numPre * (double)numPost));
+            return binomialInverseCDF(quantile, pars.at("num").cast<unsigned int>(), (double)numPre / ((double)numPre * (double)numPost));
         });
 };
 
@@ -360,19 +373,22 @@ public:
 // InitSparseConnectivitySnippet::FixedNumberPreWithReplacement
 //----------------------------------------------------------------------------
 //! Initialises connectivity with a fixed number of random synapses per column.
-/*! No need for ordering here so fine to sample directly from uniform distribution */
+/*! No need for ordering here so fine to sample directly from uniform distribution 
+    This snippet takes 1 parameter:
+
+    - \c num - number of presynaptic neurons to connect each postsynaptic neuron to.*/
 class FixedNumberPreWithReplacement : public Base
 {
 public:
     DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedNumberPreWithReplacement);
 
     SET_COL_BUILD_CODE(
-        "for(unsigned int c = colLength; c != 0; c--) {\n"
+        "for(unsigned int c = num; c != 0; c--) {\n"
         "   const unsigned int idPre = (unsigned int)ceil(gennrand_uniform() * num_pre) - 1;\n"
         "   addSynapse(idPre + id_pre_begin);\n"
         "}\n");
  
-    SET_PARAMS({{"colLength", "unsigned int"}});
+    SET_PARAMS({{"num", "unsigned int"}});
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int numPre, unsigned int numPost, const ParamValues &pars)
@@ -383,23 +399,42 @@ public:
             // In each column the number of connections that end up in a row are distributed
             // binomially with n=numConnections and p=1.0 / numPre. As there are numPost columns the total number
             // of connections that end up in each row are distributed binomially with n=numConnections * numPost and p=1.0 / numPre
-            return binomialInverseCDF(quantile, pars.at("colLength").cast<unsigned int>() * numPost, 1.0 / (double)numPre);
+            return binomialInverseCDF(quantile, pars.at("num").cast<unsigned int>() * numPost, 1.0 / (double)numPre);
         });
 
     SET_CALC_MAX_COL_LENGTH_FUNC(
         [](unsigned int, unsigned int, const ParamValues &pars)
         {
-            return pars.at("colLength").cast<unsigned int>();
+            return pars.at("num").cast<unsigned int>();
         });
 };
 
 //----------------------------------------------------------------------------
 // InitSparseConnectivitySnippet::Conv2D
 //----------------------------------------------------------------------------
-//! Initialises convolutional connectivity
+//! Initialises 2D convolutional connectivity
 //! Row build state variables are used to convert presynaptic neuron index to rows, columns and channels and, 
 //! from these, to calculate the range of postsynaptic rows, columns and channels connections will be made within.
-/*! This sparse connectivity snippet does not support multiple threads per neuron */
+/*! This sparse connectivity snippet does not support multiple threads per neuron 
+    This snippet takes 12 parameter:
+
+    - \c conv_kh - height of 2D convolution kernel.
+    - \c conv_kw - width of 2D convolution kernel.
+    - \c conv_sh - height of convolution stride
+    - \c conv_sw - width of convolution stride
+    - \c conv_padh - width of padding around input
+    - \c conv_padw - height of padding around input
+    - \c conv_ih - width of input to this convolution
+    - \c conv_iw - height of input to this convolution
+    - \c conv_ic - number of input channels to this convolution
+    - \c conv_oh - width of output from this convolution
+    - \c conv_ow - height of output from this convolution
+    - \c conv_oc - number of output channels from this convolution
+
+    \note
+    ``conv_ih * conv_iw * conv_ic`` should equal the number of neurons in the presynaptic
+    neuron population and ``conv_oh * conv_ow * conv_oc`` should equal the number of 
+    neurons in the postsynaptic neuron population.*/
 class Conv2D : public Base
 {
 public:

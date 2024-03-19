@@ -104,7 +104,7 @@ namespace GeNN
 {
 void NeuronGroup::setVarLocation(const std::string &varName, VarLocation loc) 
 { 
-    if(!getNeuronModel()->getVar(varName)) {
+    if(!getModel()->getVar(varName)) {
         throw std::runtime_error("Unknown neuron model variable '" + varName + "'");
     }
     m_VarLocation.set(varName, loc); 
@@ -112,7 +112,7 @@ void NeuronGroup::setVarLocation(const std::string &varName, VarLocation loc)
 //----------------------------------------------------------------------------
 void NeuronGroup::setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc) 
 { 
-    if(!getNeuronModel()->getExtraGlobalParam(paramName)) {
+    if(!getModel()->getExtraGlobalParam(paramName)) {
         throw std::runtime_error("Unknown neuron model extra global parameter '" + paramName + "'");
     }
     m_ExtraGlobalParamLocation.set(paramName, loc); 
@@ -120,7 +120,7 @@ void NeuronGroup::setExtraGlobalParamLocation(const std::string &paramName, VarL
 //----------------------------------------------------------------------------
 void NeuronGroup::setParamDynamic(const std::string &paramName, bool dynamic) 
 { 
-    if(!getNeuronModel()->getParam(paramName)) {
+    if(!getModel()->getParam(paramName)) {
         throw std::runtime_error("Unknown neuron model parameter '" + paramName + "'");
     }
     m_DynamicParams.set(paramName, dynamic); 
@@ -233,9 +233,10 @@ bool NeuronGroup::isSpikeEventRequired() const
 bool NeuronGroup::isZeroCopyEnabled() const
 {
     // If any bits of spikes require zero-copy return true
-    if((m_SpikeLocation & VarLocation::ZERO_COPY) || (m_SpikeEventLocation & VarLocation::ZERO_COPY) 
-       || (m_SpikeTimeLocation & VarLocation::ZERO_COPY) || (m_PrevSpikeTimeLocation & VarLocation::ZERO_COPY)
-       || (m_SpikeEventTimeLocation& VarLocation::ZERO_COPY) || (m_PrevSpikeEventTimeLocation& VarLocation::ZERO_COPY)) 
+    if(m_RecordingZeroCopyEnabled || (m_SpikeLocation & VarLocationAttribute::ZERO_COPY) 
+       || (m_SpikeEventLocation & VarLocationAttribute::ZERO_COPY) || (m_SpikeTimeLocation & VarLocationAttribute::ZERO_COPY) 
+       || (m_PrevSpikeTimeLocation & VarLocationAttribute::ZERO_COPY) || (m_SpikeEventTimeLocation& VarLocationAttribute::ZERO_COPY) 
+       || (m_PrevSpikeEventTimeLocation& VarLocationAttribute::ZERO_COPY)) 
     {
         return true;
     }
@@ -375,24 +376,24 @@ bool NeuronGroup::isInitRNGRequired() const
 }
 //----------------------------------------------------------------------------
 NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                         const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
+                         const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers,
                          VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-:   m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
-    m_NumDelaySlots(1), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
+:   m_Name(name), m_NumNeurons(numNeurons), m_Model(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
+    m_NumDelaySlots(1), m_RecordingZeroCopyEnabled(false), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
     m_SpikeTimeLocation(defaultVarLocation), m_PrevSpikeTimeLocation(defaultVarLocation), m_SpikeEventTimeLocation(defaultVarLocation), 
     m_PrevSpikeEventTimeLocation(defaultVarLocation), m_VarLocation(defaultVarLocation), m_ExtraGlobalParamLocation(defaultExtraGlobalParamLocation),
     m_SpikeRecordingEnabled(false), m_SpikeEventRecordingEnabled(false)
 {
     // Validate names
     Utils::validatePopName(name, "Neuron group");
-    getNeuronModel()->validate(getParams(), getVarInitialisers(), "Neuron group " + getName());
+    getModel()->validate(getParams(), getVarInitialisers(), "Neuron group " + getName());
 
      // Scan neuron model code strings
-    m_SimCodeTokens = Utils::scanCode(getNeuronModel()->getSimCode(), 
+    m_SimCodeTokens = Utils::scanCode(getModel()->getSimCode(), 
                                       "Neuron group '" + getName() + "' sim code");
-    m_ThresholdConditionCodeTokens = Utils::scanCode(getNeuronModel()->getThresholdConditionCode(),
+    m_ThresholdConditionCodeTokens = Utils::scanCode(getModel()->getThresholdConditionCode(),
                                                      "Neuron group '" + getName() + "' threshold condition code");
-    m_ResetCodeTokens = Utils::scanCode(getNeuronModel()->getResetCode(),
+    m_ResetCodeTokens = Utils::scanCode(getModel()->getResetCode(),
                                         "Neuron group '" + getName() + "' reset code");
 }
 //----------------------------------------------------------------------------
@@ -405,7 +406,7 @@ void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)
 //----------------------------------------------------------------------------
 void NeuronGroup::finalise(double dt)
 {
-    auto derivedParams = getNeuronModel()->getDerivedParams();
+    auto derivedParams = getModel()->getDerivedParams();
 
     // Loop through derived parameters
     for(const auto &d : derivedParams) {
@@ -556,7 +557,7 @@ bool NeuronGroup::isVarQueueRequired(const std::string &var) const
 boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getNeuronModel()->getHashDigest(), hash);
+    Utils::updateHash(getModel()->getHashDigest(), hash);
     Utils::updateHash(isSpikeTimeRequired(), hash);
     Utils::updateHash(isPrevSpikeTimeRequired(), hash);
     Utils::updateHash(isSpikeEventTimeRequired(), hash);
@@ -606,7 +607,7 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getInitHashDigest() const
     Utils::updateHash(isSimRNGRequired(), hash);
     Utils::updateHash(getNumDelaySlots(), hash);
     Utils::updateHash(m_VarQueueRequired, hash);
-    Utils::updateHash(getNeuronModel()->getVars(), hash);
+    Utils::updateHash(getModel()->getVars(), hash);
 
     // Include variable initialiser hashes
     for(const auto &n : getVarInitialisers()) {

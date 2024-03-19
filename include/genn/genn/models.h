@@ -182,7 +182,7 @@ public:
     const std::string &getVarName() const;
 
     //! Get size of variable
-    unsigned int getSize() const;
+    unsigned int getNumNeurons() const;
     
     //! Does this variable reference's target belong to neuron group
     bool isTargetNeuronGroup(const NeuronGroupInternal *ng) const;
@@ -380,6 +380,7 @@ public:
     static EGPReference createEGPRef(CurrentSource *cs, const std::string &egpName);
     static EGPReference createEGPRef(CustomUpdate *cu, const std::string &egpName);
     static EGPReference createEGPRef(CustomUpdateWU *cu, const std::string &egpName);
+    static EGPReference createEGPRef(CustomConnectivityUpdate *ccu, const std::string &egpName);
     static EGPReference createPSMEGPRef(SynapseGroup *sg, const std::string &egpName);
     static EGPReference createWUEGPRef(SynapseGroup *sg, const std::string &egpName);
 
@@ -446,11 +447,11 @@ GENN_EXPORT void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &h
 // Free functions
 //----------------------------------------------------------------------------
 //! Helper function to check if local variable references are configured correctly
-GENN_EXPORT void checkLocalVarReferences(const std::unordered_map<std::string, VarReference> &varRefs, const Base::VarRefVec &modelVarRefs,
+GENN_EXPORT void checkLocalVarReferences(const std::map<std::string, VarReference> &varRefs, const Base::VarRefVec &modelVarRefs,
                                          const NeuronGroupInternal *ng, const std::string &targetErrorDescription);
 //! Helper function to check if variable reference types match those specified in model
 template<typename V>
-void checkVarReferenceTypes(const std::unordered_map<std::string, V> &varRefs, const Base::VarRefVec &modelVarRefs)
+void checkVarReferenceTypes(const std::map<std::string, V> &varRefs, const Base::VarRefVec &modelVarRefs)
 {
     // Loop through all variable references
     for(const auto &modelVarRef : modelVarRefs) {
@@ -463,5 +464,8 @@ void checkVarReferenceTypes(const std::unordered_map<std::string, V> &varRefs, c
         }
     }
 }
+
+GENN_EXPORT void checkEGPReferenceTypes(const std::map<std::string, EGPReference> &egpRefs,
+                                        const Base::EGPRefVec &modelEGPRefs);
 
 } // GeNN::Models

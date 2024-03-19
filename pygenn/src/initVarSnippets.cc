@@ -5,7 +5,17 @@
 // GeNN includes
 #include "initVarSnippet.h"
 
+// Doc strings
+#include "docStrings.h"
+
 using namespace GeNN::InitVarSnippet;
+
+//----------------------------------------------------------------------------
+// Macros
+//----------------------------------------------------------------------------
+#define WRAP(NAME) m.def(#NAME, &getBaseInstance<NAME>,\
+                         pybind11::return_value_policy::reference,\
+                         DOC(InitVarSnippet, NAME))
 
 namespace
 {
@@ -21,21 +31,19 @@ const Base *getBaseInstance()
 //----------------------------------------------------------------------------
 PYBIND11_MODULE(init_var_snippets, m) 
 {
-    pybind11::module_::import("pygenn.genn");
+    pybind11::module_::import("pygenn._genn");
 
     //------------------------------------------------------------------------
     // Free functions
     //------------------------------------------------------------------------
-    // **THINK** with some cunning, standard macros could maybe populate
-    // an array with instance pointers that we could loop over
-    m.def("Uninitialised", &getBaseInstance<Uninitialised>, pybind11::return_value_policy::reference);
-    m.def("Constant", &getBaseInstance<Constant>, pybind11::return_value_policy::reference);
-    m.def("Kernel", &getBaseInstance<Kernel>, pybind11::return_value_policy::reference);
-    m.def("Uniform", &getBaseInstance<Uniform>, pybind11::return_value_policy::reference);
-    m.def("Normal", &getBaseInstance<Normal>, pybind11::return_value_policy::reference);
-    m.def("NormalClipped", &getBaseInstance<NormalClipped>, pybind11::return_value_policy::reference);
-    m.def("NormalClippedDelay", &getBaseInstance<NormalClippedDelay>, pybind11::return_value_policy::reference);
-    m.def("Exponential", &getBaseInstance<Exponential>, pybind11::return_value_policy::reference);
-    m.def("Gamma", &getBaseInstance<Gamma>, pybind11::return_value_policy::reference);
-    m.def("Binomial", &getBaseInstance<Binomial>, pybind11::return_value_policy::reference);
+    WRAP(Uninitialised);
+    WRAP(Constant);
+    WRAP(Kernel);
+    WRAP(Uniform);
+    WRAP(Normal);
+    WRAP(NormalClipped);
+    WRAP(NormalClippedDelay);
+    WRAP(Exponential);
+    WRAP(Gamma);
+    WRAP(Binomial);
 }

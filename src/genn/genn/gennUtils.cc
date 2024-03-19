@@ -22,6 +22,7 @@
 namespace
 {
 const std::unordered_set<std::string> randomFuncs{
+    "gennrand",
     "gennrand_uniform",
     "gennrand_normal",
     "gennrand_exponential",
@@ -112,7 +113,7 @@ bool isRNGRequired(const std::vector<Transpiler::Token> &tokens)
 
 }
 //--------------------------------------------------------------------------
-bool isRNGRequired(const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers)
+bool isRNGRequired(const std::map<std::string, InitVarSnippet::Init> &varInitialisers)
 {
     // Return true if any of these variable initialisers require an RNG
     return std::any_of(varInitialisers.cbegin(), varInitialisers.cend(),

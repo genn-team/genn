@@ -38,7 +38,7 @@ public:
 
     SET_PARAMS({"g"});
 
-    SET_SIM_CODE("addToPost(g);\n");
+    SET_PRE_SPIKE_SYN_CODE("addToPost(g);\n");
 };
 IMPLEMENT_SNIPPET(StaticPulseUInt);
 
@@ -115,7 +115,7 @@ TEST(Models, NeuronVarReference)
     auto *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     auto neuronVoltage = createVarRef(ng, "V");
-    ASSERT_EQ(neuronVoltage.getSize(), 10);
+    ASSERT_EQ(neuronVoltage.getNumNeurons(), 10);
 
     try {
         auto neuronMagic = createVarRef(ng, "Magic");
@@ -133,13 +133,14 @@ TEST(Models, NeuronVarReferenceDelay)
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
-    model.addSynapsePopulation(
-        "Syn", SynapseMatrixType::DENSE, 10,
-        "Neurons0", "Neurons1",
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
+    auto *syn = model.addSynapsePopulation(
+        "Syn", SynapseMatrixType::DENSE,
+        pre, post,
         initWeightUpdate<Cont>({}, {{"g", 0.1}}, {}, {}, {{"V", createVarRef(pre, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
-    
+    syn->setAxonalDelaySteps(10);
+
     auto neuronV = createVarRef(pre, "V");
     auto neuronU = createVarRef(pre, "U");
 
@@ -158,16 +159,16 @@ TEST(Models, CurrentSourceVarReference)
     // Add neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+    auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     // Add one poisson exp current source
     ParamValues cs0ParamVals{{"weight", 0.1}, {"tauSyn", 5.0}, {"rate", 10.0}};
     VarValues cs0VarVals{{"current", 0.0}};
-    auto *cs0 = model.addCurrentSource<CurrentSourceModels::PoissonExp>("CS0", "Neurons0",
+    auto *cs0 = model.addCurrentSource<CurrentSourceModels::PoissonExp>("CS0", pop,
                                                                         cs0ParamVals, cs0VarVals);
                                                                         
     auto csCurrent = createVarRef(cs0, "current");
-    ASSERT_EQ(csCurrent.getSize(), 10);
+    ASSERT_EQ(csCurrent.getNumNeurons(), 10);
 
     try {
         auto csMagic = createVarRef(cs0, "Magic");
@@ -184,17 +185,17 @@ TEST(Models, PSMVarReference)
     // Add two neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
     auto *sg1 = model.addSynapsePopulation(
-        "Synapses1", SynapseMatrixType::DENSE, NO_DELAY,
-        "Pre", "Post",
+        "Synapses1", SynapseMatrixType::DENSE,
+        pre, post,
         initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>({{"g", 1.0}}),
         initPostsynaptic<AlphaCurr>({{"tau", 5.0}}, {{"x", 0.0}}));
 
     auto psmX = createPSMVarRef(sg1, "x");
-    ASSERT_EQ(psmX.getSize(), 25);
+    ASSERT_EQ(psmX.getNumNeurons(), 25);
 
     // Test error if variable doesn't exist
     try {
@@ -213,21 +214,22 @@ TEST(Models, WUPreVarReference)
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
     auto *sg1 = model.addSynapsePopulation(
-        "Synapses1", SynapseMatrixType::DENSE, NO_DELAY,
-        "Pre", "Post",
+        "Synapses1", SynapseMatrixType::DENSE,
+        pre, post,
         initWeightUpdate<ContPrePost>({}, {{"g", 1.0}}, {{"preTrace", 0.0}}, {{"postTrace", 0.0}},
                                       {{"V", createVarRef(pre, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     auto *sg2 = model.addSynapsePopulation(
-        "Synapses2", SynapseMatrixType::DENSE, 5,
-        "Pre", "Post",
+        "Synapses2", SynapseMatrixType::DENSE,
+        pre, post,
         initWeightUpdate<ContPrePostConstantWeight>({{"g", 1.0}}, {}, {{"preTrace", 0.0}}, {{"postTrace", 0.0}},
                                                     {{"V", createVarRef(pre, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    sg2->setAxonalDelaySteps(5);
 
     auto wuPre = createWUPreVarRef(sg1, "preTrace");
     auto wuPre2 = createWUPreVarRef(sg2, "preTrace");
@@ -243,7 +245,7 @@ TEST(Models, WUPreVarReference)
     // Finalize model
     model.finalise();
 
-    ASSERT_EQ(wuPre.getSize(), 10);
+    ASSERT_EQ(wuPre.getNumNeurons(), 10);
     ASSERT_EQ(wuPre.getDelayNeuronGroup(), nullptr);
     ASSERT_EQ(wuPre2.getDelayNeuronGroup(), pre);
 }
@@ -259,15 +261,15 @@ TEST(Models, WUPostVarReference)
     auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
     auto *sg1 = model.addSynapsePopulation(
-        "Synapses1", SynapseMatrixType::DENSE, NO_DELAY,
-        "Pre", "Post",
+        "Synapses1", SynapseMatrixType::DENSE,
+        pre, post,
         initWeightUpdate<ContPrePost>({}, {{"g", 1.0}}, {{"preTrace", 0.0}}, {{"postTrace", 0.0}},
                                       {{"V", createVarRef(pre, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     auto *sg2 = model.addSynapsePopulation(
-        "Synapses2", SynapseMatrixType::DENSE, NO_DELAY,
-        "Pre", "Post",
+        "Synapses2", SynapseMatrixType::DENSE,
+        pre, post,
         initWeightUpdate<ContPrePostConstantWeight>({{"g", 1.0}}, {}, {{"preTrace", 0.0}}, {{"postTrace", 0.0}},
                                                     {{"V", createVarRef(pre, "V")}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
@@ -288,7 +290,7 @@ TEST(Models, WUPostVarReference)
     // Finalize model
     model.finalise();
 
-    ASSERT_EQ(wuPost.getSize(), 25);
+    ASSERT_EQ(wuPost.getNumNeurons(), 25);
     ASSERT_EQ(wuPost.getDelayNeuronGroup(), nullptr);
     ASSERT_EQ(wuPost2.getDelayNeuronGroup(), post);
 }
@@ -300,12 +302,12 @@ TEST(Models, WUMVarReference)
     // Add two neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
     auto *sg1 = model.addSynapsePopulation(
-        "Synapses1", SynapseMatrixType::DENSE, NO_DELAY,
-        "Pre", "Post",
+        "Synapses1", SynapseMatrixType::DENSE,
+        pre, post,
         initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
         initPostsynaptic<AlphaCurr>({{"tau", 5.0}}, {{"x", 0.0}}));
 
@@ -327,42 +329,42 @@ TEST(Models, WUMTransposeVarReference)
     // Add two neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
     auto *sgForward = model.addSynapsePopulation(
-        "Synapses1", SynapseMatrixType::DENSE, NO_DELAY,
-        "Pre", "Post",
+        "Synapses1", SynapseMatrixType::DENSE,
+        pre, post,
         initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     auto *sgBackwardIndividualG = model.addSynapsePopulation(
-        "Synapses2", SynapseMatrixType::DENSE, NO_DELAY,
-        "Post", "Pre",
+        "Synapses2", SynapseMatrixType::DENSE,
+        post, pre,
         initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     auto *sgBackwardGlobalG = model.addSynapsePopulation(
-        "Synapses3", SynapseMatrixType::DENSE, NO_DELAY,
-        "Post", "Pre",
+        "Synapses3", SynapseMatrixType::DENSE,
+        post, pre,
         initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>({{"g", 1.0}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     
     auto *sgBackwardBadShape = model.addSynapsePopulation(
-        "Synapses4", SynapseMatrixType::DENSE, NO_DELAY,
-        "Pre", "Pre",
+        "Synapses4", SynapseMatrixType::DENSE,
+        pre, pre,
         initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     
     auto *sgBackwardSparse = model.addSynapsePopulation(
-        "Synapses5", SynapseMatrixType::SPARSE, NO_DELAY,
-        "Post", "Pre",
+        "Synapses5", SynapseMatrixType::SPARSE,
+        post, pre,
         initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>({{"g", 1.0}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
     auto *sgBackwardBadType = model.addSynapsePopulation(
-        "Synapses6", SynapseMatrixType::SPARSE, NO_DELAY,
-        "Post", "Pre",
+        "Synapses6", SynapseMatrixType::SPARSE,
+        post, pre,
         initWeightUpdate<StaticPulseUInt>({{"g", 1.0}}, {}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 

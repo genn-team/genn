@@ -8,17 +8,17 @@ properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '',
 
 // All the types of build we'll ideally run if suitable nodes exist
 def desiredBuilds = [
-    ["cuda11", "windows"] as Set,
     ["cuda10", "windows"] as Set,
-    ["cuda9", "windows"] as Set,
+    ["cuda11", "windows"] as Set,
+    ["cuda12", "windows"] as Set,
     ["amd", "windows"] as Set,
-    ["cuda11", "linux"] as Set,
     ["cuda10", "linux"] as Set,
-    ["cuda9", "linux"] as Set,
+    ["cuda11", "linux"] as Set,
+    ["cuda12", "linux"] as Set,
     ["amd", "linux"] as Set,
-    ["cuda11", "mac"] as Set,
     ["cuda10", "mac"] as Set,
-    ["cuda9", "mac"] as Set,
+    ["cuda11", "mac"] as Set,
+    ["cuda12", "mac"] as Set,
     ["amd", "mac"] as Set]
 
 //--------------------------------------------------------------------------
@@ -145,11 +145,6 @@ for(b = 0; b < builderNodes.size(); b++) {
                             def runTestsCommand = """
                             rm -f "${outputFilename}"
 
-                            # Clean GeNN library and build a version of the single-threaded CPU backend with coverage calculation built
-                            make clean COVERAGE=1 1>> "${outputFilename}" 2>&1
-
-                            make single_threaded_cpu COVERAGE=1 1>> "${outputFilename}" 2>&1
-
                             # Clean and build unit tests
                             cd tests/unit
                             make clean all COVERAGE=1 1>> "${outputFilename}" 2>&1
@@ -171,9 +166,9 @@ for(b = 0; b < builderNodes.size(); b++) {
                             CALL %VC_VARS_BAT%
                             DEL "${outputFilename}"
 
-                            msbuild genn.sln /m /t:single_threaded_cpu_backend /verbosity:minimal /p:Configuration=Release
+                            msbuild genn.sln /m /t:single_threaded_cpu_backend /verbosity:quiet /p:Configuration=Release
 
-                            msbuild tests/tests.sln /m /verbosity:minimal /p:Configuration=Release
+                            msbuild tests/tests.sln /m /verbosity:quiet /p:Configuration=Release
 
                             PUSHD tests/unit
                             unit_Release.exe --gtest_output="xml:test_results_unit.xml"
@@ -199,22 +194,12 @@ for(b = 0; b < builderNodes.size(); b++) {
                     ${env.PYTHON} -m venv ${WORKSPACE}/venv
                     . ${WORKSPACE}/venv/bin/activate
                     pip install -U pip
-                    pip install numpy scipy pybind11 pytest flaky pytest-cov wheel flake8 bitarray
+                    pip install numpy scipy pybind11 pytest flaky pytest-cov wheel flake8 bitarray psutil
                     """;
                 }
 
                 buildStep("Installing PyGeNN (${NODE_NAME})") {
                     dir("genn") {
-                        // Build dynamic LibGeNN with coverage support
-                        echo "Building LibGeNN";
-                        def commandsLibGeNN = """
-                        make DYNAMIC=1 COVERAGE=1 LIBRARY_DIRECTORY=`pwd`/pygenn 2>&1 | tee -a "${compileOutputFilename}" >> "${outputFilename}"
-                        """;
-                        def statusLibGeNN = sh script:commandsLibGeNN, returnStatus:true;
-                        if (statusLibGeNN != 0) {
-                            setBuildStatus("Building LibGeNN (${NODE_NAME})", "FAILURE");
-                        }
-
                         // Build PyGeNN module
                         echo "Building and installing PyGeNN";
                         def commandsPyGeNN = """
@@ -281,16 +266,6 @@ for(b = 0; b < builderNodes.size(); b++) {
                 buildStep("Building Python wheels (${NODE_NAME})") {
                     dir("genn") {
                         if(isUnix()) {
-                            // Build set of dynamic libraries
-                            echo "Creating dynamic libraries";
-                            makeCommand = """
-                            make DYNAMIC=1 LIBRARY_DIRECTORY=`pwd`/pygenn 1>> "${outputFilename}" 2>&1
-                            """;
-                            def makeStatusCode = sh script:makeCommand, returnStatus:true
-                            if(makeStatusCode != 0) {
-                                setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
-                            }
-
                             // Create virtualenv, install numpy and pybind11; and make Python wheel
                             echo "Creating Python wheels";
                             script = """
@@ -310,19 +285,19 @@ for(b = 0; b < builderNodes.size(); b++) {
                             echo "Creating dynamic libraries";
                             msbuildCommand = """
                             CALL %VC_VARS_BAT%
-                            msbuild genn.sln /m /verbosity:minimal /p:Configuration=Release_DLL /t:single_threaded_cpu_backend >> "${outputFilename}" 2>&1
+                            msbuild genn.sln /m /verbosity:quiet /p:Configuration=Release_DLL /t:single_threaded_cpu_backend >> "${outputFilename}" 2>&1
                             """;
 
                             // If node has suitable CUDA, also build CUDA backend
-                            if("cuda8" in nodeLabel || "cuda9" in nodeLabel || "cuda10" in nodeLabel) {
+                            if("cuda10" in nodeLabel || "cuda11" in nodeLabel || "cuda12" in nodeLabel) {
                                 msbuildCommand += """
-                                msbuild genn.sln /m /verbosity:minimal  /p:Configuration=Release_DLL /t:cuda_backend >> "${outputFilename}" 2>&1
+                                msbuild genn.sln /m /verbosity:quiet  /p:Configuration=Release_DLL /t:cuda_backend >> "${outputFilename}" 2>&1
                                 """;
                             }
                             // If this node has OpenCL, also build OpenCL backend
                             if(nodeLabel.contains("opencl")) {
                                 msbuildCommand += """
-                                msbuild genn.sln /m /verbosity:minimal  /p:Configuration=Release_DLL /t:opencl_backend >> "${outputFilename}" 2>&1
+                                msbuild genn.sln /m /verbosity:quiet  /p:Configuration=Release_DLL /t:opencl_backend >> "${outputFilename}" 2>&1
                                 """;
                             }
 

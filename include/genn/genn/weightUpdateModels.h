@@ -6,10 +6,10 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define SET_SIM_CODE(SIM_CODE) virtual std::string getSimCode() const override{ return SIM_CODE; }
-#define SET_PRE_EVENT_CODE(EVENT_CODE) virtual std::string getPreEventCode() const override{ return EVENT_CODE; }
-#define SET_POST_EVENT_CODE(EVENT_CODE) virtual std::string getPostEventCode() const override{ return EVENT_CODE; }
-#define SET_LEARN_POST_CODE(LEARN_POST_CODE) virtual std::string getLearnPostCode() const override{ return LEARN_POST_CODE; }
+#define SET_PRE_SPIKE_SYN_CODE(CODE) virtual std::string getPreSpikeSynCode() const override{ return CODE; }
+#define SET_PRE_EVENT_SYN_CODE(CODE) virtual std::string getPreEventSynCode() const override{ return CODE; }
+#define SET_POST_EVENT_SYN_CODE(CODE) virtual std::string getPostEventSynCode() const override{ return CODE; }
+#define SET_POST_SPIKE_SYN_CODE(CODE) virtual std::string getPostSpikeSynCode() const override{ return CODE; }
 #define SET_SYNAPSE_DYNAMICS_CODE(SYNAPSE_DYNAMICS_CODE) virtual std::string getSynapseDynamicsCode() const override{ return SYNAPSE_DYNAMICS_CODE; }
 #define SET_PRE_EVENT_THRESHOLD_CONDITION_CODE(EVENT_THRESHOLD_CONDITION_CODE) virtual std::string getPreEventThresholdConditionCode() const override{ return EVENT_THRESHOLD_CONDITION_CODE; }
 #define SET_POST_EVENT_THRESHOLD_CONDITION_CODE(EVENT_THRESHOLD_CONDITION_CODE) virtual std::string getPostEventThresholdConditionCode() const override{ return EVENT_THRESHOLD_CONDITION_CODE; }
@@ -37,23 +37,23 @@ public:
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
-    //! Gets simulation code run when 'true' spikes are received
-    virtual std::string getSimCode() const{ return ""; }
+    //! Gets code run when a presynaptic spike is received at the synapse
+    virtual std::string getPreSpikeSynCode() const{ return ""; }
 
-    //! Gets code run when presynaptic events are received
+    //! Gets code run when a presynaptic spike-like event is received at the synapse
     /*! Presynaptic events are triggered for all presynaptic neurons where 
         the presynaptic event threshold condition is met*/
-    virtual std::string getPreEventCode() const{ return ""; }
+    virtual std::string getPreEventSynCode() const{ return ""; }
 
-    //! Gets code run when postsynaptic events are received
+    //! Gets code run when a postsynaptic spike-like event is received at the synapse
     /*! Postsynaptic events are triggered for all postsynaptic neurons where 
         the postsynaptic event threshold condition is met*/
-    virtual std::string getPostEventCode() const{ return ""; }
+    virtual std::string getPostEventSynCode() const{ return ""; }
 
-    //! Gets code to include in the learnSynapsesPost kernel/function.
+    //! Gets code run when a postsynaptic spike is received at the synapse
     /*! For examples when modelling STDP, this is where the effect of postsynaptic
         spikes which occur _after_ presynaptic spikes are applied. */
-    virtual std::string getLearnPostCode() const{ return ""; }
+    virtual std::string getPostSpikeSynCode() const{ return ""; }
 
     //! Gets code for synapse dynamics which are independent of spike detection
     virtual std::string getSynapseDynamicsCode() const{ return ""; }
@@ -64,14 +64,12 @@ public:
     //! Gets codes to test for postsynaptic events
     virtual std::string getPostEventThresholdConditionCode() const{ return ""; }
 
-    //! Gets code to be run once per spiking presynaptic
-    //! neuron before sim code is run on synapses
+    //! Gets code to be run once per spiking presynaptic neuron before sim code is run on synapses
     /*! This is typically for the code to update presynaptic variables. Postsynaptic
         and synapse variables are not accesible from within this code */
     virtual std::string getPreSpikeCode() const{ return ""; }
 
-    //! Gets code to be run once per spiking postsynaptic
-    //! neuron before learn post code is run on synapses
+    //! Gets code to be run once per spiking postsynaptic neuron before learn post code is run on synapses
     /*! This is typically for the code to update postsynaptic variables. Presynaptic
         and synapse variables are not accesible from within this code */
     virtual std::string getPostSpikeCode() const{ return ""; }
@@ -140,12 +138,12 @@ public:
     boost::uuids::detail::sha1::digest_type getPostEventHashDigest() const;
     
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
-                  const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
-                  const std::unordered_map<std::string, InitVarSnippet::Init> &preVarValues,
-                  const std::unordered_map<std::string, InitVarSnippet::Init> &postVarValues,
-                  const std::unordered_map<std::string, Models::VarReference> &preVarRefTargets,
-                  const std::unordered_map<std::string, Models::VarReference> &postVarRefTargets) const;
+    void validate(const std::map<std::string, Type::NumericValue> &paramValues, 
+                  const std::map<std::string, InitVarSnippet::Init> &varValues,
+                  const std::map<std::string, InitVarSnippet::Init> &preVarValues,
+                  const std::map<std::string, InitVarSnippet::Init> &postVarValues,
+                  const std::map<std::string, Models::VarReference> &preVarRefTargets,
+                  const std::map<std::string, Models::VarReference> &postVarRefTargets) const;
 };
 
 
@@ -155,35 +153,35 @@ public:
 class GENN_EXPORT Init : public Snippet::Init<Base>
 {
 public:
-    Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params, 
-         const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, 
-         const std::unordered_map<std::string, InitVarSnippet::Init> &preVarInitialisers, 
-         const std::unordered_map<std::string, InitVarSnippet::Init> &postVarInitialisers,
-         const std::unordered_map<std::string, Models::VarReference> &preNeuronVarReferences, 
-         const std::unordered_map<std::string, Models::VarReference> &postNeuronVarReferences);
+    Init(const Base *snippet, const std::map<std::string, Type::NumericValue> &params, 
+         const std::map<std::string, InitVarSnippet::Init> &varInitialisers, 
+         const std::map<std::string, InitVarSnippet::Init> &preVarInitialisers, 
+         const std::map<std::string, InitVarSnippet::Init> &postVarInitialisers,
+         const std::map<std::string, Models::VarReference> &preNeuronVarReferences, 
+         const std::map<std::string, Models::VarReference> &postNeuronVarReferences);
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
     bool isRNGRequired() const;
 
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getPreVarInitialisers() const{ return m_PreVarInitialisers; }
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getPostVarInitialisers() const{ return m_PostVarInitialisers; }
-    const std::unordered_map<std::string, Models::VarReference> &getPreNeuronVarReferences() const{ return m_PreNeuronVarReferences;  }
-    const std::unordered_map<std::string, Models::VarReference> &getPostNeuronVarReferences() const{ return m_PostNeuronVarReferences;  }
+    const auto &getVarInitialisers() const{ return m_VarInitialisers; }
+    const auto &getPreVarInitialisers() const{ return m_PreVarInitialisers; }
+    const auto &getPostVarInitialisers() const{ return m_PostVarInitialisers; }
+    const auto &getPreNeuronVarReferences() const{ return m_PreNeuronVarReferences;  }
+    const auto &getPostNeuronVarReferences() const{ return m_PostNeuronVarReferences;  }
     
-    const std::vector<Transpiler::Token> &getSimCodeTokens() const{ return m_SimCodeTokens; }
-    const std::vector<Transpiler::Token> &getPreEventCodeTokens() const{ return m_PreEventCodeTokens; }
-    const std::vector<Transpiler::Token> &getPostEventCodeTokens() const{ return m_PostEventCodeTokens; }
-    const std::vector<Transpiler::Token> &getPostLearnCodeTokens() const{ return m_PostLearnCodeTokens; }
-    const std::vector<Transpiler::Token> &getSynapseDynamicsCodeTokens() const{ return m_SynapseDynamicsCodeTokens; }
-    const std::vector<Transpiler::Token> &getPreEventThresholdCodeTokens() const{ return m_PreEventThresholdCodeTokens; }
-    const std::vector<Transpiler::Token> &getPostEventThresholdCodeTokens() const{ return m_PostEventThresholdCodeTokens; }
-    const std::vector<Transpiler::Token> &getPreSpikeCodeTokens() const{ return m_PreSpikeCodeTokens; }
-    const std::vector<Transpiler::Token> &getPostSpikeCodeTokens() const{ return m_PostSpikeCodeTokens; }
-    const std::vector<Transpiler::Token> &getPreDynamicsCodeTokens() const{ return m_PreDynamicsCodeTokens; }
-    const std::vector<Transpiler::Token> &getPostDynamicsCodeTokens() const{ return m_PostDynamicsCodeTokens; }
+    const auto &getPreSpikeSynCodeTokens() const{ return m_PreSpikeSynCodeTokens; }
+    const auto &getPreEventSynCodeTokens() const{ return m_PreEventSynCodeTokens; }
+    const auto &getPostEventSynCodeTokens() const{ return m_PostEventSynCodeTokens; }
+    const auto &getPostSpikeSynCodeTokens() const{ return m_PostSpikeSynCodeTokens; }
+    const auto &getSynapseDynamicsCodeTokens() const{ return m_SynapseDynamicsCodeTokens; }
+    const auto &getPreEventThresholdCodeTokens() const{ return m_PreEventThresholdCodeTokens; }
+    const auto &getPostEventThresholdCodeTokens() const{ return m_PostEventThresholdCodeTokens; }
+    const auto &getPreSpikeCodeTokens() const{ return m_PreSpikeCodeTokens; }
+    const auto &getPostSpikeCodeTokens() const{ return m_PostSpikeCodeTokens; }
+    const auto &getPreDynamicsCodeTokens() const{ return m_PreDynamicsCodeTokens; }
+    const auto &getPostDynamicsCodeTokens() const{ return m_PostDynamicsCodeTokens; }
 
     void finalise(double dt);
     
@@ -191,10 +189,10 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::vector<Transpiler::Token> m_SimCodeTokens;
-    std::vector<Transpiler::Token> m_PreEventCodeTokens;
-    std::vector<Transpiler::Token> m_PostEventCodeTokens;
-    std::vector<Transpiler::Token> m_PostLearnCodeTokens;
+    std::vector<Transpiler::Token> m_PreSpikeSynCodeTokens;
+    std::vector<Transpiler::Token> m_PreEventSynCodeTokens;
+    std::vector<Transpiler::Token> m_PostEventSynCodeTokens;
+    std::vector<Transpiler::Token> m_PostSpikeSynCodeTokens;
     std::vector<Transpiler::Token> m_SynapseDynamicsCodeTokens;
     std::vector<Transpiler::Token> m_PreEventThresholdCodeTokens;
     std::vector<Transpiler::Token> m_PostEventThresholdCodeTokens;
@@ -203,28 +201,24 @@ private:
     std::vector<Transpiler::Token> m_PreDynamicsCodeTokens;
     std::vector<Transpiler::Token> m_PostDynamicsCodeTokens;
 
-    std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
-    std::unordered_map<std::string, InitVarSnippet::Init> m_PreVarInitialisers;
-    std::unordered_map<std::string, InitVarSnippet::Init> m_PostVarInitialisers;
-    std::unordered_map<std::string, Models::VarReference> m_PreNeuronVarReferences;
-    std::unordered_map<std::string, Models::VarReference> m_PostNeuronVarReferences;
+    std::map<std::string, InitVarSnippet::Init> m_VarInitialisers;
+    std::map<std::string, InitVarSnippet::Init> m_PreVarInitialisers;
+    std::map<std::string, InitVarSnippet::Init> m_PostVarInitialisers;
+    std::map<std::string, Models::VarReference> m_PreNeuronVarReferences;
+    std::map<std::string, Models::VarReference> m_PostNeuronVarReferences;
 };
 
 //----------------------------------------------------------------------------
 // GeNN::WeightUpdateModels::StaticPulse
 //----------------------------------------------------------------------------
-//! Pulse-coupled, static synapse.
+//! Pulse-coupled, static synapse with heterogeneous weight.
 /*! No learning rule is applied to the synapse and for each pre-synaptic spikes,
     the synaptic conductances are simply added to the postsynaptic input variable.
     The model has 1 variable:
-    - g - conductance of scalar type
-    and no other parameters.
 
-    \c sim code is:
+    - \c g - synaptic weight
 
-    \code
-    "addToPost(g);\n"
-    \endcode*/
+    and no other parameters.*/
 class StaticPulse : public Base
 {
 public:
@@ -232,24 +226,20 @@ public:
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
-    SET_SIM_CODE("addToPost(g);\n");
+    SET_PRE_SPIKE_SYN_CODE("addToPost(g);\n");
 };
 
 //----------------------------------------------------------------------------
 // GeNN::WeightUpdateModels::StaticPulseConstantWeight
 //----------------------------------------------------------------------------
-//! Pulse-coupled, static synapse.
+//! Pulse-coupled, static synapse with homogeneous weight.
 /*! No learning rule is applied to the synapse and for each pre-synaptic spikes,
     the synaptic conductances are simply added to the postsynaptic input variable.
     The model has 1 parameter:
-    - g - conductance
-    and no other variables.
 
-    \c sim code is:
+    - \c g - synaptic weight
 
-    \code
-    "addToPost(g);"
-    \endcode*/
+    and no other variables.*/
 class StaticPulseConstantWeight : public Base
 {
 public:
@@ -257,25 +247,21 @@ public:
 
     SET_PARAMS({"g"});
 
-    SET_SIM_CODE("addToPost(g);\n");
+    SET_PRE_SPIKE_SYN_CODE("addToPost(g);\n");
 };
 
 //----------------------------------------------------------------------------
 // GeNN::WeightUpdateModels::StaticPulseDendriticDelay
 //----------------------------------------------------------------------------
-//! Pulse-coupled, static synapse with heterogenous dendritic delays
+//! Pulse-coupled, static synapse with heterogenous weight and dendritic delays
 /*! No learning rule is applied to the synapse and for each pre-synaptic spikes,
     the synaptic conductances are simply added to the postsynaptic input variable.
     The model has 2 variables:
-    - g - conductance of scalar type
-    - d - dendritic delay in timesteps
-    and no other parameters.
 
-    \c sim code is:
+    - \c g - synaptic weight
+    - \c d - dendritic delay in timesteps
 
-    \code
-    "addToPostDelay(g, d);"
-    \endcode*/
+    and no other parameters.*/
 class StaticPulseDendriticDelay : public Base
 {
 public:
@@ -283,7 +269,7 @@ public:
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}, {"d", "uint8_t", VarAccess::READ_ONLY}});
 
-    SET_SIM_CODE("addToPostDelay(g, d);\n");
+    SET_PRE_SPIKE_SYN_CODE("addToPostDelay(g, d);\n");
 };
 
 //----------------------------------------------------------------------------
@@ -294,24 +280,17 @@ public:
     \f[ gSyn= g * tanh((V - E_{pre}) / V_{slope} \f]
     whenever the membrane potential \f$V\f$ is larger than the threshold \f$E_{pre}\f$.
     The model has 1 variable:
-    - \c g: conductance of \c scalar type
+
+    - \c g - synaptic weight
+    
+    The model also has 1 presynaptic neuron variable reference:
+
+    - \c V - Presynaptic membrane potential
 
     The parameters are:
-    - \c Epre: Presynaptic threshold potential
-    - \c Vslope: Activation slope of graded release
 
-    \c event code is:
-    \code
-    addToPost(fmax(0.0, g * tanh((V_pre - Epre) / Vslope) * dt));
-    \endcode
-
-    \c event threshold condition code is:
-
-    \code
-    V_pre > Epre
-    \endcode
-    \note The pre-synaptic variables are referenced with the suffix `_pre` in synapse related code
-    such as an the event threshold test. Users can also access post-synaptic neuron variables using the suffix `_post`.*/
+    - \c Epre - Presynaptic threshold potential
+    - \c Vslope - Activation slope of graded release*/
 class StaticGraded : public Base
 {
 public:
@@ -319,110 +298,59 @@ public:
 
     SET_PARAMS({"Epre", "Vslope"});
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
+    SET_PRE_NEURON_VAR_REFS({{"V", "scalar", VarAccessMode::READ_ONLY}});
 
-    SET_PRE_EVENT_THRESHOLD_CONDITION_CODE("V_pre > Epre");
-    SET_PRE_EVENT_CODE("addToPost(fmax(0.0, g * tanh((V_pre - Epre) / Vslope) * dt));\n");
+    SET_PRE_EVENT_THRESHOLD_CONDITION_CODE("V > Epre");
+    SET_PRE_EVENT_SYN_CODE("addToPost(fmax(0.0, g * tanh((V_pre - Epre) / Vslope) * dt));\n");
 };
 
 //----------------------------------------------------------------------------
-// GeNN::PiecewiseSTDP
+// GeNN::AdditiveSTDP
 //----------------------------------------------------------------------------
-//! This is a simple STDP rule including a time delay for the finite transmission speed of the synapse.
-/*! The STDP window is defined as a piecewise function:
-    \image html LEARN1SYNAPSE_explain_html.png
-    \image latex LEARN1SYNAPSE_explain.png width=10cm
+//! Simply asymmetrical STDP rule.
+/*! This rule makes purely additive weight updates within hard bounds and uses nearest-neighbour spike pairing and the following time-dependence:
+    \f[
+        \Delta w_{ij} = \
+            \begin{cases}
+                A_{+}\exp\left(-\frac{\Delta t}{\tau_{+}}\right) & if\, \Delta t>0\\
+                A_{-}\exp\left(\frac{\Delta t}{\tau_{-}}\right) & if\, \Delta t\leq0
+            \end{cases}  
+    \f]
+The model has 1 variable:
 
-    The STDP curve is applied to the raw synaptic conductance `gRaw`, which is then filtered through the sugmoidal filter displayed above to obtain the value of `g`.
+    - \c g - synaptic weight
 
-    \note
-    The STDP curve implies that unpaired pre- and post-synaptic spikes incur a negative increment in `gRaw` (and hence in `g`).
+    and 6 parameters:
 
-    \note
-    The time of the last spike in each neuron, "sTXX", where XX is the name of a neuron population is (somewhat arbitrarily) initialised to -10.0 ms. If neurons never spike, these spike times are used.
-
-    \note
-    It is the raw synaptic conductance `gRaw` that is subject to the STDP rule. The resulting synaptic conductance is a sigmoid filter of `gRaw`. This implies that `g` is initialised but not `gRaw`, the synapse will revert to the value that corresponds to `gRaw`.
-
-    An example how to use this synapse correctly is given in `map_classol.cc` (MBody1 userproject):
-    \code
-    for (int i= 0; i < model.neuronN[1]*model.neuronN[3]; i++) {
-            if (gKCDN[i] < 2.0*SCALAR_MIN){
-                cnt++;
-                fprintf(stdout, "Too low conductance value %e detected and set to 2*SCALAR_MIN= %e, at index %d \n", gKCDN[i], 2*SCALAR_MIN, i);
-                gKCDN[i] = 2.0*SCALAR_MIN; //to avoid log(0)/0 below
-            }
-            scalar tmp = gKCDN[i] / myKCDN_p[5]*2.0 ;
-            gRawKCDN[i]=  0.5 * log( tmp / (2.0 - tmp)) /myKCDN_p[7] + myKCDN_p[6];
-    }
-    cerr << "Total number of low value corrections: " << cnt << endl;
-    \endcode
-
-    \note
-    One cannot set values of `g` fully to `0`, as this leads to `gRaw`= -infinity and this is not support. I.e., 'g' needs to be some nominal value > 0 (but can be extremely small so that it acts like it's 0).
-
-    <!--
-    If no spikes at t: \f$ g_{raw}(t+dt) = g_0 + (g_{raw}(t)-g_0)*\exp(-dt/\tau_{decay}) \f$
-    If pre or postsynaptic spike at t: \f$ g_{raw}(t+dt) = g_0 + (g_{raw}(t)-g_0)*\exp(-dt/\tau_{decay})
-    +A(t_{post}-t_{pre}-\tau_{decay}) \f$
-    -->
-
-    The model has 2 variables:
-    - \c g: conductance of \c scalar type
-    - \c gRaw: raw conductance of \c scalar type
-
-    Parameters are (compare to the figure above):
-    - \c tLrn: Time scale of learning changes
-    - \c tChng: Width of learning window
-    - \c tDecay: Time scale of synaptic strength decay
-    - \c tPunish10: Time window of suppression in response to 1/0
-    - \c tPunish01: Time window of suppression in response to 0/1
-    - \c gMax: Maximal conductance achievable
-    - \c gMid: Midpoint of sigmoid g filter curve
-    - \c gSlope: Slope of sigmoid g filter curve
-    - \c tauShift: Shift of learning curve
-    - \c gSyn0: Value of syn conductance g decays to */
-class PiecewiseSTDP : public Base
+    - \c tauPlus - Potentiation time constant (ms)
+    - \c tauMinus - Depression time constant (ms)
+    - \c Aplus - Rate of potentiation
+    - \c Aminus - Rate of depression
+    - \c Wmin - Minimum weight
+    - \c Wmax - Maximum weight*/
+class STDP : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_SNIPPET(PiecewiseSTDP);
+    DECLARE_SNIPPET(STDP);
 
-    SET_PARAMS({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
-                "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
-    SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
+    SET_PARAMS({"tauPlus", "tauMinus", "Aplus", "Aminus", "Wmin", "Wmax"});
 
-    SET_SIM_CODE(
+    SET_VARS({{"g", "scalar"}});
+
+    SET_PRE_SPIKE_SYN_CODE(
         "addToPost(g);\n"
-        "scalar dt = st_post - t - tauShift; \n"
-        "scalar dg = 0;\n"
-        "if (dt > lim0)  \n"
-        "    dg = -off0 ; \n"
-        "else if (dt > 0)  \n"
-        "    dg = slope0 * dt + off1; \n"
-        "else if (dt > lim1)  \n"
-        "    dg = slope1 * dt + (off1); \n"
-        "else dg = - (off2) ; \n"
-        "gRaw += dg; \n"
-        "g=gMax/2 *(tanh(gSlope*(gRaw - (gMid)))+1); \n");
-    SET_LEARN_POST_CODE(
-        "scalar dt = t - st_pre - (tauShift); \n"
-        "scalar dg =0; \n"
-        "if (dt > lim0)  \n"
-        "    dg = -(off0) ; \n"
-        "else if (dt > 0)  \n"
-        "    dg = slope0 * dt + (off1); \n"
-        "else if (dt > lim1)  \n"
-        "    dg = slope1 * dt + (off1); \n"
-        "else dg = -(off2) ; \n"
-        "gRaw += dg; \n"
-        "g=gMax/2.0 *(tanh(gSlope*(gRaw - (gMid)))+1); \n");
-
-    SET_DERIVED_PARAMS({
-        {"lim0", [](const ParamValues &pars, double){ return (1/pars.at("tPunish01").cast<double>() + 1 / pars.at("tChng").cast<double>()) * pars.at("tLrn").cast<double>() / (2/pars.at("tChng").cast<double>()); }},
-        {"lim1", [](const ParamValues &pars, double){ return  -((1/pars.at("tPunish10").cast<double>() + 1 / pars.at("tChng").cast<double>()) * pars.at("tLrn").cast<double>() / (2/pars.at("tChng").cast<double>())); }},
-        {"slope0", [](const ParamValues &pars, double){ return  -2*pars.at("gMax").cast<double>() /(pars.at("tChng").cast<double>()*pars.at("tLrn").cast<double>()); }},
-        {"slope1", [](const ParamValues &pars, double){ return  2*pars.at("gMax").cast<double>() / (pars.at("tChng").cast<double>() * pars.at("tLrn").cast<double>()); }},
-        {"off0", [](const ParamValues &pars, double){ return  pars.at("gMax").cast<double>() / pars.at("tPunish01").cast<double>(); }},
-        {"off1", [](const ParamValues &pars, double){ return  pars.at("gMax").cast<double>() / pars.at("tChng").cast<double>(); }},
-        {"off2", [](const ParamValues &pars, double){ return  pars.at("gMax").cast<double>() / pars.at("tPunish10").cast<double>(); }}});
+        "scalar dt = t - st_post; \n"
+        "if (dt > 0) {\n"
+        "    scalar timing = exp(-dt / tauMinus);\n"
+        "    scalar newWeight = g - (Aminus * timing);\n"
+        "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
+        "}\n");
+    SET_POST_SPIKE_SYN_CODE(
+        "scalar dt = t - st_pre;\n"
+        "if (dt > 0) {\n"
+        "    scalar timing = exp(-dt / tauPlus);\n"
+        "    scalar newWeight = g + (Aplus * timing);\n"
+        "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
+        "}\n");
 };
 }   //namespace GeNN::WeightUpdateModels

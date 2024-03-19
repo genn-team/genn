@@ -30,6 +30,7 @@ using namespace GeNN::CodeGenerator;
 namespace
 {
 const EnvironmentLibrary::Library floatRandomFunctions = {
+    {"gennrand", {Type::ResolvedType::createFunction(Type::Uint32, {}), "curand(&$(_rng))"}},
     {"gennrand_uniform", {Type::ResolvedType::createFunction(Type::Float, {}), "curand_uniform(&$(_rng))"}},
     {"gennrand_normal", {Type::ResolvedType::createFunction(Type::Float, {}), "curand_normal(&$(_rng))"}},
     {"gennrand_exponential", {Type::ResolvedType::createFunction(Type::Float, {}), "exponentialDistFloat(&$(_rng))"}},
@@ -39,12 +40,18 @@ const EnvironmentLibrary::Library floatRandomFunctions = {
 };
 
 const EnvironmentLibrary::Library doubleRandomFunctions = {
+    {"gennrand", {Type::ResolvedType::createFunction(Type::Uint32, {}), "curand(&$(_rng))"}},
     {"gennrand_uniform", {Type::ResolvedType::createFunction(Type::Double, {}), "curand_uniform_double(&$(_rng))"}},
     {"gennrand_normal", {Type::ResolvedType::createFunction(Type::Double, {}), "curand_normal_double(&$(_rng))"}},
     {"gennrand_exponential", {Type::ResolvedType::createFunction(Type::Double, {}), "exponentialDistDouble(&$(_rng))"}},
     {"gennrand_log_normal", {Type::ResolvedType::createFunction(Type::Double, {Type::Double, Type::Double}), "curand_log_normal_double(&$(_rng), $(0), $(1))"}},
     {"gennrand_gamma", {Type::ResolvedType::createFunction(Type::Double, {Type::Double}), "gammaDistDouble(&$(_rng), $(0))"}},
     {"gennrand_binomial", {Type::ResolvedType::createFunction(Type::Uint32, {Type::Uint32, Type::Double}), "binomialDistDouble(&$(_rng), $(0), $(1))"}},
+};
+
+const EnvironmentLibrary::Library backendFunctions = {
+    {"clz", {Type::ResolvedType::createFunction(Type::Int32, {Type::Uint32}), "__clz($(0))"}},
+    {"atomic_or", {Type::ResolvedType::createFunction(Type::Void, {Type::Uint32.createPointer(), Type::Uint32}), "atomicOr($(0), $(1))"}},
 };
 
 //--------------------------------------------------------------------------
@@ -94,7 +101,187 @@ private:
     const bool m_TimingEnabled;
     const bool m_SynchroniseOnStop;
 };
-//-----------------------------------------------------------------------
+
+//--------------------------------------------------------------------------
+// Array
+//--------------------------------------------------------------------------
+class Array : public Runtime::ArrayBase
+{
+public:
+    Array(const Type::ResolvedType &type, size_t count, 
+          VarLocation location, bool uninitialized)
+    :   ArrayBase(type, count, location, uninitialized), m_DevicePointer(nullptr)
+    {
+        // Allocate if count is specified
+        if(count > 0) {
+            allocate(count);
+        }
+    }
+
+    virtual ~Array()
+    {
+        if(getCount() > 0) {
+            free();
+        }
+    }
+    
+    //------------------------------------------------------------------------
+    // ArrayBase virtuals
+    //------------------------------------------------------------------------
+    //! Allocate array
+    virtual void allocate(size_t count) final
+    {
+        // Set count
+        setCount(count);
+
+        // Malloc host pointer
+        if(getLocation() & VarLocationAttribute::HOST) {
+            const unsigned int flags = (getLocation() & VarLocationAttribute::ZERO_COPY) ? cudaHostAllocMapped : cudaHostAllocPortable;
+
+            std::byte *hostPointer = nullptr;
+            CHECK_CUDA_ERRORS(cudaHostAlloc(&hostPointer, getSizeBytes(), flags));
+            setHostPointer(hostPointer);
+        }
+
+        // If variable is present on device at all
+        if(getLocation() & VarLocationAttribute::DEVICE) {
+            // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
+            if(getLocation() & VarLocationAttribute::ZERO_COPY) {
+                CHECK_CUDA_ERRORS(cudaHostGetDevicePointer(&m_DevicePointer, getHostPointer(), 0));
+            }
+            else {
+                CHECK_CUDA_ERRORS(cudaMalloc(&m_DevicePointer, getSizeBytes()));
+            }
+        }
+    }
+
+    //! Free array
+    virtual void free() final
+    {
+        // **NOTE** because we pinned the variable we need to free it with cudaFreeHost rather than use free
+        if(getLocation() & VarLocationAttribute::HOST) {
+            CHECK_CUDA_ERRORS(cudaFreeHost(getHostPointer()));
+            setHostPointer(nullptr);
+        }
+
+        // If this variable wasn't allocated in zero-copy mode, free it
+        if((getLocation() & VarLocationAttribute::DEVICE) && !(getLocation() & VarLocationAttribute::ZERO_COPY)) {
+            CHECK_CUDA_ERRORS(cudaFree(getDevicePointer()));
+            m_DevicePointer = nullptr;
+        }
+
+        // Zero count
+        setCount(0);
+    }
+    //! Copy entire array to device
+    virtual void pushToDevice() final
+    {
+        if(!(getLocation() & VarLocationAttribute::DEVICE) || !(getLocation() & VarLocationAttribute::HOST)) {
+            throw std::runtime_error("Cannot push array that isn't present on host and device");
+        }
+
+        if(!(getLocation() & VarLocationAttribute::ZERO_COPY)) {
+            CHECK_CUDA_ERRORS(cudaMemcpy(getDevicePointer(), getHostPointer(), getSizeBytes(), cudaMemcpyHostToDevice));
+        }
+    }
+
+    //! Copy entire array from device
+    virtual void pullFromDevice() final
+    {
+        if(!(getLocation() & VarLocationAttribute::DEVICE) || !(getLocation() & VarLocationAttribute::HOST)) {
+            throw std::runtime_error("Cannot pull array that isn't present on host and device");
+        }
+
+        if(!(getLocation() & VarLocationAttribute::ZERO_COPY)) {
+            CHECK_CUDA_ERRORS(cudaMemcpy(getHostPointer(), getDevicePointer(), getSizeBytes(), cudaMemcpyDeviceToHost));
+        }
+    }
+
+    //! Copy a 1D slice of elements to device 
+    /*! \param offset   Offset in elements to start copying from
+        \param count    Number of elements to copy*/
+    virtual void pushSlice1DToDevice(size_t offset, size_t count) final
+    {
+        if(!(getLocation() & VarLocationAttribute::DEVICE) || !(getLocation() & VarLocationAttribute::HOST)) {
+            throw std::runtime_error("Cannot push array that isn't present on host and device");
+        }
+
+        if(!(getLocation() & VarLocationAttribute::ZERO_COPY)) {
+            // If end of slice overflows array, give error
+            if((offset + count) > getCount()) {
+                throw std::runtime_error("Cannot pull slice that overflows array");
+            }
+
+            // Convert offset and count to bytes and copy
+            const size_t offsetBytes = offset * getType().getValue().size;
+            const size_t countBytes = count * getType().getValue().size;
+            CHECK_CUDA_ERRORS(cudaMemcpy(getDevicePointer() + offsetBytes, getHostPointer() + offsetBytes, 
+                                         countBytes, cudaMemcpyHostToDevice));
+        }
+    }
+
+    //! Copy a 1D slice of elements from device 
+    /*! \param offset   Offset in elements to start copying from
+        \param count    Number of elements to copy*/
+    virtual void pullSlice1DFromDevice(size_t offset, size_t count) final
+    {
+        if(!(getLocation() & VarLocationAttribute::DEVICE) || !(getLocation() & VarLocationAttribute::HOST)) {
+            throw std::runtime_error("Cannot pull array that isn't present on host and device");
+        }
+
+        if(!(getLocation() & VarLocationAttribute::ZERO_COPY)) {
+            // If end of slice overflows array, give error
+            if((offset + count) > getCount()) {
+                throw std::runtime_error("Cannot pull slice that overflows array");
+            }
+
+            // Convert offset and count to bytes and copy
+            const size_t offsetBytes = offset * getType().getValue().size;
+            const size_t countBytes = count * getType().getValue().size;
+            CHECK_CUDA_ERRORS(cudaMemcpy(getHostPointer() + offsetBytes, getDevicePointer() + offsetBytes, 
+                                         countBytes, cudaMemcpyDeviceToHost));
+        }
+
+    }
+
+    //! Memset the host pointer
+    virtual void memsetDeviceObject(int value) final
+    {
+        CHECK_CUDA_ERRORS(cudaMemset(m_DevicePointer, value, getSizeBytes()));
+    }
+
+    //! Serialise backend-specific device object to bytes
+    virtual void serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToPointer) const final
+    {
+        std::byte vBytes[sizeof(void*)];
+        if(pointerToPointer) {
+            std::byte* const *devicePointerPointer = &m_DevicePointer;
+            std::memcpy(vBytes, &devicePointerPointer, sizeof(void*));
+        }
+        else {
+            std::memcpy(vBytes, &m_DevicePointer, sizeof(void*));
+        }
+        std::copy(std::begin(vBytes), std::end(vBytes), std::back_inserter(bytes));
+    }
+
+    //! Serialise backend-specific host object to bytes
+    virtual void serialiseHostObject(std::vector<std::byte>&, bool) const
+    {
+        throw std::runtime_error("CUDA arrays have no host objects");
+    }
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    std::byte *getDevicePointer() const{ return m_DevicePointer; }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::byte *m_DevicePointer;
+};
+
 template<typename T, typename G>
 void genGroupStartID(CodeStream &os, size_t &idStart, size_t &totalConstMem,
                      const T &m, G getPaddedNumThreads)
@@ -218,150 +405,50 @@ const EnvironmentLibrary::Library &getRNGFunctions(const Type::ResolvedType &pre
 
 
 //--------------------------------------------------------------------------
-// GeNN::CodeGenerator::CUDA::Array
+// GeNN::CodeGenerator::CUDA::State
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator::CUDA
 {
-Array::Array(const Type::ResolvedType &type, size_t count, 
-             VarLocation location, bool uninitialized)
-:   ArrayBase(type, count, location, uninitialized), m_DevicePointer(nullptr)
+State::State(const Runtime::Runtime &runtime)
 {
-    // Allocate if count is specified
-    if(count > 0) {
-        allocate(count);
-    }
+    // Lookup NCCL symbols
+    m_NCCLGenerateUniqueID = (VoidFunction)runtime.getSymbol("ncclGenerateUniqueID", true);
+    m_NCCLGetUniqueID = (BytePtrFunction)runtime.getSymbol("ncclGetUniqueID", true);
+    m_NCCLInitCommunicator = (NCCLInitCommunicatorFunction)runtime.getSymbol("ncclInitCommunicator", true);
+    m_NCCLUniqueIDSize = (size_t*)runtime.getSymbol("ncclUniqueIDSize", true);
 }
 //--------------------------------------------------------------------------
-Array::~Array()
+void State::ncclGenerateUniqueID()
 {
-    if(getCount() > 0) {
-        free();
+    if(m_NCCLGenerateUniqueID == nullptr) {
+        throw std::runtime_error("Cannot generate NCCL unique ID - model may not have been built with NCCL support");
     }
+    m_NCCLGenerateUniqueID();
 }
 //--------------------------------------------------------------------------
-void Array::allocate(size_t count)
-{
-    // Set count
-    setCount(count);
-
-    // Malloc host pointer
-    if(getLocation() & VarLocation::HOST) {
-        const unsigned int flags = (getLocation() & VarLocation::ZERO_COPY) ? cudaHostAllocMapped : cudaHostAllocPortable;
-
-        std::byte *hostPointer = nullptr;
-        CHECK_CUDA_ERRORS(cudaHostAlloc(&hostPointer, getSizeBytes(), flags));
-        setHostPointer(hostPointer);
+unsigned char *State::ncclGetUniqueID()
+{ 
+    if(m_NCCLGetUniqueID == nullptr) {
+        throw std::runtime_error("Cannot get NCCL unique ID - model may not have been built with NCCL support");
     }
-
-    // If variable is present on device at all
-    if(getLocation() & VarLocation::DEVICE) {
-        // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
-        if(getLocation() & VarLocation::ZERO_COPY) {
-            CHECK_CUDA_ERRORS(cudaHostGetDevicePointer(&m_DevicePointer, getHostPointer(), 0));
-        }
-        else {
-            CHECK_CUDA_ERRORS(cudaMalloc(&m_DevicePointer, getSizeBytes()));
-        }
-    }
+    return m_NCCLGetUniqueID();
 }
 //--------------------------------------------------------------------------
-void Array::free()
+size_t State::ncclGetUniqueIDSize() const
 {
-    // **NOTE** because we pinned the variable we need to free it with cudaFreeHost rather than use free
-    if(getLocation() & VarLocation::HOST) {
-        CHECK_CUDA_ERRORS(cudaFreeHost(getHostPointer()));
-        setHostPointer(nullptr);
+    if(m_NCCLUniqueIDSize == nullptr) {
+        throw std::runtime_error("Cannot get NCCL unique ID size - model may not have been built with NCCL support");
     }
-
-    // If this variable wasn't allocated in zero-copy mode, free it
-    if((getLocation() & VarLocation::DEVICE) && !(getLocation() & VarLocation::ZERO_COPY)) {
-        CHECK_CUDA_ERRORS(cudaFree(getDevicePointer()));
-        m_DevicePointer = nullptr;
-    }
-
-    // Zero count
-    setCount(0);
+    
+    return *m_NCCLUniqueIDSize;
 }
-//--------------------------------------------------------------------------
-void Array::pushToDevice()
+//--------------------------------------------------------------------------    
+void State::ncclInitCommunicator(int rank, int numRanks)
 {
-    if(!(getLocation() & VarLocation::DEVICE) || !(getLocation() & VarLocation::HOST)) {
-        throw std::runtime_error("Cannot push array that isn't present on host and device");
+     if(m_NCCLInitCommunicator == nullptr) {
+        throw std::runtime_error("Cannot initialise NCCL communicator - model may not have been built with NCCL support");
     }
-
-    if(!(getLocation() & VarLocation::ZERO_COPY)) {
-        CHECK_CUDA_ERRORS(cudaMemcpy(getDevicePointer(), getHostPointer(), getSizeBytes(), cudaMemcpyHostToDevice));
-    }
-}
-//--------------------------------------------------------------------------
-void Array::pullFromDevice()
-{
-    if(!(getLocation() & VarLocation::DEVICE) || !(getLocation() & VarLocation::HOST)) {
-        throw std::runtime_error("Cannot pull array that isn't present on host and device");
-    }
-
-    if(!(getLocation() & VarLocation::ZERO_COPY)) {
-        CHECK_CUDA_ERRORS(cudaMemcpy(getHostPointer(), getDevicePointer(), getSizeBytes(), cudaMemcpyDeviceToHost));
-    }
-}
-//--------------------------------------------------------------------------
-void Array::pushSlice1DToDevice(size_t offset, size_t count)
-{
-    if(!(getLocation() & VarLocation::DEVICE) || !(getLocation() & VarLocation::HOST)) {
-        throw std::runtime_error("Cannot push array that isn't present on host and device");
-    }
-
-    if(!(getLocation() & VarLocation::ZERO_COPY)) {
-        // If end of slice overflows array, give error
-        if((offset + count) > getCount()) {
-            throw std::runtime_error("Cannot pull slice that overflows array");
-        }
-
-        // Convert offset and count to bytes and copy
-        const size_t offsetBytes = offset * getType().getValue().size;
-        const size_t countBytes = count * getType().getValue().size;
-        CHECK_CUDA_ERRORS(cudaMemcpy(getDevicePointer() + offsetBytes, getHostPointer() + offsetBytes, 
-                                     countBytes, cudaMemcpyHostToDevice));
-    }
-}
-//--------------------------------------------------------------------------
-void Array::pullSlice1DFromDevice(size_t offset, size_t count)
-{
-    if(!(getLocation() & VarLocation::DEVICE) || !(getLocation() & VarLocation::HOST)) {
-        throw std::runtime_error("Cannot pull array that isn't present on host and device");
-    }
-
-    if(!(getLocation() & VarLocation::ZERO_COPY)) {
-        // If end of slice overflows array, give error
-        if((offset + count) > getCount()) {
-            throw std::runtime_error("Cannot pull slice that overflows array");
-        }
-
-        // Convert offset and count to bytes and copy
-        const size_t offsetBytes = offset * getType().getValue().size;
-        const size_t countBytes = count * getType().getValue().size;
-        CHECK_CUDA_ERRORS(cudaMemcpy(getHostPointer() + offsetBytes, getDevicePointer() + offsetBytes, 
-                                     countBytes, cudaMemcpyDeviceToHost));
-    }
-
-}
-//--------------------------------------------------------------------------
-void Array::memsetDeviceObject(int value)
-{
-    CHECK_CUDA_ERRORS(cudaMemset(m_DevicePointer, value, getSizeBytes()));
-}
-//--------------------------------------------------------------------------
-void Array::serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToPointer) const
-{
-    std::byte vBytes[sizeof(void*)];
-    if(pointerToPointer) {
-        std::byte* const *devicePointerPointer = &m_DevicePointer;
-        std::memcpy(vBytes, &devicePointerPointer, sizeof(void*));
-    }
-    else {
-        std::memcpy(vBytes, &m_DevicePointer, sizeof(void*));
-    }
-    std::copy(std::begin(vBytes), std::end(vBytes), std::back_inserter(bytes));
+    m_NCCLInitCommunicator(rank, numRanks);
 }
 
 //--------------------------------------------------------------------------
@@ -497,7 +584,8 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     CodeStream neuronUpdate(neuronUpdateStream);
 
     // Begin environment with standard library
-    EnvironmentLibrary neuronUpdateEnv(neuronUpdate, StandardLibrary::getMathsFunctions());
+    EnvironmentLibrary backendEnv(neuronUpdate, backendFunctions);
+    EnvironmentLibrary neuronUpdateEnv(backendEnv, StandardLibrary::getMathsFunctions());
 
     // If any neuron groups require their previous spike times updating
     size_t idNeuronPrevSpikeTimeUpdate = 0;
@@ -638,7 +726,8 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
     CodeStream synapseUpdate(synapseUpdateStream);
 
     // Begin environment with standard library
-    EnvironmentLibrary synapseUpdateEnv(synapseUpdate, StandardLibrary::getMathsFunctions());
+    EnvironmentLibrary backendEnv(synapseUpdate, backendFunctions);
+    EnvironmentLibrary synapseUpdateEnv(backendEnv, StandardLibrary::getMathsFunctions());
 
     // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -811,7 +900,8 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     CodeStream customUpdate(customUpdateStream);
 
     // Begin environment with standard library
-    EnvironmentLibrary customUpdateEnv(customUpdate, StandardLibrary::getMathsFunctions());
+    EnvironmentLibrary backendEnv(customUpdate, backendFunctions);
+    EnvironmentLibrary customUpdateEnv(backendEnv, StandardLibrary::getMathsFunctions());
 
     // Build set containing union of all custom update group names
     std::set<std::string> customUpdateGroups;
@@ -995,6 +1085,8 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     modelMerged.genMergedCustomUpdateStructs(os, *this);
     modelMerged.genMergedCustomUpdateWUStructs(os, *this);
     modelMerged.genMergedCustomUpdateTransposeWUStructs(os, *this);
+    modelMerged.genMergedCustomUpdateHostReductionStructs(os, *this);
+    modelMerged.genMergedCustomWUUpdateHostReductionStructs(os, *this);
     modelMerged.genMergedCustomConnectivityUpdateStructs(os, *this);
     modelMerged.genMergedCustomConnectivityHostUpdateStructs(os, *this);
 
@@ -1004,7 +1096,9 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomConnectivityUpdateGroups());
     modelMerged.genMergedCustomConnectivityHostUpdateStructArrayPush(os, *this);
-    
+    modelMerged.genMergedCustomUpdateHostReductionHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomWUUpdateHostReductionHostStructArrayPush(os, *this);
+
     // Generate preamble
     preambleHandler(os);
 
@@ -1022,7 +1116,8 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
     // Begin environment with RNG library and standard library
     EnvironmentLibrary rngEnv(init, getRNGFunctions(model.getPrecision()));
-    EnvironmentLibrary initEnv(rngEnv, StandardLibrary::getMathsFunctions());
+    EnvironmentLibrary backendEnv(rngEnv, backendFunctions);
+    EnvironmentLibrary initEnv(backendEnv, StandardLibrary::getMathsFunctions());
 
     // If device RNG is required, generate kernel to initialise it
     if(isGlobalDeviceRNGRequired(model)) {
@@ -1180,10 +1275,10 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
         os, totalConstMem,
         modelMerged.getMergedNeuronInitGroups(), [this](const NeuronGroupInternal &ng){ return padKernelSize(ng.getNumNeurons(), KernelInitialize); },
         modelMerged.getMergedSynapseInitGroups(), [this](const SynapseGroupInternal &sg){ return padKernelSize(getNumInitThreads(sg), KernelInitialize); },
-        modelMerged.getMergedCustomUpdateInitGroups(), [this](const CustomUpdateInternal &cg) { return padKernelSize(cg.getSize(), KernelInitialize); },
-        modelMerged.getMergedCustomConnectivityUpdatePreInitGroups(), [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), KernelInitialize); },
-        modelMerged.getMergedCustomConnectivityUpdatePostInitGroups(), [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), KernelInitialize); },
+        modelMerged.getMergedCustomUpdateInitGroups(), [this](const CustomUpdateInternal &cg) { return padKernelSize(cg.getNumNeurons(), KernelInitialize); },
         modelMerged.getMergedCustomWUUpdateInitGroups(), [this](const CustomUpdateWUInternal &cg){ return padKernelSize(getNumInitThreads(cg), KernelInitialize); },        
+        modelMerged.getMergedCustomConnectivityUpdatePreInitGroups(), [this](const CustomConnectivityUpdateInternal& cg) { return padKernelSize(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), KernelInitialize); },
+        modelMerged.getMergedCustomConnectivityUpdatePostInitGroups(), [this](const CustomConnectivityUpdateInternal& cg) { return padKernelSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), KernelInitialize); },
         modelMerged.getMergedSynapseConnectivityInitGroups(), [this](const SynapseGroupInternal &sg){ return padKernelSize(getNumConnectivityInitThreads(sg), KernelInitialize); });
 
     // Generate data structure for accessing merged groups from within sparse initialisation kernel
@@ -1236,7 +1331,7 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &) co
 
         // Export ncclGetUniqueId function
         os << "extern \"C\" {" << std::endl;
-        os << "EXPORT_VAR const unsigned int ncclUniqueIDBytes;" << std::endl;
+        os << "EXPORT_VAR const size_t ncclUniqueIDSize;" << std::endl;
         os << "EXPORT_FUNC void ncclGenerateUniqueID();" << std::endl;
         os << "EXPORT_FUNC void ncclInitCommunicator(int rank, int numRanks);" << std::endl;
         os << "EXPORT_FUNC unsigned char *ncclGetUniqueID();" << std::endl;
@@ -1559,7 +1654,7 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&) const
         os << "ncclComm_t ncclCommunicator;" << std::endl;
 
         // Define constant to expose NCCL_UNIQUE_ID_BYTES
-        os << "const unsigned int ncclUniqueIDBytes = NCCL_UNIQUE_ID_BYTES;" << std::endl;
+        os << "const size_t ncclUniqueIDSize = NCCL_UNIQUE_ID_BYTES;" << std::endl;
 
         // Define wrapper to generate a unique NCCL ID
         os << std::endl;
@@ -1609,6 +1704,11 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged 
     }
 }
 //--------------------------------------------------------------------------
+std::unique_ptr<GeNN::Runtime::StateBase> Backend::createState(const Runtime::Runtime &runtime) const
+{
+    return std::make_unique<State>(runtime);
+}
+//--------------------------------------------------------------------------
 std::unique_ptr<Runtime::ArrayBase> Backend::createArray(const Type::ResolvedType &type, size_t count, 
                                                          VarLocation location, bool uninitialized) const
 {
@@ -1629,14 +1729,14 @@ void Backend::genLazyVariableDynamicAllocation(CodeStream &os,
     const std::string hostPointerToPointer = type.isPointer() ? ("$(_" + name + ")") : ("&$(_" + name + ")");
     const std::string devicePointerToPointer = type.isPointer() ? ("$(_d_" + name + ")") : ("&$(_d_" + name + ")");
    
-    if(loc & VarLocation::HOST) {
-        const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
+    if(loc & VarLocationAttribute::HOST) {
+        const char *flags = (loc & VarLocationAttribute::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
         os << "CHECK_CUDA_ERRORS(cudaHostAlloc(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << "), " << flags << "));" << std::endl;
     }
 
     // If variable is present on device at all
-    if(loc & VarLocation::DEVICE) {
-        if(loc & VarLocation::ZERO_COPY) {
+    if(loc & VarLocationAttribute::DEVICE) {
+        if(loc & VarLocationAttribute::ZERO_COPY) {
             os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void**)" << devicePointerToPointer << ", (void*)" << hostPointer << ", 0));" << std::endl;
         }
         else {
@@ -1649,7 +1749,7 @@ void Backend::genLazyVariableDynamicPush(CodeStream &os,
                                          const Type::ResolvedType &type, const std::string &name,
                                          VarLocation loc, const std::string &countVarName) const
 {
-    if(!(loc & VarLocation::ZERO_COPY)) {
+    if(!(loc & VarLocationAttribute::ZERO_COPY)) {
         if (type.isPointer()) {
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(*$(_d_" << name << "), *$(_" << name << "), ";
             os << countVarName << " * sizeof(" << type.getPointer().valueType->getName() << "), cudaMemcpyHostToDevice));" << std::endl;
@@ -1665,7 +1765,7 @@ void Backend::genLazyVariableDynamicPull(CodeStream &os,
                                          const Type::ResolvedType &type, const std::string &name,
                                          VarLocation loc, const std::string &countVarName) const
 {
-    if(!(loc & VarLocation::ZERO_COPY)) {
+    if(!(loc & VarLocationAttribute::ZERO_COPY)) {
         if (type.isPointer()) {
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(*$(_" << name << "), *$(_d_" << name << "), ";
             os << countVarName << " * sizeof(" << type.getPointer().valueType->getName() << "), cudaMemcpyDeviceToHost));" << std::endl;

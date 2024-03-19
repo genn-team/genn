@@ -52,9 +52,9 @@ public:
     }
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
-                  const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
-                  const std::unordered_map<std::string, Models::VarReference> &varRefTargets,
+    void validate(const std::map<std::string, Type::NumericValue> &paramValues, 
+                  const std::map<std::string, InitVarSnippet::Init> &varValues,
+                  const std::map<std::string, Models::VarReference> &varRefTargets,
                   const std::string &description) const;
 };
 
@@ -63,6 +63,7 @@ public:
 //----------------------------------------------------------------------------
 //! DC source
 /*! It has a single parameter:
+
     - \c amp    - amplitude of the current [nA]
 */
 class DC : public Base
@@ -79,6 +80,7 @@ class DC : public Base
 //----------------------------------------------------------------------------
 //! Noisy current source with noise drawn from normal distribution
 /*! It has 2 parameters:
+
     - \c mean   - mean of the normal distribution [nA]
     - \c sd     - standard deviation of the normal distribution [nA]
 */
@@ -97,6 +99,7 @@ class GaussianNoise : public Base
 //! Current source for injecting a current equivalent to a population of
 //! Poisson spike sources, one-to-one connected with exponential synapses
 /*! It has 3 parameters:
+
     - \c weight - synaptic weight of the Poisson spikes [nA]
     - \c tauSyn - decay time constant [ms]
     - \c rate   - mean firing rate [Hz]

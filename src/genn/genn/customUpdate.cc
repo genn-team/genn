@@ -19,7 +19,7 @@ namespace GeNN
 //------------------------------------------------------------------------
 void CustomUpdateBase::setVarLocation(const std::string &varName, VarLocation loc) 
 { 
-    if(!getCustomUpdateModel()->getVar(varName)) {
+    if(!getModel()->getVar(varName)) {
         throw std::runtime_error("Unknown custom update model variable '" + varName + "'");
     }
     m_VarLocation.set(varName, loc); 
@@ -27,7 +27,7 @@ void CustomUpdateBase::setVarLocation(const std::string &varName, VarLocation lo
 //----------------------------------------------------------------------------
 void CustomUpdateBase::setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc) 
 { 
-    if(!getCustomUpdateModel()->getExtraGlobalParam(paramName)) {
+    if(!getModel()->getExtraGlobalParam(paramName)) {
         throw std::runtime_error("Unknown custom update model extra global parameter '" + paramName + "'");
     }
     m_ExtraGlobalParamLocation.set(paramName, loc); 
@@ -35,7 +35,7 @@ void CustomUpdateBase::setExtraGlobalParamLocation(const std::string &paramName,
 //----------------------------------------------------------------------------
 void CustomUpdateBase::setParamDynamic(const std::string &paramName, bool dynamic) 
 { 
-    if(!getCustomUpdateModel()->getParam(paramName)) {
+    if(!getModel()->getParam(paramName)) {
         throw std::runtime_error("Unknown custom update model parameter '" + paramName + "'");
     }
     m_DynamicParams.set(paramName, dynamic); 
@@ -48,9 +48,9 @@ bool CustomUpdateBase::isVarInitRequired() const
 }
 //----------------------------------------------------------------------------
 CustomUpdateBase::CustomUpdateBase(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 
-                                   const std::unordered_map<std::string, Type::NumericValue> &params, const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers,
-                                   const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-:   m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
+                                   const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers,
+                                   const std::map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+:   m_Name(name), m_UpdateGroupName(updateGroupName), m_Model(customUpdateModel), m_Params(params), 
     m_VarInitialisers(varInitialisers), m_EGPReferences(egpReferences), m_VarLocation(defaultVarLocation),
     m_ExtraGlobalParamLocation(defaultExtraGlobalParamLocation), m_Dims{0}
 {
@@ -58,24 +58,17 @@ CustomUpdateBase::CustomUpdateBase(const std::string &name, const std::string &u
     Utils::validatePopName(name, "Custom update");
     Utils::validatePopName(updateGroupName, "Custom update group name");
 
-    // Loop through all extra global parameter references
-    for (const auto &modelEGPRef : getCustomUpdateModel()->getExtraGlobalParamRefs()) {
-        const auto egpRef = egpReferences.at(modelEGPRef.name);
+    // Check EGP reference types
+    Models::checkEGPReferenceTypes(m_EGPReferences, getModel()->getExtraGlobalParamRefs());
 
-        // Check types of extra global parameter references against those specified in model
-        // **THINK** this is rather conservative but I think not allowing "scalar" and whatever happens to be scalar type is ok
-        if (egpRef.getEGP().type != modelEGPRef.type) {
-            throw std::runtime_error("Incompatible type for extra global parameter reference '" + modelEGPRef.name + "'");
-        }
-    }
     // Scan custom update model code string
-    m_UpdateCodeTokens = Utils::scanCode(getCustomUpdateModel()->getUpdateCode(), 
+    m_UpdateCodeTokens = Utils::scanCode(getModel()->getUpdateCode(), 
                                          "Custom update '" + getName() + "' update code");
 }
 //----------------------------------------------------------------------------
 void CustomUpdateBase::finalise(double dt)
 {
-    auto derivedParams = getCustomUpdateModel()->getDerivedParams();
+    auto derivedParams = getModel()->getDerivedParams();
 
     // Loop through derived parameters
     for(const auto &d : derivedParams) {
@@ -102,7 +95,7 @@ bool CustomUpdateBase::isZeroCopyEnabled() const
 bool CustomUpdateBase::isModelReduction() const
 {
     // Return true if any variables have REDUCE flag in their access mode
-    const auto vars = getCustomUpdateModel()->getVars();
+    const auto vars = getModel()->getVars();
     if(std::any_of(vars.cbegin(), vars.cend(),
                     [](const auto &v){ return (v.access & VarAccessModeAttribute::REDUCE); }))
     {
@@ -110,7 +103,7 @@ bool CustomUpdateBase::isModelReduction() const
     }
 
     // Return true if any variable references have REDUCE flag in their access mode
-    const auto varRefs = getCustomUpdateModel()->getVarRefs();
+    const auto varRefs = getModel()->getVarRefs();
     if(std::any_of(varRefs.cbegin(), varRefs.cend(),
                     [](const auto &v){ return (v.access & VarAccessModeAttribute::REDUCE); }))
     {
@@ -122,7 +115,7 @@ bool CustomUpdateBase::isModelReduction() const
 //----------------------------------------------------------------------------
 void CustomUpdateBase::updateHash(boost::uuids::detail::sha1 &hash) const
 {
-    Utils::updateHash(getCustomUpdateModel()->getHashDigest(), hash);
+    Utils::updateHash(getModel()->getHashDigest(), hash);
     Utils::updateHash(getUpdateGroupName(), hash);
     Utils::updateHash(getDims(), hash);
     m_DynamicParams.updateHash(hash);
@@ -130,7 +123,7 @@ void CustomUpdateBase::updateHash(boost::uuids::detail::sha1 &hash) const
 //----------------------------------------------------------------------------
 void CustomUpdateBase::updateInitHash(boost::uuids::detail::sha1 &hash) const
 {
-    Utils::updateHash(getCustomUpdateModel()->getVars(), hash);
+    Utils::updateHash(getModel()->getVars(), hash);
     Utils::updateHash(getDims(), hash);
 
     // Include variable initialiser hashes
@@ -152,21 +145,22 @@ boost::uuids::detail::sha1::digest_type CustomUpdateBase::getVarLocationHashDige
 // CustomUpdate
 //----------------------------------------------------------------------------
 CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGroupName,
-                           const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, Type::NumericValue> &params,
-                           const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
-                           const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+                           const CustomUpdateModels::Base *customUpdateModel, const std::map<std::string, Type::NumericValue> &params,
+                           const std::map<std::string, InitVarSnippet::Init> &varInitialisers, const std::map<std::string, Models::VarReference> &varReferences,
+                           const std::map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation),
-    m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.begin()->second.getSize()), m_DelayNeuronGroup(nullptr)
+    m_VarReferences(varReferences), m_NumNeurons(varReferences.empty() ? 0 : varReferences.begin()->second.getNumNeurons()), m_DelayNeuronGroup(nullptr)
 {
     // Validate parameters, variables and variable references
-    getCustomUpdateModel()->validate(getParams(), getVarInitialisers(), getVarReferences(), "Custom update " + getName());
+    getModel()->validate(getParams(), getVarInitialisers(), getVarReferences(), getEGPReferences(),
+                         "Custom update " + getName());
 
     if(varReferences.empty()) {
         throw std::runtime_error("Custom update models must reference variables.");
     }
 
     // Check variable reference types
-    Models::checkVarReferenceTypes(m_VarReferences, getCustomUpdateModel()->getVarRefs());
+    Models::checkVarReferenceTypes(m_VarReferences, getModel()->getVarRefs());
 
     // Check only one type of reduction is specified
     const bool batchReduction = isBatchReduction();
@@ -181,7 +175,7 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
 
     // Give error if any sizes differ
     if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                   [this](const auto &v) { return v.second.getSize() != m_Size; }))
+                   [this](const auto &v) { return v.second.getNumNeurons() != m_NumNeurons; }))
     {
         throw std::runtime_error("All referenced variables must have the same size.");
     }
@@ -249,21 +243,22 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getInitHashDigest() const
 // GeNN::CustomUpdateWU
 //----------------------------------------------------------------------------
 CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
-                               const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, Type::NumericValue> &params,
-                               const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
-                               const std::unordered_map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+                               const CustomUpdateModels::Base *customUpdateModel, const std::map<std::string, Type::NumericValue> &params,
+                               const std::map<std::string, InitVarSnippet::Init> &varInitialisers, const std::map<std::string, Models::WUVarReference> &varReferences,
+                               const std::map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation),
     m_VarReferences(varReferences), m_SynapseGroup(m_VarReferences.empty() ? nullptr : static_cast<SynapseGroupInternal*>(m_VarReferences.begin()->second.getSynapseGroup()))
 {
     // Validate parameters, variables and variable references
-    getCustomUpdateModel()->validate(getParams(), getVarInitialisers(), getVarReferences(), "Custom update " + getName());
+    getModel()->validate(getParams(), getVarInitialisers(), getVarReferences(), getEGPReferences(),
+                         "Custom update " + getName());
 
     if(varReferences.empty()) {
         throw std::runtime_error("Custom update models must reference variables.");
     }
 
     // Check variable reference types
-    Models::checkVarReferenceTypes(m_VarReferences, getCustomUpdateModel()->getVarRefs());
+    Models::checkVarReferenceTypes(m_VarReferences, getModel()->getVarRefs());
 
     // If model specifies reduction operations but none are correctly configured
     if(isModelReduction() && !isBatchReduction()) {
@@ -273,7 +268,7 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     // Give error if custom update model includes any shared neuron variables
     // **NOTE** because there's no way to reference neuron variables with WUVarReferences, 
     // this safely checks for attempts to do neuron reductions
-    const auto vars = getCustomUpdateModel()->getVars();
+    const auto vars = getModel()->getVars();
     if (std::any_of(vars.cbegin(), vars.cend(),
                     [](const auto &v)
                     {

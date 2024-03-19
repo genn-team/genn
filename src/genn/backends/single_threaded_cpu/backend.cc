@@ -22,6 +22,11 @@ using namespace GeNN::Transpiler;
 //--------------------------------------------------------------------------
 namespace
 {
+const EnvironmentLibrary::Library backendFunctions = {
+    {"clz", {Type::ResolvedType::createFunction(Type::Int32, {Type::Uint32}), "gennCLZ($(0))"}},
+    {"atomic_or", {Type::ResolvedType::createFunction(Type::Void, {Type::Uint32.createPointer(), Type::Uint32}), "(*($(0)) |= ($(1)))"}}
+};
+
 //--------------------------------------------------------------------------
 // Timer
 //--------------------------------------------------------------------------
@@ -52,6 +57,91 @@ private:
     CodeStream &m_CodeStream;
     const std::string m_Name;
     const bool m_TimingEnabled;
+};
+
+//--------------------------------------------------------------------------
+// CodeGenerator::SingleThreadedCPU::Array
+//--------------------------------------------------------------------------
+class Array : public Runtime::ArrayBase
+{
+public:
+    Array(const Type::ResolvedType &type, size_t count, 
+          VarLocation location, bool uninitialized)
+    :   ArrayBase(type, count, location, uninitialized)
+    {
+        if(count > 0) {
+            allocate(count);
+        }
+    }
+    
+    virtual ~Array()
+    {
+        if(getCount() > 0) {
+            free();
+        }
+    }
+    
+    //------------------------------------------------------------------------
+    // ArrayBase virtuals
+    //------------------------------------------------------------------------
+    //! Allocate array
+    virtual void allocate(size_t count) final
+    {
+        // Malloc host pointer
+        setCount(count);
+        setHostPointer(new std::byte[getSizeBytes()]);
+    }
+
+    //! Free array
+    virtual void free() final
+    {
+        delete [] getHostPointer();
+        setHostPointer(nullptr);
+        setCount(0);
+    }
+
+
+    //! Copy entire array to device
+    virtual void pushToDevice() final
+    {
+    }
+
+    //! Copy entire array from device
+    virtual void pullFromDevice() final
+    {
+    }
+
+    //! Copy a 1D slice of elements to device 
+    /*! \param offset   Offset in elements to start copying from
+        \param count    Number of elements to copy*/
+    virtual void pushSlice1DToDevice(size_t, size_t) final
+    {
+    }
+
+    //! Copy a 1D slice of elements from device 
+    /*! \param offset   Offset in elements to start copying from
+        \param count    Number of elements to copy*/
+    virtual void pullSlice1DFromDevice(size_t, size_t) final
+    {
+    }
+    
+    //! Memset the host pointer
+    virtual void memsetDeviceObject(int) final
+    {
+        throw std::runtime_error("Single-threaded CPU arrays have no device objects");
+    }
+
+    //! Serialise backend-specific device object to bytes
+    virtual void serialiseDeviceObject(std::vector<std::byte>&, bool) const final
+    {
+        throw std::runtime_error("Single-threaded CPU arrays have no device objects");
+    }
+
+    //! Serialise backend-specific host object to bytes
+    virtual void serialiseHostObject(std::vector<std::byte>&, bool) const
+    {
+        throw std::runtime_error("Single-threaded CPU arrays have no host objects");
+    }
 };
 
 //-----------------------------------------------------------------------
@@ -97,44 +187,10 @@ void genKernelIteration(EnvironmentExternalBase &env, G &g, size_t numKernelDims
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::SingleThreadedCPU::Array
+// CodeGenerator::SingleThreadedCPU::Backend
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator::SingleThreadedCPU
 {
-//--------------------------------------------------------------------------
-Array::Array(const Type::ResolvedType &type, size_t count, 
-             VarLocation location, bool uninitialized)
-:   ArrayBase(type, count, location, uninitialized)
-{
-    if(count > 0) {
-        allocate(count);
-    }
-}
-//--------------------------------------------------------------------------
-Array::~Array()
-{
-    if(getCount() > 0) {
-        free();
-    }
-}
-//--------------------------------------------------------------------------
-void Array::allocate(size_t count)
-{
-    // Malloc host pointer
-    setCount(count);
-    setHostPointer(new std::byte[getSizeBytes()]);
-}
-//--------------------------------------------------------------------------
-void Array::free()
-{
-    delete [] getHostPointer();
-    setHostPointer(nullptr);
-    setCount(0);
-}
-
-//--------------------------------------------------------------------------
-// GeNN::CodeGenerator::SingleThreadedCPU::Backend
-//--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
                               HostHandler preambleHandler) const
 {
@@ -147,7 +203,8 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     CodeStream neuronUpdate(neuronUpdateStream);
 
     // Begin environment with standard library
-    EnvironmentLibrary neuronUpdateEnv(neuronUpdate, StandardLibrary::getMathsFunctions());
+    EnvironmentLibrary backendEnv(neuronUpdate, backendFunctions);
+    EnvironmentLibrary neuronUpdateEnv(backendEnv, StandardLibrary::getMathsFunctions());
 
     neuronUpdateEnv.getStream() << "void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
     if(modelMerged.getModel().isRecordingInUse()) {
@@ -291,6 +348,12 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                     env.printLine("$(_record_spk)[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));");
                                 }
 
+                                // Update event time
+                                if(n.getArchetype().isSpikeTimeRequired()) {
+                                    const std::string queueOffset = n.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
+                                    env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
+                                }
+
                                 // Generate spike dagta structure updates
                                 n.generateSpikes(
                                     env,
@@ -308,6 +371,11 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                     [&n, this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent&)
                                     {
                                         genEmitEvent(env, n, false);
+
+                                        if(n.getArchetype().isSpikeEventTimeRequired()) {
+                                            const std::string queueOffset = n.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
+                                            env.printLine("$(_set)[" + queueOffset + "$(id)] = $(t);");
+                                        }
 
                                         // If recording is enabled
                                         if(n.getArchetype().isSpikeEventRecordingEnabled()) {
@@ -348,7 +416,8 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
     CodeStream synapseUpdate(synapseUpdateStream);
 
     // Begin environment with standard library
-    EnvironmentLibrary synapseUpdateEnv(synapseUpdate, StandardLibrary::getMathsFunctions());
+    EnvironmentLibrary backendEnv(synapseUpdate, backendFunctions);
+    EnvironmentLibrary synapseUpdateEnv(backendEnv, StandardLibrary::getMathsFunctions());
 
     synapseUpdateEnv.getStream() << "void updateSynapses(" << modelMerged.getModel().getTimePrecision().getName() << " t)";
     {
@@ -562,7 +631,8 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     CodeStream customUpdate(customUpdateStream);
     
     // Begin environment with standard library
-    EnvironmentLibrary customUpdateEnv(customUpdate, StandardLibrary::getMathsFunctions());
+    EnvironmentLibrary backendEnv(customUpdate, backendFunctions);
+    EnvironmentLibrary customUpdateEnv(backendEnv, StandardLibrary::getMathsFunctions());
 
     // Loop through custom update groups
     for(const auto &g : customUpdateGroups) {
@@ -613,7 +683,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                 // Loop through group members
                                 EnvironmentGroupMergedField<CustomUpdateGroupMerged> memberEnv(groupEnv, c);
                                 if (c.getArchetype().getDims() & VarAccessDim::ELEMENT) {
-                                    memberEnv.print("for(unsigned int i = 0; i < $(size); i++)");
+                                    memberEnv.print("for(unsigned int i = 0; i < $(num_neurons); i++)");
                                     memberEnv.add(Type::Uint32.addConst(), "id", "i");
                                 }
                                 else {
@@ -641,7 +711,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                 // Loop through group members
                                 EnvironmentGroupMergedField<CustomUpdateGroupMerged> memberEnv(groupEnv, c);
                                 if (c.getArchetype().getDims() & VarAccessDim::ELEMENT) {
-                                    memberEnv.print("for(unsigned int i = 0; i < $(size); i++)");
+                                    memberEnv.print("for(unsigned int i = 0; i < $(num_neurons); i++)");
                                     memberEnv.add(Type::Uint32.addConst(), "id", "i");
                                 }
                                 else {
@@ -883,8 +953,8 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
     // Begin environment with RNG library and standard library
     EnvironmentLibrary rngEnv(init, StandardLibrary::getHostRNGFunctions(modelMerged.getModel().getPrecision()));
-    EnvironmentLibrary initEnv(rngEnv, StandardLibrary::getMathsFunctions());
-
+    EnvironmentLibrary backendEnv(rngEnv, backendFunctions);
+    EnvironmentLibrary initEnv(backendEnv, StandardLibrary::getMathsFunctions());
 
     initEnv.getStream() << "void initialize()";
     {
@@ -1045,7 +1115,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                     }
 
                     // If there is row-building code in this snippet
-                    const auto &connectInit = s.getArchetype().getConnectivityInitialiser();
+                    const auto &connectInit = s.getArchetype().getSparseConnectivityInitialiser();
                     if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
                         // Generate loop through source neurons
                         groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
@@ -1126,12 +1196,12 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                                  // **THINK** why is this logic so convoluted?
                                 if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
                                     addSynapseEnv.printLine("const int64_t rowStartGID = $(id_pre) * $(_row_stride);");
-                                    addSynapseEnv.printLine("setB($(_gp)[(rowStartGID + ($(id_post))) / 32], (rowStartGID + $(id_post)) & 31);");
+                                    addSynapseEnv.printLine("$(_gp)[(rowStartGID + $(id_post)) / 32] |= (0x80000000 >> ((rowStartGID + $(id_post)) & 31));");
                                 }
                                 // Otherwise
                                 else {
                                     addSynapseEnv.printLine("const int64_t colStartGID = $(id_post);");
-                                    addSynapseEnv.printLine("setB($(_gp)[(colStartGID + (($(id_pre)) * $(_row_stride))) / 32], ((colStartGID + (($(id_pre)) * $(_row_stride))) & 31));");
+                                    addSynapseEnv.printLine("$(_gp)[(colStartGID + ($(id_pre) * $(_row_stride))) / 32] |= (0x80000000 >> ((colStartGID + ($(id_pre) * $(_row_stride))) & 31));");
                                 }
                             }
                         }
@@ -1310,7 +1380,7 @@ size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
     if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) || (sg.getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ)) {
         return sg.getMaxConnections();
     }
-    else if(getPreferences().enableBitmaskOptimisations && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
+    else if(sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
         return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
     }
     else {
@@ -1383,6 +1453,11 @@ void Backend::genFreeMemPreamble(CodeStream&, const ModelSpecMerged&) const
 //--------------------------------------------------------------------------
 void Backend::genStepTimeFinalisePreamble(CodeStream &, const ModelSpecMerged &) const
 {
+}
+//--------------------------------------------------------------------------
+std::unique_ptr<GeNN::Runtime::StateBase> Backend::createState(const Runtime::Runtime&) const
+{
+    return std::make_unique<State>();
 }
 //--------------------------------------------------------------------------
 std::unique_ptr<Runtime::ArrayBase> Backend::createArray(const Type::ResolvedType &type, size_t count, 
@@ -1601,7 +1676,7 @@ bool Backend::isGlobalHostRNGRequired(const ModelSpecInternal &model) const
     if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
                    [](const ModelSpec::SynapseGroupValueType &s)
                    {
-                       return (s.second.isWUInitRNGRequired() || s.second.getConnectivityInitialiser().isHostRNGRequired());
+                       return (s.second.isWUInitRNGRequired() || s.second.getSparseConnectivityInitialiser().isHostRNGRequired());
                    }))
     {
         return true;
@@ -1809,15 +1884,17 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
             else if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
                 throw std::runtime_error("The single-threaded CPU backend does not support procedural connectivity.");
             }
-            else if(getPreferences().enableBitmaskOptimisations && (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
+            else if((sg.getArchetype().getParallelismHint() == SynapseGroup::ParallelismHint::WORD_PACKED_BITMASK)
+                    && (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK))
+            {
                 // Determine the number of words in each row
-                groupEnv.printLine("const unsigned int rowWords = (($(num_post) + 32 - 1) / 32);");
-                groupEnv.getStream() << "for(unsigned int w = 0; w < rowWords; w++)";
+                groupEnv.printLine("const unsigned int rowWords = $(_row_stride) / 32;");
+                groupEnv.print("for(unsigned int w = 0; w < rowWords; w++)");
                 {
                     CodeStream::Scope b(groupEnv.getStream());
 
                     // Read row word
-                    groupEnv.printLine("uint32_t connectivityWord = $(_gp)[(ipre * rowWords) + w];");
+                    groupEnv.printLine("uint32_t connectivityWord = $(_gp)[($(id_pre) * rowWords) + w];");
 
                     // Set ipost to first synapse in connectivity word
                     groupEnv.getStream() << "unsigned int ipost = w * 32;" << std::endl;
@@ -1834,14 +1911,14 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                         CodeStream::Scope b(groupEnv.getStream());
 
                         // Cound leading zeros (as bits are indexed backwards this is index of next synapse)
-                        groupEnv.getStream() << "const int numLZ = gennCLZ(connectivityWord);" << std::endl;
+                        groupEnv.printLine("const int numLZ = gennCLZ(connectivityWord);");
 
                         // Shift off zeros and the one just discovered
                         // **NOTE** << 32 appears to result in undefined behaviour
-                        groupEnv.getStream() << "connectivityWord = (numLZ == 31) ? 0 : (connectivityWord << (numLZ + 1));" << std::endl;
+                        groupEnv.printLine("connectivityWord = (numLZ == 31) ? 0 : (connectivityWord << (numLZ + 1));");
 
                         // Add to ipost
-                        groupEnv.getStream() << "ipost += numLZ;" << std::endl;
+                        groupEnv.printLine("ipost += numLZ;");
 
                         // If we aren't in padding region
                         // **TODO** don't bother checking if there is no padding
@@ -1857,7 +1934,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                         }
 
                         // Increment ipost to take into account fact the next CLZ will go from bit AFTER synapse
-                        groupEnv.getStream() << "ipost++;" << std::endl;
+                        groupEnv.printLine("ipost++;");
                     }
                 }
             }
@@ -1877,9 +1954,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     const auto indexType = getSynapseIndexType(sg);
                     const auto indexTypeName = indexType.getName();
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                        synEnv.printLine("const " + indexTypeName + " gid = ((" + indexTypeName + ")$(id_pre) * $(num_post)) + $(id_post);");
+                        synEnv.printLine("const " + indexTypeName + " gid = ((" + indexTypeName + ")$(id_pre) * $(_row_stride)) + $(id_post);");
 
-                        synEnv.getStream() << "if (B(" << synEnv["_gp"] << "[gid / 32], gid & 31))" << CodeStream::OB(20);
+                        synEnv.print("if($(_gp)[gid / 32] & (0x80000000 >> (gid & 31)))");
+                        synEnv.getStream() << CodeStream::OB(20);
                     }
                     else {
                         synEnv.add(indexType.addConst(), "id_syn", "idSyn",
@@ -1993,19 +2071,6 @@ void Backend::genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpi
 void Backend::genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike) const
 {
     const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
-
-    // Update event time
-    if(trueSpike) {
-        if(ng.getArchetype().isSpikeTimeRequired()) {
-            env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
-        }
-    }
-    else {
-        if(ng.getArchetype().isSpikeEventTimeRequired()) {
-            env.printLine("$(_set)[" + queueOffset + "$(id)] = $(t);");
-        }
-    }
-    
     const std::string suffix = trueSpike ? "" : "_event";
     env.print("$(_spk" + suffix + ")[" + queueOffset + "$(_spk_cnt" + suffix + ")");
     if(ng.getArchetype().isDelayRequired()) {

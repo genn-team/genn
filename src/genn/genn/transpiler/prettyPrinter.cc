@@ -320,7 +320,9 @@ private:
 
     virtual void visit(const Statement::Expression &expression) final
     {
-        expression.getExpression()->accept(*this);
+        if(expression.getExpression()) {
+            expression.getExpression()->accept(*this);
+        }
         m_Environment.get().getStream() << ";";
     }
 
@@ -375,7 +377,6 @@ private:
         // Restore old environment
         m_Environment = oldEnvironment;
     }
-
 
     virtual void visit(const Statement::If &ifStatement) final
     {

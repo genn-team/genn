@@ -20,13 +20,11 @@ TEST(CurrentSource, CompareDifferentModel)
 
     // Add one gaussian current source
     ParamValues cs0ParamVals{{"mean", 0.0}, {"sd", 0.1}};
-    CurrentSource *cs0 = model.addCurrentSource<CurrentSourceModels::GaussianNoise>("CS0", "Neurons0",
-                                                                                   cs0ParamVals, {});
+    auto *cs0 = model.addCurrentSource<CurrentSourceModels::GaussianNoise>("CS0", pop, cs0ParamVals);
 
     // Add one DC current source
     ParamValues cs1ParamVals{{"amp", 0.4}};
-    CurrentSource *cs1 = model.addCurrentSource<CurrentSourceModels::DC>("CS1", "Neurons0",
-                                                                         cs1ParamVals, {});
+    auto *cs1 = model.addCurrentSource<CurrentSourceModels::DC>("CS1", pop, cs1ParamVals);
 
     // Finalize model
     model.finalise();
@@ -47,13 +45,11 @@ TEST(CurrentSource, CompareDifferentParameters)
 
     // Add one gaussian current source
     ParamValues cs0ParamVals{{"mean", 0.0}, {"sd", 0.1}};
-    CurrentSource *cs0 = model.addCurrentSource<CurrentSourceModels::GaussianNoise>("CS0", "Neurons0",
-                                                                                   cs0ParamVals, {});
+    auto *cs0 = model.addCurrentSource<CurrentSourceModels::GaussianNoise>("CS0", pop, cs0ParamVals);
 
     // Add second gaussian current source
     ParamValues cs1ParamVals{{"mean", 0.0}, {"sd", 0.5}};
-    CurrentSource *cs1 = model.addCurrentSource<CurrentSourceModels::GaussianNoise>("CS1", "Neurons0",
-                                                                                    cs1ParamVals, {});
+    auto *cs1 = model.addCurrentSource<CurrentSourceModels::GaussianNoise>("CS1", pop, cs1ParamVals);
 
     // Finalize model
     model.finalise();
@@ -74,13 +70,11 @@ TEST(CurrentSource, CompareSameParameters)
 
     // Add one gaussian current source
     ParamValues cs0ParamVals{{"mean", 0.0}, {"sd", 0.1}};
-    CurrentSource *cs0 = model.addCurrentSource<CurrentSourceModels::GaussianNoise>("CS0", "Neurons0",
-                                                                                   cs0ParamVals, {});
+    auto *cs0 = model.addCurrentSource<CurrentSourceModels::GaussianNoise>("CS0", pop, cs0ParamVals);
 
     // Add second gaussian current source
     ParamValues cs1ParamVals{{"mean", 0.0}, {"sd", 0.1}};
-    CurrentSource *cs1 = model.addCurrentSource<CurrentSourceModels::GaussianNoise>("CS1", "Neurons0",
-                                                                                    cs1ParamVals, {});
+    auto *cs1 = model.addCurrentSource<CurrentSourceModels::GaussianNoise>("CS1", pop, cs1ParamVals);
 
     // Finalize model
     model.finalise();
@@ -96,10 +90,10 @@ TEST(CurrentSource, InvalidName)
     VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     
     ModelSpec model;
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pop", 10, paramVals, varVals);
+    auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pop", 10, paramVals, varVals);
     
     try {
-        model.addCurrentSource<CurrentSourceModels::DC>("CS-2", "Pop", {{"amp", 1.0}}, {});
+        model.addCurrentSource<CurrentSourceModels::DC>("CS-2", pop, {{"amp", 1.0}});
         FAIL();
     }
     catch(const std::runtime_error &) {

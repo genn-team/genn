@@ -32,7 +32,7 @@ public:
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues) const;
+    void validate(const std::map<std::string, Type::NumericValue> &paramValues) const;
 };
 
 
@@ -45,7 +45,7 @@ public:
 class GENN_EXPORT Init : public Snippet::Init<Base>
 {
 public:
-    Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params);
+    Init(const Base *snippet, const std::map<std::string, Type::NumericValue> &params);
     Init(double constant);
 
     //------------------------------------------------------------------------
@@ -55,7 +55,7 @@ public:
 
     bool isKernelRequired() const;
     
-    const std::vector<Transpiler::Token> &getCodeTokens() const{ return m_CodeTokens; }
+    const auto &getCodeTokens() const{ return m_CodeTokens; }
 
 private:
     //------------------------------------------------------------------------
@@ -79,7 +79,7 @@ public:
 //----------------------------------------------------------------------------
 //! Initialises variable to a constant value
 /*! This snippet takes 1 parameter:
- *
+
     - \c value - The value to intialise the variable to
 
     \note This snippet type is seldom used directly - InitVarSnippet::Init
@@ -97,7 +97,9 @@ public:
 //----------------------------------------------------------------------------
 // GeNN::InitVarSnippet::Kernel
 //----------------------------------------------------------------------------
-//! Used to initialise synapse variables from a kernel
+//! Used to initialise synapse variables from a kernel. This snippet type is used 
+//! if you wish to initialise sparse connectivity using a sparse connectivity
+//! initialisation snippet with a kernel such as InitSparseConnectivitySnippet::Conv2D.
 class Kernel : public Base
 {
     DECLARE_SNIPPET(InitVarSnippet::Kernel);

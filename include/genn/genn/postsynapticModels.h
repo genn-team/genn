@@ -45,9 +45,9 @@ public:
     }
 
     //! Validate names of parameters etc
-    void validate(const std::unordered_map<std::string, Type::NumericValue> &paramValues, 
-                  const std::unordered_map<std::string, InitVarSnippet::Init> &varValues,
-                  const std::unordered_map<std::string, Models::VarReference> &varRefTargets) const;
+    void validate(const std::map<std::string, Type::NumericValue> &paramValues, 
+                  const std::map<std::string, InitVarSnippet::Init> &varValues,
+                  const std::map<std::string, Models::VarReference> &varRefTargets) const;
 };
 
 //----------------------------------------------------------------------------
@@ -56,9 +56,9 @@ public:
 class GENN_EXPORT Init : public Snippet::Init<Base>
 {
 public:
-    Init(const Base *snippet, const std::unordered_map<std::string, Type::NumericValue> &params, 
-         const std::unordered_map<std::string, InitVarSnippet::Init> &varInitialisers, 
-         const std::unordered_map<std::string, Models::VarReference> &neuronVarReferences);
+    Init(const Base *snippet, const std::map<std::string, Type::NumericValue> &params, 
+         const std::map<std::string, InitVarSnippet::Init> &varInitialisers, 
+         const std::map<std::string, Models::VarReference> &neuronVarReferences);
 
     //------------------------------------------------------------------------
     // Public API
@@ -66,10 +66,10 @@ public:
     bool isRNGRequired() const;
     bool isVarInitRequired() const;
 
-    const std::unordered_map<std::string, InitVarSnippet::Init> &getVarInitialisers() const{ return m_VarInitialisers; }
-    const std::unordered_map<std::string, Models::VarReference> &getNeuronVarReferences() const{ return m_NeuronVarReferences;  }
+    const auto &getVarInitialisers() const{ return m_VarInitialisers; }
+    const auto &getNeuronVarReferences() const{ return m_NeuronVarReferences;  }
     
-    const std::vector<Transpiler::Token> &getSimCodeTokens() const{ return m_SimCodeTokens; }
+    const auto &getSimCodeTokens() const{ return m_SimCodeTokens; }
 
     void finalise(double dt);
 
@@ -79,8 +79,8 @@ private:
     //------------------------------------------------------------------------
     std::vector<Transpiler::Token> m_SimCodeTokens;
 
-    std::unordered_map<std::string, InitVarSnippet::Init> m_VarInitialisers;
-    std::unordered_map<std::string, Models::VarReference> m_NeuronVarReferences;
+    std::map<std::string, InitVarSnippet::Init> m_VarInitialisers;
+    std::map<std::string, Models::VarReference> m_NeuronVarReferences;
 };
 
 //----------------------------------------------------------------------------
@@ -88,7 +88,8 @@ private:
 //----------------------------------------------------------------------------
 //! Exponential decay with synaptic input treated as a current value.
 /*! This model has no variables and a single parameter:
-  - \c tau : Decay time constant*/
+
+  - \c tau - Decay time constant*/
 class ExpCurr : public Base
 {
 public:
@@ -109,11 +110,16 @@ public:
 // GeNN::PostsynapticModels::ExpCond
 //----------------------------------------------------------------------------
 //! Exponential decay with synaptic input treated as a conductance value.
-/*! This model has no variables, two parameters and a variable reference
-  - \c tau : Decay time constant
-  - \c E   : Reversal potential
-  - \c V   : Is a reference to the neuron's membrane voltage
-  \c tau is used by the derived parameter \c expdecay which returns expf(-dt/tau). */
+/*! This model has no variables, two parameters:
+
+  - \c tau - Decay time constant
+  - \c E - Reversal potential
+
+ and a variable reference:
+
+  - \c V - A reference to the neuron's membrane voltage
+
+ \c tau is used by the derived parameter \c expdecay which returns expf(-dt/tau). */
 class ExpCond : public Base
 {
 public:

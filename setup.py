@@ -2,20 +2,30 @@ import os
 import sys
 from copy import deepcopy
 from platform import system, uname
+from psutil import cpu_count
 from shutil import copytree, rmtree
+from subprocess import check_call
 from pybind11.setup_helpers import Pybind11Extension, build_ext, WIN, MACOS
 from setuptools import find_packages, setup
 
-# Determine is this is a debug build
-# **YUCK** this is not a great test
-debug_build = "--debug" in sys.argv
+# Loop through command line arguments
+debug_build = False
+coverage_build = False
+build_genn_libs = True
+filtered_args = []
+for arg in sys.argv:
+    if arg == "--debug":
+        debug_build = True
+    elif arg == "--coverage":
+        coverage_build = True
+        continue
+    elif arg in ["clean", "egg_info", "sdist"]:
+        build_genn_libs = False
 
-# Determine if this is a coverage build
-if "--coverage" in sys.argv:
-    coverage_build = True
-    sys.argv.remove("--coverage")
-else:
-    coverage_build = False
+    filtered_args.append(arg)
+
+# Add filtered (those that setuptools will understand) back to sys.argv
+sys.argv = filtered_args
 
 # Get CUDA path from environment variable - setting this up is a required CUDA post-install step
 cuda_path = os.environ.get("CUDA_PATH")
@@ -27,9 +37,9 @@ cuda_installed = cuda_path is not None and os.path.exists(cuda_path)
 opencl_path = os.environ.get("OPENCL_PATH")
 
 # Is OpenCL installed
-opencl_installed = opencl_path is not None and os.path.exists(opencl_path)
+opencl_installed = False #opencl_path is not None and os.path.exists(opencl_path)
 
-# Are we on Linux? 
+# Are we on Linux?
 # **NOTE** Pybind11Extension provides WIN and MAC
 LINUX = system() == "Linux"
 
@@ -61,8 +71,11 @@ genn_share = os.path.join(genn_path, "share", "genn")
 pygenn_share = os.path.join(pygenn_path, "share")
 
 # Always package LibGeNN
-package_data = ["genn" + genn_lib_suffix + ".*" if WIN 
-                else "libgenn" + genn_lib_suffix + ".*"]
+if WIN:
+    package_data = ["genn" + genn_lib_suffix + ".dll",
+                    "libffi" + genn_lib_suffix + ".dll"]
+else:
+    package_data = ["libgenn" + genn_lib_suffix + ".so"]
 
 
 # Copy GeNN 'share' tree into pygenn and add all files to package
@@ -87,7 +100,7 @@ genn_extension_kwargs = {
 
 # If this is Windows
 if WIN:
-    # Turn off warnings about dll-interface being required for stuff to be 
+    # Turn off warnings about dll-interface being required for stuff to be
     # used by clients and prevent windows.h exporting TOO many awful macros
     genn_extension_kwargs["extra_compile_args"].extend(["/wd4251", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX"])
 
@@ -97,11 +110,21 @@ if WIN:
     # Add FFI library with correct suffix
     # **TODO** just call this ffi
     genn_extension_kwargs["libraries"].append("libffi" + genn_lib_suffix)
-# Otherwise, if this is Linux, we want to add extension directory i.e. $ORIGIN to runtime
-# directories so libGeNN and backends can be found wherever package is installed
-elif LINUX:
-    genn_extension_kwargs["runtime_library_dirs"] = ["$ORIGIN"]
-    genn_extension_kwargs["libraries"].append("ffi")
+
+    # Add GeNN and FFI libraries to dependencies
+    genn_extension_kwargs["depends"] = [os.path.join(pygenn_path, "genn" + genn_lib_suffix + ".dll"),
+                                        os.path.join(pygenn_path, "libffi" + genn_lib_suffix + ".dll")]
+# Otherwise
+else:
+    # Add GeNN library to dependencies
+    genn_extension_kwargs["depends"] = [os.path.join(pygenn_path, "libgenn" + genn_lib_suffix + ".so"),
+                                        os.path.join(pygenn_src, "docStrings.h")]
+
+    # If this is Linux, we want to add extension directory i.e. $ORIGIN to runtime
+    # directories so libGeNN and backends can be found wherever package is installed
+    if LINUX:
+        genn_extension_kwargs["runtime_library_dirs"] = ["$ORIGIN"]
+        genn_extension_kwargs["libraries"].append("ffi")
 
 if coverage_build:
     if LINUX:
@@ -109,7 +132,6 @@ if coverage_build:
         genn_extension_kwargs["extra_link_args"].append("--coverage")
     elif MAC:
         genn_extension_kwargs["extra_compile_args"].extend(["-fprofile-instr-generate", "-fcoverage-mapping"])
-    
 
 # By default build single-threaded CPU backend
 backends = [("single_threaded_cpu", "singleThreadedCPU", {})]
@@ -146,7 +168,7 @@ if opencl_installed:
         opencl_library_dir = os.path.join(opencl_path, "lib", "x64")
     else:
         opencl_library_dir = os.path.join(opencl_path, "lib64")
-    
+
     # Add backend
     # **NOTE** on Mac OS X, a)runtime_library_dirs doesn't work b)setting rpath is required to find CUDA
     backends.append(("opencl", "opencl",
@@ -157,10 +179,10 @@ if opencl_installed:
                       "extra_compile_args": ["-DCL_HPP_TARGET_OPENCL_VERSION=120", "-DCL_HPP_MINIMUM_OPENCL_VERSION=120"]}))
 
 ext_modules = [
-    Pybind11Extension("runtime",
+    Pybind11Extension("_runtime",
                       [os.path.join(pygenn_src, "runtime.cc")],
                       **genn_extension_kwargs),
-    Pybind11Extension("genn",
+    Pybind11Extension("_genn",
                       [os.path.join(pygenn_src, "genn.cc")],
                       **genn_extension_kwargs),
     Pybind11Extension("types",
@@ -194,7 +216,7 @@ ext_modules = [
                       [os.path.join(pygenn_src, "weightUpdateModels.cc")],
                       **genn_extension_kwargs)]
 
- # Loop through namespaces of supported backends
+# Loop through namespaces of supported backends
 for module_stem, source_stem, kwargs in backends:
     # Take a copy of the standard extension kwargs
     backend_extension_kwargs = deepcopy(genn_extension_kwargs)
@@ -206,9 +228,15 @@ for module_stem, source_stem, kwargs in backends:
     # Add relocatable version of backend library to libraries
     # **NOTE** this is added BEFORE libGeNN as this library needs symbols FROM libGeNN
     if WIN:
-        package_data.append("genn_" + module_stem + "_backend" + genn_lib_suffix + ".*")
+        backend_extension_kwargs["depends"].append(
+            os.path.join(pygenn_path, "genn_" + module_stem + "_backend" + genn_lib_suffix + ".dll"))
+
+        package_data.append("genn_" + module_stem + "_backend" + genn_lib_suffix + ".dll")
     else:
-        package_data.append("libgenn_" + module_stem + "_backend" + genn_lib_suffix + ".*")
+        backend_extension_kwargs["depends"].append(
+            os.path.join(pygenn_path, "libgenn_" + module_stem + "_backend" + genn_lib_suffix + ".so"))
+
+        package_data.append("libgenn_" + module_stem + "_backend" + genn_lib_suffix + ".so")
 
     # Add backend include directory to both SWIG and C++ compiler options
     backend_include_dir = os.path.join(genn_path, "include", "genn", "backends", module_stem)
@@ -219,6 +247,31 @@ for module_stem, source_stem, kwargs in backends:
     ext_modules.append(Pybind11Extension(module_stem + "_backend", 
                                          [os.path.join(pygenn_src, source_stem + "Backend.cc")],
                                          **backend_extension_kwargs))
+
+    # If we should build required GeNN libraries
+    if build_genn_libs:
+        # If compiler is MSVC
+        if WIN:
+            # **NOTE** ensure pygenn_path has trailing slash to make MSVC happy
+            out_dir = os.path.join(pygenn_path, "")
+            check_call(["msbuild", "genn.sln", f"/t:{module_stem}_backend",
+                        f"/p:Configuration={genn_lib_suffix[1:]}",
+                        "/m", "/verbosity:quiet",
+                        f"/p:OutDir={out_dir}"],
+                        cwd=genn_path)
+        else:
+            # Define make arguments
+            make_arguments = ["make", f"{module_stem}_backend", "DYNAMIC=1",
+                              f"LIBRARY_DIRECTORY={pygenn_path}",
+                              f"--jobs={cpu_count(logical=False)}"]
+            if debug_build:
+                make_arguments.append("DEBUG=1")
+
+            if coverage_build:
+                make_arguments.append("COVERAGE=1")
+
+            # Build
+            check_call(make_arguments, cwd=genn_path)
 
 # Read version from txt file
 with open(os.path.join(genn_path, "version.txt")) as version_file:
@@ -235,6 +288,9 @@ setup(
     ext_modules=ext_modules,
     zip_safe=False,
     python_requires=">=3.6",
-    install_requires=["numpy>=1.17", "six", "deprecated", "psutil",
+    install_requires=["numpy>=1.17", "psutil",
                       "importlib-metadata>=1.0;python_version<'3.8'"],
-)
+    extras_require={
+        "doc": ["sphinx", "sphinx-gallery", "sphinx-argparse"],
+        "userproject": ["mnist", "tqdm", "scipy", "matplotlib"],
+        "test": ["bitarray", "pytest", "flaky", "pytest-cov"]})

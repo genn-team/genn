@@ -57,23 +57,23 @@ public:
     SET_POST_VARS({{"postTrace", "scalar"}});
 
     SET_PRE_SPIKE_CODE(
-        "scalar dt = t - sT_pre;\n"
+        "scalar dt = t - st_pre;\n"
         "preTrace = (preTrace * exp(-dt / tauPlus)) + 1.0;\n");
 
     SET_POST_SPIKE_CODE(
-        "scalar dt = t - sT_post;\n"
+        "scalar dt = t - st_post;\n"
         "postTrace = (postTrace * exp(-dt / tauMinus)) + 1.0;\n");
 
-    SET_SIM_CODE(
+    SET_PRE_SPIKE_SYN_CODE(
         "addToPost(g);\n"
-        "scalar dt = t - sT_post; \n"
+        "scalar dt = t - st_post; \n"
         "if (dt > 0) {\n"
         "    const scalar timing = postTrace * exp(-dt / tauMinus);\n"
         "    const scalar newWeight = g - (Aminus * timing);\n"
         "    g = fmax(Wmin, newWeight);\n"
         "}\n");
-    SET_LEARN_POST_CODE(
-        "scalar dt = t - sT_pre;\n"
+    SET_POST_SPIKE_SYN_CODE(
+        "scalar dt = t - st_pre;\n"
         "if (dt > 0) {\n"
         "    const scalar timing = postTrace * exp(-dt / tauPlus);\n"
         "    const scalar newWeight = g + (Aplus * timing);\n"
@@ -172,7 +172,7 @@ void test(const std::pair<T, bool> (&modelModifiers)[N], M applyModifierFn)
         ModelSpecInternal model;
         model.setName("test");
         model.setDT(0.1);
-        model.setTiming(false);
+        model.setTimingEnabled(false);
         model.setPrecision(Type::Float);
         model.setBatchSize(1);
         model.setSeed(0);
@@ -239,10 +239,8 @@ void testSynapseVarLocation(S setVarLocationFn)
              // Add pre population
              VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
-             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
-                                                                 neuronParamVals, neuronVarVals);
-             model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 100, 
-                                                                 neuronParamVals, neuronVarVals);
+             auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, neuronParamVals, neuronVarVals);
+             auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 100, neuronParamVals, neuronVarVals);
 
              ParamValues params{{"tauPlus", 20.0}, {"tauMinus", 20.0}, {"Aplus", 0.001}, {"Aminus", -0.001}, {"Wmin", 0.0}, {"Wmax", 1.0}};
              VarValues varValues{{"g", 0.5}};
@@ -253,13 +251,13 @@ void testSynapseVarLocation(S setVarLocationFn)
              VarValues psmVarValues{{"x", 0.0}};
 
              auto *sg = model.addSynapsePopulation(
-        "Synapse", SynapseMatrixType::SPARSE, NO_DELAY,
-        "Pre", "Post",
-        initWeightUpdate<STDPAdditive>(params, varValues, preVarValues, postVarValues),
-        initPostsynaptic<AlphaCurr>(psmParams, psmVarValues),
-        initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({{"prob", 0.1}}));
-             setVarLocationFn(sg, varLocation);
-         });
+                "Synapse", SynapseMatrixType::SPARSE,
+                pre, post,
+                initWeightUpdate<STDPAdditive>(params, varValues, preVarValues, postVarValues),
+                initPostsynaptic<AlphaCurr>(psmParams, psmVarValues),
+                initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({{"prob", 0.1}}));
+            setVarLocationFn(sg, varLocation);
+     });
 }
 //--------------------------------------------------------------------------
 template<typename S>
@@ -278,18 +276,18 @@ void testCustomConnectivityUpdateVarLocation(S setVarLocationFn)
             // Add two neuron group to model
             ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
             VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-            model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
-            model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+            auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+            auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
             // Create synapse group with global weights
-            model.addSynapsePopulation(
-                "Synapses1", SynapseMatrixType::SPARSE, NO_DELAY,
-                "Pre", "Post",
+           auto *syn = model.addSynapsePopulation(
+                "Synapses1", SynapseMatrixType::SPARSE,
+                pre, post,
                 initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>({{"g", 1.0}}),
                 initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
             auto *ccu = model.addCustomConnectivityUpdate<RemoveSynapsePrePost>(
-                "CustomConnectivityUpdate1", "Test2", "Synapses1",
+                "CustomConnectivityUpdate1", "Test2", syn,
                 {}, {{"g", 1.0}}, {{"preThresh", 1.0}}, {{"postThresh", 1.0}},
                 {}, {}, {});
              setVarLocationFn(ccu, varLocation);
@@ -308,7 +306,7 @@ TEST(ModelSpecMerged, CompareModelChanges)
         {nullptr, true},
         {[](ModelSpecInternal &model) { model.setName("interesting_name"); }, false},
         {[](ModelSpecInternal &model) { model.setDT(1.0); }, false},
-        {[](ModelSpecInternal &model) { model.setTiming(true); }, false},
+        {[](ModelSpecInternal &model) { model.setTimingEnabled(true); }, false},
         {[](ModelSpecInternal &model) { model.setPrecision(Type::Double); }, false},
         {[](ModelSpecInternal &model) { model.setTimePrecision(Type::Double); }, false},
         {[](ModelSpecInternal &model) { model.setSeed(1234); }, false}};
@@ -500,12 +498,11 @@ TEST(ModelSpecMerged, CompareCurrentSourceNameChanges)
              // Add population
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
              VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
-             model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
-                                                                 neuronParamVals, neuronVarVals);
+             auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
+                                                                             neuronParamVals, neuronVarVals);
 
              ParamValues paramVals{{"amp", 3.0}};
-             model.addCurrentSource<CurrentSourceModels::DC>(name, "Neurons",
-                                                             paramVals, {});
+             model.addCurrentSource<CurrentSourceModels::DC>(name, pop, paramVals);
          });
 }
 //--------------------------------------------------------------------------
@@ -531,13 +528,12 @@ TEST(ModelSpecMerged, CompareCurrentSourceParamChanges)
              // Add population
              VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
-             model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
-                                                                 neuronParamVals, neuronVarVals);
+             auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
+                                                                             neuronParamVals, neuronVarVals);
 
              // Add desired number of current sources
              for(size_t p = 0; p < csParams.size(); p++) {
-                 model.addCurrentSource<CurrentSourceModels::DC>("CS" + std::to_string(p), "Neurons",
-                                                                 csParams[p], {});
+                 model.addCurrentSource<CurrentSourceModels::DC>("CS" + std::to_string(p), pop, csParams[p]);
              }
          });
 }
@@ -564,15 +560,14 @@ TEST(ModelSpecMerged, CompareCurrentSourceVarInitParamChanges)
              // Add population
              VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
-             model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
-                                                                 neuronParamVals, neuronVarVals);
+             auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
+                                                                             neuronParamVals, neuronVarVals);
 
              // Add desired number of current sources
              for(size_t p = 0; p < csVarInit.size(); p++) {
                  ParamValues paramVals{{"weight", 1.0}, {"tauSyn", 20.0}, {"rate", 10.0}};
                  VarValues varVals{{"current", initVar<InitVarSnippet::Uniform>(csVarInit[p])}};
-                 model.addCurrentSource<CurrentSourceModels::PoissonExp>("CS" + std::to_string(p), "Neurons",
-                                                                         paramVals, varVals);
+                 model.addCurrentSource<CurrentSourceModels::PoissonExp>("CS" + std::to_string(p), pop, paramVals, varVals);
              }
          });
 }
@@ -593,14 +588,13 @@ TEST(ModelSpecMerged, CompareCurrentSourceDynamicParamChanges)
              // Add population
              VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
-             model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
-                                                                 neuronParamVals, neuronVarVals);
+             auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
+                                                                             neuronParamVals, neuronVarVals);
 
              // Add desired number of current sources
              ParamValues paramVals{{"weight", 1.0}, {"tauSyn", 20.0}, {"rate", 10.0}};
              VarValues varVals{{"current", 0.0}};
-             auto *cs = model.addCurrentSource<CurrentSourceModels::PoissonExp>("CS", "Neurons",
-                                                                                paramVals, varVals);
+             auto *cs = model.addCurrentSource<CurrentSourceModels::PoissonExp>("CS", pop, paramVals, varVals);
              for(const auto &d : dynamicParams) {
                  cs->setParamDynamic(d, true);
              }
@@ -622,12 +616,11 @@ TEST(ModelSpecMerged, CompareCurrentSourceVarLocationChanges)
               // Add population
               VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
               ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
-              model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
-                                                                 neuronParamVals, neuronVarVals);
+              auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
+                                                                              neuronParamVals, neuronVarVals);
               ParamValues paramVals{{"weight", 1.0}, {"tauSyn", 20.0}, {"rate", 10.0}};
               VarValues varVals{{"current", 0.0}};
-              auto *cs = model.addCurrentSource<CurrentSourceModels::PoissonExp>("CS", "Neurons",
-                                                                                 paramVals, varVals);
+              auto *cs = model.addCurrentSource<CurrentSourceModels::PoissonExp>("CS", pop, paramVals, varVals);
               cs->setVarLocation("current", varLocation);
          });
 }
@@ -649,14 +642,12 @@ TEST(ModelSpecMerged, CompareSynapseNameChanges)
              // Add populations
              VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
-             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
-                                                                 neuronParamVals, neuronVarVals);
-             model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 100, 
-                                                                 neuronParamVals, neuronVarVals);
+             auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, neuronParamVals, neuronVarVals);
+             auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 100, neuronParamVals, neuronVarVals);
 
              model.addSynapsePopulation(
-                name, SynapseMatrixType::DENSE, NO_DELAY,
-                "Pre", "Post",
+                name, SynapseMatrixType::DENSE,
+                pre, post,
                 initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
                 initPostsynaptic<PostsynapticModels::DeltaCurr>());
          });
@@ -684,17 +675,16 @@ TEST(ModelSpecMerged, ComparePSMParamChanges)
              // Add pre population
              VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
-             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
-                                                                 neuronParamVals, neuronVarVals);
+             auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, neuronParamVals, neuronVarVals);
 
              // Add desired number of post populations
              for(size_t p = 0; p < psmParams.size(); p++) {
-                 model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
-                                                                     neuronParamVals, neuronVarVals);
+                 auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
+                                                                                  neuronParamVals, neuronVarVals);
 
                  model.addSynapsePopulation(
-                    "Synapse" + std::to_string(p), SynapseMatrixType::DENSE, NO_DELAY,
-                    "Pre", "Post" + std::to_string(p),
+                    "Synapse" + std::to_string(p), SynapseMatrixType::DENSE,
+                    pre, post,
                     initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
                     initPostsynaptic<PostsynapticModels::ExpCurr>(psmParams[p]));
              }
@@ -723,19 +713,19 @@ TEST(ModelSpecMerged, ComparePSMVarInitParamChanges)
              // Add pre population
              VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
-             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
-                                                                 neuronParamVals, neuronVarVals);
+             auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
+                                                                             neuronParamVals, neuronVarVals);
 
              // Add desired number of post populations
              for(size_t p = 0; p < psmVarInitParams.size(); p++) {
-                 model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
-                                                                     neuronParamVals, neuronVarVals);
+                 auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
+                                                                                  neuronParamVals, neuronVarVals);
 
                  ParamValues params{{"tau", 5.0}};
                  VarValues varValues{{"x", initVar<InitVarSnippet::Uniform>(psmVarInitParams[p])}};
                  model.addSynapsePopulation(
-                    "Synapse" + std::to_string(p), SynapseMatrixType::DENSE, NO_DELAY,
-                    "Pre", "Post" + std::to_string(p),
+                    "Synapse" + std::to_string(p), SynapseMatrixType::DENSE,
+                    pre, post,
                     initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
                     initPostsynaptic<AlphaCurr>(params, varValues));
              }
@@ -758,8 +748,7 @@ TEST(ModelSpecMerged, ComparePSMDynamicParamChanges)
              // Add pre population
              VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
-             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
-                                                                 neuronParamVals, neuronVarVals);
+             auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, neuronParamVals, neuronVarVals);
 
              // Add desired number of post populations
              auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 100, 
@@ -767,8 +756,8 @@ TEST(ModelSpecMerged, ComparePSMDynamicParamChanges)
 
              ParamValues psmParamVal{{"tau", 10.0}, {"E", -80.0}};
              auto *sg = model.addSynapsePopulation(
-                "Synapse", SynapseMatrixType::DENSE, NO_DELAY,
-                "Pre", "Post",
+                "Synapse", SynapseMatrixType::DENSE,
+                pre, post,
                 initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
                 initPostsynaptic<PostsynapticModels::ExpCond>(psmParamVal, {}, {{"V", createVarRef(post, "V")}}));
 
@@ -786,12 +775,9 @@ TEST(ModelSpecMerged, ComparePSMVarLocationChanges)
 TEST(ModelSpecMerged, CompareWUMParamChanges)
 {
     // Weight update model parameters
-    const ParamValues paramVals1{{"tLrn", 50.0}, {"tChng", 50.0}, {"tDecay", 50000.0}, {"tPunish10", 100000.0}, {"tPunish01", 200.0}, 
-                                          {"gMax", 0.015}, {"gMid", 0.0075}, {"gSlope", 33.33}, {"tauShift", 10.0}, {"gSyn0", 0.00006}};
-    const ParamValues paramVals2{{"tLrn", 100.0}, {"tChng", 100.0}, {"tDecay", 50000.0}, {"tPunish10", 100000.0}, {"tPunish01", 200.0}, 
-                                          {"gMax", 0.015}, {"gMid", 0.0075}, {"gSlope", 33.33}, {"tauShift", 10.0}, {"gSyn0", 0.00006}};
-    const ParamValues paramVals3{{"tLrn", 50.0}, {"tChng", 50.0}, {"tDecay", 50000.0}, {"tPunish10", 100000.0}, {"tPunish01", 200.0}, 
-                                          {"gMax", 0.1}, {"gMid", 0.0075}, {"gSlope", 33.33}, {"tauShift", 10.0}, {"gSyn0", 0.00006}};
+    const ParamValues paramVals1{{"tauPlus", 10.0}, {"tauMinus", 20.0}, {"Aplus", 1.0}, {"Aminus", 1.0}, {"Wmin", 0.0}, {"Wmax", 1.0}};
+    const ParamValues paramVals2{{"tauPlus", 20.0}, {"tauMinus", 20.0}, {"Aplus", 1.0}, {"Aminus", 1.0}, {"Wmin", 0.0}, {"Wmax", 1.0}};
+    const ParamValues paramVals3{{"tauPlus", 10.0}, {"tauMinus", 20.0}, {"Aplus", 1.0}, {"Aminus", 2.0}, {"Wmin", 0.0}, {"Wmax", 1.0}};
 
     // Make array of population parameters to build model with and flags determining whether the hashes should match baseline
     const std::pair<std::vector<ParamValues>, bool> modelModifiers[] = {
@@ -808,19 +794,18 @@ TEST(ModelSpecMerged, CompareWUMParamChanges)
              // Add pre population
              VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
-             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
-                                                                 neuronParamVals, neuronVarVals);
+             auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, neuronParamVals, neuronVarVals);
 
              // Add desired number of post populations
              for(size_t p = 0; p < wumParams.size(); p++) {
-                 model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
-                                                                     neuronParamVals, neuronVarVals);
+                 auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
+                                                                                  neuronParamVals, neuronVarVals);
 
-                 VarValues varInit{{"g", 0.0}, {"gRaw", uninitialisedVar()}};
+                 VarValues varInit{{"g", 0.0}};
                  model.addSynapsePopulation(
-                    "Synapse" + std::to_string(p), SynapseMatrixType::DENSE, NO_DELAY,
-                    "Pre", "Post" + std::to_string(p),
-                    initWeightUpdate<WeightUpdateModels::PiecewiseSTDP>(wumParams[p], varInit),
+                    "Synapse" + std::to_string(p), SynapseMatrixType::DENSE,
+                    pre, post,
+                    initWeightUpdate<WeightUpdateModels::STDP>(wumParams[p], varInit),
                     initPostsynaptic<PostsynapticModels::DeltaCurr>());
              }
          });
@@ -848,18 +833,17 @@ TEST(ModelSpecMerged, CompareWUMVarInitParamChanges)
              // Add pre population
              VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
-             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
-                                                                 neuronParamVals, neuronVarVals);
+            auto *pre =  model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, neuronParamVals, neuronVarVals);
 
              // Add desired number of post populations
              for(size_t p = 0; p < wumVarInitParams.size(); p++) {
-                 model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
-                                                                     neuronParamVals, neuronVarVals);
+                 auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
+                                                                                  neuronParamVals, neuronVarVals);
 
                  VarValues varValues{{"g", initVar<InitVarSnippet::Uniform>(wumVarInitParams[p])}};
                  model.addSynapsePopulation(
-                    "Synapse" + std::to_string(p), SynapseMatrixType::DENSE, NO_DELAY,
-                    "Pre", "Post" + std::to_string(p),
+                    "Synapse" + std::to_string(p), SynapseMatrixType::DENSE,
+                    pre, post,
                     initWeightUpdate<WeightUpdateModels::StaticPulse>({}, varValues),
                     initPostsynaptic<PostsynapticModels::DeltaCurr>());
              }
@@ -870,12 +854,12 @@ TEST(ModelSpecMerged, CompareWUMDynamicParamChanges)
 {
     // Make array of population parameters to build model with and flags determining whether the hashes should match baseline
     const std::pair<std::vector<std::string>, bool> modelModifiers[] = {
-        {{"tLrn", "tauShift"},      true},
-        {{"tLrn", "tauShift"},      true},
-        {{"tLrn", "tDecay"},        false},
-        {{"tPunish01", "tauShift"}, false},
+        {{"tauPlus", "tauMinus"},   true},
+        {{"tauPlus", "tauMinus"},   true},
+        {{"tauPlus", "Aplus"},      false},
+        {{"Aminus", "Aminus"},      false},
         {{},                        false},
-        {{"tDecay"},                false}};
+        {{"Aplus"},                 false}};
 
     test(modelModifiers, 
          [](const std::vector<std::string> &dynamicParams, ModelSpecInternal &model)
@@ -883,19 +867,16 @@ TEST(ModelSpecMerged, CompareWUMDynamicParamChanges)
              // Add pre population
              VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
-             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
-                                                                 neuronParamVals, neuronVarVals);
+             auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, neuronParamVals, neuronVarVals);
 
-             model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 100, 
-                                                                 neuronParamVals, neuronVarVals);
+             auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 100, neuronParamVals, neuronVarVals);
 
-             VarValues varInit{{"g", 0.0}, {"gRaw", uninitialisedVar()}};
-             ParamValues paramVals{{"tLrn", 50.0}, {"tChng", 50.0}, {"tDecay", 50000.0}, {"tPunish10", 100000.0}, {"tPunish01", 200.0}, 
-                                   {"gMax", 0.015}, {"gMid", 0.0075}, {"gSlope", 33.33}, {"tauShift", 10.0}, {"gSyn0", 0.00006}};
+             VarValues varInit{{"g", 0.0}};
+             ParamValues paramVals{{"tauPlus", 10.0}, {"tauMinus", 20.0}, {"Aplus", 1.0}, {"Aminus", 1.0}, {"Wmin", 0.0}, {"Wmax", 1.0}};
              auto *sg = model.addSynapsePopulation(
-                "Synapse", SynapseMatrixType::DENSE, NO_DELAY,
-                "Pre", "Post",
-                initWeightUpdate<WeightUpdateModels::PiecewiseSTDP>(paramVals, varInit),
+                "Synapse", SynapseMatrixType::DENSE,
+                pre, post,
+                initWeightUpdate<WeightUpdateModels::STDP>(paramVals, varInit),
                 initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
              for(const auto &d : dynamicParams) {
@@ -931,13 +912,12 @@ TEST(ModelSpecMerged, CompareWUMPreVarInitParamChanges)
              // Add pre population
              VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
-             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
-                                                                 neuronParamVals, neuronVarVals);
+             auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, neuronParamVals, neuronVarVals);
 
              // Add desired number of post populations
              for(size_t p = 0; p < wumPreVarInitParams.size(); p++) {
-                 model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
-                                                                     neuronParamVals, neuronVarVals);
+                 auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
+                                                                                  neuronParamVals, neuronVarVals);
 
                  ParamValues params{{"tauPlus", 20.0}, {"tauMinus", 20.0}, {"Aplus", 0.001}, {"Aminus", -0.001}, {"Wmin", 0.0}, {"Wmax", 1.0}};
                  VarValues varValues{{"g", 0.5}};
@@ -945,8 +925,8 @@ TEST(ModelSpecMerged, CompareWUMPreVarInitParamChanges)
                  VarValues postVarValues{{"postTrace", 0.0}};
                 
                  model.addSynapsePopulation(
-                    "Synapse" + std::to_string(p), SynapseMatrixType::DENSE, NO_DELAY,
-                    "Pre", "Post" + std::to_string(p),
+                    "Synapse" + std::to_string(p), SynapseMatrixType::DENSE,
+                    pre, post,
                     initWeightUpdate<STDPAdditive>(params, varValues, preVarValues, postVarValues),
                     initPostsynaptic<PostsynapticModels::DeltaCurr>());
              }
@@ -980,13 +960,12 @@ TEST(ModelSpecMerged, CompareWUMPostVarInitParamChanges)
              // Add pre population
              VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
-             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
-                                                                 neuronParamVals, neuronVarVals);
+             auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, neuronParamVals, neuronVarVals);
 
              // Add desired number of post populations
              for(size_t p = 0; p < wumPostVarInitParams.size(); p++) {
-                 model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
-                                                                     neuronParamVals, neuronVarVals);
+                 auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
+                                                                                  neuronParamVals, neuronVarVals);
 
                  ParamValues params{{"tauPlus", 20.0}, {"tauMinus", 20.0}, {"Aplus", 0.001}, {"Aminus", -0.001}, {"Wmin", 0.0}, {"Wmax", 1.0}};
                  VarValues varValues{{"g", 0.5}};
@@ -994,8 +973,8 @@ TEST(ModelSpecMerged, CompareWUMPostVarInitParamChanges)
                  VarValues postVarValues{{"postTrace", initVar<InitVarSnippet::Uniform>(wumPostVarInitParams[p])}};
                  
                  model.addSynapsePopulation(
-                    "Synapse" + std::to_string(p), SynapseMatrixType::DENSE, NO_DELAY,
-                    "Pre", "Post" + std::to_string(p),
+                    "Synapse" + std::to_string(p), SynapseMatrixType::DENSE,
+                    pre, post,
                     initWeightUpdate<STDPAdditive>(params, varValues, preVarValues, postVarValues),
                     initPostsynaptic<PostsynapticModels::DeltaCurr>());
              }
@@ -1029,17 +1008,16 @@ TEST(ModelSpecMerged, CompareConnectivityParamChanges)
              // Add pre population
              VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
-             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
-                                                                 neuronParamVals, neuronVarVals);
+             auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, neuronParamVals, neuronVarVals);
 
              // Add desired number of post populations
              for(size_t p = 0; p < connectivityParams.size(); p++) {
-                 model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
-                                                                     neuronParamVals, neuronVarVals);
+                 auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
+                                                                                   neuronParamVals, neuronVarVals);
 
                  model.addSynapsePopulation(
-                     "Synapse" + std::to_string(p), SynapseMatrixType::SPARSE, NO_DELAY,
-                     "Pre", "Post" + std::to_string(p),
+                     "Synapse" + std::to_string(p), SynapseMatrixType::SPARSE,
+                     pre, post,
                      initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>({{"g", 1.0}}),
                      initPostsynaptic<PostsynapticModels::DeltaCurr>(),
                      initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(connectivityParams[p]));
@@ -1068,17 +1046,16 @@ TEST(ModelSpecMerged, CompareConnectivityModelChanges)
              // Add pre population
              VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
-             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
-                                                                 neuronParamVals, neuronVarVals);
+             auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, neuronParamVals, neuronVarVals);
 
              // Add desired number of post populations
              for(size_t p = 0; p < connectivityModels.size(); p++) {
-                 model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
-                                                                     neuronParamVals, neuronVarVals);
+                 auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
+                                                                                  neuronParamVals, neuronVarVals);
 
                  model.addSynapsePopulation(
-                     "Synapse" + std::to_string(p), SynapseMatrixType::SPARSE, NO_DELAY,
-                     "Pre", "Post" + std::to_string(p),
+                     "Synapse" + std::to_string(p), SynapseMatrixType::SPARSE,
+                     pre, post,
                      initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>({{"g", 1.0}}),
                      initPostsynaptic<PostsynapticModels::DeltaCurr>(),
                      InitSparseConnectivitySnippet::Init(connectivityModels[p], {}));
@@ -1091,9 +1068,9 @@ TEST(ModelSpecMerged, CompareConnectivityLocationChanges)
     testSynapseVarLocation([](SynapseGroup *pop, VarLocation varLocation) {pop->setSparseConnectivityLocation(varLocation); });
 }
 //--------------------------------------------------------------------------
-TEST(ModelSpecMerged, CompareInSynLocationChanges)
+TEST(ModelSpecMerged, CompareOutputLocationChanges)
 {
-    testSynapseVarLocation([](SynapseGroup *pop, VarLocation varLocation) {pop->setInSynVarLocation(varLocation); });
+    testSynapseVarLocation([](SynapseGroup *pop, VarLocation varLocation) {pop->setOutputLocation(varLocation); });
 }
 //--------------------------------------------------------------------------
 TEST(ModelSpecMerged, CompareDendriticDelayLocationChanges)
@@ -1295,19 +1272,19 @@ TEST(ModelSpecMerged, CompareCustomConnectivityUpdateParamChanges)
             // Add two neuron group to model
             ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
             VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-            model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
-            model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+            auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+            auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
             // Create synapse group with global weights
             auto *syn = model.addSynapsePopulation(
-                "Synapses1", SynapseMatrixType::SPARSE, NO_DELAY,
-                "Pre", "Post",
+                "Synapses1", SynapseMatrixType::SPARSE,
+                pre, post,
                 initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
                 initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
             WUVarReferences varRefs{{"g", createWUVarRef(syn, "g")}};
             model.addCustomConnectivityUpdate<RemoveSynapseParam>(
-                "CustomConnectivityUpdate1", "Test2", "Synapses1",
+                "CustomConnectivityUpdate1", "Test2", syn,
                 {{"thresh", thresh}}, {}, {}, {},
                 varRefs, {}, {});
          });
@@ -1334,18 +1311,18 @@ TEST(ModelSpecMerged, CompareCustomConnectivityUpdateVarInitParamChanges)
             // Add two neuron group to model
             ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
             VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-            model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
-            model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+            auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+            auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
             // Create synapse group with global weights
-            model.addSynapsePopulation(
-                "Synapses1", SynapseMatrixType::SPARSE, NO_DELAY,
-                "Pre", "Post",
+            auto *syn = model.addSynapsePopulation(
+                "Synapses1", SynapseMatrixType::SPARSE,
+                pre, post,
                 initWeightUpdate<WeightUpdateModels::StaticPulseConstantWeight>({{"g", 1.0}}),
                 initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
             model.addCustomConnectivityUpdate<RemoveSynapsePrePost>(
-                "CustomConnectivityUpdate1", "Test2", "Synapses1",
+                "CustomConnectivityUpdate1", "Test2", syn,
                 {}, {{"g", params[0]}}, {{"preThresh", params[1]}}, {{"postThresh", params[2]}});
          });
 }
@@ -1364,20 +1341,19 @@ TEST(ModelSpecMerged, CompareCustomConnectivityUpdateDynamicParamChanges)
             // Add two neuron group to model
             ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
             VarValues varVals{{"V", 0.0}, {"U", 0.0}};
-            model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
-            model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+            auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+            auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
             // Create synapse group with global weights
             auto *syn = model.addSynapsePopulation(
-                "Synapses1", SynapseMatrixType::SPARSE, NO_DELAY,
-                "Pre", "Post",
+                "Synapses1", SynapseMatrixType::SPARSE,
+                pre, post,
                 initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
                 initPostsynaptic<PostsynapticModels::DeltaCurr>());
-
            
             WUVarReferences varRefs{{"g", createWUVarRef(syn, "g")}};
             auto *ccu = model.addCustomConnectivityUpdate<RemoveSynapseParam>(
-                "CustomConnectivityUpdate1", "Test2", "Synapses1",
+                "CustomConnectivityUpdate1", "Test2", syn,
                 {{"thresh", 1.0}}, {}, {}, {},
                 varRefs, {}, {});
             for(const auto &d : dynamicParams) {

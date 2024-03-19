@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from pygenn import types
 
-from pygenn.genn import CustomUpdateVarAccess, VarAccess, VarAccessMode
+from pygenn import CustomUpdateVarAccess, VarAccess, VarAccessMode
 
 from scipy.special import softmax
 from pygenn import (create_current_source_model, 
@@ -20,6 +20,8 @@ from pygenn import (create_current_source_model,
                     init_toeplitz_connectivity,
                     init_weight_update, init_var)
 
+# Neuron model which does nothing
+empty_neuron_model = create_neuron_model("empty")
 
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
@@ -76,29 +78,29 @@ def test_custom_update(make_model, backend, precision, batch_size):
     model.batch_size = batch_size
     
     # Create a variety of models to attach custom updates to
-    ss_pop = model.add_neuron_population("SpikeSource", 10, "SpikeSource", {}, {});
+    ss_pop = model.add_neuron_population("SpikeSource", 10, empty_neuron_model);
     n_pop = model.add_neuron_population("Neurons", 100, neuron_model, 
                                         {}, {"X": 0.0, "XShared": 0.0})
     cs = model.add_current_source("CurrentSource", current_source_model, n_pop,
                                   {}, {"X": 0.0, "XShared": 0.0})
     
     dense_s_pop = model.add_synapse_population(
-        "DenseSynapses", "DENSE", 0,
+        "DenseSynapses", "DENSE",
         ss_pop, n_pop,
         init_weight_update(weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0}),
         init_postsynaptic(postsynaptic_update_model, {}, {"psmX": 0.0, "psmXShared": 0.0}))
     sparse_s_pop = model.add_synapse_population(
-        "SparseSynapses", "SPARSE", 0,
+        "SparseSynapses", "SPARSE",
         ss_pop, n_pop,
         init_weight_update(weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0}),
         init_postsynaptic("DeltaCurr"),
-        init_sparse_connectivity("FixedNumberPostWithReplacement", {"rowLength": 10}))
+        init_sparse_connectivity("FixedNumberPostWithReplacement", {"num": 10}))
     
     conv_params = {"conv_kh": 3, "conv_kw": 3,
                    "conv_ih": 10, "conv_iw": 10, "conv_ic": 1,
                    "conv_oh": 10, "conv_ow": 10, "conv_oc": 1}
     kernel_s_pop = model.add_synapse_population(
-        "ToeplitzSynapses", "TOEPLITZ", 0,
+        "ToeplitzSynapses", "TOEPLITZ",
         ss_pop, n_pop,
         init_weight_update(weight_update_model, {}, {"X": 0.0}, {"preX": 0.0, "preXShared": 0.0}, {"postX": 0.0, "postXShared": 0.0}),
         init_postsynaptic("DeltaCurr"),
@@ -260,19 +262,22 @@ def test_custom_update_delay(make_model, backend, precision, batch_size):
                                           {}, {"V": 0.0, "U": 0.0});
     post_pop = model.add_neuron_population("Post", 10, neuron_model, 
                                            {}, {"V": 0.0, "U": 0.0})
-    model.add_synapse_population(
-        "Syn1", "DENSE", 5,
+    syn1_pop = model.add_synapse_population(
+        "Syn1", "DENSE",
         pre_pop, post_pop,
         init_weight_update(weight_update_model, {}, {"g": 0.0},
                            pre_var_refs={"V": create_var_ref(pre_pop, "V")}),
         init_postsynaptic("DeltaCurr"))
+    syn1_pop.axonal_delay_steps = 5
+    
     syn2_pop = model.add_synapse_population(
-        "Syn2", "DENSE", 5,
+        "Syn2", "DENSE",
         pre_pop, post_pop,
         init_weight_update(pre_weight_update_model, {}, {"g": 0.0}, {"pre": 0.0},
                            pre_var_refs={"V": create_var_ref(pre_pop, "V")}),
         init_postsynaptic("DeltaCurr"))
-    
+    syn2_pop.axonal_delay_steps = 5
+
     model.add_custom_update("NeuronDelaySetTime", "Test", set_time_custom_update_model,
                             {}, {}, {"R": create_var_ref(pre_pop, "V")})
     model.add_custom_update("WUPreDelaySetTime", "Test", set_time_custom_update_model,
@@ -315,7 +320,7 @@ def test_custom_update_transpose(make_model, backend, precision, batch_size):
     static_pulse_duplicate_model = create_weight_update_model(
         "static_pulse_duplicate",
         var_name_types=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
-        sim_code=
+        pre_spike_syn_code=
         """
         addToPost(g);
         """)
@@ -326,19 +331,19 @@ def test_custom_update_transpose(make_model, backend, precision, batch_size):
     model.batch_size = batch_size
     
     # Create pre and postsynaptic populations
-    pre_n_pop = model.add_neuron_population("PreNeurons", 100, "SpikeSource", {}, {}); 
-    post_n_pop = model.add_neuron_population("PostNeurons", 100, "SpikeSource", {}, {}); 
+    pre_n_pop = model.add_neuron_population("PreNeurons", 100, empty_neuron_model); 
+    post_n_pop = model.add_neuron_population("PostNeurons", 100, empty_neuron_model); 
     
     # Create forward and transpose synapse populations between populations
     g = (np.random.normal(size=(batch_size, 100 * 100)) if batch_size > 1 
          else np.random.normal(size=(100 * 100)))
     forward_s_pop = model.add_synapse_population(
-        "ForwardSynapses", "DENSE", 0,
+        "ForwardSynapses", "DENSE",
         pre_n_pop, post_n_pop,
         init_weight_update(static_pulse_duplicate_model, {}, {"g": g}),
         init_postsynaptic("DeltaCurr"))
     transpose_s_pop = model.add_synapse_population(
-        "TransposeSynapses", "DENSE", 0,
+        "TransposeSynapses", "DENSE",
         post_n_pop, pre_n_pop,
         init_weight_update(static_pulse_duplicate_model, {}, {"g": 0.0}),
         init_postsynaptic("DeltaCurr"))
@@ -476,7 +481,7 @@ def test_custom_update_batch_reduction(make_model, backend, precision, batch_siz
     model.batch_size = batch_size
     
     # Create a variety of models to attach custom updates to
-    ss_pop = model.add_neuron_population("SpikeSource", 10, "SpikeSource", {}, {});
+    ss_pop = model.add_neuron_population("SpikeSource", 10, empty_neuron_model);
     
     x_n = (np.random.uniform(high=100.0, size=(batch_size, 100)) if batch_size > 1
            else np.random.uniform(high=100.0, size=100))
@@ -486,7 +491,7 @@ def test_custom_update_batch_reduction(make_model, backend, precision, batch_siz
     x_dense_s = (np.random.uniform(high=100.0, size=(batch_size, 1000)) if batch_size > 1
                  else np.random.uniform(high=100.0, size=1000))
     dense_s_pop = model.add_synapse_population(
-        "DenseSynapses", "DENSE", 0,
+        "DenseSynapses", "DENSE",
         ss_pop, n_pop,
         init_weight_update(weight_update_model, {}, {"X": x_dense_s, "SumX": 0.0}),
         init_postsynaptic("DeltaCurr"))
@@ -496,7 +501,7 @@ def test_custom_update_batch_reduction(make_model, backend, precision, batch_siz
     pre_ind_sparse = np.repeat(np.arange(10), 10)
     post_ind_sparse = np.random.randint(0, 100, len(pre_ind_sparse))
     sparse_s_pop = model.add_synapse_population(
-        "SparseSynapses", "SPARSE", 0,
+        "SparseSynapses", "SPARSE",
         ss_pop, n_pop,
         init_weight_update(weight_update_model, {}, {"X": x_sparse_s, "SumX": 0.0}, {}, {}),
         init_postsynaptic("DeltaCurr", {}, {}))
@@ -508,7 +513,7 @@ def test_custom_update_batch_reduction(make_model, backend, precision, batch_siz
                    "conv_ih": 10, "conv_iw": 10, "conv_ic": 1,
                    "conv_oh": 10, "conv_ow": 10, "conv_oc": 1}
     kern_s_pop = model.add_synapse_population(
-        "ToeplitzSynapses", "TOEPLITZ", 0,
+        "ToeplitzSynapses", "TOEPLITZ",
         ss_pop, n_pop,
         init_weight_update(weight_update_model, {}, {"X": x_kern_s, "SumX": 0.0}),
         init_postsynaptic("DeltaCurr"),

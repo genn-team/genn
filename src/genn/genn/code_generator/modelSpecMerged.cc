@@ -152,7 +152,7 @@ using namespace GeNN::CodeGenerator;
     createMergedGroups(getModel().getSynapseGroups(), m_MergedSynapseConnectivityHostInitGroups,
                        [](const SynapseGroupInternal &sg)
                        { 
-                           return !Utils::areTokensEmpty(sg.getConnectivityInitialiser().getHostInitCodeTokens());
+                           return !Utils::areTokensEmpty(sg.getSparseConnectivityInitialiser().getHostInitCodeTokens());
                        },
                        &SynapseGroupInternal::getConnectivityHostInitHashDigest);
 }

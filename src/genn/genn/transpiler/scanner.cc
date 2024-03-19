@@ -55,7 +55,8 @@ const std::unordered_map<std::string_view, Token::Type> keywords{
     {"int64_t", Token::Type::TYPE_SPECIFIER},
     {"size_t", Token::Type::TYPE_SPECIFIER},
     {"bool", Token::Type::TYPE_SPECIFIER},
-    {"scalar", Token::Type::TYPE_SPECIFIER}};
+    {"scalar", Token::Type::TYPE_SPECIFIER},
+    {"timepoint", Token::Type::TYPE_SPECIFIER}};
 //---------------------------------------------------------------------------
 // ScanState
 //---------------------------------------------------------------------------

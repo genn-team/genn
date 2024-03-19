@@ -33,65 +33,10 @@ struct Preferences : public PreferencesBase
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::SingleThreadedCPU::Array
+// CodeGenerator::SingleThreadedCPU::Backend
 //--------------------------------------------------------------------------
-class BACKEND_EXPORT Array : public Runtime::ArrayBase
+class State : public Runtime::StateBase
 {
-public:
-    Array(const Type::ResolvedType &type, size_t count, 
-          VarLocation location, bool uninitialized);
-    virtual ~Array();
-    
-    //------------------------------------------------------------------------
-    // ArrayBase virtuals
-    //------------------------------------------------------------------------
-    //! Allocate array
-    virtual void allocate(size_t count) final;
-
-    //! Free array
-    virtual void free() final;
-
-    //! Copy entire array to device
-    virtual void pushToDevice() final
-    {
-    }
-
-    //! Copy entire array from device
-    virtual void pullFromDevice() final
-    {
-    }
-
-    //! Copy a 1D slice of elements to device 
-    /*! \param offset   Offset in elements to start copying from
-        \param count    Number of elements to copy*/
-    virtual void pushSlice1DToDevice(size_t, size_t) final
-    {
-    }
-
-    //! Copy a 1D slice of elements from device 
-    /*! \param offset   Offset in elements to start copying from
-        \param count    Number of elements to copy*/
-    virtual void pullSlice1DFromDevice(size_t, size_t) final
-    {
-    }
-    
-    //! Memset the host pointer
-    virtual void memsetDeviceObject(int) final
-    {
-        throw std::runtime_error("Single-threaded CPU arrays have no device objects");
-    }
-
-    //! Serialise backend-specific device object to bytes
-    virtual void serialiseDeviceObject(std::vector<std::byte>&, bool) const final
-    {
-        throw std::runtime_error("Single-threaded CPU arrays have no device objects");
-    }
-
-    //! Serialise backend-specific host object to bytes
-    virtual void serialiseHostObject(std::vector<std::byte>&, bool) const
-    {
-        throw std::runtime_error("Single-threaded CPU arrays have no host objects");
-    }
 };
 
 //--------------------------------------------------------------------------
@@ -127,6 +72,10 @@ public:
     virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+
+    //! Create backend-specific runtime state object
+    /*! \param runtime  runtime object */
+    virtual std::unique_ptr<GeNN::Runtime::StateBase> createState(const Runtime::Runtime &runtime) const final;
 
     //! Create backend-specific array object
     /*! \param type         data type of array
@@ -242,7 +191,7 @@ private:
     template<typename G, typename R>
     void genWriteBackReductions(EnvironmentExternalBase &env, G &cg, const std::string &idxName, R getVarRefIndexFn) const
     {
-        const auto *cm = cg.getArchetype().getCustomUpdateModel();
+        const auto *cm = cg.getArchetype().getModel();
         for(const auto &v : cm->getVars()) {
             // If variable is a reduction target, copy value from register straight back into global memory
             if(v.access & VarAccessModeAttribute::REDUCE) {

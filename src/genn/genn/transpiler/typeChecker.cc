@@ -677,12 +677,14 @@ private:
 
     virtual void visit(const Statement::Expression &expression) final
     {
-        expression.getExpression()->accept(*this);
+        if(expression.getExpression()) {
+            expression.getExpression()->accept(*this);
+        }
     }
 
     virtual void visit(const Statement::For &forStatement) final
     {
-        // Cache reference to current reference
+        // Cache reference to current environment
         std::reference_wrapper<EnvironmentInternal> oldEnvironment = m_Environment; 
         
         // Create new environment and set to current
@@ -718,7 +720,7 @@ private:
                                  "Not supported in this context");
             throw TypeCheckError();
         }
-        // Cache reference to current reference
+        // Cache reference to current environment
         std::reference_wrapper<EnvironmentInternal> oldEnvironment = m_Environment; 
         
         // Create new environment and set to current

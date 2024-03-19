@@ -38,7 +38,7 @@ public:
         "   postIdx = (postIdx < num_post) ? postIdx : (num_post - 1);\n"
         "   addSynapse(postIdx + id_post_begin);\n"
         "}\n");
-    SET_PARAMS({"total"});
+    SET_PARAMS({"num"});
     SET_EXTRA_GLOBAL_PARAMS({{"preCalcRowLength", "unsigned int*"}})
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
@@ -50,7 +50,7 @@ public:
             // There are numConnections connections amongst the numPre*numPost possible connections.
             // Each of the numConnections connections has an independent p=float(numPost)/(numPre*numPost)
             // probability of being selected, and the number of synapses in the sub-row is binomially distributed
-            return binomialInverseCDF(quantile, pars.at("total").cast<unsigned int>(), (double)numPost / ((double)numPre * (double)numPost));
+            return binomialInverseCDF(quantile, pars.at("num").cast<unsigned int>(), (double)numPost / ((double)numPre * (double)numPost));
         });
 
     SET_CALC_MAX_COL_LENGTH_FUNC(
@@ -62,7 +62,7 @@ public:
             // There are numConnections connections amongst the numPre*numPost possible connections.
             // Each of the numConnections connections has an independent p=float(numPost)/(numPre*numPost)
             // probability of being selected, and the number of synapses in the sub-row is binomially distributed
-            return binomialInverseCDF(quantile, pars.at("total").cast<unsigned int>(), (double)numPre / ((double)numPre * (double)numPost));
+            return binomialInverseCDF(quantile, pars.at("num").cast<unsigned int>(), (double)numPre / ((double)numPre * (double)numPost));
         });
 };
 IMPLEMENT_SNIPPET(FixedNumberTotalWithReplacement);
@@ -105,8 +105,8 @@ TEST(InitSparseConnectivitySnippet, CompareVarInitParameters)
 
 TEST(InitSparseConnectivitySnippet, CompareUnusedParameters)
 {
-    ParamValues fixedNumberParamsA{{"total", 1000}};
-    ParamValues fixedNumberParamsB{{"total", 1200}};
+    ParamValues fixedNumberParamsA{{"num", 1000}};
+    ParamValues fixedNumberParamsB{{"num", 1200}};
 
     auto connectivityInit0 = initConnectivity<FixedNumberTotalWithReplacement>(fixedNumberParamsA);
     auto connectivityInit1 = initConnectivity<FixedNumberTotalWithReplacement>(fixedNumberParamsB);
