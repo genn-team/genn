@@ -1340,7 +1340,8 @@ def create_weight_update_model(
         extra_global_params:                    names and types of model
                                                 extra global parameters
     
-    For example, we can define a simple additive STDP rule with nearest-neighbour spike pairing and the following time-dependence:
+    For example, we can define a simple additive STDP rule with 
+    nearest-neighbour spike pairing and the following time-dependence (equivalent to :func:`.weight_update_models.STDP`):
 
     ..  math::
 
