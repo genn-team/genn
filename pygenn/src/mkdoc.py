@@ -172,12 +172,9 @@ def process_comment(comment):
     s = re.sub(r'</?ul>', r'', s)
     s = re.sub(r'</li>', r'\n\n', s)
 
-    # Doxygen LaTeX commands.
-    #s = re.sub(r'[@\\]f\$\s*(.*?)\s*[@\\]f\$', r':math:`\1`', s,
-    #           flags=re.DOTALL)
-    #s = re.sub(r'[@\\]f\[\s*(.*?)\s*[@\\]f\]', r'\n\n.. math:: \1\n\n', s,
-    #           flags=re.DOTALL)
-
+    # Citations
+    s = re.sub(r'[@\\]cite\s+(\w+)', r'[\1]_', s)
+    
     # Replace block maths with default environment
     def replace_math(match):
         return ("\n.. math::\n\n"

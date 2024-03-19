@@ -2911,7 +2911,7 @@ static const char *__doc_NeuronModels_Base_isAutoRefractoryRequired = R"doc(Does
 static const char *__doc_NeuronModels_Base_validate = R"doc(Validate names of parameters etc)doc";
 
 static const char *__doc_NeuronModels_Izhikevich =
-R"doc(Izhikevich neuron with fixed parameters \cite izhikevich2003simple.
+R"doc(Izhikevich neuron with fixed parameters [izhikevich2003simple]_.
 It is usually described as
 
 .. math::
@@ -2937,7 +2937,7 @@ Parameters are:
 - ``d`` - after-spike reset value of U)doc";
 
 static const char *__doc_NeuronModels_IzhikevichVariable =
-R"doc(Izhikevich neuron with variable parameters \cite izhikevich2003simple.
+R"doc(Izhikevich neuron with variable parameters [izhikevich2003simple]_.
 This is the same model as NeuronModels::Izhikevich but parameters are defined as
 "variables" in order to allow users to provide individual values for each
 individual neuron instead of fixed values for all neurons across the population.
@@ -3030,8 +3030,8 @@ static const char *__doc_NeuronModels_Poisson_isAutoRefractoryRequired = R"doc()
 
 static const char *__doc_NeuronModels_RulkovMap =
 R"doc(Rulkov Map neuron
-The RulkovMap type is a map based neuron model based on \cite Rulkov2002 but in
-the 1-dimensional map form used in \cite nowotny2005self :
+The RulkovMap type is a map based neuron model based on [Rulkov2002]_ but in
+the 1-dimensional map form used in [nowotny2005self]_ :
 
 .. math::
     :nowrap:
@@ -3109,7 +3109,7 @@ static const char *__doc_NeuronModels_SpikeSourceArray_isAutoRefractoryRequired 
 
 static const char *__doc_NeuronModels_TraubMiles =
 R"doc(Hodgkin-Huxley neurons with Traub & Miles algorithm.
-This conductance based model has been taken from \cite Traub1991 and can be described by the equations:
+This conductance based model has been taken from [Traub1991]_ and can be described by the equations:
 
 .. math::
     :nowrap:
