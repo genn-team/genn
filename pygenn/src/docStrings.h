@@ -3006,7 +3006,13 @@ and 1 parameter:
 
     Internally this samples from the exponential distribution using
     the C++ 11 \<random\> library on the CPU and by transforming the
-    uniform distribution, generated using cuRAND, with a natural log on the GPU.)doc";
+    uniform distribution, generated using cuRAND, with a natural log on the GPU.
+
+
+.. note::
+
+    If you are connecting Poisson neurons one-to-one to another neuron population,
+    it is more efficient to add a CurrentSourceModels::PoissonExp instead.)doc";
 
 static const char *__doc_NeuronModels_Poisson_getDerivedParams = R"doc()doc";
 
@@ -4544,7 +4550,7 @@ This rule makes purely additive weight updates within hard bounds and uses neare
 
 .. math::
 
-    \Delta w_{ij} & = \
+    \Delta w_{ij} = \
     \begin{cases}
     A_{+}\exp\left(-\frac{\Delta t}{\tau_{+}}\right) & if\, \Delta t>0\
     A_{-}\exp\left(\frac{\Delta t}{\tau_{-}}\right) & if\, \Delta t\leq0
