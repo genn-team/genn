@@ -29,6 +29,7 @@ Random number generation
 Random numbers are useful in many forms of custom model. For example as a source of noise or a probabilistic spiking mechanism. 
 In GeNN this can be implemented by using the following functions within GeNNCode:
 
+- ``gennrand()`` returns a random 32-bit unsigned integer
 - ``gennrand_uniform()`` returns a number drawn uniformly from the interval :math:`[0.0, 1.0]`
 - ``gennrand_normal()`` returns a number drawn from a normal distribution with a mean of 0 and a standard deviation of 1.
 - ``gennrand_exponential()`` returns a number drawn from an exponential distribution with :math:`\lambda=1`.
