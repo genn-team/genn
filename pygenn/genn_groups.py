@@ -9,7 +9,7 @@ from ._genn import (CustomUpdateWU, NumericValue, SynapseMatrixConnectivity,
 from warnings import warn
 from weakref import proxy
 from ._genn import get_var_access_dim
-from .deprecated import deprecated
+from ._deprecated import deprecated
 from .model_preprocessor import (_prepare_egps, _prepare_vars, Array,
                                  ExtraGlobalParameter, SynapseVariable,
                                  Variable)

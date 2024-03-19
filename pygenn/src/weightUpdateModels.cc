@@ -40,5 +40,5 @@ PYBIND11_MODULE(weight_update_models, m)
     WRAP(StaticPulseConstantWeight);
     WRAP(StaticPulseDendriticDelay);
     WRAP(StaticGraded);
-    WRAP(PiecewiseSTDP);
+    WRAP(STDP);
 }

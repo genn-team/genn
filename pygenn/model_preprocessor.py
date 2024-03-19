@@ -9,7 +9,7 @@ from .init_var_snippets import Uninitialised
 
 from copy import copy
 from weakref import proxy, ref
-from .deprecated import deprecated
+from ._deprecated import deprecated
 
 # Type aliases
 VarTypeType = Union[ResolvedType, UnresolvedType]
