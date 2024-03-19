@@ -141,26 +141,13 @@ docker run --gpus=all -e LOCAL_USER_ID=`id -u $USER` -e LOCAL_GROUP_ID=`id -g $U
 
 At the moment, the following Python example projects are provided with GeNN:
 
-- Self-organisation with STDP in the locust olfactory system \([Nowotny et al. 2005][@Nowotnyetal2005]\):
-    - with all-to-all connectivity, using built-in neuron and synapse models \(for benchmarks see [Yavuz et al. 2016][@Yavuzetal2016]\)
-    - with sparse connectivity for some synapses, using user-defined neuron-and synapse models \(for benchmarks see [Yavuz et al. 2016][@Yavuzetal2016]\)
-    - using BITMASK connectivity
-    - using synapses with axonal delays
-- Pulse-coupled network of Izhikevich neurons \([Izhikevich 2003][@Izhikevich2003]\) (for benchmarks see [Yavuz et al. 2016][@Yavuzetal2016])
-
-- Genetic algorithm for tracking parameters in a Hodgkin-Huxley model cell
-
-- Classifier based on an abstraction of the insect olfactory system \([Schmuker et al. 2014][@Schmukeretal2014]\)
-
 - Cortical microcircuit model \([Potjans et al. 2014][@Potjans2014]\)
+- SuperSpike model \([Zenke et al. 2018][@Zenke2018]\)
+- MNIST classifier using an insect-inspired mushroom body model
 
-- Toy examples:
-    - Single neuron population of Izhikevich neuron(s) receiving Poisson spike trains as input
-    - Single neuron population of Izhikevich neuron(s) with no synapses
-    - Network of Izhikevich neurons with delayed synapses
-
-In order to get a quick start and run one of the the provided example models, navigate to one of the example project directories in the userproject sub-directory, and then follow the instructions in the README file contained within.
+In order to get a quick start and run one of the the provided example models, navigate to the userproject directory, and run the python script with ``--help`` to see what options are available.
 
 For more details on how to use GeNN, please see [documentation](http://genn-team.github.io/genn/).
 
-If you use GeNN in your work, please cite "Yavuz, E., Turner, J. and Nowotny, T. GeNN: a code generation framework for accelerated brain simulations. Scientific Reports, 6. (2016)"
+[@Potjans2014]: https://doi.org/10.1093/cercor/bhs358 "Potjans, T. C., & Diesmann, M. The Cell-Type Specific Cortical Microcircuit: Relating Structure and Activity in a Full-Scale Spiking Network Model. Cerebral Cortex, 24(3), 785–806 (2014)"
+[@Zenke2018]: https://doi.org/10.1162/neco_a_01086  "Zenke, F., & Ganguli, S. (2018). SuperSpike: Supervised Learning in Multilayer Spiking Neural Networks. Neural Computation, 30(6), 1514–1541."
