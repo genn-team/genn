@@ -384,7 +384,7 @@ public:
 
     SET_COL_BUILD_CODE(
         "for(unsigned int c = num; c != 0; c--) {\n"
-        "   const unsigned int idPre = (unsigned int)ceil(gennrand_uniform() * num_pre) - 1;\n"
+        "   const unsigned int idPre = gennrand() % num_pre;\n"
         "   addSynapse(idPre + id_pre_begin);\n"
         "}\n");
  

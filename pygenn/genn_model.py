@@ -2068,7 +2068,7 @@ def create_sparse_connect_init_snippet(class_name: str, params=None,
             row_build_code=
                 \"""
                 for(unsigned int c = num; c != 0; c--) {
-                   const unsigned int idPost = (unsigned int)ceil(gennrand_uniform() * num_post) - 1;
+                   const unsigned int idPost = gennrand() % num_post;
                    addSynapse(idPost + id_post_begin);
                 }
                 \""",
