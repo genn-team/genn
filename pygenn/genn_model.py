@@ -38,7 +38,7 @@ from textwrap import dedent
 from warnings import warn
 from weakref import proxy
 from ._genn import generate_code, init_logging
-from .deprecated import deprecated
+from ._deprecated import deprecated
 from .model_preprocessor import _get_snippet, _get_var_init, _prepare_param_vals
 
 # Type aliases used in model creation functions
