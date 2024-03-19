@@ -307,8 +307,16 @@ public:
 //----------------------------------------------------------------------------
 // GeNN::AdditiveSTDP
 //----------------------------------------------------------------------------
-//! This is a simple STDP rule including a time delay for the finite transmission speed of the synapse.
-/*!  The model has 1 variable:
+//! Simply asymmetrical STDP rule.
+/*! This rule makes purely additive weight updates within hard bounds and uses nearest-neighbour spike pairing and the following time-dependence:
+    \f[
+        \Delta w_{ij} & = \
+            \begin{cases}
+                A_{+}\exp\left(-\frac{\Delta t}{\tau_{+}}\right) & if\, \Delta t>0\
+                A_{-}\exp\left(\frac{\Delta t}{\tau_{-}}\right) & if\, \Delta t\leq0
+            \end{cases}  
+    \f]
+The model has 1 variable:
 
     - \c g - conductance of scalar type
 
