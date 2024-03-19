@@ -1,29 +1,28 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Building networks &mdash; PyGeNN  documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css" />
-      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css" />
-      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css" />
-      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css?v=61a4c737" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css?v=f4aeca0c" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css?v=2082cf3c" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css?v=1277b6f3" />
 
   
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="_static/doctools.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=b3ba4146"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=4825356b"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
@@ -179,11 +178,11 @@ model can be configured as follows:</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>snippet</strong> (<em>Union</em><em>[</em><em>InitVarSnippetBase</em><em>, </em><em>str</em><em>]</em>) – variable init snippet, either as a string referencing
+<li><p><strong>snippet</strong> (<em>InitVarSnippetBase</em><em> | </em><em>str</em>) – variable init snippet, either as a string referencing
 a built-in snippet (see <a class="reference internal" href="source/pygenn.html#module-pygenn.init_var_snippets" title="pygenn.init_var_snippets"><code class="xref py py-mod docutils literal notranslate"><span class="pre">init_var_snippets</span></code></a>)
 or an instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">InitVarSnippetBase</span></code>
 (for example returned by <a class="reference internal" href="source/pygenn.html#pygenn.create_var_init_snippet" title="pygenn.create_var_init_snippet"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_var_init_snippet()</span></code></a>)</p></li>
-<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – parameter values for the variable init snippet (see <a class="reference internal" href="#parameters">Parameters</a>)</p></li>
+<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>) – parameter values for the variable init snippet (see <a class="reference internal" href="#parameters">Parameters</a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -351,11 +350,11 @@ These can be created using:</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>pop_name</strong> (<em>str</em>) – unique name</p></li>
 <li><p><strong>num_neurons</strong> (<em>int</em>) – number of neurons</p></li>
-<li><p><strong>neuron</strong> (<em>Union</em><em>[</em><em>NeuronModelBase</em><em>, </em><em>str</em><em>]</em>) – neuron model either as a string referencing a built-in model
+<li><p><strong>neuron</strong> (<em>NeuronModelBase</em><em> | </em><em>str</em>) – neuron model either as a string referencing a built-in model
 (see <a class="reference internal" href="source/pygenn.html#module-pygenn.neuron_models" title="pygenn.neuron_models"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neuron_models</span></code></a>) or an instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronModelBase</span></code>
 (for example returned by <a class="reference internal" href="source/pygenn.html#pygenn.create_neuron_model" title="pygenn.create_neuron_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_neuron_model()</span></code></a>)</p></li>
-<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – parameter values for the neuron model (see <a class="reference internal" href="#parameters">Parameters</a>)</p></li>
-<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – initial variable values or initialisers
+<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>) – parameter values for the neuron model (see <a class="reference internal" href="#parameters">Parameters</a>)</p></li>
+<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial variable values or initialisers
 for the neuron model (see <a class="reference internal" href="#variables">Variables</a>)</p></li>
 </ul>
 </dd>
@@ -392,12 +391,12 @@ variable initialisers and variable references</p>
 (see <a class="reference internal" href="source/pygenn.html#module-pygenn.weight_update_models" title="pygenn.weight_update_models"><code class="xref py py-mod docutils literal notranslate"><span class="pre">weight_update_models</span></code></a>) or an instance of
 <code class="xref py py-class docutils literal notranslate"><span class="pre">WeightUpdateModelBase</span></code> (for example returned
 by <a class="reference internal" href="source/pygenn.html#pygenn.create_weight_update_model" title="pygenn.create_weight_update_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_weight_update_model()</span></code></a>)</p></li>
-<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – parameter values (see <a class="reference internal" href="#parameters">Parameters</a>)</p></li>
-<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – initial synaptic variable values or
+<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>) – parameter values (see <a class="reference internal" href="#parameters">Parameters</a>)</p></li>
+<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial synaptic variable values or
 initialisers (see <a class="reference internal" href="#variables">Variables</a>)</p></li>
-<li><p><strong>pre_vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – initial presynaptic variable values or
+<li><p><strong>pre_vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial presynaptic variable values or
 initialisers (see <a class="reference internal" href="#variables">Variables</a>)</p></li>
-<li><p><strong>post_vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – initial postsynaptic variable values or initialisers
+<li><p><strong>post_vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial postsynaptic variable values or initialisers
 (see <a class="reference internal" href="#variables">Variables</a>)</p></li>
 <li><p><strong>pre_var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarReference</em><em>]</em>) – references to presynaptic neuron variables,
 typically created using <a class="reference internal" href="source/pygenn.html#pygenn.create_var_ref" title="pygenn.create_var_ref"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_var_ref()</span></code></a>
@@ -425,14 +424,14 @@ variable initialisers and variable references</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>snippet</strong> (<em>Union</em><em>[</em><em>PostsynapticModelBase</em><em>, </em><em>str</em><em>]</em>) – postsynaptic model either as a string referencing a built-in model
+<li><p><strong>snippet</strong> (<em>PostsynapticModelBase</em><em> | </em><em>str</em>) – postsynaptic model either as a string referencing a built-in model
 (see <a class="reference internal" href="source/pygenn.html#module-pygenn.postsynaptic_models" title="pygenn.postsynaptic_models"><code class="xref py py-mod docutils literal notranslate"><span class="pre">postsynaptic_models</span></code></a>) or an instance of
 <code class="xref py py-class docutils literal notranslate"><span class="pre">PostsynapticModelBase</span></code> (for example returned
 by <a class="reference internal" href="source/pygenn.html#pygenn.create_postsynaptic_model" title="pygenn.create_postsynaptic_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_postsynaptic_model()</span></code></a>)</p></li>
-<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – parameter values for the postsynaptic model (see <a class="reference internal" href="#parameters">Parameters</a>)</p></li>
-<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – initial synaptic variable values or initialisers
+<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>) – parameter values for the postsynaptic model (see <a class="reference internal" href="#parameters">Parameters</a>)</p></li>
+<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial synaptic variable values or initialisers
 for the postsynaptic model (see <a class="reference internal" href="#variables">Variables</a>)</p></li>
-<li><p><strong>var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – references to postsynaptic neuron variables,
+<li><p><strong>var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – references to postsynaptic neuron variables,
 typically created using <a class="reference internal" href="source/pygenn.html#pygenn.create_var_ref" title="pygenn.create_var_ref"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_var_ref()</span></code></a>
 (see <a class="reference internal" href="#variables-references">Variables references</a>)</p></li>
 </ul>
@@ -489,11 +488,11 @@ initialisation snippet with parameter values</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>snippet</strong> (<em>Union</em><em>[</em><em>InitSparseConnectivitySnippetBase</em><em>, </em><em>str</em><em>]</em>) – sparse connectivity init snippet, either as a string referencing
+<li><p><strong>snippet</strong> (<em>InitSparseConnectivitySnippetBase</em><em> | </em><em>str</em>) – sparse connectivity init snippet, either as a string referencing
 a built-in snippet (see <a class="reference internal" href="source/pygenn.html#module-pygenn.init_sparse_connectivity_snippets" title="pygenn.init_sparse_connectivity_snippets"><code class="xref py py-mod docutils literal notranslate"><span class="pre">init_sparse_connectivity_snippets</span></code></a>)
 or an instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">InitSparseConnectivitySnippetBase</span></code>
 (for example returned by <a class="reference internal" href="source/pygenn.html#pygenn.create_sparse_connect_init_snippet" title="pygenn.create_sparse_connect_init_snippet"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_sparse_connect_init_snippet()</span></code></a>)</p></li>
-<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – parameter values for the sparse connectivity init snippet (see <a class="reference internal" href="#parameters">Parameters</a>)</p></li>
+<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>) – parameter values for the sparse connectivity init snippet (see <a class="reference internal" href="#parameters">Parameters</a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -548,14 +547,14 @@ population with <span class="math notranslate nohighlight">\(62 \times 62 \times
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>pop_name</strong> (<em>str</em>) – unique name</p></li>
-<li><p><strong>matrix_type</strong> (<em>Union</em><em>[</em><a class="reference internal" href="source/pygenn.html#pygenn.SynapseMatrixType" title="pygenn._genn.SynapseMatrixType"><em>SynapseMatrixType</em></a><em>, </em><em>str</em><em>]</em>) – type of connectivity to use</p></li>
+<li><p><strong>matrix_type</strong> (<a class="reference internal" href="source/pygenn.html#pygenn.SynapseMatrixType" title="pygenn._genn.SynapseMatrixType"><em>SynapseMatrixType</em></a><em> | </em><em>str</em>) – type of connectivity to use</p></li>
 <li><p><strong>source</strong> (<a class="reference internal" href="source/pygenn.html#pygenn.NeuronGroup" title="pygenn._genn.NeuronGroup"><em>NeuronGroup</em></a>) – source neuron group</p></li>
 <li><p><strong>target</strong> (<a class="reference internal" href="source/pygenn.html#pygenn.NeuronGroup" title="pygenn._genn.NeuronGroup"><em>NeuronGroup</em></a>) – target neuron group</p></li>
 <li><p><strong>weight_update_init</strong> – initialiser for weight update model, typically
 created using <a class="reference internal" href="source/pygenn.html#pygenn.init_weight_update" title="pygenn.init_weight_update"><code class="xref py py-func docutils literal notranslate"><span class="pre">init_weight_update()</span></code></a></p></li>
 <li><p><strong>postsynaptic_init</strong> – initialiser for postsynaptic model, typically
 created using <a class="reference internal" href="source/pygenn.html#pygenn.init_postsynaptic" title="pygenn.init_postsynaptic"><code class="xref py py-func docutils literal notranslate"><span class="pre">init_postsynaptic()</span></code></a></p></li>
-<li><p><strong>connectivity_init</strong> (<em>Union</em><em>[</em><em>None</em><em>, </em><em>SparseConnectivityInit</em><em>, </em><em>ToeplitzConnectivityInit</em><em>]</em>) – initialiser for connectivity, typically created
+<li><p><strong>connectivity_init</strong> (<em>None</em><em> | </em><em>SparseConnectivityInit</em><em> | </em><em>ToeplitzConnectivityInit</em>) – initialiser for connectivity, typically created
 using <a class="reference internal" href="source/pygenn.html#pygenn.init_sparse_connectivity" title="pygenn.init_sparse_connectivity"><code class="xref py py-func docutils literal notranslate"><span class="pre">init_sparse_connectivity()</span></code></a> when
 <code class="docutils literal notranslate"><span class="pre">matrix_type</span></code> is <a class="reference internal" href="source/pygenn.html#pygenn.SynapseMatrixType.BITMASK" title="pygenn.SynapseMatrixType.BITMASK"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SynapseMatrixType.BITMASK</span></code></a>,
 <a class="reference internal" href="source/pygenn.html#pygenn.SynapseMatrixType.SPARSE" title="pygenn.SynapseMatrixType.SPARSE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SynapseMatrixType.SPARSE</span></code></a>,
@@ -593,12 +592,12 @@ exponential shaped current inputs as follows:</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>cs_name</strong> (<em>str</em>) – unique name</p></li>
-<li><p><strong>current_source_model</strong> (<em>Union</em><em>[</em><em>CurrentSourceModelBase</em><em>, </em><em>str</em><em>]</em>) – current source model either as a string referencing a built-in model
+<li><p><strong>current_source_model</strong> (<em>CurrentSourceModelBase</em><em> | </em><em>str</em>) – current source model either as a string referencing a built-in model
 (see <a class="reference internal" href="source/pygenn.html#module-pygenn.current_source_models" title="pygenn.current_source_models"><code class="xref py py-mod docutils literal notranslate"><span class="pre">current_source_models</span></code></a>) or an instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">CurrentSourceModelBase</span></code>
 (for example returned by <a class="reference internal" href="source/pygenn.html#pygenn.create_current_source_model" title="pygenn.create_current_source_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_current_source_model()</span></code></a>)</p></li>
 <li><p><strong>pop</strong> (<a class="reference internal" href="source/pygenn.html#pygenn.NeuronGroup" title="pygenn._genn.NeuronGroup"><em>NeuronGroup</em></a>) – neuron population to inject current into</p></li>
-<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – parameter values for the current source model (see <a class="reference internal" href="#parameters">Parameters</a>)</p></li>
-<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – initial variable values or initialisers
+<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>) – parameter values for the current source model (see <a class="reference internal" href="#parameters">Parameters</a>)</p></li>
+<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial variable values or initialisers
 for the current source model (see <a class="reference internal" href="#variables">Variables</a>)</p></li>
 <li><p><strong>var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarReference</em><em>]</em>) – variables references to neuron variables in <code class="docutils literal notranslate"><span class="pre">pop</span></code>,
 typically created using <a class="reference internal" href="source/pygenn.html#pygenn.create_var_ref" title="pygenn.create_var_ref"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_var_ref()</span></code></a>
@@ -638,14 +637,14 @@ The custom update system also provides functionality for efficiently calculating
 <li><p><strong>cu_name</strong> (<em>str</em>) – unique name</p></li>
 <li><p><strong>group_name</strong> (<em>str</em>) – name of the ‘custom update group’ to include this update in.
 All custom updates in the same group are executed simultaneously.</p></li>
-<li><p><strong>custom_update_model</strong> (<em>Union</em><em>[</em><em>CustomUpdateModelBase</em><em>, </em><em>str</em><em>]</em>) – custom update model either as a string referencing a built-in model
+<li><p><strong>custom_update_model</strong> (<em>CustomUpdateModelBase</em><em> | </em><em>str</em>) – custom update model either as a string referencing a built-in model
 (see <a class="reference internal" href="source/pygenn.html#module-pygenn.custom_update_models" title="pygenn.custom_update_models"><code class="xref py py-mod docutils literal notranslate"><span class="pre">custom_update_models</span></code></a>) or an instance of
 <code class="xref py py-class docutils literal notranslate"><span class="pre">CustomUpdateModelBase</span></code>
 (for example returned by <a class="reference internal" href="source/pygenn.html#pygenn.create_custom_update_model" title="pygenn.create_custom_update_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_custom_update_model()</span></code></a>)</p></li>
-<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – parameter values for the custom update model (see <a class="reference internal" href="#parameters">Parameters</a>)</p></li>
-<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – initial variable values or initialisers
+<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>) – parameter values for the custom update model (see <a class="reference internal" href="#parameters">Parameters</a>)</p></li>
+<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial variable values or initialisers
 for the custom update model (see <a class="reference internal" href="#variables">Variables</a>)</p></li>
-<li><p><strong>var_refs</strong> (<em>Union</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarReference</em><em>]</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>WUVarReference</em><em>]</em><em>]</em>) – references to variables in other populations to
+<li><p><strong>var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarReference</em><em>] </em><em>| </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>WUVarReference</em><em>]</em>) – references to variables in other populations to
 access from this update, typically created using either
 <a class="reference internal" href="source/pygenn.html#pygenn.create_var_ref" title="pygenn.create_var_ref"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_var_ref()</span></code></a> or <a class="reference internal" href="source/pygenn.html#pygenn.create_wu_var_ref" title="pygenn.create_wu_var_ref"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_wu_var_ref()</span></code></a>
 (see <a class="reference internal" href="#variables-references">Variables references</a>).</p></li>
@@ -686,16 +685,16 @@ Custom connectivity updates are added to a model using:</p>
 <li><p><strong>group_name</strong> (<em>str</em>) – name of the ‘custom update group’ to include this update in.
 All custom updates in the same group are executed simultaneously.</p></li>
 <li><p><strong>syn_group</strong> (<a class="reference internal" href="source/pygenn.html#pygenn.SynapseGroup" title="pygenn._genn.SynapseGroup"><em>SynapseGroup</em></a>) – Synapse group to attach custom connectivity update to</p></li>
-<li><p><strong>custom_conn_update_model</strong> (<em>Union</em><em>[</em><em>CustomConnectivityUpdateModelBase</em><em>, </em><em>str</em><em>]</em>) – custom connectivity update model either as a string referencing a built-in model
+<li><p><strong>custom_conn_update_model</strong> (<em>CustomConnectivityUpdateModelBase</em><em> | </em><em>str</em>) – custom connectivity update model either as a string referencing a built-in model
 (see <a class="reference internal" href="source/pygenn.html#module-pygenn.custom_connectivity_update_models" title="pygenn.custom_connectivity_update_models"><code class="xref py py-mod docutils literal notranslate"><span class="pre">custom_connectivity_update_models</span></code></a>) or an instance of
 <code class="xref py py-class docutils literal notranslate"><span class="pre">CustomConnectivityUpdateModelBaseUpdateModelBase</span></code>
 (for example returned by <a class="reference internal" href="source/pygenn.html#pygenn.create_custom_connectivity_update_model" title="pygenn.create_custom_connectivity_update_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_custom_connectivity_update_model()</span></code></a>)</p></li>
-<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>]</em>) – parameter values for the custom connectivity model (see <a class="reference internal" href="#parameters">Parameters</a>)</p></li>
-<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – initial synaptic variable values or
+<li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>) – parameter values for the custom connectivity model (see <a class="reference internal" href="#parameters">Parameters</a>)</p></li>
+<li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial synaptic variable values or
 initialisers (see <a class="reference internal" href="#variables">Variables</a>)</p></li>
-<li><p><strong>pre_vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – initial presynaptic variable values or
+<li><p><strong>pre_vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial presynaptic variable values or
 initialisers (see <a class="reference internal" href="#variables">Variables</a>)</p></li>
-<li><p><strong>post_vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>VarInit</em><em>, </em><em>int</em><em>, </em><em>float</em><em>, </em><em>ndarray</em><em>, </em><em>Sequence</em><em>]</em><em>]</em>) – initial postsynaptic variable values or initialisers
+<li><p><strong>post_vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial postsynaptic variable values or initialisers
 (see <a class="reference internal" href="#variables">Variables</a>)</p></li>
 <li><p><strong>var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>WUVarReference</em><em>]</em>) – references to synaptic variables,
 typically created using <a class="reference internal" href="source/pygenn.html#pygenn.create_wu_var_ref" title="pygenn.create_wu_var_ref"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_wu_var_ref()</span></code></a>
