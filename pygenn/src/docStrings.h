@@ -3221,12 +3221,12 @@ static const char *__doc_PostsynapticModels_ExpCond =
 R"doc(Exponential decay with synaptic input treated as a conductance value.
 This model has no variables, two parameters:
 
-- ``tau`` : Decay time constant
-- ``E``   : Reversal potential
+- ``tau`` - Decay time constant
+- ``E`` - Reversal potential
 
 and a variable reference:
 
-- ``V``   : Is a reference to the neuron's membrane voltage
+- ``V`` - A reference to the neuron's membrane voltage
 
 ``tau`` is used by the derived parameter ``expdecay`` which returns expf(-dt/tau).)doc";
 
@@ -3244,7 +3244,7 @@ static const char *__doc_PostsynapticModels_ExpCurr =
 R"doc(Exponential decay with synaptic input treated as a current value.
 This model has no variables and a single parameter:
 
-- ``tau`` : Decay time constant)doc";
+- ``tau`` - Decay time constant)doc";
 
 static const char *__doc_PostsynapticModels_ExpCurr_getDerivedParams = R"doc()doc";
 
@@ -4552,13 +4552,13 @@ This rule makes purely additive weight updates within hard bounds and uses neare
 
     \Delta w_{ij} = \
     \begin{cases}
-    A_{+}\exp\left(-\frac{\Delta t}{\tau_{+}}\right) & if\, \Delta t>0\
+    A_{+}\exp\left(-\frac{\Delta t}{\tau_{+}}\right) & if\, \Delta t>0\\
     A_{-}\exp\left(\frac{\Delta t}{\tau_{-}}\right) & if\, \Delta t\leq0
     \end{cases}
 
 The model has 1 variable:
 
-- ``g`` - conductance of scalar type
+- ``g`` - synaptic weight
 
 and 6 parameters:
 
@@ -4590,16 +4590,16 @@ In a graded synapse, the conductance is updated gradually with the rule:
 whenever the membrane potential :math:`V` is larger than the threshold :math:`E_{pre}`.
 The model has 1 variable:
 
-- ``g:`` synaptic weight
+- ``g`` - synaptic weight
 
 The model also has 1 presynaptic neuron variable reference:
 
-- ``V:`` Presynaptic membrane potential
+- ``V`` - Presynaptic membrane potential
 
 The parameters are:
 
-- ``Epre:`` Presynaptic threshold potential
-- ``Vslope:`` Activation slope of graded release)doc";
+- ``Epre`` - Presynaptic threshold potential
+- ``Vslope`` - Activation slope of graded release)doc";
 
 static const char *__doc_WeightUpdateModels_StaticGraded_getInstance = R"doc()doc";
 
