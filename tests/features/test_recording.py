@@ -8,6 +8,9 @@ from pygenn import (create_neuron_model, create_var_ref,
                     create_weight_update_model, init_postsynaptic,
                     init_weight_update)
 
+# Neuron model which does nothing
+empty_neuron_model = create_neuron_model("empty")
+    
 spike_event_source_array_model = create_neuron_model(
     "spike_event_source_array",
     sim_code=
@@ -106,7 +109,7 @@ def test_event_recording(make_model, backend, precision, batch_size):
     es.spike_event_recording_enabled = True
 
     # Because spike events are recorded per synapse group, add 
-    post = model.add_neuron_population("Post", 1, "SpikeSource")
+    post = model.add_neuron_population("Post", 1, empty_neuron_model)
     sg = model.add_synapse_population(
         "Synapses", "DENSE",
         es, post,

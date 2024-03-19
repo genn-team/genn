@@ -10,6 +10,9 @@ from pygenn import (create_neuron_model,
                     init_sparse_connectivity,
                     init_weight_update, init_var)
 
+# Neuron model which does nothing
+empty_neuron_model = create_neuron_model("empty")
+        
 # Neuron model which fires every timestep
 # **NOTE** this is just so sim_code fires every timestep
 always_spike_neuron_model = create_neuron_model(
@@ -285,11 +288,9 @@ def test_wu_var_cont(make_model, backend, precision, fuse, delay):
     model.fuse_postsynaptic_models = fuse
 
     # Create pre and postsynaptic neuron populations
-    pre_n_pop = model.add_neuron_population("PreNeurons", 10, pattern_spike_neuron_model, 
-                                            {}, {})
+    pre_n_pop = model.add_neuron_population("PreNeurons", 10, pattern_spike_neuron_model)
   
-    post_n_pop = model.add_neuron_population("PostNeurons", 10, "SpikeSource", 
-                                             {}, {})
+    post_n_pop = model.add_neuron_population("PostNeurons", 10, empty_neuron_model)
 
     # Add synapse models testing various ways of reading presynaptic WU vars
     float_min = np.finfo(np.float32).min

@@ -20,6 +20,9 @@ from pygenn import (create_current_source_model,
                     init_toeplitz_connectivity,
                     init_weight_update, init_var)
 
+# Neuron model which does nothing
+empty_neuron_model = create_neuron_model("empty")
+
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
@@ -145,7 +148,7 @@ def test_num(make_model, backend, precision, batch_size):
     synapse_var_init = {"num_pre_syn_test": init_var(num_pre_snippet), 
                         "num_post_syn_test": init_var(num_post_snippet),
                         "num_batch_syn_test": init_var(num_batch_snippet)}
-    ss_pop = model.add_neuron_population("Pre", 2, "SpikeSource", {}, {});
+    ss_pop = model.add_neuron_population("Pre", 2, empty_neuron_model);
     n_pop = model.add_neuron_population("Post", 4, neuron_model, 
                                         {}, neuron_var_init)
     cs = model.add_current_source("CurrentSource", current_source_model, n_pop,

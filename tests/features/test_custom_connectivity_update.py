@@ -19,6 +19,9 @@ from pygenn import (create_custom_connectivity_update_model,
                     init_sparse_connectivity,
                     init_var, init_weight_update)
 
+# Neuron model which does nothing
+empty_neuron_model = create_neuron_model("empty")
+
 # Snippet to initialise variable to hold its column-major index
 weight_init_snippet = create_var_init_snippet(
     "weight_init",
@@ -187,8 +190,8 @@ def test_custom_connectivity_update(make_model, backend, precision, batch_size):
     model.dt = 1.0
 
     # Create pre and postsynaptic populations
-    pre_n_pop = model.add_neuron_population("PreNeurons", 64, "SpikeSource", {}, {}); 
-    post_n_pop = model.add_neuron_population("PostNeurons", 64, "SpikeSource", {}, {}); 
+    pre_n_pop = model.add_neuron_population("PreNeurons", 64, empty_neuron_model); 
+    post_n_pop = model.add_neuron_population("PostNeurons", 64, empty_neuron_model); 
 
     # Create synapse groups
     s_pop_1 = model.add_synapse_population(

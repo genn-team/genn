@@ -3,8 +3,11 @@ import pytest
 from pygenn import types
 from scipy import stats
 
-from pygenn import (init_postsynaptic, init_sparse_connectivity,
-                    init_weight_update)
+from pygenn import (create_neuron_model, init_postsynaptic, 
+                    init_sparse_connectivity, init_weight_update)
+
+# Neuron model which does nothing
+empty_neuron_model = create_neuron_model("empty")
 
 @pytest.mark.flaky
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
@@ -14,8 +17,8 @@ def test_connect_init(make_model, backend, precision):
     model.narrow_sparse_ind_enabled = True
     
     # Create pre and postsynaptic neuron populations
-    pre_pop = model.add_neuron_population("Pre", 100, "SpikeSource", {}, {})
-    post_pop = model.add_neuron_population("Post", 100, "SpikeSource", {}, {})
+    pre_pop = model.add_neuron_population("Pre", 100, empty_neuron_model)
+    post_pop = model.add_neuron_population("Post", 100, empty_neuron_model)
     
     # Add synapse populations with different types of built-in connectivity
     fixed_number_total_s_pop = model.add_synapse_population(

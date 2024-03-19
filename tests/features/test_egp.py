@@ -14,6 +14,9 @@ from pygenn import (create_current_source_model,
                     init_sparse_connectivity,
                     init_weight_update, init_var)
 
+# Neuron model which does nothing
+empty_neuron_model = create_neuron_model("empty")
+
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_egp_var_init(make_model, backend, precision):
@@ -64,7 +67,7 @@ def test_egp_var_init(make_model, backend, precision):
     
     model = make_model(precision, "test_egp_var_init", backend=backend)
 
-    ss_pop = model.add_neuron_population("SpikeSource", 20, "SpikeSource", {}, {});
+    ss_pop = model.add_neuron_population("SpikeSource", 20, empty_neuron_model);
     
     # Create populations with randomly-initialised variables
     correct = np.arange(10.0)

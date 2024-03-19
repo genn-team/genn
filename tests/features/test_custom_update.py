@@ -20,6 +20,8 @@ from pygenn import (create_current_source_model,
                     init_toeplitz_connectivity,
                     init_weight_update, init_var)
 
+# Neuron model which does nothing
+empty_neuron_model = create_neuron_model("empty")
 
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
@@ -76,7 +78,7 @@ def test_custom_update(make_model, backend, precision, batch_size):
     model.batch_size = batch_size
     
     # Create a variety of models to attach custom updates to
-    ss_pop = model.add_neuron_population("SpikeSource", 10, "SpikeSource", {}, {});
+    ss_pop = model.add_neuron_population("SpikeSource", 10, empty_neuron_model);
     n_pop = model.add_neuron_population("Neurons", 100, neuron_model, 
                                         {}, {"X": 0.0, "XShared": 0.0})
     cs = model.add_current_source("CurrentSource", current_source_model, n_pop,
@@ -329,8 +331,8 @@ def test_custom_update_transpose(make_model, backend, precision, batch_size):
     model.batch_size = batch_size
     
     # Create pre and postsynaptic populations
-    pre_n_pop = model.add_neuron_population("PreNeurons", 100, "SpikeSource", {}, {}); 
-    post_n_pop = model.add_neuron_population("PostNeurons", 100, "SpikeSource", {}, {}); 
+    pre_n_pop = model.add_neuron_population("PreNeurons", 100, empty_neuron_model); 
+    post_n_pop = model.add_neuron_population("PostNeurons", 100, empty_neuron_model); 
     
     # Create forward and transpose synapse populations between populations
     g = (np.random.normal(size=(batch_size, 100 * 100)) if batch_size > 1 
@@ -479,7 +481,7 @@ def test_custom_update_batch_reduction(make_model, backend, precision, batch_siz
     model.batch_size = batch_size
     
     # Create a variety of models to attach custom updates to
-    ss_pop = model.add_neuron_population("SpikeSource", 10, "SpikeSource", {}, {});
+    ss_pop = model.add_neuron_population("SpikeSource", 10, empty_neuron_model);
     
     x_n = (np.random.uniform(high=100.0, size=(batch_size, 100)) if batch_size > 1
            else np.random.uniform(high=100.0, size=100))

@@ -14,6 +14,8 @@ from pygenn import (create_current_source_model,
                     init_sparse_connectivity,
                     init_weight_update, init_var)
 
+# Neuron model which does nothing
+empty_neuron_model = create_neuron_model("empty")
 
 @pytest.mark.flaky
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
@@ -70,8 +72,7 @@ def test_sim(make_model, backend, precision, batch_size):
                                       {}, var_init)
     
     # Add second neuron and synapse population to hang custom connectivity update off
-    post_n_pop = model.add_neuron_population("PostNeurons", 1000, "SpikeSource", 
-                                             {}, {})
+    post_n_pop = model.add_neuron_population("PostNeurons", 1000, empty_neuron_model)
     s_pop = model.add_synapse_population(
         "Synapses", "SPARSE",
         n_pop, post_n_pop,
@@ -166,8 +167,8 @@ def test_init(make_model, backend, precision):
         
     model = make_model(precision, "test_init", backend=backend)
 
-    ss1_pop = model.add_neuron_population("SpikeSource1", 1, "SpikeSource", {}, {});
-    ss2_pop = model.add_neuron_population("SpikeSource2", 50000, "SpikeSource", {}, {});
+    ss1_pop = model.add_neuron_population("SpikeSource1", 1, empty_neuron_model);
+    ss2_pop = model.add_neuron_population("SpikeSource2", 50000, empty_neuron_model);
     
     # Create populations with randomly-initialised variables
     n_pop = model.add_neuron_population("Neurons", 50000, nop_neuron_model, {}, init_vars())
