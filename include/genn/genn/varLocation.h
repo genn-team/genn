@@ -35,7 +35,7 @@ enum class VarLocation : unsigned int
 
     //! Variable is shared between host and device using zero copy memory. 
     //! This can improve performance if data is frequently copied between host and device 
-    //! but, on non cache-coherant architectures e.g. Jetson, can also reduce access speed.
+    //! but, on non cache-coherent architectures e.g. Jetson, can also reduce access speed.
     HOST_DEVICE_ZERO_COPY = static_cast<unsigned int>(VarLocationAttribute::HOST) | static_cast<unsigned int>(VarLocationAttribute::DEVICE) | static_cast<unsigned int>(VarLocationAttribute::ZERO_COPY),
 };
 

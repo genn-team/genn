@@ -2,7 +2,7 @@
 PyGeNN implementation of SuperSpike
 ===================================
 This example model is a reimplementation of the model developed by 
-Friedemann Zenke and Surya Ganguli [Zenke2018]_. It uses the SuperSpike 
+Friedemann Zenke and Surya Ganguli [Zenke and Ganguli, 2018]_. It uses the SuperSpike 
 learning rule to learn the transformation between fixed spike trains of 
 Poisson noise and a target spiking output (by default the Radcliffe Camera at Oxford).
 
