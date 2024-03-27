@@ -3,8 +3,8 @@
 =============
 Custom models
 =============
-One of the main things that makes GeNN different than other SNN simulators is that all the 
-models and snippets  used to describe the behaviour of your model (see `Building networks`_)
+One of the main things that makes GeNN different from other SNN simulators is that all the 
+models and snippets  used to describe the behaviour of your model (see :ref:`section-building-networks`)
 can be easily customised by the user using strings containing a C-like language called GeNNCode.
 
 --------
@@ -18,15 +18,15 @@ This is essentially C99 (https://en.cppreference.com/w/c/language) with the foll
 - Functions, typedefines and structures cannot be defined in user code
 - Structures are not supported at all
 - Some esoteric C99 language features like octal integer and hexadecimal floating point literals aren't supported
-- The address of (&) operator isn't supported. On the GPU hardware GeNN targets, local variables are assumed to be stored in registers and not addressable. The only time this is limiting is when dealing with extra global parameter arrays as you can no longer do stuff like ``const int *egpSubset = &egp[offset];`` and instead have to do ``const int *egpSubset = egp + offset;``.
+- The address of (&) operator isn't supported. On the GPU hardware GeNN targets, local variables are assumed to be stored in registers and not addressable. The only time this is limiting is when dealing with extra global parameter arrays as you can no longer do something like ``const int *egpSubset = &egp[offset];`` and instead have to do ``const int *egpSubset = egp + offset;``.
 - Like C++ (but not C99) function overloading is supported so ``sin(30.0f)`` will resolve to the floating point rather than double-precision version.
-- Floating point literals like ``30.0`` without a suffix will be treated as ``scalar``, ``30.0f`` will always be treated as float and ``30.0d`` will always be treated as double.
-- A LP64 data model is used on all platforms where ``int`` is 32-bit and ``long`` is 64-bit.
-- Only the following standard library functions are supported: ``cos``, ``sin`, ``tan``, ``acos``, ``asin``, ``atan``, ``atan2``, ``cosh``, ``sinh``, ``tanh``, ``acosh``, ``asinh``, ``atanh``, ``exp``, ``expm1``, ``exp2``, ``pow``, ``scalbn``, ``log``, ``log1p``, ``log2``, ``log10``, ``ldexp``, ``ilogb``, ``sqrt``, ``cbrt``, ``hypot``, ``ceil``, ``floor``, ``fmod``, ``round``, ``rint``, ``trunc``, ``nearbyint``, ``nextafter``, ``remainder``, ``fabs``, ``fdim``, ``fmax``, ``fmin``, ``erf``, ``erfc``, ``tgamma``, ``lgamma``, ``copysign``, ``fma``, ``min``, ``max``, ``abs``,``printf``
+- Floating point literals like ``30.0`` without a suffix will be treated as ``scalar`` (i.e. the floating point type declared as the precision of the overall model), ``30.0f`` will always be treated as float and ``30.0d`` will always be treated as double.
+- An LP64 data model is used on all platforms where ``int`` is 32-bit and ``long`` is 64-bit.
+- Only the following standard library functions are supported: ``cos``, ``sin``, ``tan``, ``acos``, ``asin``, ``atan``, ``atan2``, ``cosh``, ``sinh``, ``tanh``, ``acosh``, ``asinh``, ``atanh``, ``exp``, ``expm1``, ``exp2``, ``pow``, ``scalbn``, ``log``, ``log1p``, ``log2``, ``log10``, ``ldexp``, ``ilogb``, ``sqrt``, ``cbrt``, ``hypot``, ``ceil``, ``floor``, ``fmod``, ``round``, ``rint``, ``trunc``, ``nearbyint``, ``nextafter``, ``remainder``, ``fabs``, ``fdim``, ``fmax``, ``fmin``, ``erf``, ``erfc``, ``tgamma``, ``lgamma``, ``copysign``, ``fma``, ``min``, ``max``, ``abs``, ``printf``
 
 Random number generation
 ------------------------
-Random numbers are useful in many forms of custom model. For example as a source of noise or a probabilistic spiking mechanism. 
+Random numbers are useful in many forms of custom model, for example as a source of noise or a probabilistic spiking mechanism. 
 In GeNN this can be implemented by using the following functions within GeNNCode:
 
 - ``gennrand()`` returns a random 32-bit unsigned integer
@@ -40,14 +40,14 @@ In GeNN this can be implemented by using the following functions within GeNNCode
 -----------------------
 Initialisation snippets
 -----------------------
-Initialisation snippets are use GeNNCode to initialise various parts of a GeNN model.
+Initialisation snippets are GeNNCode to initialise various parts of a GeNN model.
 They are configurable by the user with parameters, derived parameters and extra global parameters.
 Parameters have a homogeneous numeric value across the population being initialised. 
 'Derived parameters' are a mechanism for enhanced efficiency when running neuron models. 
 They allow constants used within the GeNNCode implementation of a model to be computed 
 from more 'user friendly' parameters provided by the user. For example, a decay to apply 
 each timestep could be computed from a time constant provided in a parameter called ``tau`` 
-by passing the following keyword arguments to one of the snippet or model creation functions described bwlo:
+by passing the following keyword arguments to one of the snippet or model creation functions described below:
 
 ..  code-block:: python
 
@@ -76,7 +76,7 @@ Toeplitz connectivity initialisation
 ------------------------------------
 Toeplitz connectivity initialisation snippets are used to generate convolution-like connectivity 
 on the fly when using :attr:`SynapseMatrixType.TOEPLITZ` connectivity.
-New toeplitz connectivity initialisation snippets can be defined by calling:
+New Toeplitz connectivity initialisation snippets can be defined by calling:
 
 .. autofunction:: pygenn.create_toeplitz_connect_init_snippet
     :noindex:
@@ -84,7 +84,7 @@ New toeplitz connectivity initialisation snippets can be defined by calling:
 ------
 Models
 ------
-Models extend the snippets describe above by adding state. 
+Models extend the snippets described above by adding state. 
 They are used to define the behaviour of neurons, synapses and custom updates.
 
 Variable access
@@ -109,7 +109,7 @@ different circumstances, their variables can have the following modes:
 .. autoclass:: pygenn.CustomUpdateVarAccess
     :noindex:
 
-
+.. _section-neuron-models:
 Neuron models
 -------------
 Neuron models define the dynamics and spiking behaviour of populations of neurons.
@@ -128,7 +128,7 @@ New weight update models are defined by calling:
 
 Postsynaptic models
 -------------------
-The postsynaptic models defines how synaptic input translates into an input current (or other input term for models that are not current based).
+The postsynaptic model defines how synaptic input translates into an input current (or other input term for models that are not current based).
 They can contain equations defining dynamics that are applied to the (summed) synaptic activation, e.g. an exponential decay over time.
 New postsynaptic models are defined by calling:
 

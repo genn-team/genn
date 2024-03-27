@@ -8,7 +8,7 @@ namespace GeNN
 //! Flags defining how synaptic connectivity is represented
 enum class SynapseMatrixConnectivity : unsigned int
 {
-    //! Connectivity is dense with a synapse between each pair or pre and postsynaptic neurons
+    //! Connectivity is dense with a synapse between each pair of pre and postsynaptic neurons
     DENSE       = (1 << 0),
 
     //! Connectivity is sparse and stored using a bitmask.
@@ -41,32 +41,31 @@ enum class SynapseMatrixWeight : unsigned int
 //! Supported combinations of SynapticMatrixConnectivity and SynapticMatrixWeight
 enum class SynapseMatrixType : unsigned int
 {
-    //! Synaptic matrix is dense and synaptic state variables are stored individually in memory
+    //! Synaptic matrix is dense and synaptic state variables are stored individually in memory.
     DENSE               = static_cast<unsigned int>(SynapseMatrixConnectivity::DENSE) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL),
 
-    //! Synaptic matrix is dense and all synaptic state variables must either be constant or generated on the fly using their variable initialisation snippets
+    //! Synaptic matrix is dense and all synaptic state variables must either be constant or generated on the fly using their variable initialisation snippets.
     DENSE_PROCEDURALG   = static_cast<unsigned int>(SynapseMatrixConnectivity::DENSE) | static_cast<unsigned int>(SynapseMatrixWeight::PROCEDURAL),
 
-    //! Connectivity is stored as a bitmask.
-    /*! For moderately sparse (>3%) connectivity, this uses the least memory. However, connectivity of this sort cannot 
-        have any accompanying state variables. Which algorithm is used for propagating spikes through BITMASK connectivity can be hinted via
-        SynapseGroup::ParallelismHint. */
+    /*! Connectivity is stored as a bitmask.
+     For moderately sparse (>3%) connectivity, this uses the least memory. However, connectivity of this sort cannot 
+     have any accompanying state variables. Which algorithm is used for propagating spikes through BITMASK connectivity can be hinted via
+     SynapseGroup::ParallelismHint. */
     BITMASK             = static_cast<unsigned int>(SynapseMatrixConnectivity::BITMASK) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL),
 
-    //! Connectivity is stored using a compressed sparse row data structure and synaptic state variables are stored individually in memory.
-    /*! This is the most efficient choice for very sparse unstructured connectivity or if synaptic state variables are required.*/
+    /*! Connectivity is stored using a compressed sparse row data structure and synaptic state variables are stored individually in memory.
+     This is the most efficient choice for very sparse unstructured connectivity or if synaptic state variables are required.*/
     SPARSE              = static_cast<unsigned int>(SynapseMatrixConnectivity::SPARSE) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL),
 
-    //! Sparse synaptic connectivity is generated on the fly using a sparse connectivity initialisation snippet and 
-    //! all state variables must be either constant or generated on the fly using variable initialisation snippets.
-    /*! Synaptic connectivity of this sort requires very little memory allowing extremely large models to be simulated on a single GPU. */
+    /*! Sparse synaptic connectivity is generated on the fly using a sparse connectivity initialisation snippet and  all state variables must be either constant or generated on the fly using variable initialisation snippets.
+     Synaptic connectivity of this sort requires very little memory allowing extremely large models to be simulated on a single GPU. */
     PROCEDURAL          = static_cast<unsigned int>(SynapseMatrixConnectivity::PROCEDURAL) | static_cast<unsigned int>(SynapseMatrixWeight::PROCEDURAL),
 
-    //! Sparse synaptic connectivity is generated on the fly using a sparse connectivity initialisation snippet and state variables are stored in a shared kernel
+    //! Sparse synaptic connectivity is generated on the fly using a sparse connectivity initialisation snippet and state variables are stored in a shared kernel.
     PROCEDURAL_KERNELG  = static_cast<unsigned int>(SynapseMatrixConnectivity::PROCEDURAL) | static_cast<unsigned int>(SynapseMatrixWeight::KERNEL),
 
-    //! Sparse structured connectivity is generated on the fly a Toeplitz connectivity initialisation snippet and state variables are stored in a shared kernel
-    /*! This is the most efficient choice for convolution-like connectivity*/
+    /*! Sparse structured connectivity is generated on the fly a Toeplitz connectivity initialisation snippet and state variables are stored in a shared kernel.
+     This is the most efficient choice for convolution-like connectivity*/
     TOEPLITZ            = static_cast<unsigned int>(SynapseMatrixConnectivity::TOEPLITZ) | static_cast<unsigned int>(SynapseMatrixWeight::KERNEL),
 };
 
