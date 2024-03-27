@@ -49,6 +49,8 @@ Populations
 -----------
 Populations formalise the concept of groups of neurons or synapses that are functionally related or a practical grouping, e.g. a brain region in a neuroscience model or a layer in a machine learning context.
 
+..  _`section-parameters`:
+
 Parameters
 ----------
 Parameters are initialised to constant numeric values which are homogeneous across an entire population:
@@ -97,6 +99,8 @@ model can be configured as follows:
     ssa.extra_global_params["spikeTimes"].set_init_values(spike_times)
 
 
+..  _`section-variables`:
+    
 Variables
 ----------
 Variables contain values that are individual to the members of a population and can change over time. They can be initialised in many ways. The initialisation is configured through a Python dictionary that is then passed to :meth:`.GeNNModel.add_neuron_population` or :meth:`.GeNNModel.add_synapse_population` which create the populations.
@@ -124,7 +128,7 @@ The resulting initialisation snippet can then be used in the dictionary in the u
 
     ini = {"m": init, ...}
 
-.. _section-variables-references:
+..  _`section-variables-references`:
 
 Variables references
 --------------------
@@ -178,7 +182,8 @@ However, the following alternative 'variable locations' are available:
     the Jetson TX1 where there is no physical seperation between GPU and host memory and 
     thus the same physical memory can be shared between them. 
 
-
+..  _`section-extra-global-parameter-references`:
+    
 Extra global parameter references
 ---------------------------------
 When building models with complex `Custom updates`_ and `Custom Connectivity updates`_, 

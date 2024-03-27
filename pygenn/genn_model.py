@@ -342,9 +342,9 @@ class GeNNModel(ModelSpec):
             neuron:         neuron model either as a string referencing a built-in model 
                             (see :mod:`.neuron_models`) or an instance of :class:`.NeuronModelBase`
                             (for example returned by :func:`.create_neuron_model`)
-            params:         parameter values for the neuron model (see `Parameters`_)
+            params:         parameter values for the neuron model (see :ref:`section-parameters`)
             vars:           initial variable values or initialisers 
-                            for the neuron model (see `Variables`_)
+                            for the neuron model (see :ref:`section-variables`)
 
         For example, a population of 10 neurons using the built-in Izhikevich model and 
         the standard set of 'tonic spiking' parameters could be added to a model as follows:
@@ -450,12 +450,12 @@ class GeNNModel(ModelSpec):
                                     (see :mod:`.current_source_models`) or an instance of :class:`.CurrentSourceModelBase`
                                     (for example returned by :func:`.create_current_source_model`)
             pop:                    neuron population to inject current into
-            params:                 parameter values for the current source model (see `Parameters`_)
+            params:                 parameter values for the current source model (see :ref:`section-parameters`)
             vars:                   initial variable values or initialisers 
-                                    for the current source model (see `Variables`_)
+                                    for the current source model (see :ref:`section-variables`)
             var_refs:               variables references to neuron variables in ``pop``,
                                     typically created using :func:`.create_var_ref`
-                                    (see `Variables references`_)
+                                    (see :ref:`section-variables-references`)
 
         For example, a current source to inject a Gaussian noise current can be added to a model as follows:
 
@@ -503,16 +503,16 @@ class GeNNModel(ModelSpec):
                                     (see :mod:`.custom_update_models`) or an instance of 
                                     :class:`.CustomUpdateModelBase`
                                     (for example returned by :func:`.create_custom_update_model`)
-            params:                 parameter values for the custom update model (see `Parameters`_)
+            params:                 parameter values for the custom update model (see :ref:`section-parameters`)
             vars:                   initial variable values or initialisers 
-                                    for the custom update model (see `Variables`_)
+                                    for the custom update model (see :ref:`section-variables`)
             var_refs:               references to variables in other populations to 
                                     access from this update, typically created using either
                                     :func:`.create_var_ref` or :func:`.create_wu_var_ref`
-                                    (see `Variables references`_).
+                                    (see :ref:`section-variables-references`).
             egp_refs:               references to extra global parameters in other populations
                                     to access from this update, typically created using
-                                    :func:`.create_egp_ref` (see `Extra global parameter references`_).
+                                    :func:`.create_egp_ref` (see :ref:`section-extra-global-parameter-references`).
         
         For example, a custom update to calculate transpose weights could be added to a model as follows:
 
@@ -570,25 +570,25 @@ class GeNNModel(ModelSpec):
                                         (see :mod:`.custom_connectivity_update_models`) or an instance of 
                                         :class:`.CustomConnectivityUpdateModelBaseUpdateModelBase`
                                         (for example returned by :func:`.create_custom_connectivity_update_model`)
-            params:                     parameter values for the custom connectivity model (see `Parameters`_)
+            params:                     parameter values for the custom connectivity model (see :ref:`section-parameters`)
             vars:                       initial synaptic variable values or
-                                        initialisers (see `Variables`_)
+                                        initialisers (see :ref:`section-variables`)
             pre_vars:                   initial presynaptic variable values or
-                                        initialisers (see `Variables`_)
+                                        initialisers (see :ref:`section-variables`)
             post_vars:                  initial postsynaptic variable values or initialisers
-                                        (see `Variables`_)
+                                        (see :ref:`section-variables`)
             var_refs:                   references to synaptic variables,
                                         typically created using :func:`.create_wu_var_ref`
-                                        (see `Variables references`_)
+                                        (see :ref:`section-variables-references`)
             pre_var_refs:               references to presynaptic variables,
                                         typically created using :func:`.create_var_ref`
-                                        (see `Variables references`_)
+                                        (see :ref:`section-variables-references`)
             post_var_refs:              references to postsynaptic variables,
                                         typically created using :func:`.create_var_ref`
-                                        (see `Variables references`_)
+                                        (see :ref:`section-variables-references`)
             egp_refs:                   references to extra global parameters in other populations
                                         to access from this update, typically created using
-                                        :func:`.create_egp_ref` (see `Extra global parameter references`_).
+                                        :func:`.create_egp_ref` (see :ref:`section-extra-global-parameter-references`).
 
         """
         if self._built:
@@ -816,7 +816,7 @@ def init_var(snippet: Union[InitVarSnippetBase, str],
                         a built-in snippet (see :mod:`.init_var_snippets`) 
                         or an instance of :class:`.InitVarSnippetBase` 
                         (for example returned by :func:`.create_var_init_snippet`)
-        params:         parameter values for the variable init snippet (see `Parameters`_)
+        params:         parameter values for the variable init snippet (see :ref:`section-parameters`)
     
     For example, the built-in model "Normal" could be used to initialise a variable 
     by sampling from the normal distribution with a mean of 0 and a standard deviation of 1:
@@ -840,7 +840,7 @@ def init_sparse_connectivity(snippet: Union[InitSparseConnectivitySnippetBase, s
                         a built-in snippet (see :mod:`.init_sparse_connectivity_snippets`) 
                         or an instance of :class:`.InitSparseConnectivitySnippetBase` 
                         (for example returned by :func:`.create_sparse_connect_init_snippet`)
-        params:         parameter values for the sparse connectivity init snippet (see `Parameters`_)
+        params:         parameter values for the sparse connectivity init snippet (see :ref:`section-parameters`)
     
     For example, the built-in "FixedProbability" snippet could be used to generate connectivity 
     where each pair of pre and postsynaptic neurons is connected with a probability of 0.1:
@@ -866,12 +866,12 @@ def init_postsynaptic(snippet: Union[PostsynapticModelBase, str],
                         (see :mod:`.postsynaptic_models`) or an instance of 
                         :class:`.PostsynapticModelBase` (for example returned 
                         by :func:`.create_postsynaptic_model`)
-        params:         parameter values for the postsynaptic model (see `Parameters`_)
+        params:         parameter values for the postsynaptic model (see :ref:`section-Parameters`)
         vars:           initial synaptic variable values or initialisers 
-                        for the postsynaptic model (see `Variables`_)
+                        for the postsynaptic model (see :ref:`section-variables`)
         var_refs:       references to postsynaptic neuron variables,
                         typically created using :func:`.create_var_ref`
-                        (see `Variables references`_)
+                        (see :ref:`section-variables-references`)
 
     For example, the built-in conductance model with exponential 
     current shaping could be initialised as follows:
@@ -906,19 +906,19 @@ def init_weight_update(snippet, params: PopParamVals = {}, vars: PopVarVals = {}
                         (see :mod:`.weight_update_models`) or an instance of 
                         :class:`.WeightUpdateModelBase` (for example returned 
                         by :func:`.create_weight_update_model`)
-        params:         parameter values (see `Parameters`_)
+        params:         parameter values (see :ref:`section-parameters`)
         vars:           initial synaptic variable values or
-                        initialisers (see `Variables`_)
+                        initialisers (see :ref:`section-variables`)
         pre_vars:       initial presynaptic variable values or
-                        initialisers (see `Variables`_)
+                        initialisers (see :ref:`section-variables`)
         post_vars:      initial postsynaptic variable values or initialisers
-                        (see `Variables`_)
+                        (see :ref:`section-variables`)
         pre_var_refs:   references to presynaptic neuron variables,
                         typically created using :func:`.create_var_ref`
-                        (see `Variables references`_)
+                        (see :ref:`section-variables-references`)
         post_var_refs:  references to postsynaptic neuron variables,
                         typically created using :func:`.create_var_ref`
-                        (see `Variables references`_)
+                        (see :ref:`section-variables-references`)
 
     For example, the built-in static pulse model with 
     constant weights could be initialised as follows:
@@ -953,7 +953,7 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, params={}):
                         a built-in snippet (see :mod:`.init_toeplitz_connectivity_snippets`) 
                         or an instance of :class:`.InitToeplitzConnectivitySnippetBase` 
                         (for example returned by :func:`.create_toeplitz_connect_init_snippet`)
-        params:         parameter values for the toeplitz connectivity init snippet (see `Parameters`_)
+        params:         parameter values for the toeplitz connectivity init snippet (see :ref:`section-parameters`)
     
     For example, the built-in "Conv2D" snippet could be used to generate 2D convolutional 
     connectivity with a :math:`3 \\times 3` kernel, a :math:`64 \\times 64 \\times 1` input

@@ -105,12 +105,16 @@ Additionally, you can can *directly* access the memory owned by GeNN using a 'me
 ..  note::
 
     The memory access is always to the host memory space (unless it is them same as the backend memory space for "single_threaded_cpu" ot through pinned zero copy memory). Therefore, typically, memory access would look like
+
 ..  code-block:: python
+
     pop.vars["V"].pull_from_device()
     np.save("values.npy", pop.vars["V"].current_values)
 
 and similarly,
+
 ..  code-block:: python
+
     pop.vars["V"].current_view[:] = 1.0
     pop.vars["V"].push_to_device()
 
