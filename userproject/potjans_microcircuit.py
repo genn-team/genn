@@ -1,7 +1,7 @@
 """
 PyGeNN implementation of local cortical microcircuit model
 ==========================================================
-This example model is a reimplementation of the microcircuit model developed by Tobias C. Potjans and Markus Diesmann [Potjans and Diesmann, 2014]_.
+This example model is a reimplementation of the microcircuit model developed by Tobias C. Potjans and Markus Diesmann [Potjans2014]_.
 It is a full-scale spiking network model of the local cortical microcircuit.
 The simulated spontaneous activity is asynchronous irregular and cell-type specific firing rates are in agreement
 with in vivo recordings in awake animals, including the low rate of layer 2/3 excitatory cells.

@@ -1387,7 +1387,7 @@ def create_weight_update_model(
     The memory required for synapse variables and the computational cost of updating them tends to grow with :math:`O(N^2)` with the number of neurons.
     Therefore, if it is possible, implementing synapse variables on a per-neuron rather than per-synapse basis is a good idea. 
     The ``pre_var_name_types`` and ``post_var_name_types`` keyword arguments are used to define any pre or postsynaptic state variables.
-    For example, using pre and postsynaptic variables, our event-driven STDP rule can be extended to use all-to-all spike pairing using pre and postsynaptic *trace* variables [Morrison et al., 2008]_ :
+    For example, using pre and postsynaptic variables, our event-driven STDP rule can be extended to use all-to-all spike pairing using pre and postsynaptic *trace* variables [Morrison2008]_ :
 
     ..  code-block:: python
 
@@ -2078,7 +2078,7 @@ def create_sparse_connect_init_snippet(class_name: str, params=None,
                                                                             pars["num"] * num_pre,
                                                                             1.0 / num_post))
 
-    For full details of how maximum column lengths are calculated, you should refer to our paper [Knight and Nowotny, 2018]_ but, 
+    For full details of how maximum column lengths are calculated, you should refer to our paper [Knight2018]_ but, 
     in short, the number of connections that end up in a column are distributed binomially with :math:`n=\\text{num}` and :math:`p=\\frac{1}{\\text{num_post}}`
     Therefore, we can calculate the maximum column length by looking at the inverse cummulative distribution function (CDF) for the binomial distribution,
     looking at the point in the inverse CDF where there is a 0.9999 chance of the bound being correct when drawing synapses from ``num_post`` columns.
@@ -2178,7 +2178,7 @@ def create_toeplitz_connect_init_snippet(class_name: str, params: ModelParamsTyp
             calc_max_row_len_func=lambda num_pre, num_post, pars: pars["kern_size"] * pars["kern_size"],
             calc_kernel_size_func=lambda pars: [pars["kern_size"], pars["kern_size"]])
     
-    For full details of how convolution-like connectivity is expressed in this way, please see our paper [Turner et al., 2022]_.
+    For full details of how convolution-like connectivity is expressed in this way, please see our paper [Turner2022]_.
     """
 
     body = {}
