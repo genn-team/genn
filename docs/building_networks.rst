@@ -1,6 +1,7 @@
 .. py:currentmodule:: pygenn
 
 .. _`section-building-networks`:
+
 =================
 Building networks
 =================
@@ -124,6 +125,7 @@ The resulting initialisation snippet can then be used in the dictionary in the u
     ini = {"m": init, ...}
 
 .. _section-variables-references:
+
 Variables references
 --------------------
 As well as variables and parameters, various types of models have variable references which are used to reference variables belonging to other populations.

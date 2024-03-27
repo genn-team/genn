@@ -23,6 +23,7 @@ On GPU platforms like CUDA, the above simulation will run asynchronously with th
 launching the kernels to simulate each timestep but not synchronising with the CPU at any point.
 
 .. _section-spike-recording:
+
 ---------------
 Spike recording
 ---------------
@@ -61,6 +62,7 @@ By default, copies of GeNN variables are allocated both on the GPU device and th
 However, if variable's location is set to :attr:`.VarLocation.DEVICE`, they cannot be accessed from Python.
 
 ..  _`section-pull-push`:
+
 Pushing and pulling
 -------------------
 The contents of the host copy of a variable can be 'pushed' to the GPU device by calling :meth:`pygenn.model_preprocessor.ArrayBase.push_to_device`
@@ -114,6 +116,7 @@ and similarly,
 
     
 .. _section-extra-global-parameters:
+
 -----------------------
 Extra global parameters
 -----------------------
@@ -145,6 +148,7 @@ After allocation, extra global parameters can be accessed just like variables, f
     pop.extra_global_params["X"].push_to_device()
 
 .. _section-dynamic-parameters:
+
 ------------------
 Dynamic parameters
 ------------------
