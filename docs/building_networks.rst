@@ -165,7 +165,10 @@ These 'weight update variable references' also have the additional feature that 
 where ``back_sg`` is another :class:`.SynapseGroup` with tranposed dimensions to sg i.e. its *postsynaptic* population has the same number of neurons as sg's *presynaptic* population and vice-versa.
 
 After the update has run, any updates made to the 'forward' variable will also be applied to the tranpose variable 
-[#]_ Tranposing is currently only possible on variables belonging to synapse groups with :attr:`.SynapseMatrixType.DENSE` connectivity [#]_
+
+.. note::
+
+    Transposing is currently only possible on variables belonging to synapse groups with :attr:`.SynapseMatrixType.DENSE` connectivity 
 
 Variable locations
 ------------------
