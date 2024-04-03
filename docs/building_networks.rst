@@ -33,7 +33,7 @@ Batching can be enabled on a GeNN model with:
     model.batch_size = 512
 
 Parameters and sparse connectivity are shared across all batches. 
-Whether state variables are duplicated or shared is controlled by the :class:`.VarAccess` or :class:`.CustomUpdateVarAccess` property 
+Whether state variables are duplicated or shared is controlled by the :class:`.VarAccess` or :class:`.CustomUpdateVarAccess` enumeration 
 associated with each variable. Please see TODO for more details.
 
 Additionally, any preferences exposed by the backend can be configured here. 
@@ -61,10 +61,9 @@ Parameters are initialised to constant numeric values which are homogeneous acro
 
 They are very efficient to access from models as their values are either hard-coded into the backend code 
 or, on the GPU, delivered via high-performance constant cache.
-However, they can only be used if literally no changes are needed for the entire simulation and all members of
-the population have the exact same parameter value.
-
-Alternatively, parameters can be made dynamic by calling :meth:`pygenn.NeuronGroup.set_param_dynamic` on a :class:`.NeuronGroup`, i.e.
+However, they can only be used if all members of the population have the exact same parameter value.
+Parameters are always read-only but can be made *dynamic* so they can be changed from the host 
+during the simulation by calling :meth:`pygenn.NeuronGroup.set_param_dynamic` on a :class:`.NeuronGroup`, i.e.
 
 ..  code-block:: python
 
@@ -72,6 +71,8 @@ Alternatively, parameters can be made dynamic by calling :meth:`pygenn.NeuronGro
 
 where ``pop`` is a neuron group returned by :meth:`.GeNNModel.add_neuron_population` or synapse group returned by :meth:`.GeNNModel.add_synapse_population` and "tau" is one of the population's declared parameters.
 
+.. warning::
+    Derived parameters will not change if the parameters they rely on are made dynamic and changed at runtime.
 
 Extra Global Parameters
 -----------------------

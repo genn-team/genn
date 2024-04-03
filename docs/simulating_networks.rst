@@ -104,7 +104,7 @@ Additionally, you can can *directly* access the memory owned by GeNN using a 'me
 
 ..  note::
 
-    The memory access is always to the host memory space (unless it is them same as the backend memory space for "single_threaded_cpu" ot through pinned zero copy memory). Therefore, typically, memory access would look like
+    The memory access is always to the host memory space (unless it is them same as the backend memory space for "single_threaded_cpu" or through zero copy memory). Therefore, typically, memory access would look like
 
 ..  code-block:: python
 

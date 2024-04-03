@@ -153,7 +153,10 @@ class GeNNModel(ModelSpec):
     Args:
         precision:              Data type to use for ``scalar`` variables
         model_name:             Name of the model
-        backend:                Name of backend module to use. Currently supported "single_threaded_cpu", "cuda". Defaults to automatically picking the 'best' backend for your system
+        backend:                Name of backend module to use. Currently 
+                                supported "single_threaded_cpu", "cuda". 
+                                Defaults to automatically picking the 'best'
+                                backend for your system
         time_precision:         data type to use for representing time
         genn_log_level:         Log level for GeNN
         code_gen_log_level:     Log level for GeNN code-generator
@@ -1277,7 +1280,7 @@ def create_weight_update_model(
 
         pre_spike_syn_code="addToPostDelay(inc, delay);"
 
-    where, once again, ``inc`` is the amount to add to the postsynapse's tic neuron``inSyn`` variable and ``delay`` is the length of the dendritic delay in timesteps.
+    where, once again, ``inc`` is the amount to add to the postsynaptic neuron's ``inSyn`` variable and ``delay`` is the length of the dendritic delay in timesteps.
     By implementing ``delay`` as a weight update model variable, heterogeneous synaptic delays can be implemented.
     For an example, see WeightUpdateModels::StaticPulseDendriticDelay for a simple synapse update model with heterogeneous dendritic delays.
 
