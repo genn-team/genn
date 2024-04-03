@@ -23,6 +23,7 @@
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -103,7 +104,7 @@ Linux distribution repository, for example on Ubuntu by running <code class="doc
 or alternatively from <a class="reference external" href="https://gcc.gnu.org/index.html">https://gcc.gnu.org/index.html</a>.</p></li>
 <li><p>If your machine has an NVIDIA GPU and you haven’t installed CUDA already,
 obtain a fresh installation of the NVIDIA CUDA toolkit from
-<a class="reference external" href="https://developer.nvidia.com/cuda-downloads">https://developer.nvidia.com/cuda-downloads</a>
+<a class="reference external" href="https://developer.nvidia.com/cuda-downloads">https://developer.nvidia.com/cuda-downloads</a>.
 Be sure to pick CUDA and C++ compiler versions which are compatible
 with each other. The latest C++ compiler need not necessarily be
 compatible with the latest CUDA toolkit.</p></li>
@@ -115,19 +116,19 @@ However, on Linux, you need to set <code class="docutils literal notranslate"><s
 <code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">CUDA_PATH=/usr/local/cuda</span></code>
 assuming CUDA is installed in /usr/local/cuda (the standard location
 on Ubuntu Linux). Again, to make this change persistent, this can
-be added to your login script (e.g. <code class="docutils literal notranslate"><span class="pre">.profile</span></code> or <code class="docutils literal notranslate"><span class="pre">.bashrc</span></code>)</p></li>
-<li><p>Either download the latest release of GeNN and extract into your
+be added to your login script (e.g. <code class="docutils literal notranslate"><span class="pre">.profile</span></code>, <code class="docutils literal notranslate"><span class="pre">.bash_profile</span></code> or <code class="docutils literal notranslate"><span class="pre">.bashrc</span></code>)</p></li>
+<li><p>Either download the latest release of GeNN and extract it into your
 home directory or clone using git from <a class="reference external" href="https://github.com/genn-team/genn">https://github.com/genn-team/genn</a></p></li>
 <li><p>On Linux, install the development version of libffi. For example, on Ubuntu you can do this
 by running <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">libffi-dev</span></code>.</p></li>
-<li><p>Install the pybind11, psutil and numpy packages with pip i.e. <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">pybind11</span> <span class="pre">psutil</span> <span class="pre">numpy</span></code>.</p></li>
+<li><p>Install the pybind11, psutil and numpy packages with pip, i.e. <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">pybind11</span> <span class="pre">psutil</span> <span class="pre">numpy</span></code>.</p></li>
 </ol>
 </section>
 <section id="building-with-setup-py">
 <h2>Building with setup.py<a class="headerlink" href="#building-with-setup-py" title="Permalink to this heading"></a></h2>
 <p>From the GeNN directory, the GeNN libraries and python package can be built
 with <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span></code>. If you wish to create an editable install
-(most useful if you are intending to modify GeNN yourself) you can also used
+(most useful if you are intending to modify GeNN yourself) you can also use
 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">develop</span></code>. On Linux (or Windows if you have a debug version
 of the python libraries installed) you can build a debug version of GeNN with
 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">build_ext</span> <span class="pre">--debug</span> <span class="pre">develop</span></code>.</p>
@@ -136,7 +137,7 @@ of the python libraries installed) you can build a debug version of GeNN with
 <h2>Building with pip<a class="headerlink" href="#building-with-pip" title="Permalink to this heading"></a></h2>
 <p>From the GeNN directory, the GeNN libraries and python package can be built
 with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code>. If you wish to create an editable install
-(most useful if you are intending to modify GeNN yourself) you can also used
+(most useful if you are intending to modify GeNN yourself) you can also use
 <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">--editable</span> <span class="pre">.</span></code>.</p>
 </section>
 </section>
