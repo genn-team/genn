@@ -78,8 +78,8 @@ public:
 // GeNN::NeuronModels::RulkovMap
 //----------------------------------------------------------------------------
 //! Rulkov Map neuron
-/*! The RulkovMap type is a map based neuron model based on \cite Rulkov2002 but in
-    the 1-dimensional map form used in \cite nowotny2005self :
+/*! The RulkovMap type is a map based neuron model based on  \cite Rulkov2002 but in
+    the 1-dimensional map form used in \cite Nowotny2005:
     \f{eqnarray*}{
     V(t+\Delta t) &=& \left\{ \begin{array}{ll}
     V_{\rm spike} \Big(\frac{\alpha V_{\rm spike}}{V_{\rm spike}-V(t) \beta I_{\rm syn}} + y \Big) & V(t) \leq 0 \\
@@ -141,7 +141,7 @@ public:
 //----------------------------------------------------------------------------
 // GeNN::NeuronModels::Izhikevich
 //----------------------------------------------------------------------------
-//! Izhikevich neuron with fixed parameters \cite izhikevich2003simple.
+//! Izhikevich neuron with fixed parameters  \cite Izhikevich2003.
 /*! It is usually described as
     \f{eqnarray*}
     \frac{dV}{dt} &=& 0.04 V^2 + 5 V + 140 - U + I, \\
@@ -188,7 +188,7 @@ public:
 //----------------------------------------------------------------------------
 // GeNN::NeuronModels::IzhikevichVariable
 //----------------------------------------------------------------------------
-//! Izhikevich neuron with variable parameters \cite izhikevich2003simple.
+//! Izhikevich neuron with variable parameters  \cite Izhikevich2003.
 /*! This is the same model as NeuronModels::Izhikevich but parameters are defined as
     "variables" in order to allow users to provide individual values for each
     individual neuron instead of fixed values for all neurons across the population.
@@ -328,7 +328,7 @@ public:
 // GeNN::NeuronModels::TraubMiles
 //----------------------------------------------------------------------------
 //! Hodgkin-Huxley neurons with Traub & Miles algorithm.
-/*! This conductance based model has been taken from \cite Traub1991 and can be described by the equations:
+/*! This conductance based model has been taken from  \cite Traub1991 and can be described by the equations:
     \f{eqnarray*}{
     C \frac{d V}{dt}  &=& -I_{{\rm Na}} -I_K-I_{{\rm leak}}-I_M-I_{i,DC}-I_{i,{\rm syn}}-I_i, \\
     I_{{\rm Na}}(t) &=& g_{{\rm Na}} m_i(t)^3 h_i(t)(V_i(t)-E_{{\rm Na}}) \\

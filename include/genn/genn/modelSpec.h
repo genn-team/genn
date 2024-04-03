@@ -124,110 +124,110 @@ inline WeightUpdateModels::Init initWeightUpdate(const ParamValues &params = {},
                                     preNeuronVarRefs, postNeuronVarRefs);
 }
 
-//! Creates a reference to a neuron group variable
+//! Creates a reference to a neuron group variable.
 inline Models::VarReference createVarRef(NeuronGroup *ng, const std::string &varName)
 {
     return Models::VarReference::createVarRef(ng, varName);
 }
 
-//! Creates a reference to a current source variable
+//! Creates a reference to a current source variable.
 inline Models::VarReference createVarRef(CurrentSource *cs, const std::string &varName)
 {
     return Models::VarReference::createVarRef(cs, varName);
 }
 
-//! Creates a reference to a custom update variable
+//! Creates a reference to a custom update variable.
 inline Models::VarReference createVarRef(CustomUpdate *cu, const std::string &varName)
 {
     return Models::VarReference::createVarRef(cu, varName);
 }
 
-//! Creates a reference to a presynaptic custom connectivity update variable
+//! Creates a reference to a presynaptic custom connectivity update variable.
 inline Models::VarReference createPreVarRef(CustomConnectivityUpdate *cu, const std::string &varName)
 {
     return Models::VarReference::createPreVarRef(cu, varName);
 }
 
-//! Creates a reference to a postsynaptic custom connectivity update variable
+//! Creates a reference to a postsynaptic custom connectivity update variable.
 inline Models::VarReference createPostVarRef(CustomConnectivityUpdate *cu, const std::string &varName)
 {
     return Models::VarReference::createPostVarRef(cu, varName);
 }
 
-//! Creates a reference to a postsynaptic model variable
+//! Creates a reference to a postsynaptic model variable.
 inline Models::VarReference createPSMVarRef(SynapseGroup *sg, const std::string &varName)
 {
     return Models::VarReference::createPSMVarRef(sg, varName);
 }
 
-//! Creates a reference to a weight update model presynaptic variable
+//! Creates a reference to a weight update model presynaptic variable.
 inline Models::VarReference createWUPreVarRef(SynapseGroup *sg, const std::string &varName)
 {
     return Models::VarReference::createWUPreVarRef(sg, varName);
 }
 
-//! Creates a reference to a weight update model postsynapticvariable
+//! Creates a reference to a weight update model postsynapticvariable.
 inline Models::VarReference createWUPostVarRef(SynapseGroup *sg, const std::string &varName)
 {
     return Models::VarReference::createWUPostVarRef(sg, varName);
 }
 
-//! Creates a reference to a weight update model variable
+//! Creates a reference to a weight update model variable.
 inline Models::WUVarReference createWUVarRef(SynapseGroup *sg, const std::string &varName,
                                              SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "")
 {
     return Models::WUVarReference::createWUVarReference(sg, varName, transposeSG, transposeVarName);
 }
 
-//! Creates a reference to a custom weight update variable
+//! Creates a reference to a custom weight update variable.
 inline Models::WUVarReference createWUVarRef(CustomUpdateWU *cu, const std::string &varName)
 {
     return Models::WUVarReference::createWUVarReference(cu, varName);
 }
 
-//! Creates a reference to a custom connectivity update update variable
+//! Creates a reference to a custom connectivity update update variable.
 inline Models::WUVarReference createWUVarRef(CustomConnectivityUpdate *cu, const std::string &varName)
 {
     return Models::WUVarReference::createWUVarReference(cu, varName);
 }
 
-//! Creates a reference to a neuron group extra global parameter
+//! Creates a reference to a neuron group extra global parameter.
 inline Models::EGPReference createEGPRef(NeuronGroup *ng, const std::string &egpName)
 {
     return Models::EGPReference::createEGPRef(ng, egpName);
 }
 
-//! Creates a reference to a current source extra global parameter
+//! Creates a reference to a current source extra global parameter.
 inline Models::EGPReference createEGPRef(CurrentSource *cs, const std::string &egpName)
 {
     return Models::EGPReference::createEGPRef(cs, egpName);
 }
 
-//! Creates a reference to a custom update extra global parameter
+//! Creates a reference to a custom update extra global parameter.
 inline Models::EGPReference createEGPRef(CustomUpdate *cu, const std::string &egpName)
 {
     return Models::EGPReference::createEGPRef(cu, egpName);
 }
 
-//! Creates a reference to a custom weight update extra global parameter
+//! Creates a reference to a custom weight update extra global parameter.
 inline Models::EGPReference createEGPRef(CustomUpdateWU *cu, const std::string &egpName)
 {
     return Models::EGPReference::createEGPRef(cu, egpName);
 }
 
-//! Creates a reference to a custom connectivity update extra global parameter
+//! Creates a reference to a custom connectivity update extra global parameter.
 inline Models::EGPReference createEGPRef(CustomConnectivityUpdate *ccu, const std::string &egpName)
 {
     return Models::EGPReference::createEGPRef(ccu, egpName);
 }
 
-//! Creates a reference to a postsynaptic model extra global parameter
+//! Creates a reference to a postsynaptic model extra global parameter.
 inline Models::EGPReference createPSMEGPRef(SynapseGroup *sg, const std::string &egpName)
 {
     return Models::EGPReference::createPSMEGPRef(sg, egpName);
 }
 
-//! Creates a reference to a weight update model extra global parameter
+//! Creates a reference to a weight update model extra global parameter.
 inline Models::EGPReference createWUEGPRef(SynapseGroup *sg, const std::string &egpName)
 {
     return Models::EGPReference::createWUEGPRef(sg, egpName);

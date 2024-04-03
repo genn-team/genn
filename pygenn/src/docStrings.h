@@ -1043,16 +1043,16 @@ static const char *__doc_CustomUpdateModels_Transpose_getVarRefs = R"doc()doc";
 
 static const char *__doc_CustomUpdateVarAccess =
 R"doc(Supported combinations of access mode and dimension for custom update variables.
-The axes are defined 'subtractively' ie VarAccessDim::BATCH indicates that this axis should be removed.)doc";
+The axes are defined 'subtractively', i.e. VarAccessDim::BATCH indicates that this axis should be removed.)doc";
 
-static const char *__doc_CustomUpdateVarAccess_READ_ONLY = R"doc(This variable can be only be read from and has the same dimensions as whatever the custom update is attached to)doc";
+static const char *__doc_CustomUpdateVarAccess_READ_ONLY = R"doc(This variable can only be read from and has the same dimensions as whatever the custom update is attached to)doc";
 
 static const char *__doc_CustomUpdateVarAccess_READ_ONLY_SHARED =
-R"doc(This variable can be only be read from and has the same dimensions as whatever
+R"doc(This variable can only be read from and has the same dimensions as whatever
 the custom update is attached to aside from being shared across batches)doc";
 
 static const char *__doc_CustomUpdateVarAccess_READ_ONLY_SHARED_NEURON =
-R"doc(This variable can be only be read from and has the same dimensions as whatever
+R"doc(This variable can only be read from and has the same dimensions as whatever
 the custom update is attached to aside from being shared across neurons)doc";
 
 static const char *__doc_CustomUpdateVarAccess_READ_WRITE = R"doc(This variable can be read from and written to and has the same dimensions as whatever the custom update is attached to)doc";
@@ -2911,7 +2911,7 @@ static const char *__doc_NeuronModels_Base_isAutoRefractoryRequired = R"doc(Does
 static const char *__doc_NeuronModels_Base_validate = R"doc(Validate names of parameters etc)doc";
 
 static const char *__doc_NeuronModels_Izhikevich =
-R"doc(Izhikevich neuron with fixed parameters [izhikevich2003simple]_.
+R"doc(Izhikevich neuron with fixed parameters  [Izhikevich2003]_.
 It is usually described as
 
 .. math::
@@ -2937,7 +2937,7 @@ Parameters are:
 - ``d`` - after-spike reset value of U)doc";
 
 static const char *__doc_NeuronModels_IzhikevichVariable =
-R"doc(Izhikevich neuron with variable parameters [izhikevich2003simple]_.
+R"doc(Izhikevich neuron with variable parameters  [Izhikevich2003]_.
 This is the same model as NeuronModels::Izhikevich but parameters are defined as
 "variables" in order to allow users to provide individual values for each
 individual neuron instead of fixed values for all neurons across the population.
@@ -3030,8 +3030,8 @@ static const char *__doc_NeuronModels_Poisson_isAutoRefractoryRequired = R"doc()
 
 static const char *__doc_NeuronModels_RulkovMap =
 R"doc(Rulkov Map neuron
-The RulkovMap type is a map based neuron model based on [Rulkov2002]_ but in
-the 1-dimensional map form used in [nowotny2005self]_ :
+The RulkovMap type is a map based neuron model based on  [Rulkov2002]_ but in
+the 1-dimensional map form used in [Nowotny2005]_:
 
 .. math::
     :nowrap:
@@ -3109,7 +3109,7 @@ static const char *__doc_NeuronModels_SpikeSourceArray_isAutoRefractoryRequired 
 
 static const char *__doc_NeuronModels_TraubMiles =
 R"doc(Hodgkin-Huxley neurons with Traub & Miles algorithm.
-This conductance based model has been taken from [Traub1991]_ and can be described by the equations:
+This conductance based model has been taken from  [Traub1991]_ and can be described by the equations:
 
 .. math::
     :nowrap:
@@ -3893,7 +3893,7 @@ static const char *__doc_SynapseMatrixConnectivity = R"doc(Flags defining how sy
 
 static const char *__doc_SynapseMatrixConnectivity_BITMASK = R"doc(Connectivity is sparse and stored using a bitmask.)doc";
 
-static const char *__doc_SynapseMatrixConnectivity_DENSE = R"doc(Connectivity is dense with a synapse between each pair or pre and postsynaptic neurons)doc";
+static const char *__doc_SynapseMatrixConnectivity_DENSE = R"doc(Connectivity is dense with a synapse between each pair of pre and postsynaptic neurons)doc";
 
 static const char *__doc_SynapseMatrixConnectivity_PROCEDURAL = R"doc(Connectivity is generated on the fly using a sparse connectivity initialisation snippet)doc";
 
@@ -3909,23 +3909,22 @@ For moderately sparse (>3%) connectivity, this uses the least memory. However, c
 have any accompanying state variables. Which algorithm is used for propagating spikes through BITMASK connectivity can be hinted via
 SynapseGroup::ParallelismHint.)doc";
 
-static const char *__doc_SynapseMatrixType_DENSE = R"doc(Synaptic matrix is dense and synaptic state variables are stored individually in memory)doc";
+static const char *__doc_SynapseMatrixType_DENSE = R"doc(Synaptic matrix is dense and synaptic state variables are stored individually in memory.)doc";
 
-static const char *__doc_SynapseMatrixType_DENSE_PROCEDURALG = R"doc(Synaptic matrix is dense and all synaptic state variables must either be constant or generated on the fly using their variable initialisation snippets)doc";
+static const char *__doc_SynapseMatrixType_DENSE_PROCEDURALG = R"doc(Synaptic matrix is dense and all synaptic state variables must either be constant or generated on the fly using their variable initialisation snippets.)doc";
 
 static const char *__doc_SynapseMatrixType_PROCEDURAL =
-R"doc(Sparse synaptic connectivity is generated on the fly using a sparse connectivity initialisation snippet and
-all state variables must be either constant or generated on the fly using variable initialisation snippets.
+R"doc(Sparse synaptic connectivity is generated on the fly using a sparse connectivity initialisation snippet and  all state variables must be either constant or generated on the fly using variable initialisation snippets.
 Synaptic connectivity of this sort requires very little memory allowing extremely large models to be simulated on a single GPU.)doc";
 
-static const char *__doc_SynapseMatrixType_PROCEDURAL_KERNELG = R"doc(Sparse synaptic connectivity is generated on the fly using a sparse connectivity initialisation snippet and state variables are stored in a shared kernel)doc";
+static const char *__doc_SynapseMatrixType_PROCEDURAL_KERNELG = R"doc(Sparse synaptic connectivity is generated on the fly using a sparse connectivity initialisation snippet and state variables are stored in a shared kernel.)doc";
 
 static const char *__doc_SynapseMatrixType_SPARSE =
 R"doc(Connectivity is stored using a compressed sparse row data structure and synaptic state variables are stored individually in memory.
 This is the most efficient choice for very sparse unstructured connectivity or if synaptic state variables are required.)doc";
 
 static const char *__doc_SynapseMatrixType_TOEPLITZ =
-R"doc(Sparse structured connectivity is generated on the fly a Toeplitz connectivity initialisation snippet and state variables are stored in a shared kernel
+R"doc(Sparse structured connectivity is generated on the fly a Toeplitz connectivity initialisation snippet and state variables are stored in a shared kernel.
 This is the most efficient choice for convolution-like connectivity)doc";
 
 static const char *__doc_SynapseMatrixWeight = R"doc(Flags defining how synaptic state variables are stored)doc";
@@ -4340,15 +4339,15 @@ static const char *__doc_VarAccess = R"doc(Supported combinations of access mode
 
 static const char *__doc_VarAccessDim = R"doc(Flags defining dimensions this variables has)doc";
 
-static const char *__doc_VarAccessDim_BATCH = R"doc(This variable stores seperate values for each batch)doc";
+static const char *__doc_VarAccessDim_BATCH = R"doc(This variable stores separate values for each batch)doc";
 
-static const char *__doc_VarAccessDim_ELEMENT = R"doc(This variable stores seperate values for each element i.e. neuron or synapse)doc";
+static const char *__doc_VarAccessDim_ELEMENT = R"doc(This variable stores separate values for each element i.e. neuron or synapse)doc";
 
 static const char *__doc_VarAccessMode = R"doc(Supported combination of VarAccessModeAttribute)doc";
 
 static const char *__doc_VarAccessModeAttribute =
 R"doc(Flags defining attributes of var access models
-Read-only and read-write are seperate flags rather than read and write so you can test mode & VarAccessMode::READ_ONLY)doc";
+Read-only and read-write are separate flags rather than read and write so you can test mode & VarAccessMode::READ_ONLY)doc";
 
 static const char *__doc_VarAccessModeAttribute_MAX = R"doc(This variable's reduction operation is a maximum)doc";
 
@@ -4368,13 +4367,13 @@ static const char *__doc_VarAccessMode_REDUCE_MAX = R"doc(This variable is a tar
 
 static const char *__doc_VarAccessMode_REDUCE_SUM = R"doc(This variable is a target for a reduction with a sum operation)doc";
 
-static const char *__doc_VarAccess_READ_ONLY = R"doc(This variable can only be read from and stores seperate values for each element but these are shared across batches)doc";
+static const char *__doc_VarAccess_READ_ONLY = R"doc(This variable can only be read from and stores separate values for each element but these are shared across batches)doc";
 
-static const char *__doc_VarAccess_READ_ONLY_DUPLICATE = R"doc(This variable can only be read from and stores seperate values for each element and each batch)doc";
+static const char *__doc_VarAccess_READ_ONLY_DUPLICATE = R"doc(This variable can only be read from and stores separate values for each element and each batch)doc";
 
-static const char *__doc_VarAccess_READ_ONLY_SHARED_NEURON = R"doc(This variable can only be read from and stores seperate values for each batch but these are shared across neurons)doc";
+static const char *__doc_VarAccess_READ_ONLY_SHARED_NEURON = R"doc(This variable can only be read from and stores separate values for each batch but these are shared across neurons)doc";
 
-static const char *__doc_VarAccess_READ_WRITE = R"doc(This variable can be read from and written to and stores seperate values for each element and each batch)doc";
+static const char *__doc_VarAccess_READ_WRITE = R"doc(This variable can be read from and written to and stores separate values for each element and each batch)doc";
 
 static const char *__doc_VarLocation = R"doc(Supported combination of VarLocationAttribute)doc";
 
@@ -4393,7 +4392,7 @@ static const char *__doc_VarLocation_HOST_DEVICE = R"doc(Variable is located on 
 static const char *__doc_VarLocation_HOST_DEVICE_ZERO_COPY =
 R"doc(Variable is shared between host and device using zero copy memory.
 This can improve performance if data is frequently copied between host and device
-but, on non cache-coherant architectures e.g. Jetson, can also reduce access speed.)doc";
+but, on non cache-coherent architectures e.g. Jetson, can also reduce access speed.)doc";
 
 static const char *__doc_WeightUpdateModels_Base = R"doc(Base class for all weight update models)doc";
 
@@ -4666,41 +4665,41 @@ static const char *__doc_binomialInverseCDF = R"doc()doc";
 
 static const char *__doc_clearVarAccessDim = R"doc()doc";
 
-static const char *__doc_createEGPRef = R"doc(Creates a reference to a neuron group extra global parameter)doc";
+static const char *__doc_createEGPRef = R"doc(Creates a reference to a neuron group extra global parameter.)doc";
 
-static const char *__doc_createEGPRef_2 = R"doc(Creates a reference to a current source extra global parameter)doc";
+static const char *__doc_createEGPRef_2 = R"doc(Creates a reference to a current source extra global parameter.)doc";
 
-static const char *__doc_createEGPRef_3 = R"doc(Creates a reference to a custom update extra global parameter)doc";
+static const char *__doc_createEGPRef_3 = R"doc(Creates a reference to a custom update extra global parameter.)doc";
 
-static const char *__doc_createEGPRef_4 = R"doc(Creates a reference to a custom weight update extra global parameter)doc";
+static const char *__doc_createEGPRef_4 = R"doc(Creates a reference to a custom weight update extra global parameter.)doc";
 
-static const char *__doc_createEGPRef_5 = R"doc(Creates a reference to a custom connectivity update extra global parameter)doc";
+static const char *__doc_createEGPRef_5 = R"doc(Creates a reference to a custom connectivity update extra global parameter.)doc";
 
-static const char *__doc_createPSMEGPRef = R"doc(Creates a reference to a postsynaptic model extra global parameter)doc";
+static const char *__doc_createPSMEGPRef = R"doc(Creates a reference to a postsynaptic model extra global parameter.)doc";
 
-static const char *__doc_createPSMVarRef = R"doc(Creates a reference to a postsynaptic model variable)doc";
+static const char *__doc_createPSMVarRef = R"doc(Creates a reference to a postsynaptic model variable.)doc";
 
-static const char *__doc_createPostVarRef = R"doc(Creates a reference to a postsynaptic custom connectivity update variable)doc";
+static const char *__doc_createPostVarRef = R"doc(Creates a reference to a postsynaptic custom connectivity update variable.)doc";
 
-static const char *__doc_createPreVarRef = R"doc(Creates a reference to a presynaptic custom connectivity update variable)doc";
+static const char *__doc_createPreVarRef = R"doc(Creates a reference to a presynaptic custom connectivity update variable.)doc";
 
-static const char *__doc_createVarRef = R"doc(Creates a reference to a neuron group variable)doc";
+static const char *__doc_createVarRef = R"doc(Creates a reference to a neuron group variable.)doc";
 
-static const char *__doc_createVarRef_2 = R"doc(Creates a reference to a current source variable)doc";
+static const char *__doc_createVarRef_2 = R"doc(Creates a reference to a current source variable.)doc";
 
-static const char *__doc_createVarRef_3 = R"doc(Creates a reference to a custom update variable)doc";
+static const char *__doc_createVarRef_3 = R"doc(Creates a reference to a custom update variable.)doc";
 
-static const char *__doc_createWUEGPRef = R"doc(Creates a reference to a weight update model extra global parameter)doc";
+static const char *__doc_createWUEGPRef = R"doc(Creates a reference to a weight update model extra global parameter.)doc";
 
-static const char *__doc_createWUPostVarRef = R"doc(Creates a reference to a weight update model postsynapticvariable)doc";
+static const char *__doc_createWUPostVarRef = R"doc(Creates a reference to a weight update model postsynapticvariable.)doc";
 
-static const char *__doc_createWUPreVarRef = R"doc(Creates a reference to a weight update model presynaptic variable)doc";
+static const char *__doc_createWUPreVarRef = R"doc(Creates a reference to a weight update model presynaptic variable.)doc";
 
-static const char *__doc_createWUVarRef = R"doc(Creates a reference to a weight update model variable)doc";
+static const char *__doc_createWUVarRef = R"doc(Creates a reference to a weight update model variable.)doc";
 
-static const char *__doc_createWUVarRef_2 = R"doc(Creates a reference to a custom weight update variable)doc";
+static const char *__doc_createWUVarRef_2 = R"doc(Creates a reference to a custom weight update variable.)doc";
 
-static const char *__doc_createWUVarRef_3 = R"doc(Creates a reference to a custom connectivity update update variable)doc";
+static const char *__doc_createWUVarRef_3 = R"doc(Creates a reference to a custom connectivity update update variable.)doc";
 
 static const char *__doc_getSynapseMatrixConnectivity = R"doc()doc";
 

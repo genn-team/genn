@@ -153,7 +153,10 @@ class GeNNModel(ModelSpec):
     Args:
         precision:              Data type to use for ``scalar`` variables
         model_name:             Name of the model
-        backend:                Name of backend module to use. Defaults to one to pick 'best' backend for your system
+        backend:                Name of backend module to use. Currently 
+                                supported "single_threaded_cpu", "cuda". 
+                                Defaults to automatically picking the 'best'
+                                backend for your system
         time_precision:         data type to use for representing time
         genn_log_level:         Log level for GeNN
         code_gen_log_level:     Log level for GeNN code-generator
@@ -342,9 +345,9 @@ class GeNNModel(ModelSpec):
             neuron:         neuron model either as a string referencing a built-in model 
                             (see :mod:`.neuron_models`) or an instance of :class:`.NeuronModelBase`
                             (for example returned by :func:`.create_neuron_model`)
-            params:         parameter values for the neuron model (see `Parameters`_)
+            params:         parameter values for the neuron model (see :ref:`section-parameters`)
             vars:           initial variable values or initialisers 
-                            for the neuron model (see `Variables`_)
+                            for the neuron model (see :ref:`section-variables`)
 
         For example, a population of 10 neurons using the built-in Izhikevich model and 
         the standard set of 'tonic spiking' parameters could be added to a model as follows:
@@ -450,14 +453,14 @@ class GeNNModel(ModelSpec):
                                     (see :mod:`.current_source_models`) or an instance of :class:`.CurrentSourceModelBase`
                                     (for example returned by :func:`.create_current_source_model`)
             pop:                    neuron population to inject current into
-            params:                 parameter values for the current source model (see `Parameters`_)
+            params:                 parameter values for the current source model (see :ref:`section-parameters`)
             vars:                   initial variable values or initialisers 
-                                    for the current source model (see `Variables`_)
+                                    for the current source model (see :ref:`section-variables`)
             var_refs:               variables references to neuron variables in ``pop``,
                                     typically created using :func:`.create_var_ref`
-                                    (see `Variables references`_)
+                                    (see :ref:`section-variables-references`)
 
-        For example, a current source to inject a gaussian noise current in added to a model as follows:
+        For example, a current source to inject a Gaussian noise current can be added to a model as follows:
 
         ..  code-block:: python
 
@@ -503,16 +506,16 @@ class GeNNModel(ModelSpec):
                                     (see :mod:`.custom_update_models`) or an instance of 
                                     :class:`.CustomUpdateModelBase`
                                     (for example returned by :func:`.create_custom_update_model`)
-            params:                 parameter values for the custom update model (see `Parameters`_)
+            params:                 parameter values for the custom update model (see :ref:`section-parameters`)
             vars:                   initial variable values or initialisers 
-                                    for the custom update model (see `Variables`_)
+                                    for the custom update model (see :ref:`section-variables`)
             var_refs:               references to variables in other populations to 
                                     access from this update, typically created using either
                                     :func:`.create_var_ref` or :func:`.create_wu_var_ref`
-                                    (see `Variables references`_).
+                                    (see :ref:`section-variables-references`).
             egp_refs:               references to extra global parameters in other populations
                                     to access from this update, typically created using
-                                    :func:`.create_egp_ref` (see `Extra global parameter references`_).
+                                    :func:`.create_egp_ref` (see :ref:`section-extra-global-parameter-references`).
         
         For example, a custom update to calculate transpose weights could be added to a model as follows:
 
@@ -570,25 +573,25 @@ class GeNNModel(ModelSpec):
                                         (see :mod:`.custom_connectivity_update_models`) or an instance of 
                                         :class:`.CustomConnectivityUpdateModelBaseUpdateModelBase`
                                         (for example returned by :func:`.create_custom_connectivity_update_model`)
-            params:                     parameter values for the custom connectivity model (see `Parameters`_)
+            params:                     parameter values for the custom connectivity model (see :ref:`section-parameters`)
             vars:                       initial synaptic variable values or
-                                        initialisers (see `Variables`_)
+                                        initialisers (see :ref:`section-variables`)
             pre_vars:                   initial presynaptic variable values or
-                                        initialisers (see `Variables`_)
+                                        initialisers (see :ref:`section-variables`)
             post_vars:                  initial postsynaptic variable values or initialisers
-                                        (see `Variables`_)
+                                        (see :ref:`section-variables`)
             var_refs:                   references to synaptic variables,
                                         typically created using :func:`.create_wu_var_ref`
-                                        (see `Variables references`_)
+                                        (see :ref:`section-variables-references`)
             pre_var_refs:               references to presynaptic variables,
                                         typically created using :func:`.create_var_ref`
-                                        (see `Variables references`_)
+                                        (see :ref:`section-variables-references`)
             post_var_refs:              references to postsynaptic variables,
                                         typically created using :func:`.create_var_ref`
-                                        (see `Variables references`_)
+                                        (see :ref:`section-variables-references`)
             egp_refs:                   references to extra global parameters in other populations
                                         to access from this update, typically created using
-                                        :func:`.create_egp_ref` (see `Extra global parameter references`_).
+                                        :func:`.create_egp_ref` (see :ref:`section-extra-global-parameter-references`).
 
         """
         if self._built:
@@ -816,7 +819,7 @@ def init_var(snippet: Union[InitVarSnippetBase, str],
                         a built-in snippet (see :mod:`.init_var_snippets`) 
                         or an instance of :class:`.InitVarSnippetBase` 
                         (for example returned by :func:`.create_var_init_snippet`)
-        params:         parameter values for the variable init snippet (see `Parameters`_)
+        params:         parameter values for the variable init snippet (see :ref:`section-parameters`)
     
     For example, the built-in model "Normal" could be used to initialise a variable 
     by sampling from the normal distribution with a mean of 0 and a standard deviation of 1:
@@ -833,17 +836,16 @@ def init_var(snippet: Union[InitVarSnippetBase, str],
 
 def init_sparse_connectivity(snippet: Union[InitSparseConnectivitySnippetBase, str],
                              params: PopParamVals = {}):
-    """Initialises a sparse connectivity 
-    initialisation snippet with parameter values
+    """Initialises a sparse connectivity initialisation snippet with parameter values
      
     Args:
         snippet:        sparse connectivity init snippet, either as a string referencing
                         a built-in snippet (see :mod:`.init_sparse_connectivity_snippets`) 
                         or an instance of :class:`.InitSparseConnectivitySnippetBase` 
                         (for example returned by :func:`.create_sparse_connect_init_snippet`)
-        params:         parameter values for the sparse connectivity init snippet (see `Parameters`_)
+        params:         parameter values for the sparse connectivity init snippet (see :ref:`section-parameters`)
     
-    For example, the built-in model could be initialised to generate connectivity 
+    For example, the built-in "FixedProbability" snippet could be used to generate connectivity 
     where each pair of pre and postsynaptic neurons is connected with a probability of 0.1:
 
     ..  code-block:: python
@@ -867,12 +869,12 @@ def init_postsynaptic(snippet: Union[PostsynapticModelBase, str],
                         (see :mod:`.postsynaptic_models`) or an instance of 
                         :class:`.PostsynapticModelBase` (for example returned 
                         by :func:`.create_postsynaptic_model`)
-        params:         parameter values for the postsynaptic model (see `Parameters`_)
+        params:         parameter values for the postsynaptic model (see :ref:`section-Parameters`)
         vars:           initial synaptic variable values or initialisers 
-                        for the postsynaptic model (see `Variables`_)
+                        for the postsynaptic model (see :ref:`section-variables`)
         var_refs:       references to postsynaptic neuron variables,
                         typically created using :func:`.create_var_ref`
-                        (see `Variables references`_)
+                        (see :ref:`section-variables-references`)
 
     For example, the built-in conductance model with exponential 
     current shaping could be initialised as follows:
@@ -900,26 +902,26 @@ def init_weight_update(snippet, params: PopParamVals = {}, vars: PopVarVals = {}
                        pre_vars: PopVarVals = {}, post_vars: PopVarVals = {}, 
                        pre_var_refs: PopVarRefs = {}, post_var_refs: PopVarRefs = {}):
     """Initialises a weight update model with parameter values, 
-    variable initialisers and variable references
+    variable initialisers and variable references.
 
     Args:
         snippet:        weight update model either as a string referencing a built-in model 
                         (see :mod:`.weight_update_models`) or an instance of 
                         :class:`.WeightUpdateModelBase` (for example returned 
                         by :func:`.create_weight_update_model`)
-        params:         parameter values (see `Parameters`_)
+        params:         parameter values (see :ref:`section-parameters`)
         vars:           initial synaptic variable values or
-                        initialisers (see `Variables`_)
+                        initialisers (see :ref:`section-variables`)
         pre_vars:       initial presynaptic variable values or
-                        initialisers (see `Variables`_)
+                        initialisers (see :ref:`section-variables`)
         post_vars:      initial postsynaptic variable values or initialisers
-                        (see `Variables`_)
+                        (see :ref:`section-variables`)
         pre_var_refs:   references to presynaptic neuron variables,
                         typically created using :func:`.create_var_ref`
-                        (see `Variables references`_)
+                        (see :ref:`section-variables-references`)
         post_var_refs:  references to postsynaptic neuron variables,
                         typically created using :func:`.create_var_ref`
-                        (see `Variables references`_)
+                        (see :ref:`section-variables-references`)
 
     For example, the built-in static pulse model with 
     constant weights could be initialised as follows:
@@ -954,11 +956,11 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, params={}):
                         a built-in snippet (see :mod:`.init_toeplitz_connectivity_snippets`) 
                         or an instance of :class:`.InitToeplitzConnectivitySnippetBase` 
                         (for example returned by :func:`.create_toeplitz_connect_init_snippet`)
-        params:         parameter values for the toeplitz connectivity init snippet (see `Parameters`_)
+        params:         parameter values for the toeplitz connectivity init snippet (see :ref:`section-parameters`)
     
-    For example, the built-in model could be initialised to generate 2D convolutional 
+    For example, the built-in "Conv2D" snippet could be used to generate 2D convolutional 
     connectivity with a :math:`3 \\times 3` kernel, a :math:`64 \\times 64 \\times 1` input
-    and a :math:`62 \\times 62 \\times 1` input:
+    and a :math:`62 \\times 62 \\times 1` output:
 
     ..  code-block:: python
 
@@ -969,7 +971,7 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, params={}):
         init = init_toeplitz_connectivity("Conv2D", params))
 
     .. note::
-        this should be used to connect a presynaptic neuron population with 
+        This should be used to connect a presynaptic neuron population with 
         :math:`64 \\times 64 \\times 1 = 4096` neurons to a postsynaptic neuron
         population with :math:`62 \\times 62 \\times 1 = 3844` neurons.
     """
@@ -1069,13 +1071,13 @@ def create_neuron_model(class_name: str, params: ModelParamsType = None,
     """Creates a new neuron model.
     Within all of the code strings, the variables, parameters,
     derived parameters, additional input variables and extra global
-    parameters defined in this model can all be referred to be name.
+    parameters defined in this model can all be referred to by name.
     Additionally, the code may refer to the following built-in read-only variables
 
-    - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
+    - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`).
     - ``Isyn`` which represents the total incoming synaptic input.
-    - ``id`` which represents a neurons index within a population (starting from zero)
-    - ``num_neurons`` which represents the number of neurons in the population
+    - ``id`` which represents a neurons index within a population (starting from zero).
+    - ``num_neurons`` which represents the number of neurons in the population.
 
     Args:
         class_name:                 name of the new class (only for debugging)
@@ -1120,19 +1122,21 @@ def create_neuron_model(class_name: str, params: ModelParamsType = None,
             vars=[("V", "scalar", pygenn.VarAccess.READ_WRITE)])
 
     Additional input variables
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    --------------------------
     Normally, neuron models receive the linear sum of the inputs coming from all of their synaptic inputs through the ``Isyn`` variable. 
-    However neuron models can define additional input variables - allowing input from different synaptic inputs to be combined non-linearly.
+    However neuron models can define additional input variables, allowing input from different synaptic inputs to be combined non-linearly.
     For example, if we wanted our leaky integrator to operate on the the product of two input currents, we could modify our model as follows:
 
     ..  code-block:: python
 
+        ...
         additional_input_vars=[("Isyn2", "scalar", 1.0)],
         sim_code=
             \"""
             const scalar input = Isyn * Isyn2;
             sim_code="V += (-V + input) * (dt / tau);
             \""",
+        ...
 
     """
     body = {}
@@ -1182,16 +1186,17 @@ def create_postsynaptic_model(class_name, params=None, param_names=None,
     """Creates a new postsynaptic update model.
     Within all of the code strings, the variables, parameters,
     derived parameters and extra global parameters defined in this model
-    can all be referred to be name. Additionally, the code may refer to the
+    can all be referred to by name. Additionally, the code may refer to the
     following built-in read-only variables:
 
     - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
     - ``id`` which represents a neurons index within a population (starting from zero)
     - ``num_neurons`` which represents the number of neurons in the population
+    - ``inSyn`` which contains the summed input received from the weight update model through ``addToPost()`` or ``addToPostDelay()``
 
     Finally, the function ``injectCurrent(x)`` can be used to inject a current
     ``x`` into the postsynaptic neuron. The variable it goes into can be
-    configured using the :attr:`SynapseGroup.post_target_var`.
+    configured using the :attr:`SynapseGroup.post_target_var`. By default it targets ``Isyn``.
 
     Args:
         class_name:                 name of the new class (only for debugging)
@@ -1267,7 +1272,7 @@ def create_weight_update_model(
 
         pre_spike_syn_code="addToPost(inc);"
 
-    where ``inc`` is the amount to add to the postsynaptic neuron for each pre-synaptic spike.
+    where ``inc`` is the amount to add to the postsynapse model's ``inSyn`` variable for each pre-synaptic spike.
     Dendritic delays can also be inserted between the synapse and the postsynaptic neuron by using the ``addToPostDelay(inc, delay)`` function.
     For example,
 
@@ -1275,7 +1280,7 @@ def create_weight_update_model(
 
         pre_spike_syn_code="addToPostDelay(inc, delay);"
 
-    where, once again, ``inc`` is the amount to add to the postsynaptic neuron and ``delay`` is the length of the dendritic delay in timesteps.
+    where, once again, ``inc`` is the amount to add to the postsynaptic neuron's ``inSyn`` variable and ``delay`` is the length of the dendritic delay in timesteps.
     By implementing ``delay`` as a weight update model variable, heterogeneous synaptic delays can be implemented.
     For an example, see WeightUpdateModels::StaticPulseDendriticDelay for a simple synapse update model with heterogeneous dendritic delays.
 
@@ -1287,8 +1292,8 @@ def create_weight_update_model(
 
         pre_spike_syn_code="addToPre(inc * V_post);"
 
-    would add terms ``inc * V_post`` to for each _outgoing_ synapse of a presynaptic neuron.
-    Like postsynaptic models, by default these inputs are accumulated in ``Isyn`` in the presynaptic 
+    would add terms ``inc * V_post`` to for each *outgoing* synapse of a presynaptic neuron.
+    Similar to postsynaptic models, by default these inputs are accumulated in ``Isyn`` in the presynaptic 
     neuron but they can also be directed to additional input variables by setting the 
     :attr:`SynapseGroup.pre_target_var` property. Unlike for normal forward synaptic 
     actions, reverse synaptic actions with ``addToPre(inc)`` are not modulated through 
@@ -1384,8 +1389,8 @@ def create_weight_update_model(
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     The memory required for synapse variables and the computational cost of updating them tends to grow with :math:`O(N^2)` with the number of neurons.
     Therefore, if it is possible, implementing synapse variables on a per-neuron rather than per-synapse basis is a good idea. 
-    The ``pre_var_name_types`` and ``post_var_name_types`` keyword arguments} are used to define any pre or postsynaptic state variables.
-    For example, using pre and postsynaptic variables, our event-driven STDP rule can be extended to use all-to-all spike pairing using pre and postsynaptic _trace_ variables [Morrison2008]_ :
+    The ``pre_var_name_types`` and ``post_var_name_types`` keyword arguments are used to define any pre or postsynaptic state variables.
+    For example, using pre and postsynaptic variables, our event-driven STDP rule can be extended to use all-to-all spike pairing using pre and postsynaptic *trace* variables [Morrison2008]_ :
 
     ..  code-block:: python
 
@@ -1420,10 +1425,10 @@ def create_weight_update_model(
             post_dynamics_code="postTrace *= tauMinusDecay;")
 
     Synapse dynamics
-    ^^^^^^^^^^^^^^^^
-    Unlike the event-driven updates previously described, synapse dynamics code is run for each synapse, each timestep i.e. unlike the others it is time-driven. 
+    ----------------
+    Unlike the event-driven updates previously described, synapse dynamics code is run for each synapse and each timestep, i.e. it is time-driven. 
     This can be used where synapses have internal variables and dynamics that are described in continuous time, e.g. by ODEs.
-    However using this mechanism is typically computationally very costly because of the large number of synapses in a typical network. 
+    However, using this mechanism is typically computationally very costly because of the large number of synapses in a typical network. 
     By using the ``addToPost()`` and ``addToPostDelay()`` functions discussed in the context of ``pre_spike_syn_code``, the synapse dynamics can also be used to implement continuous synapses for rate-based models.
     For example a continous synapse which multiplies a presynaptic neuron variable by the weight could be added to a weight update model definition as follows:
 
@@ -1433,7 +1438,7 @@ def create_weight_update_model(
         synapse_dynamics_code="addToPost(g * V_pre);",
 
     Spike-like events
-    ^^^^^^^^^^^^^^^^^
+    -----------------
     As well as time-driven synapse dynamics and spike event-driven updates, GeNN weight update models also support "spike-like events". 
     These can be triggered by a threshold condition evaluated on the pre or postsynaptic neuron. 
     This typically involves pre or postsynaptic weight update model variables or variable references respectively.
@@ -1570,7 +1575,7 @@ def create_current_source_model(class_name: str, params: ModelParamsType = None,
     """Creates a new current source model.
     Within the ``injection_code`` code string, the variables, parameters,
     derived parameters, neuron variable references and extra global
-    parameters defined in this model can all be referred to be name.
+    parameters defined in this model can all be referred to by name.
     Additionally, the code may refer to the following built-in read-only variables
 
     - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
@@ -1579,7 +1584,7 @@ def create_current_source_model(class_name: str, params: ModelParamsType = None,
     
     Finally, the function ``injectCurrent(x)`` can be used to inject a current
     ``x`` into the attached neuron. The variable it goes into can be
-    configured using the :attr:`CurrentSource.target_var`.
+    configured using the :attr:`CurrentSource.target_var`. It defaults to ``Isyn``.
 
     Args:
         class_name:             name of the new class (only for debugging)
@@ -1642,7 +1647,7 @@ def create_custom_update_model(class_name: str, params: ModelParamsType = None,
     """Creates a new custom update model.
     Within the ``update_code`` code string, the variables, parameters,
     derived parameters, variable references, extra global parameters 
-    and extra global parameter references defined in this model can all be referred to be name.
+    and extra global parameter references defined in this model can all be referred to by name.
     Additionally, the code may refer to the following built-in read-only variables
 
     - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
@@ -1691,7 +1696,7 @@ def create_custom_update_model(class_name: str, params: ModelParamsType = None,
     and any variables associated with the custom update with :attr:`.VarAccess.READ_ONLY_DUPLICATE` or :attr:`.VarAccess.READ_WRITE` access modes will be duplicated across the batches.
     
     Batch reduction
-    ^^^^^^^^^^^^^^^
+    ---------------
     As well as the standard variable access modes described previously, custom updates support variables with 'batch reduction' access modes 
     such as :attr:`.CustomUpdateVarAccess.REDUCE_BATCH_SUM` and :attr:`.CustomUpdateVarAccess.REDUCE_BATCH_MAX`.
     These access modes allow values read from variables duplicated across batches to be reduced into variables that are shared across batches.
@@ -1713,7 +1718,7 @@ def create_custom_update_model(class_name: str, params: ModelParamsType = None,
     the :attr:`.VarAccessMode.REDUCE_SUM` or :attr:`VarAccessMode.REDUCE_MAX` access modes.
     
     Neuron reduction
-    ^^^^^^^^^^^^^^^^
+    ----------------
     Similarly to the batch reduction modes discussed previously, custom updates also support variables with several 'neuron reduction' access modes
     such as :attr:`.CustomUpdateVarAccess.REDUCE_NEURON_SUM` and :attr:`.CustomUpdateVarAccess.REDUCE_NEURON_MAX`.
 
@@ -1777,10 +1782,10 @@ def create_custom_connectivity_update_model(class_name: str,
     Within host update code, you have full access to parameters, derived parameters, 
     extra global parameters and pre and postsynaptic variables. By design you do
     not have access to per-synapse variables or variable references and, currently, 
-    you can not access pre and post synaptic variable references as there are issues regarding delays. 
-    Each variable has an accompanying push and pull function to copy it to and from the device, 
-    for variables this has no parameters as illustrated in the above example and for 
-    extra global parameters it has a single parameter specifying the size of the array.
+    you cannot access pre and postsynaptic variable references as there are issues regarding delays. 
+    Each variable has an accompanying push and pull function to copy it to and from the device. 
+    For variables these have no parameters as illustrated in the example in :ref:`section-pull-push`, and for 
+    extra global parameters they have a single parameter specifying the size of the array.
     Within the row update code you have full access to parameters, derived parameters,
     extra global parameters, presynaptic variables and presynaptic variables references.
     Postsynaptic and synaptic variables and variables references can only be accessed 
@@ -1826,8 +1831,8 @@ def create_custom_connectivity_update_model(class_name: str,
                                     parameter references
 
     Parallel synapse iteration and removal
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    The main GPU operation that custom connectivity updates expose is the ability to generate per-presynaptic neuron update code. This can be used to implement a very simple model which removes 'diagonals' from the connection matrix:
+    --------------------------------------
+    The main GPU operation that custom connectivity updates expose is the ability to generate per-presynaptic neuron update code. This can be used to implement a very simple model which removes 'diagonals' from the connectivity matrix:
 
     ..  code-block:: python
 
@@ -1844,7 +1849,7 @@ def create_custom_connectivity_update_model(class_name: str,
                 \""")
 
     Parallel synapse creation
-    ^^^^^^^^^^^^^^^^^^^^^^^^^
+    -------------------------
     Similarly you could implement a custom connectivity model which adds diagonals back into the connection matrix like this:
 
     ..  code-block:: python
@@ -1856,7 +1861,7 @@ def create_custom_connectivity_update_model(class_name: str,
                 add_synapse(id_pre);
                 \""")
 
-    One important issue here is that lots of other parts of the model (e.g. other custom connectivity updates or custom weight updates) _might_ have state variables 'attached' to the same connectivity that the custom update is modifying. GeNN will automatically detect this and add and shuffle all these variables around accordingly which is fine for removing synapses but has no way of knowing what value to add synapses with. If you want new synapses to be created with state variables initialised to values other than zero, you need to use variables references to hook them to the custom connectivity update. For example, if you wanted to be able to provide weights for your new synapse, you could update the previous example model like:
+    One important issue here is that lots of other parts of the model (e.g. other custom connectivity updates or custom weight updates) *might* have state variables 'attached' to the same connectivity that the custom update is modifying. GeNN will automatically detect this and add and shuffle all these variables around accordingly which is fine for removing synapses but has no way of knowing what value to add synapses with. If you want new synapses to be created with state variables initialised to values other than zero, you need to use variables references to hook them to the custom connectivity update. For example, if you wanted to be able to provide weights for your new synapse, you could update the previous example model like:
 
     ..  code-block:: python
 
@@ -1869,7 +1874,7 @@ def create_custom_connectivity_update_model(class_name: str,
                 \""")
 
     Host updates
-    ^^^^^^^^^^^^
+    ------------
     Some common connectivity update scenarios involve some computation which can't be easily parallelized. If, for example you wanted to determine which elements on each row you wanted to remove on the host, you can include ``host_update_code`` which gets run before the row update code:
 
     ..  code-block:: python
@@ -1944,9 +1949,9 @@ def create_var_init_snippet(class_name: str, params: ModelParamsType = None,
                             derived_params: ModelDerivedParamsType = None,
                             var_init_code: Optional[str] = None,
                             extra_global_params=None):
-    """Creates a new variable initialisation snippet
+    """Creates a new variable initialisation snippet.
     Within the ``var_init_code``, the parameters, derived parameters and
-    extra global parameters defined in this snippet can all be referred to be name.
+    extra global parameters defined in this snippet can all be referred to by name.
     Additionally, the code may refer to the following built-in read-only variables
 
     - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
@@ -1987,9 +1992,8 @@ def create_var_init_snippet(class_name: str, params: ModelParamsType = None,
             var_init_code=
                 \"""
                 scalar normal;
-                do
-                {
-                normal = mean + (gennrand_normal() * sd);
+                do {
+                    normal = mean + (gennrand_normal() * sd);
                 } while (normal < 0.0);
                 value = normal;
                 \""")
@@ -2015,16 +2019,16 @@ def create_sparse_connect_init_snippet(class_name: str, params=None,
                                        calc_max_col_len_func: Optional[Callable] = None,
                                        calc_kernel_size_func: Optional[Callable] = None,
                                        extra_global_params: ModelEGPType = None):
-    """Creates a new sparse connectivity initialisation snippet
+    """Creates a new sparse connectivity initialisation snippet.
     Within the code strings, the parameters, derived parameters and
-    extra global parameters defined in this snippet can all be referred to be name.
+    extra global parameters defined in this snippet can all be referred to by name.
     Additionally, the code may refer to the following built-in read-only variables
     
     - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
     - ``num_pre`` which represents the number of presynaptic neurons
     - ``num_post`` which represents the number of postsynaptic neurons
     - ``thread`` when some procedural connectivity is used with multiple 
-      threads per presynaptic neuron, represents the index of thread
+      threads per presynaptic neuron, represents the index of the current thread
 
     and, in ``row_build_code``:
 
@@ -2034,10 +2038,10 @@ def create_sparse_connect_init_snippet(class_name: str, params=None,
     
     and, in ``col_build_code``:
 
-    - ``id_post`` which represents the index of the postsynaptic neuron (starting from zero)
+    - ``id_post`` which represents the index of the postsynaptic neuron (starting from zero).
 
     Finally, the function ``addSynapse(x)`` can be used to add a new synapse to the connectivity 
-    where, in ``row_build_code``, ``x`` is the index of the postsynaptic neuron to connect `id_pre`` to
+    where, in ``row_build_code``, ``x`` is the index of the postsynaptic neuron to connect ``id_pre`` to
     and, in ``col_build_code``, ``x`` is the index of the presynaptic neuron to connect to ``id_post``
     
     Args:
@@ -2048,9 +2052,9 @@ def create_sparse_connect_init_snippet(class_name: str, params=None,
         row_build_code:         code for building connectivity row by row
         col_build_code:         code for building connectivity column by column
         calc_max_row_len_func:  used to calculate the maximum
-                                row length of synaptic matrix created using this snippet
+                                row length of the synaptic matrix created using this snippet
         calc_max_col_len_func:  used to calculate the maximum
-                                column length of synaptic matrix created using this snippet
+                                column length of the synaptic matrix created using this snippet
         calc_kernel_size_func:  used to calculate the size of the kernel if snippet requires one
         extra_global_params:    names and types of snippet extra global parameters
     
@@ -2068,8 +2072,8 @@ def create_sparse_connect_init_snippet(class_name: str, params=None,
             row_build_code=
                 \"""
                 for(unsigned int c = num; c != 0; c--) {
-                   const unsigned int idPost = gennrand() % num_post;
-                   addSynapse(idPost + id_post_begin);
+                    const unsigned int idPost = gennrand() % num_post;
+                    addSynapse(idPost + id_post_begin);
                 }
                 \""",
             calc_max_row_len_func=lambda num_pre, num_post, pars: pars["num"],
@@ -2118,23 +2122,23 @@ def create_toeplitz_connect_init_snippet(class_name: str, params: ModelParamsTyp
                                          calc_max_row_len_func: Optional[Callable] = None,
                                          calc_kernel_size_func: Optional[Callable] = None,
                                          extra_global_params: ModelEGPType = None):
-    """Creates a new toeplitz connectivity initialisation snippet
+    """Creates a new Toeplitz connectivity initialisation snippet.
     Each *diagonal* of Toeplitz connectivity is initialised independently by running the 
-    snippet of code specified using the `diagonal_build_code``.
+    snippet of code specified using the ``diagonal_build_code``.
     Within the code strings, the parameters, derived parameters and
-    extra global parameters defined in this snippet can all be referred to be name.
+    extra global parameters defined in this snippet can all be referred to by name.
     Additionally, the code may refer to the following built-in read-only variables
     
     - ``dt`` which represents the simulation time step (as specified via  :meth:`.GeNNModel.dt`)
     - ``num_pre`` which represents the number of presynaptic neurons
     - ``num_post`` which represents the number of postsynaptic neurons
-    - ``id_diag`` when some procedural connectivity is used with multiple 
+    - ``id_diag`` when some procedural connectivity is used with multiple threads
 
     Additionally, the function ``addSynapse(id_post, id_kern_0, id_kern_1, ..., id_kern_N)`` 
     can be used to generate a new synapse to postsynaptic neuron ``id_post`` using
     N-dimensional kernel variables indexed with ``id_kern_0, id_kern_1, ..., id_kern_N``.
     Finally the ``for_each_synapse{}`` construct can be used to loop through incoming spikes
-    and, inside this, `id_pre`` will represent the index of the spiking presynaptic neuron.
+    and, inside this, ``id_pre`` will represent the index of the spiking presynaptic neuron.
     
     Args:
         class_name:             name of the snippet (only for debugging)
@@ -2148,7 +2152,7 @@ def create_toeplitz_connect_init_snippet(class_name: str, params: ModelParamsTyp
         extra_global_params:    names and types of snippet extra global parameters
     
     For example, the following Toeplitz connectivity initialisation snippet could be used to 
-    convolve a :math:`\text{kern_dim} \times \text{kern_dim}` square kernel with the spikes from a populations of :math:`\text{pop_dim} \times \text{pop_dim}` neurons.
+    convolve a :math:`\\text{kern_dim} \\times \\text{kern_dim}` square kernel with the spikes from a population of :math:`\\text{pop_dim} \\times \\text{pop_dim}` neurons.
     
     ..  code-block:: python
         

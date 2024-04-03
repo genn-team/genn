@@ -13,7 +13,7 @@
 namespace GeNN
 {
 //! Flags defining attributes of var access models
-//! Read-only and read-write are seperate flags rather than read and write so you can test mode & VarAccessMode::READ_ONLY
+//! Read-only and read-write are separate flags rather than read and write so you can test mode & VarAccessMode::READ_ONLY
 enum class VarAccessModeAttribute : unsigned int
 {
     READ_ONLY   = (1 << 0), //!< This variable can only be read from
@@ -42,42 +42,42 @@ enum class VarAccessMode : unsigned int
 //! Flags defining dimensions this variables has
 enum class VarAccessDim : unsigned int
 {
-    ELEMENT     = (1 << 5), //!< This variable stores seperate values for each element i.e. neuron or synapse
-    BATCH       = (1 << 6), //!< This variable stores seperate values for each batch
+    ELEMENT     = (1 << 5), //!< This variable stores separate values for each element i.e. neuron or synapse
+    BATCH       = (1 << 6), //!< This variable stores separate values for each batch
 };
 
 //! Supported combinations of access mode and dimension for neuron and synapse variables
 enum class VarAccess : unsigned int
 {
-    //! This variable can be read from and written to and stores seperate values for each element and each batch
+    //! This variable can be read from and written to and stores separate values for each element and each batch
     READ_WRITE              = static_cast<unsigned int>(VarAccessMode::READ_WRITE) | static_cast<unsigned int>(VarAccessDim::ELEMENT) | static_cast<unsigned int>(VarAccessDim::BATCH),
 
-    //! This variable can only be read from and stores seperate values for each element but these are shared across batches
+    //! This variable can only be read from and stores separate values for each element but these are shared across batches
     READ_ONLY               = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::ELEMENT),
 
-    //! This variable can only be read from and stores seperate values for each element and each batch
+    //! This variable can only be read from and stores separate values for each element and each batch
     READ_ONLY_DUPLICATE     = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::ELEMENT) | static_cast<unsigned int>(VarAccessDim::BATCH),
 
-    //! This variable can only be read from and stores seperate values for each batch but these are shared across neurons
+    //! This variable can only be read from and stores separate values for each batch but these are shared across neurons
     READ_ONLY_SHARED_NEURON = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::BATCH),
 };
 
 //! Supported combinations of access mode and dimension for custom update variables.
-/*! The axes are defined 'subtractively' ie VarAccessDim::BATCH indicates that this axis should be removed. */
+/*! The axes are defined 'subtractively', i.e. VarAccessDim::BATCH indicates that this axis should be removed. */
 enum class CustomUpdateVarAccess : unsigned int
 {
     //! This variable can be read from and written to and has the same dimensions as whatever the custom update is attached to
     READ_WRITE                  = static_cast<unsigned int>(VarAccessMode::READ_WRITE),
     
-    //! This variable can be only be read from and has the same dimensions as whatever the custom update is attached to
+    //! This variable can only be read from and has the same dimensions as whatever the custom update is attached to
     READ_ONLY                   = static_cast<unsigned int>(VarAccessMode::READ_ONLY),
 
-    //! This variable can be only be read from and has the same dimensions as whatever 
-    //! the custom update is attached to aside from being shared across batches
+    /*! This variable can only be read from and has the same dimensions as whatever 
+      the custom update is attached to aside from being shared across batches */
     READ_ONLY_SHARED            = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::BATCH),
 
-    //! This variable can be only be read from and has the same dimensions as whatever 
-    //! the custom update is attached to aside from being shared across neurons
+    /*! This variable can only be read from and has the same dimensions as whatever 
+      the custom update is attached to aside from being shared across neurons */
     READ_ONLY_SHARED_NEURON    = static_cast<unsigned int>(VarAccessMode::READ_ONLY) | static_cast<unsigned int>(VarAccessDim::ELEMENT),
 
     //! This variable is a target for a reduction across batches using a sum operation
