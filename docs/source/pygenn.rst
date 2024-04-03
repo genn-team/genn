@@ -9,6 +9,14 @@ pygenn package
 Submodules
 ----------
 
+pygenn.cuda\_backend module
+---------------------------
+
+.. automodule:: pygenn.cuda_backend
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pygenn.current\_source\_models module
 -------------------------------------
 
@@ -61,22 +69,6 @@ pygenn.init\_var\_snippets module
 ---------------------------------
 
 .. automodule:: pygenn.init_var_snippets
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pygenn.libgenn\_dynamic module
-------------------------------
-
-.. automodule:: pygenn.libgenn_dynamic
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pygenn.libgenn\_single\_threaded\_cpu\_backend\_dynamic module
---------------------------------------------------------------
-
-.. automodule:: pygenn.libgenn_single_threaded_cpu_backend_dynamic
    :members:
    :undoc-members:
    :show-inheritance:
