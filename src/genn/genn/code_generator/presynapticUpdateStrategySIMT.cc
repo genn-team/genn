@@ -41,6 +41,12 @@ bool isSmallSharedMemoryPop(const PresynapticUpdateGroupMerged &sg,
                            });
     }
 }
+//----------------------------------------------------------------------------
+bool isPresynapticOutputRequired(const PresynapticUpdateGroupMerged &sg, bool trueSpike)
+{
+    const auto& tokens = trueSpike ? sg.getArchetype().getWUInitialiser().getPreSpikeSynCodeTokens() : sg.getArchetype().getWUInitialiser().getPreEventSynCodeTokens();
+    return GeNN::Utils::isIdentifierReferenced("addToPre", tokens);
+}
 }   // Anonymous namespace
 
 //----------------------------------------------------------------------------
@@ -91,8 +97,8 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
         env.getStream() << "const unsigned int spike = " << env["id"] << ";" << std::endl;
     }
 
-    if(sg.getArchetype().isPresynapticOutputRequired()) {
-        env.getStream() << sg.getScalarType().getName() << " lOutPre = 0.0;" << std::endl;
+    if(isPresynapticOutputRequired(sg, trueSpike)) {
+        env.getStream() << sg.getScalarType().getName() << " lOutPre = " << Type::writeNumeric(0.0, sg.getScalarType()) << ";" << std::endl;
     }
     
     env.print("if (spike < $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(batchSize) + "])");
@@ -143,7 +149,7 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
         }
 
         // Add lOutPre to global memory
-        if(sg.getArchetype().isPresynapticOutputRequired()) {
+        if(isPresynapticOutputRequired(sg, trueSpike)) {
             env.printLine(backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "preInd") + "], lOutPre);");
         }
         
@@ -246,11 +252,20 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
         env.getStream() << "for (unsigned int j = 0; j < numSpikesInBlock; j++)";
         {
             CodeStream::Scope b(env.getStream());
-            env.getStream() << "// only work on existing neurons" << std::endl;
-            env.print("if ($(id) < $(_row_stride))");
+            EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> spikeEnv(env, sg);
+
+            spikeEnv.add(Type::Uint32.addConst(), "id_pre", "$(_sh_spk" + eventSuffix + ")[j]");
+
+            // Create local variable to hold presynaptic output from all threads in warp
+            if (isPresynapticOutputRequired(sg, trueSpike)) {
+                spikeEnv.getStream() << sg.getScalarType().getName() << " lOutPre = " << Type::writeNumeric(0.0, sg.getScalarType()) << ";" << std::endl;
+            }
+
+            spikeEnv.getStream() << "// only work on existing neurons" << std::endl;
+            spikeEnv.print("if ($(id) < $(_row_stride))");
             {
-                CodeStream::Scope b(env.getStream());
-                EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(env, sg);
+                CodeStream::Scope b(spikeEnv.getStream());
+                EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(spikeEnv, sg);
 
                 const auto indexType = backend.getSynapseIndexType(sg);
                 const auto indexTypeName = indexType.getName();
@@ -265,8 +280,6 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
                     synEnv.getStream() << CodeStream::OB(135);
                 }
 
-
-                synEnv.add(Type::Uint32.addConst(), "id_pre", "$(_sh_spk" + eventSuffix + ")[j]");
                 synEnv.add(indexType.addConst(), "id_syn", "synAddress",
                            {synEnv.addInitialiser( "const " + indexTypeName + " synAddress = ((" + indexTypeName + ")$(_sh_spk" + eventSuffix + ")[j] * $(_row_stride)) + $(id);")});
 
@@ -301,11 +314,9 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
                                backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
                 }
 
-                // Use global memory atomic for presynaptic output
-                // **NOTE** this could use per-block shared memory
-                synEnv.add(Type::AddToPre, "addToPre",
-                            backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
-                
+                // Add presynaptic output to local variable
+                synEnv.add(Type::AddToPre, "addToPre", "lOutPre += $(0)");
+
                 if(trueSpike) {
                     sg.generateSpikeUpdate(synEnv, batchSize, dt);
                 }
@@ -319,6 +330,21 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
 
                 if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                     synEnv.getStream() << CodeStream::CB(135); // end if (B(dd_gp" << sg.getName() << "[gid / 32], gid
+                }
+            }
+
+            if (isPresynapticOutputRequired(sg, trueSpike)) {
+                // Perform warp reduction into first lane
+                // **YUCK** CUDA-specific
+                for (unsigned int i = 16; i > 0; i /= 2) {
+                    spikeEnv.printLine("lOutPre += __shfl_down_sync(0xFFFFFFFF, lOutPre, " + std::to_string(i) + ");");
+                }
+
+                // Issue atomic add on first lane of warp
+                spikeEnv.print("if((" + backend.getThreadID() + " % 32) == 0)");
+                {
+                    CodeStream::Scope b(spikeEnv.getStream());
+                    spikeEnv.printLine(backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], lOutPre);");
                 }
             }
         }
@@ -422,8 +448,8 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
     {
         CodeStream::Scope b(groupEnv.getStream());
         
-        if(sg.getArchetype().isPresynapticOutputRequired()) {
-            groupEnv.getStream() << "scalar lOutPre = 0.0;" << std::endl;
+        if(isPresynapticOutputRequired(sg, trueSpike)) {
+            groupEnv.getStream() << sg.getScalarType().getName() << " lOutPre = " << Type::writeNumeric(0.0, sg.getScalarType()) << ";" << std::endl;
         }
 
         // Create environment and add presynaptic index
@@ -528,7 +554,7 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
         }
 
         // Write sum of presynaptic output to global memory
-        if(sg.getArchetype().isPresynapticOutputRequired()) {
+        if(isPresynapticOutputRequired(sg, trueSpike)) {
             groupEnv.printLine(backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], lOutPre);");
         }
 
