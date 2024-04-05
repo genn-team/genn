@@ -169,13 +169,13 @@ void ModelSpecMerged::genMergedNeuronUpdateGroups(const BackendBase &backend, Ba
 }
 //----------------------------------------------------------------------------
 void ModelSpecMerged::genMergedPresynapticSpikeUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
-                                                       GenMergedGroupFn<PresynapticUpdateGroupMerged> generateGroup)
+                                                            GenMergedGroupFn<PresynapticSpikeUpdateGroupMerged> generateGroup)
 {
     genMergedGroups(backend, memorySpaces, m_MergedPresynapticSpikeUpdateGroups, generateGroup);
 }
 //----------------------------------------------------------------------------
 void ModelSpecMerged::genMergedPresynapticSpikeEventUpdateGroups(const BackendBase& backend, BackendBase::MemorySpaces& memorySpaces,
-    GenMergedGroupFn<PresynapticUpdateGroupMerged> generateGroup)
+                                                                 GenMergedGroupFn<PresynapticSpikeEventUpdateGroupMerged> generateGroup)
 {
     genMergedGroups(backend, memorySpaces, m_MergedPresynapticSpikeEventUpdateGroups, generateGroup);
 }

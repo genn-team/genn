@@ -559,7 +559,12 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<NeuronSpi
     buildStandardNeuronEnvironment(env, batchSize);
 }
 //-----------------------------------------------------------------------
-void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> &env, unsigned int batchSize) const
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<PresynapticSpikeUpdateGroupMerged> &env, unsigned int batchSize) const
+{
+    buildStandardSynapseEnvironment(*this, env, batchSize);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<PresynapticSpikeEventUpdateGroupMerged>& env, unsigned int batchSize) const
 {
     buildStandardSynapseEnvironment(*this, env, batchSize);
 }

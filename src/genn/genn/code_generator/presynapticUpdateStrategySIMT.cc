@@ -19,7 +19,7 @@ using namespace GeNN::CodeGenerator;
 //----------------------------------------------------------------------------
 namespace
 {
-bool isSmallSharedMemoryPop(const PresynapticUpdateGroupMerged &sg,
+bool isSmallSharedMemoryPop(const PresynapticUpdateGroupMergedBase &sg,
                             const BackendSIMT &backend)
 {
     // If shared memory atomics are slow
@@ -66,17 +66,17 @@ bool PreSpan::isCompatible(const SynapseGroupInternal &sg, const PreferencesBase
             && (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE));
 }
 //----------------------------------------------------------------------------
-size_t PreSpan::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged&, const BackendSIMT&) const
+size_t PreSpan::getSharedMemoryPerThread(const PresynapticUpdateGroupMergedBase&, const BackendSIMT&) const
 {
     return 0;
 }
 //----------------------------------------------------------------------------
-void PreSpan::genPreamble(EnvironmentExternalBase&, PresynapticUpdateGroupMerged&, 
+void PreSpan::genPreamble(EnvironmentExternalBase&, PresynapticUpdateGroupMergedBase&, 
                           const BackendSIMT&) const
 {
 }
 //----------------------------------------------------------------------------
-void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, const BackendSIMT &backend, 
                         unsigned int batchSize, double dt, bool trueSpike) const
 {
     // Get suffix based on type of events
@@ -121,7 +121,7 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
             CodeStream::Scope b(env.getStream());
 
             // Create substitution stack for presynaptic simulation code
-            EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(env, sg);
+            EnvironmentGroupMergedField<PresynapticUpdateGroupMergedBase> synEnv(env, sg);
             synEnv.add(Type::Uint32.addConst(), "id_pre", "preInd");
             synEnv.add(Type::Uint32.addConst(), "id_post", "ipost",
                        {synEnv.addInitialiser("const unsigned int ipost = $(_ind)[synAddress];")});
@@ -150,7 +150,7 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
     }
 }
 //----------------------------------------------------------------------------
-void PreSpan::genPostamble(EnvironmentExternalBase &, PresynapticUpdateGroupMerged&, const BackendSIMT&, unsigned int) const
+void PreSpan::genPostamble(EnvironmentExternalBase &, PresynapticUpdateGroupMergedBase&, const BackendSIMT&, unsigned int) const
 {
 }
 
@@ -189,7 +189,7 @@ bool PostSpan::isCompatible(const SynapseGroupInternal &sg, const PreferencesBas
             && !(sg.getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ));
 }
 //----------------------------------------------------------------------------
-void PostSpan::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+void PostSpan::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, 
                            const BackendSIMT &backend) const
 {
     // If synapse group provides any postsynaptic output
@@ -209,13 +209,13 @@ void PostSpan::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupM
     }
 }
 //----------------------------------------------------------------------------
-size_t PostSpan::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const
+size_t PostSpan::getSharedMemoryPerThread(const PresynapticUpdateGroupMergedBase &sg, const BackendSIMT &backend) const
 {
     // One element is required per thread if small shared memory optimization should be used for sg
     return isSmallSharedMemoryPop(sg, backend) ? 1 : 0;
 }
 //----------------------------------------------------------------------------
-void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, const BackendSIMT &backend, 
                          unsigned int batchSize, double dt, bool trueSpike) const
 {
     // Get suffix based on type of events
@@ -250,7 +250,7 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
             env.print("if ($(id) < $(_row_stride))");
             {
                 CodeStream::Scope b(env.getStream());
-                EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(env, sg);
+                EnvironmentGroupMergedField<PresynapticUpdateGroupMergedBase> synEnv(env, sg);
 
                 const auto indexType = backend.getSynapseIndexType(sg);
                 const auto indexTypeName = indexType.getName();
@@ -325,7 +325,7 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
     }
 }
 //----------------------------------------------------------------------------
-void PostSpan::genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+void PostSpan::genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, 
                             const BackendSIMT &backend, unsigned int batchSize) const
 {
     if(sg.getArchetype().isPostsynapticOutputRequired()) {
@@ -356,7 +356,7 @@ void PostSpan::genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroup
     }
 }
 // ----------------------------------------------------------------------------
-bool PostSpan::shouldAccumulateInRegister(const PresynapticUpdateGroupMerged &sg) const
+bool PostSpan::shouldAccumulateInRegister(const PresynapticUpdateGroupMergedBase &sg) const
 {
     // If no dendritic delays are required and data structure is dense, we can accumulate output directly into register
     const auto matrixType = sg.getArchetype().getMatrixType();
@@ -388,17 +388,17 @@ bool PreSpanProcedural::isCompatible(const SynapseGroupInternal &sg, const Prefe
                 || (matrixType & SynapseMatrixWeight::KERNEL)));
 }
 //----------------------------------------------------------------------------
-size_t PreSpanProcedural::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged&, const BackendSIMT&) const
+size_t PreSpanProcedural::getSharedMemoryPerThread(const PresynapticUpdateGroupMergedBase&, const BackendSIMT&) const
 {
     return 0;
 }
 //----------------------------------------------------------------------------
-void PreSpanProcedural::genPreamble(EnvironmentExternalBase&, PresynapticUpdateGroupMerged&, 
+void PreSpanProcedural::genPreamble(EnvironmentExternalBase&, PresynapticUpdateGroupMergedBase&, 
                                     const BackendSIMT&) const
 {
 }
 //----------------------------------------------------------------------------
-void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, const BackendSIMT &backend, 
                                   unsigned int batchSize, double dt, bool trueSpike) const
 {
     // Get suffix based on type of events
@@ -427,7 +427,7 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
         }
 
         // Create environment and add presynaptic index
-        EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(groupEnv, sg);
+        EnvironmentGroupMergedField<PresynapticUpdateGroupMergedBase> synEnv(groupEnv, sg);
         synEnv.add(Type::Uint32.addConst(), "id_pre", "preInd",
                    {synEnv.addInitialiser("const unsigned int preInd = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(_spike)") + "];")});
 
@@ -535,7 +535,7 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
     }
 }
 //----------------------------------------------------------------------------
-void PreSpanProcedural::genPostamble(EnvironmentExternalBase&, PresynapticUpdateGroupMerged&, 
+void PreSpanProcedural::genPostamble(EnvironmentExternalBase&, PresynapticUpdateGroupMergedBase&, 
                                      const BackendSIMT&, unsigned int) const
 {
 }
@@ -563,7 +563,7 @@ bool PostSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const Prefere
             && !sg.isDendriticDelayRequired());
 }
 //----------------------------------------------------------------------------
-void PostSpanBitmask::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+void PostSpanBitmask::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, 
                                   const BackendSIMT &backend) const
 {
     // If synapse group provides any postsynaptic output
@@ -578,13 +578,13 @@ void PostSpanBitmask::genPreamble(EnvironmentExternalBase &env, PresynapticUpdat
     }
 }
 //----------------------------------------------------------------------------
-size_t PostSpanBitmask::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged&, const BackendSIMT&) const
+size_t PostSpanBitmask::getSharedMemoryPerThread(const PresynapticUpdateGroupMergedBase&, const BackendSIMT&) const
 {
     // Each thread sums up the input to 32 postsynaptic neurons
     return 32;
 }
 //----------------------------------------------------------------------------
-void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, const BackendSIMT &backend, 
                                 unsigned int batchSize, double dt, bool trueSpike) const
 {
     // Get suffix based on type of events
@@ -630,7 +630,7 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
                 env.getStream() << "while(connectivityWord != 0)";
                 {
                     CodeStream::Scope b(env.getStream());
-                    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(env, sg);
+                    EnvironmentGroupMergedField<PresynapticUpdateGroupMergedBase> synEnv(env, sg);
 
                     // Cound leading zeros (as bits are indexed backwards this is index of next synapse)
                     synEnv.getStream() << "const int numLZ = " << backend.getCLZ() << "(connectivityWord);" << std::endl;
@@ -667,7 +667,7 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
     }
 }
 //----------------------------------------------------------------------------
-void PostSpanBitmask::genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+void PostSpanBitmask::genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, 
                                    const BackendSIMT &backend, unsigned int batchSize) const
 {
     // If synapse group provides any postsynaptic output
@@ -715,7 +715,7 @@ bool PostSpanToeplitz::isCompatible(const SynapseGroupInternal &sg, const Prefer
     return (sg.getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ);
 }
 //----------------------------------------------------------------------------
-void PostSpanToeplitz::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+void PostSpanToeplitz::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, 
                                    const BackendSIMT &backend) const
 {
     if(isSmallSharedMemoryPop(sg, backend) && sg.getArchetype().isPostsynapticOutputRequired()) {
@@ -728,13 +728,13 @@ void PostSpanToeplitz::genPreamble(EnvironmentExternalBase &env, PresynapticUpda
     }
 }
 //----------------------------------------------------------------------------
-size_t PostSpanToeplitz::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const
+size_t PostSpanToeplitz::getSharedMemoryPerThread(const PresynapticUpdateGroupMergedBase &sg, const BackendSIMT &backend) const
 {
     // One element is required per thread if small shared memory optimization should be used for sg
     return isSmallSharedMemoryPop(sg, backend) ? 1 : 0;
 }
 //----------------------------------------------------------------------------
-void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, const BackendSIMT &backend, 
                                  unsigned int batchSize, double dt, bool trueSpike) const
 {
     // Create environment for generating presynaptic update code into seperate CodeStream
@@ -853,7 +853,7 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
         });
 }
 //----------------------------------------------------------------------------
-void PostSpanToeplitz::genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+void PostSpanToeplitz::genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, 
                                     const BackendSIMT &backend, unsigned int batchSize) const
 {
     // If we should accumulate into shared memory and synapse group provides postsynaptic output

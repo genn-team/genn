@@ -35,16 +35,16 @@ public:
     virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const = 0;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const = 0;
+    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMergedBase &sg, const BackendSIMT &backend) const = 0;
 
-    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase&sg,
                              const BackendSIMT &backend) const = 0;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase&sg, const BackendSIMT &backend,
                            unsigned int batchSize, double dt, bool trueSpike) const = 0;
 
-    virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+    virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase&sg,
                               const BackendSIMT &backend, unsigned int batchSize) const = 0;
 };
 
@@ -68,16 +68,16 @@ public:
     virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const final;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const final;
+    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMergedBase &sg, const BackendSIMT &backend) const final;
 
-    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase&sg,
                              const BackendSIMT &backend) const final;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, const BackendSIMT &backend,
                            unsigned int batchSize, double dt, bool trueSpike) const final;
 
-    virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+    virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg,
                               const BackendSIMT &backend, unsigned int batchSize) const final;
 };
 
@@ -101,16 +101,16 @@ public:
     virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const final;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const final;
+    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMergedBase &sg, const BackendSIMT &backend) const final;
 
-    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg,
                              const BackendSIMT &backend) const final;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, const BackendSIMT &backend,
                            unsigned int batchSize, double dt, bool trueSpike) const final;
 
-    virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+    virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg,
                               const BackendSIMT &backend, unsigned int batchSize) const final;
 
 private:
@@ -118,7 +118,7 @@ private:
     // Private methods
     //--------------------------------------------------------------------------
     //! Are input currents emitted by this presynaptic update accumulated into a register?
-    bool shouldAccumulateInRegister(const PresynapticUpdateGroupMerged &sg) const;
+    bool shouldAccumulateInRegister(const PresynapticUpdateGroupMergedBase &sg) const;
 
 };
 
@@ -142,16 +142,16 @@ public:
     virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const final;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const final;
+    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMergedBase &sg, const BackendSIMT &backend) const final;
 
-    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, 
                              const BackendSIMT &backend) const final;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, const BackendSIMT &backend, 
                            unsigned int batchSize, double dt, bool trueSpike) const final;
 
-    virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+    virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, 
                               const BackendSIMT &backend, unsigned int batchSize) const final;
 };
 
@@ -175,16 +175,16 @@ public:
     virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const final;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const final;
+    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMergedBase &sg, const BackendSIMT &backend) const final;
 
-    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, 
                              const BackendSIMT &backend) const final;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, const BackendSIMT &backend, 
                            unsigned int batchSize, double dt, bool trueSpike) const final;
 
-    virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+    virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, 
                               const BackendSIMT &backend, unsigned int batchSize) const final;
 };
 
@@ -208,16 +208,16 @@ public:
     virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const final;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const final;
+    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMergedBase &sg, const BackendSIMT &backend) const final;
 
-    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+    virtual void genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, 
                              const BackendSIMT &backend) const final;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
+    virtual void genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, const BackendSIMT &backend, 
                            unsigned int batchSize, double dt, bool trueSpike) const final;
 
-    virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+    virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMergedBase &sg, 
                               const BackendSIMT &backend, unsigned int batchSize) const final;
 };
 }   // namespace GeNN::CodeGenerator::PresynapticUpdateStrategySIMT

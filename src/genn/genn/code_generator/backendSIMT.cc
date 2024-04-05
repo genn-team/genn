@@ -729,12 +729,12 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
 
     // Parallelise over spike update groups
     idStart = 0;
-    genParallelGroup<PresynapticUpdateGroupMerged>(
+    genParallelGroup<PresynapticSpikeUpdateGroupMerged>(
         kernelEnv, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedPresynapticSpikeUpdateGroups,
         [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumPresynapticUpdateThreads(sg, getPreferences()), KernelPresynapticUpdate); },
-        [&modelMerged, this](EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg)
+        [&modelMerged, this](EnvironmentExternalBase &env, PresynapticSpikeUpdateGroupMerged &sg)
         {
-            EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(env, sg);
+            EnvironmentGroupMergedField<PresynapticSpikeUpdateGroupMerged> groupEnv(env, sg);
 
             // Get presynaptic update strategy to use for this synapse group
             const auto *presynapticUpdateStrategy = getPresynapticUpdateStrategy(sg.getArchetype());
@@ -758,12 +758,12 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
         });
 
     // Parallelise over spike-event update groups
-    genParallelGroup<PresynapticUpdateGroupMerged>(
+    genParallelGroup<PresynapticSpikeEventUpdateGroupMerged>(
         kernelEnv, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedPresynapticSpikeEventUpdateGroups,
         [this](const SynapseGroupInternal& sg) { return padKernelSize(getNumPresynapticUpdateThreads(sg, getPreferences()), KernelPresynapticUpdate); },
-        [&modelMerged, this](EnvironmentExternalBase& env, PresynapticUpdateGroupMerged& sg)
+        [&modelMerged, this](EnvironmentExternalBase& env, PresynapticSpikeEventUpdateGroupMerged& sg)
         {
-            EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(env, sg);
+            EnvironmentGroupMergedField<PresynapticSpikeEventUpdateGroupMerged> groupEnv(env, sg);
 
             // Get presynaptic update strategy to use for this synapse group
             const auto* presynapticUpdateStrategy = getPresynapticUpdateStrategy(sg.getArchetype());

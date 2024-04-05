@@ -109,24 +109,52 @@ private:
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::PresynapticUpdateGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT PresynapticUpdateGroupMerged : public SynapseGroupMergedBase
+class GENN_EXPORT PresynapticUpdateGroupMergedBase : public SynapseGroupMergedBase
 {
 public:
     using SynapseGroupMergedBase::SynapseGroupMergedBase;
 
-    void generateRunner(const BackendBase &backend, CodeStream &definitions) const
+    void generateProceduralConnectivity(EnvironmentExternalBase &env);
+    void generateToeplitzConnectivity(EnvironmentExternalBase &env,
+                                      Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
+                                      Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler);    
+};
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::PresynapticSpikeUpdateGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT PresynapticSpikeUpdateGroupMerged : public PresynapticUpdateGroupMergedBase
+{
+public:
+    using PresynapticUpdateGroupMergedBase::PresynapticUpdateGroupMergedBase;
+    
+    void generateRunner(const BackendBase& backend, CodeStream& definitions) const
     {
         generateRunnerBase(backend, definitions, name);
     }
 
-    void generateSpikeEventUpdate(EnvironmentExternalBase &env, 
-                                  unsigned int batchSize, double dt);
-    void generateSpikeUpdate(EnvironmentExternalBase &env, 
-                             unsigned int batchSize, double dt);
-    void generateProceduralConnectivity(EnvironmentExternalBase &env);
-    void generateToeplitzConnectivity(EnvironmentExternalBase &env,
-                                      Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
-                                      Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler);
+    void generateSpikeUpdate(EnvironmentExternalBase& env, unsigned int batchSize, double dt);
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::PresynapticSpikeEventUpdateGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT PresynapticSpikeEventUpdateGroupMerged : public PresynapticUpdateGroupMergedBase
+{
+public:
+    using PresynapticUpdateGroupMergedBase::PresynapticUpdateGroupMergedBase;
+
+    void generateRunner(const BackendBase& backend, CodeStream& definitions) const
+    {
+        generateRunnerBase(backend, definitions, name);
+    }
+
+    void generateSpikeEventUpdate(EnvironmentExternalBase& env, unsigned int batchSize, double dt);
 
     //----------------------------------------------------------------------------
     // Static constants

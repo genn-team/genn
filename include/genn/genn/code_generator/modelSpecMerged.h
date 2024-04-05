@@ -51,10 +51,10 @@ public:
     const std::vector<NeuronUpdateGroupMerged> &getMergedNeuronUpdateGroups() const{ return m_MergedNeuronUpdateGroups; }
 
     //! Get merged synapse groups which require presynaptic updates
-    const std::vector<PresynapticUpdateGroupMerged> &getMergedPresynapticSpikeUpdateGroups() const{ return m_MergedPresynapticSpikeUpdateGroups; }
+    const std::vector<PresynapticSpikeUpdateGroupMerged> &getMergedPresynapticSpikeUpdateGroups() const{ return m_MergedPresynapticSpikeUpdateGroups; }
 
     //! Get merged synapse groups which require presynaptic updates
-    const std::vector<PresynapticUpdateGroupMerged>& getMergedPresynapticSpikeEventUpdateGroups() const { return m_MergedPresynapticSpikeEventUpdateGroups; }
+    const std::vector<PresynapticSpikeEventUpdateGroupMerged>& getMergedPresynapticSpikeEventUpdateGroups() const { return m_MergedPresynapticSpikeEventUpdateGroups; }
 
     //! Get merged synapse groups which require postsynaptic updates
     const std::vector<PostsynapticUpdateGroupMerged> &getMergedPostsynapticUpdateGroups() const{ return m_MergedPostsynapticUpdateGroups; }
@@ -128,9 +128,9 @@ public:
     void genMergedNeuronUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
                                      GenMergedGroupFn<NeuronUpdateGroupMerged> generateGroup);
     void genMergedPresynapticSpikeUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
-                                               GenMergedGroupFn<PresynapticUpdateGroupMerged> generateGroup);
+                                               GenMergedGroupFn<PresynapticSpikeUpdateGroupMerged> generateGroup);
     void genMergedPresynapticSpikeEventUpdateGroups(const BackendBase& backend, BackendBase::MemorySpaces& memorySpaces,
-                                                    GenMergedGroupFn<PresynapticUpdateGroupMerged> generateGroup);
+                                                    GenMergedGroupFn<PresynapticSpikeEventUpdateGroupMerged> generateGroup);
     void genMergedPostsynapticUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
                                            GenMergedGroupFn<PostsynapticUpdateGroupMerged> generateGroup);
     void genMergedSynapseDynamicsGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
@@ -386,10 +386,10 @@ private:
     std::vector<NeuronUpdateGroupMerged> m_MergedNeuronUpdateGroups;
 
     //! Merged synapse groups which require presynaptic spike updates
-    std::vector<PresynapticUpdateGroupMerged> m_MergedPresynapticSpikeUpdateGroups;
+    std::vector<PresynapticSpikeUpdateGroupMerged> m_MergedPresynapticSpikeUpdateGroups;
 
     //! Merged synapse groups which require presynaptic spike event updates
-    std::vector<PresynapticUpdateGroupMerged> m_MergedPresynapticSpikeEventUpdateGroups;
+    std::vector<PresynapticSpikeEventUpdateGroupMerged> m_MergedPresynapticSpikeEventUpdateGroups;
 
     //! Merged synapse groups which require postsynaptic updates
     std::vector<PostsynapticUpdateGroupMerged> m_MergedPostsynapticUpdateGroups;
