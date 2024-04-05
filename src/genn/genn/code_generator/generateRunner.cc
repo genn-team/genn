@@ -183,7 +183,7 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
                          runnerStepTimeFinalise, "neuronUpdate", true);
 
         // Add presynaptic update timer
-        if(!modelMerged.getMergedPresynapticUpdateGroups().empty()) {
+        if(!modelMerged.getMergedPresynapticSpikeUpdateGroups().empty() || !modelMerged.getMergedPresynapticSpikeEventUpdateGroups().empty()) {
             backend.genTimer(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                              runnerStepTimeFinalise, "presynapticUpdate", true);
         }
@@ -377,8 +377,13 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
         m.generateRunner(backend, definitions);
     }
 
-    // Loop through merged presynaptic update groups
-    for(const auto &m : modelMerged.getMergedPresynapticUpdateGroups()) {
+    // Loop through merged presynaptic spike update groups
+    for(const auto &m : modelMerged.getMergedPresynapticSpikeUpdateGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Loop through merged presynaptic spike event update groups
+    for (const auto& m : modelMerged.getMergedPresynapticSpikeEventUpdateGroups()) {
         m.generateRunner(backend, definitions);
     }
 

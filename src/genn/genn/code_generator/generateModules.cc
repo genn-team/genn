@@ -151,7 +151,8 @@ std::vector<std::string> generateAll(ModelSpecMerged &modelMerged, const Backend
     // Output summary to log
     LOGI_CODE_GEN << "Merging model with " << modelMerged.getModel().getNeuronGroups().size() << " neuron groups and " << modelMerged.getModel().getSynapseGroups().size() << " synapse groups results in:";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedNeuronUpdateGroups().size() << " merged neuron update groups";
-    LOGI_CODE_GEN << "\t" << modelMerged.getMergedPresynapticUpdateGroups().size() << " merged presynaptic update groups";
+    LOGI_CODE_GEN << "\t" << modelMerged.getMergedPresynapticSpikeUpdateGroups().size() << " merged presynaptic spike update groups";
+    LOGI_CODE_GEN << "\t" << modelMerged.getMergedPresynapticSpikeEventUpdateGroups().size() << " merged presynaptic spike event update groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedPostsynapticUpdateGroups().size() << " merged postsynaptic update groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseDynamicsGroups().size() << " merged synapse dynamics groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomUpdateGroups().size() << " merged custom update groups";
@@ -235,7 +236,8 @@ void generateSynapseUpdate(std::ostream &stream, ModelSpecMerged &modelMerged, c
         [&modelMerged, &backend](CodeStream &os)
         {
             modelMerged.genDynamicFieldPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), backend);
-            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedPresynapticUpdateGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedPresynapticSpikeUpdateGroups(), backend);
+            modelMerged.genDynamicFieldPush(os, modelMerged.getMergedPresynapticSpikeEventUpdateGroups(), backend);
             modelMerged.genDynamicFieldPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), backend);
             modelMerged.genDynamicFieldPush(os, modelMerged.getMergedSynapseDynamicsGroups(), backend);
         });

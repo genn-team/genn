@@ -21,9 +21,14 @@ using namespace GeNN::CodeGenerator;
                        [](const NeuronGroupInternal&){ return true; },
                        &NeuronGroupInternal::getHashDigest);
 
-    createMergedGroups(getModel().getSynapseGroups(), m_MergedPresynapticUpdateGroups,
-                       [](const SynapseGroupInternal &sg) { return (sg.isPreSpikeEventRequired() || sg.isPreSpikeRequired()); },
+    createMergedGroups(getModel().getSynapseGroups(), m_MergedPresynapticSpikeUpdateGroups,
+                       [](const SynapseGroupInternal &sg) { return sg.isPreSpikeRequired(); },
                        &SynapseGroupInternal::getWUHashDigest);
+    
+    createMergedGroups(getModel().getSynapseGroups(), m_MergedPresynapticSpikeEventUpdateGroups,
+                       [](const SynapseGroupInternal &sg) { return sg.isPreSpikeEventRequired(); },
+                       &SynapseGroupInternal::getWUHashDigest);
+
 
     createMergedGroups(getModel().getSynapseGroups(), m_MergedPostsynapticUpdateGroups,
                        [](const SynapseGroupInternal &sg){ return (sg.isPostSpikeEventRequired() || sg.isPostSpikeRequired()); },
@@ -156,8 +161,6 @@ using namespace GeNN::CodeGenerator;
                        },
                        &SynapseGroupInternal::getConnectivityHostInitHashDigest);
 }
-
-
 //----------------------------------------------------------------------------
 void ModelSpecMerged::genMergedNeuronUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
                                                   GenMergedGroupFn<NeuronUpdateGroupMerged> generateGroup)
@@ -165,10 +168,16 @@ void ModelSpecMerged::genMergedNeuronUpdateGroups(const BackendBase &backend, Ba
     genMergedGroups(backend, memorySpaces, m_MergedNeuronUpdateGroups, generateGroup);
 }
 //----------------------------------------------------------------------------
-void ModelSpecMerged::genMergedPresynapticUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+void ModelSpecMerged::genMergedPresynapticSpikeUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
                                                        GenMergedGroupFn<PresynapticUpdateGroupMerged> generateGroup)
 {
-    genMergedGroups(backend, memorySpaces, m_MergedPresynapticUpdateGroups, generateGroup);
+    genMergedGroups(backend, memorySpaces, m_MergedPresynapticSpikeUpdateGroups, generateGroup);
+}
+//----------------------------------------------------------------------------
+void ModelSpecMerged::genMergedPresynapticSpikeEventUpdateGroups(const BackendBase& backend, BackendBase::MemorySpaces& memorySpaces,
+    GenMergedGroupFn<PresynapticUpdateGroupMerged> generateGroup)
+{
+    genMergedGroups(backend, memorySpaces, m_MergedPresynapticSpikeEventUpdateGroups, generateGroup);
 }
 //----------------------------------------------------------------------------
 void ModelSpecMerged::genMergedPostsynapticUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
@@ -338,8 +347,13 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getHashDigest(const Bac
         Utils::updateHash(g.getHashDigest(), hash);
     }
 
-    // Concatenate hash digest of presynaptic update groups
-    for(const auto &g : m_MergedPresynapticUpdateGroups) {
+    // Concatenate hash digest of presynaptic spike update groups
+    for(const auto &g : m_MergedPresynapticSpikeUpdateGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of presynaptic spike event update groups
+    for (const auto& g : m_MergedPresynapticSpikeEventUpdateGroups) {
         Utils::updateHash(g.getHashDigest(), hash);
     }
 
@@ -498,8 +512,13 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getSynapseUpdateArchety
     // **NOTE** it would be nicer to actually treat git hash as a hash but not really important
     Utils::updateHash(GIT_HASH, hash);
 
-    // Concatenate hash digest of archetype presynaptic update group
-    for(const auto &g : m_MergedPresynapticUpdateGroups) {
+    // Concatenate hash digest of archetype presynaptic spike update group
+    for(const auto &g : m_MergedPresynapticSpikeUpdateGroups) {
+        Utils::updateHash(g.getArchetype().getWUHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of archetype presynaptic spike event update group
+    for (const auto& g : m_MergedPresynapticSpikeEventUpdateGroups) {
         Utils::updateHash(g.getArchetype().getWUHashDigest(), hash);
     }
 
@@ -623,19 +642,3 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getInitArchetypeHashDig
 
     return hash.get_digest();
 }
-//----------------------------------------------------------------------------
-/*bool ModelSpecMerged::anyPointerEGPs() const
-{
-    // Loop through grouped merged EGPs
-    for(const auto &e : m_MergedEGPs) {
-        // If there's any pointer EGPs, return true
-        // **TODO** without scalar EGPS, all EGPS are pointer EGPS!
-        if(std::any_of(e.second.cbegin(), e.second.cend(),
-                       [](const MergedEGPDestinations::value_type &g){ return g.second.type.isPointer(); }))
-        {
-            return true;
-        }
-    }
-
-    return false;
-}*/

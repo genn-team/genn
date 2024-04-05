@@ -558,7 +558,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     os << "cl::Kernel " << KernelNames[KernelPostsynapticUpdate] << ";" << std::endl;
     os << "cl::Kernel " << KernelNames[KernelSynapseDynamicsUpdate] << ";" << std::endl;
     genMergedStructPreamble(os, modelMerged, modelMerged.getMergedSynapseDendriticDelayUpdateGroups());
-    genMergedStructPreamble(os, modelMerged, modelMerged.getMergedPresynapticUpdateGroups());
+    genMergedStructPreamble(os, modelMerged, modelMerged.getMergedPresynapticSpikeUpdateGroups());
+    genMergedStructPreamble(os, modelMerged, modelMerged.getMergedPresynapticSpikeEventUpdateGroups());
     genMergedStructPreamble(os, modelMerged, modelMerged.getMergedPostsynapticUpdateGroups());
     genMergedStructPreamble(os, modelMerged, modelMerged.getMergedSynapseDynamicsGroups());
 
@@ -597,7 +598,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     // Generate data structure for accessing merged groups
     genMergedKernelDataStructures(
         synapseUpdateKernels,
-        modelMerged.getMergedPresynapticUpdateGroups(), [this](const SynapseGroupInternal &sg){ return padKernelSize(getNumPresynapticUpdateThreads(sg, getPreferences()), KernelPresynapticUpdate); });
+        modelMerged.getMergedPresynapticSpikeUpdateGroups(), [this](const SynapseGroupInternal &sg){ return padKernelSize(getNumPresynapticUpdateThreads(sg, getPreferences()), KernelPresynapticUpdate); },
+        modelMerged.getMergedPresynapticSpikeEventUpdateGroups(), [this](const SynapseGroupInternal& sg) { return padKernelSize(getNumPresynapticUpdateThreads(sg, getPreferences()), KernelPresynapticUpdate); });
     genMergedKernelDataStructures(
         synapseUpdateKernels,
         modelMerged.getMergedPostsynapticUpdateGroups(), [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumPostsynapticUpdateThreads(sg), KernelPostsynapticUpdate); });
@@ -607,7 +609,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
     // Generate kernels used to populate merged structs
     genMergedStructBuildKernels(synapseUpdateKernels, modelMerged, modelMerged.getMergedSynapseDendriticDelayUpdateGroups());
-    genMergedStructBuildKernels(synapseUpdateKernels, modelMerged, modelMerged.getMergedPresynapticUpdateGroups());
+    genMergedStructBuildKernels(synapseUpdateKernels, modelMerged, modelMerged.getMergedPresynapticSpikeUpdateGroups());
+    genMergedStructBuildKernels(synapseUpdateKernels, modelMerged, modelMerged.getMergedPresynapticSpikeEventUpdateGroups());
     genMergedStructBuildKernels(synapseUpdateKernels, modelMerged, modelMerged.getMergedPostsynapticUpdateGroups());
     genMergedStructBuildKernels(synapseUpdateKernels, modelMerged, modelMerged.getMergedSynapseDynamicsGroups());
 
@@ -631,10 +634,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     // If there are any presynaptic update groups
     size_t idPresynapticStart = 0;
     const bool globalRNGRequired = isGlobalDeviceRNGRequired(modelMerged);
-    if(!modelMerged.getMergedPresynapticUpdateGroups().empty()) {
+    if(!modelMerged.getMergedPresynapticSpikeUpdateGroups().empty() || !modelMerged.getMergedPresynapticSpikeEventUpdateGroups().empty()) {
         synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelPresynapticUpdate) << ", 1, 1)))" << std::endl;
         synapseUpdateKernels << "__kernel void " << KernelNames[KernelPresynapticUpdate] << "(";
-        genMergedGroupKernelParams(synapseUpdateKernels, modelMerged.getMergedPresynapticUpdateGroups(), true);
+        genMergedGroupKernelParams(synapseUpdateKernels, modelMerged.getMergedPresynapticSpikeUpdateGroups(), true);
         synapseUpdateKernels << model.getTimePrecision() << " t";
         if(globalRNGRequired) {
             synapseUpdateKernels << ", __global clrngPhilox432HostStream *d_rng";
@@ -745,7 +748,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
             os << "// Configure merged struct buffers and kernels" << std::endl;
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), "synapseUpdateProgram");
-            genMergedStructBuild(os, modelMerged, modelMerged.getMergedPresynapticUpdateGroups(), "synapseUpdateProgram");
+            genMergedStructBuild(os, modelMerged, modelMerged.getMergedPresynapticSpikeUpdateGroups(), "synapseUpdateProgram");
+            genMergedStructBuild(os, modelMerged, modelMerged.getMergedPresynapticSpikeEventUpdateGroups(), "synapseUpdateProgram");
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedPostsynapticUpdateGroups(), "synapseUpdateProgram");
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedSynapseDynamicsGroups(), "synapseUpdateProgram");
             os << std::endl;
@@ -764,13 +768,17 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         if(idPresynapticStart > 0) {
             os << "// Configure presynaptic update kernel" << std::endl;
             os << "CHECK_OPENCL_ERRORS_POINTER(" << KernelNames[KernelPresynapticUpdate] << " = cl::Kernel(synapseUpdateProgram, \"" << KernelNames[KernelPresynapticUpdate] << "\", &error));" << std::endl;
-            setMergedGroupKernelParams(os, KernelNames[KernelPresynapticUpdate], modelMerged.getMergedPresynapticUpdateGroups());
+            size_t start = 0;
+            setMergedGroupKernelParams(os, KernelNames[KernelPresynapticUpdate], modelMerged.getMergedPresynapticSpikeUpdateGroups(), start);
+            setMergedGroupKernelParams(os, KernelNames[KernelPresynapticUpdate], modelMerged.getMergedPresynapticSpikeEventUpdateGroups(), start);
+
             if(globalRNGRequired) {
-                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << modelMerged.getMergedPresynapticUpdateGroups().size() + 1 << ", d_rng));" << std::endl;
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << (start + 1) << ", d_rng));" << std::endl;
+                start++;
             }
             if(shouldUseSubBufferAllocations()) {
-                const size_t start = modelMerged.getMergedPresynapticUpdateGroups().size() + (globalRNGRequired ? 2 : 1);
-                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << start << ", d_staticBuffer));" << std::endl;
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << (start + 1) << ", d_staticBuffer));" << std::endl;
+                start++;
             }
             os << std::endl;
         }
@@ -825,7 +833,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         // Launch presynaptic update kernel
         if (idPresynapticStart > 0) {
             CodeStream::Scope b(os);
-            os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << modelMerged.getMergedPresynapticUpdateGroups().size() << ", t));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << modelMerged.getMergedPresynapticSpikeUpdateGroups().size() + modelMerged.getMergedPresynapticSpikeEventUpdateGroups().size() << ", t));" << std::endl;
             os << std::endl;
             genKernelDimensions(os, KernelPresynapticUpdate, idPresynapticStart, model.getBatchSize());
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPresynapticUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize";

@@ -352,7 +352,7 @@ TEST(SynapseGroup, CompareWUDifferentModel)
 
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
-    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 2);
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticSpikeUpdateGroups().size() == 2);
     ASSERT_TRUE(modelSpecMerged.getMergedPostsynapticUpdateGroups().empty());
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseDynamicsGroups().empty());
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronInitGroups().size() == 2);
@@ -405,13 +405,13 @@ TEST(SynapseGroup, CompareWUDifferentParams)
 
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
-    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticSpikeUpdateGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().empty());
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseInitGroups().empty());
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().empty());
 
     // Check that global g var is heterogeneous
-    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isWUParamHeterogeneous("g"));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticSpikeUpdateGroups().at(0).isWUParamHeterogeneous("g"));
 }
 
 TEST(SynapseGroup, CompareWUDifferentProceduralConnectivity)
@@ -513,22 +513,22 @@ TEST(SynapseGroup, CompareWUDifferentToeplitzConnectivity)
 
     // Check all groups are merged
     ASSERT_EQ(modelSpecMerged.getMergedNeuronUpdateGroups().size(), 3);
-    ASSERT_EQ(modelSpecMerged.getMergedPresynapticUpdateGroups().size(), 1);
+    ASSERT_EQ(modelSpecMerged.getMergedPresynapticSpikeUpdateGroups().size(), 1);
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().empty());
     ASSERT_EQ(modelSpecMerged.getMergedSynapseInitGroups().size(), 1);
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().empty());
 
     // Check that connectivity parameter is heterogeneous
-    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_kh"));
-    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_kw"));
-    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_ih"));
-    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_iw"));
-    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_ic"));
-    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_oh"));
-    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_ow"));
-    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_oc"));
-    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitDerivedParamHeterogeneous("conv_bh"));
-    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitDerivedParamHeterogeneous("conv_bw"));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticSpikeUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_kh"));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticSpikeUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_kw"));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticSpikeUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_ih"));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticSpikeUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_iw"));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticSpikeUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_ic"));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticSpikeUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_oh"));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticSpikeUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_ow"));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticSpikeUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_oc"));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticSpikeUpdateGroups().at(0).isToeplitzConnectivityInitDerivedParamHeterogeneous("conv_bh"));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticSpikeUpdateGroups().at(0).isToeplitzConnectivityInitDerivedParamHeterogeneous("conv_bw"));
 }
 
 TEST(SynapseGroup, CompareWUDifferentProceduralVars)
@@ -667,7 +667,7 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
 
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
-    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticSpikeUpdateGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseInitGroups().empty());
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().size() == 1);
@@ -816,7 +816,7 @@ TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)
 
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
-    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticSpikeUpdateGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedPostsynapticUpdateGroups().empty());
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseDynamicsGroups().empty());
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronInitGroups().size() == 2);
@@ -879,7 +879,7 @@ TEST(SynapseGroup, InitCompareWUSynapseDynamicsPostLearn)
 
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
-    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 3);
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticSpikeUpdateGroups().size() == 3);
     ASSERT_TRUE(modelSpecMerged.getMergedPostsynapticUpdateGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseDynamicsGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronInitGroups().size() == 2);

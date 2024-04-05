@@ -706,7 +706,8 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     // Generate data structure for accessing merged groups
     // **NOTE** constant cache is preferentially given to synapse groups as, typically, more synapse kernels are launched
     // so subtract constant memory requirements of synapse group start ids from total constant memory
-    const size_t synapseGroupStartIDSize = (getGroupStartIDSize(modelMerged.getMergedPresynapticUpdateGroups()) +
+    const size_t synapseGroupStartIDSize = (getGroupStartIDSize(modelMerged.getMergedPresynapticSpikeUpdateGroups()) +
+                                            getGroupStartIDSize(modelMerged.getMergedPresynapticSpikeEventUpdateGroups()) +
                                             getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
                                             getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()));
     size_t totalConstMem = (getChosenDeviceSafeConstMemBytes() > synapseGroupStartIDSize) ? (getChosenDeviceSafeConstMemBytes() - synapseGroupStartIDSize) : 0;
@@ -745,7 +746,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
 
     // If there are any presynaptic update groups
     size_t idPresynapticStart = 0;
-    if(!modelMerged.getMergedPresynapticUpdateGroups().empty()) {
+    if(!modelMerged.getMergedPresynapticSpikeUpdateGroups().empty() || !modelMerged.getMergedPresynapticSpikeEventUpdateGroups().empty()) {
         synapseUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelPresynapticUpdate] << "(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl; // end of synapse kernel header
         {
             CodeStream::Scope b(synapseUpdateEnv.getStream());
@@ -860,13 +861,15 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
 
     // Generate struct definitions
     modelMerged.genMergedSynapseDendriticDelayUpdateStructs(os, *this);
-    modelMerged.genMergedPresynapticUpdateGroupStructs(os, *this);
+    modelMerged.genMergedPresynapticSpikeUpdateGroupStructs(os, *this);
+    modelMerged.genMergedPresynapticSpikeEventUpdateGroupStructs(os, *this);
     modelMerged.genMergedPostsynapticUpdateGroupStructs(os, *this);
     modelMerged.genMergedSynapseDynamicsGroupStructs(os, *this);
 
     // Generate arrays of merged structs and functions to push them
     genMergedStructArrayPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedPresynapticUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedPresynapticSpikeUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedPresynapticSpikeEventUpdateGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedPostsynapticUpdateGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedSynapseDynamicsGroups());
 
@@ -875,11 +878,9 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
 
     // Generate data structure for accessing merged groups
     size_t totalConstMem = getChosenDeviceSafeConstMemBytes();
-    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedPresynapticUpdateGroups(),
-                                  [this](const SynapseGroupInternal &sg)
-                                  {
-                                      return padKernelSize(getNumPresynapticUpdateThreads(sg, getPreferences()), KernelPresynapticUpdate);
-                                  });
+    genMergedKernelDataStructures(os, totalConstMem, 
+                                  modelMerged.getMergedPresynapticSpikeUpdateGroups(), [this](const SynapseGroupInternal &sg){ return padKernelSize(getNumPresynapticUpdateThreads(sg, getPreferences()), KernelPresynapticUpdate); },
+                                  modelMerged.getMergedPresynapticSpikeEventUpdateGroups(), [this](const SynapseGroupInternal& sg){ return padKernelSize(getNumPresynapticUpdateThreads(sg, getPreferences()), KernelPresynapticUpdate); });
     genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedPostsynapticUpdateGroups(),
                                   [this](const SynapseGroupInternal &sg){ return padKernelSize(getNumPostsynapticUpdateThreads(sg), KernelPostsynapticUpdate); });
 
@@ -919,7 +920,8 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     // **THINK** I don't think there was any need for these to be filtered
     // **NOTE** constant cache is preferentially given to neuron and synapse groups as, typically, they are launched more often 
     // than custom update kernels so subtract constant memory requirements of synapse group start ids from total constant memory
-    const size_t timestepGroupStartIDSize = (getGroupStartIDSize(modelMerged.getMergedPresynapticUpdateGroups()) +
+    const size_t timestepGroupStartIDSize = (getGroupStartIDSize(modelMerged.getMergedPresynapticSpikeUpdateGroups()) +
+                                             getGroupStartIDSize(modelMerged.getMergedPresynapticSpikeEventUpdateGroups()) +
                                              getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
                                              getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()) +
                                              getGroupStartIDSize(modelMerged.getMergedNeuronUpdateGroups()));
@@ -1950,7 +1952,8 @@ Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged 
 {
     // Get size of update group start ids (constant cache is precious so don't use for init groups
     const size_t groupStartIDSize = (getGroupStartIDSize(modelMerged.getMergedNeuronUpdateGroups()) +
-                                     getGroupStartIDSize(modelMerged.getMergedPresynapticUpdateGroups()) +
+                                     getGroupStartIDSize(modelMerged.getMergedPresynapticSpikeUpdateGroups()) +
+                                     getGroupStartIDSize(modelMerged.getMergedPresynapticSpikeEventUpdateGroups()) +
                                      getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
                                      getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()) +
                                      getGroupStartIDSize(modelMerged.getMergedCustomUpdateGroups()) +

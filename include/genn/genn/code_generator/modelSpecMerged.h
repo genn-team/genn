@@ -51,7 +51,10 @@ public:
     const std::vector<NeuronUpdateGroupMerged> &getMergedNeuronUpdateGroups() const{ return m_MergedNeuronUpdateGroups; }
 
     //! Get merged synapse groups which require presynaptic updates
-    const std::vector<PresynapticUpdateGroupMerged> &getMergedPresynapticUpdateGroups() const{ return m_MergedPresynapticUpdateGroups; }
+    const std::vector<PresynapticUpdateGroupMerged> &getMergedPresynapticSpikeUpdateGroups() const{ return m_MergedPresynapticSpikeUpdateGroups; }
+
+    //! Get merged synapse groups which require presynaptic updates
+    const std::vector<PresynapticUpdateGroupMerged>& getMergedPresynapticSpikeEventUpdateGroups() const { return m_MergedPresynapticSpikeEventUpdateGroups; }
 
     //! Get merged synapse groups which require postsynaptic updates
     const std::vector<PostsynapticUpdateGroupMerged> &getMergedPostsynapticUpdateGroups() const{ return m_MergedPostsynapticUpdateGroups; }
@@ -124,8 +127,10 @@ public:
 
     void genMergedNeuronUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
                                      GenMergedGroupFn<NeuronUpdateGroupMerged> generateGroup);
-    void genMergedPresynapticUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
-                                          GenMergedGroupFn<PresynapticUpdateGroupMerged> generateGroup);
+    void genMergedPresynapticSpikeUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+                                               GenMergedGroupFn<PresynapticUpdateGroupMerged> generateGroup);
+    void genMergedPresynapticSpikeEventUpdateGroups(const BackendBase& backend, BackendBase::MemorySpaces& memorySpaces,
+                                                    GenMergedGroupFn<PresynapticUpdateGroupMerged> generateGroup);
     void genMergedPostsynapticUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
                                            GenMergedGroupFn<PostsynapticUpdateGroupMerged> generateGroup);
     void genMergedSynapseDynamicsGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
@@ -175,7 +180,8 @@ public:
 
 
     void genMergedNeuronUpdateGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedNeuronUpdateGroups); }
-    void genMergedPresynapticUpdateGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedPresynapticUpdateGroups); }
+    void genMergedPresynapticSpikeUpdateGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedPresynapticSpikeUpdateGroups); }
+    void genMergedPresynapticSpikeEventUpdateGroupStructs(CodeStream& os, const BackendBase& backend) const { genMergedStructures(os, backend, m_MergedPresynapticSpikeEventUpdateGroups); }
     void genMergedPostsynapticUpdateGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedPostsynapticUpdateGroups); }
     void genMergedSynapseDynamicsGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseDynamicsGroups); }
     void genMergedNeuronInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedNeuronInitGroups); }
@@ -202,7 +208,8 @@ public:
 
 
     void genMergedNeuronUpdateGroupHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedNeuronUpdateGroups); }
-    void genMergedPresynapticUpdateGroupHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedPresynapticUpdateGroups); }
+    void genMergedPresynapticSpikeUpdateGroupHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedPresynapticSpikeUpdateGroups); }
+    void genMergedPresynapticSpikeEventUpdateGroupHostStructArrayPush(CodeStream& os, const BackendBase& backend) const { genHostMergedStructArrayPush(os, backend, m_MergedPresynapticSpikeEventUpdateGroups); }
     void genMergedPostsynapticUpdateGroupHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedPostsynapticUpdateGroups); }
     void genMergedSynapseDynamicsGroupHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedSynapseDynamicsGroups); }
     void genMergedNeuronInitGroupHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedNeuronInitGroups); }
@@ -242,29 +249,6 @@ public:
 
     //! Get hash digest of init module
     boost::uuids::detail::sha1::digest_type getInitArchetypeHashDigest() const;
-
-    //! Are there any destinations within the merged data structures for a particular extra global parameter?
-    /*// Get set of unique fields referenced in a merged group
-    template<typename T>
-    std::set<EGPField> getMergedGroupFields() const
-    {
-        // Loop through all EGPs
-        std::set<EGPField> mergedGroupFields;
-        for(const auto &e : m_MergedEGPs) {
-            // Get all destinations in this type of group
-            const auto groupEGPs = e.second.equal_range(T::name);
-
-            // Copy them all into set
-            std::transform(groupEGPs.first, groupEGPs.second, std::inserter(mergedGroupFields, mergedGroupFields.end()),
-                           [](const MergedEGPMap::value_type::second_type::value_type &g)
-                           {
-                               return EGPField{g.second.mergedGroupIndex, g.second.type, g.second.fieldName, g.second.hostGroup};
-                           });
-        }
-
-        // Return set
-        return mergedGroupFields;
-    }*/
 
     template<typename T>
     void genDynamicFieldPush(CodeStream &os, const std::vector<T> &groups, 
@@ -401,8 +385,11 @@ private:
     //! Merged neuron groups which require updating
     std::vector<NeuronUpdateGroupMerged> m_MergedNeuronUpdateGroups;
 
-    //! Merged synapse groups which require presynaptic updates
-    std::vector<PresynapticUpdateGroupMerged> m_MergedPresynapticUpdateGroups;
+    //! Merged synapse groups which require presynaptic spike updates
+    std::vector<PresynapticUpdateGroupMerged> m_MergedPresynapticSpikeUpdateGroups;
+
+    //! Merged synapse groups which require presynaptic spike event updates
+    std::vector<PresynapticUpdateGroupMerged> m_MergedPresynapticSpikeEventUpdateGroups;
 
     //! Merged synapse groups which require postsynaptic updates
     std::vector<PostsynapticUpdateGroupMerged> m_MergedPostsynapticUpdateGroups;

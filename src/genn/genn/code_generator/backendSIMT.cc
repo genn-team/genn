@@ -700,7 +700,11 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
     // We need shOutPost if any synapse groups accumulate into shared memory
     // Determine the maximum shared memory outputs 
     size_t maxSharedMemPerThread = 0;
-    for(const auto &s : modelMerged.getMergedPresynapticUpdateGroups()) {
+    for(const auto &s : modelMerged.getMergedPresynapticSpikeUpdateGroups()) {
+        maxSharedMemPerThread = std::max(maxSharedMemPerThread,
+                                         getPresynapticUpdateStrategy(s.getArchetype())->getSharedMemoryPerThread(s, *this));
+    }
+    for (const auto& s : modelMerged.getMergedPresynapticSpikeEventUpdateGroups()) {
         maxSharedMemPerThread = std::max(maxSharedMemPerThread,
                                          getPresynapticUpdateStrategy(s.getArchetype())->getSharedMemoryPerThread(s, *this));
     }
@@ -723,10 +727,10 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
     kernelEnv.add(Type::Void, "_sh_spk_event", "shSpkEvent",
                   {kernelEnv.addInitialiser(getSharedPrefix() + "unsigned int shSpkEvent[" + std::to_string(getKernelBlockSize(KernelPresynapticUpdate)) + "];")});
 
-    // Parallelise over synapse groups
+    // Parallelise over spike update groups
     idStart = 0;
     genParallelGroup<PresynapticUpdateGroupMerged>(
-        kernelEnv, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedPresynapticUpdateGroups,
+        kernelEnv, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedPresynapticSpikeUpdateGroups,
         [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumPresynapticUpdateThreads(sg, getPreferences()), KernelPresynapticUpdate); },
         [&modelMerged, this](EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg)
         {
@@ -742,20 +746,39 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
 
             // Generate preamble
             presynapticUpdateStrategy->genPreamble(groupEnv, sg, *this);
+            
+            // Generate update
+            presynapticUpdateStrategy->genUpdate(groupEnv, sg, *this, batchSize, 
+                                                    modelMerged.getModel().getDT(), true);
 
-            // If spike events should be processed
-            if(sg.getArchetype().isPreSpikeEventRequired()) {
-                CodeStream::Scope b(groupEnv.getStream());
-                presynapticUpdateStrategy->genUpdate(groupEnv, sg, *this, batchSize, 
-                                                     modelMerged.getModel().getDT(), false);
-            }
+            groupEnv.getStream() << std::endl;
 
-            // If true spikes should be processed
-            if(sg.getArchetype().isPreSpikeRequired()) {
-                CodeStream::Scope b(groupEnv.getStream());
-                presynapticUpdateStrategy->genUpdate(groupEnv, sg, *this, batchSize, 
-                                                     modelMerged.getModel().getDT(), true);
-            }
+            // Generate pre-amble
+            presynapticUpdateStrategy->genPostamble(groupEnv, sg, *this, batchSize);
+        });
+
+    // Parallelise over spike-event update groups
+    genParallelGroup<PresynapticUpdateGroupMerged>(
+        kernelEnv, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedPresynapticSpikeEventUpdateGroups,
+        [this](const SynapseGroupInternal& sg) { return padKernelSize(getNumPresynapticUpdateThreads(sg, getPreferences()), KernelPresynapticUpdate); },
+        [&modelMerged, this](EnvironmentExternalBase& env, PresynapticUpdateGroupMerged& sg)
+        {
+            EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(env, sg);
+
+            // Get presynaptic update strategy to use for this synapse group
+            const auto* presynapticUpdateStrategy = getPresynapticUpdateStrategy(sg.getArchetype());
+            LOGD_BACKEND << "Using '" << typeid(*presynapticUpdateStrategy).name() << "' presynaptic update strategy for merged synapse group '" << sg.getIndex() << "'";
+
+            // Generate index calculation code
+            const unsigned int batchSize = modelMerged.getModel().getBatchSize();
+            buildStandardEnvironment(groupEnv, batchSize);
+
+            // Generate preamble
+            presynapticUpdateStrategy->genPreamble(groupEnv, sg, *this);
+
+            // Generate update
+            presynapticUpdateStrategy->genUpdate(groupEnv, sg, *this, batchSize,
+                modelMerged.getModel().getDT(), false);
 
             groupEnv.getStream() << std::endl;
 

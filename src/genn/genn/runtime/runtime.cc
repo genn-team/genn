@@ -565,8 +565,14 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         pushMergedGroup(m);
     }
 
-    // Push merged presynaptic update groups
-    for(const auto &m : m_ModelMerged.get().getMergedPresynapticUpdateGroups()) {
+    // Push merged presynaptic spike update groups
+    for(const auto &m : m_ModelMerged.get().getMergedPresynapticSpikeUpdateGroups()) {
+        addMergedArrays(m);
+        pushMergedGroup(m);
+    }
+
+    // Push merged presynaptic spike event update groups
+    for (const auto& m : m_ModelMerged.get().getMergedPresynapticSpikeEventUpdateGroups()) {
         addMergedArrays(m);
         pushMergedGroup(m);
     }

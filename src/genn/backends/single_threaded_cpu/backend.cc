@@ -525,12 +525,12 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
         // Presynaptic update
         {
             Timer t(funcEnv.getStream(), "presynapticUpdate", modelMerged.getModel().isTimingEnabled());
-            modelMerged.genMergedPresynapticUpdateGroups(
+            modelMerged.genMergedPresynapticSpikeUpdateGroups(
                 *this, memorySpaces,
                 [this, &funcEnv, &modelMerged](auto &s)
                 {
                     CodeStream::Scope b(funcEnv.getStream());
-                    funcEnv.getStream() << "// merged presynaptic update group " << s.getIndex() << std::endl;
+                    funcEnv.getStream() << "// merged presynaptic spike update group " << s.getIndex() << std::endl;
                     funcEnv.getStream() << "for(unsigned int g = 0; g < " << s.getGroups().size() << "; g++)";
                     {
                         CodeStream::Scope b(funcEnv.getStream());
@@ -542,15 +542,32 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
                         EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(funcEnv, s);
                         buildStandardEnvironment(groupEnv, 1);
                     
-                        // generate the code for processing spike-like events
-                        if (s.getArchetype().isPreSpikeEventRequired()) {
-                            genPresynapticUpdate(groupEnv, s, modelMerged.getModel().getDT(), false);
-                        }
-
                         // generate the code for processing true spike events
-                        if (s.getArchetype().isPreSpikeRequired()) {
-                            genPresynapticUpdate(groupEnv, s, modelMerged.getModel().getDT(), true);
-                        }
+                        genPresynapticUpdate(groupEnv, s, modelMerged.getModel().getDT(), true);
+ 
+                        funcEnv.getStream() << std::endl;
+                    }
+                });
+            modelMerged.genMergedPresynapticSpikeEventUpdateGroups(
+                *this, memorySpaces,
+                [this, &funcEnv, &modelMerged](auto& s)
+                {
+                    CodeStream::Scope b(funcEnv.getStream());
+                    funcEnv.getStream() << "// merged presynaptic spike event update group " << s.getIndex() << std::endl;
+                    funcEnv.getStream() << "for(unsigned int g = 0; g < " << s.getGroups().size() << "; g++)";
+                    {
+                        CodeStream::Scope b(funcEnv.getStream());
+
+                        // Get reference to group
+                        funcEnv.getStream() << "const auto *group = &mergedPresynapticUpdateGroup" << s.getIndex() << "[g]; " << std::endl;
+
+                        // Create matching environment
+                        EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(funcEnv, s);
+                        buildStandardEnvironment(groupEnv, 1);
+
+                        // generate the code for processing spike-like events
+                        genPresynapticUpdate(groupEnv, s, modelMerged.getModel().getDT(), false);
+                       
                         funcEnv.getStream() << std::endl;
                     }
                 });
@@ -593,13 +610,15 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
 
     // Generate struct definitions
     modelMerged.genMergedSynapseDendriticDelayUpdateStructs(os, *this);
-    modelMerged.genMergedPresynapticUpdateGroupStructs(os, *this);
+    modelMerged.genMergedPresynapticSpikeUpdateGroupStructs(os, *this);
+    modelMerged.genMergedPresynapticSpikeEventUpdateGroupStructs(os, *this);
     modelMerged.genMergedPostsynapticUpdateGroupStructs(os, *this);
     modelMerged.genMergedSynapseDynamicsGroupStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
     modelMerged.genMergedSynapseDendriticDelayUpdateHostStructArrayPush(os, *this);
-    modelMerged.genMergedPresynapticUpdateGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedPresynapticSpikeUpdateGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedPresynapticSpikeEventUpdateGroupHostStructArrayPush(os, *this);
     modelMerged.genMergedPostsynapticUpdateGroupHostStructArrayPush(os, *this);
     modelMerged.genMergedSynapseDynamicsGroupHostStructArrayPush(os, *this);
 
