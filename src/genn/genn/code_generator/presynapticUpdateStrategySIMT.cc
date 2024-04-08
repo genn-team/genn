@@ -258,7 +258,7 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
 
             // Create local variable to hold presynaptic output from all threads in warp
             if (isPresynapticOutputRequired(sg, trueSpike)) {
-                spikeEnv.getStream() << sg.getScalarType().getName() << " lOutPre = " << Type::writeNumeric(0.0, sg.getScalarType()) << ";" << std::endl;
+                spikeEnv.printLine(sg.getScalarType().getName() + " lOutPre = " + Type::writeNumeric(0.0, sg.getScalarType()) + ";");
             }
 
             spikeEnv.getStream() << "// only work on existing neurons" << std::endl;
@@ -335,13 +335,10 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
 
             if (isPresynapticOutputRequired(sg, trueSpike)) {
                 // Perform warp reduction into first lane
-                // **YUCK** CUDA-specific
-                for (unsigned int i = 16; i > 0; i /= 2) {
-                    spikeEnv.printLine("lOutPre += __shfl_down_sync(0xFFFFFFFF, lOutPre, " + std::to_string(i) + ");");
-                }
+                backend.genWarpReduction(spikeEnv.getStream(), "lOutPre", VarAccessMode::REDUCE_SUM, sg.getScalarType());
 
                 // Issue atomic add on first lane of warp
-                spikeEnv.print("if((" + backend.getThreadID() + " % 32) == 0)");
+                spikeEnv.print("if((" + backend.getThreadID() + " % " + std::to_string(backend.getNumLanes()) + ") == 0)");
                 {
                     CodeStream::Scope b(spikeEnv.getStream());
                     spikeEnv.printLine(backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], lOutPre);");
@@ -643,6 +640,12 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
         env.getStream() << "for (unsigned int j = 0; j < numSpikesInBlock; j++)";
         {
             CodeStream::Scope b(env.getStream());
+
+            // Create local variable to hold presynaptic output from all threads in warp
+            if (isPresynapticOutputRequired(sg, trueSpike)) {
+                env.printLine(sg.getScalarType().getName() + " lOutPre = " + Type::writeNumeric(0.0, sg.getScalarType()) + ";");
+            }
+            
             env.getStream() << "// only work on existing neurons" << std::endl;
             env.print("if ($(id) < rowWords)");
             {
@@ -676,8 +679,7 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
 
                     synEnv.add(Type::AddToPost, "addToPost",
                                "$(_sh_out_post)[(ibit * " + std::to_string(blockSize) + ") + " + backend.getThreadID() + "] += $(0)");
-                    synEnv.add(Type::AddToPre, "addToPre",
-                               backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
+                    synEnv.add(Type::AddToPre, "addToPre", "lOutPre += $(0)");
 
                     if(trueSpike) {
                         sg.generateSpikeUpdate(synEnv, batchSize, dt);
@@ -687,6 +689,18 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
                     }
 
                     synEnv.getStream() << "ibit++;" << std::endl;
+                }
+            }
+
+            if (isPresynapticOutputRequired(sg, trueSpike)) {
+                // Perform warp reduction into first lane
+                backend.genWarpReduction(env.getStream(), "lOutPre", VarAccessMode::REDUCE_SUM, sg.getScalarType());
+
+                // Issue atomic add on first lane of warp
+                env.print("if((" + backend.getThreadID() + " % " + std::to_string(backend.getNumLanes()) + ") == 0)");
+                {
+                    CodeStream::Scope b(env.getStream());
+                    env.printLine(backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], lOutPre);");
                 }
             }
         }
@@ -800,10 +814,7 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
                              backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
         }
 
-        // Use global memory atomic for presynaptic output
-        // **NOTE** this could use per-block shared memory
-        preUpdateEnv.add(Type::AddToPre, "addToPre",
-                         backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
+        preUpdateEnv.add(Type::AddToPre, "addToPre", "lOutPre += $(0)");
 
         // Generate spike update
         if(trueSpike) {
@@ -859,6 +870,12 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
                 env.getStream() << "for (unsigned int j = 0; j < numSpikesInBlock; j++)";
                 {
                     CodeStream::Scope b(env.getStream());
+
+                    // Create local variable to hold presynaptic output from all threads in warp
+                    if (isPresynapticOutputRequired(sg, trueSpike)) {
+                        env.printLine(sg.getScalarType().getName() + " lOutPre = " + Type::writeNumeric(0.0, sg.getScalarType()) + ";");
+                    }
+
                     env.getStream() << "// only work on existing neurons" << std::endl;
                     env.print("if ($(id) < $(_row_stride))");
                     {
@@ -873,6 +890,18 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
 
                         // Generate body of for_each_synapse loop within this new environment
                         generateBody(bodyEnv);
+                    }
+
+                    if (isPresynapticOutputRequired(sg, trueSpike)) {
+                        // Perform warp reduction into first lane
+                        backend.genWarpReduction(env.getStream(), "lOutPre", VarAccessMode::REDUCE_SUM, sg.getScalarType());
+
+                        // Issue atomic add on first lane of warp
+                        env.print("if((" + backend.getThreadID() + " % " + std::to_string(backend.getNumLanes()) + ") == 0)");
+                        {
+                            CodeStream::Scope b(env.getStream());
+                            env.printLine(backend.getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], lOutPre);");
+                        }
                     }
                 }
             }
