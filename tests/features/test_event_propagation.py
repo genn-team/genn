@@ -40,6 +40,13 @@ decoder_dense_model = create_var_init_snippet(
     value = (((id_pre + 1) & jValue) != 0) ? 1.0 : 0.0;
     """)
 
+decoder_value_model = create_var_init_snippet(
+    "decoder_value",
+    var_init_code=
+    """
+    value = (1 << id_post);
+    """)
+
 static_event_pulse_model = create_weight_update_model(
     "static_event_pulse",
     var_name_types=[("g", "scalar")],
@@ -584,7 +591,13 @@ def test_reverse(make_model, backend, precision):
         addToPre(g);
         """,
         var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
-
+    
+    static_pulse_reverse_constant_weight_model = create_weight_update_model(
+        "static_pulse_reverse_constant_weight",
+        sim_code=
+        """
+        addToPre(pow(2.0, id_post));
+        """)
 
     static_event_pulse_reverse_model = create_weight_update_model(
         "static_event_pulse_reverse",
@@ -612,6 +625,10 @@ def test_reverse(make_model, backend, precision):
         "PreSpikeSource", 16, pre_reverse_spike_source_model,
         {}, {"startSpike": np.arange(16), "endSpike": np.arange(1, 17), "x": 0.0})
     pre_pre_n_pop.extra_global_params["spikeTimes"].set_init_values(np.arange(16.0))
+    pre_bitmask_n_pop = model.add_neuron_population(
+        "BitmaskSpikeSource", 16, pre_reverse_spike_source_model,
+        {}, {"startSpike": np.arange(16), "endSpike": np.arange(1, 17), "x": 0.0})
+    pre_bitmask_n_pop.extra_global_params["spikeTimes"].set_init_values(np.arange(16.0))
     pre_event_n_pop = model.add_neuron_population(
         "EventSpikeSource", 16, pre_model,
         {}, {"x": 0.0})
@@ -621,44 +638,36 @@ def test_reverse(make_model, backend, precision):
         "Post", 4, post_neuron_model,
         {}, {"x": 0.0})
 
-    # Build sparse connectivity
-    pre_inds = []
-    post_inds = []
-    weights = []
-    for i in range(16):
-        for j in range(4):
-            j_value = 1 << j
-            if ((i + 1) & j_value) != 0:
-                pre_inds.append(i)
-                post_inds.append(j)
-                weights.append(float(j_value))
-
-    pre_inds = np.asarray(pre_inds)
-    post_inds = np.asarray(post_inds)
-    weights = np.asarray(weights)
-    
     # Add connectivity
     s_pop = model.add_synapse_population(
         "SparseSynapse", "SPARSE",
         pre_n_pop, post_n_pop,
-        init_weight_update(static_pulse_reverse_model, {}, {"g": weights}),
-        init_postsynaptic("DeltaCurr"))
-    s_pop.set_sparse_connections(pre_inds, post_inds)
+        init_weight_update(static_pulse_reverse_model, {}, {"g": init_var(decoder_value_model)}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity(decoder_model))
     
     s_pre_pop = model.add_synapse_population(
         "SparsePreSynapse", "SPARSE",
         pre_pre_n_pop, post_n_pop,
-        init_weight_update(static_pulse_reverse_model, {}, {"g": weights}),
-        init_postsynaptic("DeltaCurr"))
-    s_pre_pop.set_sparse_connections(pre_inds, post_inds)
+        init_weight_update(static_pulse_reverse_model, {}, {"g": init_var(decoder_value_model)}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity(decoder_model))
     s_pre_pop.parallelism_hint = ParallelismHint.PRESYNAPTIC
+
+    s_bitmask_pop = model.add_synapse_population(
+        "SparseBitmaskSynapse", "BITMASK",
+        pre_bitmask_n_pop, post_n_pop,
+        init_weight_update(static_pulse_reverse_constant_weight_model),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity(decoder_model))
+    s_bitmask_pop.parallelism_hint = ParallelismHint.WORD_PACKED_BITMASK
 
     s_event_pop = model.add_synapse_population(
         "SparseEventSynapse", "SPARSE",
         pre_event_n_pop, post_n_pop,
-        init_weight_update(static_event_pulse_reverse_model, {}, {"g": weights}),
-        init_postsynaptic("DeltaCurr"))
-    s_event_pop.set_sparse_connections(pre_inds, post_inds)
+        init_weight_update(static_event_pulse_reverse_model, {}, {"g": init_var(decoder_value_model)}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity(decoder_model))
     
     # Build model and load
     model.build()
@@ -670,10 +679,12 @@ def test_reverse(make_model, backend, precision):
         
         pre_n_pop.vars["x"].pull_from_device()
         pre_pre_n_pop.vars["x"].pull_from_device()
+        pre_bitmask_n_pop.vars["x"].pull_from_device()
         pre_event_n_pop.vars["x"].pull_from_device()
 
         assert np.sum(pre_n_pop.vars["x"].view) == (model.timestep - 1)
         assert np.sum(pre_pre_n_pop.vars["x"].view) == (model.timestep - 1)
+        assert np.sum(pre_bitmask_n_pop.vars["x"].view) == (model.timestep - 1)
         assert np.sum(pre_event_n_pop.vars["x"].view) == (model.timestep - 1)
 
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
