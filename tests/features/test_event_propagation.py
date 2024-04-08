@@ -40,13 +40,6 @@ decoder_dense_model = create_var_init_snippet(
     value = (((id_pre + 1) & jValue) != 0) ? 1.0 : 0.0;
     """)
 
-decoder_value_model = create_var_init_snippet(
-    "decoder_value",
-    var_init_code=
-    """
-    value = (1 << id_post);
-    """)
-
 static_event_pulse_model = create_weight_update_model(
     "static_event_pulse",
     var_name_types=[("g", "scalar")],
@@ -556,6 +549,13 @@ def test_forward_kernel_procedural(make_model, backend, precision):
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_reverse(make_model, backend, precision):
+    decoder_value_model = create_var_init_snippet(
+        "decoder_value",
+        var_init_code=
+        """
+        value = (1 << id_post);
+        """)
+
     pre_reverse_spike_source_model = create_neuron_model(
         "pre_reverse_spike_source",
         var_name_types=[("startSpike", "unsigned int"), 
@@ -596,7 +596,7 @@ def test_reverse(make_model, backend, precision):
         "static_pulse_reverse_constant_weight",
         sim_code=
         """
-        addToPre(pow(2.0, id_post));
+        addToPre(1 << id_post);
         """)
 
     static_event_pulse_reverse_model = create_weight_update_model(
