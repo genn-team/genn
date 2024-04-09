@@ -733,8 +733,9 @@ ArrayBase *Runtime::getFusedTrgSpikeArray(const SynapseGroupInternal &g, const s
     // Get the synapse group TARGET spike generation has been fused with
     const auto &f = static_cast<const SynapseGroupInternal&>(g.getFusedSpikeTarget(g.getTrgNeuronGroup()));
 
-    // If the fused target shares a TARGET neuron with original synapse group, we should use it's TARGET prefixed array
-    const std::string prefix = (g.getTrgNeuronGroup() == f.getTrgNeuronGroup()) ? "trg" : "src";
+    // If the fused target's TARGET neuron matches original synapse group's source, we should use it's SOURDCE prefixed array
+    // **YUCK** it's important to check in this order to match SynapseGroup::getFusedSpikeTarget otherwise things go wrong with recurrent connections
+    const std::string prefix = (g.getTrgNeuronGroup() == f.getSrcNeuronGroup()) ? "src" : "trg";
     return getArray(f, prefix + name); 
 }
 //--------------------------------------------------------------------------
@@ -753,8 +754,9 @@ ArrayBase *Runtime::getFusedTrgSpikeEventArray(const SynapseGroupInternal &g, co
     // Get the synapse group TARGET spike generation has been fused with
     const auto &f = static_cast<const SynapseGroupInternal&>(g.getFusedSpikeEventTarget(g.getTrgNeuronGroup()));
 
-    // If the fused target shares a TARGET neuron with original synapse group, we should use it's TARGET prefixed array
-    const std::string prefix = (g.getTrgNeuronGroup() == f.getTrgNeuronGroup()) ? "trg" : "src";
+    // If the fused target's TARGET neuron matches original synapse group's source, we should use it's SOURDCE prefixed array
+    // **YUCK** it's important to check in this order to match SynapseGroup::getFusedSpikeEventTarget otherwise things go wrong with recurrent connections
+    const std::string prefix = (g.getTrgNeuronGroup() == f.getSrcNeuronGroup()) ? "src" : "trg";
     return getArray(f, prefix + name); 
 }
 //----------------------------------------------------------------------------
