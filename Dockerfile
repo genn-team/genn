@@ -12,7 +12,7 @@ RUN apt-get update && \
     apt-get upgrade -y
 
 # Install Python, pip and swig
-RUN apt-get install -yq --no-install-recommends python3-dev python3-pip gosu nano
+RUN apt-get install -yq --no-install-recommends python3-dev python3-pip libffi-dev pkgconf gosu nano
 
 # Set CUDA environment variable
 ENV CUDA_PATH=/usr/local/cuda
