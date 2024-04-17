@@ -364,6 +364,14 @@ bool CustomConnectivityUpdateGroupMerged::isDerivedParamHeterogeneous(const std:
     return isParamValueHeterogeneous(name, [](const CustomConnectivityUpdateInternal &cg) { return cg.getDerivedParams(); });
 }
 
+// ----------------------------------------------------------------------------
+// CustomConnectivityRemapUpdateGroupMerged
+// ----------------------------------------------------------------------------
+const std::string CustomConnectivityRemapUpdateGroupMerged::name = "CustomConnectivityRemapUpdate";
+//----------------------------------------------------------------------------
+void CustomConnectivityRemapUpdateGroupMerged::generateUpdate(const BackendBase &backend, EnvironmentExternalBase &env)
+{
+}
 //----------------------------------------------------------------------------
 // CodeGenerator::CustomConnectivityHostUpdateGroupMerged
 //----------------------------------------------------------------------------
