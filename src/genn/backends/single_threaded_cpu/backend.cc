@@ -1260,23 +1260,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
                         // If postsynaptic learning is required
                         if(s.getArchetype().isPostSpikeRequired() || s.getArchetype().isPostSpikeEventRequired()) {
-                            groupEnv.printLine("// Loop through synapses in corresponding matrix row");
-                            groupEnv.print("for(unsigned int j = 0; j < $(_row_length)[i]; j++)");
-                            {
-                                CodeStream::Scope b(groupEnv.getStream());
-
-                                // Calculate column length and remapping
-                                groupEnv.printLine("// Calculate index of this synapse in the row-major matrix");
-                                groupEnv.printLine("const unsigned int rowMajorIndex = (i * $(_row_stride)) + j;");
-                                groupEnv.printLine("// Using this, lookup postsynaptic target");
-                                groupEnv.printLine("const unsigned int postIndex = $(_ind)[rowMajorIndex];");
-                                groupEnv.printLine("// From this calculate index of this synapse in the column-major matrix)");
-                                groupEnv.printLine("const unsigned int colMajorIndex = (postIndex * $(_col_stride)) + $(_col_length)[postIndex];");
-                                groupEnv.printLine("// Increment column length corresponding to this postsynaptic neuron");
-                                groupEnv.printLine("$(_col_length)[postIndex]++;");
-                                groupEnv.printLine("// Add remapping entry");
-                                groupEnv.printLine("$(_remap)[colMajorIndex] = rowMajorIndex;");
-                            }
+                            genRemap(groupEnv);
                         }
                     }
                 }
@@ -1560,6 +1544,31 @@ void Backend::genKernelSynapseVariableInit(EnvironmentExternalBase &env, Synapse
 void Backend::genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const
 {
     genKernelIteration(env, cu, cu.getArchetype().getSynapseGroup()->getKernelSize().size(), handler);
+}
+//--------------------------------------------------------------------------
+void Backend::genRemap(EnvironmentExternalBase &env) const
+{
+    env.printLine("// Loop through synapses in corresponding matrix row");
+    env.print("for(unsigned int j = 0; j < $(_row_length)[i]; j++)");
+    {
+        CodeStream::Scope b(env.getStream());
+
+        // Calculate column length and remapping
+        env.printLine("// Calculate index of this synapse in the row-major matrix");
+        env.printLine("const unsigned int rowMajorIndex = (i * $(_row_stride)) + j;");
+
+        env.printLine("// Using this, lookup postsynaptic target");
+        env.printLine("const unsigned int postIndex = $(_ind)[rowMajorIndex];");
+
+        env.printLine("// From this calculate index of this synapse in the column-major matrix)");
+        env.printLine("const unsigned int colMajorIndex = (postIndex * $(_col_stride)) + $(_col_length)[postIndex];");
+
+        env.printLine("// Increment column length corresponding to this postsynaptic neuron");
+        env.printLine("$(_col_length)[postIndex]++;");
+
+        env.printLine("// Add remapping entry");
+        env.printLine("$(_remap)[colMajorIndex] = rowMajorIndex;");
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&) const
