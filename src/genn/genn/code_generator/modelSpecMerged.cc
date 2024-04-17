@@ -63,6 +63,29 @@ using namespace GeNN::CodeGenerator;
                        [](const CustomConnectivityUpdateInternal &cg) { return !Utils::areTokensEmpty(cg.getHostUpdateCodeTokens()); },
                        &CustomConnectivityUpdateInternal::getHashDigest);
 
+    // If the current backend requires postsynaptic
+    if (backend.isPostsynapticRemapRequired()) {
+        // Build map of (arbitrary) custom connectivity updates associated with each 
+        // synapse group which requires postsynaptic remap in each custom update group!
+        std::map<std::pair<std::string, const SynapseGroupInternal*>, std::reference_wrapper<const CustomConnectivityUpdateInternal>> customConnectUpdateMap;
+        for (const auto& c : getModel().getCustomConnectivityUpdates()) {
+            const auto* sg = c.second.getSynapseGroup();
+            if (sg->isPostSpikeRequired() || sg->isPostSpikeEventRequired()) {
+                customConnectUpdateMap.emplace(std::piecewise_construct,
+                                               std::forward_as_tuple(c.second.getUpdateGroupName(), sg), 
+                                               std::forward_as_tuple(c.second));
+            }
+        }
+
+        // Copy custom connection updates into vector
+        std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> customConnectUpdates;
+        customConnectUpdates.reserve(customConnectUpdateMap.size());
+        std::transform(customConnectUpdateMap.cbegin(), customConnectUpdateMap.cend(), std::back_inserter(customConnectUpdates),
+                       [](const auto& c) { return c.second; });
+
+
+         
+    }
     createMergedGroups(getModel().getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
                        [](const NeuronGroupInternal &g){ return (g.isDelayRequired() || g.isTrueSpikeRequired() || g.isSpikeEventRequired()); },
                        &NeuronGroupInternal::getSpikeQueueUpdateHashDigest);
