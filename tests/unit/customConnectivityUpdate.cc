@@ -453,16 +453,21 @@ TEST(CustomConnectivityUpdate, CompareRemap)
         pre, post,
         initWeightUpdate<STDPAdditive>(stdpParams, stdpVarValues, stdpPreVarValues, stdpPostVarValues),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
+
+    auto *stdpSG3 = model.addSynapsePopulation(
+        "STDPSynapse3", SynapseMatrixType::SPARSE,
+        pre, post,
+        initWeightUpdate<STDPAdditive>(stdpParams, stdpVarValues, stdpPreVarValues, stdpPostVarValues),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    stdpSG3->setNarrowSparseIndEnabled(true);
     
     // Create  custom updates to passively count synapse in static and STDP - neither should result in remap
     auto *staticCountCCU = model.addCustomConnectivityUpdate<CountPositive>("StaticCountCCU", "Count", staticSG,
-                                                                       {}, {}, countPreVarValues, {},
-                                                                       {{"g", createWUVarRef(staticSG, "g")}});
+                                                                            {}, {}, countPreVarValues, {},
+                                                                            {{"g", createWUVarRef(staticSG, "g")}});
     auto *stdp1CountCCU = model.addCustomConnectivityUpdate<CountPositive>("STDP1CountCCU", "Count", stdpSG1,
-                                                                      {}, {}, countPreVarValues, {},
-                                                                      {{"g", createWUVarRef(stdpSG1, "g")}});
-    
-    // **TODO** narrow index
+                                                                           {}, {}, countPreVarValues, {},
+                                                                           {{"g", createWUVarRef(stdpSG1, "g")}});
 
     // Create custom update to remove connections from static synapse - no need for remap
     auto *staticRemove1CCU = model.addCustomConnectivityUpdate<RemoveSynapse>("StaticRemove1CCU", "Remove1", staticSG,
@@ -478,11 +483,14 @@ TEST(CustomConnectivityUpdate, CompareRemap)
     auto *stdp1Remove2CCU = model.addCustomConnectivityUpdate<RemoveSynapse>("STDP1Remove2CCU", "Remove2", stdpSG1,
                                                                              {}, {{"a", 1.0}});
     
+    // Create custom update to remove connections from STDP sg 3 which has narrowed indices - needs one remap
+    auto *stdp3Remove1CCU = model.addCustomConnectivityUpdate<RemoveSynapse>("STDP3Remove1CCU", "Remove1", stdpSG3,
+                                                                             {}, { {"a", 1.0} });
+
     // Create custom update to remove connections from STDP sg 2 in different group - needs one remap
     auto *stdp2Remove1CCU = model.addCustomConnectivityUpdate<RemoveSynapse>("STDP2Remove1CCU", "Remove1", stdpSG2,
                                                                              {}, {{"a", 1.0}});
-    //auto *ccu1 = model.addCustomConnectivityUpdate<RemoveSynapse>("CustomConnectivityUpdate1", "Test2", sg1,
-    //                                                              {}, {{"a", 1.0}});
+
     model.finalise();
 
     // Create a backend
@@ -492,19 +500,44 @@ TEST(CustomConnectivityUpdate, CompareRemap)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
-    // Check correct groups are merged - ones in remove 1 and remove 2
-    ASSERT_EQ(modelSpecMerged.getMergedCustomConnectivityRemapUpdateGroups().size(), 2);
+    // Check correct number of merged groups produced - one for Remove1 update group with 32-bit indices, one for Remove1 update group with narrow indices and one for Remove2 group
+    ASSERT_EQ(modelSpecMerged.getMergedCustomConnectivityRemapUpdateGroups().size(), 3);
 
-     // Find which merged group is the one containing 2 groups i.e. the 2 groups with unique synapse groups in remove1 group
-    const auto remove1MergedUpdateGroup = std::find_if(modelSpecMerged.getMergedCustomConnectivityRemapUpdateGroups().cbegin(), modelSpecMerged.getMergedCustomConnectivityRemapUpdateGroups().cend(),
-                                                       [](const auto &ng) { return (ng.getGroups().size() == 2); });
+    // Loop through merged groups
+    bool remove1Found = false;
+    bool remove1NarrowFound = false;
+    bool remove2Found = false;
+    for (const auto &cg : modelSpecMerged.getMergedCustomConnectivityRemapUpdateGroups()) {
+        // If group contains two groups - must be the 2 groups with unique synapse groups in "Remove1" update group
+        if (cg.getGroups().size() == 2) {
+            // Check update groups cover the two STDP synapse groups
+            const auto *sg0 = cg.getGroups().at(0).get().getSynapseGroup();
+            const auto *sg1 = cg.getGroups().at(1).get().getSynapseGroup();
+            ASSERT_TRUE(sg0 == stdpSG1 || sg0 == stdpSG2);
+            ASSERT_TRUE(sg1 == stdpSG1 || sg1 == stdpSG2);
+
+            remove1Found = true;
+        }
+        else {
+            ASSERT_EQ(cg.getGroups().size(), 1);
+            const auto *sg0 = cg.getGroups().at(0).get().getSynapseGroup();
+
+            if (cg.getArchetype().getUpdateGroupName() == "Remove1") {
+                ASSERT_EQ(sg0, stdpSG3);
+                remove1NarrowFound = true;
+            }
+            else {
+                ASSERT_EQ(cg.getArchetype().getUpdateGroupName(), "Remove2");
+                ASSERT_EQ(sg0, stdpSG1);
+
+                remove2Found = true;
+            }
+        }
+    }
+
+    // Check all groups matched
+    ASSERT_TRUE(remove1Found && remove1NarrowFound && remove2Found);
     
-    // Check update group name is correct
-    ASSERT_EQ(remove1MergedUpdateGroup->getArchetype().getUpdateGroupName(), "Remove1");
-
-    // **TODO** check synapse groups are correct
-
-    // Check OTHER update group name is "Remove2"
 }
 //--------------------------------------------------------------------------
 TEST(CustomConnectivityUpdate, BitmaskConnectivity)
