@@ -34,6 +34,7 @@ enum Kernel
     KernelSynapseDendriticDelayUpdate,
     KernelCustomUpdate,
     KernelCustomTransposeUpdate,
+    KernelCustomConnectivityColLengthUpdate,
     KernelCustomConnectivityRemapUpdate,
     KernelMax
 };
@@ -211,7 +212,8 @@ protected:
 
     void genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
                                            BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const;
-
+    void genCustomConnectivityColLengthUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
+                                                    BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const;
     void genCustomConnectivityRemapUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
                                                 BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const;
 

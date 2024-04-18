@@ -45,6 +45,7 @@ const char *BackendSIMT::KernelNames[KernelMax] = {
     "synapseDendriticDelayUpdateKernel",
     "customUpdate",
     "customTransposeUpdate",
+    "customConnectivityColLengthUpdate",
     "customConnectivityRemapUpdate" };
 //--------------------------------------------------------------------------
 std::vector<PresynapticUpdateStrategySIMT::Base*> BackendSIMT::s_PresynapticUpdateStrategies = {
@@ -1324,6 +1325,29 @@ void BackendSIMT::genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env
                 /*if(Utils::isRNGRequired(cg.getArchetype().getRowUpdateCodeTokens())) {
                     genPopulationRNGPostamble(groupEnv.getStream(), rng);
                 }*/
+            }
+        });
+}
+//--------------------------------------------------------------------------
+void BackendSIMT::genCustomConnectivityColLengthUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
+                                                             BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const
+{
+    // Parallelise across postsynaptic neurons
+    // **TODO** this subtly incorrect as genMergedCustomConnectivityRemapUpdateGroups will double-account for memory usage of groups
+    genParallelGroup<CustomConnectivityRemapUpdateGroupMerged>(
+        env, modelMerged, memorySpaces, updateGroup, idStart, &ModelSpecMerged::genMergedCustomConnectivityRemapUpdateGroups,
+        [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), KernelCustomUpdate); },
+        [&modelMerged, this](EnvironmentExternalBase &env, CustomConnectivityRemapUpdateGroupMerged &cg)
+        {
+            EnvironmentGroupMergedField<CustomConnectivityRemapUpdateGroupMerged> groupEnv(env, cg);
+            buildStandardEnvironment(groupEnv);
+
+            groupEnv.getStream() << "// only do this for existing postsynaptic neurons" << std::endl;
+            groupEnv.print("if($(id) < $(num_post))");
+            {
+                CodeStream::Scope b(groupEnv.getStream());
+
+                groupEnv.printLine("$(_col_length)[$(id)] = 0;");
             }
         });
 }
