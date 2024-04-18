@@ -103,6 +103,22 @@ public:
 };
 IMPLEMENT_SNIPPET(RemoveSynapsePost);
 
+class CountPositive : public CustomConnectivityUpdateModels::Base
+{
+public:
+    DECLARE_SNIPPET(CountPositive);
+    
+    SET_VAR_REFS({{"g", "scalar"}});
+    SET_PRE_VARS({{"num", "unsigned int"}});
+    SET_ROW_UPDATE_CODE(
+        "for_each_synapse {\n"
+        "   if(g > 0.0) {\n"
+        "       num++;\n"
+        "   }\n"
+        "};\n");
+};
+IMPLEMENT_SNIPPET(CountPositive);
+
 class Cont : public WeightUpdateModels::Base
 {
 public:
@@ -128,6 +144,49 @@ public:
         "addToPost(g * V);\n");
 };
 IMPLEMENT_SNIPPET(ContPost);
+
+class STDPAdditive : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_SNIPPET(STDPAdditive);
+
+    SET_PARAMS({
+      "tauPlus",  // 0 - Potentiation time constant (ms)
+      "tauMinus", // 1 - Depression time constant (ms)
+      "Aplus",    // 2 - Rate of potentiation
+      "Aminus",   // 3 - Rate of depression
+      "Wmin",     // 4 - Minimum weight
+      "Wmax"});   // 5 - Maximum weight
+
+    SET_VARS({{"g", "scalar"}});
+    SET_PRE_VARS({{"preTrace", "scalar"}});
+    SET_POST_VARS({{"postTrace", "scalar"}});
+
+    SET_PRE_SPIKE_CODE(
+        "scalar dt = t - st_pre;\n"
+        "preTrace = (preTrace * exp(-dt / tauPlus)) + 1.0;\n");
+
+    SET_POST_SPIKE_CODE(
+        "scalar dt = t - st_post;\n"
+        "postTrace = (postTrace * exp(-dt / tauMinus)) + 1.0;\n");
+
+    SET_PRE_SPIKE_SYN_CODE(
+        "addToPost(g);\n"
+        "scalar dt = t - st_post; \n"
+        "if (dt > 0) {\n"
+        "    const scalar timing = postTrace * exp(-dt / tauMinus);\n"
+        "    const scalar newWeight = g - (Aminus * timing);\n"
+        "    g = fmax(Wmin, newWeight);\n"
+        "}\n");
+    SET_POST_SPIKE_SYN_CODE(
+        "scalar dt = t - st_pre;\n"
+        "if (dt > 0) {\n"
+        "    const scalar timing = postTrace * exp(-dt / tauPlus);\n"
+        "    const scalar newWeight = g + (Aplus * timing);\n"
+        "    g = fmin(Wmax, newWeight);\n"
+        "}\n");
+};
+IMPLEMENT_SNIPPET(STDPAdditive);
 
 /*bool hasVarRef(const std::vector<Models::WUVarReference> &varRefs, const std::string &targetName, const std::string &varName)
 {
@@ -358,6 +417,94 @@ TEST(CustomConnectivityUpdate, CompareDifferentDependentVars)
     ASSERT_EQ(modelSpecMerged.getMergedCustomConnectivityUpdatePreInitGroups().size(), 0);
     ASSERT_EQ(modelSpecMerged.getMergedCustomConnectivityUpdatePostInitGroups().size(), 0);
     ASSERT_EQ(modelSpecMerged.getMergedCustomConnectivityUpdateSparseInitGroups().size(), 1);
+}
+//--------------------------------------------------------------------------
+TEST(CustomConnectivityUpdate, CompareRemap)
+{
+     ModelSpecInternal model;
+    
+    // Add two neuron group to model
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};   
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+
+    ParamValues stdpParams{{"tauPlus", 20.0}, {"tauMinus", 20.0}, {"Aplus", 0.001}, {"Aminus", -0.001}, {"Wmin", 0.0}, {"Wmax", 1.0}};
+    VarValues stdpVarValues{{"g", 0.5}};
+    VarValues stdpPreVarValues{{"preTrace", 0.0}};
+    VarValues stdpPostVarValues{{"postTrace", 0.0}};
+
+    VarValues countPreVarValues{{"num", 0}};
+
+    auto *staticSG =  model.addSynapsePopulation(
+        "StaticSynapse", SynapseMatrixType::SPARSE,
+        pre, post,
+        initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+
+    auto *stdpSG1 =  model.addSynapsePopulation(
+        "STDPSynapse1", SynapseMatrixType::SPARSE,
+        pre, post,
+        initWeightUpdate<STDPAdditive>(stdpParams, stdpVarValues, stdpPreVarValues, stdpPostVarValues),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+
+    auto *stdpSG2 =  model.addSynapsePopulation(
+        "STDPSynapse2", SynapseMatrixType::SPARSE,
+        pre, post,
+        initWeightUpdate<STDPAdditive>(stdpParams, stdpVarValues, stdpPreVarValues, stdpPostVarValues),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    
+    // Create  custom updates to passively count synapse in static and STDP - neither should result in remap
+    auto *staticCountCCU = model.addCustomConnectivityUpdate<CountPositive>("StaticCountCCU", "Count", staticSG,
+                                                                       {}, {}, countPreVarValues, {},
+                                                                       {{"g", createWUVarRef(staticSG, "g")}});
+    auto *stdp1CountCCU = model.addCustomConnectivityUpdate<CountPositive>("STDP1CountCCU", "Count", stdpSG1,
+                                                                      {}, {}, countPreVarValues, {},
+                                                                      {{"g", createWUVarRef(stdpSG1, "g")}});
+    
+    // **TODO** narrow index
+
+    // Create custom update to remove connections from static synapse - no need for remap
+    auto *staticRemove1CCU = model.addCustomConnectivityUpdate<RemoveSynapse>("StaticRemove1CCU", "Remove1", staticSG,
+                                                                             {}, {{"a", 1.0}});
+
+    // Create two custom updates to remove connections from STDP sg 1 - needs one remap
+    auto *stdp1Remove1CCU1 = model.addCustomConnectivityUpdate<RemoveSynapse>("STDP1Remove1CCU1", "Remove1", stdpSG1,
+                                                                             {}, {{"a", 1.0}});
+    auto *stdp1Remove1CCU2 = model.addCustomConnectivityUpdate<RemoveSynapse>("STDP1Remove1CCU2", "Remove1", stdpSG1,
+                                                                            {}, {{"a", 1.0}});
+
+    // Create custom update to remove connections from STDP sg 1 in different group - needs one remap
+    auto *stdp1Remove2CCU = model.addCustomConnectivityUpdate<RemoveSynapse>("STDP1Remove2CCU", "Remove2", stdpSG1,
+                                                                             {}, {{"a", 1.0}});
+    
+    // Create custom update to remove connections from STDP sg 2 in different group - needs one remap
+    auto *stdp2Remove1CCU = model.addCustomConnectivityUpdate<RemoveSynapse>("STDP2Remove1CCU", "Remove1", stdpSG2,
+                                                                             {}, {{"a", 1.0}});
+    //auto *ccu1 = model.addCustomConnectivityUpdate<RemoveSynapse>("CustomConnectivityUpdate1", "Test2", sg1,
+    //                                                              {}, {{"a", 1.0}});
+    model.finalise();
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
+
+    // Check correct groups are merged - ones in remove 1 and remove 2
+    ASSERT_EQ(modelSpecMerged.getMergedCustomConnectivityRemapUpdateGroups().size(), 2);
+
+     // Find which merged group is the one containing 2 groups i.e. the 2 groups with unique synapse groups in remove1 group
+    const auto remove1MergedUpdateGroup = std::find_if(modelSpecMerged.getMergedCustomConnectivityRemapUpdateGroups().cbegin(), modelSpecMerged.getMergedCustomConnectivityRemapUpdateGroups().cend(),
+                                                       [](const auto &ng) { return (ng.getGroups().size() == 2); });
+    
+    // Check update group name is correct
+    ASSERT_EQ(remove1MergedUpdateGroup->getArchetype().getUpdateGroupName(), "Remove1");
+
+    // **TODO** check synapse groups are correct
+
+    // Check OTHER update group name is "Remove2"
 }
 //--------------------------------------------------------------------------
 TEST(CustomConnectivityUpdate, BitmaskConnectivity)
