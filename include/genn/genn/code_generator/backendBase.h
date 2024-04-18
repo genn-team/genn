@@ -51,6 +51,7 @@ class PostsynapticUpdateGroupMerged;
 class SynapseDynamicsGroupMerged;
 class SynapseDendriticDelayUpdateGroupMerged;
 class CustomConnectivityUpdateGroupMerged;
+class CustomConnectivityRemapUpdateGroupMerged;
 class CustomUpdateGroupMerged;
 class CustomUpdateWUGroupMerged;
 class CustomUpdateTransposeWUGroupMerged;
@@ -343,6 +344,7 @@ public:
     void buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env, unsigned int batchSize) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env, unsigned int batchSize) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const;
+    void buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityRemapUpdateGroupMerged> &env) const;
 
     void buildStandardEnvironment(EnvironmentGroupMergedField<NeuronInitGroupMerged> &env, unsigned int batchSize) const;
     void buildStandardEnvironment(EnvironmentGroupMergedField<SynapseInitGroupMerged> &env, unsigned int batchSize) const;

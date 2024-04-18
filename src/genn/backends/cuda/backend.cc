@@ -1000,6 +1000,28 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                 genCustomTransposeUpdateWUKernel(funcEnv, modelMerged, memorySpaces, g, idCustomTransposeUpdateStart);
             }
         }
+
+        size_t idCustomConnectivityRemapUpdateStart = 0;
+        if (std::any_of(modelMerged.getMergedCustomConnectivityRemapUpdateGroups().cbegin(), modelMerged.getMergedCustomConnectivityRemapUpdateGroups().cend(),
+                        [&g](const auto &cg) { return (cg.getArchetype().getUpdateGroupName() == g); }))
+        {
+            genFilteredMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomConnectivityRemapUpdateGroups(),
+                                                  [&model, this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelCustomUpdate); },
+                                                  [g](const CustomConnectivityRemapUpdateGroupMerged &cg) { return cg.getArchetype().getUpdateGroupName() == g; });
+
+            customUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelCustomConnectivityRemapUpdate] << g << "()" << std::endl;
+            {
+                CodeStream::Scope b(customUpdateEnv.getStream());
+
+                EnvironmentExternal funcEnv(customUpdateEnv);
+                funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelCustomUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
+
+                funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
+                funcEnv.getStream() << "// Custom connectiviy remap updates" << std::endl;
+                genCustomConnectivityRemapUpdateKernel(funcEnv, modelMerged, memorySpaces, g, idCustomConnectivityRemapUpdateStart);
+            }
+        }
+
         customUpdateEnv.getStream() << "void update" << g << "(unsigned long long timestep)";
         {
             CodeStream::Scope b(customUpdateEnv.getStream());
@@ -1035,6 +1057,8 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                 funcEnv.printLine("CHECK_CUDA_ERRORS(cudaPeekAtLastError());");
             }
 
+            if (idCustomConnectivityRemapUpdateStart > 0) {
+            }
             // If NCCL reductions are enabled
             if(getPreferences<Preferences>().enableNCCLReductions) {
                 // Loop through custom update host reduction groups and

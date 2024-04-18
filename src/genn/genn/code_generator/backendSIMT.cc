@@ -44,7 +44,8 @@ const char *BackendSIMT::KernelNames[KernelMax] = {
     "neuronPrevSpikeTimeUpdateKernel",
     "synapseDendriticDelayUpdateKernel",
     "customUpdate",
-    "customTransposeUpdate"};
+    "customTransposeUpdate",
+    "customConnectivityRemapUpdate" };
 //--------------------------------------------------------------------------
 std::vector<PresynapticUpdateStrategySIMT::Base*> BackendSIMT::s_PresynapticUpdateStrategies = {
     new PresynapticUpdateStrategySIMT::PreSpan,
@@ -1323,6 +1324,63 @@ void BackendSIMT::genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env
                 /*if(Utils::isRNGRequired(cg.getArchetype().getRowUpdateCodeTokens())) {
                     genPopulationRNGPostamble(groupEnv.getStream(), rng);
                 }*/
+            }
+        });
+}
+//--------------------------------------------------------------------------
+void BackendSIMT::genCustomConnectivityRemapUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
+                                                         BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const
+{
+    // Parallelise across presynaptic neurons
+    genParallelGroup<CustomConnectivityRemapUpdateGroupMerged>(
+        env, modelMerged, memorySpaces, updateGroup, idStart, &ModelSpecMerged::genMergedCustomConnectivityRemapUpdateGroups,
+        [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelCustomUpdate); },
+        [&modelMerged, this](EnvironmentExternalBase &env, CustomConnectivityRemapUpdateGroupMerged &cg)
+        {
+            EnvironmentGroupMergedField<CustomConnectivityRemapUpdateGroupMerged> groupEnv(env, cg);
+            buildStandardEnvironment(groupEnv);
+
+            // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
+            const size_t blockSize = getKernelBlockSize(KernelInitializeSparse);
+            const std::string blockSizeStr = std::to_string(blockSize);
+            groupEnv.printLine("const unsigned int numBlocks = ($(num_pre) + " + blockSizeStr + " - 1) / " + blockSizeStr + ";");
+            groupEnv.printLine("unsigned int idx = $(id);");
+
+            // Loop through blocks
+            groupEnv.getStream() << "for(unsigned int r = 0; r < numBlocks; r++)";
+            {
+                CodeStream::Scope b(groupEnv.getStream());
+
+                // Calculate number of rows to process in this block
+                groupEnv.getStream() << "const unsigned numRowsInBlock = (r == (numBlocks - 1))";
+                groupEnv.getStream() << " ? ((" << groupEnv["num_pre"] << " - 1) % " << blockSize << ") + 1";
+                groupEnv.getStream() << " : " << blockSize << ";" << std::endl;
+
+                // Use threads to copy block of sparse structure into shared memory
+                genSharedMemBarrier(groupEnv.getStream());
+                groupEnv.getStream() << "if (" << getThreadID() << " < numRowsInBlock)";
+                {
+                    CodeStream::Scope b(groupEnv.getStream());
+                    groupEnv.printLine("$(_sh_row_length)[" + getThreadID() + "] = $(_row_length)[(r * " + blockSizeStr + ") + " + getThreadID() + "];");
+                }
+                genSharedMemBarrier(groupEnv.getStream());
+
+                // Loop through rows
+                groupEnv.getStream() << "for(unsigned int i = 0; i < numRowsInBlock; i++)";
+                {
+                    CodeStream::Scope b(groupEnv.getStream());
+
+                    // If there is a synapse for this thread to initialise
+                    groupEnv.print("if($(id) < $(_sh_row_length)[i])");
+                    {
+                        CodeStream::Scope b(groupEnv.getStream());
+
+                        genRemap(groupEnv);
+                    }
+
+                    // If matrix is ragged, advance index to next row by adding stride
+                    groupEnv.printLine("idx += $(_row_stride);");
+                }
             }
         });
 }

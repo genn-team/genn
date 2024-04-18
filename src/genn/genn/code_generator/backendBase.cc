@@ -605,6 +605,11 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomCon
     buildStandardCustomConnectivityUpdateEnvironment(*this, env);
 }
 //-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityRemapUpdateGroupMerged> &env) const
+{
+    buildStandardCustomConnectivityUpdateEnvironment(*this, env);
+}
+//-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<NeuronInitGroupMerged> &env, unsigned int batchSize) const
 {
     buildStandardNeuronEnvironment(env, batchSize);
