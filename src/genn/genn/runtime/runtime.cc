@@ -637,6 +637,12 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         pushMergedGroup(m);
     }
 
+    // Push custom connectivity remap update groups
+    for (const auto &m : m_ModelMerged.get().getMergedCustomConnectivityRemapUpdateGroups()) {
+        addMergedArrays(m);
+        pushMergedGroup(m);
+    }
+
     // Push custom connectivity host update groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomConnectivityHostUpdateGroups()) {
         addMergedArrays(m);

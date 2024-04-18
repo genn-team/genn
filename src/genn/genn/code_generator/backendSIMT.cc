@@ -1331,9 +1331,13 @@ void BackendSIMT::genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env
 void BackendSIMT::genCustomConnectivityRemapUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
                                                          BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const
 {
+    EnvironmentExternal envKernel(env);
+    envKernel.add(Type::Void, "_sh_row_length", "shRowLength",
+                  { envKernel.addInitialiser(getSharedPrefix() + "unsigned int shRowLength[" + std::to_string(getKernelBlockSize(KernelInitializeSparse)) + "];") });
+
     // Parallelise across presynaptic neurons
     genParallelGroup<CustomConnectivityRemapUpdateGroupMerged>(
-        env, modelMerged, memorySpaces, updateGroup, idStart, &ModelSpecMerged::genMergedCustomConnectivityRemapUpdateGroups,
+        envKernel, modelMerged, memorySpaces, updateGroup, idStart, &ModelSpecMerged::genMergedCustomConnectivityRemapUpdateGroups,
         [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelCustomUpdate); },
         [&modelMerged, this](EnvironmentExternalBase &env, CustomConnectivityRemapUpdateGroupMerged &cg)
         {
