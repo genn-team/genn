@@ -87,6 +87,9 @@ public:
     //! Is var init code required for any postsynaptic variables in this custom connectivity update group?
     bool isPostVarInitRequired() const;
 
+    //! Can this custom connectivty update actually modify connectivity
+    bool canModifyConnectivity() const;
+
 protected:
     CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup,
                              const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel,
@@ -118,6 +121,10 @@ protected:
     //! Updates hash with custom update.
     /*! \note this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
+    //! Updates hash with custom update.
+    /*! \note this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getRemapHashDigest() const;
 
     //! Updates hash with custom update.
     /*! \note this can only be called after model is finalized */

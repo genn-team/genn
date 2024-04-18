@@ -119,6 +119,9 @@ public:
     //! Get merged custom connectivity update groups
     const std::vector<CustomConnectivityUpdateGroupMerged> &getMergedCustomConnectivityUpdateGroups() const { return m_MergedCustomConnectivityUpdateGroups; }
 
+    //! Get merged custom connectivity update groups which require regeneration of remap structure
+    const std::vector<CustomConnectivityRemapUpdateGroupMerged> &getMergedCustomConnectivityRemapUpdateGroups() const { return m_MergedCustomConnectivityRemapUpdateGroups; }
+
     //! Get merged custom connectivity update groups where host processing needs to be performed
     const std::vector<CustomConnectivityHostUpdateGroupMerged> &getMergedCustomConnectivityHostUpdateGroups() const { return m_MergedCustomConnectivityHostUpdateGroups; }
 
@@ -142,6 +145,8 @@ public:
                                                     GenMergedGroupFn<CustomWUUpdateHostReductionGroupMerged> generateGroup);
     void genMergedCustomConnectivityUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroupName, 
                                                  GenMergedGroupFn<CustomConnectivityUpdateGroupMerged> generateGroup);
+    void genMergedCustomConnectivityRemapUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroupName, 
+                                                     GenMergedGroupFn<CustomConnectivityRemapUpdateGroupMerged> generateGroup);
     void genMergedCustomConnectivityHostUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroupName, 
                                                      GenMergedGroupFn<CustomConnectivityHostUpdateGroupMerged> generateGroup);
     void genMergedNeuronSpikeQueueUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
@@ -198,6 +203,7 @@ public:
     void genMergedCustomUpdateHostReductionStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomUpdateHostReductionGroups); }
     void genMergedCustomWUUpdateHostReductionStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomWUUpdateHostReductionGroups); }
     void genMergedCustomConnectivityUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomConnectivityUpdateGroups); }
+    void genMergedCustomConnectivityRemapUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomConnectivityRemapUpdateGroups); }
     void genMergedCustomConnectivityHostUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomConnectivityHostUpdateGroups); }
 
 
@@ -225,6 +231,7 @@ public:
     void genMergedCustomUpdateHostReductionHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedCustomUpdateHostReductionGroups); }
     void genMergedCustomWUUpdateHostReductionHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedCustomWUUpdateHostReductionGroups); }
     void genMergedCustomConnectivityUpdateHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedCustomConnectivityUpdateGroups); }
+    void genMergedCustomConnectivityRemapUpdateHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedCustomConnectivityRemapUpdateGroups); }
     void genMergedCustomConnectivityHostUpdateStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedCustomConnectivityHostUpdateGroups); }
 
 
@@ -469,6 +476,9 @@ private:
 
     //! Merged custom connectivity update groups
     std::vector<CustomConnectivityUpdateGroupMerged> m_MergedCustomConnectivityUpdateGroups;
+
+    //! Merged custom connectivity update groups which require remap data structure regenerating
+    std::vector<CustomConnectivityRemapUpdateGroupMerged> m_MergedCustomConnectivityRemapUpdateGroups;
 
     //! Merged custom connectivity update groups where host processing needs to be performed
     std::vector<CustomConnectivityHostUpdateGroupMerged> m_MergedCustomConnectivityHostUpdateGroups;

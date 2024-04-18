@@ -123,8 +123,6 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
-    void generateUpdate(const BackendBase& backend, EnvironmentExternalBase& env);
-
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
