@@ -821,7 +821,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                             }
                         }
                     });
-                
+ 
                 // Loop through merged custom connectivity update groups
                 modelMerged.genMergedCustomConnectivityUpdateGroups(
                     *this, memorySpaces, g,
@@ -857,10 +857,40 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                     });
             }
 
+            // Loop through merged custom connectivity remap update groups
+            {
+                Timer t(funcEnv.getStream(), "customUpdate" + g + "Remap", model.isTimingEnabled());
+                modelMerged.genMergedCustomConnectivityRemapUpdateGroups(
+                    *this, memorySpaces, g,
+                    [this, &funcEnv](auto &c)
+                    {
+                        CodeStream::Scope b(funcEnv.getStream());
+                        funcEnv.getStream() << "// merged custom connectivity remap update group " << c.getIndex() << std::endl;
+                        funcEnv.getStream() << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                        {
+                            CodeStream::Scope b(funcEnv.getStream());
+
+                            // Get reference to group
+                            funcEnv.getStream() << "const auto *group = &mergedCustomConnectivityRemapUpdateGroup" << c.getIndex() << "[g]; " << std::endl;
+                     
+                            // Create matching environment
+                            EnvironmentGroupMergedField<CustomConnectivityRemapUpdateGroupMerged> groupEnv(funcEnv, c);
+                            buildStandardEnvironment(groupEnv);
+                            
+                            groupEnv.printLine("// Loop through presynaptic neurons");
+                            groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
+                            {
+                                CodeStream::Scope b(groupEnv.getStream());
+
+                                genRemap(groupEnv);
+                            }
+                        }
+                    });
+            }
+
             // Loop through merged custom WU transpose update groups
             {
                 Timer t(funcEnv.getStream(), "customUpdate" + g + "Transpose", model.isTimingEnabled());
-                // Loop through merged custom connectivity update groups
                 modelMerged.genMergedCustomUpdateTransposeWUGroups(
                     *this, memorySpaces, g,
                     [this, &funcEnv](auto &c)
@@ -923,6 +953,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     modelMerged.genMergedCustomUpdateWUStructs(os, *this);
     modelMerged.genMergedCustomUpdateTransposeWUStructs(os, *this);
     modelMerged.genMergedCustomConnectivityUpdateStructs(os, *this);
+    modelMerged.genMergedCustomConnectivityRemapUpdateStructs(os, *this);
     modelMerged.genMergedCustomConnectivityHostUpdateStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
@@ -930,6 +961,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     modelMerged.genMergedCustomUpdateWUHostStructArrayPush(os, *this);
     modelMerged.genMergedCustomUpdateTransposeWUHostStructArrayPush(os, *this);
     modelMerged.genMergedCustomConnectivityUpdateHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomConnectivityRemapUpdateHostStructArrayPush(os, *this);
     modelMerged.genMergedCustomConnectivityHostUpdateStructArrayPush(os, *this);
 
     // Generate preamble
