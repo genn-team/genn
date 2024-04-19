@@ -65,14 +65,14 @@ using namespace GeNN::CodeGenerator;
 
     // If the current backend requires postsynaptic
     if (backend.isPostsynapticRemapRequired()) {
-        // Build map of (arbitrary) custom connectivity updates associated with each 
+        // Build map of (arbitrary) custom connectivity updates associated with name of each 
         // synapse group which requires postsynaptic remap in each custom update group!
-        std::map<std::pair<std::string, const SynapseGroupInternal*>, std::reference_wrapper<const CustomConnectivityUpdateInternal>> customConnectUpdateMap;
+        std::map<std::pair<std::string, std::string>, std::reference_wrapper<const CustomConnectivityUpdateInternal>> customConnectUpdateMap;
         for (const auto& c : getModel().getCustomConnectivityUpdates()) {
             const auto* sg = c.second.getSynapseGroup();
             if (c.second.canModifyConnectivity() && (sg->isPostSpikeRequired() || sg->isPostSpikeEventRequired())) {
                 customConnectUpdateMap.emplace(std::piecewise_construct,
-                                               std::forward_as_tuple(c.second.getUpdateGroupName(), sg), 
+                                               std::forward_as_tuple(c.second.getUpdateGroupName(), sg->getName()), 
                                                std::forward_as_tuple(c.second));
             }
         }
