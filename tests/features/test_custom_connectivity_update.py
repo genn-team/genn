@@ -418,9 +418,9 @@ def test_custom_connectivity_update_delay(make_model, backend, precision):
                         lambda i: _clear_bit(dense_bitarray, 60),
                         [(s_pop_2, "g", False)])
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu"])#, "cuda"])
+@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_reverse_post_remap(make_model, backend, precision):
+def test_custom_connectivity_update_remap(make_model, backend, precision):
     """
     for j in range(16):
         for i in range(4):
@@ -467,7 +467,7 @@ def test_reverse_post_remap(make_model, backend, precision):
         }
         """)
         
-    model = make_model(precision, "test_reverse_post_modification", backend=backend)
+    model = make_model(precision, "test_custom_connectivity_update_remap", backend=backend)
     model.dt = 1.0
 
     # Add presynaptic populations to sum reverse input
@@ -498,11 +498,6 @@ def test_reverse_post_remap(make_model, backend, precision):
     model.build()
     model.load()
 
-    sparse_s_pop.pull_connectivity_from_device()
-    pre_inds = sparse_s_pop.get_sparse_pre_inds()
-    post_inds = sparse_s_pop.get_sparse_post_inds()
-    print("Before", pre_inds, post_inds)
-
     # Simulate 16 timesteps
     output_place_values = 2 ** np.arange(4)
     while model.timestep < 16:
@@ -516,18 +511,12 @@ def test_reverse_post_remap(make_model, backend, precision):
 
         # Sum up active place values
         output_value = np.sum(output_place_values[output_binary])
-        print(output_value)
         if output_value != (model.timestep - 1):
             assert False, f"{sparse_pre_n_pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
-    
+
     # Run update to remove synapses
     model.custom_update("RemoveSynapse")
-    
-    sparse_s_pop.pull_connectivity_from_device()
-    pre_inds = sparse_s_pop.get_sparse_pre_inds()
-    post_inds = sparse_s_pop.get_sparse_post_inds()
-    print("After",pre_inds, post_inds)
-    
+
     # Reset time and start spike
     model.timestep = 0
     post_n_pop.vars["startSpike"].view[:] = np.arange(16)
@@ -545,7 +534,6 @@ def test_reverse_post_remap(make_model, backend, precision):
 
         # Sum up active place values
         output_value = np.sum(output_place_values[output_binary])
-        print(output_value)
-        #if output_value != (model.timestep - 1):
-        #    assert False, f"{sparse_pre_n_pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
-    
+        correct = (model.timestep - 1) & ~1
+        if output_value != correct:
+            assert False, f"{sparse_pre_n_pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
