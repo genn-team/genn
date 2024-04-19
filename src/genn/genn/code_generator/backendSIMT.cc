@@ -99,22 +99,6 @@ void BackendSIMT::genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env
     handler(varEnv);
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genRemap(EnvironmentExternalBase &env) const
-{
-    // Extract index of synapse's postsynaptic target
-    env.printLine("const unsigned int postIndex = $(_ind)[idx];");
-
-    // Atomically increment length of column of connectivity associated with this target
-    // **NOTE** this returns previous length i.e. where to insert new entry
-    env.printLine("const unsigned int colLocation = " + getAtomic(Type::Uint32) + "(&$(_col_length)[postIndex], 1);");
-
-    // From this calculate index into column-major matrix
-    env.printLine("const unsigned int colMajorIndex = (postIndex * $(_col_stride)) + colLocation;");
-
-    // Add remapping entry at this location poining back to row-major index
-    env.printLine("$(_remap)[colMajorIndex] = idx;");
-}
-//--------------------------------------------------------------------------
 bool BackendSIMT::isGlobalHostRNGRequired(const ModelSpecInternal &model) const
 {
     // Host RNG is required if any synapse groups or custom connectivity updates require a host RNG
@@ -1991,6 +1975,22 @@ void BackendSIMT::genCopyEventToGlobal(EnvironmentExternalBase &env, NeuronUpdat
     else {
         env.printLine("[$(batch)], $(_sh_spk_count" + suffix + ")[" + indexStr + "]);");
     }
+}
+//--------------------------------------------------------------------------
+void BackendSIMT::genRemap(EnvironmentExternalBase &env) const
+{
+    // Extract index of synapse's postsynaptic target
+    env.printLine("const unsigned int postIndex = $(_ind)[idx];");
+
+    // Atomically increment length of column of connectivity associated with this target
+    // **NOTE** this returns previous length i.e. where to insert new entry
+    env.printLine("const unsigned int colLocation = " + getAtomic(Type::Uint32) + "(&$(_col_length)[postIndex], 1);");
+
+    // From this calculate index into column-major matrix
+    env.printLine("const unsigned int colMajorIndex = (postIndex * $(_col_stride)) + colLocation;");
+
+    // Add remapping entry at this location poining back to row-major index
+    env.printLine("$(_remap)[colMajorIndex] = idx;");
 }
 //--------------------------------------------------------------------------
 const PresynapticUpdateStrategySIMT::Base *BackendSIMT::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg,

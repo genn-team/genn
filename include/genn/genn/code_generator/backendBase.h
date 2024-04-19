@@ -236,9 +236,6 @@ public:
     virtual void genKernelSynapseVariableInit(EnvironmentExternalBase &env, SynapseInitGroupMerged &sg, HandlerEnv handler) const = 0;
     virtual void genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const = 0;
 
-    //! Populate $(_remap) and $(_col_length) based on $(_ind), $(_row_stride) and $(_col_stride)
-    virtual void genRemap(EnvironmentExternalBase &env) const = 0;
-
     //! Generate a single RNG instance
     /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free) const = 0;

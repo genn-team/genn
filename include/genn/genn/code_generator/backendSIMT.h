@@ -136,9 +136,6 @@ public:
     virtual void genKernelSynapseVariableInit(EnvironmentExternalBase &env, SynapseInitGroupMerged &sg, HandlerEnv handler) const final;
     virtual void genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const final;
 
-    //! Populate $(_remap) and $(_col_length) based on $(_ind), $(_row_stride) and $(_col_stride)
-    virtual void genRemap(EnvironmentExternalBase &env) const final;
-
     //! Should 'scalar' variables be implemented on device or can host variables be used directly?
     virtual bool isDeviceScalarRequired() const final { return true; }
 
@@ -480,6 +477,9 @@ private:
                       size_t index, bool trueSpike) const;
     void genCopyEventToGlobal(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                               unsigned int batchSize, size_t index, bool trueSpike) const;
+
+    //! Populate $(_remap) and $(_col_length) based on $(_ind), $(_row_stride) and $(_col_stride)
+    void genRemap(EnvironmentExternalBase &env) const;
 
     // Get appropriate presynaptic update strategy to use for this synapse group
     const PresynapticUpdateStrategySIMT::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const
