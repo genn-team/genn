@@ -307,10 +307,7 @@ public:
     void stepTime();
 
     //! Perform named custom update
-    void customUpdate(const std::string &name)
-    { 
-        m_CustomUpdateFunctions.at(name)(getTimestep());
-    }
+    void customUpdate(const std::string &name);
 
     //! Get current simulation timestep
     uint64_t getTimestep() const{ return m_Timestep; }
@@ -694,6 +691,9 @@ private:
 
     //! Functions to perform custom updates
     std::unordered_map<std::string, CustomUpdateFunction> m_CustomUpdateFunctions;
+
+    //! Arrays containing column length arrays which should be zeroed before updating connectivity
+    std::unordered_map<std::string, std::vector<ArrayBase*>> m_CustomUpdateColLengthArrays;
 
     //! Map containing mapping of dynamic arrays to their locations within merged groups
     MergedDynamicArrayMap m_MergedDynamicArrays;
