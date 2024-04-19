@@ -174,6 +174,7 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
     for(const auto &g : customUpdateGroups) {
         genHostScalar(definitionsVar, runnerVarDecl, Type::Double, "customUpdate" + g + "Time", "0.0");
         genHostScalar(definitionsVar, runnerVarDecl, Type::Double, "customUpdate" + g + "TransposeTime", "0.0");
+        genHostScalar(definitionsVar, runnerVarDecl, Type::Double, "customUpdate" + g + "RemapTime", "0.0");
     }
     
     // If timing is actually enabled
