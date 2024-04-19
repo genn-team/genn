@@ -329,6 +329,7 @@ public:
     double getInitSparseTime() const{ return *(double*)getSymbol("initSparseTime"); }
     double getCustomUpdateTime(const std::string &name) const{ return *(double*)getSymbol("customUpdate" + name + "Time"); }
     double getCustomUpdateTransposeTime(const std::string &name) const{ return *(double*)getSymbol("customUpdate" + name + "TransposeTime"); }
+    double getCustomUpdateRemapTime(const std::string &name) const{ return *(double*)getSymbol("customUpdate" + name + "RemapTime"); }
     
     void pullRecordingBuffersFromDevice() const;
 

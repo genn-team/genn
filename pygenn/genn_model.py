@@ -332,6 +332,15 @@ class GeNNModel(ModelSpec):
             name:   Name of custom update
         """
         return self._runtime.get_custom_update_transpose_time(name)
+    
+    def get_custom_update_remap_time(self, name: str) -> float:
+        """Get time in seconds spent in remap custom update.
+        Only available if :attr:`.ModelSpec.timing_enabled` is set.
+    
+        Args:
+            name:   Name of custom update
+        """
+        return self._runtime.get_custom_update_remap_time(name)
 
     def add_neuron_population(self, pop_name: str, num_neurons: int, 
                               neuron: Union[NeuronModelBase, str],
