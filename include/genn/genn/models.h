@@ -3,47 +3,51 @@
 // Standard C++ includes
 #include <algorithm>
 #include <functional>
+#include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 
 // GeNN includes
-#include "snippet.h"
 #include "initVarSnippet.h"
+#include "type.h"
 #include "varAccess.h"
 
 // Forward declarations
-class CustomUpdate;
-class CustomUpdateWU;
+namespace GeNN
+{
 class NeuronGroup;
 class SynapseGroup;
 class CurrentSource;
+class CustomUpdate;
+class CustomUpdateWU;
+class CustomConnectivityUpdate;
 class NeuronGroupInternal;
 class SynapseGroupInternal;
 class CurrentSourceInternal;
-namespace CodeGenerator
+class CustomUpdateInternal;
+class CustomUpdateWUInternal;
+class CustomConnectivityUpdateInternal;
+}
+
+namespace GeNN::Runtime
 {
-class BackendBase;
+class ArrayBase;
+class Runtime;
 }
 
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS)                       \
-    DECLARE_SNIPPET(TYPE, NUM_PARAMS);                                  \
-    typedef Models::VarInitContainerBase<NUM_VARS> VarValues;        \
-    typedef Models::VarInitContainerBase<0> PreVarValues;            \
-    typedef Models::VarInitContainerBase<0> PostVarValues
-
-#define IMPLEMENT_MODEL(TYPE) IMPLEMENT_SNIPPET(TYPE)
-
-#define SET_VARS(...) virtual VarVec getVars() const override{ return __VA_ARGS__; }
-
+#define SET_VARS(...) virtual std::vector<Var> getVars() const override{ return __VA_ARGS__; }
+#define DEFINE_REF_DETAIL_STRUCT(NAME, GROUP_TYPE, VAR_TYPE) using NAME = Detail<GROUP_TYPE, VAR_TYPE, struct _##NAME>
+#define DEFINE_EGP_REF_DETAIL_STRUCT(NAME, GROUP_TYPE) using NAME = Detail<GROUP_TYPE, struct _##NAME>
 
 //----------------------------------------------------------------------------
-// Models::Base
+// GeNN::Models::Base
 //----------------------------------------------------------------------------
 //! Base class for all models - in addition to the parameters snippets have, models can have state variables
-namespace Models
+namespace GeNN::Models
 {
 class GENN_EXPORT Base : public Snippet::Base
 {
@@ -55,157 +59,112 @@ public:
     /*! Explicit constructors required as although, through the wonders of C++
         aggregate initialization, access would default to VarAccess::READ_WRITE
         if not specified, this results in a -Wmissing-field-initializers warning on GCC and Clang*/
-    struct Var
+    template<typename A>
+    struct VarBase
     {
-        Var(const std::string &n, const std::string &t, VarAccess a) : name(n), type(t), access(a)
+        VarBase(const std::string &n, const Type::ResolvedType &t, A a)
+        :   name(n), type(t), access(a)
         {}
-        Var(const std::string &n, const std::string &t) : Var(n, t, VarAccess::READ_WRITE)
-        {}
-        Var() : Var("", "", VarAccess::READ_WRITE)
+        VarBase(const std::string &n, const std::string &t, A a)
+        :   name(n), type(t), access(a)
         {}
 
-        bool operator == (const Var &other) const
+        using AccessType = A;
+        
+        bool operator == (const VarBase &other) const
         {
-            return ((name == other.name) && (type == other.type) && (access == other.access));
+            return (std::tie(name, type, access) == std::tie(other.name, other.type, other.access));
         }
 
         std::string name;
-        std::string type;
-        VarAccess access;
+        Type::UnresolvedType type;
+        A access;
     };
 
-    struct VarRef
+    struct Var : public VarBase<VarAccess>
     {
-        VarRef(const std::string &n, const std::string &t, VarAccessMode a) : name(n), type(t), access(a)
-        {}
-        VarRef(const std::string &n, const std::string &t) : VarRef(n, t, VarAccessMode::READ_WRITE)
-        {}
-        VarRef() : VarRef("", "", VarAccessMode::READ_WRITE)
-        {}
+        using VarBase<VarAccess>::VarBase;
 
+        Var(const std::string &n, const Type::ResolvedType &t) 
+        :   VarBase(n, t, VarAccess::READ_WRITE)
+        {}
+        Var(const std::string &n, const std::string &t) 
+        :   VarBase(n, t, VarAccess::READ_WRITE)
+        {}
+    };
+
+    struct CustomUpdateVar : public VarBase<CustomUpdateVarAccess>
+    {
+        using VarBase<CustomUpdateVarAccess>::VarBase;
+
+        CustomUpdateVar(const std::string &n, const Type::ResolvedType &t) 
+        :   VarBase(n, t, CustomUpdateVarAccess::READ_WRITE)
+        {}
+        CustomUpdateVar(const std::string &n, const std::string &t) 
+        :   VarBase(n, t, CustomUpdateVarAccess::READ_WRITE)
+        {}
+    };
+
+    struct GENN_EXPORT VarRef
+    {
+        VarRef(const std::string &n, const Type::ResolvedType &t, VarAccessMode a = VarAccessMode::READ_WRITE) : name(n), type(t), access(a)
+        {}
+        VarRef(const std::string &n, const std::string &t, VarAccessMode a = VarAccessMode::READ_WRITE) : name(n), type(t), access(a)
+        {}
+        
         bool operator == (const VarRef &other) const
         {
-            return ((name == other.name) && (type == other.type) && (access == other.access));
+            return (std::tie(name, type, access) == std::tie(other.name, other.type, other.access));
         }
 
         std::string name;
-        std::string type;
+        Type::UnresolvedType type;
         VarAccessMode access;
     };
 
-    struct EGPRef
+    struct GENN_EXPORT EGPRef
     {
-        EGPRef(const std::string &n, const std::string &t) : name(n), type(t)
+        EGPRef(const std::string &n, const Type::ResolvedType &t) : name(n), type(t)
         {}
-        EGPRef() : EGPRef("", "")
-        {}
+        EGPRef(const std::string &n, const std::string &t);
 
         bool operator == (const EGPRef &other) const
         {
-            return ((name == other.name) && (type == other.type));
+            return (std::tie(name, type) == std::tie(other.name, other.type));
         }
 
         std::string name;
-        std::string type;
+        Type::UnresolvedType type;
     };
 
     //----------------------------------------------------------------------------
     // Typedefines
     //----------------------------------------------------------------------------
-    typedef std::vector<Var> VarVec;
     typedef std::vector<VarRef> VarRefVec;
     typedef std::vector<EGPRef> EGPRefVec;
-
-    //----------------------------------------------------------------------------
-    // Declared virtuals
-    //------------------------------------------------------------------------
-    //! Gets names and types (as strings) of model variables
-    virtual VarVec getVars() const{ return {}; }
-
-    //------------------------------------------------------------------------
-    // Public methods
-    //------------------------------------------------------------------------
-    //! Find the index of a named variable
-    size_t getVarIndex(const std::string &varName) const
-    {
-        return getNamedVecIndex(varName, getVars());
-    }
-
-protected:
-    //------------------------------------------------------------------------
-    // Protected methods
-    //------------------------------------------------------------------------
-    void updateHash(boost::uuids::detail::sha1 &hash) const;
-
-    //! Validate names of parameters etc
-    void validate() const;
-};
-
-
-//----------------------------------------------------------------------------
-// Models::VarInit
-//----------------------------------------------------------------------------
-//! Class used to bind together everything required to initialise a variable:
-//! 1. A pointer to a variable initialisation snippet
-//! 2. The parameters required to control the variable initialisation snippet
-class VarInit : public Snippet::Init<InitVarSnippet::Base>
-{
-public:
-    VarInit(const InitVarSnippet::Base *snippet, const std::vector<double> &params)
-        : Snippet::Init<InitVarSnippet::Base>(snippet, params)
-    {
-    }
-
-    VarInit(double constant)
-        : Snippet::Init<InitVarSnippet::Base>(InitVarSnippet::Constant::getInstance(), {constant})
-    {
-    }
 };
 
 //----------------------------------------------------------------------------
-// Models::VarInitContainerBase
-//----------------------------------------------------------------------------
-template<size_t NumVars>
-using VarInitContainerBase = Snippet::InitialiserContainerBase<VarInit, NumVars>;
-
-//----------------------------------------------------------------------------
-// Models::VarReferenceBase
+// GeNN::Models::VarReferenceBase
 //----------------------------------------------------------------------------
 class GENN_EXPORT VarReferenceBase
 {
-public:
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    const Models::Base::Var &getVar() const { return m_Var; }
-    size_t getVarIndex() const { return m_VarIndex; }
-    std::string getTargetName() const { return m_GetTargetName(); }
-    bool isBatched() const{ return m_IsBatched(); }
-
 protected:
     //------------------------------------------------------------------------
-    // Typedefines
+    // Detail
     //------------------------------------------------------------------------
-    typedef std::function<std::string(void)> GetTargetNameFn;
-    typedef std::function<bool(void)> IsBatchedFn;
-
-    VarReferenceBase(size_t varIndex, const Models::Base::VarVec &varVec, 
-                     GetTargetNameFn getTargetName, IsBatchedFn isBatched)
-    : m_VarIndex(varIndex), m_Var(varVec.at(varIndex)), m_GetTargetName(getTargetName), m_IsBatched(isBatched)
-    {}
-
-private:
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    size_t m_VarIndex;
-    Models::Base::Var m_Var;
-    GetTargetNameFn m_GetTargetName;
-    IsBatchedFn m_IsBatched;
+    //! Minimal helper class for definining unique struct 
+    //! wrappers around group pointers for use with std::variant
+    template<typename G, typename V, typename Tag>
+    struct Detail
+    {
+        G *group;
+        V var;
+    };
 };
 
 //----------------------------------------------------------------------------
-// Models::VarReference
+// GeNN::Models::VarReference
 //----------------------------------------------------------------------------
 class GENN_EXPORT VarReference : public VarReferenceBase
 {
@@ -213,81 +172,191 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    unsigned int getSize() const { return m_Size; }
-    const NeuronGroup *getDelayNeuronGroup() const { return m_GetDelayNeuronGroup(); }
+    // Get type of variable
+    const Type::UnresolvedType &getVarType() const;
+
+    // Get dimensions of variable
+    VarAccessDim getVarDims() const;
+
+    //! Get name of targetted variable
+    const std::string &getVarName() const;
+
+    //! Get size of variable
+    unsigned int getNumNeurons() const;
+    
+    //! Does this variable reference's target belong to neuron group
+    bool isTargetNeuronGroup(const NeuronGroupInternal *ng) const;
+    
+    //! If variable is delayed, get neuron group which manages its delay
+    NeuronGroup *getDelayNeuronGroup() const;
+    
+    //! Get array associated with referenced variable
+    const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime) const;
+
+    //! If this reference points to another custom update, return pointer to it
+    /*! This is used to detect circular dependencies */
+    CustomUpdate *getReferencedCustomUpdate() const;
+
+    //------------------------------------------------------------------------
+    // Operators
+    //------------------------------------------------------------------------
+    bool operator < (const VarReference &other) const;
 
     //------------------------------------------------------------------------
     // Static API
     //------------------------------------------------------------------------
-    static VarReference createVarRef(const NeuronGroup *ng, const std::string &varName);
-    static VarReference createVarRef(const CurrentSource *cs, const std::string &varName);
-    static VarReference createVarRef(const CustomUpdate *su, const std::string &varName);
-    static VarReference createPSMVarRef(const SynapseGroup *sg, const std::string &varName);
-    static VarReference createWUPreVarRef(const SynapseGroup *sg, const std::string &varName);
-    static VarReference createWUPostVarRef(const SynapseGroup *sg, const std::string &varName);
-    
+    static VarReference createVarRef(NeuronGroup *ng, const std::string &varName);
+    static VarReference createVarRef(CurrentSource *cs, const std::string &varName);
+    static VarReference createVarRef(CustomUpdate *cu, const std::string &varName);
+    static VarReference createPreVarRef(CustomConnectivityUpdate *ccu, const std::string &varName);
+    static VarReference createPostVarRef(CustomConnectivityUpdate *ccu, const std::string &varName);
+    static VarReference createPSMVarRef(SynapseGroup *sg, const std::string &varName);
+    static VarReference createWUPreVarRef(SynapseGroup *sg, const std::string &varName);
+    static VarReference createWUPostVarRef(SynapseGroup *sg, const std::string &varName);
+
 private:
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
-    typedef std::function<const NeuronGroup*(void)> GetDelayNeuronGroupFn;
+    DEFINE_REF_DETAIL_STRUCT(NGRef, NeuronGroupInternal, Base::Var);
+    DEFINE_REF_DETAIL_STRUCT(PSMRef, SynapseGroupInternal, Base::Var);
+    DEFINE_REF_DETAIL_STRUCT(WUPreRef, SynapseGroupInternal, Base::Var);
+    DEFINE_REF_DETAIL_STRUCT(WUPostRef, SynapseGroupInternal, Base::Var);
+    DEFINE_REF_DETAIL_STRUCT(CSRef, CurrentSourceInternal, Base::Var);
+    DEFINE_REF_DETAIL_STRUCT(CURef, CustomUpdateInternal, Base::CustomUpdateVar);
+    DEFINE_REF_DETAIL_STRUCT(CCUPreRef, CustomConnectivityUpdateInternal, Base::Var);
+    DEFINE_REF_DETAIL_STRUCT(CCUPostRef, CustomConnectivityUpdateInternal, Base::Var);
 
-    VarReference(const NeuronGroupInternal *ng, const std::string &varName);
-    VarReference(const CurrentSourceInternal *cs, const std::string &varName);
-    VarReference(const CustomUpdate *cu, const std::string &varName);
-    VarReference(unsigned int size, GetDelayNeuronGroupFn getDelayNeuronGroup,
-                 size_t varIndex, const Models::Base::VarVec &varVec, 
-                 GetTargetNameFn getTargetName, IsBatchedFn isBatched);
+    //! Variant type used to store 'detail'
+    using DetailType = std::variant<NGRef, PSMRef, WUPreRef, WUPostRef, CSRef, 
+                                    CURef, CCUPreRef, CCUPostRef>;
+
+    VarReference(const DetailType &detail) : m_Detail(detail)
+    {}
+
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+    const std::string &getTargetName() const;
+
+    //------------------------------------------------------------------------
+    // Friends
+    //------------------------------------------------------------------------
+    friend void updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash)
+    {
+        Utils::updateHash(v.getTargetName(), hash);
+        Utils::updateHash(v.getVarName(), hash);
+    }
 
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    unsigned int m_Size;
-    GetDelayNeuronGroupFn m_GetDelayNeuronGroup;
+    DetailType m_Detail;
 };
 
 //----------------------------------------------------------------------------
-// Models::VarReferenceContainerBase
-//----------------------------------------------------------------------------
-template<size_t NumVars>
-using VarReferenceContainerBase = Snippet::InitialiserContainerBase<VarReference, NumVars>;
-
-//----------------------------------------------------------------------------
-// Models::WUVarReference
+// GeNN::Models::WUVarReference
 //----------------------------------------------------------------------------
 class GENN_EXPORT WUVarReference : public VarReferenceBase
 {
 public:
-    WUVarReference(const SynapseGroup *sg, const std::string &varName,
-                   const SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "");
-    WUVarReference(const CustomUpdateWU *cu, const std::string &varName);
-
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    const SynapseGroup *getSynapseGroup() const;
+    // Get type of variable
+    const Type::UnresolvedType &getVarType() const;
 
-    const SynapseGroup *getTransposeSynapseGroup() const;
-    const Models::Base::Var &getTransposeVar() const { return m_TransposeVar; }
-    size_t getTransposeVarIndex() const { return m_TransposeVarIndex; }
-    std::string getTransposeTargetName() const { return m_GetTransposeTargetName(); }
+    // Get dimensions of variable
+    VarAccessDim getVarDims() const;
+    
+    //! Get array associated with referenced variable
+    const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime) const;
+    
+    SynapseGroup *getSynapseGroup() const;
+    
+    // Get type of transpose variable
+    std::optional<Type::UnresolvedType> getTransposeVarType() const;
+
+    //! Get dimensions of transpose variable being referenced
+    std::optional<VarAccessDim> getTransposeVarDims() const;
+
+    //! Get array associated with referenced transpose variable
+    const Runtime::ArrayBase *getTransposeTargetArray(const Runtime::Runtime &runtime) const;
+
+    SynapseGroup *getTransposeSynapseGroup() const;
+
+    //! If this reference points to another custom update, return pointer to it
+    /*! This is used to detect circular dependencies */
+    CustomUpdateWU *getReferencedCustomUpdate() const;
+
+    //------------------------------------------------------------------------
+    // Operators
+    //------------------------------------------------------------------------
+    bool operator < (const WUVarReference &other) const;
+
+    //------------------------------------------------------------------------
+    // Static API
+    //------------------------------------------------------------------------
+    static WUVarReference createWUVarReference(SynapseGroup *sg, const std::string &varName, 
+                                               SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "");
+    static WUVarReference createWUVarReference(CustomUpdateWU *cu, const std::string &varName);
+    static WUVarReference createWUVarReference(CustomConnectivityUpdate *ccu, const std::string &varName);
 
 private:
     //------------------------------------------------------------------------
+    // WURef
+    //------------------------------------------------------------------------
+    //! Struct for storing weight update group variable reference - needs
+    //! Additional field to store synapse group associated with transpose
+    struct WURef
+    {
+        SynapseGroupInternal *group;
+        SynapseGroupInternal *transposeGroup;
+
+        Base::Var var;
+        std::optional<Base::Var> transposeVar;
+    };
+
+    //------------------------------------------------------------------------
+    // Typedefines
+    //------------------------------------------------------------------------
+    DEFINE_REF_DETAIL_STRUCT(CURef, CustomUpdateWUInternal, Base::CustomUpdateVar);
+    DEFINE_REF_DETAIL_STRUCT(CCURef, CustomConnectivityUpdateInternal, Base::Var);
+
+     //! Variant type used to store 'detail'
+    using DetailType = std::variant<WURef, CURef, CCURef>;
+
+    WUVarReference(const DetailType &detail);
+
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+    SynapseGroupInternal *getSynapseGroupInternal() const;
+    SynapseGroupInternal *getTransposeSynapseGroupInternal() const;
+    const std::string &getVarName() const;
+    const std::string &getTargetName() const;
+    std::optional<std::string> getTransposeVarName() const;
+    std::optional<std::string> getTransposeTargetName() const;
+
+    //------------------------------------------------------------------------
+    // Friends
+    //------------------------------------------------------------------------
+    friend void updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &hash)
+    {
+        Utils::updateHash(v.getTargetName(), hash);
+        Utils::updateHash(v.getVarName(), hash);
+
+        if(v.getTransposeSynapseGroup() != nullptr) {
+            Utils::updateHash(v.getTransposeTargetName(), hash);
+            Utils::updateHash(v.getTransposeVarName(), hash);
+        }
+    }
+
+    //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const SynapseGroupInternal *m_SG;
-    const SynapseGroupInternal *m_TransposeSG;
-    size_t m_TransposeVarIndex;
-    Models::Base::Var m_TransposeVar;
-    GetTargetNameFn m_GetTransposeTargetName;
+    DetailType m_Detail;
 };
-
-//----------------------------------------------------------------------------
-// Models::WUVarReferenceContainerBase
-//----------------------------------------------------------------------------
-template<size_t NumVars>
-using WUVarReferenceContainerBase = Snippet::InitialiserContainerBase<WUVarReference, NumVars>;
 
 //----------------------------------------------------------------------------
 // Models::EGPReference
@@ -298,46 +367,105 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    const Models::Base::EGP &getEGP() const { return m_EGP; }
-    size_t getEGPIndex() const { return m_EGPIndex; }
-    std::string getTargetName() const { return m_TargetName; }
+    const Models::Base::EGP &getEGP() const;
+    
+    //! Get array associated with referenced EGP
+    // **YUCK** dependency on codegenerator and runtime suggests this belongs elsewhere
+    const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime) const;
 
     //------------------------------------------------------------------------
     // Static API
     //------------------------------------------------------------------------
-    static EGPReference createEGPRef(const NeuronGroup *ng, const std::string &egpName);
-    static EGPReference createEGPRef(const CurrentSource *cs, const std::string &egpName);
-    static EGPReference createEGPRef(const CustomUpdate *cu, const std::string &egpName);
-    static EGPReference createEGPRef(const CustomUpdateWU *cu, const std::string &egpName);
-    static EGPReference createPSMEGPRef(const SynapseGroup *sg, const std::string &egpName);
-    static EGPReference createWUEGPRef(const SynapseGroup *sg, const std::string &egpName);
+    static EGPReference createEGPRef(NeuronGroup *ng, const std::string &egpName);
+    static EGPReference createEGPRef(CurrentSource *cs, const std::string &egpName);
+    static EGPReference createEGPRef(CustomUpdate *cu, const std::string &egpName);
+    static EGPReference createEGPRef(CustomUpdateWU *cu, const std::string &egpName);
+    static EGPReference createEGPRef(CustomConnectivityUpdate *ccu, const std::string &egpName);
+    static EGPReference createPSMEGPRef(SynapseGroup *sg, const std::string &egpName);
+    static EGPReference createWUEGPRef(SynapseGroup *sg, const std::string &egpName);
 
 private:
-    EGPReference(size_t egpIndex, const Models::Base::EGPVec &egpVec, 
-                 const std::string &targetName)
-    :   m_EGPIndex(egpIndex), m_EGP(egpVec.at(egpIndex)), m_TargetName(targetName)
+    //------------------------------------------------------------------------
+    // Detail
+    //------------------------------------------------------------------------
+    //! Minimal helper class for definining unique struct 
+    //! wrappers around group pointers for use with std::variant
+    template<typename G, typename Tag>
+    struct Detail
+    {
+        G *group;
+        Models::Base::EGP egp;
+    };
+
+    //------------------------------------------------------------------------
+    // Typedefines
+    //------------------------------------------------------------------------
+    DEFINE_EGP_REF_DETAIL_STRUCT(NGRef, NeuronGroup);
+    DEFINE_EGP_REF_DETAIL_STRUCT(CSRef, CurrentSource);
+    DEFINE_EGP_REF_DETAIL_STRUCT(CURef, CustomUpdate);
+    DEFINE_EGP_REF_DETAIL_STRUCT(CUWURef, CustomUpdateWU);
+    DEFINE_EGP_REF_DETAIL_STRUCT(CCURef, CustomConnectivityUpdate);
+    DEFINE_EGP_REF_DETAIL_STRUCT(PSMRef, SynapseGroup);
+    DEFINE_EGP_REF_DETAIL_STRUCT(WURef, SynapseGroup);
+
+    //! Variant type used to store 'detail'
+    using DetailType = std::variant<NGRef, CSRef, CURef, CUWURef, CCURef, PSMRef, WURef>;
+
+    EGPReference(const DetailType &detail) : m_Detail(detail)
     {}
+
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+    const std::string &getEGPName() const;
+    const std::string &getTargetName() const;
+
+    //----------------------------------------------------------------------------
+    // Friends
+    //----------------------------------------------------------------------------
+    friend void updateHash(const EGPReference &v, boost::uuids::detail::sha1 &hash)
+    {
+        Utils::updateHash(v.getTargetName(), hash);
+        Utils::updateHash(v.getEGPName(), hash);
+    }
+
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    size_t m_EGPIndex;
-    Models::Base::EGP m_EGP;
-    std::string m_TargetName;
+    DetailType m_Detail;
 };
-
-//----------------------------------------------------------------------------
-// Models::EGPReferenceContainerBase
-//----------------------------------------------------------------------------
-template<size_t NumEGPs>
-using EGPReferenceContainerBase = Snippet::InitialiserContainerBase<EGPReference, NumEGPs>;
 
 //----------------------------------------------------------------------------
 // updateHash overrides
 //----------------------------------------------------------------------------
 GENN_EXPORT void updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const Base::CustomUpdateVar &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash);
-GENN_EXPORT void updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash);
-GENN_EXPORT void updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &hash);
-GENN_EXPORT void updateHash(const EGPReference &v, boost::uuids::detail::sha1 &hash);
-} // Models
+
+//----------------------------------------------------------------------------
+// Free functions
+//----------------------------------------------------------------------------
+//! Helper function to check if local variable references are configured correctly
+GENN_EXPORT void checkLocalVarReferences(const std::map<std::string, VarReference> &varRefs, const Base::VarRefVec &modelVarRefs,
+                                         const NeuronGroupInternal *ng, const std::string &targetErrorDescription);
+//! Helper function to check if variable reference types match those specified in model
+template<typename V>
+void checkVarReferenceTypes(const std::map<std::string, V> &varRefs, const Base::VarRefVec &modelVarRefs)
+{
+    // Loop through all variable references
+    for(const auto &modelVarRef : modelVarRefs) {
+        const auto varRef = varRefs.at(modelVarRef.name);
+
+        // Check types of variable references against those specified in model
+        // **THINK** this is rather conservative but I think not allowing "scalar" and whatever happens to be scalar type is ok
+        if(varRef.getVarType() != modelVarRef.type) {
+            throw std::runtime_error("Incompatible type for variable reference '" + modelVarRef.name + "'");
+        }
+    }
+}
+
+GENN_EXPORT void checkEGPReferenceTypes(const std::map<std::string, EGPReference> &egpRefs,
+                                        const Base::EGPRefVec &modelEGPRefs);
+
+} // GeNN::Models

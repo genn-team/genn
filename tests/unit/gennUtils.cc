@@ -5,6 +5,8 @@
 #include "gennUtils.h"
 #include "snippet.h"
 
+using namespace GeNN;
+
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
@@ -57,19 +59,6 @@ TEST(GeNNUtils, ValidateVarPopName)
     validatePopNameDeathTest("");
     validatePopNameDeathTest("test.test");
     validatePopNameDeathTest("test-test");
-}
-//--------------------------------------------------------------------------
-TEST(GeNNUtils, ValidateParamNames)
-{
-    Utils::validateParamNames({"test", "Test", "test123"});
-
-    try {
-        Utils::validateParamNames({"test", "test.test"});
-        FAIL();
-    }
-
-    catch(const std::runtime_error &) {
-    }
 }
 //--------------------------------------------------------------------------
 TEST(GeNNUtils, ValidateVecNames)

@@ -1,21 +1,28 @@
 #include "initVarSnippet.h"
 
+// GeNN includes
+#include "gennUtils.h"
+
+using namespace GeNN;
+
+namespace GeNN::InitVarSnippet
+{
 // Implement value initialization snippets
-IMPLEMENT_SNIPPET(InitVarSnippet::Uninitialised);
-IMPLEMENT_SNIPPET(InitVarSnippet::Constant);
-IMPLEMENT_SNIPPET(InitVarSnippet::Kernel);
-IMPLEMENT_SNIPPET(InitVarSnippet::Uniform);
-IMPLEMENT_SNIPPET(InitVarSnippet::Normal);
-IMPLEMENT_SNIPPET(InitVarSnippet::NormalClipped);
-IMPLEMENT_SNIPPET(InitVarSnippet::NormalClippedDelay);
-IMPLEMENT_SNIPPET(InitVarSnippet::Exponential);
-IMPLEMENT_SNIPPET(InitVarSnippet::Gamma);
-IMPLEMENT_SNIPPET(InitVarSnippet::Binomial);
+IMPLEMENT_SNIPPET(Uninitialised);
+IMPLEMENT_SNIPPET(Constant);
+IMPLEMENT_SNIPPET(Kernel);
+IMPLEMENT_SNIPPET(Uniform);
+IMPLEMENT_SNIPPET(Normal);
+IMPLEMENT_SNIPPET(NormalClipped);
+IMPLEMENT_SNIPPET(NormalClippedDelay);
+IMPLEMENT_SNIPPET(Exponential);
+IMPLEMENT_SNIPPET(Gamma);
+IMPLEMENT_SNIPPET(Binomial);
 
 //----------------------------------------------------------------------------
-// InitVarSnippet::Base
+// GeNN::InitVarSnippet::Base
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type InitVarSnippet::Base::getHashDigest() const
+boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 {
     // Superclass
     boost::uuids::detail::sha1 hash;
@@ -25,8 +32,43 @@ boost::uuids::detail::sha1::digest_type InitVarSnippet::Base::getHashDigest() co
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-bool InitVarSnippet::Base::requiresKernel() const
+void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues) const
 {
-    return (getCode().find("$(id_kernel)") != std::string::npos);
+    // Superclass
+    Snippet::Base::validate(paramValues, "Variable initialiser ");
 }
 
+
+//----------------------------------------------------------------------------
+// Init
+//----------------------------------------------------------------------------
+Init::Init(const Base *snippet, const std::map<std::string, Type::NumericValue> &params)
+:   Snippet::Init<Base>(snippet, params)
+{
+    // Validate
+    getSnippet()->validate(getParams());
+
+    // Scan code tokens
+    m_CodeTokens = Utils::scanCode(getSnippet()->getCode(), "Variable initialisation code");
+}
+//----------------------------------------------------------------------------
+Init::Init(double constant)
+:   Snippet::Init<Base>(Constant::getInstance(), {{"constant", constant}})
+{
+    // Validate
+    getSnippet()->validate(getParams());
+
+    // Scan code tokens
+    m_CodeTokens = Utils::scanCode(getSnippet()->getCode(), "Variable initialisation code");
+}
+//----------------------------------------------------------------------------
+bool Init::isRNGRequired() const
+{
+    return Utils::isRNGRequired(m_CodeTokens);
+}
+//----------------------------------------------------------------------------
+bool Init::isKernelRequired() const
+{
+    return Utils::isIdentifierReferenced("id_kernel", m_CodeTokens);
+}
+}   // namespace GeNN::InitVarSnippet

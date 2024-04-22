@@ -28,11 +28,9 @@ namespace filesystem
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::OpenCL::DeviceSelectMethod
+// GeNN::CodeGenerator::OpenCL::DeviceSelectMethod
 //--------------------------------------------------------------------------
-namespace CodeGenerator
-{
-namespace OpenCL
+namespace GeNN::CodeGenerator::OpenCL
 {
 //! Methods for selecting OpenCL platform
 enum class PlatformSelect
@@ -124,29 +122,25 @@ public:
     virtual void genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const override;
 
     //! Generate a preamble to add substitution name for population RNG
-    virtual void genPopulationRNGPreamble(CodeStream &os, Substitutions &subs, const std::string &globalRNG, const std::string &name = "rng") const override;
+    virtual std::string genPopulationRNGPreamble(CodeStream &os, const std::string &globalRNG) const override;
 
     //! If required, generate a postamble for population RNG
     /*! For example, in OpenCL, this is used to write local RNG state back to global memory*/
     virtual void genPopulationRNGPostamble(CodeStream &os, const std::string &globalRNG) const override;
 
     //! Generate code to skip ahead local copy of global RNG
-    virtual void genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const std::string &sequence, const std::string &name = "rng") const override;
+    virtual std::string genGlobalRNGSkipAhead(CodeStream &os, const std::string &sequence) const override;
 
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase:: virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                                 HostHandler preambleHandler, HostHandler pushEGPHandler) const override;
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const override;
 
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                                  HostHandler preambleHandler, HostHandler pushEGPHandler) const override;
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const override;
 
-    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                                 HostHandler preambleHandler, HostHandler pushEGPHandler) const override;
+    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const override;
 
-    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                         HostHandler preambleHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
+    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const override;
 
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
     virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
@@ -175,10 +169,7 @@ public:
                                                const std::string &egpName) const override;
 
     //! When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host
-    virtual std::string getMergedGroupFieldHostType(const std::string &type) const override;
-
-    //! When generating merged structures what type to use for simulation RNGs
-    virtual std::string getMergedGroupSimRNGType() const override { return "clrngLfsr113HostStream"; }
+    virtual std::string getMergedGroupFieldHostTypeName(const Type::Base *type, const Type::TypeContext &context) const override;
 
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;
     virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
@@ -215,6 +206,9 @@ public:
 
     //! Generate code to return amount of free 'device' memory in bytes
     virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const override;
+
+     //! On backends which support it, generate a runtime assert
+    virtual void genAssert(CodeStream &os, const std::string &condition) const override {}
 
     virtual void genMakefilePreamble(std::ostream &os) const override;
     virtual void genMakefileLinkRule(std::ostream &os) const override;
@@ -364,7 +358,7 @@ private:
             const auto sortedFields = g.getSortedFields(*this);
             for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
                 const auto &f = sortedFields[fieldIndex];
-                if(::Utils::isTypePointer(std::get<0>(f))) {
+                if(GeNN::Utils::isTypePointer(std::get<0>(f))) {
                     os << "__global ";
                 }
                 os << std::get<0>(f) << " " << std::get<1>(f);
@@ -393,7 +387,7 @@ private:
                 
                 os << "__kernel void setMerged" << T::name << f.mergedGroupIndex << f.fieldName << "Kernel(";
                 os << "__global struct Merged" << T::name << "Group" << f.mergedGroupIndex << " *group, unsigned int idx, ";
-                if(::Utils::isTypePointer(f.type)) {
+                if(GeNN::Utils::isTypePointer(f.type)) {
                     os << "__global ";
                 }
                 os << f.type << " " << f.fieldName << ")";
@@ -453,5 +447,4 @@ private:
     cl::Device m_ChosenDevice;
     cl::Platform m_ChosenPlatform;
 };
-}   // OpenCL
-}   // CodeGenerator
+}   // GeNN::CodeGenerator::OpenCL

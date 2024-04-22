@@ -10,24 +10,22 @@
 #include "backend.h"
 
 // Forward declarations
+namespace GeNN
+{
 class ModelSpecInternal;
+}
+
 namespace plog
 {
 class IAppender;
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::SingleThreadedCPU::Optimiser
+// GeNN::CodeGenerator::SingleThreadedCPU::Optimiser
 //--------------------------------------------------------------------------
-namespace CodeGenerator
-{
-namespace SingleThreadedCPU
-{
-namespace Optimiser
+namespace GeNN::CodeGenerator::SingleThreadedCPU::Optimiser
 {
 BACKEND_EXPORT Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath, 
                                      plog::Severity backendLevel, plog::IAppender *backendAppender,
                                      const Preferences &preferences);
-}
-}   // namespace SingleThreadedCPU
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator::SingleThreadedCPU::Optimiser

@@ -4,6 +4,8 @@
 // GeNN includes
 #include "modelSpecInternal.h"
 
+using namespace GeNN;
+
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
@@ -12,23 +14,51 @@ namespace
 class AlphaCurr : public PostsynapticModels::Base
 {
 public:
-    DECLARE_MODEL(AlphaCurr, 1, 1);
+    DECLARE_SNIPPET(AlphaCurr);
 
-    SET_DECAY_CODE(
-        "$(x) = (DT * $(expDecay) * $(inSyn) * $(init)) + ($(expDecay) * $(x));\n"
-        "$(inSyn)*=$(expDecay);\n");
+    SET_SIM_CODE(
+        "injectCurrent(x);\n"
+        "x = (dt * expDecay * inSyn * init) + (expDecay * x);\n"
+        "inSyn *= expDecay;\n");
 
-    SET_CURRENT_CONVERTER_CODE("$(x)");
-
-    SET_PARAM_NAMES({"tau"});
+    SET_PARAMS({"tau"});
 
     SET_VARS({{"x", "scalar"}});
 
     SET_DERIVED_PARAMS({
-        {"expDecay", [](const std::vector<double> &pars, double dt) { return std::exp(-dt / pars[0]); }},
-        {"init", [](const std::vector<double> &pars, double) { return (std::exp(1) / pars[0]); }}});
+        {"expDecay", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars.at("tau").cast<double>()); }},
+        {"init", [](const ParamValues &pars, double) { return (std::exp(1) / pars.at("tau").cast<double>()); }}});
 };
-IMPLEMENT_MODEL(AlphaCurr);
+IMPLEMENT_SNIPPET(AlphaCurr);
+
+
+class Sum : public CustomUpdateModels::Base
+{
+    DECLARE_SNIPPET(Sum);
+
+    SET_UPDATE_CODE("sum = a + b;\n");
+
+    SET_CUSTOM_UPDATE_VARS({{"sum", "scalar"}});
+    SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_ONLY}, 
+                  {"b", "scalar", VarAccessMode::READ_ONLY}});
+};
+IMPLEMENT_SNIPPET(Sum);
+
+class RemoveSynapse : public CustomConnectivityUpdateModels::Base
+{
+public:
+    DECLARE_SNIPPET(RemoveSynapse);
+    
+    SET_VARS({{"a", "scalar"}});
+    SET_ROW_UPDATE_CODE(
+        "for_each_synapse{\n"
+        "   if(id_post == (id_pre + 1)) {\n"
+        "       remove_synapse();\n"
+        "       break;\n"
+        "   }\n"
+        "};\n");
+};
+IMPLEMENT_SNIPPET(RemoveSynapse);
 }
 
 //--------------------------------------------------------------------------
@@ -38,8 +68,8 @@ TEST(ModelSpec, NeuronGroupZeroCopy)
 {
     ModelSpecInternal model;
 
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     ng->setSpikeLocation(VarLocation::HOST_DEVICE_ZERO_COPY);
 
@@ -50,13 +80,13 @@ TEST(ModelSpec, CurrentSourceZeroCopy)
 {
     ModelSpecInternal model;
 
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 10, paramVals, varVals);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
+    auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 10, paramVals, varVals);
 
-    CurrentSourceModels::PoissonExp::ParamValues csParamVals(0.1, 5.0, 10.0);
-    CurrentSourceModels::PoissonExp::VarValues csVarVals(0.0);
-    CurrentSource *cs = model.addCurrentSource<CurrentSourceModels::PoissonExp>("CS", "Neurons", csParamVals, csVarVals);
+    ParamValues csParamVals{{"weight", 0.1}, {"tauSyn", 5.0}, {"rate", 10.0}};
+    VarValues csVarVals{{"current", 0.0}};
+    auto *cs = model.addCurrentSource<CurrentSourceModels::PoissonExp>("CS", pop, csParamVals, csVarVals);
     cs->setVarLocation("current", VarLocation::HOST_DEVICE_ZERO_COPY);
 
     ASSERT_TRUE(model.zeroCopyInUse());
@@ -66,16 +96,16 @@ TEST(ModelSpec, PSMZeroCopy)
 {
     ModelSpecInternal model;
 
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
-    SynapseGroup *sg = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, AlphaCurr>(
-        "Synapse", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
-        "Neurons0", "Neurons1",
-        {}, {1.0},
-        {5.0}, {0.0});
+    SynapseGroup *sg = model.addSynapsePopulation(
+        "Synapse", SynapseMatrixType::DENSE,
+        pre, post,
+        initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
+        initPostsynaptic<AlphaCurr>({{"tau", 5.0}}, {{"x", 0.0}}));
     sg->setPSVarLocation("x", VarLocation::HOST_DEVICE_ZERO_COPY);
 
     ASSERT_TRUE(model.zeroCopyInUse());
@@ -85,17 +115,54 @@ TEST(ModelSpec, WUZeroCopy)
 {
     ModelSpecInternal model;
 
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
-    SynapseGroup *sg = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
-        "Synapse", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
-        "Neurons0", "Neurons1",
-        {}, {1.0},
-        {}, {});
+    SynapseGroup *sg = model.addSynapsePopulation(
+        "Synapse", SynapseMatrixType::DENSE,
+        pre, post,
+        initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
     sg->setWUVarLocation("g", VarLocation::HOST_DEVICE_ZERO_COPY);
 
+    ASSERT_TRUE(model.zeroCopyInUse());
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpec, CustomUpdateZeroCopy)
+{
+    ModelSpecInternal model;
+
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
+    NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 10, paramVals, varVals);
+
+    VarReferences varRefs{{"a", createVarRef(ng, "V")}, {"b", createVarRef(ng, "U")}};
+    CustomUpdate *cu = model.addCustomUpdate<Sum>("Sum", "Test", 
+                                                  {}, {{"sum", 0.0}}, varRefs);
+    cu->setVarLocation("sum", VarLocation::HOST_DEVICE_ZERO_COPY);
+    ASSERT_TRUE(model.zeroCopyInUse());
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpec, CustomConnectivityUpdateZeroCopy)
+{
+    ModelSpecInternal model;
+
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
+
+    auto *syn = model.addSynapsePopulation(
+        "Synapse", SynapseMatrixType::SPARSE,
+        pre, post,
+        initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, {{"g", 1.0}, {"d", 1}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+
+    CustomConnectivityUpdate *cu = model.addCustomConnectivityUpdate<RemoveSynapse>("RemoveSynapse", "Test", syn,
+                                                                                    {}, {{"a", 0.0}}, {}, {},
+                                                                                    {}, {}, {});
+    cu->setVarLocation("a", VarLocation::HOST_DEVICE_ZERO_COPY);
     ASSERT_TRUE(model.zeroCopyInUse());
 }

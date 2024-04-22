@@ -4,6 +4,8 @@
 // GeNN includes
 #include "modelSpec.h"
 
+using namespace GeNN;
+
 //--------------------------------------------------------------------------
 // UniformCopy
 //--------------------------------------------------------------------------
@@ -11,10 +13,10 @@ class UniformCopy : public InitVarSnippet::Base
 {
 public:
     SET_CODE(
-        "const scalar scale = $(max) - $(min);\n"
-        "$(value) = $(min) + ($(gennrand_uniform) * scale);");
+        "const scalar scale = max - min;\n"
+        "value = min + (gennrand_uniform() * scale);");
 
-    SET_PARAM_NAMES({"min", "max"});
+    SET_PARAMS({"min", "max"});
 };
 
 //--------------------------------------------------------------------------
@@ -39,8 +41,8 @@ TEST(InitVarSnippet, CompareCopyPasted)
 
 TEST(InitVarSnippet, CompareVarInitParameters)
 {
-    InitVarSnippet::Uniform::ParamValues uniformParamsA(0.0, 1.0);
-    InitVarSnippet::Uniform::ParamValues uniformParamsB(0.0, 0.5);
+    ParamValues uniformParamsA{{"min", 0.0}, {"max", 1.0}};
+    ParamValues uniformParamsB{{"min", 0.0}, {"max", 0.5}};
 
     const auto varInit0 = initVar<InitVarSnippet::Uniform>(uniformParamsA);
     const auto varInit1 = initVar<InitVarSnippet::Uniform>(uniformParamsA);
@@ -48,4 +50,35 @@ TEST(InitVarSnippet, CompareVarInitParameters)
 
     ASSERT_EQ(varInit0.getHashDigest(), varInit1.getHashDigest());
     ASSERT_EQ(varInit0.getHashDigest(), varInit2.getHashDigest());
+}
+//--------------------------------------------------------------------------
+TEST(InitVarSnippet, ValidateParamValues) 
+{
+    const ParamValues paramValsCorrect{{"min", 0.0}, {"max", 1.0}};
+    const ParamValues paramValsMisSpelled{{"miny", 0.0}, {"max", 1.0}};
+    const ParamValues paramValsMissing{{"max", 1.0}};
+    const ParamValues paramValsExtra{{"min", 0.0}, {"max", 1.0}, {"mean", 0.5}};
+
+    InitVarSnippet::Uniform::getInstance()->validate(paramValsCorrect);
+
+    try {
+        InitVarSnippet::Uniform::getInstance()->validate(paramValsMisSpelled);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    } 
+
+    try {
+        InitVarSnippet::Uniform::getInstance()->validate(paramValsMissing);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    } 
+
+    try {
+        InitVarSnippet::Uniform::getInstance()->validate(paramValsExtra);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    } 
 }

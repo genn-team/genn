@@ -31,13 +31,13 @@
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/generateModules.h"
 #include "code_generator/generateRunner.h"
-#include "code_generator/generateSupportCode.h"
 #include "code_generator/modelSpecMerged.h"
 
 // CUDA backend includes
 #include "utils.h"
 
-using namespace CodeGenerator;
+using namespace GeNN;
+using namespace GeNN::CodeGenerator;
 using namespace CUDA;
 
 //--------------------------------------------------------------------------
@@ -162,12 +162,12 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
 
     // Loop through custom updates, add size to vector of custom update groups and update group name to set
     for(const auto &c : model.getCustomUpdates()) {
-        const size_t numCopies = (c.second.isBatched() && !c.second.isBatchReduction()) ? model.getBatchSize() : 1;
-        const size_t size = numCopies * (c.second.isNeuronReduction() ? 32 : c.second.getSize());
+        const size_t numCopies = ((c.second.getDims() & VarAccessDim::BATCH) && !c.second.isBatchReduction()) ? model.getBatchSize() : 1;
+        const size_t size = numCopies * (c.second.isNeuronReduction() ? 32 : c.second.getNumNeurons());
 
         groupSizes[KernelCustomUpdate].push_back(size);
         if(c.second.isVarInitRequired()) {
-            groupSizes[KernelInitialize].push_back(c.second.getSize());
+            groupSizes[KernelInitialize].push_back(c.second.getNumNeurons());
         }
         customUpdateKernels.insert(c.second.getUpdateGroupName());
     }
@@ -176,7 +176,7 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
     for(const auto &c : model.getCustomWUUpdates()) {
         const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(c.second.getSynapseGroup());
         if(c.second.isTransposeOperation()) {
-            const size_t numCopies = c.second.isBatched() ? model.getBatchSize() : 1;
+            const size_t numCopies = (c.second.getDims() & VarAccessDim::BATCH) ? model.getBatchSize() : 1;
             const size_t size = numCopies * sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getTrgNeuronGroup()->getNumNeurons();
             groupSizes[KernelCustomTransposeUpdate].push_back(size);
             customTransposeUpdateKernels.insert(c.second.getUpdateGroupName());
@@ -184,7 +184,7 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
         else {
             customUpdateKernels.insert(c.second.getUpdateGroupName());
 
-            const size_t numCopies = (c.second.isBatched() && !c.second.isBatchReduction()) ? model.getBatchSize() : 1;
+            const size_t numCopies = ((c.second.getDims() & VarAccessDim::BATCH) && !c.second.isBatchReduction()) ? model.getBatchSize() : 1;
             if(sgInternal->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 groupSizes[KernelCustomUpdate].push_back(numCopies * sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getMaxConnections());
             }
@@ -200,18 +200,33 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
         }
     }
 
+    for (const auto &c : model.getCustomConnectivityUpdates()) {
+        const auto *sg = c.second.getSynapseGroup();
+        groupSizes[KernelCustomUpdate].push_back(sg->getSrcNeuronGroup()->getNumNeurons());
+        if(c.second.isVarInitRequired()) {
+            groupSizes[KernelInitializeSparse].push_back(sg->getSrcNeuronGroup()->getNumNeurons() * sg->getMaxConnections());
+        }
+        if(c.second.isPreVarInitRequired()) {
+            groupSizes[KernelInitialize].push_back(sg->getSrcNeuronGroup()->getNumNeurons());
+        }
+        if(c.second.isPostVarInitRequired()) {
+            groupSizes[KernelInitialize].push_back(sg->getTrgNeuronGroup()->getNumNeurons());
+        }
+        customUpdateKernels.insert(c.second.getUpdateGroupName());
+    }
+
     // Loop through synapse groups
     size_t numPreSynapseResetGroups = 0;
     for(const auto &s : model.getSynapseGroups()) {
-        if(s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()) {
+        if(s.second.isPreSpikeEventRequired() || s.second.isPreSpikeRequired()) {
             groupSizes[KernelPresynapticUpdate].push_back(model.getBatchSize() * Backend::getNumPresynapticUpdateThreads(s.second, preferences));
         }
 
-        if(!s.second.getWUModel()->getLearnPostCode().empty()) {
+        if(s.second.isPostSpikeRequired() || s.second.isPostSpikeEventRequired()) {
             groupSizes[KernelPostsynapticUpdate].push_back(model.getBatchSize() * Backend::getNumPostsynapticUpdateThreads(s.second));
         }
 
-        if(!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
+        if(!Utils::areTokensEmpty(s.second.getWUInitialiser().getSynapseDynamicsCodeTokens())) {
             groupSizes[KernelSynapseDynamicsUpdate].push_back(model.getBatchSize() * Backend::getNumSynapseDynamicsThreads(s.second));
         }
 
@@ -436,23 +451,28 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         std::fill(blockSize.begin(), blockSize.end(), repBlockSizes[r]);
 
         // Create backend
-        Backend backend(blockSize, preferences, model.getPrecision(), deviceID);
+        Backend backend(blockSize, preferences, deviceID, model.zeroCopyInUse());
 
         // Create merged model
-        ModelSpecMerged modelMerged(model, backend);
+        ModelSpecMerged modelMerged(backend, model);
+
+        // Get memory spaces available to this backend
+        // **NOTE** Memory spaces are given out on a first-come, first-serve basis so subsequent groups are in preferential order
+        auto memorySpaces = backend.getMergedGroupMemorySpaces(modelMerged);
 
         // Generate code with suffix so it doesn't interfere with primary generated code
         // **NOTE** we don't really need to generate all the code but, on windows, generating code selectively seems to result in werid b
         const std::string dryRunSuffix = "CUDAOptim";
-        generateRunner(outputPath, modelMerged, backend, dryRunSuffix);
-        generateSynapseUpdate(outputPath, modelMerged, backend, dryRunSuffix);
-        generateNeuronUpdate(outputPath, modelMerged, backend, dryRunSuffix);
-        generateCustomUpdate(outputPath, modelMerged, backend, dryRunSuffix);
-        generateInit(outputPath, modelMerged, backend, dryRunSuffix);
-
-        // Generate support code module if the backend supports namespaces
-        if (backend.supportsNamespace()) {
-            generateSupportCode(outputPath, modelMerged, dryRunSuffix);
+        {
+            std::ofstream neuronUpdateStream((outputPath / "neuronUpdateCUDAOptim.cc").str());
+            std::ofstream customUpdateStream((outputPath / "customUpdateCUDAOptim.cc").str());
+            std::ofstream synapseUpdateStream((outputPath / "synapseUpdateCUDAOptim.cc").str());
+            std::ofstream initStream((outputPath / "initCUDAOptim.cc").str());
+            generateSynapseUpdate(synapseUpdateStream, modelMerged, backend, memorySpaces, dryRunSuffix);
+            generateNeuronUpdate(neuronUpdateStream, modelMerged, backend, memorySpaces, dryRunSuffix);
+            generateCustomUpdate(customUpdateStream, modelMerged, backend, memorySpaces, dryRunSuffix);
+            generateInit(initStream, modelMerged, backend, memorySpaces, dryRunSuffix);
+            generateRunner(outputPath, modelMerged, backend, dryRunSuffix);
         }
 
         // Loop through modules
@@ -461,7 +481,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
             // Calculate module's hash digest
             // **NOTE** this COULD be done in thread functions but, because when using GeNN from Python,
             // this will call into Python code it would require whole Python interface to be made thread-safe
-            const auto hashDigest = (modelMerged.*m.getArchetypeHashDigest)();
+            const auto hashDigest = std::invoke(m.getArchetypeHashDigest, modelMerged);
 
             // Launch thread to analyse kernels in this module (if required)
             threads.emplace_back(analyseModule, std::cref(m), r, cuContext, hashDigest, std::cref(outputPath), std::cref(nvccPath),
@@ -478,13 +498,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         if(std::remove((outputPath / ("runner" + dryRunSuffix + ".cc")).str().c_str())) {
             LOGW_BACKEND << "Cannot remove dry-run source file";
         }
-        if(std::remove((outputPath / ("supportCode" + dryRunSuffix + ".h")).str().c_str())) {
-            LOGW_BACKEND << "Cannot remove dry-run source file";
-        }
         if(std::remove((outputPath / ("definitions" + dryRunSuffix + ".h")).str().c_str())) {
-            LOGW_BACKEND << "Cannot remove dry-run source file";
-        }
-        if(std::remove((outputPath / ("definitionsInternal" + dryRunSuffix + ".h")).str().c_str())) {
             LOGW_BACKEND << "Cannot remove dry-run source file";
         }
     }
@@ -716,13 +730,12 @@ int chooseDeviceWithMostGlobalMemory()
     LOGI_BACKEND << "Using device " << bestDevice << " which has " << mostGlobalMemory << " bytes of global memory";
     return bestDevice;
 }
-}
+}   // anonymous namespace
+
+//--------------------------------------------------------------------------
 // CodeGenerator::Backends::Optimiser
-namespace CodeGenerator
-{
-namespace CUDA
-{
-namespace Optimiser
+//--------------------------------------------------------------------------
+namespace GeNN::CodeGenerator::CUDA::Optimiser
 {
 Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath, 
                       plog::Severity backendLevel, plog::IAppender *backendAppender, 
@@ -748,7 +761,7 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &ou
         const int deviceID = chooseOptimalDevice(model, cudaBlockSize, preferences, outputPath);
 
         // Create backend
-        return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);
+        return Backend(cudaBlockSize, preferences, deviceID, model.zeroCopyInUse());
     }
     // Otherwise
     else {
@@ -767,15 +780,13 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &ou
             optimizeBlockSize(deviceID, deviceProps, model, cudaBlockSize, preferences, outputPath);
 
             // Create backend
-            return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);
+            return Backend(cudaBlockSize, preferences, deviceID, model.zeroCopyInUse());
         }
         // Otherwise, create backend using manual block sizes specified in preferences
         else {
-            return Backend(preferences.manualBlockSizes, preferences, model.getPrecision(), deviceID);
+            return Backend(preferences.manualBlockSizes, preferences, deviceID, model.zeroCopyInUse());
         }
 
     }
 }
-}   // namespace Optimiser
-}   // namespace CUDA
-}   // namespace CodeGenerator
+}   // namespace CodeGenerator::Backends::Optimiser

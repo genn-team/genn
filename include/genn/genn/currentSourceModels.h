@@ -16,11 +16,12 @@
 // Macros
 //----------------------------------------------------------------------------
 #define SET_INJECTION_CODE(INJECTION_CODE) virtual std::string getInjectionCode() const override{ return INJECTION_CODE; }
+#define SET_NEURON_VAR_REFS(...) virtual VarRefVec getNeuronVarRefs() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
-// CurrentSourceModels::Base
+// GeNN::CurrentSourceModels::Base
 //----------------------------------------------------------------------------
-namespace CurrentSourceModels
+namespace GeNN::CurrentSourceModels
 {
 //! Base class for all current source models
 class GENN_EXPORT Base : public Models::Base
@@ -32,14 +33,29 @@ public:
     //! Gets the code that defines current injected each timestep 
     virtual std::string getInjectionCode() const{ return ""; }
 
+    //! Gets model variables
+    virtual std::vector<Var> getVars() const{ return {}; }
+
+    //! Gets names and types of model variable references
+    virtual VarRefVec getNeuronVarRefs() const{ return {}; }
+
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
     //! Update hash from model
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
+    //! Find the named variable
+    std::optional<Var> getVar(const std::string &varName) const
+    {
+        return getNamed(varName, getVars());
+    }
+
     //! Validate names of parameters etc
-    void validate() const;
+    void validate(const std::map<std::string, Type::NumericValue> &paramValues, 
+                  const std::map<std::string, InitVarSnippet::Init> &varValues,
+                  const std::map<std::string, Models::VarReference> &varRefTargets,
+                  const std::string &description) const;
 };
 
 //----------------------------------------------------------------------------
@@ -47,15 +63,16 @@ public:
 //----------------------------------------------------------------------------
 //! DC source
 /*! It has a single parameter:
+
     - \c amp    - amplitude of the current [nA]
 */
 class DC : public Base
 {
-    DECLARE_MODEL(DC, 1, 0);
+    DECLARE_SNIPPET(DC);
 
-    SET_INJECTION_CODE("$(injectCurrent, $(amp));\n");
+    SET_INJECTION_CODE("injectCurrent(amp);\n");
 
-    SET_PARAM_NAMES({"amp"});
+    SET_PARAMS({"amp"});
 };
 
 //----------------------------------------------------------------------------
@@ -63,16 +80,17 @@ class DC : public Base
 //----------------------------------------------------------------------------
 //! Noisy current source with noise drawn from normal distribution
 /*! It has 2 parameters:
+
     - \c mean   - mean of the normal distribution [nA]
     - \c sd     - standard deviation of the normal distribution [nA]
 */
 class GaussianNoise : public Base
 {
-    DECLARE_MODEL(GaussianNoise, 2, 0);
+    DECLARE_SNIPPET(GaussianNoise);
 
-    SET_INJECTION_CODE("$(injectCurrent, $(mean) + $(gennrand_normal) * $(sd));\n");
+    SET_INJECTION_CODE("injectCurrent(mean + (gennrand_normal() * sd));\n");
 
-    SET_PARAM_NAMES({"mean", "sd"} );
+    SET_PARAMS({"mean", "sd"} );
 };
 
 //----------------------------------------------------------------------------
@@ -81,31 +99,32 @@ class GaussianNoise : public Base
 //! Current source for injecting a current equivalent to a population of
 //! Poisson spike sources, one-to-one connected with exponential synapses
 /*! It has 3 parameters:
+
     - \c weight - synaptic weight of the Poisson spikes [nA]
     - \c tauSyn - decay time constant [ms]
     - \c rate   - mean firing rate [Hz]
 */
 class PoissonExp : public Base
 {
-    DECLARE_MODEL(PoissonExp, 3, 1);
+    DECLARE_SNIPPET(PoissonExp);
 
     SET_INJECTION_CODE(
-        "scalar p = 1.0f;\n"
+        "scalar p = 1.0;\n"
         "unsigned int numSpikes = 0;\n"
         "do\n"
         "{\n"
         "    numSpikes++;\n"
-        "    p *= $(gennrand_uniform);\n"
-        "} while (p > $(ExpMinusLambda));\n"
-        "$(current) += $(Init) * (scalar)(numSpikes - 1);\n"
-        "$(injectCurrent, $(current));\n"
-        "$(current) *= $(ExpDecay);\n");
+        "    p *= gennrand_uniform();\n"
+        "} while (p > ExpMinusLambda);\n"
+        "current += Init * (scalar)(numSpikes - 1);\n"
+        "injectCurrent(current);\n"
+        "current *= ExpDecay;\n");
 
-    SET_PARAM_NAMES({"weight", "tauSyn", "rate"});
+    SET_PARAMS({"weight", "tauSyn", "rate"});
     SET_VARS({{"current", "scalar"}});
     SET_DERIVED_PARAMS({
-        {"ExpDecay", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[1]); }},
-        {"Init", [](const std::vector<double> &pars, double dt){ return pars[0] * (1.0 - std::exp(-dt / pars[1])) * (pars[1] / dt); }},
-        {"ExpMinusLambda", [](const std::vector<double> &pars, double dt){ return std::exp(-(pars[2] / 1000.0) * dt); }}});
+        {"ExpDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauSyn").cast<double>()); }},
+        {"Init", [](const ParamValues &pars, double dt){ return pars.at("weight").cast<double>() * (1.0 - std::exp(-dt / pars.at("tauSyn").cast<double>())) * (pars.at("tauSyn").cast<double>() / dt); }},
+        {"ExpMinusLambda", [](const ParamValues &pars, double dt){ return std::exp(-(pars.at("rate").cast<double>() / 1000.0) * dt); }}});
 };
-} // CurrentSourceModels
+} // GeNN::CurrentSourceModels

@@ -6,10 +6,10 @@
 #include <vector>
 
 //--------------------------------------------------------------------------
-// CodeGenerator::TeeBuf
+// GeNN::CodeGenerator::TeeBuf
 //--------------------------------------------------------------------------
 // A stream buffer to support 'Teeing' streams - curtesy of http://wordaligned.org/articles/cpp-streambufs
-namespace CodeGenerator
+namespace GeNN::CodeGenerator
 {
 class TeeBuf: public std::streambuf
 {
@@ -60,7 +60,7 @@ private:
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::TeeStream
+// GeNN::CodeGenerator::TeeStream
 //--------------------------------------------------------------------------
 class TeeStream : public std::ostream
 {
@@ -77,4 +77,4 @@ private:
     //--------------------------------------------------------------------------
     TeeBuf m_TeeBuf;
 };
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator

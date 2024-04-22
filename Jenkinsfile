@@ -8,17 +8,17 @@ properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '',
 
 // All the types of build we'll ideally run if suitable nodes exist
 def desiredBuilds = [
-    ["cuda11", "windows"] as Set,
     ["cuda10", "windows"] as Set,
-    ["cuda9", "windows"] as Set,
+    ["cuda11", "windows"] as Set,
+    ["cuda12", "windows"] as Set,
     ["amd", "windows"] as Set,
-    ["cuda11", "linux"] as Set,
     ["cuda10", "linux"] as Set,
-    ["cuda9", "linux"] as Set,
+    ["cuda11", "linux"] as Set,
+    ["cuda12", "linux"] as Set,
     ["amd", "linux"] as Set,
-    ["cuda11", "mac"] as Set,
     ["cuda10", "mac"] as Set,
-    ["cuda9", "mac"] as Set,
+    ["cuda11", "mac"] as Set,
+    ["cuda12", "mac"] as Set,
     ["amd", "mac"] as Set]
 
 //--------------------------------------------------------------------------
@@ -96,7 +96,7 @@ for(b = 0; b < builderNodes.size(); b++) {
             // Customise this nodes environment so GeNN and googletest environment variables are set and genn binaries are in path
             // **NOTE** these are NOT set directly using env.PATH as this makes the change across ALL nodes which means you get a randomly mangled path depending on node startup order
             withEnv(["GTEST_DIR=" + pwd() + "/googletest-release-1.11.0/googletest",
-                     "PATH+GENN=" + pwd() + "/genn/bin"]) {
+                     "PATH+GENN=" + pwd() + "/genn/bin", "OPENCL_PATH="]) {
                 stage(installationStageName) {
                     echo "Checking out GeNN";
 
@@ -133,108 +133,146 @@ for(b = 0; b < builderNodes.size(); b++) {
                     }
                 }
 
-                buildStep("Running tests (" + env.NODE_NAME + ")") {
+                def outputFilename = "${WORKSPACE}/genn/output_${NODE_NAME}.txt";
+                def compileOutputFilename = "${WORKSPACE}/genn/compile_${NODE_NAME}.txt";
+                def coveragePython = "${WORKSPACE}/genn/coverage_python_${NODE_NAME}.xml";
+                def coverageCPP = "${WORKSPACE}/genn/coverage_${NODE_NAME}.txt";
+                buildStep("Running unit tests (" + env.NODE_NAME + ")") {
                     // Run automatic tests
-                    def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
-                    dir("genn/tests") {
+                    dir("genn") {
                         if (isUnix()) {
-                            // **YUCK** if dev_toolset is in node label - add flag to enable newer GCC using dev_toolset (CentOS)
-                            def runTestArguments = "";
-                            if("dev_toolset" in nodeLabel) {
-                                echo "Enabling devtoolset 6 version of GCC";
-                                runTestArguments += " -d";
-                            }
-
-                            // If node has suitable CUDA, add -c option
-                            if("cuda8" in nodeLabel || "cuda9" in nodeLabel || "cuda10" in nodeLabel || "cuda11" in nodeLabel) {
-                                runTestArguments += " -c";
-                            }
-
-                            // If node has OpenCL, add -l option
-                            if(nodeLabel.contains("opencl")) {
-                                runTestArguments += " -l";
-                            }
-
                             // Run tests
-                            // **NOTE** uniqueMsg is in genn directory, NOT tests directory
-                            def runTestsCommand = "./run_tests.sh" + runTestArguments + " 1>> \"../" + uniqueMsg + "\" 2>> \"../" + uniqueMsg + "\"";
+                            def runTestsCommand = """
+                            rm -f "${outputFilename}"
+
+                            # Clean and build unit tests
+                            cd tests/unit
+                            make clean all COVERAGE=1 1>> "${outputFilename}" 2>&1
+
+                            # Run tests
+                            ./test_coverage --gtest_output="xml:test_results_unit.xml" 1>> "${outputFilename}" 2>&1
+                            """;
                             def runTestsStatus = sh script:runTestsCommand, returnStatus:true;
 
                             // If tests failed, set failure status
                             if(runTestsStatus != 0) {
-                                setBuildStatus("Running tests (" + env.NODE_NAME + ")", "FAILURE");
+                                setBuildStatus("Running unit tests (" + env.NODE_NAME + ")", "FAILURE");
                             }
 
                         }
                         else {
                             // Run tests
-                            // **NOTE** uniqueMsg is in genn directory, NOT tests directory
                             def runTestsCommand = """
                             CALL %VC_VARS_BAT%
-                            CALL run_tests.bat >> "..\\${uniqueMsg}" 2>&1;
+                            DEL "${outputFilename}"
+
+                            msbuild genn.sln /m /t:single_threaded_cpu_backend /verbosity:quiet /p:Configuration=Release
+
+                            msbuild tests/tests.sln /m /verbosity:quiet /p:Configuration=Release
+
+                            PUSHD tests/unit
+                            unit_Release.exe --gtest_output="xml:test_results_unit.xml"
+                            POPD
+
+                            CALL run_tests.bat >> "${outputFilename}" 2>&1;
                             """;
                             def runTestsStatus = bat script:runTestsCommand, returnStatus:true;
 
                             // If tests failed, set failure status
                             if(runTestsStatus != 0) {
-                                setBuildStatus("Running tests (" + env.NODE_NAME + ")", "FAILURE");
+                                setBuildStatus("Running unit tests (" + env.NODE_NAME + ")", "FAILURE");
                             }
                         }
                     }
                 }
 
-                buildStep("Gathering test results (" + env.NODE_NAME + ")") {
+                buildStep("Setup virtualenv (${NODE_NAME})") {
+                    // Set up new virtualenv
+                    echo "Creating virtualenv";
+                    sh """
+                    rm -rf ${WORKSPACE}/venv
+                    ${env.PYTHON} -m venv ${WORKSPACE}/venv
+                    . ${WORKSPACE}/venv/bin/activate
+                    pip install -U pip
+                    pip install numpy scipy pybind11 pytest flaky pytest-cov wheel flake8 bitarray psutil
+                    """;
+                }
+
+                buildStep("Installing PyGeNN (${NODE_NAME})") {
+                    dir("genn") {
+                        // Build PyGeNN module
+                        echo "Building and installing PyGeNN";
+                        def commandsPyGeNN = """
+                        . ${WORKSPACE}/venv/bin/activate
+                        python setup.py develop --coverage 2>&1 | tee -a "${compileOutputFilename}" >> "${outputFilename}"
+                        """;
+                        def statusPyGeNN = sh script:commandsPyGeNN, returnStatus:true;
+                        if (statusPyGeNN != 0) {
+                            setBuildStatus("Building PyGeNN (${NODE_NAME})", "FAILURE");
+                        }
+                    }
+                }
+
+                
+                buildStep("Running feature tests (${NODE_NAME})") {
+                    dir("genn/tests/features") {
+                        // Run ML GeNN test suite
+                        def commandsTest = """
+                        . ${WORKSPACE}/venv/bin/activate
+                        pytest -s -v --cov ../../pygenn --cov-report=xml:${coveragePython} --junitxml test_results_feature.xml 1>> "${outputFilename}" 2>&1
+                        """;
+                        def statusTests = sh script:commandsTest, returnStatus:true;
+                        if (statusTests != 0) {
+                            setBuildStatus("Running tests (${NODE_NAME})", "FAILURE");
+                        }
+                    }
+                }
+
+                buildStep("Gathering test results (${NODE_NAME})") {
                     dir("genn/tests") {
                         // Process JUnit test output
                         junit "**/test_results*.xml";
                     }
                 }
 
-                buildStep("Uploading coverage (" + env.NODE_NAME + ")") {
+                buildStep("Uploading coverage (${NODE_NAME})") {
                     dir("genn/tests") {
                         if(isUnix()) {
-                            // If coverage was emitted
-                            def uniqueCoverage = "coverage_" + env.NODE_NAME + ".txt";
-                            if(fileExists(uniqueCoverage)) {
-                                // Upload to code cov
-                                withCredentials([string(credentialsId: "codecov_token_genn", variable: "CODECOV_TOKEN")]) {
-                                    sh 'curl -s https://codecov.io/bash | bash -s - -n ' + env.NODE_NAME + ' -f ' + uniqueCoverage + ' -t $CODECOV_TOKEN';
+                            // Run script to gather together GCOV coverage from unit and feature tests
+                            sh './gather_coverage.sh'
+                            
+                            // Upload to code cov
+                            withCredentials([string(credentialsId: "codecov_token_genn", variable: "CODECOV_TOKEN")]) {
+                                // Upload Python coverage if it was produced
+                                if(fileExists(coveragePython)) {
+                                    sh 'curl -s https://codecov.io/bash | bash -s - -n ' + env.NODE_NAME + ' -f ' + coveragePython + ' -t $CODECOV_TOKEN';
                                 }
-                            }
-                            else {
-                                echo uniqueCoverage + " doesn't exist!";
+                                else {
+                                    echo coveragePython + " doesn't exist!";
+                                }
+                                
+                                // Upload CPP coverage if it was produced
+                                if(fileExists(coverageCPP)) {
+                                    sh 'curl -s https://codecov.io/bash | bash -s - -n ' + env.NODE_NAME + ' -f ' + coverageCPP + ' -t $CODECOV_TOKEN';
+                                }
+                                else {
+                                    echo coverageCPP + " doesn't exist!";
+                                }
                             }
                         }
                     }
                 }
 
-                buildStep("Building Python wheels (" + env.NODE_NAME + ")") {
+                buildStep("Building Python wheels (${NODE_NAME})") {
                     dir("genn") {
-                        def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
                         if(isUnix()) {
-                            // Build set of dynamic libraries
-                            echo "Creating dynamic libraries";
-                            makeCommand = ""
-                            if("dev_toolset" in nodeLabel) {
-                                makeCommand += ". /opt/rh/devtoolset-6/enable\n"
-                            }
-                            makeCommand += "make DYNAMIC=1 LIBRARY_DIRECTORY=" + pwd() + "/pygenn/genn_wrapper 1>> \"" + uniqueMsg + "\" 2>> \"" + uniqueMsg + "\"";
-                            def makeStatusCode = sh script:makeCommand, returnStatus:true
-                            if(makeStatusCode != 0) {
-                                setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
-                            }
-
-                            // Create virtualenv, install numpy and make Python wheel
+                            // Create virtualenv, install numpy and pybind11; and make Python wheel
                             echo "Creating Python wheels";
                             script = """
-                            rm -rf virtualenv
-                            ${env.PYTHON} -m venv virtualenv
-                            . virtualenv/bin/activate
-                            pip install --upgrade pip
-                            pip install wheel "numpy>=1.17"
+                            . ${WORKSPACE}/venv/bin/activate
 
-                            python setup.py clean --all
-                            python setup.py bdist_wheel -d . 1>> "${uniqueMsg}" 2>> "${uniqueMsg}"
+                            python setup.py clean --all 1>> "${outputFilename}" 2>&1
+                            python setup.py bdist_wheel -d . 1>> "${outputFilename}" 2>&1
                             """
 
                             def wheelStatusCode = sh script:script, returnStatus:true
@@ -247,16 +285,20 @@ for(b = 0; b < builderNodes.size(); b++) {
                             echo "Creating dynamic libraries";
                             msbuildCommand = """
                             CALL %VC_VARS_BAT%
-                            msbuild genn.sln /m /verbosity:minimal /p:Configuration=Release_DLL /t:single_threaded_cpu_backend >> "${uniqueMsg}" 2>&1
+                            msbuild genn.sln /m /verbosity:quiet /p:Configuration=Release_DLL /t:single_threaded_cpu_backend >> "${outputFilename}" 2>&1
                             """;
 
                             // If node has suitable CUDA, also build CUDA backend
-                            if("cuda8" in nodeLabel || "cuda9" in nodeLabel || "cuda10" in nodeLabel) {
-                                msbuildCommand += "msbuild genn.sln /m /verbosity:minimal  /p:Configuration=Release_DLL /t:cuda_backend >> \"${uniqueMsg}\" 2>&1";
+                            if("cuda10" in nodeLabel || "cuda11" in nodeLabel || "cuda12" in nodeLabel) {
+                                msbuildCommand += """
+                                msbuild genn.sln /m /verbosity:quiet  /p:Configuration=Release_DLL /t:cuda_backend >> "${outputFilename}" 2>&1
+                                """;
                             }
                             // If this node has OpenCL, also build OpenCL backend
                             if(nodeLabel.contains("opencl")) {
-                                msbuildCommand += "msbuild genn.sln /m /verbosity:minimal  /p:Configuration=Release_DLL /t:opencl_backend >> \"${uniqueMsg}\" 2>&1";
+                                msbuildCommand += """
+                                msbuild genn.sln /m /verbosity:quiet  /p:Configuration=Release_DLL /t:opencl_backend >> "${outputFilename}" 2>&1
+                                """;
                             }
 
                             def msbuildStatusCode = bat script:msbuildCommand, returnStatus:true
@@ -272,20 +314,18 @@ for(b = 0; b < builderNodes.size(); b++) {
                             CALL %VC_VARS_BAT%
                             CALL %ANACONDA_ACTIVATE_BAT%
 
-                            CALL conda install -y swig
-
                             ${env.PYTHON} -m venv virtualenv
                             pushd virtualenv\\Scripts
                             call activate
                             popd
 
-                            pip install wheel "numpy>=1.17"
+                            pip install --upgrade pip
+                            pip install wheel "numpy>=1.17" pybind11
 
-                            copy /Y lib\\genn*Release_DLL.* pygenn\\genn_wrapper
+                            copy /Y lib\\genn*Release_DLL.* pygenn
 
                             python setup.py clean --all
-                            python setup.py bdist_wheel -d . >> "${uniqueMsg}" 2>&1
-                            python setup.py bdist_wheel -d . >> "${uniqueMsg}" 2>&1
+                            python setup.py bdist_wheel -d . >> "${outputFilename}" 2>&1
                             """
 
                             def wheelStatusCode = bat script:script, returnStatus:true
@@ -299,20 +339,21 @@ for(b = 0; b < builderNodes.size(); b++) {
                     }
                 }
 
-                buildStep("Archiving output (" + env.NODE_NAME + ")") {
+                buildStep("Archiving output (${NODE_NAME})") {
                     dir("genn") {
-                        def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
-                        archive uniqueMsg;
+                        def outputPattern = "output_" + env.NODE_NAME + ".txt";
+                        archive outputPattern;
 
                         // Run 'next-generation' warning plugin on results
+                        def compilePattern = "compile_" + env.NODE_NAME + ".txt";
                         if("mac" in nodeLabel) {
-                            recordIssues enabledForFailure: true, tool: clang(pattern: uniqueMsg);
+                            recordIssues enabledForFailure: true, tool: clang(pattern: compilePattern);
                         }
                         else if("windows" in nodeLabel){
-                            recordIssues enabledForFailure: true, tool: msBuild(pattern: uniqueMsg);
+                            recordIssues enabledForFailure: true, tool: msBuild(pattern: compilePattern);
                         }
                         else {
-                            recordIssues enabledForFailure: true, tool: gcc4(pattern: uniqueMsg);
+                            recordIssues enabledForFailure: true, tool: gcc4(pattern: compilePattern);
                         }
 
                     }

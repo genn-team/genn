@@ -7,7 +7,11 @@
 #include "backend.h"
 
 // Forward declarations
+namespace GeNN
+{
 class ModelSpecInternal;
+}
+
 namespace plog
 {
 class IAppender;
@@ -15,17 +19,11 @@ class IAppender;
 
 
 //--------------------------------------------------------------------------
-// CodeGenerator::OpenCL::Optimiser
+// GeNN::CodeGenerator::OpenCL::Optimiser
 //--------------------------------------------------------------------------
-namespace CodeGenerator
-{
-namespace OpenCL
-{
-namespace Optimiser
+namespace GeNN::CodeGenerator::OpenCL::Optimiser
 {
 BACKEND_EXPORT Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath, 
                                      plog::Severity backendLevel, plog::IAppender *backendAppender, 
                                      const Preferences &preferences);
-}   // namespace Optimiser
-}   // namespace CUDA
-}   // namespace CodeGenerator
+}   // namespace GeNN::CodeGenerator::OpenCL::Optimiser

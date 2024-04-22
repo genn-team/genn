@@ -6,102 +6,118 @@
 // Standard C includes
 #include <cctype>
 
-// GeNN includes
-#include "models.h"
+// Platform includes
+#ifdef _WIN32
+#include <intrin.h>
+#endif
 
+// GeNN transpiler includes
+#include "transpiler/errorHandler.h"
+#include "transpiler/parser.h"
+#include "transpiler/scanner.h"
+
+//--------------------------------------------------------------------------
+// Anonymous namespace
+//--------------------------------------------------------------------------
 namespace
 {
+const std::unordered_set<std::string> randomFuncs{
+    "gennrand",
+    "gennrand_uniform",
+    "gennrand_normal",
+    "gennrand_exponential",
+    "gennrand_log_normal",
+    "gennrand_gamma",
+    "gennrand_binomial"};
+}   // Anonymous namespace
+
 //--------------------------------------------------------------------------
-// GenericFunction
+// GeNN::Utils
 //--------------------------------------------------------------------------
-//! Immutable structure for specifying the name and number of
-//! arguments of a generic funcion e.g. gennrand_uniform
-struct GenericFunction
+namespace GeNN::Utils
 {
-    //! Generic name used to refer to function in user code
-    const std::string genericName;
-
-    //! Number of function arguments
-    const unsigned int numArguments;
-};
-
-
-GenericFunction randomFuncs[] = {
-    {"gennrand_uniform", 0},
-    {"gennrand_normal", 0},
-    {"gennrand_exponential", 0},
-    {"gennrand_log_normal", 2},
-    {"gennrand_gamma", 1},
-    {"gennrand_binomial", 2}
-};
-}
-
-//--------------------------------------------------------------------------
-// Utils
-//--------------------------------------------------------------------------
-namespace Utils
+std::vector<Transpiler::Token> scanCode(const std::string &code, const std::string &errorContext)
 {
-bool isRNGRequired(const std::string &code)
-{
-    // Loop through random functions
-    for(const auto &r : randomFuncs) {
-        // If this function takes no arguments, return true if
-        // generic function name enclosed in $() markers is found
-        if(r.numArguments == 0) {
-            if(code.find("$(" + r.genericName + ")") != std::string::npos) {
-                return true;
-            }
-        }
-        // Otherwise, return true if generic function name
-        // prefixed by $( and suffixed with comma is found
-        else if(code.find("$(" + r.genericName + ",") != std::string::npos) {
-            return true;
-        }
+    using namespace Transpiler;
+
+    // Scan code string and return tokens
+    Transpiler::ErrorHandler errorHandler(errorContext);
+    const auto tokens = Transpiler::Scanner::scanSource(code, errorHandler);
+    if(errorHandler.hasError()) {
+        throw std::runtime_error("Error scanning " + errorContext);
     }
-    return false;
+    return tokens;
+}
+//--------------------------------------------------------------------------
+Type::ResolvedType parseNumericType(const std::string &type, const Type::TypeContext &typeContext)
+{
+    using namespace Transpiler;
+
+    // Scan type
+    SingleLineErrorHandler errorHandler;
+    const auto tokens = Scanner::scanSource(type, errorHandler);
+    if(errorHandler.hasError()) {
+        throw std::runtime_error("Error scanning numeric type '" + std::string{type} + "'");
+    }
+
+    // Parse type numeric type
+    const auto resolvedType = Parser::parseNumericType(tokens, typeContext, errorHandler);
+
+    // If an error was encountered while scanning or parsing, throw exception
+    if (errorHandler.hasError()) {
+        throw std::runtime_error("Error parsing numeric type '" + std::string{type} + "'");
+    }
+
+    return resolvedType;
+}
+//--------------------------------------------------------------------------
+bool areTokensEmpty(const std::vector<Transpiler::Token> &tokens)
+{
+    // For easy parsing, there should always be at least one token
+    assert(tokens.size() >= 1);
+
+    // If there's only one token, assert it is actually an EOF and return true
+    if(tokens.size() == 1) {
+        assert(tokens.front().type == Transpiler::Token::Type::END_OF_FILE);
+        return true;
+    }
+    // Otherwise, return false
+    else {
+        return false;
+    }
+}
+//--------------------------------------------------------------------------
+bool isIdentifierReferenced(const std::string &identifierName, const std::vector<Transpiler::Token> &tokens)
+{
+    assert(!tokens.empty());
+
+    // Return true if any identifier's lexems match identifier name
+    return std::any_of(tokens.cbegin(), tokens.cend(), 
+                       [&identifierName](const auto &t)
+                       { 
+                           return (t.type == Transpiler::Token::Type::IDENTIFIER && t.lexeme == identifierName); 
+                       });
+            
+}
+//--------------------------------------------------------------------------
+bool isRNGRequired(const std::vector<Transpiler::Token> &tokens)
+{
+    assert(!tokens.empty());
+
+    // Return true if any identifier's lexems are in set of random functions
+    return std::any_of(tokens.cbegin(), tokens.cend(), 
+                       [](const auto &t)
+                       { 
+                           return (t.type == Transpiler::Token::Type::IDENTIFIER && randomFuncs.find(t.lexeme) != randomFuncs.cend()); 
+                       });
 
 }
 //--------------------------------------------------------------------------
-bool isRNGRequired(const std::vector<Models::VarInit> &varInitialisers)
+bool isRNGRequired(const std::map<std::string, InitVarSnippet::Init> &varInitialisers)
 {
     // Return true if any of these variable initialisers require an RNG
     return std::any_of(varInitialisers.cbegin(), varInitialisers.cend(),
-                       [](const Models::VarInit &varInit)
-                       {
-                           return isRNGRequired(varInit.getSnippet()->getCode());
-                       });
-}
-//--------------------------------------------------------------------------
-bool isTypePointer(const std::string &type)
-{
-    return (type.back() == '*');
-}
-//--------------------------------------------------------------------------
-bool isTypePointerToPointer(const std::string &type)
-{
-    const size_t len = type.length();
-    return (type[len - 1] == '*' && type[len - 2] == '*');
-}
-//--------------------------------------------------------------------------
-bool isTypeFloatingPoint(const std::string &type)
-{
-    assert(!isTypePointer(type));
-    return ((type == "float") || (type == "double") || (type == "half") || (type == "scalar"));
-}
-//--------------------------------------------------------------------------
-std::string getUnderlyingType(const std::string &type)
-{
-    // Check that type is a pointer type
-    assert(isTypePointer(type));
-
-    // if type is actually a pointer to a pointer, return string without last 2 characters
-    if(isTypePointerToPointer(type)) {
-        return type.substr(0, type.length() - 2);
-    }
-    // Otherwise, return string without last character
-    else {
-        return type.substr(0, type.length() - 1);
-    }
+                       [](const auto &varInit) { return isRNGRequired(varInit.second.getCodeTokens()); });
 }
 //--------------------------------------------------------------------------
 void validateVarName(const std::string &name, const std::string &description)
@@ -131,7 +147,7 @@ void validatePopName(const std::string &name, const std::string &description)
         throw std::runtime_error(description + " name invalid: cannot be empty");
     }
 
-    // If any characters aren't underscores or alphanumeric, name isn't valud
+    // If any characters aren't underscores or alphanumeric, name isn't valid
     if(std::any_of(name.cbegin(), name.cend(),
                    [](char c) { return (c != '_') && !std::isalnum(c); }))
     {
@@ -139,10 +155,31 @@ void validatePopName(const std::string &name, const std::string &description)
     }
 }
 //--------------------------------------------------------------------------
-void validateParamNames(const std::vector<std::string> &paramNames)
+std::string handleLegacyEGPType(const std::string &type)
 {
-    for(const std::string &p : paramNames) {
-        validateVarName(p, "Parameter");
+    // If type string ends in *
+    if(!type.empty() && type.back() == '*') {
+        return type.substr(0, type.length() - 1);
+    }
+    // Otherwise, throw exception
+    else {
+        throw std::runtime_error("GeNN no longer supports non-array extra global parameters. "
+                                 "Dynamic parameters provide the same functionality");
     }
 }
-}   // namespace utils
+//--------------------------------------------------------------------------
+int clz(unsigned int value)
+{
+#ifdef _WIN32
+    unsigned long leadingZero = 0;
+    if(_BitScanReverse(&leadingZero, value)) {
+        return 31 - leadingZero;
+    }
+    else {
+        return 32;
+    }
+#else
+    return __builtin_clz(value);
+#endif
+}
+}   // namespace GeNN::utils

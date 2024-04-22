@@ -3,10 +3,10 @@
 // Standard C++ includes
 #include <algorithm>
 
-//----------------------------------------------------------------------------
-// CodeGenerator::CodeStream::IndentBuffer
-//----------------------------------------------------------------------------
-namespace CodeGenerator
+//------------------------------------------------------------------------
+// GeNN::CodeGenerator::CodeStream::IndentBuffer
+//------------------------------------------------------------------------
+namespace GeNN::CodeGenerator
 {
 int CodeStream::IndentBuffer::overflow(int c)
 {
@@ -35,7 +35,7 @@ int CodeStream::IndentBuffer::overflow(int c)
 }
 
 //------------------------------------------------------------------------
-// CodeGenerator::CodeStream::Scope
+// GeNN::CodeGenerator::CodeStream::Scope
 //------------------------------------------------------------------------
 unsigned int CodeStream::Scope::s_NextLevel = 0;
 
@@ -76,4 +76,4 @@ std::ostream& operator << (std::ostream& s, const CodeStream::CB &cb)
 
     return c;
 }
-}   // namspace CodeGenerator
+}

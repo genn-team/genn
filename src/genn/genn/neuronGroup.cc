@@ -3,6 +3,7 @@
 // Standard includes
 #include <algorithm>
 #include <cmath>
+#include <vector>
 
 // GeNN includes
 #include "currentSourceInternal.h"
@@ -11,13 +12,15 @@
 #include "synapseGroupInternal.h"
 #include "gennUtils.h"
 
+using namespace GeNN;
+
 // ------------------------------------------------------------------------
 // Anonymous namespace
 // ------------------------------------------------------------------------
 namespace
 {
 template<typename T, typename D>
-void updateHashList(const std::vector<T*> &objects, boost::uuids::detail::sha1 &hash, D getHashDigestFunc)
+void updateHashList(const NeuronGroup *ng, const std::vector<T*> &objects, boost::uuids::detail::sha1 &hash, D getHashDigestFunc)
 {
     // Build vector to hold digests
     std::vector<boost::uuids::detail::sha1::digest_type> digests;
@@ -25,7 +28,7 @@ void updateHashList(const std::vector<T*> &objects, boost::uuids::detail::sha1 &
 
     // Loop through objects and add their digests to vector
     for(auto *o : objects) {
-        digests.push_back((o->*getHashDigestFunc)());
+        digests.push_back(std::invoke(getHashDigestFunc, o, ng));
     }
     // Sort digests
     std::sort(digests.begin(), digests.end());
@@ -35,47 +38,43 @@ void updateHashList(const std::vector<T*> &objects, boost::uuids::detail::sha1 &
 }
 // ------------------------------------------------------------------------
 template<typename M, typename H, typename T>
-void fuseSynapseGroups(const std::vector<SynapseGroupInternal*> &unmergedSyn, bool merge, std::vector<SynapseGroupInternal*> &mergedSyn,
-                        const std::string &mergedTargetPrefix, const std::string &mergedTargetSuffix, const std::string &logDescription,
-                        M isSynMergableFunc, H getSynMergeHashFunc, T setSynMergeTargetFunc)
+void fuseSynapseGroups(const NeuronGroup *ng, const std::vector<SynapseGroupInternal*> &unfusedSyn, bool fuse, std::vector<SynapseGroupInternal*> &fusedSyn,
+                       const std::string &logDescription, M isSynFusableFunc, H getSynFusedHashFunc, T setSynFuseTargetFunc)
 {
     // Create a copy of list of synapse groups
-    std::vector<SynapseGroupInternal*> syn = unmergedSyn;
+    std::vector<SynapseGroupInternal*> syn = unfusedSyn;
 
     // Loop through un-merged synapse groups
     for(unsigned int i = 0; !syn.empty(); i++) {
         // Remove last element from vector
-        SynapseGroupInternal *a = syn.back();
+        auto *a = syn.back();
         syn.pop_back();
 
-        // Add A to vector of merged groups
-        mergedSyn.push_back(a);
+        // Add A to vector of fused groups
+        fusedSyn.push_back(a);
 
-        // Continue if merging is disabled
-        if(!merge) {
+        // Continue if fusing is disabled
+        if(!fuse) {
             continue;
         }
 
-        // If this synapse group can be merged at all
-        if(!(a->*isSynMergableFunc)()) {
+        // If this synapse group can be fused at all
+        if(!std::invoke(isSynFusableFunc, a, ng)) {
             continue;
         }
 
         // Get hash digest used for checking compatibility
-        const auto aHashDigest = (a->*getSynMergeHashFunc)();
-
-        // Create a name for merged groups
-        const std::string mergedTargetName = mergedTargetPrefix + std::to_string(i) + "_" + mergedTargetSuffix;
+        const auto aHashDigest = std::invoke(getSynFusedHashFunc, a, ng);
 
         // Loop through remainder of synapse groups
         bool anyMerged = false;
         for(auto b = syn.begin(); b != syn.end();) {
-            // If synapse group b can be merged with others and it's compatible with a
-            if(((*b)->*isSynMergableFunc)() && (aHashDigest == ((*b)->*getSynMergeHashFunc)())) {
-                LOGD_GENN << "Merging " << logDescription << " of '" << (*b)->getName() << "' with '" << a->getName() << "' into '" << mergedTargetName << "'";
+            // If synapse group b can be fused with others and it's compatible with a
+            if(std::invoke(isSynFusableFunc, *b, ng) && (aHashDigest == std::invoke(getSynFusedHashFunc, *b, ng))) {
+                LOGD_GENN << "Fusing " << logDescription << " of '" << (*b)->getName() << "' with '" << a->getName() << "'";
 
-                // Set b's merge target to our unique name
-                ((*b)->*setSynMergeTargetFunc)(mergedTargetName);
+                // Set b's merge target to ourselves
+                std::invoke(setSynFuseTargetFunc, *b, ng, *a);
 
                 // Remove from temporary vector
                 b = syn.erase(b);
@@ -92,51 +91,53 @@ void fuseSynapseGroups(const std::vector<SynapseGroupInternal*> &unmergedSyn, bo
 
         // If synapse group A was successfully merged with anything, set it's merge target to the unique name
         if(anyMerged) {
-            (a->*setSynMergeTargetFunc)(mergedTargetName);
+            std::invoke(setSynFuseTargetFunc, a, ng, *a);
         }
     }
 }
 }   // Anonymous namespace
 
 // ------------------------------------------------------------------------
-// NeuronGroup
+// GeNN::NeuronGroup
 // ------------------------------------------------------------------------
-void NeuronGroup::setVarLocation(const std::string &varName, VarLocation loc)
+namespace GeNN
 {
-    m_VarLocation.at(getNeuronModel()->getVarIndex(varName)) = loc;
-}
-//----------------------------------------------------------------------------
-void NeuronGroup::setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
-{
-    const size_t extraGlobalParamIndex = getNeuronModel()->getExtraGlobalParamIndex(paramName);
-    if(!Utils::isTypePointer(getNeuronModel()->getExtraGlobalParams()[extraGlobalParamIndex].type)) {
-        throw std::runtime_error("Only extra global parameters with a pointer type have a location");
+void NeuronGroup::setVarLocation(const std::string &varName, VarLocation loc) 
+{ 
+    if(!getModel()->getVar(varName)) {
+        throw std::runtime_error("Unknown neuron model variable '" + varName + "'");
     }
-    m_ExtraGlobalParamLocation.at(extraGlobalParamIndex) = loc;
+    m_VarLocation.set(varName, loc); 
 }
 //----------------------------------------------------------------------------
-VarLocation NeuronGroup::getVarLocation(const std::string &varName) const
-{
-    return m_VarLocation.at(getNeuronModel()->getVarIndex(varName));
+void NeuronGroup::setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc) 
+{ 
+    if(!getModel()->getExtraGlobalParam(paramName)) {
+        throw std::runtime_error("Unknown neuron model extra global parameter '" + paramName + "'");
+    }
+    m_ExtraGlobalParamLocation.set(paramName, loc); 
 }
 //----------------------------------------------------------------------------
-VarLocation NeuronGroup::getExtraGlobalParamLocation(const std::string &paramName) const
-{
-    return m_ExtraGlobalParamLocation.at(getNeuronModel()->getExtraGlobalParamIndex(paramName));
+void NeuronGroup::setParamDynamic(const std::string &paramName, bool dynamic) 
+{ 
+    if(!getModel()->getParam(paramName)) {
+        throw std::runtime_error("Unknown neuron model parameter '" + paramName + "'");
+    }
+    m_DynamicParams.set(paramName, dynamic); 
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isSpikeTimeRequired() const
 {
     // If any INCOMING synapse groups require POSTSYNAPTIC spike times, return true
     if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-        [](SynapseGroup *sg){ return sg->getWUModel()->isPostSpikeTimeRequired(); }))
+                   [](SynapseGroup *sg){ return sg->isPostSpikeTimeRequired(); }))
     {
         return true;
     }
 
     // If any OUTGOING synapse groups require PRESYNAPTIC spike times, return true
     if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-        [](SynapseGroup *sg){ return sg->getWUModel()->isPreSpikeTimeRequired(); }))
+                   [](SynapseGroup *sg){ return sg->isPreSpikeTimeRequired(); }))
     {
         return true;
     }
@@ -148,14 +149,14 @@ bool NeuronGroup::isPrevSpikeTimeRequired() const
 {
     // If any INCOMING synapse groups require previous POSTSYNAPTIC spike times, return true
     if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-        [](SynapseGroup *sg){ return sg->getWUModel()->isPrevPostSpikeTimeRequired(); }))
+                   [](SynapseGroup *sg){ return sg->isPrevPostSpikeTimeRequired(); }))
     {
         return true;
     }
 
     // If any OUTGOING synapse groups require previous PRESYNAPTIC spike times, return true
     if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-        [](SynapseGroup *sg){ return sg->getWUModel()->isPrevPreSpikeTimeRequired(); }))
+                   [](SynapseGroup *sg){ return sg->isPrevPreSpikeTimeRequired(); }))
     {
         return true;
     }
@@ -165,30 +166,44 @@ bool NeuronGroup::isPrevSpikeTimeRequired() const
 //----------------------------------------------------------------------------
 bool NeuronGroup::isSpikeEventTimeRequired() const
 {
+    // If any INCOMING synapse groups require POSTSYNAPTIC spike-like event times, return true
+    if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
+                   [](SynapseGroup *sg){ return sg->isPostSpikeEventTimeRequired(); }))
+    {
+        return true;
+    }
+    
     // If any OUTGOING synapse groups require PRESYNAPTIC spike-like event times, return true
     return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-                       [](SynapseGroup *sg) { return sg->getWUModel()->isPreSpikeEventTimeRequired(); });
+                       [](SynapseGroup *sg) { return sg->isPreSpikeEventTimeRequired(); });
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isPrevSpikeEventTimeRequired() const
 {
-    // If any OUTGOING synapse groups require previous PRESYNAPTIC spike-like event times, return true
-    return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-                       [](SynapseGroup *sg) { return sg->getWUModel()->isPrevPreSpikeEventTimeRequired(); });
-}
-//----------------------------------------------------------------------------
-bool NeuronGroup::isTrueSpikeRequired() const
-{
-    // If any OUTGOING synapse groups require true spikes, return true
-    if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-        [](SynapseGroupInternal *sg){ return sg->isTrueSpikeRequired(); }))
+    // If any INCOMING synapse groups require previous POSTSYNAPTIC spike-like event times, return true
+    if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
+                   [](SynapseGroup *sg){ return sg->isPrevPostSpikeEventTimeRequired(); }))
     {
         return true;
     }
 
-    // If any INCOMING synapse groups require postsynaptic learning, return true
+    // If any OUTGOING synapse groups require previous PRESYNAPTIC spike-like event times, return true
+    return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+                       [](SynapseGroup *sg) { return sg->isPrevPreSpikeEventTimeRequired(); });
+}
+//----------------------------------------------------------------------------
+bool NeuronGroup::isTrueSpikeRequired() const
+{
+    // If any OUTGOING synapse groups require presynaptic spikes, return true
+    if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+                   [](SynapseGroupInternal *sg){ return sg->isPreSpikeRequired(); }))
+    {
+        return true;
+    }
+
+    // If any INCOMING synapse groups require postsynaptic spikes, return true
     if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-        [](SynapseGroupInternal *sg){ return !sg->getWUModel()->getLearnPostCode().empty(); }))
+                   [](SynapseGroupInternal *sg){ return sg->isPostSpikeRequired(); }))
     {
         return true;
     }
@@ -198,21 +213,16 @@ bool NeuronGroup::isTrueSpikeRequired() const
 //----------------------------------------------------------------------------
 bool NeuronGroup::isSpikeEventRequired() const
 {
-    // Spike like events are required if any OUTGOING synapse groups has a spike like event threshold
-    return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-                       [](SynapseGroupInternal *sg){ return !sg->getWUModel()->getEventThresholdConditionCode().empty(); });
-}
-//----------------------------------------------------------------------------
-bool NeuronGroup::isZeroCopyEnabled() const
-{
-    // If any bits of spikes require zero-copy return true
-    if((m_SpikeLocation & VarLocation::ZERO_COPY) || (m_SpikeEventLocation & VarLocation::ZERO_COPY) || (m_SpikeTimeLocation & VarLocation::ZERO_COPY)) {
+    // If any OUTGOING synapse groups require presynaptic spike events, return true
+    if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+                   [](SynapseGroupInternal *sg){ return sg->isPreSpikeEventRequired(); }))
+    {
         return true;
     }
 
-    // If there are any variables implemented in zero-copy mode return true
-    if(std::any_of(m_VarLocation.begin(), m_VarLocation.end(),
-        [](VarLocation loc){ return (loc & VarLocation::ZERO_COPY); }))
+    // If any INCOMING synapse groups require postsynaptic spike events, return true
+    if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
+                   [](SynapseGroupInternal *sg){ return sg->isPostSpikeEventRequired(); }))
     {
         return true;
     }
@@ -220,66 +230,21 @@ bool NeuronGroup::isZeroCopyEnabled() const
     return false;
 }
 //----------------------------------------------------------------------------
-bool NeuronGroup::isSimRNGRequired() const
+bool NeuronGroup::isZeroCopyEnabled() const
 {
-    // Returns true if any parts of the neuron code require an RNG
-    if(Utils::isRNGRequired(getNeuronModel()->getSimCode())
-        || Utils::isRNGRequired(getNeuronModel()->getThresholdConditionCode())
-        || Utils::isRNGRequired(getNeuronModel()->getResetCode()))
+    // If any bits of spikes require zero-copy return true
+    if(m_RecordingZeroCopyEnabled || (m_SpikeLocation & VarLocationAttribute::ZERO_COPY) 
+       || (m_SpikeEventLocation & VarLocationAttribute::ZERO_COPY) || (m_SpikeTimeLocation & VarLocationAttribute::ZERO_COPY) 
+       || (m_PrevSpikeTimeLocation & VarLocationAttribute::ZERO_COPY) || (m_SpikeEventTimeLocation& VarLocationAttribute::ZERO_COPY) 
+       || (m_PrevSpikeEventTimeLocation& VarLocationAttribute::ZERO_COPY)) 
     {
         return true;
     }
 
-    // Return true if any current sources require an RNG for simulation
-    if(std::any_of(m_CurrentSources.cbegin(), m_CurrentSources.cend(),
-        [](const CurrentSourceInternal *cs){ return cs->isSimRNGRequired(); }))
-    {
-        return true;
-    }
-
-    // Return true if any of the incoming synapse groups require an RNG in their postsynaptic model
-    // **NOTE** these are included as they are simulated in the neuron kernel/function
-    return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-                       [](const SynapseGroupInternal *sg)
-                       {
-                           return (Utils::isRNGRequired(sg->getPSModel()->getApplyInputCode()) ||
-                                   Utils::isRNGRequired(sg->getPSModel()->getDecayCode()));
-                       });
+    // If there are any variables implemented in zero-copy mode return true
+    return (m_VarLocation.anyZeroCopy() || m_ExtraGlobalParamLocation.anyZeroCopy());
 }
-//----------------------------------------------------------------------------
-bool NeuronGroup::isInitRNGRequired() const
-{
-    // If initialising the neuron variables require an RNG, return true
-    if(Utils::isRNGRequired(m_VarInitialisers)) {
-        return true;
-    }
 
-    // Return true if any current sources require an RNG for initialisation
-    if(std::any_of(m_CurrentSources.cbegin(), m_CurrentSources.cend(),
-        [](const CurrentSourceInternal *cs){ return cs->isInitRNGRequired(); }))
-    {
-        return true;
-    }
-
-    // Return true if any incoming synapse groups require and RNG to initialize their postsynaptic variables
-    if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-                   [](const SynapseGroupInternal *sg) { return sg->isWUPostInitRNGRequired(); }))
-    {
-        return true;
-    }
-
-    // Return true if any outgoing synapse groups require and RNG to initialize their presynaptic variables
-    if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-                   [](const SynapseGroupInternal *sg) { return sg->isWUPreInitRNGRequired(); }))
-    {
-        return true;
-    }
-
-    // Return true if any of the incoming synapse groups have state variables which require an RNG to initialise
-    // **NOTE** these are included here as they are initialised in neuron initialisation threads
-    return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
-                       [](const SynapseGroupInternal *sg){ return sg->isPSInitRNGRequired(); });
-}
 //----------------------------------------------------------------------------
 bool NeuronGroup::isRecordingEnabled() const
 {
@@ -297,58 +262,160 @@ bool NeuronGroup::isRecordingEnabled() const
     }
 }
 //----------------------------------------------------------------------------
+bool NeuronGroup::isVarInitRequired() const
+{
+    // Returns true if any neuron variables require initialisation
+    if(std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),
+                   [](const auto &init)
+                   { 
+                       return !Utils::areTokensEmpty(init.second.getCodeTokens());
+                   }))
+    {
+        return true;
+    }
+
+    // Return true if any current sources variables require initialisation
+    if(std::any_of(getCurrentSources().cbegin(), getCurrentSources().cend(),
+                   [](const auto *cs){ return cs->isVarInitRequired(); }))
+    {
+        return true;
+    }
+    
+    // Return true if any incoming synapse groups have 
+    // postsynaptic model variables which require initialisation
+    if(std::any_of(getFusedPSMInSyn().cbegin(), getFusedPSMInSyn().cend(),
+                   [](const auto *sg){ return sg->isPSVarInitRequired(); }))
+    {
+        return true;
+    }
+
+    // Return true if any incoming synapse groups have postsynaptic
+    // weight update model variables which require initialisation
+    const auto fusedInSynWithPostVars = getFusedInSynWithPostVars();
+    if(std::any_of(fusedInSynWithPostVars.cbegin(), fusedInSynWithPostVars.cend(),
+                   [](const auto *sg){ return sg->isWUPostVarInitRequired(); }))
+    {
+        return true;
+    }
+
+    // Return true if any outgoing synapse groups have presynaptic
+    // weight update model variables which require initialisation
+    const auto fusedOutSynWithPreVars = getFusedOutSynWithPreVars();
+    if(std::any_of(fusedOutSynWithPreVars.cbegin(), fusedOutSynWithPreVars.cend(),
+                   [](const auto *sg){ return sg->isWUPreVarInitRequired(); }))
+    {
+        return true;
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
 void NeuronGroup::injectCurrent(CurrentSourceInternal *src)
 {
-    m_CurrentSources.push_back(src);
+    m_CurrentSourceGroups.push_back(src);
+}
+//----------------------------------------------------------------------------
+bool NeuronGroup::isSimRNGRequired() const
+{
+    // Returns true if any parts of the neuron code require an RNG
+    if(Utils::isRNGRequired(getSimCodeTokens())
+        || Utils::isRNGRequired(getThresholdConditionCodeTokens())
+        || Utils::isRNGRequired(getResetCodeTokens()))
+    {
+        return true;
+    }
+
+    // Return true if any current sources require an RNG for simulation
+    if(std::any_of(m_CurrentSourceGroups.cbegin(), m_CurrentSourceGroups.cend(),
+        [](const CurrentSourceInternal *cs){ return Utils::isRNGRequired(cs->getInjectionCodeTokens()); }))
+    {
+        return true;
+    }
+
+    // Return true if any of the incoming synapse groups require an RNG in their postsynaptic model
+    // **NOTE** these are included as they are simulated in the neuron kernel/function
+    return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
+                       [](const SynapseGroupInternal *sg)
+                       {
+                           return Utils::isRNGRequired(sg->getPSInitialiser().getSimCodeTokens());
+                       });
+}
+//----------------------------------------------------------------------------
+bool NeuronGroup::isInitRNGRequired() const
+{
+    // If initialising the neuron variables require an RNG, return true
+    if(Utils::isRNGRequired(m_VarInitialisers)) {
+        return true;
+    }
+
+    // Return true if any current sources require an RNG for initialisation
+    if(std::any_of(m_CurrentSourceGroups.cbegin(), m_CurrentSourceGroups.cend(),
+        [](const CurrentSourceInternal *cs){ return Utils::isRNGRequired(cs->getVarInitialisers()); }))
+    {
+        return true;
+    }
+
+    // Return true if any incoming synapse groups require and RNG to initialize their postsynaptic variables
+    if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
+                   [](const SynapseGroupInternal *sg) { return Utils::isRNGRequired(sg->getWUInitialiser().getPostVarInitialisers()); }))
+    {
+        return true;
+    }
+
+    // Return true if any outgoing synapse groups require and RNG to initialize their presynaptic variables
+    if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+                   [](const SynapseGroupInternal *sg) { return Utils::isRNGRequired(sg->getWUInitialiser().getPreVarInitialisers()); }))
+    {
+        return true;
+    }
+
+    // Return true if any of the incoming synapse groups have state variables which require an RNG to initialise
+    // **NOTE** these are included here as they are initialised in neuron initialisation threads
+    return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
+                       [](const SynapseGroupInternal *sg){ return Utils::isRNGRequired(sg->getPSInitialiser().getVarInitialisers()); });
 }
 //----------------------------------------------------------------------------
 NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                         const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
+                         const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers,
                          VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-:   m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
-    m_NumDelaySlots(1), m_VarQueueRequired(varInitialisers.size(), false), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
-    m_SpikeTimeLocation(defaultVarLocation), m_PrevSpikeTimeLocation(defaultVarLocation), m_SpikeEventTimeLocation(defaultVarLocation), m_PrevSpikeEventTimeLocation(defaultVarLocation),
-    m_VarLocation(varInitialisers.size(), defaultVarLocation), m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
+:   m_Name(name), m_NumNeurons(numNeurons), m_Model(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
+    m_NumDelaySlots(1), m_RecordingZeroCopyEnabled(false), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
+    m_SpikeTimeLocation(defaultVarLocation), m_PrevSpikeTimeLocation(defaultVarLocation), m_SpikeEventTimeLocation(defaultVarLocation), 
+    m_PrevSpikeEventTimeLocation(defaultVarLocation), m_VarLocation(defaultVarLocation), m_ExtraGlobalParamLocation(defaultExtraGlobalParamLocation),
     m_SpikeRecordingEnabled(false), m_SpikeEventRecordingEnabled(false)
 {
     // Validate names
     Utils::validatePopName(name, "Neuron group");
-    getNeuronModel()->validate();
+    getModel()->validate(getParams(), getVarInitialisers(), "Neuron group " + getName());
+
+     // Scan neuron model code strings
+    m_SimCodeTokens = Utils::scanCode(getModel()->getSimCode(), 
+                                      "Neuron group '" + getName() + "' sim code");
+    m_ThresholdConditionCodeTokens = Utils::scanCode(getModel()->getThresholdConditionCode(),
+                                                     "Neuron group '" + getName() + "' threshold condition code");
+    m_ResetCodeTokens = Utils::scanCode(getModel()->getResetCode(),
+                                        "Neuron group '" + getName() + "' reset code");
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)
 {
-    if (requiredDelay >= getNumDelaySlots())
-    {
+    if (requiredDelay >= getNumDelaySlots()) {
         m_NumDelaySlots = requiredDelay + 1;
     }
 }
 //----------------------------------------------------------------------------
-void NeuronGroup::updatePreVarQueues(const std::string &code)
+void NeuronGroup::finalise(double dt)
 {
-    updateVarQueues(code, "_pre");
-}
-//----------------------------------------------------------------------------
-void NeuronGroup::updatePostVarQueues(const std::string &code)
-{
-    updateVarQueues(code, "_post");
-}
-//----------------------------------------------------------------------------
-void NeuronGroup::initDerivedParams(double dt)
-{
-    auto derivedParams = getNeuronModel()->getDerivedParams();
-
-    // Reserve vector to hold derived parameters
-    m_DerivedParams.reserve(derivedParams.size());
+    auto derivedParams = getModel()->getDerivedParams();
 
     // Loop through derived parameters
     for(const auto &d : derivedParams) {
-        m_DerivedParams.push_back(d.func(m_Params, dt));
+        m_DerivedParams.emplace(d.name, d.func(m_Params, dt));
     }
 
-    // Initialise derived parameters for variable initialisers
+    // Finalise variable initialisers
     for(auto &v : m_VarInitialisers) {
-        v.initDerivedParams(dt);
+        v.second.finalise(dt);
     }
 }
 //----------------------------------------------------------------------------
@@ -357,25 +424,25 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
     // If there are any incoming synapse groups
     if(!getInSyn().empty()) {
         // All incoming synapse groups will have postsynaptic models so attempt to merge these directly
-        fuseSynapseGroups(getInSyn(), fusePSM, m_FusedPSMInSyn, "FusedPSM", getName(), "postsynaptic update",
+        fuseSynapseGroups(this, getInSyn(), fusePSM, m_FusedPSMInSyn, "postsynaptic update",
                           &SynapseGroupInternal::canPSBeFused, &SynapseGroupInternal::getPSFuseHashDigest,
-                          &SynapseGroupInternal::setFusedPSVarSuffix);
+                          &SynapseGroupInternal::setFusedPSTarget);
 
         // Copy groups with some form of postsynaptic update into new vector
         std::vector<SynapseGroupInternal *> inSynWithPostUpdate;
         std::copy_if(getInSyn().cbegin(), getInSyn().cend(), std::back_inserter(inSynWithPostUpdate),
                      [](SynapseGroupInternal *sg)
                      {
-                         return (!sg->getWUModel()->getPostSpikeCode().empty()
-                                 || !sg->getWUModel()->getPostDynamicsCode().empty()
-                                 || !sg->getWUModel()->getPostVars().empty());
+                         return (!Utils::areTokensEmpty(sg->getWUInitialiser().getPostSpikeCodeTokens())
+                                 || !Utils::areTokensEmpty(sg->getWUInitialiser().getPostDynamicsCodeTokens())
+                                 || !sg->getWUInitialiser().getSnippet()->getPostVars().empty());
                      });
 
         // If there are any, merge
         if(!inSynWithPostUpdate.empty()) {
-            fuseSynapseGroups(inSynWithPostUpdate, fusePrePostWUM, m_FusedWUPostInSyn, "FusedWUPost", getName(), "postsynaptic weight update",
-                              &SynapseGroupInternal::canWUMPostUpdateBeFused, &SynapseGroupInternal::getWUPostFuseHashDigest,
-                              &SynapseGroupInternal::setFusedWUPostVarSuffix);
+            fuseSynapseGroups(this, inSynWithPostUpdate, fusePrePostWUM, m_FusedWUPostInSyn, "postsynaptic weight update",
+                              &SynapseGroupInternal::canWUMPrePostUpdateBeFused, &SynapseGroupInternal::getWUPrePostFuseHashDigest,
+                              &SynapseGroupInternal::setFusedWUPrePostTarget);
         }
     }
 
@@ -384,16 +451,16 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
     std::copy_if(getOutSyn().cbegin(), getOutSyn().cend(), std::back_inserter(outSynWithPreUpdate),
                  [](SynapseGroupInternal *sg)
                  {
-                     return (!sg->getWUModel()->getPreSpikeCode().empty()
-                             || !sg->getWUModel()->getPreDynamicsCode().empty()
-                             || !sg->getWUModel()->getPreVars().empty());
+                     return (!Utils::areTokensEmpty(sg->getWUInitialiser().getPreSpikeCodeTokens())
+                             || !Utils::areTokensEmpty(sg->getWUInitialiser().getPreDynamicsCodeTokens())
+                             || !sg->getWUInitialiser().getSnippet()->getPreVars().empty());
                  });
 
      // If there are any
     if(!outSynWithPreUpdate.empty()) {
-        fuseSynapseGroups(outSynWithPreUpdate, fusePrePostWUM, m_FusedWUPreOutSyn, "FusedWUPre", getName(), "presynaptic weight update",
-                          &SynapseGroupInternal::canWUMPreUpdateBeFused, &SynapseGroupInternal::getWUPreFuseHashDigest,
-                          &SynapseGroupInternal::setFusedWUPreVarSuffix);
+        fuseSynapseGroups(this, outSynWithPreUpdate, fusePrePostWUM, m_FusedWUPreOutSyn, "presynaptic weight update",
+                          &SynapseGroupInternal::canWUMPrePostUpdateBeFused, &SynapseGroupInternal::getWUPrePostFuseHashDigest,
+                          &SynapseGroupInternal::setFusedWUPrePostTarget);
     }
 
     // Copy groups with output onto the presynaptic neuron into new vector
@@ -406,11 +473,40 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
 
     // If there are any
     if(!outSynWithPreOutput.empty()) {
-        fuseSynapseGroups(outSynWithPreOutput, fusePSM, m_FusedPreOutputOutSyn, "FusedPreOut", getName(), "presynaptic synapse output",
+        fuseSynapseGroups(this, outSynWithPreOutput, fusePSM, m_FusedPreOutputOutSyn, "presynaptic synapse output",
                           &SynapseGroupInternal::canPreOutputBeFused, &SynapseGroupInternal::getPreOutputHashDigest,
-                          &SynapseGroupInternal::setFusedPreOutputSuffix);
+                          &SynapseGroupInternal::setFusedPreOutputTarget);
+    }
+
+    // Copy incoming synapse groups which require back-projected 
+    // spikes and outgoing groups which require spikes
+    std::vector<SynapseGroupInternal*> synWithSpike;
+    std::copy_if(getInSyn().cbegin(), getInSyn().cend(), std::back_inserter(synWithSpike),
+                 [](SynapseGroupInternal *sg) { return sg->isPostSpikeRequired(); });
+    std::copy_if(getOutSyn().cbegin(), getOutSyn().cend(), std::back_inserter(synWithSpike),
+                 [](SynapseGroupInternal *sg) { return sg->isPreSpikeRequired(); });
+    
+    // If there are any, fuse together
+    if(!synWithSpike.empty()) {
+        fuseSynapseGroups(this, synWithSpike, true, m_FusedSpike, "spike",
+                          &SynapseGroupInternal::canSpikeBeFused, &SynapseGroupInternal::getSpikeHashDigest,
+                          &SynapseGroupInternal::setFusedSpikeTarget);
     }
    
+    // Copy incoming synapse groups which require back-projected 
+    // spike-events and outgoing groups which require spike-events
+    std::vector<SynapseGroupInternal*> synWithSpikeEvent;
+    std::copy_if(getInSyn().cbegin(), getInSyn().cend(), std::back_inserter(synWithSpikeEvent),
+                 [](SynapseGroupInternal *sg) { return sg->isPostSpikeEventRequired(); });
+    std::copy_if(getOutSyn().cbegin(), getOutSyn().cend(), std::back_inserter(synWithSpikeEvent),
+                 [](SynapseGroupInternal *sg) { return sg->isPreSpikeEventRequired(); });
+    
+    // If there are any, fuse together
+    if(!synWithSpikeEvent.empty()) {
+        fuseSynapseGroups(this, synWithSpikeEvent, true, m_FusedSpikeEvent, "spike event",
+                          &SynapseGroupInternal::canWUSpikeEventBeFused, &SynapseGroupInternal::getWUSpikeEventFuseHashDigest,
+                          &SynapseGroupInternal::setFusedSpikeEventTarget);
+    }
 }
 //----------------------------------------------------------------------------
 std::vector<SynapseGroupInternal*> NeuronGroup::getFusedInSynWithPostCode() const
@@ -419,8 +515,8 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getFusedInSynWithPostCode() cons
     std::copy_if(getFusedWUPostInSyn().cbegin(), getFusedWUPostInSyn().cend(), std::back_inserter(vec),
                  [](SynapseGroupInternal *sg)
                  {
-                     return (!sg->getWUModel()->getPostSpikeCode().empty()
-                             || !sg->getWUModel()->getPostDynamicsCode().empty());
+                     return (!Utils::areTokensEmpty(sg->getWUInitialiser().getPostSpikeCodeTokens())
+                             || !Utils::areTokensEmpty(sg->getWUInitialiser().getPostDynamicsCodeTokens()));
                  });
     return vec;
 }
@@ -431,8 +527,8 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getFusedOutSynWithPreCode() cons
     std::copy_if(getFusedWUPreOutSyn().cbegin(), getFusedWUPreOutSyn().cend(), std::back_inserter(vec),
                  [](SynapseGroupInternal *sg)
                  {
-                     return (!sg->getWUModel()->getPreSpikeCode().empty()
-                             || !sg->getWUModel()->getPreDynamicsCode().empty());
+                     return (!Utils::areTokensEmpty(sg->getWUInitialiser().getPreSpikeCodeTokens())
+                             || !Utils::areTokensEmpty(sg->getWUInitialiser().getPreDynamicsCodeTokens()));
                 });
     return vec;
 }
@@ -441,7 +537,7 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getFusedInSynWithPostVars() cons
 {
     std::vector<SynapseGroupInternal *> vec;
     std::copy_if(getFusedWUPostInSyn().cbegin(), getFusedWUPostInSyn().cend(), std::back_inserter(vec),
-                 [](SynapseGroupInternal *sg) { return !sg->getWUModel()->getPostVars().empty(); });
+                 [](SynapseGroupInternal *sg) { return !sg->getWUInitialiser().getSnippet()->getPostVars().empty(); });
     return vec;
 }
 //----------------------------------------------------------------------------
@@ -449,67 +545,52 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getFusedOutSynWithPreVars() cons
 {
     std::vector<SynapseGroupInternal *> vec;
     std::copy_if(getFusedWUPreOutSyn().cbegin(), getFusedWUPreOutSyn().cend(), std::back_inserter(vec),
-                 [](SynapseGroupInternal *sg) { return !sg->getWUModel()->getPreVars().empty(); });
+                 [](SynapseGroupInternal *sg) { return !sg->getWUInitialiser().getSnippet()->getPreVars().empty(); });
     return vec;
-}
-//----------------------------------------------------------------------------
-void NeuronGroup::addSpkEventCondition(const std::string &code, SynapseGroupInternal *synapseGroup)
-{
-    const auto *wu = synapseGroup->getWUModel();
-
-    // Determine if any EGPs are required by threshold code
-    const auto wuEGPs = wu->getExtraGlobalParams();
-    const bool egpInThresholdCode = std::any_of(wuEGPs.cbegin(), wuEGPs.cend(),
-                                                [&code](const Snippet::Base::EGP &egp)
-                                                {
-                                                    return (code.find("$(" + egp.name + ")") != std::string::npos);
-                                                });
-
-    // Determine if any presynaptic variables are required by threshold code
-    const auto wuPreVars = wu->getPreVars();
-    const bool preVarInThresholdCode = std::any_of(wuPreVars.cbegin(), wuPreVars.cend(),
-                                                   [&code](const Models::Base::Var &var)
-                                                   {
-                                                       return (code.find("$(" + var.name + ")") != std::string::npos);
-                                                   });
-
-    // Add threshold, support code, synapse group and whether egps are required to set
-    m_SpikeEventCondition.emplace(code, wu->getSimSupportCode(), egpInThresholdCode || preVarInThresholdCode, synapseGroup);
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isVarQueueRequired(const std::string &var) const
 {
-    // Return flag corresponding to variable
-    return m_VarQueueRequired[getNeuronModel()->getVarIndex(var)];
+    return (m_VarQueueRequired.count(var) == 0) ? false : true;
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getNeuronModel()->getHashDigest(), hash);
+    Utils::updateHash(getModel()->getHashDigest(), hash);
     Utils::updateHash(isSpikeTimeRequired(), hash);
     Utils::updateHash(isPrevSpikeTimeRequired(), hash);
-    //Utils::updateHash(getSpikeEventCondition(), hash); **FIXME**
+    Utils::updateHash(isSpikeEventTimeRequired(), hash);
+    Utils::updateHash(isPrevSpikeEventTimeRequired(), hash);
     Utils::updateHash(isSpikeEventRequired(), hash);
+    Utils::updateHash(isTrueSpikeRequired(), hash);
     Utils::updateHash(isSpikeRecordingEnabled(), hash);
     Utils::updateHash(isSpikeEventRecordingEnabled(), hash);
     Utils::updateHash(getNumDelaySlots(), hash);
     Utils::updateHash(m_VarQueueRequired, hash);
+    m_DynamicParams.updateHash(hash);
+
+    // Update hash with number of fused spike conditions
+    // **NOTE** nothing else is required as logic of each update only depends on number of delay slots
+    Utils::updateHash(getFusedSpike().size(), hash);
+
+    // Update hash with hash list built from fused spike event thresholds
+    updateHashList(this, getFusedSpikeEvent(), hash, &SynapseGroupInternal::getWUSpikeEventHashDigest);
 
     // Update hash with hash list built from current sources
-    updateHashList(getCurrentSources(), hash, &CurrentSourceInternal::getHashDigest);
+    updateHashList(this, getCurrentSources(), hash, &CurrentSourceInternal::getHashDigest);
 
     // Update hash with hash list built from fused incoming synapse groups with post code
-    updateHashList(getFusedInSynWithPostCode(), hash, &SynapseGroupInternal::getWUPostHashDigest);
+    updateHashList(this, getFusedInSynWithPostCode(), hash, &SynapseGroupInternal::getWUPrePostHashDigest);
 
     // Update hash with hash list built from fused outgoing synapse groups with pre code
-    updateHashList(getFusedOutSynWithPreCode(), hash, &SynapseGroupInternal::getWUPreHashDigest);
+    updateHashList(this, getFusedOutSynWithPreCode(), hash, &SynapseGroupInternal::getWUPrePostHashDigest);
 
     // Update hash with hash list built from fused incoming synapses
-    updateHashList(getFusedPSMInSyn(), hash, &SynapseGroupInternal::getPSHashDigest);
+    updateHashList(this, getFusedPSMInSyn(), hash, &SynapseGroupInternal::getPSHashDigest);
 
     // Update hash with hash list built from fused outgoing synapses with presynaptic output
-    updateHashList(getFusedPreOutputOutSyn(), hash, &SynapseGroupInternal::getPreOutputHashDigest);
+    updateHashList(this, getFusedPreOutputOutSyn(), hash, &SynapseGroupInternal::getPreOutputHashDigest);
     
     return hash.get_digest();
 }
@@ -519,31 +600,39 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getInitHashDigest() const
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(isSpikeTimeRequired(), hash);
     Utils::updateHash(isPrevSpikeTimeRequired(), hash);
+    Utils::updateHash(isSpikeEventTimeRequired(), hash);
+    Utils::updateHash(isPrevSpikeEventTimeRequired(), hash);
     Utils::updateHash(isSpikeEventRequired(), hash);
+    Utils::updateHash(isTrueSpikeRequired(), hash);
     Utils::updateHash(isSimRNGRequired(), hash);
     Utils::updateHash(getNumDelaySlots(), hash);
     Utils::updateHash(m_VarQueueRequired, hash);
-    Utils::updateHash(getNeuronModel()->getVars(), hash);
+    Utils::updateHash(getModel()->getVars(), hash);
 
     // Include variable initialiser hashes
     for(const auto &n : getVarInitialisers()) {
-        Utils::updateHash(n.getHashDigest(), hash);
+        Utils::updateHash(n.first, hash);
+        Utils::updateHash(n.second.getHashDigest(), hash);
     }
 
+    // Update hash with number of fused spike conditions
+    // **NOTE** nothing else is required as logic of initialisation only depends on number of delay slots
+    Utils::updateHash(getFusedSpike().size(), hash);
+
     // Update hash with hash list built from current sources
-    updateHashList(getCurrentSources(), hash, &CurrentSourceInternal::getInitHashDigest);
+    updateHashList(this, getCurrentSources(), hash, &CurrentSourceInternal::getInitHashDigest);
 
     // Update hash with hash list built from fused incoming synapse groups with post vars
-    updateHashList(getFusedInSynWithPostVars(), hash, &SynapseGroupInternal::getWUPostInitHashDigest);
+    updateHashList(this, getFusedInSynWithPostVars(), hash, &SynapseGroupInternal::getWUPrePostInitHashDigest);
 
     // Update hash with hash list built from fusedoutgoing synapse groups with pre vars
-    updateHashList(getFusedOutSynWithPreVars(), hash, &SynapseGroupInternal::getWUPreInitHashDigest);
+    updateHashList(this, getFusedOutSynWithPreVars(), hash, &SynapseGroupInternal::getWUPrePostInitHashDigest);
 
     // Update hash with hash list built from fused incoming synapses
-    updateHashList(getFusedPSMInSyn(), hash, &SynapseGroupInternal::getPSInitHashDigest);
+    updateHashList(this, getFusedPSMInSyn(), hash, &SynapseGroupInternal::getPSInitHashDigest);
 
     // Update hash with hash list built from fused outgoing synapses with presynaptic output
-    updateHashList(getFusedPreOutputOutSyn(), hash, &SynapseGroupInternal::getPreOutputInitHashDigest);
+    updateHashList(this, getFusedPreOutputOutSyn(), hash, &SynapseGroupInternal::getPreOutputInitHashDigest);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
@@ -551,8 +640,12 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getSpikeQueueUpdateHashDige
 {
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getNumDelaySlots(), hash);
-    Utils::updateHash(isSpikeEventRequired(), hash);
-    Utils::updateHash(isTrueSpikeRequired(), hash);
+    
+    // Update hash with number of fused spike and spike event conditions
+    // **NOTE** nothing else is required as logic of each update only depends on number of delay slots
+    Utils::updateHash(getFusedSpike().size(), hash);
+    Utils::updateHash(getFusedSpikeEvent().size(), hash);
+    
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
@@ -560,10 +653,15 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getPrevSpikeTimeUpdateHashD
 {
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getNumDelaySlots(), hash);
-    Utils::updateHash(isSpikeEventRequired(), hash);
-    Utils::updateHash(isTrueSpikeRequired(), hash);
+    
+     // Update hash with number of fused spike and spike event conditions
+    // **NOTE** nothing else is required as logic of each update only depends on number of delay slots
+    Utils::updateHash(getFusedSpike().size(), hash);
+    Utils::updateHash(getFusedSpikeEvent().size(), hash);
+
     Utils::updateHash(isPrevSpikeTimeRequired(), hash);
     Utils::updateHash(isPrevSpikeEventTimeRequired(), hash);
+
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
@@ -576,20 +674,8 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getVarLocationHashDigest() 
     Utils::updateHash(getPrevSpikeTimeLocation(), hash);
     Utils::updateHash(getSpikeEventTimeLocation(), hash);
     Utils::updateHash(getPrevSpikeEventTimeLocation(), hash);
-    Utils::updateHash(m_VarLocation, hash);
-    Utils::updateHash(m_ExtraGlobalParamLocation, hash);
+    m_VarLocation.updateHash(hash);
+    m_ExtraGlobalParamLocation.updateHash(hash);
     return hash.get_digest();
 }
-//----------------------------------------------------------------------------
-void NeuronGroup::updateVarQueues(const std::string &code, const std::string &suffix)
-{
-    // Loop through variables
-    const auto vars = getNeuronModel()->getVars();
-    for(size_t i = 0; i < vars.size(); i++) {
-        // If the code contains a reference to this variable, set corresponding flag
-        if (code.find(vars[i].name + suffix) != std::string::npos) {
-            m_VarQueueRequired[i] = true;
-        }
-    }
-}
-
+}   // namespace GeNN

@@ -10,7 +10,7 @@ OBJECTS			:=$(SOURCES:%.cc=$(OBJECT_DIRECTORY)/%.o)
 DEPS			:=$(OBJECTS:.o=.d)
 
 # Add compiler and linker flags to link libGeNN and pthreads
-LDFLAGS			+= -L$(LIBRARY_DIRECTORY) -lgenn_single_threaded_cpu_backend$(GENN_PREFIX) -lgenn$(GENN_PREFIX) -lpthread
+LDFLAGS			+= -L$(LIBRARY_DIRECTORY) -lgenn_single_threaded_cpu_backend$(GENN_PREFIX) -lgenn$(GENN_PREFIX) -lpthread -ldl $(shell pkg-config libffi --libs)
 CXXFLAGS		+= -I$(GENN_DIR)/include/genn/backends/single_threaded_cpu -I "$(GTEST_DIR)" -isystem "$(GTEST_DIR)/include" 
 
 # Determine full path to generator and backend
@@ -27,7 +27,7 @@ $(TEST): $(OBJECTS) libgenn backend
 
 $(OBJECT_DIRECTORY)/%.o: %.cc $(OBJECT_DIRECTORY)/%.d
 	mkdir -p $(@D)
-	$(CXX) -std=c++11 $(CXXFLAGS) -c -o $@ $<
+	$(CXX) -std=c++17 $(CXXFLAGS) -c -o $@ $<
 
 %.d: ;
 

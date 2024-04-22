@@ -3,7 +3,10 @@
 // Standard C++ includes
 #include <algorithm>
 #include <functional>
+#include <optional>
+#include <set>
 #include <string>
+#include <map>
 #include <vector>
 
 // Standard C includes
@@ -11,12 +14,12 @@
 
 // GeNN includes
 #include "gennExport.h"
-#include "gennUtils.h"
+#include "type.h"
 
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define DECLARE_SNIPPET(TYPE, NUM_PARAMS)               \
+#define DECLARE_SNIPPET(TYPE)                           \
 private:                                                \
     GENN_EXPORT static TYPE *s_Instance;                \
 public:                                                 \
@@ -27,96 +30,25 @@ public:                                                 \
             s_Instance = new TYPE;                      \
         }                                               \
         return s_Instance;                              \
-    }                                                   \
-    typedef Snippet::ValueBase<NUM_PARAMS> ParamValues  \
+    }
 
 
 #define IMPLEMENT_SNIPPET(TYPE) TYPE *TYPE::s_Instance = NULL
 
-#define SET_PARAM_NAMES(...) virtual StringVec getParamNames() const override{ return __VA_ARGS__; }
+#define SET_PARAMS(...) virtual ParamVec getParams() const override{ return __VA_ARGS__; }
 #define SET_DERIVED_PARAMS(...) virtual DerivedParamVec getDerivedParams() const override{ return __VA_ARGS__; }
 #define SET_EXTRA_GLOBAL_PARAMS(...) virtual EGPVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
-// Snippet::InitialiserContainerBase
-//----------------------------------------------------------------------------
-//! Wrapper to ensure at compile time that correct 
-//! number of values are used when initialising models
-namespace Snippet
-{
-template<typename V, size_t NumVars>
-class InitialiserContainerBase
-{
-public:
-    // **NOTE** other less terrifying forms of constructor won't complain at compile time about
-    // number of parameters e.g. std::array<V, 4> can be initialized with <= 4 elements
-    template<typename... T>
-    InitialiserContainerBase(T&&... vals) : m_Values(std::vector<V>{{std::forward<const V>(vals)...}})
-    {
-        static_assert(sizeof...(vals) == NumVars, "Wrong number of values");
-    }
-
-    //----------------------------------------------------------------------------
-    // Public API
-    //----------------------------------------------------------------------------
-    //! Gets values as a vector
-    const std::vector<V> &getInitialisers() const
-    {
-        return m_Values;
-    }
-
-    //----------------------------------------------------------------------------
-    // Operators
-    //----------------------------------------------------------------------------
-    const V &operator[](size_t pos) const
-    {
-        return m_Values[pos];
-    }
-
-private:
-    //----------------------------------------------------------------------------
-    // Members
-    //----------------------------------------------------------------------------
-    std::vector<V> m_Values;
-};
-
-//----------------------------------------------------------------------------
-// Snippet::InitialiserContainerBase<0>
-//----------------------------------------------------------------------------
-//! Template specialisation of InitialiserContainerBase to avoid compiler warnings
-//! in the case when a model requires no parameters or state variables
-template<typename V>
-class InitialiserContainerBase<V, 0>
-{
-public:
-    // **NOTE** other less terrifying forms of constructor won't complain at compile time about
-    // number of parameters e.g. std::array<double, 4> can be initialized with <= 4 elements
-    template<typename... T>
-    InitialiserContainerBase(T&&... vals)
-    {
-        static_assert(sizeof...(vals) == 0, "Wrong number of values");
-    }
-
-    //----------------------------------------------------------------------------
-    // Public API
-    //----------------------------------------------------------------------------
-    //! Gets values as a vector of doubles
-    std::vector<V> getInitialisers() const
-    {
-        return {};
-    }
-};
-
-//----------------------------------------------------------------------------
-// Snippet::ValueBase
-//----------------------------------------------------------------------------
-template<size_t NumVars>
-using ValueBase = InitialiserContainerBase<double, NumVars>;
-
-//----------------------------------------------------------------------------
-// Snippet::Base
+// GeNN::Snippet::Base
 //----------------------------------------------------------------------------
 //! Base class for all code snippets
+namespace GeNN
+{
+using ParamValues = std::map<std::string, Type::NumericValue>;
+
+namespace Snippet
+{
 class GENN_EXPORT Base
 {
 public:
@@ -127,64 +59,98 @@ public:
     //----------------------------------------------------------------------------
     // Structs
     //----------------------------------------------------------------------------
-    //! An extra global parameter has a name and a type
-    struct EGP
+    //! A parameter has a name and a type
+    struct GENN_EXPORT Param
     {
-        bool operator == (const EGP &other) const
+        Param(const std::string &n, const Type::ResolvedType &t) : name(n), type(t)
+        {}
+        Param(const std::string &n, const std::string &t) : name(n), type(t)
+        {}
+        Param(const char *n) : Param(n, "scalar")
+        {}
+        
+        bool operator == (const Param &other) const
         {
-            return ((name == other.name) && (type == other.type));
+            return (std::tie(name, type) == std::tie(other.name, other.type));
         }
 
         std::string name;
-        std::string type;
+        Type::UnresolvedType type;
+    };
+
+    //! An extra global parameter has a name and a type
+    struct GENN_EXPORT EGP
+    {
+        EGP(const std::string &n, const Type::ResolvedType &t) : name(n), type(t)
+        {}
+        EGP(const std::string &n, const std::string &t);
+        
+        bool operator == (const EGP &other) const
+        {
+            return (std::tie(name, type) == std::tie(other.name, other.type));
+        }
+
+        std::string name;
+        Type::UnresolvedType type;
     };
 
     //! Additional input variables, row state variables and other things have a name, a type and an initial value
-    struct ParamVal
+    struct GENN_EXPORT ParamVal
     {
-        ParamVal(const std::string &n, const std::string &t, const std::string &v) : name(n), type(t), value(v)
+        ParamVal(const std::string &n, const Type::ResolvedType &t, Type::NumericValue v)
+        :   name(n), type(t), value(v)
         {}
-        ParamVal(const std::string &n, const std::string &t, double v) : ParamVal(n, t, Utils::writePreciseString(v))
-        {}
-        ParamVal() : ParamVal("", "", "0.0")
+
+        ParamVal(const std::string &n, const std::string &t, Type::NumericValue v)
+        :   name(n), type(t), value(v)
         {}
 
         bool operator == (const ParamVal &other) const
         {
-            return ((name == other.name) && (type == other.type) && (value == other.value));
+            // **THINK** why isn't value included?
+            return (std::tie(name, type) == std::tie(other.name, other.type));
         }
 
         std::string name;
-        std::string type;
-        std::string value;
+        Type::UnresolvedType type;
+        Type::NumericValue value;
     };
 
     //! A derived parameter has a name and a function for obtaining its value
-    struct DerivedParam
+    struct GENN_EXPORT DerivedParam
     {
+        typedef std::function<Type::NumericValue(const std::map<std::string, Type::NumericValue>&, double)> Func;
+
+        DerivedParam(const std::string &n, Func f, const Type::ResolvedType &t) : name(n), func(f), type(t)
+        {}
+        DerivedParam(const std::string &n, Func f, const std::string &t = "scalar") : name(n), func(f), type(t)
+        {}
+
         bool operator == (const DerivedParam &other) const
         {
-            return (name == other.name);
+            return (std::tie(name, type) == std::tie(other.name, other.type));
         }
 
         std::string name;
-        std::function<double(const std::vector<double> &, double)> func;
+        Func func;
+        Type::UnresolvedType type;
     };
-
 
     //----------------------------------------------------------------------------
     // Typedefines
     //----------------------------------------------------------------------------
-    typedef std::vector<std::string> StringVec;
+    typedef std::vector<Param> ParamVec;
     typedef std::vector<EGP> EGPVec;
     typedef std::vector<ParamVal> ParamValVec;
     typedef std::vector<DerivedParam> DerivedParamVec;
+    typedef std::function<unsigned int(unsigned int, unsigned int, const std::map<std::string, Type::NumericValue> &)> CalcMaxLengthFunc;
+    typedef std::function<std::vector<unsigned int>(const std::map<std::string, Type::NumericValue> &)> CalcKernelSizeFunc;
 
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
-    //! Gets names of of (independent) model parameters
-    virtual StringVec getParamNames() const{ return {}; }
+    //! Gets names and types of (independent) model parameters
+    virtual ParamVec getParams() const{ return {}; }
 
     //! Gets names of derived model parameters and the function objects to call to
     //! Calculate their value from a vector of model parameter values
@@ -197,46 +163,40 @@ public:
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
-    //! Find the index of a named extra global parameter
-    size_t getExtraGlobalParamIndex(const std::string &paramName) const
+    //! Find the named parameter
+    std::optional<Param> getParam(const std::string &paramName) const
     {
-        return getNamedVecIndex(paramName, getExtraGlobalParams());
+        return getNamed(paramName, getParams());
+    }
+    //! Find the named extra global parameter
+    std::optional<EGP> getExtraGlobalParam(const std::string &paramName) const
+    {
+        return getNamed(paramName, getExtraGlobalParams());
     }
 
 protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    void updateHash(boost::uuids::detail::sha1 &hash) const
-    {
-        Utils::updateHash(getParamNames(), hash);
-        Utils::updateHash(getDerivedParams(), hash);
-        Utils::updateHash(getExtraGlobalParams(), hash);
-    }
+    void updateHash(boost::uuids::detail::sha1 &hash) const;
 
     //! Validate names of parameters etc
-    void validate() const
-    {
-        Utils::validateParamNames(getParamNames());
-        Utils::validateVecNames(getDerivedParams(), "Derived parameter");
-        Utils::validateVecNames(getExtraGlobalParams(), "Derived parameter");
-    }
+    void validate(const std::map<std::string, Type::NumericValue> &paramValues, const std::string &description) const;
 
     //------------------------------------------------------------------------
     // Protected static helpers
     //------------------------------------------------------------------------
     template<typename T>
-    static size_t getNamedVecIndex(const std::string &name, const std::vector<T> &vec)
+    static std::optional<T> getNamed(const std::string &name, const std::vector<T> &vec)
     {
         auto iter = std::find_if(vec.begin(), vec.end(),
             [name](const T &v){ return (v.name == name); });
-
-        if(iter == vec.end()) {
-            throw std::runtime_error("Cannot find variable '" + name + "'");
+        if(iter == vec.cend()) {
+            return std::nullopt;
         }
-
-        // Return 'distance' between first entry in vector and iterator i.e. index
-        return distance(vec.begin(), iter);
+        else {
+            return *iter;
+        }
     }
 };
 
@@ -250,36 +210,31 @@ template<typename SnippetBase>
 class Init
 {
 public:
-    Init(const SnippetBase *snippet, const std::vector<double> &params)
+    Init(const SnippetBase *snippet, const std::map<std::string, Type::NumericValue> &params)
         : m_Snippet(snippet), m_Params(params)
     {
-        // Validate names
-        getSnippet()->validate();
     }
 
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
     const SnippetBase *getSnippet() const{ return m_Snippet; }
-    const std::vector<double> &getParams() const{ return m_Params; }
-    const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
-
-    void initDerivedParams(double dt)
-    {
-        auto derivedParams = m_Snippet->getDerivedParams();
-
-        // Reserve vector to hold derived parameters
-        m_DerivedParams.reserve(derivedParams.size());
-
-        // Loop through derived parameters
-        for(const auto &d : derivedParams) {
-            m_DerivedParams.push_back(d.func(m_Params, dt));
-        }
-    }
+    const auto &getParams() const{ return m_Params; }
+    const auto &getDerivedParams() const{ return m_DerivedParams; }
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const
     {
         return getSnippet()->getHashDigest();
+    }
+
+    void finalise(double dt)
+    {
+        auto derivedParams = m_Snippet->getDerivedParams();
+
+        // Loop through derived parameters
+        for(const auto &d : derivedParams) {
+            m_DerivedParams.emplace(d.name, d.func(m_Params, dt));
+        }
     }
 
 private:
@@ -287,28 +242,38 @@ private:
     // Members
     //----------------------------------------------------------------------------
     const SnippetBase *m_Snippet;
-    std::vector<double> m_Params;
-    std::vector<double> m_DerivedParams;
+    std::map<std::string, Type::NumericValue> m_Params;
+    std::map<std::string, Type::NumericValue> m_DerivedParams;
+};
+
+//----------------------------------------------------------------------------
+// GeNN::Snippet::DynamicParameterContainer
+//----------------------------------------------------------------------------
+class DynamicParameterContainer
+{
+public:
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void set(const std::string &name, bool value);
+    bool get(const std::string &name) const;
+
+    void updateHash(boost::uuids::detail::sha1 &hash) const;
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    const Base *m_Snippet;
+    std::set<std::string> m_Dynamic;
 };
 
 //----------------------------------------------------------------------------
 // updateHash overrides
 //----------------------------------------------------------------------------
-inline void updateHash(const Base::EGP &e, boost::uuids::detail::sha1 &hash)
-{
-    Utils::updateHash(e.name, hash);
-    Utils::updateHash(e.type, hash);
-}
-
-inline void updateHash(const Base::ParamVal &p, boost::uuids::detail::sha1 &hash)
-{
-    Utils::updateHash(p.name, hash);
-    Utils::updateHash(p.type, hash);
-    Utils::updateHash(p.value, hash);
-}
-
-inline void updateHash(const Base::DerivedParam &d, boost::uuids::detail::sha1 &hash)
-{
-    Utils::updateHash(d.name, hash);
-}
-}   // namespace Snippet
+GENN_EXPORT void updateHash(const Base::Param &p, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const Base::EGP &e, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const Base::ParamVal &p, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const Base::DerivedParam &d, boost::uuids::detail::sha1 &hash);
+}   // namespace GeNN::Snippet
+}   // namespace GeNN

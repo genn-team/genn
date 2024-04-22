@@ -1,258 +1,742 @@
 #include "code_generator/backendBase.h"
 
+// Standard C++ includes
+#include <algorithm>
+
 // GeNN includes
 #include "gennUtils.h"
 #include "logging.h"
 
 // GeNN code generator includes
+#include "code_generator/codeGenUtils.h"
 #include "code_generator/groupMerged.h"
+#include "code_generator/customConnectivityUpdateGroupMerged.h"
 #include "code_generator/customUpdateGroupMerged.h"
+#include "code_generator/initGroupMerged.h"
 #include "code_generator/neuronUpdateGroupMerged.h"
+#include "code_generator/synapseUpdateGroupMerged.h"
 
+// GeNN runtime includes
+#include "runtime/runtime.h"
 
-// Macro for simplifying defining type sizes
-#define TYPE(T) {#T, {sizeof(T), std::to_string(std::numeric_limits<T>::lowest())}}
-#define FLOAT_TYPE(T) {#T, {sizeof(T), Utils::writePreciseString(std::numeric_limits<T>::lowest())}}
+using namespace GeNN;
+using namespace GeNN::CodeGenerator;
 
 //--------------------------------------------------------------------------
-// CodeGenerator::BackendBase
+// Anonymous namespace
 //--------------------------------------------------------------------------
-namespace CodeGenerator
+namespace
 {
-BackendBase::BackendBase(const std::string &scalarType, const PreferencesBase &preferences)
-:   m_PointerBytes(sizeof(char*)), m_Types{{TYPE(char), TYPE(wchar_t), TYPE(signed char), TYPE(short),
-    TYPE(signed short), TYPE(short int), TYPE(signed short int), TYPE(int), TYPE(signed int), TYPE(long),
-    TYPE(signed long), TYPE(long int), TYPE(signed long int), TYPE(long long), TYPE(signed long long), TYPE(long long int),
-    TYPE(signed long long int), TYPE(unsigned char), TYPE(unsigned short), TYPE(unsigned short int), TYPE(unsigned),
-    TYPE(unsigned int), TYPE(unsigned long), TYPE(unsigned long int), TYPE(unsigned long long),
-    TYPE(unsigned long long int), TYPE(bool), TYPE(intmax_t), TYPE(uintmax_t), TYPE(int8_t), TYPE(uint8_t), 
-    TYPE(int16_t), TYPE(uint16_t), TYPE(int32_t), TYPE(uint32_t), TYPE(int64_t), TYPE(uint64_t), 
-    TYPE(int_least8_t), TYPE(uint_least8_t), TYPE(int_least16_t), TYPE(uint_least16_t), TYPE(int_least32_t), 
-    TYPE(uint_least32_t), TYPE(int_least64_t), TYPE(uint_least64_t), TYPE(int_fast8_t), TYPE(uint_fast8_t), 
-    TYPE(int_fast16_t), TYPE(uint_fast16_t), TYPE(int_fast32_t), TYPE(uint_fast32_t), TYPE(int_fast64_t), 
-    TYPE(uint_fast64_t), FLOAT_TYPE(float), FLOAT_TYPE(double), FLOAT_TYPE(long double)}}, m_Preferences(preferences)
+template<typename G>
+void buildCustomUpdateSizeEnvironment(EnvironmentGroupMergedField<G> &env)
 {
-    // Add scalar type
-    if(scalarType == "float") {
-        addType("scalar", sizeof(float), Utils::writePreciseString(std::numeric_limits<float>::lowest()));
-    }
-    else {
-        addType("scalar", sizeof(double), Utils::writePreciseString(std::numeric_limits<double>::lowest()));
-    }
+    // Add size field
+    env.addField(Type::Uint32.addConst(), "num_neurons",
+                Type::Uint32, "numNeurons", 
+                [](const auto &, const auto &c, size_t) { return c.getNumNeurons(); });
+    env.add(Type::Uint32.addConst(), "_size", "$(num_neurons)");
 }
 //--------------------------------------------------------------------------
-size_t BackendBase::getSize(const std::string &type) const
+template<typename G>
+void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env)
 {
-     // If type is a pointer, any pointer should have the same type
-    if(Utils::isTypePointer(type)) {
-        return m_PointerBytes;
-    }
-    // Otherwise
-    else {
-        // If type isn't found in dictionary, give a warning and return 0
-        const auto typeSizeLowest = m_Types.find(type);
-        if(typeSizeLowest == m_Types.cend()) {
-            LOGW_CODE_GEN << "Unable to estimate size of type '" << type << "'";
-            return 0;
+    // Synapse group fields 
+    env.addField(Type::Uint32.addConst(), "num_pre",
+                 Type::Uint32, "numSrcNeurons", 
+                 [](const auto&, auto  &cg, size_t) { return cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); });
+    env.addField(Type::Uint32.addConst(), "num_post",
+                 Type::Uint32, "numTrgNeurons", 
+                 [](const auto&, const auto  &cg, size_t) { return cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); });
+    env.addField(Type::Uint32, "_row_stride", "rowStride", 
+                 [&backend](const auto&, const auto &cg, size_t) { return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup()); });
+
+    // If underlying synapse group has kernel connectivity
+    const auto *sg = env.getGroup().getArchetype().getSynapseGroup();
+    if(sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
+        // Loop through kernel size dimensions
+        // **TODO** automatic heterogeneity detection on all fields would make this much nicer
+        std::ostringstream kernSizeInit;
+        kernSizeInit << "const unsigned int kernelSize = ";
+        const auto &kernelSize = env.getGroup().getArchetype().getKernelSize();
+        for (size_t d = 0; d < kernelSize.size(); d++) {
+            // If this dimension has a heterogeneous size, add it to struct
+            if (isKernelSizeHeterogeneous(env.getGroup(), d)) {
+                env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), 
+                             Type::Uint32, "kernelSize" + std::to_string(d),
+                             [d](const auto&, const auto &g, size_t) { return g.getSynapseGroup()->getKernelSize().at(d); });
+            }
+
+            // Multiply size by dimension
+            kernSizeInit << getKernelSize(env.getGroup(), d);
+            if (d != (kernelSize.size() - 1)) {
+                kernSizeInit << " * ";
+            }
         }
-        // Otherwise, return its size
-        else {
-            return typeSizeLowest->second.first;
-        }
-    }
-}
-//--------------------------------------------------------------------------
-std::string BackendBase::getLowestValue(const std::string &type) const
-{
-    assert(!Utils::isTypePointer(type));
 
-    // If type's found in dictionary and it has a lowest value
-    const auto typeSizeLowest = m_Types.find(type);
-    if(typeSizeLowest != m_Types.cend() && !typeSizeLowest->second.second.empty()) {
-        return typeSizeLowest->second.second;
+        // Add size field
+        kernSizeInit << ";";
+        env.add(Type::Uint32.addConst(), "_kernel_size", "kernelSize",
+                {env.addInitialiser(kernSizeInit.str())});
+        env.add(Type::Uint32.addConst(), "_size", "$(_kernel_size)");
     }
-    // Otherwise, give warning and return empty string
+    // Otherwise, calculate size as normal
     else {
-        LOGW_CODE_GEN << "Unable to get lowest value for type '" << type << "'";
-        return "";
-    }
-}
-//--------------------------------------------------------------------------
-bool BackendBase::areSixtyFourBitSynapseIndicesRequired(const SynapseGroupMergedBase &sg) const
-{
-    // Loop through merged groups and calculate maximum number of synapses
-    size_t maxSynapses = 0;
-    for(const auto &g : sg.getGroups()) {
-        const size_t numSynapses = (size_t)g.get().getSrcNeuronGroup()->getNumNeurons() * (size_t)getSynapticMatrixRowStride(g.get());
-        maxSynapses = std::max(maxSynapses, numSynapses);
+        // Connectivity fields
+        if(sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            env.addField(Type::Uint32.createPointer(), "_row_length", "rowLength",
+                         [](const auto &runtime, const auto &cg, size_t) { return runtime.getArray(*cg.getSynapseGroup(), "rowLength"); });
+            env.addField(sg->getSparseIndType().createPointer(), "_ind", "ind",
+                         [](const auto &runtime, const auto &cg, size_t) { return runtime.getArray(*cg.getSynapseGroup(), "ind"); });
+        }
+
+        const auto indexType = backend.getSynapseIndexType(env.getGroup());
+        const auto indexTypeName = indexType.getName();
+        env.add(indexType.addConst(), "_size", "size",
+                {env.addInitialiser("const " + indexTypeName + " size = (" + indexTypeName + ")$(num_pre) * $(_row_stride);")});
     }
 
-    // Return true if any high bits are set
-    return ((maxSynapses & 0xFFFFFFFF00000000ULL) != 0);
 }
-//-----------------------------------------------------------------------
-void BackendBase::genNeuronIndexCalculation(CodeStream &os, const NeuronUpdateGroupMerged &ng, unsigned int batchSize) const
+//--------------------------------------------------------------------------
+template<typename G>
+void buildStandardNeuronEnvironment(EnvironmentGroupMergedField<G> &env, unsigned int batchSize)
 {
+    using namespace Type;
+
+    env.addField(Uint32.addConst(), "num_neurons",
+                 Uint32, "numNeurons",
+                 [](const auto&, const auto &ng, size_t) { return ng.getNumNeurons(); });
+    env.addField(Uint32.createPointer(), "_spk_que_ptr", "spkQuePtr",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkQuePtr"); });
+    env.addField(Uint32.createPointer(), "_record_spk", "recordSpk",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "recordSpk"); });
+    env.addField(env.getGroup().getTimeType().createPointer(), "_st", "sT",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "sT"); });
+    env.addField(env.getGroup().getTimeType().createPointer(), "_prev_st", "prevST", 
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "prevST"); });
+
     // If batching is enabled, calculate batch offset
+    env.add(Uint32.addConst(), "num_batch", std::to_string(batchSize));
     if(batchSize > 1) {
-        os << "const unsigned int batchOffset = group->numNeurons * batch;" << std::endl;
+        env.add(Uint32.addConst(), "_batch_offset", "batchOffset",
+                {env.addInitialiser("const unsigned int batchOffset = $(num_neurons) * $(batch);")});
     }
             
     // If axonal delays are required
-    if(ng.getArchetype().isDelayRequired()) {
+    if(env.getGroup().getArchetype().isDelayRequired()) {
         // We should READ from delay slot before spkQuePtr
-        os << "const unsigned int readDelaySlot = (*group->spkQuePtr + " << (ng.getArchetype().getNumDelaySlots() - 1) << ") % " << ng.getArchetype().getNumDelaySlots() << ";" << std::endl;
-        os << "const unsigned int readDelayOffset = readDelaySlot * group->numNeurons;" << std::endl;
+        const unsigned int numDelaySlots = env.getGroup().getArchetype().getNumDelaySlots();
+        const std::string numDelaySlotsStr = std::to_string(numDelaySlots);
+        env.add(Uint32.addConst(), "_read_delay_slot", "readDelaySlot",
+                {env.addInitialiser("const unsigned int readDelaySlot = (*$(_spk_que_ptr) + " + std::to_string(numDelaySlots - 1) + ") % " + numDelaySlotsStr+ ";")});
+        env.add(Uint32.addConst(), "_read_delay_offset", "readDelayOffset",
+                {env.addInitialiser("const unsigned int readDelayOffset = $(_read_delay_slot) * $(num_neurons);")});
 
         // And we should WRITE to delay slot pointed to be spkQuePtr
-        os << "const unsigned int writeDelaySlot = *group->spkQuePtr;" << std::endl;
-        os << "const unsigned int writeDelayOffset = writeDelaySlot * group->numNeurons;" << std::endl;
+        env.add(Uint32.addConst(), "_write_delay_slot", "writeDelaySlot",
+                {env.addInitialiser("const unsigned int writeDelaySlot = *$(_spk_que_ptr);")});
+        env.add(Uint32.addConst(), "_write_delay_offset", "writeDelayOffset",
+                {env.addInitialiser("const unsigned int writeDelayOffset = $(_write_delay_slot) * $(num_neurons);")});
 
         // If batching is also enabled
         if(batchSize > 1) {
             // Calculate batched delay slots
-            os << "const unsigned int readBatchDelaySlot = (batch * " << ng.getArchetype().getNumDelaySlots() << ") + readDelaySlot;" << std::endl;
-            os << "const unsigned int writeBatchDelaySlot = (batch * " << ng.getArchetype().getNumDelaySlots() << ") + writeDelaySlot;" << std::endl;
+            env.add(Uint32.addConst(), "_read_batch_delay_slot", "readBatchDelaySlot",
+                    {env.addInitialiser("const unsigned int readBatchDelaySlot = ($(batch) * " + numDelaySlotsStr + ") + $(_read_delay_slot);")});
+            env.add(Uint32.addConst(), "_write_batch_delay_slot", "writeBatchDelaySlot",
+                    {env.addInitialiser("const unsigned int writeBatchDelaySlot = ($(batch) * " + numDelaySlotsStr + ") + $(_write_delay_slot);")});
 
             // Calculate current batch offset
-            os << "const unsigned int batchDelayOffset = batchOffset * " << ng.getArchetype().getNumDelaySlots() << ";" << std::endl;
+            env.add(Uint32.addConst(), "_batch_delay_offset", "batchDelayOffset",
+                    {env.addInitialiser("const unsigned int batchDelayOffset = $(_batch_offset) * " + numDelaySlotsStr + ";")});
 
             // Calculate further offsets to include delay and batch
-            os << "const unsigned int readBatchDelayOffset = readDelayOffset + batchDelayOffset;" << std::endl;
-            os << "const unsigned int writeBatchDelayOffset = writeDelayOffset + batchDelayOffset;" << std::endl;
+            env.add(Uint32.addConst(), "_read_batch_delay_offset", "readBatchDelayOffset",
+                    {env.addInitialiser("const unsigned int readBatchDelayOffset = $(_read_delay_offset) + $(_batch_delay_offset);")});
+            env.add(Uint32.addConst(), "_write_batch_delay_offset", "writeBatchDelayOffset",
+                    {env.addInitialiser("const unsigned int writeBatchDelayOffset = $(_write_delay_offset) + $(_batch_delay_offset);")});
         }
     }
 }
-//-----------------------------------------------------------------------
-void BackendBase::genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg, unsigned int batchSize) const
+//--------------------------------------------------------------------------
+template<typename G>
+void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env, unsigned int batchSize)
 {
-     // If batching is enabled
+    using namespace Type;
+
+    // Synapse group fields 
+    env.addField(Uint32.addConst(), "num_pre",
+                 Uint32, "numSrcNeurons", 
+                 [](const auto&, const SynapseGroupInternal &sg, size_t) { return sg.getSrcNeuronGroup()->getNumNeurons(); });
+    env.addField(Uint32.addConst(), "num_post",
+                 Uint32, "numTrgNeurons", 
+                 [](const auto&, const SynapseGroupInternal &sg, size_t) { return sg.getTrgNeuronGroup()->getNumNeurons(); });
+    env.addField(Uint32, "_row_stride", "rowStride", 
+                 [&backend](const auto&, const SynapseGroupInternal &sg, size_t) { return backend.getSynapticMatrixRowStride(sg); });
+    env.addField(Uint32, "_col_stride", "colStride", 
+                 [](const auto&, const SynapseGroupInternal &sg, size_t) { return sg.getMaxSourceConnections(); });
+
+    // Postsynaptic model fields         
+    env.addField(env.getGroup().getScalarType().createPointer(), "_out_post", "outPost",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "outPost"); });
+    env.addField(env.getGroup().getScalarType().createPointer(), "_den_delay", "denDelay",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "denDelay"); });
+    env.addField(Uint32.createPointer(), "_den_delay_ptr", "denDelayPtr",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPSTarget(), "denDelayPtr"); });
+                       
+    // Presynaptic output fields
+    env.addField(env.getGroup().getScalarType().createPointer(), "_out_pre", "outPre",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPreOutputTarget(), "outPre"); });
+                        
+    // Source neuron fields
+    env.addField(Uint32.createPointer(), "_src_spk_que_ptr", "srcSpkQuePtr",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "spkQuePtr"); });
+    env.addField(Uint32.createPointer(), "_src_spk_cnt", "srcSpkCnt",
+                 [](const auto &runtime, const auto &g, size_t){ return runtime.getFusedSrcSpikeArray(g, "SpkCnt"); });
+    env.addField(Uint32.createPointer(), "_src_spk", "srcSpk",
+                 [](const auto &runtime, const auto &g, size_t){ return runtime.getFusedSrcSpikeArray(g, "Spk"); });
+    env.addField(Uint32.createPointer(), "_src_spk_cnt_event", "srcSpkCntEvent",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedSrcSpikeEventArray(g, "SpkCntEvent"); });
+    env.addField(Uint32.createPointer(), "_src_spk_event", "srcSpkEvent",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedSrcSpikeEventArray(g, "SpkEvent"); });
+    env.addField(env.getGroup().getTimeType().createPointer(), "_src_st", "srcST",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "sT"); });
+    env.addField(env.getGroup().getTimeType().createPointer(), "_src_prev_st", "srcPrevST",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "prevST"); });
+    env.addField(env.getGroup().getTimeType().createPointer(), "_src_set", "srcSET",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedSrcSpikeEventArray(g, "SET"); });
+    env.addField(env.getGroup().getTimeType().createPointer(), "_src_prev_set", "srcPrevSET",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedSrcSpikeEventArray(g, "PrevSET" ); });
+    
+    // Target neuron fields
+    env.addField(Uint32.createPointer(), "_trg_spk_que_ptr", "trgSpkQuePtr",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getTrgNeuronGroup(), "spkQuePtr"); });
+    env.addField(Uint32.createPointer(), "_trg_spk_cnt", "trgSpkCnt",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeArray(g, "SpkCnt"); });
+    env.addField(Uint32.createPointer(), "_trg_spk", "trgSpk",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeArray(g, "Spk"); });
+    env.addField(Uint32.createPointer(), "_trg_spk_cnt_event", "trgSpkCntEvent",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeEventArray(g, "SpkCntEvent"); });
+    env.addField(Uint32.createPointer(), "_trg_spk_event", "trgSpkEvent",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeEventArray(g, "SpkEvent"); });
+    env.addField(env.getGroup().getTimeType().createPointer(), "_trg_st", "trgST",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getTrgNeuronGroup(), "sT"); });
+    env.addField(env.getGroup().getTimeType().createPointer(), "_trg_prev_st", "trgPrevST",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getTrgNeuronGroup(), "prevST"); });
+    env.addField(env.getGroup().getTimeType().createPointer(), "_trg_set", "trgSET",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeEventArray(g, "SET"); });
+    env.addField(env.getGroup().getTimeType().createPointer(), "_trg_prev_set", "trgPrevSET",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getFusedTrgSpikeEventArray(g, "PrevSET"); });
+
+    // Connectivity fields
+    if(env.getGroup().getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+        env.addField(Uint32.createPointer(), "_gp", "gp",
+                     [](const auto &runtime, const auto &sg, size_t) { return runtime.getArray(sg, "gp"); });
+    }
+    else if(env.getGroup().getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        env.addField(Uint32.createPointer(), "_row_length", "rowLength",
+                     [](const auto &runtime, const auto &sg, size_t) { return runtime.getArray(sg, "rowLength"); });
+        env.addField(env.getGroup().getArchetype().getSparseIndType().createPointer(), "_ind", "ind",
+                     [](const auto &runtime, const auto &sg, size_t) { return runtime.getArray(sg, "ind"); });
+        env.addField(Uint32.createPointer(), "_col_length", "colLength", 
+                     [](const auto &runtime, const auto &sg, size_t) { return runtime.getArray(sg, "colLength"); });
+        env.addField(Uint32.createPointer(), "_remap", "remap", 
+                     [](const auto &runtime, const auto &sg, size_t) { return runtime.getArray(sg, "remap"); });
+    }
+    else if(env.getGroup().getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
+        // **TODO** automatic heterogeneity detection on all fields would make this much nicer
+        std::ostringstream kernSizeInit;
+        kernSizeInit << "const unsigned int kernelSize = ";
+        const auto &kernelSize = env.getGroup().getArchetype().getKernelSize();
+        for (size_t d = 0; d < kernelSize.size(); d++) {
+            // If this dimension has a heterogeneous size, add it to struct
+            if (isKernelSizeHeterogeneous(env.getGroup(), d)) {
+                env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), 
+                             Type::Uint32, "kernelSize" + std::to_string(d),
+                             [d](const auto&, const auto &g, size_t) { return g.getKernelSize().at(d); });
+            }
+
+            // Multiply size by dimension
+            kernSizeInit << getKernelSize(env.getGroup(), d);
+            if (d != (kernelSize.size() - 1)) {
+                kernSizeInit << " * ";
+            }
+        }
+
+        // Add size field
+        kernSizeInit << ";";
+        env.add(Type::Uint32.addConst(), "_kernel_size", "kernelSize",
+                {env.addInitialiser(kernSizeInit.str())});
+    }
+
+    // If batching is enabled
+    env.add(Uint32.addConst(), "num_batch", std::to_string(batchSize));
     if(batchSize > 1) {
         // Calculate batch offsets into pre and postsynaptic populations
-        os << "const unsigned int preBatchOffset = group->numSrcNeurons * batch;" << std::endl;
-        os << "const unsigned int postBatchOffset = group->numTrgNeurons * batch;" << std::endl;
-
-        // Calculate batch offsets into synapse arrays, using 64-bit arithmetic if necessary
-        if(areSixtyFourBitSynapseIndicesRequired(sg)) {
-            os << "const uint64_t synBatchOffset = (uint64_t)preBatchOffset * (uint64_t)group->rowStride;" << std::endl;
-        }
-        else {
-            os << "const unsigned int synBatchOffset = preBatchOffset * group->rowStride;" << std::endl;
-        }
+        env.add(Uint32.addConst(), "_pre_batch_offset", "preBatchOffset",
+                {env.addInitialiser("const unsigned int preBatchOffset = $(num_pre) * $(batch);")});
+        env.add(Uint32.addConst(), "_post_batch_offset", "postBatchOffset",
+                {env.addInitialiser("const unsigned int postBatchOffset = $(num_post) * $(batch);")});
         
-        // If synapse group has kernel weights
-        const auto &kernelSize = sg.getArchetype().getKernelSize();
-        if((sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) && !kernelSize.empty()) {
-            // Loop through kernel dimensions and multiply together
-            os << "const unsigned int kernBatchOffset = ";
-            for(size_t i = 0; i < kernelSize.size(); i++) {
-                os << sg.getKernelSize(i) << " * ";
-            }
-            
-            // And finally by batch
-            os << "batch;" << std::endl;
+        // Calculate batch offsets into synapse arrays
+        const auto indexType = backend.getSynapseIndexType(env.getGroup());
+        const auto indexTypeName = indexType.getName();
+        env.add(indexType.addConst(), "_syn_batch_offset", "synBatchOffset",
+                {env.addInitialiser("const " + indexTypeName + " synBatchOffset = (" + indexTypeName + ")$(_pre_batch_offset) * $(_row_stride);")});
+        
+        // If group has kernel weights, calculate batch stride over them
+        if(env.getGroup().getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
+            env.add(Uint32.addConst(), "_kern_batch_offset", "kernBatchOffset",
+                    {env.addInitialiser("const unsigned int kernBatchOffset = $(_kernel_size) * $(batch);")});
         }
     }
 
     // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
-    if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-        const unsigned int numDelaySteps = sg.getArchetype().getDelaySteps();
-        const unsigned int numSrcDelaySlots = sg.getArchetype().getSrcNeuronGroup()->getNumDelaySlots();
+    if(env.getGroup().getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
+        const unsigned int numDelaySteps = env.getGroup().getArchetype().getAxonalDelaySteps();
+        const unsigned int numSrcDelaySlots = env.getGroup().getArchetype().getSrcNeuronGroup()->getNumDelaySlots();
 
-        os << "const unsigned int preDelaySlot = ";
+        std::ostringstream preDelaySlotInit;
+        preDelaySlotInit << "const unsigned int preDelaySlot = ";
         if(numDelaySteps == 0) {
-            os << "*group->srcSpkQuePtr;" << std::endl;
+            preDelaySlotInit << "*$(_src_spk_que_ptr);" << std::endl;
         }
         else {
-            os << "(*group->srcSpkQuePtr + " << (numSrcDelaySlots - numDelaySteps) << ") % " << numSrcDelaySlots <<  ";" << std::endl;
+            preDelaySlotInit << "(*$(_src_spk_que_ptr) + " << (numSrcDelaySlots - numDelaySteps) << ") % " << numSrcDelaySlots <<  ";" << std::endl;
         }
-        os << "const unsigned int preDelayOffset = preDelaySlot * group->numSrcNeurons;" << std::endl;
+        env.add(Uint32, "_pre_delay_slot", "preDelaySlot", 
+                {env.addInitialiser(preDelaySlotInit.str())});
+
+        env.add(Uint32, "_pre_delay_offset", "preDelayOffset",
+                {env.addInitialiser("const unsigned int preDelayOffset = $(_pre_delay_slot) * $(num_pre);")});
 
         if(batchSize > 1) {
-            os << "const unsigned int preBatchDelaySlot = preDelaySlot + (batch * " << numSrcDelaySlots << ");" << std::endl;
-            os << "const unsigned int preBatchDelayOffset = preDelayOffset + (preBatchOffset * " << numSrcDelaySlots << ");" << std::endl;
+            env.add(Uint32, "_pre_batch_delay_slot", "preBatchDelaySlot",
+                    {env.addInitialiser("const unsigned int preBatchDelaySlot = $(_pre_delay_slot) + ($(batch) * " + std::to_string(numSrcDelaySlots) + ");")});
+            env.add(Uint32, "_pre_batch_delay_offset", "preBatchDelayOffset",
+                    {env.addInitialiser("const unsigned int preBatchDelayOffset = $(_pre_delay_offset) + ($(_pre_batch_offset) * " + std::to_string(numSrcDelaySlots) + ");")});
         }
 
-        if(sg.getArchetype().getWUModel()->isPrevPreSpikeTimeRequired() || sg.getArchetype().getWUModel()->isPrevPreSpikeEventTimeRequired()) {
-            os << "const unsigned int prePrevSpikeTimeDelayOffset = " << "((*group->srcSpkQuePtr + " << (numSrcDelaySlots - numDelaySteps - 1) << ") % " << numSrcDelaySlots << ")" << " * group->numSrcNeurons;" << std::endl;
+        env.add(Uint32, "_pre_prev_spike_time_delay_offset", "prePrevSpikeTimeDelayOffset",
+                {env.addInitialiser("const unsigned int prePrevSpikeTimeDelayOffset = ((*$(_src_spk_que_ptr) + " 
+                                    + std::to_string(numSrcDelaySlots - numDelaySteps - 1) + ") % " + std::to_string(numSrcDelaySlots) + ") * $(num_pre);")});
 
-            if(batchSize > 1) {
-                os << "const unsigned int prePrevSpikeTimeBatchDelayOffset = prePrevSpikeTimeDelayOffset + (preBatchOffset * " << numSrcDelaySlots << ");" << std::endl;
-            }
+        if(batchSize > 1) {
+            env.add(Uint32, "_pre_prev_spike_time_batch_delay_offset", "prePrevSpikeTimeBatchDelayOffset",
+                    {env.addInitialiser("const unsigned int prePrevSpikeTimeBatchDelayOffset = $(_pre_prev_spike_time_delay_offset) + ($(_pre_batch_offset) * " + std::to_string(numSrcDelaySlots) + ");")});
         }
     }
 
     // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
-    if(sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
-        const unsigned int numBackPropDelaySteps = sg.getArchetype().getBackPropDelaySteps();
-        const unsigned int numTrgDelaySlots = sg.getArchetype().getTrgNeuronGroup()->getNumDelaySlots();
+    if(env.getGroup().getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
+        const unsigned int numBackPropDelaySteps = env.getGroup().getArchetype().getBackPropDelaySteps();
+        const unsigned int numTrgDelaySlots = env.getGroup().getArchetype().getTrgNeuronGroup()->getNumDelaySlots();
 
-        os << "const unsigned int postDelaySlot = ";
+        std::ostringstream postDelaySlotInit;
+        postDelaySlotInit << "const unsigned int postDelaySlot = ";
         if(numBackPropDelaySteps == 0) {
-            os << "*group->trgSpkQuePtr;" << std::endl;
+            postDelaySlotInit << "*$(_trg_spk_que_ptr);" << std::endl;
         }
         else {
-            os << "(*group->trgSpkQuePtr + " << (numTrgDelaySlots - numBackPropDelaySteps) << ") % " << numTrgDelaySlots << ";" << std::endl;
+            postDelaySlotInit << "(*$(_trg_spk_que_ptr) + " << (numTrgDelaySlots - numBackPropDelaySteps) << ") % " << numTrgDelaySlots << ";" << std::endl;
         }
-        os << "const unsigned int postDelayOffset = postDelaySlot * group->numTrgNeurons;" << std::endl;
+        env.add(Uint32, "_post_delay_slot", "postDelaySlot", 
+                {env.addInitialiser(postDelaySlotInit.str())});
+
+        env.add(Uint32, "_post_delay_offset", "postDelayOffset",
+                {env.addInitialiser("const unsigned int postDelayOffset = $(_post_delay_slot) * $(num_post);")});
 
         if(batchSize > 1) {
-            os << "const unsigned int postBatchDelaySlot = postDelaySlot + (batch * " << numTrgDelaySlots << ");" << std::endl;
-            os << "const unsigned int postBatchDelayOffset = postDelayOffset + (postBatchOffset * " << numTrgDelaySlots << ");" << std::endl;
+            env.add(Uint32, "_post_batch_delay_slot", "postBatchDelaySlot",
+                    {env.addInitialiser("const unsigned int postBatchDelaySlot =$(_post_delay_slot) + ($(batch) * " + std::to_string(numTrgDelaySlots) + ");")});
+            env.add(Uint32, "_post_batch_delay_offset", "postBatchDelayOffset",
+                    {env.addInitialiser("const unsigned int postBatchDelayOffset = $(_post_delay_offset) + ($(_post_batch_offset) * " + std::to_string(numTrgDelaySlots) + ");")});
         }
 
-        if(sg.getArchetype().getWUModel()->isPrevPostSpikeTimeRequired()) {
-            os << "const unsigned int postPrevSpikeTimeDelayOffset = " << "((*group->trgSpkQuePtr + " << (numTrgDelaySlots - numBackPropDelaySteps - 1) << ") % " << numTrgDelaySlots << ")" << " * group->numTrgNeurons;" << std::endl;
-            
-            if(batchSize > 1) {
-                os << "const unsigned int postPrevSpikeTimeBatchDelayOffset = postPrevSpikeTimeDelayOffset + (postBatchOffset * " << numTrgDelaySlots << ");" << std::endl;
-            }
+        env.add(Uint32, "_post_prev_spike_time_delay_offset", "postPrevSpikeTimeDelayOffset",
+                {env.addInitialiser("const unsigned int postPrevSpikeTimeDelayOffset = ((*$(_trg_spk_que_ptr) + " 
+                                    + std::to_string(numTrgDelaySlots - numBackPropDelaySteps - 1) + ") % " + std::to_string(numTrgDelaySlots) + ") * $(num_post);")});
 
+        if(batchSize > 1) {
+            env.add(Uint32, "_post_prev_spike_time_batch_delay_offset", "postPrevSpikeTimeBatchDelayOffset",
+                    {env.addInitialiser("const unsigned int postPrevSpikeTimeBatchDelayOffset = $(_post_prev_spike_time_delay_offset) + ($(_post_batch_offset) * " + std::to_string(numTrgDelaySlots) + ");")});
         }
     }
 }
-//-----------------------------------------------------------------------
-void BackendBase::genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const
+//--------------------------------------------------------------------------
+template<typename G>
+void buildStandardCustomUpdateEnvironment(EnvironmentGroupMergedField<G> &env, unsigned int batchSize)
 {
     // If batching is enabled, calculate batch offset
-    if(cu.getArchetype().isBatched()) {
-        os << "const unsigned int batchOffset = group->size * batch;" << std::endl;
+    const bool batched = (env.getGroup().getArchetype().getDims() & VarAccessDim::BATCH) && (batchSize > 1);
+    if(batched) {
+        env.add(Type::Uint32.addConst(), "_batch_offset", "batchOffset",
+                {env.addInitialiser("const unsigned int batchOffset = $(num_neurons) * $(batch);")});
     }
             
     // If axonal delays are required
-    if(cu.getArchetype().getDelayNeuronGroup() != nullptr) {
-        // We should read from delay slot pointed to be spkQuePtr
-        os << "const unsigned int delaySlot = *group->spkQuePtr;" << std::endl;
-        os << "const unsigned int delayOffset = (delaySlot * group->size);" << std::endl;
+    if(env.getGroup().getArchetype().getDelayNeuronGroup() != nullptr) {
+        // Add spike queue pointer field
+        env.addField(Type::Uint32.createPointer(), "_spk_que_ptr", "spkQuePtr", 
+                     [](const auto &runtime, const auto &cg, size_t) 
+                     { 
+                         return runtime.getArray(*cg.getDelayNeuronGroup(), "spkQuePtr"); 
+                     });
+
+        // We should read from delay slot pointed to be spkQuePtr 
+        env.add(Type::Uint32.addConst(), "_delay_slot", "delaySlot",
+                {env.addInitialiser("const unsigned int delaySlot = * $(_spk_que_ptr);")});
+        env.add(Type::Uint32.addConst(), "_delay_offset", "delayOffset",
+                {env.addInitialiser("const unsigned int delayOffset = $(_delay_slot) * $(num_neurons);")});
 
         // If batching is also enabled, calculate offset including delay and batch
-        if(cu.getArchetype().isBatched()) {
-            os << "const unsigned int batchDelaySlot = (batch * " << cu.getArchetype().getDelayNeuronGroup()->getNumDelaySlots() << ") + delaySlot;" << std::endl;
+        if(batched) {
+            const std::string numDelaySlotsStr = std::to_string(env.getGroup().getArchetype().getDelayNeuronGroup()->getNumDelaySlots());
+            env.add(Type::Uint32.addConst(), "_batch_delay_slot", "batchDelaySlot",
+                    {env.addInitialiser("const unsigned int batchDelaySlot = ($(batch) * " + numDelaySlotsStr + ") + $(_delay_slot);")});
 
             // Calculate current batch offset
-            os << "const unsigned int batchDelayOffset = delayOffset + (batchOffset * " << cu.getArchetype().getDelayNeuronGroup()->getNumDelaySlots() << ");" << std::endl;
+            env.add(Type::Uint32.addConst(), "_batch_delay_offset", "batchDelayOffset",
+                    {env.addInitialiser("const unsigned int batchDelayOffset = $(_delay_offset) + ($(_batch_offset) * " + numDelaySlotsStr + ");")});
         }
     }
 }
-//-----------------------------------------------------------------------
-std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(CodeStream &os, const CustomUpdateGroupMerged &cg, const std::string &idx) const
+//--------------------------------------------------------------------------
+template<typename G>
+void buildStandardCustomUpdateWUEnvironment(EnvironmentGroupMergedField<G> &env, unsigned int batchSize)
 {
-    return genInitReductionTargets(os, cg, idx,
-                                   [&cg](const Models::VarReference &varRef, const std::string &index)
-                                   {
-                                       return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
-                                                                getVarAccessDuplication(varRef.getVar().access),
-                                                                index);
-                                   });
+    // Add batch offset if group is batched
+    if((env.getGroup().getArchetype().getDims() & VarAccessDim::BATCH) && (batchSize > 1)) {
+        env.add(Type::Uint32.addConst(), "_batch_offset", "batchOffset",
+                {env.addInitialiser("const unsigned int batchOffset = $(_size) * $(batch);")});
+    }
+}
+//--------------------------------------------------------------------------
+template<typename G>
+void buildStandardCustomConnectivityUpdateEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env)
+{
+    // Add fields for number of pre and postsynaptic neurons
+    env.addField(Type::Uint32.addConst(), "num_pre",
+                 Type::Uint32, "numSrcNeurons", 
+                 [](const auto&, const auto &cg, size_t) 
+                 { 
+                     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                     return sgInternal->getSrcNeuronGroup()->getNumNeurons();
+                 });
+    env.addField(Type::Uint32.addConst(), "num_post",
+                 Type::Uint32, "numTrgNeurons", 
+                 [](const auto&, const auto &cg, size_t) 
+                 { 
+                     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                     return sgInternal->getTrgNeuronGroup()->getNumNeurons();
+                 });
+    env.addField(Type::Uint32, "_row_stride", "rowStride", 
+                 [&backend](const auto&, const auto &cg, size_t) { return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup()); });
+    env.addField(Type::Uint32, "_col_stride", "colStride", 
+                 [&backend](const auto&, const auto &cg, size_t) { return cg.getSynapseGroup()->getMaxSourceConnections(); });
+    
+    // Connectivity fields
+    auto *sg = env.getGroup().getArchetype().getSynapseGroup();
+    if(sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        env.addField(Type::Uint32.createPointer(), "_row_length", "rowLength",
+                     [](const auto &runtime, const auto &cg, size_t) { return runtime.getArray(*cg.getSynapseGroup(), "rowLength"); });
+        env.addField(sg->getSparseIndType().createPointer(), "_ind", "ind",
+                     [](const auto &runtime, const auto &cg, size_t) { return runtime.getArray(*cg.getSynapseGroup(), "ind"); });
+        env.addField(Type::Uint32.createPointer(), "_col_length", "colLength", 
+                     [](const auto &runtime, const auto &cg, size_t) { return runtime.getArray(*cg.getSynapseGroup(), "colLength"); });
+        env.addField(Type::Uint32.createPointer(), "_remap", "remap", 
+                     [](const auto &runtime, const auto &cg, size_t) { return runtime.getArray(*cg.getSynapseGroup(), "remap"); });
+    }
+
+    // If there are delays on presynaptic variable references
+    if(env.getGroup().getArchetype().getPreDelayNeuronGroup() != nullptr) {
+        env.addField(Type::Uint32.createPointer(), "_pre_spk_que_ptr", "preSpkQuePtr",
+                     [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getPreDelayNeuronGroup(), "spkQuePtr"); });
+    
+        env.add(Type::Uint32.addConst(), "_pre_delay_offset", "preDelayOffset",
+                {env.addInitialiser("const unsigned int preDelayOffset = (*$(_pre_spk_que_ptr) * $(num_pre));")});
+    }
+    
+    // If there are delays on postsynaptic variable references
+    if(env.getGroup().getArchetype().getPostDelayNeuronGroup() != nullptr) {
+        env.addField(Type::Uint32.createPointer(), "_post_spk_que_ptr", "postSpkQuePtr",
+                     [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getPostDelayNeuronGroup(), "spkQuePtr"); });
+
+        env.add(Type::Uint32.addConst(), "_post_delay_offset", "postDelayOffset",
+                {env.addInitialiser("const unsigned int postDelayOffset = (*$(_post_spk_que_ptr) * $(num_post));")});
+    }
 }
 //-----------------------------------------------------------------------
-std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(CodeStream &os, const CustomUpdateWUGroupMerged &cg, const std::string &idx) const
+template<typename G, typename S>
+Type::ResolvedType getSynapseIndexType(const BackendBase &backend, const GroupMerged<G> &m,
+                                       S getSynapseGroupFn)
 {
-    return genInitReductionTargets(os, cg, idx,
-                                   [&cg](const Models::WUVarReference &varRef, const std::string &index)
-                                   {
-                                       return cg.getVarRefIndex(getVarAccessDuplication(varRef.getVar().access),
-                                                                index);
-                                   });
+    // If any merged groups have more synapses than can be represented using a uint32, use Uint64
+    if(std::any_of(m.getGroups().cbegin(), m.getGroups().cend(),
+                   [getSynapseGroupFn, &backend](const auto &g)
+                   {
+                       const auto &sg = getSynapseGroupFn(g.get());
+                       const size_t numSynapses = (size_t)sg.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(sg);
+                       return (numSynapses > std::numeric_limits<uint32_t>::max());
+                   }))
+    {
+        return Type::Uint64;
+    }
+    // Otherwise, use Uint64
+    else {
+        return Type::Uint32;
+    }
 }
-}   // namespace CodeGenerator
+}   // Anonymous namespace
+
+//--------------------------------------------------------------------------
+// GeNN::CodeGenerator::BackendBase
+//--------------------------------------------------------------------------
+namespace GeNN::CodeGenerator
+{
+BackendBase::BackendBase(const PreferencesBase &preferences)
+:   m_PointerBytes(sizeof(char *)), m_Preferences(preferences)
+{
+}
+//-----------------------------------------------------------------------
+Type::ResolvedType BackendBase::getSynapseIndexType(const GroupMerged<SynapseGroupInternal> &sg) const
+{
+    return ::getSynapseIndexType(*this, sg, 
+                                 [](const auto &g)->const SynapseGroupInternal&
+                                 { 
+                                    return g; 
+                                 });
+}
+//-----------------------------------------------------------------------
+Type::ResolvedType BackendBase::getSynapseIndexType(const GroupMerged<CustomUpdateWUInternal> &cg) const
+{
+    return ::getSynapseIndexType(*this, cg, 
+                                 [](const auto &g)->const SynapseGroupInternal&
+                                 { 
+                                    return *(g.getSynapseGroup()); 
+                                 });
+}
+//-----------------------------------------------------------------------
+Type::ResolvedType BackendBase::getSynapseIndexType(const GroupMerged<CustomConnectivityUpdateInternal> &cg) const
+{
+    return ::getSynapseIndexType(*this, cg, 
+                                 [](const auto &g)->const SynapseGroupInternal&
+                                 { 
+                                    return *(g.getSynapseGroup()); 
+                                 });
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env) const
+{
+    buildCustomUpdateSizeEnvironment(env);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateHostReductionGroupMerged> &env) const
+{
+    buildCustomUpdateSizeEnvironment(env);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env) const
+{
+    buildCustomUpdateWUSizeEnvironment(*this, env);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildSizeEnvironment(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env) const
+{
+    buildCustomUpdateWUSizeEnvironment(*this, env);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildSizeEnvironment(EnvironmentGroupMergedField<CustomWUUpdateHostReductionGroupMerged> &env) const
+{
+    buildCustomUpdateWUSizeEnvironment(*this, env);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env, unsigned int batchSize) const
+{
+    buildStandardNeuronEnvironment(env, batchSize);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<NeuronPrevSpikeTimeUpdateGroupMerged> &env, unsigned int batchSize) const
+{
+    buildStandardNeuronEnvironment(env, batchSize);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<NeuronSpikeQueueUpdateGroupMerged> &env, unsigned int batchSize) const
+{
+    buildStandardNeuronEnvironment(env, batchSize);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> &env, unsigned int batchSize) const
+{
+    buildStandardSynapseEnvironment(*this, env, batchSize);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<PostsynapticUpdateGroupMerged> &env, unsigned int batchSize) const
+{
+    buildStandardSynapseEnvironment(*this, env, batchSize);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<SynapseDynamicsGroupMerged> &env, unsigned int batchSize) const
+{
+    buildStandardSynapseEnvironment(*this, env, batchSize);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<SynapseDendriticDelayUpdateGroupMerged> &env, unsigned int batchSize) const
+{
+    buildStandardSynapseEnvironment(*this, env, batchSize);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateGroupMerged> &env, unsigned int batchSize) const
+{
+    buildStandardCustomUpdateEnvironment(env, batchSize);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> &env, unsigned int batchSize) const
+{
+    buildStandardCustomUpdateWUEnvironment(env, batchSize);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> &env, unsigned int batchSize) const
+{
+    buildStandardCustomUpdateWUEnvironment(env, batchSize);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const
+{
+    buildStandardCustomConnectivityUpdateEnvironment(*this, env);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityRemapUpdateGroupMerged> &env) const
+{
+    buildStandardCustomConnectivityUpdateEnvironment(*this, env);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<NeuronInitGroupMerged> &env, unsigned int batchSize) const
+{
+    buildStandardNeuronEnvironment(env, batchSize);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<SynapseInitGroupMerged> &env, unsigned int batchSize) const
+{
+    buildStandardSynapseEnvironment(*this, env, batchSize);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> &env, unsigned int batchSize) const
+{
+    buildCustomUpdateSizeEnvironment(env);
+    buildStandardCustomUpdateEnvironment(env, batchSize);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomWUUpdateInitGroupMerged> &env, unsigned int batchSize) const
+{
+    buildCustomUpdateWUSizeEnvironment(*this, env);
+    buildStandardCustomUpdateWUEnvironment(env, batchSize);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomWUUpdateSparseInitGroupMerged> &env, unsigned int batchSize) const
+{
+    buildCustomUpdateWUSizeEnvironment(*this, env);
+    buildStandardCustomUpdateWUEnvironment(env, batchSize);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdatePreInitGroupMerged> &env) const
+{
+    env.addField(Type::Uint32.addConst(), "num_neurons", 
+                 Type::Uint32, "numNeurons",
+                 [](const auto &, const auto &c, size_t) 
+                 { 
+                     return c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); 
+                 });
+
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdatePostInitGroupMerged> &env) const
+{
+    env.addField(Type::Uint32.addConst(), "num_neurons", 
+                 Type::Uint32, "numNeurons",
+                 [](const auto &, const auto &c, size_t) 
+                 { 
+                     return c.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); 
+                 });
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> &env, unsigned int batchSize) const
+{
+    buildStandardSynapseEnvironment(*this, env, batchSize);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateSparseInitGroupMerged> &env) const
+{
+    buildStandardCustomConnectivityUpdateEnvironment(*this, env);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> &env, unsigned int batchSize) const
+{
+    buildStandardSynapseEnvironment(*this, env, batchSize);
+}
+//----------------------------------------------------------------------------
+std::string BackendBase::getReductionInitialValue(VarAccessMode access, const Type::ResolvedType &type) const
+{
+    // If reduction is a sum, initialise to zero
+    if(access & VarAccessModeAttribute::SUM) {
+        return Type::writeNumeric(0, type);
+    }
+    // Otherwise, reduction is a maximum operation, return lowest value for type
+    else if(access & VarAccessModeAttribute::MAX) {
+        return Type::writeNumeric(type.getNumeric().lowest, type);
+    }
+    else {
+        assert(false);
+        return "";
+    }
+}
+//----------------------------------------------------------------------------
+std::string BackendBase::getReductionOperation(const std::string &reduction, const std::string &value,
+                                               VarAccessMode access, const Type::ResolvedType &type) const
+{
+    // If operation is sum, add output of custom update to sum
+    assert(type.isNumeric());
+    assert(access & VarAccessModeAttribute::REDUCE);
+    if(access & VarAccessModeAttribute::SUM) {
+        return reduction + " += " + value;
+    }
+    // Otherwise, if it's max
+    else if(access & VarAccessModeAttribute::MAX) {
+        // If type is integral, generate max call
+        if(type.getNumeric().isIntegral) {
+            return reduction + " = " + "max(" + reduction + ", " + value + ")";
+            
+        }
+        // Otherwise, generate fmax call
+        else {
+            return reduction + " = " + "fmax(" + reduction + ", " + value + ")";
+        }
+    }
+    else {
+        assert(false);
+        return "";
+    }
+}
+//-----------------------------------------------------------------------
+std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(CodeStream &os, const CustomUpdateGroupMerged &cg, 
+                                                                               unsigned int batchSize, const std::string &idx) const
+{
+    return genInitReductionTargets<VarAccess>(
+        os, cg, batchSize, idx,
+        [batchSize, &cg](const Models::VarReference &varRef, const std::string &index)
+        {
+            return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr, batchSize,
+                                     varRef.getVarDims(), index);
+        });
+}
+//-----------------------------------------------------------------------
+std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(CodeStream &os, const CustomUpdateWUGroupMerged &cg, 
+                                                                               unsigned int batchSize, const std::string &idx) const
+{
+    return genInitReductionTargets<VarAccess>(
+        os, cg, batchSize, idx,
+        [batchSize, &cg](const Models::WUVarReference &varRef, const std::string &index)
+        {
+            return cg.getVarRefIndex(batchSize, varRef.getVarDims(), index);
+        });
+}
+}   // namespace GeNN::CodeGenerator

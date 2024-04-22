@@ -9,20 +9,12 @@ MICROSOFT			:=$(strip $(findstring MICROSOFT,$(OS_RELEASE_UPPER)))
 GENN_DIR			:= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../../)
 
 # Set standard compiler and archiver flags
-CXXFLAGS			+=-Wall -Wpedantic -Wextra -MMD -MP -I$(GENN_DIR)/include/genn/genn -I$(GENN_DIR)/include/genn/third_party
+CXXFLAGS			+=-Wall -Wpedantic -Wextra -MMD -MP -I$(GENN_DIR)/include/genn/genn -I$(GENN_DIR)/include/genn/third_party $(shell pkg-config libffi --cflags)
 ARFLAGS				:=-rcs
 
 # On Mac OS X, use Clang++ rather than GC++
 ifeq ($(DARWIN),DARWIN)
     CXX				:=clang++
-endif
-
-# Setup compiler based on configuration
-ifdef MPI_ENABLE
-    GENN_PREFIX			:=$(GENN_PREFIX)_mpi
-    CXXFLAGS			+=-DMPI_ENABLE $(shell mpiCC -showme:compile)
-    LDFLAGS			+=$(shell mpiCC -showme:link)
-    CXX				:=mpiCC
 endif
 
 ifdef COVERAGE

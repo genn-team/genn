@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_DLL|x64">
+      <Configuration>Debug_DLL</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_DLL|x64">
+      <Configuration>Release_DLL</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="closures.c" />
+    <ClCompile Include="java_raw_api.c" />
+    <ClCompile Include="prep_cif.c" />
+    <ClCompile Include="raw_api.c" />
+    <ClCompile Include="tramp.c" />
+    <ClCompile Include="types.c" />
+    <ClCompile Include="x86\ffiw64.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\include\genn\third_party\libffi\ffi.h" />
+    <ClInclude Include="..\..\..\..\include\genn\third_party\libffi\fficonfig.h" />
+    <ClInclude Include="..\..\..\..\include\genn\third_party\libffi\ffitarget.h" />
+    <ClInclude Include="..\..\..\..\include\genn\third_party\libffi\ffi_cfi.h" />
+    <ClInclude Include="..\..\..\..\include\genn\third_party\libffi\ffi_common.h" />
+    <ClInclude Include="..\..\..\..\include\genn\third_party\libffi\tramp.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="x86\win64_intel.asm" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{20b1efde-150b-4bf5-988f-c1299d492d5d}</ProjectGuid>
+    <RootNamespace>libffi</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType Condition=" !$(Configuration.Contains('DLL')) ">StaticLibrary</ConfigurationType>
+    <ConfigurationType Condition=" $(Configuration.Contains('DLL')) ">DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries Condition=" $(Configuration.Contains('Release')) ">false</UseDebugLibraries>
+    <UseDebugLibraries Condition=" $(Configuration.Contains('Debug')) ">true</UseDebugLibraries>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <WholeProgramOptimization Condition=" $(Configuration.Contains('Release')) ">true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <OutDir>..\..\..\..\lib\</OutDir>
+    <IntDir>..\..\..\..\$(Platform)\$(Configuration)\libffi\</IntDir>
+    <TargetName>$(ProjectName)_$(Configuration)</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization Condition=" $(Configuration.Contains('Release')) ">MaxSpeed</Optimization>
+      <Optimization Condition=" $(Configuration.Contains('Debug')) ">Disabled</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>..\..\..\..\include\genn\third_party\libffi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions Condition=" !$(Configuration.Contains('DLL')) ">FFI_BUILDING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" $(Configuration.Contains('DLL')) ">FFI_BUILDING_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard_C>stdc11</LanguageStandard_C>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding Condition=" $(Configuration.Contains('Debug')) ">true</EnableCOMDATFolding>
+      <OptimizeReferences Condition=" $(Configuration.Contains('Debug')) ">true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+  </ImportGroup>
+</Project>

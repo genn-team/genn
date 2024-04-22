@@ -1,33 +1,50 @@
 #include "currentSourceModels.h"
 
+// GeNN includes
+#include "gennUtils.h"
+
+using namespace GeNN;
+
+namespace GeNN::CurrentSourceModels
+{
 // Implement models
-IMPLEMENT_MODEL(CurrentSourceModels::DC);
-IMPLEMENT_MODEL(CurrentSourceModels::GaussianNoise);
-IMPLEMENT_MODEL(CurrentSourceModels::PoissonExp);
+IMPLEMENT_SNIPPET(DC);
+IMPLEMENT_SNIPPET(GaussianNoise);
+IMPLEMENT_SNIPPET(PoissonExp);
 
 //----------------------------------------------------------------------------
-// CurrentSourceModels::Base
+// GeNN::CurrentSourceModels::Base
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type CurrentSourceModels::Base::getHashDigest() const
+boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 {
     // Superclass
     boost::uuids::detail::sha1 hash;
-    Models::Base::updateHash(hash);
+    Snippet::Base::updateHash(hash);
 
+    Utils::updateHash(getVars(), hash);
+    Utils::updateHash(getNeuronVarRefs(), hash);
     Utils::updateHash(getInjectionCode(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CurrentSourceModels::Base::validate() const
+void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues, 
+                    const std::map<std::string, InitVarSnippet::Init> &varValues,
+                    const std::map<std::string, Models::VarReference> &varRefTargets,
+                    const std::string &description) const
 {
     // Superclass
-    Models::Base::validate();
+    Snippet::Base::validate(paramValues, description);
 
-    // If any variables have a reduction access mode, give an error
+    // Validate variable names
     const auto vars = getVars();
-    if(std::any_of(vars.cbegin(), vars.cend(),
-                   [](const Models::Base::Var &v){ return (v.access & VarAccessModeAttribute::REDUCE); }))
-    {
-        throw std::runtime_error("Current source models cannot include variables with REDUCE access modes - they are only supported by custom update models");
-    }
+    Utils::validateVecNames(vars, "Variable");
+
+    // Validate variable initialisers
+    Utils::validateInitialisers(vars, varValues, "variable", description);
+
+    // Validate variable reference initialisers
+    const auto varRefs = getNeuronVarRefs();
+    Utils::validateVecNames(varRefs, "Neuron variable reference");
+    Utils::validateInitialisers(varRefs, varRefTargets, "Neuron variable reference", description);
 }
+}   // namespace GeNN::CurrentSourceModels

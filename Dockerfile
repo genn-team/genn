@@ -8,7 +8,7 @@ LABEL maintainer="J.C.Knight@sussex.ac.uk" \
     org.opencontainers.image.source="https://github.com/genn-team/genn" \
     org.opencontainers.image.title="GeNN Docker image"
 
-# Update APT database and upgrade any outdated packages and install Python, pip and swig
+# Update APT database and upgrade any outdated packages and install Python, pip and pkgconfig
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -yq --no-install-recommends python3-dev python3-pip swig gosu nano
@@ -22,7 +22,7 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 
 # Upgrade pip itself and install numpy and jupyter
 RUN python -m pip install --upgrade pip && \
-    python -m pip install numpy jupyter matplotlib
+    python -m pip install numpy jupyter matplotlib psutil pybind11
 
 # Copy GeNN into /opt
 COPY . ${GENN_PATH}
@@ -31,9 +31,7 @@ COPY . ${GENN_PATH}
 WORKDIR ${GENN_PATH}
 
 # Install GeNN and PyGeNN
-RUN make install -j `lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l`
-RUN make DYNAMIC=1 LIBRARY_DIRECTORY=${GENN_PATH}/pygenn/genn_wrapper/ -j `lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l`
-RUN python setup.py develop
+RUN python3 setup.py develop
 
 # Start entrypoint
 # **NOTE** in 'exec' mode shell arguments aren't expanded so can't use environment variables

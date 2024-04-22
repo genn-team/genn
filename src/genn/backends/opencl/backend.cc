@@ -17,7 +17,8 @@
 // OpenCL backend includes
 #include "utils.h"
 
-using namespace CodeGenerator;
+using namespace GeNN;
+using namespace GeNN::CodeGenerator;
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -41,7 +42,46 @@ const std::vector<Substitutions::FunctionTemplate> openclPhilloxFunctions = {
     {"gennrand_gamma", 1, "gammaDistPhilox432($(rng), $(0))"},
     {"gennrand_binomial", 2, "binomialDistPhilox432($(rng), $(0), $(1))"}
 };
+
 //--------------------------------------------------------------------------
+// CLRRNGLFSR113Stream
+//--------------------------------------------------------------------------
+class CLRRNGLFSR113Stream : public Type::ValueBase
+{
+public:
+    DECLARE_TYPE(CLRRNGLFSR113Stream);
+    
+    CLRRNGLFSR113Stream(Type::Qualifier qualifiers = Type::Qualifier{0}) : ValueBase(qualifiers){}
+
+    //------------------------------------------------------------------------
+    // Base overloads
+    //------------------------------------------------------------------------
+    virtual std::string getName() const final{ return "clrngLfsr113Stream"; }
+    virtual Base *getQualifiedType(Type::Qualifier qualifiers) const { return new CLRRNGLFSR113Stream(qualifiers); }
+    virtual size_t getSizeBytes() const final{ return 48; }
+};
+IMPLEMENT_TYPE(CLRRNGLFSR113Stream);
+
+//--------------------------------------------------------------------------
+// CLRRNGPhilox432Stream
+//--------------------------------------------------------------------------
+class CLRRNGPhilox432Stream : public Type::ValueBase
+{
+public:
+    DECLARE_TYPE(CLRRNGPhilox432Stream);
+    
+    CLRRNGPhilox432Stream(Type::Qualifier qualifiers = Type::Qualifier{0}) : ValueBase(qualifiers){}
+
+    //------------------------------------------------------------------------
+    // Base overloads
+    //------------------------------------------------------------------------
+    virtual std::string getName() const final{ return "clrngPhilox432Stream"; }
+    virtual Base *getQualifiedType(Type::Qualifier qualifiers) const { return new CLRRNGLFSR113Stream(qualifiers); }
+    virtual size_t getSizeBytes() const final{ return 132; }
+};
+IMPLEMENT_TYPE(CLRRNGLFSR113Stream);
+
+
 template<typename T>
 void genMergedGroupKernelParams(CodeStream &os, const std::vector<T> &groups, bool includeFinalComma = false)
 {
@@ -148,22 +188,14 @@ void genReadEventTiming(CodeStream &os, const std::string &name)
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::OpenCL::Backend
+// GeNN::CodeGenerator::OpenCL::Backend
 //--------------------------------------------------------------------------
-namespace CodeGenerator
+namespace GeNN::CodeGenerator::OpenCL
 {
-namespace OpenCL
-{
-//--------------------------------------------------------------------------
 Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences,
                  const std::string &scalarType, unsigned int platformIndex, unsigned int deviceIndex)
 :   BackendSIMT(kernelBlockSizes, preferences, scalarType), m_ChosenPlatformIndex(platformIndex), m_ChosenDeviceIndex(deviceIndex)
 {
-    // Throw exceptions if unsupported preferences are selected
-    if(preferences.automaticCopy) {
-        throw std::runtime_error("OpenCL backend does not currently support automatic copy mode.");
-    }
-
     // Get platforms
     std::vector<cl::Platform> platforms;
     cl::Platform::get(&platforms);
@@ -196,10 +228,6 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     // Determine minimum alignement
     m_AllocationAlignementBytes = m_ChosenDevice.getInfo<CL_DEVICE_MEM_BASE_ADDR_ALIGN>() / 8;
     LOGI_BACKEND << "Device uses " << m_AllocationAlignementBytes << " byte alignement";
-
-    // Add OpenCL-specific types
-    addType("clrngLfsr113Stream", 48);
-    addType("clrngPhilox432Stream", 132);
 }
 //--------------------------------------------------------------------------
 bool Backend::areSharedMemAtomicsSlow() const
@@ -244,11 +272,11 @@ void Backend::genPopulationRNGInit(CodeStream&, const std::string&, const std::s
     assert(false);
 }
 //--------------------------------------------------------------------------
-void Backend::genPopulationRNGPreamble(CodeStream &os, Substitutions &subs, const std::string &globalRNG, const std::string &name) const
+std::string Backend::genPopulationRNGPreamble(CodeStream &os, const std::string &globalRNG) const
 {
     os << "clrngLfsr113Stream localStream;" << std::endl;
     os << "clrngLfsr113CopyOverStreamsFromGlobal(1, &localStream, &" << globalRNG << ");" << std::endl;
-    subs.addVarSubstitution(name, "&localStream");
+    return "&localStream";
 }
 //--------------------------------------------------------------------------
 void Backend::genPopulationRNGPostamble(CodeStream &os, const std::string &globalRNG) const
@@ -256,7 +284,7 @@ void Backend::genPopulationRNGPostamble(CodeStream &os, const std::string &globa
     os << "clrngLfsr113CopyOverStreamsToGlobal(1, &" << globalRNG << ", &localStream);" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const std::string &sequence, const std::string &name) const
+std::string Backend::genGlobalRNGSkipAhead(CodeStream &os, const std::string &sequence) const
 {
     // Make local copy of host stream
     os << "clrngPhilox432Stream localStream;" << std::endl;
@@ -267,11 +295,10 @@ void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const s
     os << "const clrngPhilox432Counter steps = {{0, " << sequence << "}, {0, 0}};" << std::endl;
     os << "localStream.current.ctr = clrngPhilox432Add(localStream.current.ctr, steps);" << std::endl;
     os << "localStream.current.deckIndex = 0;" << std::endl;
-    subs.addVarSubstitution(name, "&localStream");
+    return "&localStream";
 }
 //--------------------------------------------------------------------------
-void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                              HostHandler preambleHandler, HostHandler pushEGPHandler) const
+void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -487,9 +514,6 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     {
         CodeStream::Scope b(os);
 
-        // Push any required EGPS
-        pushEGPHandler(os);
-
         if (idNeuronPrevSpikeTimeUpdate > 0) {
             CodeStream::Scope b(os);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << ".setArg(" << modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups().size() << ", t));" << std::endl;
@@ -520,8 +544,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                               HostHandler preambleHandler, HostHandler pushEGPHandler) const
+void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -779,9 +802,6 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     {
         CodeStream::Scope b(os);
 
-        // Push any required EGPs
-        pushEGPHandler(os);
-
         // Launch pre-synapse reset kernel if required
         if (idSynapseDendriticDelayUpdate > 0) {
             CodeStream::Scope b(os);
@@ -830,8 +850,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                              HostHandler preambleHandler, HostHandler pushEGPHandler) const
+void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -850,6 +869,9 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     std::transform(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
                    std::inserter(customUpdateGroups, customUpdateGroups.end()),
                    [](const ModelSpec::CustomUpdateWUValueType &v) { return std::make_pair(v.second.getUpdateGroupName(), std::make_pair(0, 0)); });
+    std::transform(model.getCustomConnectivityUpdates().cbegin(), model.getCustomConnectivityUpdates().cend(),
+                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
+                   [](const ModelSpec::CustomConnectivityUpdateValueType &v) { return std::make_pair(v.second.getUpdateGroupName(), std::make_pair(0, 0)); });
 
     os << "//--------------------------------------------------------------------------" << std::endl;
     os << "// OpenCL program and kernels" << std::endl;
@@ -862,6 +884,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     genMergedStructPreamble(os, modelMerged, modelMerged.getMergedCustomUpdateGroups());
     genMergedStructPreamble(os, modelMerged, modelMerged.getMergedCustomUpdateWUGroups());
     genMergedStructPreamble(os, modelMerged, modelMerged.getMergedCustomUpdateTransposeWUGroups());
+    genMergedStructPreamble(os, modelMerged, modelMerged.getMergedCustomConnectivityUpdateGroups());
     os << std::endl;
 
     // Generate preamble
@@ -878,6 +901,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     modelMerged.genMergedCustomUpdateStructs(customUpdateKernels, *this);
     modelMerged.genMergedCustomUpdateWUStructs(customUpdateKernels, *this);
     modelMerged.genMergedCustomUpdateTransposeWUStructs(customUpdateKernels, *this);
+    modelMerged.genMergedCustomConnectivityUpdateStructs(customUpdateKernels, *this);
    
 
     // Generate data structure for accessing merged groups from within custom update kernels
@@ -887,6 +911,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     genMergedStructBuildKernels(customUpdateKernels, modelMerged, modelMerged.getMergedCustomUpdateGroups());
     genMergedStructBuildKernels(customUpdateKernels, modelMerged, modelMerged.getMergedCustomUpdateWUGroups());
     genMergedStructBuildKernels(customUpdateKernels, modelMerged, modelMerged.getMergedCustomUpdateTransposeWUGroups());
+    genMergedStructBuildKernels(customUpdateKernels, modelMerged, modelMerged.getMergedCustomConnectivityUpdateGroups());
 
     // Loop through custom update groups
     for(auto &g : customUpdateGroups) {
@@ -894,7 +919,9 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         if(std::any_of(modelMerged.getMergedCustomUpdateGroups().cbegin(), modelMerged.getMergedCustomUpdateGroups().cend(),
                        [&g](const CustomUpdateGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g.first); })
            || std::any_of(modelMerged.getMergedCustomUpdateWUGroups().cbegin(), modelMerged.getMergedCustomUpdateWUGroups().cend(),
-                          [&g](const CustomUpdateWUGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g.first); }))
+                          [&g](const CustomUpdateWUGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g.first); })
+           || std::any_of(modelMerged.getMergedCustomConnectivityUpdateGroups().cbegin(), modelMerged.getMergedCustomConnectivityUpdateGroups().cend(),
+                          [&g](const CustomConnectivityUpdateGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g.first); }))
         {
             genFilteredMergedKernelDataStructures(
                 customUpdateKernels,
@@ -904,13 +931,18 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
                 modelMerged.getMergedCustomUpdateWUGroups(),
                 [&model, this](const CustomUpdateWUInternal &cg) { return getPaddedNumCustomUpdateWUThreads(cg, model.getBatchSize()); },
-                [&g](const CustomUpdateWUGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g.first); });
+                [&g](const CustomUpdateWUGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g.first); },
+                
+                modelMerged.getMergedCustomConnectivityUpdateGroups(),
+                [this](const CustomConnectivityUpdateInternal &cg){ return padKernelSize(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), KernelCustomUpdate); },
+                [g](const CustomConnectivityUpdateGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g.first; });
 
 
             customUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelCustomUpdate) << ", 1, 1)))" << std::endl;
             customUpdateKernels << "__kernel void " << KernelNames[KernelCustomUpdate] << g.first << "(";
             genMergedGroupKernelParams(customUpdateKernels, modelMerged.getMergedCustomUpdateGroups(), true);
             genMergedGroupKernelParams(customUpdateKernels, modelMerged.getMergedCustomUpdateWUGroups(), true);
+            genMergedGroupKernelParams(customUpdateKernels, modelMerged.getMergedCustomConnectivityUpdateGroups(), true);
             customUpdateKernels << model.getTimePrecision() << " t";
             if(shouldUseSubBufferAllocations()) {
                 customUpdateKernels << ", __global void *d_staticBuffer"; 
@@ -930,6 +962,10 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 customUpdateKernels << "// ------------------------------------------------------------------------" << std::endl;
                 customUpdateKernels << "// Custom WU updates" << std::endl;
                 genCustomUpdateWUKernel(customUpdateKernels, kernelSubs, modelMerged, g.first, g.second.first);
+                
+                customUpdateKernels << "// ------------------------------------------------------------------------" << std::endl;
+                customUpdateKernels << "// Custom connectivity updates" << std::endl;
+                genCustomConnectivityUpdateKernel(customUpdateKernels, kernelSubs, modelMerged, g.first, g.second.first);
             }
         }
 
@@ -970,14 +1006,19 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         {
             CodeStream::Scope b(os);
 
-            // Push any required EGPs
-            pushEGPHandler(os);
+            // Loop through host update groups and generate code for those in this custom update group
+            for (const auto &cg : modelMerged.getMergedCustomConnectivityHostUpdateGroups()) {
+                if (cg.getArchetype().getUpdateGroupName() == g.first) {
+                    cg.generateUpdate(*this, os, modelMerged);
+                }
+            }
 
             // If there are any custom update work-items
             if(g.second.first > 0) {
                 CodeStream::Scope b(os);
                 genKernelDimensions(os, KernelCustomUpdate, g.second.first, 1);
-                const size_t numCustomUpdateGroups = (modelMerged.getMergedCustomUpdateGroups().size() +  modelMerged.getMergedCustomUpdateWUGroups().size());
+                const size_t numCustomUpdateGroups = (modelMerged.getMergedCustomUpdateGroups().size() +  modelMerged.getMergedCustomUpdateWUGroups().size() +
+                                                      modelMerged.getMergedCustomConnectivityUpdateGroups().size());
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelCustomUpdate] << g.first << ".setArg(" << numCustomUpdateGroups << ", t));" << std::endl;
                 os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelCustomUpdate] << g.first << ", cl::NullRange, globalWorkSize, localWorkSize";
                 if(model.isTimingEnabled()) {
@@ -1044,6 +1085,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedCustomUpdateGroups(), "customUpdateProgram");
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedCustomUpdateWUGroups(), "customUpdateProgram");
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedCustomUpdateTransposeWUGroups(), "customUpdateProgram");
+            genMergedStructBuild(os, modelMerged, modelMerged.getMergedCustomConnectivityUpdateGroups(), "customUpdateProgram");
             os << std::endl;
 
             // Loop through custom update groups
@@ -1055,6 +1097,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                     size_t start = 0;
                     setMergedGroupKernelParams(os, KernelNames[KernelCustomUpdate] + g.first, modelMerged.getMergedCustomUpdateGroups(), start);
                     setMergedGroupKernelParams(os, KernelNames[KernelCustomUpdate] + g.first, modelMerged.getMergedCustomUpdateWUGroups(), start);
+                    setMergedGroupKernelParams(os, KernelNames[KernelCustomUpdate] + g.first, modelMerged.getMergedCustomConnectivityUpdateGroups(), start);
                     if(shouldUseSubBufferAllocations()) {
                         os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelCustomUpdate] << g.first << ".setArg(" << (start + 1) << ", d_staticBuffer));" << std::endl;
                     }
@@ -1075,8 +1118,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                      HostHandler preambleHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
+void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -1094,6 +1136,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     genMergedStructPreamble(os, modelMerged, modelMerged.getMergedSynapseConnectivityInitGroups());
     genMergedStructPreamble(os, modelMerged, modelMerged.getMergedSynapseSparseInitGroups());
     genMergedStructPreamble(os, modelMerged, modelMerged.getMergedCustomWUUpdateSparseInitGroups());
+    genMergedStructPreamble(os, modelMerged, modelMerged.getMergedCustomConnectivityUpdatePreInitGroups());
+    genMergedStructPreamble(os, modelMerged, modelMerged.getMergedCustomConnectivityUpdatePostInitGroups());
+    genMergedStructPreamble(os, modelMerged, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups());
     os << std::endl;
 
     // Generate preamble
@@ -1120,6 +1165,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     modelMerged.genMergedSynapseConnectivityInitGroupStructs(initializeKernels, *this);
     modelMerged.genMergedSynapseSparseInitGroupStructs(initializeKernels, *this);
     modelMerged.genMergedCustomWUUpdateSparseInitGroupStructs(initializeKernels, *this);
+    modelMerged.genMergedCustomConnectivityUpdatePreInitStructs(initializeKernels, *this);
+    modelMerged.genMergedCustomConnectivityUpdatePostInitStructs(initializeKernels, *this);
+    modelMerged.genMergedCustomConnectivityUpdateSparseInitStructs(initializeKernels, *this);
 
     // Generate data structure for accessing merged groups from within initialisation kernel
     // **NOTE** pass in zero constant cache here as it's precious and would be wasted on init kernels which are only launched once
@@ -1127,7 +1175,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
         initializeKernels,
         modelMerged.getMergedNeuronInitGroups(), [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelInitialize); },
         modelMerged.getMergedSynapseInitGroups(), [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumInitThreads(sg), KernelInitialize); },
-        modelMerged.getMergedCustomUpdateInitGroups(), [this](const CustomUpdateInternal &cg) { return padKernelSize(cg.getSize(), KernelInitialize); },
+        modelMerged.getMergedCustomUpdateInitGroups(), [this](const CustomUpdateInternal &cg) { return padKernelSize(cg.getNumNeurons(), KernelInitialize); },
+        modelMerged.getMergedCustomConnectivityUpdatePreInitGroups(), [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), KernelInitialize); },
+        modelMerged.getMergedCustomConnectivityUpdatePostInitGroups(), [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), KernelInitialize); },
         modelMerged.getMergedCustomWUUpdateInitGroups(), [this](const CustomUpdateWUInternal &cg) { return padKernelSize(getNumInitThreads(cg), KernelInitialize); },
         modelMerged.getMergedSynapseConnectivityInitGroups(), [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumConnectivityInitThreads(sg), KernelInitialize); });
 
@@ -1135,31 +1185,41 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     genMergedKernelDataStructures(
         initializeKernels,
         modelMerged.getMergedSynapseSparseInitGroups(), [this](const SynapseGroupInternal &sg) { return padKernelSize(sg.getMaxConnections(), KernelInitializeSparse); },
-        modelMerged.getMergedCustomWUUpdateSparseInitGroups(), [this](const CustomUpdateWUInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelInitializeSparse); });
+        modelMerged.getMergedCustomWUUpdateSparseInitGroups(), [this](const CustomUpdateWUInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelInitializeSparse); },
+        modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups(), [this](const CustomConnectivityUpdateInternal &cg){ return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelInitializeSparse); });
     initializeKernels << std::endl;
 
     // Generate kernels used to populate merged structs
     genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedNeuronInitGroups());
     genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedSynapseInitGroups());
     genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedCustomUpdateInitGroups());
+    genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedCustomConnectivityUpdatePreInitGroups());
+    genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedCustomConnectivityUpdatePostInitGroups());
     genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedCustomWUUpdateInitGroups());
     genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedSynapseConnectivityInitGroups());
     genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedSynapseSparseInitGroups());
     genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedCustomWUUpdateSparseInitGroups());
+    genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups());
 
     initializeKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelInitialize) << ", 1, 1)))" << std::endl;
     initializeKernels << "__kernel void " << KernelNames[KernelInitialize] << "(";
     bool globalRNGRequired = isGlobalDeviceRNGRequired(modelMerged);
     bool additionalParamsRequired = globalRNGRequired || shouldUseSubBufferAllocations();
     const bool anyCustomUpdateInitGroups = !modelMerged.getMergedCustomUpdateInitGroups().empty();
+    const bool anyCustomConnectivityUpdatePreInitGroups = !modelMerged.getMergedCustomConnectivityUpdatePreInitGroups().empty();
+    const bool anyCustomConnectivityUpdatePostInitGroups = !modelMerged.getMergedCustomConnectivityUpdatePostInitGroups().empty();
     const bool anyCustomWUUpdateInitGroups = !modelMerged.getMergedCustomWUUpdateInitGroups().empty();
     const bool anySynapseInitGroups = !modelMerged.getMergedSynapseInitGroups().empty();
     const bool anyConnectivityInitGroups = !modelMerged.getMergedSynapseConnectivityInitGroups().empty();
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedNeuronInitGroups(), 
-                              anySynapseInitGroups ||  anyCustomUpdateInitGroups || anyCustomWUUpdateInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
+                              anySynapseInitGroups ||  anyCustomUpdateInitGroups || anyCustomConnectivityUpdatePreInitGroups || anyCustomConnectivityUpdatePostInitGroups || anyCustomWUUpdateInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseInitGroups(), 
-                               anyCustomUpdateInitGroups || anyCustomWUUpdateInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
+                               anyCustomUpdateInitGroups || anyCustomConnectivityUpdatePreInitGroups || anyCustomConnectivityUpdatePostInitGroups || anyCustomWUUpdateInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedCustomUpdateInitGroups(), 
+                               anyCustomConnectivityUpdatePreInitGroups || anyCustomConnectivityUpdatePostInitGroups || anyCustomWUUpdateInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
+    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedCustomConnectivityUpdatePreInitGroups(), 
+                               anyCustomConnectivityUpdatePostInitGroups || anyCustomWUUpdateInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
+    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedCustomConnectivityUpdatePostInitGroups(), 
                                anyCustomWUUpdateInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedCustomWUUpdateInitGroups(), 
                                anyConnectivityInitGroups || additionalParamsRequired);
@@ -1183,12 +1243,16 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 
     // Generate sparse initialisation kernel
     size_t idSparseInitStart = 0;
-    if(!modelMerged.getMergedSynapseSparseInitGroups().empty() || !modelMerged.getMergedCustomWUUpdateSparseInitGroups().empty()) {
+    if(!modelMerged.getMergedSynapseSparseInitGroups().empty() || !modelMerged.getMergedCustomWUUpdateSparseInitGroups().empty()
+       || !modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups().empty()) 
+    {
         initializeKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelInitializeSparse) << ", 1, 1)))" << std::endl;
         initializeKernels << "__kernel void " << KernelNames[KernelInitializeSparse] << "(";
         const bool anyCustomWUUpdateSparseInitGroups = !modelMerged.getMergedCustomWUUpdateSparseInitGroups().empty();
-        genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseSparseInitGroups(), anyCustomWUUpdateSparseInitGroups || additionalParamsRequired);
-        genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), additionalParamsRequired);
+        const bool anyCustomConnectivityUpdateSparseInitGroups = !modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups().empty();
+        genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseSparseInitGroups(), anyCustomWUUpdateSparseInitGroups || anyCustomConnectivityUpdateSparseInitGroups || additionalParamsRequired);
+        genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), anyCustomConnectivityUpdateSparseInitGroups || additionalParamsRequired);
+        genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups(), additionalParamsRequired);
         if(globalRNGRequired) {
             initializeKernels << "__global clrngPhilox432HostStream *d_rng";
         }
@@ -1237,10 +1301,13 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedNeuronInitGroups(), "initializeProgram");
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedSynapseInitGroups(), "initializeProgram");
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedCustomUpdateInitGroups(), "initializeProgram");
+            genMergedStructBuild(os, modelMerged, modelMerged.getMergedCustomConnectivityUpdatePreInitGroups(), "initializeProgram");
+            genMergedStructBuild(os, modelMerged, modelMerged.getMergedCustomConnectivityUpdatePostInitGroups(), "initializeProgram");
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedCustomWUUpdateInitGroups(), "initializeProgram");
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedSynapseConnectivityInitGroups(), "initializeProgram");
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedSynapseSparseInitGroups(), "initializeProgram");
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), "initializeProgram");
+            genMergedStructBuild(os, modelMerged, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups(), "initializeProgram");
             os << std::endl;
         }
 
@@ -1251,6 +1318,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
             setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedNeuronInitGroups(), start);
             setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedSynapseInitGroups(), start);
             setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedCustomUpdateInitGroups(), start);
+            setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedCustomConnectivityUpdatePreInitGroups(), start);
+            setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedCustomConnectivityUpdatePostInitGroups(), start);
             setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedCustomWUUpdateInitGroups(), start);
             setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedSynapseConnectivityInitGroups(), start);
             if(shouldUseSubBufferAllocations()) {
@@ -1265,6 +1334,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
             size_t start = 0;
             setMergedGroupKernelParams(os, KernelNames[KernelInitializeSparse], modelMerged.getMergedSynapseSparseInitGroups(), start);
             setMergedGroupKernelParams(os, KernelNames[KernelInitializeSparse], modelMerged.getMergedCustomWUUpdateSparseInitGroups(), start);
+            setMergedGroupKernelParams(os, KernelNames[KernelInitializeSparse], modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups(), start);
             if(shouldUseSubBufferAllocations()) {
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitializeSparse] << ".setArg(" << (start + (globalRNGRequired ? 1 : 0)) << ", d_staticBuffer));" << std::endl;
             }
@@ -1278,41 +1348,14 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     {
         CodeStream::Scope b(os);
 
-        // Loop through all synapse groups
-        // **TODO** this logic belongs in BackendSIMT
-        // **TODO** apply merging to this process - large models could generate thousands of lines of code here
-        for(const auto &s : model.getSynapseGroups()) {
-            // If this synapse population has BITMASK connectivity and is intialised on device, enqueue a buffer fill operation to zero the whole bitmask
-            if(s.second.isSparseConnectivityInitRequired() && s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                const size_t gpSize = ceilDivide((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * getSynapticMatrixRowStride(s.second), 32);
-                os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer<uint32_t>(d_gp" << s.first << ", 0, 0, " << gpSize << " * sizeof(uint32_t)));" << std::endl;
-            }
-            
-            // If this synapse population has SPARSE connectivity and column-based on device connectivity, enqueue a buffer fill operation to zero row lengths
-            // **NOTE** we could also use this code path for row-based connectivity but, leaving this in the kernel is much better as it gets merged
-            if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE && !s.second.getConnectivityInitialiser().getSnippet()->getColBuildCode().empty()
-               && !s.second.isWeightSharingSlave())
-            {
-                os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer<unsigned int>(d_rowLength" << s.first << ", 0, 0, " << s.second.getSrcNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
-            }
-
-            // If this synapse population has SPARSE connectivity and has postsynaptic learning, enqueue a buffer fill operation to zero column lengths
-            if((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getLearnPostCode().empty()) {
-                os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer<unsigned int>(d_colLength" << s.first << ", 0, 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
-            }
-        }
-        os << std::endl;
-
-        // Push any required EGPs
-        initPushEGPHandler(os);
-
         // If there are any initialisation work-items
         if (idInitStart > 0) {
             CodeStream::Scope b(os);
             genKernelDimensions(os, KernelInitialize, idInitStart, 1);
             if(globalRNGRequired) {
                 const size_t numInitGroups = (modelMerged.getMergedNeuronInitGroups().size() + modelMerged.getMergedSynapseInitGroups().size() + 
-                                              modelMerged.getMergedCustomUpdateInitGroups().size() + modelMerged.getMergedCustomWUUpdateInitGroups().size() + 
+                                              modelMerged.getMergedCustomUpdateInitGroups().size() + modelMerged.getMergedCustomConnectivityUpdatePreInitGroups().size() +
+                                              modelMerged.getMergedCustomConnectivityUpdatePostInitGroups().size() + modelMerged.getMergedCustomWUUpdateInitGroups().size() + 
                                               modelMerged.getMergedSynapseConnectivityInitGroups().size());
 
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << numInitGroups << ", d_rng));" << std::endl;
@@ -1338,19 +1381,13 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     {
         CodeStream::Scope b(os);
 
-        // Push any required EGPs
-        initSparsePushEGPHandler(os);
-
-        // Copy all uninitialised state variables to device
-        os << "copyStateToDevice(true);" << std::endl;
-        os << "copyConnectivityToDevice(true);" << std::endl;
-
         // If there are any sparse initialisation work-items
         if (idSparseInitStart > 0) {
             CodeStream::Scope b(os);
             genKernelDimensions(os, KernelInitializeSparse, idSparseInitStart, 1);
             if(globalRNGRequired) {
-                const size_t numInitGroups = (modelMerged.getMergedSynapseSparseInitGroups().size() +  modelMerged.getMergedCustomWUUpdateSparseInitGroups().size());
+                const size_t numInitGroups = (modelMerged.getMergedSynapseSparseInitGroups().size() +  modelMerged.getMergedCustomWUUpdateSparseInitGroups().size() + 
+                                              modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups().size());
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitializeSparse] << ".setArg(" << numInitGroups << ", d_rng));" << std::endl;
             }
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitializeSparse] << ", cl::NullRange, globalWorkSize, localWorkSize";
@@ -1371,7 +1408,7 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &mode
 {
     // If any neuron groups require support code, raise error
     if(std::any_of(modelMerged.getModel().getNeuronGroups().cbegin(), modelMerged.getModel().getNeuronGroups().cbegin(),
-                   [](const ModelSpec::NeuronGroupValueType &ng){ return !ng.second.getNeuronModel()->getSupportCode().empty(); }))
+                   [](const ModelSpec::NeuronGroupValueType &ng){ return !ng.second.getModel()->getSupportCode().empty(); }))
     {
         throw std::runtime_error("OpenCL backend does not currently support models which use support code.");
     }
@@ -1380,8 +1417,8 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &mode
     if(std::any_of(modelMerged.getModel().getSynapseGroups().cbegin(), modelMerged.getModel().getSynapseGroups().cbegin(),
                    [](const ModelSpec::SynapseGroupValueType &sg)
                    {
-                       const auto *wum = sg.second.getWUModel();
-                       const auto *psm = sg.second.getPSModel();
+                       const auto *wum = sg.second.getWUInitialiser().getSnippet();
+                       const auto *psm = sg.second.getPSInitialiser().getSnippet();
                        return (!wum->getSimSupportCode().empty() || !wum->getLearnPostSupportCode().empty()
                                || !wum->getSynapseDynamicsSuppportCode().empty() || !psm->getSupportCode().empty());
                    }))
@@ -1675,10 +1712,12 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
     os << "buildCustomUpdateProgram();" << std::endl;
     os << std::endl;
 
-    // If any neuron groups require a simulation RNG
+    // If any neuron groups or custom connectivity updates require a simulation RNG
     const ModelSpecInternal &model = modelMerged.getModel();
     if(std::any_of(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
-                   [](const ModelSpec::NeuronGroupValueType &n) { return n.second.isSimRNGRequired(); }))
+                   [](const ModelSpec::NeuronGroupValueType &n) { return n.second.isSimRNGRequired(); })
+       || std::any_of(model.getCustomConnectivityUpdates().cbegin(), model.getCustomConnectivityUpdates().cend(),
+                      [](const ModelSpec::CustomConnectivityUpdateValueType &c){ return c.second.isRowSimRNGRequired(); }))
     {
         os << "// Seed LFSR113 RNG" << std::endl;
         os << "clrngLfsr113StreamCreator *lfsrStreamCreator = clrngLfsr113CopyStreamCreator(nullptr, nullptr);" << std::endl;
@@ -1880,7 +1919,7 @@ void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream 
         definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
         definitionsInternal << "EXPORT_VAR cl::Buffer h_" << name << ";" << std::endl;
     }
-    if (loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
+    if (loc & VarLocation::DEVICE && GeNN::Utils::isTypePointer(type)) {
         definitionsInternal << "EXPORT_VAR cl::Buffer d_" << name << ";" << std::endl;
     }
 }
@@ -1891,7 +1930,7 @@ void Backend::genExtraGlobalParamImplementation(CodeStream &os, const std::strin
         os << type << " " << name << ";" << std::endl;
         os << "cl::Buffer h_" << name << ";" << std::endl;
     }
-    if (loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
+    if (loc & VarLocation::DEVICE && GeNN::Utils::isTypePointer(type)) {
         os << "cl::Buffer d_" << name << ";" << std::endl;
     }
 }
@@ -1900,8 +1939,8 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
                                             VarLocation loc, const std::string &countVarName, const std::string &prefix) const
 {
     // Get underlying type
-    const std::string underlyingType = ::Utils::getUnderlyingType(type);
-    const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
+    const std::string underlyingType = GeNN::Utils::getUnderlyingType(type);
+    const bool pointerToPointer = GeNN::Utils::isTypePointerToPointer(type);
 
     const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
     const std::string deviceBuffer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
@@ -1951,11 +1990,9 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
 void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name,
                                       VarLocation loc, const std::string &countVarName, const std::string &prefix) const
 {
-    assert(!getPreferences().automaticCopy);
-
     // Get underlying type
-    const std::string underlyingType = ::Utils::getUnderlyingType(type);
-    const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
+    const std::string underlyingType = GeNN::Utils::getUnderlyingType(type);
+    const bool pointerToPointer = GeNN::Utils::isTypePointerToPointer(type);
 
     const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
     const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
@@ -1972,11 +2009,9 @@ void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, c
 void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name,
                                       VarLocation loc, const std::string &countVarName, const std::string &prefix) const
 {
-    assert(!getPreferences().automaticCopy);
-
     // Get underlying type
-    const std::string underlyingType = ::Utils::getUnderlyingType(type);
-    const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
+    const std::string underlyingType = GeNN::Utils::getUnderlyingType(type);
+    const bool pointerToPointer = GeNN::Utils::isTypePointerToPointer(type);
 
     const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
     const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
@@ -2003,18 +2038,18 @@ void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &s
     os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << kernelName << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
 }
 //--------------------------------------------------------------------------
-std::string Backend::getMergedGroupFieldHostType(const std::string &type) const
+std::string Backend::getMergedGroupFieldHostTypeName(const Type::Base *type, const Type::TypeContext &context) const
 {
     // If type is a pointer, on the host it is represented by an OpenCL buffer
-    if(::Utils::isTypePointerToPointer(type)) {
+    /*if(GeNN::Utils::isTypePointerToPointer(type)) {
         return "cl::Buffer*";
     }
-    if(::Utils::isTypePointer(type)) {
+    else */if(dynamic_cast<Type::Pointer*>(type)) {
         return "cl::Buffer";
     }
     // Otherwise, type remains the same
     else {
-        return type;
+        return type->getName();
     }
 }
 //--------------------------------------------------------------------------
@@ -2052,8 +2087,6 @@ void Backend::genVariablePull(CodeStream &os, const std::string &type, const std
 void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
                                      const std::string &name, VarLocation loc, unsigned int batchSize) const
 {
-    assert(!getPreferences().automaticCopy);
-
     // If this variable requires queuing and isn't zero-copy
     if (ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
         // If batch size is one, generate 1D memcpy to copy current timestep's data
@@ -2086,8 +2119,6 @@ void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &
 void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
                                      const std::string &name, VarLocation loc, unsigned int batchSize) const
 {
-    assert(!getPreferences().automaticCopy);
-
     // If this variable requires queuing and isn't zero-copy
     if (ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
         // If batch size is one, generate 1D memcpy to copy current timestep's data
@@ -2353,13 +2384,13 @@ boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
     boost::uuids::detail::sha1 hash;
 
     // Update hash was name of backend
-    ::Utils::updateHash("OpenCL", hash);
+    GeNN::Utils::updateHash("OpenCL", hash);
     
     // Update hash with chosen device ID and kernel block sizes
-    ::Utils::updateHash(m_ChosenPlatformIndex, hash);
-    ::Utils::updateHash(m_ChosenDeviceIndex, hash);
-    ::Utils::updateHash(m_AllocationAlignementBytes, hash);
-    ::Utils::updateHash(getKernelBlockSize(), hash);
+    GeNN::Utils::updateHash(m_ChosenPlatformIndex, hash);
+    GeNN::Utils::updateHash(m_ChosenDeviceIndex, hash);
+    GeNN::Utils::updateHash(m_AllocationAlignementBytes, hash);
+    GeNN::Utils::updateHash(getKernelBlockSize(), hash);
 
     // Update hash with preferences
     getPreferences<Preferences>().updateHash(hash);
@@ -2369,8 +2400,6 @@ boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
 //--------------------------------------------------------------------------
 void Backend::genCurrentSpikePushPull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent, bool push) const
 {
-    assert(!getPreferences().automaticCopy);
-
     if (!(ng.getSpikeLocation() & VarLocation::ZERO_COPY)) {
         // Is delay required
         const bool delayRequired = spikeEvent ?
@@ -2378,8 +2407,8 @@ void Backend::genCurrentSpikePushPull(CodeStream &os, const NeuronGroupInternal 
             (ng.isTrueSpikeRequired() && ng.isDelayRequired());
 
         const char *function = push ? "Write" : "Read";
-        const char* spikeCntPrefix = spikeEvent ? "glbSpkCntEvnt" : "glbSpkCnt";
-        const char* spikePrefix = spikeEvent ? "glbSpkEvnt" : "glbSpk";
+        const char* spikeCntPrefix = spikeEvent ? "spkCntEvnt" : "spkCnt";
+        const char* spikePrefix = spikeEvent ? "spkEvnt" : "spk";
 
         if (delayRequired) {
             // If there's only a single batch
@@ -2550,7 +2579,7 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     os << "#include <clRNG/philox432.clh>" << std::endl;
 
     os << "typedef " << precision << " scalar;" << std::endl;
-    os << "#define DT " << model.scalarExpr(model.getDT()) << std::endl;
+    os << "#define DT " << modelMerged.scalarExprr(model.getDT()) << std::endl;
     os << "#define SUPPORT_CODE_FUNC" << std::endl;
     genTypeRange(os, model.getTimePrecision(), "TIME");
 
@@ -2566,7 +2595,7 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
             {
                 CodeStream::Scope b(os);
                 os << "const " << precision << " u = clrng" << r << "RandomU01(rng);" << std::endl;
-                os << "if (u != " << model.scalarExpr(0.0) << ")";
+                os << "if (u != " << modelMerged.scalarExprr(0.0) << ")";
                 {
                     CodeStream::Scope b(os);
                     os << "return -log(u);" << std::endl;
@@ -2582,8 +2611,8 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
             const std::string pi = (model.getPrecision() == "float") ? "M_PI_F" : "M_PI";
             os << "const " << precision << " u1 = clrng" << r << "RandomU01(rng);" << std::endl;
             os << "const " << precision << " u2 = clrng" << r << "RandomU01(rng);" << std::endl;
-            os << "const " << precision << " r = sqrt(" << model.scalarExpr(-2.0) << " * log(u1));" << std::endl;
-            os << "const " << precision << " theta = " << model.scalarExpr(2.0) << " * " << pi << " * u2;" << std::endl;
+            os << "const " << precision << " r = sqrt(" << modelMerged.scalarExprr(-2.0) << " * log(u1));" << std::endl;
+            os << "const " << precision << " theta = " << modelMerged.scalarExprr(2.0) << " * " << pi << " * u2;" << std::endl;
             os << "return r * sin(theta);" << std::endl;
         }
         os << std::endl;
@@ -2608,9 +2637,9 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
                 {
                     CodeStream::Scope b(os);
                     os << "x = normalDist" << r << "(rng);" << std::endl;
-                    os << "v = " << model.scalarExpr(1.0) << " + c*x;" << std::endl;
+                    os << "v = " << modelMerged.scalarExprr(1.0) << " + c*x;" << std::endl;
                 }
-                os << "while (v <= " << model.scalarExpr(0.0) << ");" << std::endl;
+                os << "while (v <= " << modelMerged.scalarExprr(0.0) << ");" << std::endl;
                 os << std::endl;
                 os << "v = v*v*v;" << std::endl;
                 os << "do";
@@ -2618,10 +2647,10 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
                     CodeStream::Scope b(os);
                     os << "u = clrng" << r << "RandomU01(rng);" << std::endl;
                 }
-                os << "while (u == " << model.scalarExpr(1.0) << ");" << std::endl;
+                os << "while (u == " << modelMerged.scalarExprr(1.0) << ");" << std::endl;
                 os << std::endl;
-                os << "if (u < " << model.scalarExpr(1.0) << " - " << model.scalarExpr(0.0331) << "*x*x*x*x) break;" << std::endl;
-                os << "if (log(u) < " << model.scalarExpr(0.5) << "*x*x + d*(" << model.scalarExpr(1.0) << " - v + log(v))) break;" << std::endl;
+                os << "if (u < " << modelMerged.scalarExprr(1.0) << " - " << modelMerged.scalarExprr(0.0331) << "*x*x*x*x) break;" << std::endl;
+                os << "if (log(u) < " << modelMerged.scalarExprr(0.5) << "*x*x + d*(" << modelMerged.scalarExprr(1.0) << " - v + log(v))) break;" << std::endl;
             }
             os << std::endl;
             os << "return d*v;" << std::endl;
@@ -2635,15 +2664,15 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
             {
                 CodeStream::Scope b(os);
                 os << "const " << precision << " u = clrng" << r << "RandomU01 (rng);" << std::endl;
-                os << "const " << precision << " d = (" << model.scalarExpr(1.0) << " + a) - " << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ";" << std::endl;
-                os << "const " << precision << " c = (" << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ") / sqrt(d);" << std::endl;
-                os << "return gammaDistInternal" << r << "(rng, c, d) * pow(u, " << model.scalarExpr(1.0) << " / a);" << std::endl;
+                os << "const " << precision << " d = (" << modelMerged.scalarExprr(1.0) << " + a) - " << modelMerged.scalarExprr(1.0) << " / " << modelMerged.scalarExprr(3.0) << ";" << std::endl;
+                os << "const " << precision << " c = (" << modelMerged.scalarExprr(1.0) << " / " << modelMerged.scalarExprr(3.0) << ") / sqrt(d);" << std::endl;
+                os << "return gammaDistInternal" << r << "(rng, c, d) * pow(u, " << modelMerged.scalarExprr(1.0) << " / a);" << std::endl;
             }
             os << "else" << std::endl;
             {
                 CodeStream::Scope b(os);
-                os << "const " << precision << " d = a - " << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ";" << std::endl;
-                os << "const " << precision << " c = (" << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ") / sqrt(d);" << std::endl;
+                os << "const " << precision << " d = a - " << modelMerged.scalarExprr(1.0) << " / " << modelMerged.scalarExprr(3.0) << ";" << std::endl;
+                os << "const " << precision << " c = (" << modelMerged.scalarExprr(1.0) << " / " << modelMerged.scalarExprr(3.0) << ") / sqrt(d);" << std::endl;
                 os << "return gammaDistInternal" << r << "(rng, c, d);" << std::endl;
             }
         }
@@ -2653,10 +2682,10 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
         os << "inline unsigned int binomialDist" << r << "Internal(clrng" << r << "Stream *rng, unsigned int n, " << precision << " p)" << std::endl;
         {
             CodeStream::Scope b(os);
-            os << "const " << precision << " q = " << model.scalarExpr(1.0) << " - p;" << std::endl;
+            os << "const " << precision << " q = " << modelMerged.scalarExprr(1.0) << " - p;" << std::endl;
             os << "const " << precision << " qn = exp(n * log(q));" << std::endl;
             os << "const " << precision << " np = n * p;" << std::endl;
-            os << "const unsigned int bound = min(n, (unsigned int)(np + (" << model.scalarExpr(10.0) << " * sqrt((np * q) + " << model.scalarExpr(1.0) << "))));" << std::endl;
+            os << "const unsigned int bound = min(n, (unsigned int)(np + (" << modelMerged.scalarExprr(10.0) << " * sqrt((np * q) + " << modelMerged.scalarExprr(1.0) << "))));" << std::endl;
 
             os << "unsigned int x = 0;" << std::endl;
             os << precision << " px = qn;" << std::endl;
@@ -2686,7 +2715,7 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
         os << "inline unsigned int binomialDist" << r << "(clrng" << r << "Stream *rng, unsigned int n, " << precision << " p)" << std::endl;
         {
             CodeStream::Scope b(os);
-            os << "if(p <= " << model.scalarExpr(0.5) << ")";
+            os << "if(p <= " << modelMerged.scalarExprr(0.5) << ")";
             {
                 CodeStream::Scope b(os);
                 os << "return binomialDist" << r << "Internal(rng, n, p);" << std::endl;
@@ -2695,7 +2724,7 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
             os << "else";
             {
                 CodeStream::Scope b(os);
-                os << "return (n - binomialDist" << r << "Internal(rng, n, " << model.scalarExpr(1.0) << " - p));" << std::endl;
+                os << "return (n - binomialDist" << r << "Internal(rng, n, " << modelMerged.scalarExprr(1.0) << " - p));" << std::endl;
             }
         }
         os << std::endl;
@@ -2747,5 +2776,4 @@ bool Backend::shouldUseSubBufferAllocations() const
 {
     return isChosenDeviceAMD();
 }
-} // namespace OpenCL
-} // namespace CodeGenerator
+} // namespace GeNN::CodeGenerator::OpenCL

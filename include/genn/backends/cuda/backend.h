@@ -15,13 +15,18 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#if __has_include(<nccl.h>)
+    #include <nccl.h>
+
+    #define NCCL_AVAILABLE
+#endif
+
 // GeNN includes
 #include "backendExport.h"
 
 // GeNN code generator includes
 #include "code_generator/backendSIMT.h"
 #include "code_generator/codeStream.h"
-#include "code_generator/substitutions.h"
 
 // Forward declarations
 namespace filesystem
@@ -30,11 +35,9 @@ namespace filesystem
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::CUDA::DeviceSelectMethod
+// GeNN::CodeGenerator::CUDA::DeviceSelectMethod
 //--------------------------------------------------------------------------
-namespace CodeGenerator
-{
-namespace CUDA
+namespace GeNN::CodeGenerator::CUDA
 {
 //! Methods for selecting CUDA device
 enum class DeviceSelect
@@ -42,7 +45,6 @@ enum class DeviceSelect
     OPTIMAL,        //!< Pick optimal device based on how well kernels can be simultaneously simulated and occupancy
     MOST_MEMORY,    //!< Pick device with most global memory
     MANUAL,         //!< Use device specified by user
-    MANUAL_RUNTIME, //!< Use device specified by user at runtime with allocateMem parameter. Optimisation will be performed on device specified with manualDeviceID.
 };
 
 //--------------------------------------------------------------------------
@@ -72,20 +74,11 @@ struct Preferences : public PreferencesBase
     //! Should line info be included in resultant executable for debugging/profiling purposes?
     bool generateLineInfo = false;
 
-    //! GeNN normally identifies devices by PCI bus ID to ensure that the model is run on the same device
-    //! it was optimized for. However if, for example, you are running on a cluser with NVML this is not desired behaviour.
-    bool selectGPUByDeviceID = false;
-
     //! Generate corresponding NCCL batch reductions
     bool enableNCCLReductions = false;
     
-    //! By default, GeNN generates CUDA error-handling code that generates exceptions with line numbers etc.
-    //! This can make compilation of large models very slow and require a large amount of memory.
-    //! Turning on this option generates much simpler error-handling code that simply raises an abort signal.
-    bool generateSimpleErrorHandling = false;
-    
     //! How to select GPU device
-    DeviceSelect deviceSelectMethod = DeviceSelect::OPTIMAL;
+    DeviceSelect deviceSelectMethod = DeviceSelect::MANUAL;
 
     //! If device select method is set to DeviceSelect::MANUAL, id of device to use
     unsigned int manualDeviceID = 0;
@@ -115,12 +108,50 @@ struct Preferences : public PreferencesBase
         // **NOTE** while device selection is also not relevant as the chosen device is hashed in the backend, DeviceSelect::MANUAL_OVERRIDE is used in the backend
 
         //! Update hash with preferences
-        Utils::updateHash(selectGPUByDeviceID, hash);
         Utils::updateHash(deviceSelectMethod, hash);
         Utils::updateHash(constantCacheOverhead, hash);
         Utils::updateHash(enableNCCLReductions, hash);
-        Utils::updateHash(generateSimpleErrorHandling, hash);
     }
+};
+
+//--------------------------------------------------------------------------
+// CodeGenerator::CUDA::Backend
+//--------------------------------------------------------------------------
+class BACKEND_EXPORT State : public Runtime::StateBase
+{
+public:
+    State(const Runtime::Runtime &base);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    //! To be called on one rank to generate ID before creating communicator
+    void ncclGenerateUniqueID();
+    
+    //! Get pointer to unique ID
+    unsigned char *ncclGetUniqueID();
+    
+    //! Get size of unique ID in bytes
+    size_t ncclGetUniqueIDSize() const;
+
+    //! Initialise communicator
+    void ncclInitCommunicator(int rank, int numRanks);
+
+private:
+    //----------------------------------------------------------------------------
+    // Type defines
+    //----------------------------------------------------------------------------
+    typedef void (*VoidFunction)(void);
+    typedef unsigned char* (*BytePtrFunction)(void);
+    typedef void (*NCCLInitCommunicatorFunction)(int, int);
+
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    VoidFunction m_NCCLGenerateUniqueID;
+    BytePtrFunction m_NCCLGetUniqueID;
+    NCCLInitCommunicatorFunction m_NCCLInitCommunicator;
+    const size_t *m_NCCLUniqueIDSize;
 };
 
 //--------------------------------------------------------------------------
@@ -129,163 +160,163 @@ struct Preferences : public PreferencesBase
 class BACKEND_EXPORT Backend : public BackendSIMT
 {
 public:
-    Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences,
-            const std::string &scalarType, int device);
+    Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, 
+            int device, bool zeroCopy);
 
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendSIMT virtuals
     //--------------------------------------------------------------------------
     //! On some older devices, shared memory atomics are actually slower than global memory atomics so should be avoided
-    virtual bool areSharedMemAtomicsSlow() const override;
+    virtual bool areSharedMemAtomicsSlow() const final;
 
     //! Get the prefix to use for shared memory variables
-    virtual std::string getSharedPrefix() const override{ return "__shared__ "; }
+    virtual std::string getSharedPrefix() const final{ return "__shared__ "; }
 
     //! Get the ID of the current thread within the threadblock
-    virtual std::string getThreadID(unsigned int axis = 0) const override;
+    virtual std::string getThreadID(unsigned int axis = 0) const final;
 
     //! Get the ID of the current thread block
-    virtual std::string getBlockID(unsigned int axis = 0) const override;
+    virtual std::string getBlockID(unsigned int axis = 0) const final;
+
+    //! How many 'lanes' does underlying hardware have?
+    /*! This is typically used for warp-shuffle algorithms */
+    virtual unsigned int getNumLanes() const final;
 
     //! Get the name of the count-leading-zeros function
-    virtual std::string getCLZ() const override { return "__clz"; }
+    virtual std::string getCLZ() const final { return "__clz"; }
 
     //! Get name of atomic operation
-    virtual std::string getAtomic(const std::string &type, AtomicOperation op = AtomicOperation::ADD,
-                                  AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const override;
+    virtual std::string getAtomic(const Type::ResolvedType &type,
+                                  AtomicOperation op = AtomicOperation::ADD, 
+                                  AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const final;
+
+    //! Generate a warp reduction across getNumLanes lanes into lane 0
+    virtual void genWarpReduction(CodeStream& os, const std::string& variable,
+                                  VarAccessMode access, const Type::ResolvedType& type) const final;
 
     //! Generate a shared memory barrier
-    virtual void genSharedMemBarrier(CodeStream &os) const override;
+    virtual void genSharedMemBarrier(CodeStream &os) const final;
 
     //! For SIMT backends which initialize RNGs on device, initialize population RNG with specified seed and sequence
-    virtual void genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const override;
+    virtual void genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const final;
 
     //! Generate a preamble to add substitution name for population RNG
-    virtual void genPopulationRNGPreamble(CodeStream &os, Substitutions &subs, const std::string &globalRNG, const std::string &name = "rng") const override;
+    virtual std::string genPopulationRNGPreamble(CodeStream &os, const std::string &globalRNG) const final;
 
     //! If required, generate a postamble for population RNG
     /*! For example, in OpenCL, this is used to write local RNG state back to global memory*/
-    virtual void genPopulationRNGPostamble(CodeStream &os, const std::string &globalRNG) const override;
+    virtual void genPopulationRNGPostamble(CodeStream &os, const std::string &globalRNG) const final;
 
     //! Generate code to skip ahead local copy of global RNG
-    virtual void genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const std::string &sequence, const std::string &name = "rng") const override;
+    virtual std::string genGlobalRNGSkipAhead(CodeStream &os, const std::string &sequence) const final;
+
+    //! Get type of population RNG
+    virtual Type::ResolvedType getPopulationRNGType() const final;
 
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                                 HostHandler preambleHandler, HostHandler pushEGPHandler) const override;
+    virtual void genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
+                                 HostHandler preambleHandler) const final;
 
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                                  HostHandler preambleHandler, HostHandler pushEGPHandler) const override;
+    virtual void genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
+                                  HostHandler preambleHandler) const final;
 
-    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                                 HostHandler preambleHandler, HostHandler pushEGPHandler) const override;
+    virtual void genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
+                                 HostHandler preambleHandler) const final;
 
-    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                         HostHandler preambleHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
+    virtual void genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
+                         HostHandler preambleHandler) const final;
 
-    virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
-    virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
-    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const override;
-    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const override;
-    virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
-    virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
+    virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+    virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+    virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
 
-    virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const override;
-    virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const override;
+    //! Create backend-specific runtime state object
+    /*! \param runtime  runtime object */
+    virtual std::unique_ptr<GeNN::Runtime::StateBase> createState(const Runtime::Runtime &runtime) const final;
 
-    virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
-                                               VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
-    virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, 
-                                         VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
-    virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, 
-                                         VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
+    //! Create backend-specific array object
+    /*! \param type         data type of array
+        \param count        number of elements in array, if non-zero will allocate
+        \param location     location of array e.g. device-only*/
+    virtual std::unique_ptr<Runtime::ArrayBase> createArray(const Type::ResolvedType &type, size_t count, 
+                                                            VarLocation location, bool uninitialized) const final;
 
-    //! Generate code for pushing an updated EGP value into the merged group structure on 'device'
-    virtual void genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
-                                               const std::string &groupIdx, const std::string &fieldName,
-                                               const std::string &egpName) const override;
+    //! Create array of backend-specific population RNGs (if they are initialised on host this will occur here)
+    /*! \param count        number of RNGs required*/
+    virtual std::unique_ptr<Runtime::ArrayBase> createPopulationRNG(size_t count) const final;
+
+    //! Generate code to allocate variable with a size known at runtime
+    virtual void genLazyVariableDynamicAllocation(CodeStream &os, 
+                                                  const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
+                                                  const std::string &countVarName) const final;
+
+    //! Generate code for pushing a variable with a size known at runtime to the 'device'
+    virtual void genLazyVariableDynamicPush(CodeStream &os, 
+                                            const Type::ResolvedType &type, const std::string &name,
+                                            VarLocation loc, const std::string &countVarName) const final;
+
+    //! Generate code for pulling a variable with a size known at runtime from the 'device'
+    virtual void genLazyVariableDynamicPull(CodeStream &os, 
+                                            const Type::ResolvedType &type, const std::string &name,
+                                            VarLocation loc, const std::string &countVarName) const final;
+
+    //! Generate code for pushing a new pointer to a dynamic variable into the merged group structure on 'device'
+    virtual void genMergedDynamicVariablePush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
+                                              const std::string &groupIdx, const std::string &fieldName,
+                                              const std::string &egpName) const final;
 
     //! When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host
-    virtual std::string getMergedGroupFieldHostType(const std::string &type) const override;
+    virtual std::string getMergedGroupFieldHostTypeName(const Type::ResolvedType &type) const final;
 
-    //! When generating merged structures what type to use for simulation RNGs
-    virtual std::string getMergedGroupSimRNGType() const override { return "curandState"; }
+    //! Generate a single RNG instance
+    /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
+    virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free) const final;
 
-    virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;
-    virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
-
-    virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
-                                        const std::string &name, VarLocation loc, unsigned int batchSize) const override;
-    virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
-                                        const std::string &name, VarLocation loc, unsigned int batchSize) const override;
-
-    virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
-    {
-        genCurrentSpikePush(os, ng, batchSize, false);
-    }
-    virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
-    {
-        genCurrentSpikePull(os, ng, batchSize, false);
-    }
-    virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
-    {
-        genCurrentSpikePush(os, ng, batchSize, true);
-    }
-    virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
-    {
-        genCurrentSpikePull(os, ng, batchSize, true);
-    }
-    
-    virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, 
-                                    CodeStream &runner, CodeStream &allocations, CodeStream &free, 
-                                    MemAlloc &memAlloc) const override;
-    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, 
-                                  CodeStream &runner, CodeStream &allocations, CodeStream &free, 
-                                  const std::string &name, size_t count, MemAlloc &memAlloc) const override;
-    virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                          CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise,
-                          const std::string &name, bool updateInStepTime) const override;
+    virtual void genTimer(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, 
+                          CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const final;
 
     //! Generate code to return amount of free 'device' memory in bytes
-    virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const override;
+    virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const final;
 
-    virtual void genMakefilePreamble(std::ostream &os) const override;
-    virtual void genMakefileLinkRule(std::ostream &os) const override;
-    virtual void genMakefileCompileRule(std::ostream &os) const override;
+    //! On backends which support it, generate a runtime assert
+    virtual void genAssert(CodeStream &os, const std::string &condition) const final;
 
-    virtual void genMSBuildConfigProperties(std::ostream &os) const override;
-    virtual void genMSBuildImportProps(std::ostream &os) const override;
-    virtual void genMSBuildItemDefinitions(std::ostream &os) const override;
-    virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const override;
-    virtual void genMSBuildImportTarget(std::ostream &os) const override;
+    virtual void genMakefilePreamble(std::ostream &os) const final;
+    virtual void genMakefileLinkRule(std::ostream &os) const final;
+    virtual void genMakefileCompileRule(std::ostream &os) const final;
 
-    //! Get backend-specific allocate memory parameters
-    virtual std::string getAllocateMemParams(const ModelSpecMerged &) const override;
+    virtual void genMSBuildConfigProperties(std::ostream &os) const final;
+    virtual void genMSBuildImportProps(std::ostream &os) const final;
+    virtual void genMSBuildItemDefinitions(std::ostream &os) const final;
+    virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const final;
+    virtual void genMSBuildImportTarget(std::ostream &os) const final;
+
+    //! As well as host pointers, are device objects required?
+    virtual bool isArrayDeviceObjectRequired() const final{ return true; }
+
+    //! As well as host pointers, are additional host objects required e.g. for buffers in OpenCL?
+    virtual bool isArrayHostObjectRequired() const final{ return false; }
 
     //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
-    virtual bool isPopulationRNGInitialisedOnDevice() const override { return true; }
+    virtual bool isPopulationRNGInitialisedOnDevice() const final { return true; }
 
     //! Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels
-    virtual bool isHostReductionRequired() const override { return getPreferences<Preferences>().enableNCCLReductions; }
+    virtual bool isHostReductionRequired() const final { return getPreferences<Preferences>().enableNCCLReductions; }
 
     //! How many bytes of memory does 'device' have
-    virtual size_t getDeviceMemoryBytes() const override{ return m_ChosenDevice.totalGlobalMem; }
+    virtual size_t getDeviceMemoryBytes() const final{ return m_ChosenDevice.totalGlobalMem; }
 
     //! Some backends will have additional small, fast, memory spaces for read-only data which might
     //! Be well-suited to storing merged group structs. This method returns the prefix required to
     //! Place arrays in these and their size in preferential order
-    virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override;
-
-    virtual bool supportsNamespace() const override { return true; };
+    virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const final;
 
     //! Get hash digest of this backends identification and the preferences it has been configured with
-    virtual boost::uuids::detail::sha1::digest_type getHashDigest() const override;
+    virtual boost::uuids::detail::sha1::digest_type getHashDigest() const final;
 
     //--------------------------------------------------------------------------
     // Public API
@@ -299,6 +330,11 @@ private:
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
+    std::string getNCCLReductionType(VarAccessMode mode) const;
+    std::string getNCCLType(const Type::ResolvedType &type) const;
+    
+    void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY = 1) const;
+
     template<typename T>
     void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups) const
     {
@@ -321,7 +357,7 @@ private:
                 os << "Merged" << T::name << "Group" << g.getIndex() << " group = {";
                 const auto sortedFields = g.getSortedFields(*this);
                 for(const auto &f : sortedFields) {
-                    os << std::get<1>(f) << ", ";
+                    os << f.name << ", ";
                 }
                 os << "};" << std::endl;
 
@@ -332,17 +368,65 @@ private:
         }
     }
 
+    template<typename G>
+    void genNCCLReduction(EnvironmentExternalBase &env, G &cg) const
+    {
+        CodeStream::Scope b(env.getStream());
+        env.getStream() << "// merged custom update host reduction group " << cg.getIndex() << std::endl;
+        env.getStream() << "for(unsigned int g = 0; g < " << cg.getGroups().size() << "; g++)";
+        {
+            CodeStream::Scope b(env.getStream());
+
+            // Get reference to group
+            env.getStream() << "const auto *group = &merged" << G::name << "Group" << cg.getIndex() << "[g]; " << std::endl;
+            EnvironmentGroupMergedField<G> groupEnv(env, cg);
+            buildSizeEnvironment(groupEnv);
+        
+            // Loop through variables
+            const auto *cm = cg.getArchetype().getModel();
+            for(const auto &v : cm->getVars()) {
+                // If variable is reduction target
+                if(v.access & VarAccessModeAttribute::REDUCE) {
+                    // Add pointer field
+                    const auto resolvedType = v.type.resolve(cg.getTypeContext());
+                    groupEnv.addField(resolvedType.createPointer(), "_" + v.name, v.name,
+                                      [v](const auto &runtime, const auto &g, size_t) 
+                                      { 
+                                          return runtime.getArray(g, v.name);
+                                      });
+                    
+                    // Add NCCL reduction
+                    groupEnv.print("CHECK_NCCL_ERRORS(ncclAllReduce($(_" + v.name + "), $(_" + v.name + "), $(_size)");
+                    groupEnv.printLine(", " + getNCCLType(resolvedType) + ", " + getNCCLReductionType(getVarAccessMode(v.access)) + ", ncclCommunicator, 0));");
+                }
+            }
+
+            // Loop through variable references
+            for(const auto &v : cm->getVarRefs()) {
+                // If variable reference ios reduction target
+                if(v.access & VarAccessModeAttribute::REDUCE) {
+                    // Add pointer field
+                    const auto resolvedType = v.type.resolve(cg.getTypeContext());
+                    groupEnv.addField(resolvedType.createPointer(), "_" + v.name, v.name,
+                                      [v](const auto &runtime, const auto &g, size_t) 
+                                      { 
+                                          const auto varRef = g.getVarReferences().at(v.name);
+                                          return varRef.getTargetArray(runtime);
+                                      });
+
+                    // Add NCCL reduction
+                    groupEnv.print("CHECK_NCCL_ERRORS(ncclAllReduce($(_" + v.name + "), $(_" + v.name + "), $(_size)");
+                    groupEnv.printLine(", " + getNCCLType(v.type.resolve(cg.getTypeContext())) + ", " + getNCCLReductionType(v.access) + ", ncclCommunicator, 0));");
+                }
+            } 
+        }
+    }
 
     //! Get the safe amount of constant cache we can use
     size_t getChosenDeviceSafeConstMemBytes() const
     {
         return m_ChosenDevice.totalConstMem - getPreferences<Preferences>().constantCacheOverhead;
     }
-
-    void genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const;
-    void genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const;
-
-    void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY = 1) const;
 
     //--------------------------------------------------------------------------
     // Members
@@ -351,5 +435,4 @@ private:
     cudaDeviceProp m_ChosenDevice;
     int m_RuntimeVersion;
 };
-}   // CUDA
-}   // CodeGenerator
+}   // GeNN::CUDA::CodeGenerator

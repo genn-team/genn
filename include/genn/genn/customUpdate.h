@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard includes
+#include <set>
 #include <string>
 #include <vector>
 
@@ -8,11 +9,13 @@
 #include "gennExport.h"
 #include "gennUtils.h"
 #include "customUpdateModels.h"
-#include "variableMode.h"
+#include "varLocation.h"
 
 //------------------------------------------------------------------------
-// CustomUpdateBase
+// GeNN::CustomUpdateBase
 //------------------------------------------------------------------------
+namespace GeNN
+{
 class GENN_EXPORT CustomUpdateBase
 {
 public:
@@ -22,9 +25,16 @@ public:
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
-    //! Set location of state variable
+    //! Set location of state variable.
     /*! This is ignored for simulations on hardware with a single memory space */
     void setVarLocation(const std::string &varName, VarLocation loc);
+
+    //! Set location of extra global parameter.
+    /*! This is ignored for simulations on hardware with a single memory space. */
+    void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
+
+    //! Set whether parameter is dynamic or not i.e. it can be changed at runtime
+    void setParamDynamic(const std::string &paramName, bool dynamic = true);
 
     //------------------------------------------------------------------------
     // Public const methods
@@ -33,78 +43,87 @@ public:
     const std::string &getUpdateGroupName() const { return m_UpdateGroupName; }
 
     //! Gets the custom update model used by this group
-    const CustomUpdateModels::Base *getCustomUpdateModel() const{ return m_CustomUpdateModel; }
+    const CustomUpdateModels::Base *getModel() const{ return m_Model; }
 
-    const std::vector<double> &getParams() const{ return m_Params; }
-    const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
+    const auto  &getParams() const{ return m_Params; }
+    const auto &getVarInitialisers() const{ return m_VarInitialisers; }
 
-    const std::vector<Models::EGPReference> &getEGPReferences() const{ return m_EGPReferences;  }
-
-    //! Get variable location for custom update model state variable
-    VarLocation getVarLocation(const std::string &varName) const;
+    const auto &getEGPReferences() const{ return m_EGPReferences;  }
 
     //! Get variable location for custom update model state variable
-    VarLocation getVarLocation(size_t index) const{ return m_VarLocation.at(index); }
+    VarLocation getVarLocation(const std::string &varName) const{ return m_VarLocation.get(varName); }
+
+    //! Get location of neuron model extra global parameter by name
+    VarLocation getExtraGlobalParamLocation(const std::string &paramName) const{ return m_ExtraGlobalParamLocation.get(paramName); }
+
+    //! Is parameter dynamic i.e. it can be changed at runtime
+    bool isParamDynamic(const std::string &paramName) const{ return m_DynamicParams.get(paramName); }
 
     //! Is var init code required for any variables in this custom update group's custom update model?
     bool isVarInitRequired() const;
 
+    //! Get dimensions of this custom update
+    VarAccessDim getDims() const{ return m_Dims; }
+
 protected:
-    CustomUpdateBase(const std::string &name, const std::string &updateGroupName,
-                     const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
-                     const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::EGPReference> &egpReferences,
-                     VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
+    CustomUpdateBase(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 
+                     const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers,
+                     const std::map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    void initDerivedParams(double dt);
+    void finalise(double dt);
 
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
-    const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
+    const auto &getDerivedParams() const{ return m_DerivedParams; }
 
     //! Does this current source group require an RNG for it's init code
     bool isInitRNGRequired() const;
 
     bool isZeroCopyEnabled() const;
 
-    //! Is this custom update batched i.e. run in parallel across model batches
-    bool isBatched() const { return m_Batched; }
+    bool isModelReduction() const;
 
     //! Updates hash with custom update
-    /*! NOTE: this can only be called after model is finalized */
+    /*! \note this can only be called after model is finalized */
     void updateHash(boost::uuids::detail::sha1 &hash) const;
 
     //! Updates hash with custom update
-    /*! NOTE: this can only be called after model is finalized */
+    /*! \note this can only be called after model is finalized */
     void updateInitHash(boost::uuids::detail::sha1 &hash) const;
 
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
 
+    const auto &getUpdateCodeTokens() const{ return m_UpdateCodeTokens; }
+
     template<typename V>
-    bool isReduction(const std::vector<V> &varRefs, VarAccessDuplication duplication) const
+    bool isReduction(const std::map<std::string, V> &varRefs, 
+                     VarAccessDim reduceDim) const
     {
-        // Return true if any variables have REDUCE flag in their access mode and have correct duplication flag
-        const auto vars = getCustomUpdateModel()->getVars();
+        // Return true if any variables have REDUCE flag in their access mode and have reduction dimension 
+        // **NOTE** this is correct because custom update variable access types are defined subtractively
+        const auto vars = getModel()->getVars();
         if(std::any_of(vars.cbegin(), vars.cend(),
-                       [duplication](const Models::Base::Var &v)
+                       [reduceDim](const Models::Base::CustomUpdateVar &v)
                        { 
-                           return (v.access & VarAccessModeAttribute::REDUCE) && (v.access & duplication);
+                           return ((v.access & VarAccessModeAttribute::REDUCE) 
+                                   && (static_cast<unsigned int>(v.access) & static_cast<unsigned int>(reduceDim)));
                        }))
         {
             return true;
         }
 
         // Loop through all variable references
-        const auto modelVarRefs = getCustomUpdateModel()->getVarRefs();
-        for (size_t i = 0; i < varRefs.size(); i++) {
-            const auto varRef = varRefs.at(i);
-            const auto modelVarRef = modelVarRefs.at(i);
-
-            // If custom update model reduces into this variable reference and the variable it targets has correct duplication flag
-            if ((modelVarRef.access & VarAccessModeAttribute::REDUCE) & (varRef.getVar().access & duplication)) {
+        for(const auto &modelVarRef : getModel()->getVarRefs()) {
+            // If custom update model reduces into this variable reference 
+            // and the variable it targets doesn't have reduction dimension
+            const auto &varRef = varRefs.at(modelVarRef.name);
+            if ((modelVarRef.access & VarAccessModeAttribute::REDUCE) 
+                && !(varRef.getVarDims() & reduceDim)) 
+            {
                 return true;
             }
         }
@@ -114,83 +133,141 @@ protected:
 
     //! Helper function to check if variable reference types match those specified in model
     template<typename V>
-    void checkVarReferences(const std::vector<V> &varRefs)
+    void checkVarReferenceDims(const std::map<std::string, V>& varRefs, unsigned int batchSize)
     {
-        // Loop through all variable references
-        const auto modelVarRefs = getCustomUpdateModel()->getVarRefs();
-        for(size_t i = 0; i < varRefs.size(); i++) {
-            const auto varRef = varRefs.at(i);
-            const auto modelVarRef = modelVarRefs.at(i);
-
-            // Check types of variable references against those specified in model
-            // **THINK** due to GeNN's current string-based type system this is rather conservative
-            if(varRef.getVar().type != modelVarRef.type) {
-                throw std::runtime_error("Incompatible type for variable reference '" + modelVarRef.name + "'");
-            }
-
-            // Check that no reduction targets reference duplicated variables
-            if((varRef.getVar().access & VarAccessDuplication::DUPLICATE) 
-                && (modelVarRef.access & VarAccessModeAttribute::REDUCE))
-            {
-                throw std::runtime_error("Reduction target variable reference must be to SHARED or SHARED_NEURON variables.");
-            }
-        }
-    }
-
-    //! Helper function to check if variable reference types match those specified in model
-    template<typename V>
-    void checkVarReferenceBatching(const std::vector<V>& varRefs, unsigned int batchSize)
-    {
-        // If target of any variable references is not shared across batches, custom update should be batched
-        if(batchSize > 1) {
-            m_Batched = std::any_of(varRefs.cbegin(), varRefs.cend(),
-                                    [](const V& v) 
-                                    {
-                                        return (v.isBatched() && !(v.getVar().access & VarAccessDuplication::SHARED)); 
-                                    });
-        }
-        else {
-            m_Batched = false;
+        // Loop through variable references and or together their dimensions to get dimensionality of update
+        m_Dims = VarAccessDim{0};
+        for(const auto &v : varRefs) {
+            m_Dims = m_Dims | v.second.getVarDims();
         }
 
         // Loop through all variable references
-        const auto modelVarRefs = getCustomUpdateModel()->getVarRefs();
-        for (size_t i = 0; i < varRefs.size(); i++) {
-            const auto varRef = varRefs.at(i);
-            const auto modelVarRef = modelVarRefs.at(i);
+        for(const auto &modelVarRef : getModel()->getVarRefs()) {
+            const auto varRef = varRefs.at(modelVarRef.name);
 
-            // If custom update is batched, check that any variable references to shared variables are read-only
-            // **NOTE** if custom update isn't batched, it's totally fine to write to shared variables
-            if(m_Batched && (varRef.getVar().access & VarAccessDuplication::SHARED)
+            // Determine what dimensions are 'missing' from this variable compared to update dimensionality
+            const auto missingDims = clearVarAccessDim(m_Dims, varRef.getVarDims());
+
+            // If any dimensions are missing (unless missing dimensions is BATCH and
+            // model isn't actually batched), check variable isn't accessed read-write
+            if(((missingDims != VarAccessDim{0}) && (missingDims != VarAccessDim::BATCH || batchSize > 1))
                && (modelVarRef.access == VarAccessMode::READ_WRITE))
             {
-                throw std::runtime_error("Variable references to SHARED variables in batched custom updates cannot be read-write.");
+                throw std::runtime_error("Variable reference '" + modelVarRef.name + "' in custom update '" + getName() + 
+                                         "' to lower-dimensional variables cannot be read-write.");
             }
         }
     }
+
+    template<typename G, typename V>
+    std::vector<G*> getReferencedCustomUpdates(const std::map<std::string, V>& varRefs) const
+    {
+        // Loop through variable references
+        std::vector<G*> references;
+        for(const auto &v : varRefs) {
+            // If a custom update is referenced, add to set
+            auto *refCU = v.second.getReferencedCustomUpdate();
+            if(refCU != nullptr) {
+                references.push_back(refCU);
+            }
+        }
+
+        // Return set
+        return references;
+    }
+
 
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const std::string m_Name;
-    const std::string m_UpdateGroupName;
+    //! Unique name of custom update
+    std::string m_Name;
 
-    const CustomUpdateModels::Base *m_CustomUpdateModel;
-    const std::vector<double> m_Params;
-    std::vector<double> m_DerivedParams;
-    std::vector<Models::VarInit> m_VarInitialisers;
+    //! Name of the update group this custom connectivity update is part of
+    std::string m_UpdateGroupName;
 
-    std::vector<Models::EGPReference> m_EGPReferences;
+    //! Custom update model used for this update
+    const CustomUpdateModels::Base *m_Model;
+
+    //! Values of custom connectivity update parameters
+    std::map<std::string, Type::NumericValue> m_Params;
+    std::map<std::string, Type::NumericValue> m_DerivedParams;
+    std::map<std::string, InitVarSnippet::Init> m_VarInitialisers;
+
+    std::map<std::string, Models::EGPReference> m_EGPReferences;
 
     //! Location of individual state variables
-    std::vector<VarLocation> m_VarLocation;
+    LocationContainer m_VarLocation;
 
     //! Location of extra global parameters
-    std::vector<VarLocation> m_ExtraGlobalParamLocation;
+    LocationContainer m_ExtraGlobalParamLocation;
 
-    //! Is this custom update batched i.e. run in parallel across model batches
-    bool m_Batched;
+    //! Data structure tracking whether parameters are dynamic or not
+    Snippet::DynamicParameterContainer m_DynamicParams;
+
+    //! Tokens produced by scanner from update code
+    std::vector<Transpiler::Token> m_UpdateCodeTokens;
+
+    //! Dimensions of this custom update
+    VarAccessDim m_Dims;
+};
+
+//----------------------------------------------------------------------------
+// CustomUpdateVarAdapter
+//----------------------------------------------------------------------------
+class CustomUpdateVarAdapter
+{
+public:
+    CustomUpdateVarAdapter(const CustomUpdateBase &cu) : m_CU(cu)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getLoc(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
+
+    auto getDefs() const{ return m_CU.getModel()->getVars(); }
+
+    const auto &getInitialisers() const{ return m_CU.getVarInitialisers(); }
+
+    bool isVarDelayed(const std::string &) const { return false; }
+
+    const CustomUpdateBase &getTarget() const{ return m_CU; }
+
+    VarAccessDim getVarDims(const Models::Base::CustomUpdateVar &var) const
+    { 
+        return getVarAccessDim(var.access, m_CU.getDims());
+    }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CustomUpdateBase &m_CU;
+};
+
+//----------------------------------------------------------------------------
+// CustomUpdateEGPAdapter
+//----------------------------------------------------------------------------
+class CustomUpdateEGPAdapter
+{
+public:
+    CustomUpdateEGPAdapter(const CustomUpdateBase &cu) : m_CU(cu)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    VarLocation getLoc(const std::string &varName) const{ return m_CU.getExtraGlobalParamLocation(varName); }
+
+    Snippet::Base::EGPVec getDefs() const{ return m_CU.getModel()->getExtraGlobalParams(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CustomUpdateBase &m_CU;
 };
 
 //------------------------------------------------------------------------
@@ -202,48 +279,56 @@ public:
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
-    const std::vector<Models::VarReference> &getVarReferences() const{ return m_VarReferences;  }
-    unsigned int getSize() const { return m_Size; }
+    const auto &getVarReferences() const{ return m_VarReferences;  }
+
+    //! Get number of neurons custom update operates over
+    /*! This must be the same for all groups whose variables are referenced */
+    unsigned int getNumNeurons() const { return m_NumNeurons; }
 
 protected:
     CustomUpdate(const std::string &name, const std::string &updateGroupName,
-                 const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
-                 const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences,
-                 const std::vector<Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, 
-                 VarLocation defaultExtraGlobalParamLocation);
+                 const CustomUpdateModels::Base *customUpdateModel, const std::map<std::string, Type::NumericValue> &params,
+                 const std::map<std::string, InitVarSnippet::Init> &varInitialisers, const std::map<std::string, Models::VarReference> &varReferences,
+                 const std::map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    void finalize(unsigned int batchSize);
+    void finalise(double dt, unsigned int batchSize);
 
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
-    bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED); }
-    bool isNeuronReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED_NEURON); }
-    bool isPerNeuron() const{ return m_PerNeuron; }
+    bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDim::BATCH); }
+    bool isNeuronReduction() const { return isReduction(getVarReferences(), VarAccessDim::ELEMENT); }
 
-     //! Updates hash with custom update
-    /*! NOTE: this can only be called after model is finalized */
+    const NeuronGroup *getDelayNeuronGroup() const { return m_DelayNeuronGroup; }
+
+    //! Get vector of other custom updates referenced by this custom update
+    std::vector<CustomUpdate*> getReferencedCustomUpdates() const
+    { 
+        return CustomUpdateBase::getReferencedCustomUpdates<CustomUpdate>(m_VarReferences);
+    }
+
+    //! Updates hash with custom update
+    /*! \note this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Updates hash with custom update
-    /*! NOTE: this can only be called after model is finalized */
+    /*! \note this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getInitHashDigest() const;
-
-    const NeuronGroup *getDelayNeuronGroup() const { return m_DelayNeuronGroup; }
 
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const std::vector<Models::VarReference> m_VarReferences;
-    const unsigned int m_Size;
-    const NeuronGroup *m_DelayNeuronGroup;
+    std::map<std::string, Models::VarReference> m_VarReferences;
 
-    //! Is this custom update per-neuron i.e. run in parallel across all neurons
-    bool m_PerNeuron;
+    //! Number of neurons custom update operates over.
+    /*! This must be the same for all groups whose variables are referenced */
+    unsigned int m_NumNeurons;
+
+    const NeuronGroup *m_DelayNeuronGroup;
 };
 
 //------------------------------------------------------------------------
@@ -255,40 +340,50 @@ public:
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
-    const std::vector<Models::WUVarReference> &getVarReferences() const{ return m_VarReferences;  }
+    const auto &getVarReferences() const{ return m_VarReferences;  }
 
 protected:
     CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
-                   const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
-                   const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::WUVarReference> &varReferences,
-                   const std::vector<Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, 
-                   VarLocation defaultExtraGlobalParamLocation);
+                   const CustomUpdateModels::Base *customUpdateModel, const std::map<std::string, Type::NumericValue> &params,
+                   const std::map<std::string, InitVarSnippet::Init> &varInitialisers, const std::map<std::string, Models::WUVarReference> &varReferences,
+                   const std::map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    void finalize(unsigned int batchSize);
+    void finalise(double dt, unsigned int batchSize);
 
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
-    bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED); }
+    bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDim::BATCH); }
     bool isTransposeOperation() const;
 
-    const SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }
+    SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }
+
+    const std::vector<unsigned int> &getKernelSize() const;
+
+    //! Get vector of other custom updates referenced by this custom update
+    std::vector<CustomUpdateWU*> getReferencedCustomUpdates() const
+    { 
+        return CustomUpdateBase::getReferencedCustomUpdates<CustomUpdateWU>(m_VarReferences); 
+    }
 
     //! Updates hash with custom update
-    /*! NOTE: this can only be called after model is finalized */
+    /*! \note this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Updates hash with custom update
-    /*! NOTE: this can only be called after model is finalized */
+    /*! \note this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getInitHashDigest() const;
 
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const std::vector<Models::WUVarReference> m_VarReferences;
-    const SynapseGroupInternal *m_SynapseGroup;
+    std::map<std::string, Models::WUVarReference> m_VarReferences;
+
+    //! Synapse group all variables referenced by custom update are associated with
+    SynapseGroupInternal *m_SynapseGroup;
 };
+}   // namespace GeNN

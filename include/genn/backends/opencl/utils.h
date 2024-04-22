@@ -20,13 +20,9 @@
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::OpenCL::Utils
+// GeNN::CodeGenerator::OpenCL::Utils
 //--------------------------------------------------------------------------
-namespace CodeGenerator
-{
-namespace OpenCL
-{
-namespace Utils
+namespace GeNN::CodeGenerator::OpenCL::Utils
 {
 // OpenCL error string
 const char *clGetErrorString(cl_int error) 
@@ -100,6 +96,4 @@ const char *clGetErrorString(cl_int error)
     }   
 #undef GEN_CL_ERROR_CASE
 }
-}   // namespace Utils
-}   // namespace OpenCL
-}   // namespace CodeGenerator
+}   // namespace GeNN::Utils::OpenCL::CodeGenerator

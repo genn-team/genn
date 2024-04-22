@@ -24,44 +24,127 @@
 
 // GeNN includes
 #include "gennUtils.h"
+#include "logging.h"
 #include "modelSpec.h"
 
-// GeNN code generator includes
-#include "code_generator/codeGenUtils.h"
-#include "code_generator/substitutions.h"
+// GeNN transpiler includes
+#include "transpiler/parser.h"
 
-// ------------------------------------------------------------------------
-// ModelSpec
-// ------------------------------------------------------------------------
-// class ModelSpec for specifying a neuronal network model
+//----------------------------------------------------------------------------
+// Anonymous namespace
+//----------------------------------------------------------------------------
+namespace
+{
+//! Use Kahn's algorithm to sort custom updates topologically based on inter-custom update references
+template<typename G>
+std::vector<G*> getSortedCustomUpdates(std::map<std::string, G> &customUpdates)
+{
+    // Loop through custom updates
+    std::set<G*> startCustomUpdate;
+    std::multimap<G*, G*> referencingCustomUpdates;
+    std::map<G*, int> inDegree;
+    for(auto &c : customUpdates) {
+        // Get vector of other custom updates referenced by this one and use to build reverse lookup structure
+        const auto referenced = c.second.getReferencedCustomUpdates();
+        for(auto *r : referenced) {
+            referencingCustomUpdates.emplace(static_cast<G*>(r), &c.second);
+        }
+        
+        // Store this as initial in-degree
+        inDegree.emplace(&c.second, referenced.size());
+
+        // If it doesn't references any other custom updates, it's a possible starting node
+        if(referenced.empty()) {
+            startCustomUpdate.insert(&c.second);
+        }
+    }
+
+    // Loop through start nodes
+    std::vector<G*> sortedCustomUpdates;
+    while(!startCustomUpdate.empty()) {
+        // Move custom update from star set to sorted 
+        auto *cu = *startCustomUpdate.begin();
+        sortedCustomUpdates.push_back(cu);
+        startCustomUpdate.erase(startCustomUpdate.begin());
+
+        // Loop through all custom updates whch reference this one
+        auto const [refBegin, refEnd] = referencingCustomUpdates.equal_range(cu);
+        for(auto r = refBegin; r != refEnd; r++) {
+            // Decrease in-degree
+            int &rInDegree = inDegree.at(r->second);
+            rInDegree--;
+
+            // If in-degree has reached zero, add to starting set
+            if(rInDegree == 0) {
+                startCustomUpdate.insert(r->second);
+            }
+        }
+    }
+
+    // If any custom updates end up with an in-degree greater than 0
+    if(std::any_of(inDegree.cbegin(), inDegree.cend(),
+                   [](const auto &cu){ return cu.second > 0; }))
+    {
+        throw std::runtime_error("Custom update variable references cannot form a cycle");
+    }
+
+    // Check that all custom updates have made it into the sorted list
+    assert(sortedCustomUpdates.size() == customUpdates.size());
+
+    // Return sorted custom updates
+    return sortedCustomUpdates;
+}
+}   // Anonymous namespace
+
+// ---------------------------------------------------------------------------
+// GeNN::ModelSpec
+// ---------------------------------------------------------------------------
+namespace GeNN
+{
 ModelSpec::ModelSpec()
-:   m_TimePrecision(TimePrecision::DEFAULT), m_DT(0.5), m_TimingEnabled(false), m_Seed(0),
+:   m_Precision(Type::Float), m_TimePrecision(std::nullopt), m_DT(0.5), m_TimingEnabled(false), m_Seed(0),
     m_DefaultVarLocation(VarLocation::HOST_DEVICE), m_DefaultExtraGlobalParamLocation(VarLocation::HOST_DEVICE),
     m_DefaultSparseConnectivityLocation(VarLocation::HOST_DEVICE), m_DefaultNarrowSparseIndEnabled(false),
-    m_ShouldFusePostsynapticModels(false), m_ShouldFusePrePostWeightUpdateModels(false), m_BatchSize(1)
+    m_FusePostsynapticModels(false), m_FusePrePostWeightUpdateModels(false), m_BatchSize(1)
 {
-    setPrecision(GENN_FLOAT);
 }
-
+// ---------------------------------------------------------------------------
 ModelSpec::~ModelSpec() 
 {
 }
-
-std::string ModelSpec::getTimePrecision() const
+// ---------------------------------------------------------------------------
+void ModelSpec::setPrecision(const Type::UnresolvedType &precision)
 {
-    // If time precision is set to match model precision
-    if(m_TimePrecision == TimePrecision::DEFAULT) {
-        return getPrecision();
-    }
-    // Otherwise return appropriate type
-    else if(m_TimePrecision == TimePrecision::FLOAT) {
-        return "float";
+    // Resolve type
+    // **NOTE** no type context as that would be circular!
+    const auto resolved = precision.resolve({});
+    if (!resolved.isNumeric()) {
+        throw std::runtime_error("Only numeric types can be used for precision");
     }
     else {
-        return "double";
+        if (resolved.getNumeric().isIntegral) {
+            throw std::runtime_error("Only floating point types can be used for precision");
+        }
+        m_Precision = resolved;
     }
 }
-
+// ---------------------------------------------------------------------------
+void ModelSpec::setTimePrecision(const Type::UnresolvedType &timePrecision)
+{ 
+    // Resolve type
+    // **NOTE** no type context as that would be circular!
+    const auto resolved = timePrecision.resolve({});
+    if (!resolved.isNumeric()) {
+        throw std::runtime_error("Only numeric types can be used for timeprecision");
+    }
+    else {
+        if (resolved.getNumeric().isIntegral) {
+            throw std::runtime_error("Only floating point types can be used for time precision");
+        }
+        m_TimePrecision = resolved; 
+    }
+}
+// ---------------------------------------------------------------------------
 unsigned int ModelSpec::getNumNeurons() const
 {
     // Return sum of local neuron group sizes
@@ -71,24 +154,77 @@ unsigned int ModelSpec::getNumNeurons() const
                                return total + n.second.getNumNeurons();
                            });
 }
-
-
-SynapseGroup *ModelSpec::findSynapseGroup(const std::string &name)
+// ---------------------------------------------------------------------------
+NeuronGroup *ModelSpec::findNeuronGroup(const std::string &name)
 {
-    // If a matching local synapse group is found, return it
-    auto localSynapseGroup = m_LocalSynapseGroups.find(name);
-    if(localSynapseGroup != m_LocalSynapseGroups.cend()) {
-        return &localSynapseGroup->second;
+    // If a matching local neuron group is found, return it
+    auto localNeuronGroup = m_LocalNeuronGroups.find(name);
+    if(localNeuronGroup != m_LocalNeuronGroups.cend()) {
+        return &localNeuronGroup->second;
     }
     // Otherwise, error
     else {
-        throw std::runtime_error("synapse group " + name + " not found, aborting ...");
+        throw std::runtime_error("Neuron group '" + name + "' not found");
     }
 }
+// ---------------------------------------------------------------------------
+const NeuronGroup *ModelSpec::findNeuronGroup(const std::string &name) const
+{
+    // If a matching local neuron group is found, return it
+    auto localNeuronGroup = m_LocalNeuronGroups.find(name);
+    if(localNeuronGroup != m_LocalNeuronGroups.cend()) {
+        return &localNeuronGroup->second;
+    }
+    // Otherwise, error
+    else {
+        throw std::runtime_error("Neuron group '" + name + "' not found");
+    }
+}
+// ---------------------------------------------------------------------------
+NeuronGroup *ModelSpec::addNeuronPopulation(const std::string &name, unsigned int size, const NeuronModels::Base *model,
+                                            const ParamValues &paramValues, const VarValues &varInitialisers)
+{
+    // Add neuron group to map
+    auto result = m_LocalNeuronGroups.try_emplace(
+        name,
+        name, size, model,
+        paramValues, varInitialisers, 
+        m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation);
 
-//--------------------------------------------------------------------------
-/*! \brief This function attempts to find an existing current source */
-//--------------------------------------------------------------------------
+    if(!result.second) {
+        throw std::runtime_error("Cannot add a neuron population with duplicate name:" + name);
+    }
+    else {
+        return &result.first->second;
+    }
+}
+// ---------------------------------------------------------------------------
+SynapseGroup *ModelSpec::findSynapseGroup(const std::string &name)
+{
+    // If a matching local synapse group is found, return it
+    auto synapseGroup = m_LocalSynapseGroups.find(name);
+    if(synapseGroup != m_LocalSynapseGroups.cend()) {
+        return &synapseGroup->second;
+    }
+    // Otherwise, error
+    else {
+        throw std::runtime_error("Synapse group '" + name + "' not found");
+    }
+}
+// ---------------------------------------------------------------------------
+const SynapseGroup *ModelSpec::findSynapseGroup(const std::string &name) const
+{
+    // If a matching local synapse group is found, return it
+    auto synapseGroup = m_LocalSynapseGroups.find(name);
+    if(synapseGroup != m_LocalSynapseGroups.cend()) {
+        return &synapseGroup->second;
+    }
+    // Otherwise, error
+    else {
+        throw std::runtime_error("Synapse group '" + name + "' not found");
+    }
+}
+// ---------------------------------------------------------------------------
 CurrentSource *ModelSpec::findCurrentSource(const std::string &name)
 {
     // If a matching local current source is found, return it
@@ -98,149 +234,152 @@ CurrentSource *ModelSpec::findCurrentSource(const std::string &name)
     }
     // Otherwise, error
     else {
-        throw std::runtime_error("current source " + name + " not found, aborting ...");
+        throw std::runtime_error("Current source " + name + " not found, aborting ...");
     }
 }
-
-//--------------------------------------------------------------------------
-/*! \brief This function sets the numerical precision of floating type variables. By default, it is GENN_GENN_FLOAT.
- */
-//--------------------------------------------------------------------------
-void ModelSpec::setPrecision(FloatType floattype /**<  */)
+// ---------------------------------------------------------------------------
+CurrentSource *ModelSpec::addCurrentSource(const std::string &currentSourceName, const CurrentSourceModels::Base *model, NeuronGroup *neuronGroup, 
+                                           const ParamValues &paramValues, const VarValues &varInitialisers, const VarReferences &neuronVarReferences)
 {
-    switch (floattype) {
-    case GENN_FLOAT:
-        m_Precision = "float";
-        break;
-    case GENN_DOUBLE:
-        m_Precision = "double"; // not supported by compute capability < 1.3
-        break;
-    case GENN_LONG_DOUBLE:
-        m_Precision = "long double"; // not supported by CUDA at the moment.
-        break;
-    default:
-        throw std::runtime_error("Unrecognised floating-point type.");
+    // Add current source to map
+    auto *neuronGroupInternal = static_cast<NeuronGroupInternal*>(neuronGroup);
+    auto result = m_LocalCurrentSources.try_emplace(
+        currentSourceName,
+        currentSourceName, model, paramValues,
+        varInitialisers, neuronVarReferences, neuronGroupInternal, 
+        m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation);
+
+    if(!result.second) {
+        throw std::runtime_error("Cannot add a current source with duplicate name:" + currentSourceName);
+    }
+    else {
+        neuronGroupInternal->injectCurrent(&result.first->second);
+        return &result.first->second;
     }
 }
-
-
-void ModelSpec::finalize()
+// ---------------------------------------------------------------------------
+CustomUpdate *ModelSpec::addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model,
+                                         const ParamValues &paramValues, const VarValues &varInitialisers,
+                                         const VarReferences &varReferences, const EGPReferences &egpReferences)
 {
-    // NEURON GROUPS
+    // Add neuron group to map
+    auto result = m_CustomUpdates.try_emplace(
+        name,
+        name, updateGroupName, model,
+        paramValues, varInitialisers, varReferences, egpReferences,
+        m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation);
+
+    if(!result.second) {
+        throw std::runtime_error("Cannot add a custom update with duplicate name:" + name);
+    }
+    else {
+        return &result.first->second;
+    }
+}
+// ---------------------------------------------------------------------------
+CustomConnectivityUpdate *ModelSpec::addCustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, 
+                                                                 SynapseGroup *synapseGroup, const CustomConnectivityUpdateModels::Base *model, 
+                                                                 const ParamValues &paramValues, const VarValues &varInitialisers,
+                                                                 const VarValues &preVarInitialisers, const VarValues &postVarInitialisers,
+                                                                 const WUVarReferences &varReferences, const VarReferences &preVarReferences,
+                                                                 const VarReferences &postVarReferences, const EGPReferences &egpReferences)
+{
+    // Add custom connectivity update to 
+    auto result = m_CustomConnectivityUpdates.try_emplace(
+        name,
+        name, updateGroupName, static_cast<SynapseGroupInternal*>(synapseGroup), model,
+        paramValues, varInitialisers, preVarInitialisers, postVarInitialisers, 
+        varReferences, preVarReferences, postVarReferences, egpReferences,
+        m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation);
+
+    if(!result.second) {
+        throw std::runtime_error("Cannot add a custom connectivity update with duplicate name:" + name);
+    }
+    else {
+        return &result.first->second;
+    }
+}
+// ---------------------------------------------------------------------------
+CustomUpdateWU *ModelSpec::addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model, 
+                                           const ParamValues &paramValues, const VarValues &varInitialisers,
+                                           const WUVarReferences &varReferences, const EGPReferences &egpReferences)
+{
+    // Add neuron group to map
+    auto result = m_CustomWUUpdates.try_emplace(
+        name,
+        name, updateGroupName, model,
+        paramValues, varInitialisers, varReferences, egpReferences,
+        m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation);
+
+    if(!result.second) {
+        throw std::runtime_error("Cannot add a custom update with duplicate name:" + name);
+    }
+    else {
+        return &result.first->second;
+    }
+}
+// ---------------------------------------------------------------------------
+void ModelSpec::finalise()
+{
+    // Build type context
+    m_TypeContext = {{"scalar", getPrecision()}, {"timepoint", getTimePrecision()}};
+
+    // Sort custom updates and custom WU updates so whether each one 
+    // should be batched or not gets correctly resolved
+    const auto sortedCustomUpdates = getSortedCustomUpdates(m_CustomUpdates);
+    const auto sortedCustomWUUpdates = getSortedCustomUpdates(m_CustomWUUpdates);
+    
+    LOGD_GENN << "Custom update finalise order";
+    for(const auto *c : sortedCustomUpdates) {
+        LOGD_GENN << "\t" << c->getName();
+    }
+
+    LOGD_GENN << "Custom WU update finalise order";
+    for(const auto *c : sortedCustomWUUpdates) {
+        LOGD_GENN << "\t" << c->getName();
+    }
+
+    // Finalise neuron groups
     for(auto &n : m_LocalNeuronGroups) {
-        // Initialize derived parameters
-        n.second.initDerivedParams(m_DT);
+        n.second.finalise(m_DT);
     }
 
-    // SYNAPSE groups
+    // Finalise synapse groups
     for(auto &s : m_LocalSynapseGroups) {
-        const auto *wu = s.second.getWUModel();
-
-        // Initialize derived parameters
-        s.second.initDerivedParams(m_DT);
-
-        // Mark any pre or postsyaptic neuron variables referenced in sim code as requiring queues
-        if (!wu->getSimCode().empty()) {
-            s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getSimCode());
-            s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getSimCode());
-        }
-
-        // Mark any pre or postsyaptic neuron variables referenced in event code as requiring queues
-        if (!wu->getEventCode().empty()) {
-            s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getEventCode());
-            s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getEventCode());
-        }
-
-        // Mark any pre or postsyaptic neuron variables referenced in postsynaptic update code as requiring queues
-        if (!wu->getLearnPostCode().empty()) {
-            s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getLearnPostCode());
-            s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getLearnPostCode());
-        }
-
-        // Mark any pre or postsyaptic neuron variables referenced in synapse dynamics code as requiring queues
-        if (!wu->getSynapseDynamicsCode().empty()) {
-            s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getSynapseDynamicsCode());
-            s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getSynapseDynamicsCode());
-        }
-
-        // Set flag specifying whether any of this synapse groups variables are referenced by a custom update
-        s.second.setWUVarReferencedByCustomUpdate(std::any_of(getCustomWUUpdates().cbegin(), getCustomWUUpdates().cend(),
-                                                              [&s](const CustomUpdateWUValueType &cg) { return (cg.second.getSynapseGroup() == &s.second); }));
+        s.second.finalise(m_DT);
     }
 
-    // CURRENT SOURCES
+    // Finalise current sources
     for(auto &cs : m_LocalCurrentSources) {
-        // Initialize derived parameters
-        cs.second.initDerivedParams(m_DT);
+        cs.second.finalise(m_DT);
     }
 
-    // Custom update groups
-    for(auto &c : m_CustomUpdates) {
-        c.second.finalize(m_BatchSize);
-        c.second.initDerivedParams(m_DT);
+    // Finalise custom update groups
+    // **NOTE** needs to be after synapse groups are finalised 
+    // so which vars are delayed has been established
+    for(auto *c : sortedCustomUpdates) {
+        c->finalise(m_DT, m_BatchSize);
     }
 
-    // Custom WUM update groups
-    for(auto &c : m_CustomWUUpdates) {
-        c.second.finalize(m_BatchSize);
-        c.second.initDerivedParams(m_DT);
+    // Finalise custom WUM update groups
+    for(auto *c : sortedCustomWUUpdates) {
+        c->finalise(m_DT, m_BatchSize);
+    }
+
+    // Finalize custom connectivity update groups
+    // **NOTE** needs to be after synapse groups are finalised 
+    // so which vars are delayed has been established and after custom
+    // updates are finalised so which variables are batched has been established
+    for (auto &c : m_CustomConnectivityUpdates) {
+        c.second.finalise(m_DT, m_BatchSize);
     }
 
     // Merge incoming postsynaptic models
     for(auto &n : m_LocalNeuronGroups) {
-        n.second.fusePrePostSynapses(m_ShouldFusePostsynapticModels, m_ShouldFusePrePostWeightUpdateModels);
-    }
-
-    // Loop through neuron populations and their outgoing synapse populations
-    for(auto &n : m_LocalNeuronGroups) {
-        for(auto *sg : n.second.getOutSyn()) {
-            const auto *wu = sg->getWUModel();
-
-            if(!wu->getEventThresholdConditionCode().empty()) {
-                using namespace CodeGenerator;
-
-                // do an early replacement of weight update model parameters and derived parameters
-                // **NOTE** this is really gross but I can't really see an alternative - merging decisions are based on the spike event conditions set
-                // **NOTE** we do not substitute EGP names here as they aren't known and don't effect merging
-                // **NOTE** this prevents heterogeneous parameters being allowed in event threshold conditions but I can't see any way around this
-                Substitutions thresholdSubs;
-                thresholdSubs.addParamValueSubstitution(wu->getParamNames(), sg->getWUParams());
-                thresholdSubs.addVarValueSubstitution(wu->getDerivedParams(), sg->getWUDerivedParams());
-                
-                std::string eCode = wu->getEventThresholdConditionCode();
-                thresholdSubs.apply(eCode);
-
-                // Add code and name of support code namespace to set	
-                n.second.addSpkEventCondition(eCode, sg);
-            }
-        }
-        if (n.second.getSpikeEventCondition().size() > 1) {
-            if(n.second.isSpikeEventTimeRequired() || n.second.isPrevSpikeEventTimeRequired()) {
-                LOGW << "Neuron group '" << n.first << "' records spike-like-event times but, it has outgoing synapse groups with multiple spike-like-event conditions so the recorded times may be ambiguous.";
-            }
-            for(auto *sg : n.second.getOutSyn()) {
-                if (!sg->getWUModel()->getEventCode().empty()) {
-                    sg->setEventThresholdReTestRequired(true);
-                }
-            }
-        }
+        n.second.fusePrePostSynapses(m_FusePostsynapticModels, m_FusePrePostWeightUpdateModels);
     }
 }
-
-std::string ModelSpec::scalarExpr(double val) const
-{
-    if (m_Precision == "float") {
-        return Utils::writePreciseString<float>(val) + "f";
-    }
-    else if (m_Precision == "double") {
-        return Utils::writePreciseString(val);
-    }
-    else {
-        throw std::runtime_error("Unrecognised floating-point type.");
-    }
-}
-
-
+// ---------------------------------------------------------------------------
 bool ModelSpec::zeroCopyInUse() const
 {
     // If any neuron groups use zero copy return true
@@ -265,28 +404,42 @@ bool ModelSpec::zeroCopyInUse() const
     }
 
      // If any custom updates use zero copy return true
-     /*if(std::any_of(std::begin(m_CustomUpdates), std::end(m_CustomUpdates),
+     if(std::any_of(std::begin(m_CustomUpdates), std::end(m_CustomUpdates),
                    [](const CustomUpdateValueType &c){ return c.second.isZeroCopyEnabled(); }))
-    {
+     {
         return true;
-    }*/
+     }
+
+     // If any custom WU updates use zero copy return true
+     if(std::any_of(std::begin(m_CustomWUUpdates), std::end(m_CustomWUUpdates),
+                   [](const CustomUpdateWUValueType &c){ return c.second.isZeroCopyEnabled(); }))
+     {
+        return true;
+     }
+
+     // If any custom connectivity updates use zero copy return true
+     if(std::any_of(std::begin(m_CustomConnectivityUpdates), std::end(m_CustomConnectivityUpdates),
+                   [](const CustomConnectivityUpdateValueType &c){ return c.second.isZeroCopyEnabled(); }))
+     {
+        return true;
+     }
 
     return false;
 }
-
+// ---------------------------------------------------------------------------
 bool ModelSpec::isRecordingInUse() const
 {
     return std::any_of(m_LocalNeuronGroups.cbegin(), m_LocalNeuronGroups.cend(),
                        [](const NeuronGroupValueType &n) { return n.second.isRecordingEnabled(); });
 }
-
+// ---------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type ModelSpec::getHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
 
     Utils::updateHash(getName(), hash);
-    Utils::updateHash(getPrecision(), hash);
-    Utils::updateHash(getTimePrecision(), hash);
+    Type::updateHash(getPrecision(), hash);
+    Type::updateHash(getTimePrecision(), hash);
     Utils::updateHash(getDT(), hash);
     Utils::updateHash(isTimingEnabled(), hash);
     Utils::updateHash(getBatchSize(), hash);
@@ -294,29 +447,27 @@ boost::uuids::detail::sha1::digest_type ModelSpec::getHashDigest() const
 
     return hash.get_digest();
 }
-
-NeuronGroupInternal *ModelSpec::findNeuronGroupInternal(const std::string &name)
+// ---------------------------------------------------------------------------
+SynapseGroup *ModelSpec::addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, NeuronGroup *src, NeuronGroup *trg,
+                                              const WeightUpdateModels::Init &wumInitialiser, const PostsynapticModels::Init &psmInitialiser, 
+                                              const InitSparseConnectivitySnippet::Init &connectivityInitialiser, 
+                                              const InitToeplitzConnectivitySnippet::Init &toeplitzConnectivityInitialiser)
 {
-    // If a matching local neuron group is found, return it
-    auto localNeuronGroup = m_LocalNeuronGroups.find(name);
-    if(localNeuronGroup != m_LocalNeuronGroups.cend()) {
-        return &localNeuronGroup->second;
+    // Add synapse group to map
+    auto result = m_LocalSynapseGroups.try_emplace(
+        name,
+        name, mtype,
+        wumInitialiser, psmInitialiser, 
+        static_cast<NeuronGroupInternal*>(src), static_cast<NeuronGroupInternal*>(trg),
+        connectivityInitialiser, toeplitzConnectivityInitialiser, 
+        m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation,
+        m_DefaultSparseConnectivityLocation, m_DefaultNarrowSparseIndEnabled);
+
+    if(!result.second) {
+        throw std::runtime_error("Cannot add a synapse population with duplicate name:" + name);
     }
-    // Otherwise, error
     else {
-        throw std::runtime_error("neuron group " + name + " not found, aborting ...");
+        return &result.first->second;
     }
 }
-
-SynapseGroupInternal *ModelSpec::findSynapseGroupInternal(const std::string &name)
-{
-    // If a matching local synapse group is found, return it
-    auto synapseGroup = m_LocalSynapseGroups.find(name);
-    if(synapseGroup != m_LocalSynapseGroups.cend()) {
-        return &synapseGroup->second;
-    }
-    // Otherwise, error
-    else {
-        throw std::runtime_error("synapse group " + name + " not found, aborting ...");
-    }
-}
+}   // namespace GeNN

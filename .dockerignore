@@ -1,12 +1,9 @@
 .git
 build
 dist
-documentation
-doxygen
+docs
 lib
 obj*
 tests
-userproject
-!userproject/include
 **/*.so
 **/*.lib

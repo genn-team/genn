@@ -1,23 +1,12 @@
 #!/bin/bash
 # By default no flags are passed to genn-buildmodel.sh
-BACKENDS="SingleThreadedCPU"
 REPORT=0
-
-# Variables containing build flags corresponding to various backends
-BUILD_FLAGS_SingleThreadedCPU=-c
-BUILD_FLAGS_OpenCL=-l
 
 # Parse command line arguments
 OPTIND=1
-while getopts "clrd" opt; do
+while getopts "r" opt; do
     case "$opt" in
-    c)  BACKENDS+=" CUDA"
-        ;;
-    l)  BACKENDS+=" OpenCL"
-        ;;
     r) REPORT=1
-        ;;
-    d) source /opt/rh/devtoolset-6/enable
         ;;
     esac
 done
@@ -33,56 +22,10 @@ else
     CORE_COUNT=$(lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l)
 fi
 
-# Clean GeNN library
+# Clean GeNN library and build a version of the single-threaded CPU backend with coverage calculation built
 pushd $GENN_PATH
 make clean COVERAGE=1
-popd
 
-# Push tests directory
-pushd $TESTS_DIR
-
-# Loop through feature tests
-for f in features/*/ ; do
-    echo "Running test $f..."
-
-    # Push feature directory
-    pushd $f
-    
-    # Determine where the sim code is located for this test
-    c=$(basename $f)"_CODE"
-
-    # Clean test 
-    # **NOTE** we do this to be sure profile data is deleted, even if building model fails
-    make clean SIM_CODE=$c
-    
-    # Loop through backends to test
-    for b in $BACKENDS; do
-        # If skip file exists for this backend, skip
-        if [ -f "skip_$b" ]; then
-            echo "Skipping..."
-        # Otherwise
-        else
-            # Get build flags for this backend
-            BUILD_FLAGS_VAR="BUILD_FLAGS_$b"
-            BUILD_FLAGS=${!BUILD_FLAGS_VAR}
-            
-            # Run code generator once, generating coverage
-            if genn-buildmodel.sh $BUILD_FLAGS -v model.cc; then
-                # Build test
-                if make -j $CORE_COUNT SIM_CODE=$c; then
-                    # Run tests
-                    ./test --gtest_output="xml:test_results_$b.xml"
-                fi
-            fi
-        fi
-    done;
-
-    # Pop feature directory
-    popd
-done;
-
-# Make sure we have a version of the single-threaded CPU backend with coverage calculation built
-pushd $GENN_PATH
 make single_threaded_cpu -j $CORE_COUNT COVERAGE=1
 popd
 
@@ -96,26 +39,6 @@ make clean all -j $CORE_COUNT COVERAGE=1
 ./test_coverage --gtest_output="xml:test_results_unit.xml"
 
 popd    # unit
-
-pushd spineml/simulator
-
-# Clean and build
-make -j $CORE_COUNT clean all
-
-# Run SpineML simulator tests
-./test --gtest_output="xml:test_results_spineml_simulator.xml"
-
-popd    # spineml/simulator
-
-pushd spineml/generator
-
-# Clean and build
-make -j $CORE_COUNT clean all
-
-# Run SpineML simulator tests
-./test --gtest_output="xml:test_results_spineml_generator.xml"
-
-popd    # spineml/generator
 
 if [[ "$(uname)" = "Darwin" ]]; then
     # Loop through features and build list of raw profile output files
@@ -179,5 +102,3 @@ if [ $REPORT -eq 1 ]; then
     # Generate browseable HTML
     genhtml coverage.txt --branch-coverage --output-directory ./code_coverage_report/ 1>> ../../msg 2>> msg
 fi
-
-popd    # tests
