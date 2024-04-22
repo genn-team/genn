@@ -148,7 +148,6 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    bool m_EnableNCCLReductions;
     VoidFunction m_NCCLGenerateUniqueID;
     BytePtrFunction m_NCCLGetUniqueID;
     NCCLInitCommunicatorFunction m_NCCLInitCommunicator;

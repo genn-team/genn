@@ -44,7 +44,8 @@ const char *BackendSIMT::KernelNames[KernelMax] = {
     "neuronPrevSpikeTimeUpdateKernel",
     "synapseDendriticDelayUpdateKernel",
     "customUpdate",
-    "customTransposeUpdate"};
+    "customTransposeUpdate",
+    "customConnectivityRemapUpdate" };
 //--------------------------------------------------------------------------
 std::vector<PresynapticUpdateStrategySIMT::Base*> BackendSIMT::s_PresynapticUpdateStrategies = {
     new PresynapticUpdateStrategySIMT::PreSpan,
@@ -1307,6 +1308,67 @@ void BackendSIMT::genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env
         });
 }
 //--------------------------------------------------------------------------
+void BackendSIMT::genCustomConnectivityRemapUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
+                                                         BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const
+{
+    EnvironmentExternal envKernel(env);
+    envKernel.add(Type::Void, "_sh_row_length", "shRowLength",
+                  { envKernel.addInitialiser(getSharedPrefix() + "unsigned int shRowLength[" + std::to_string(getKernelBlockSize(KernelInitializeSparse)) + "];") });
+
+    // Parallelise across presynaptic neurons
+    genParallelGroup<CustomConnectivityRemapUpdateGroupMerged>(
+        envKernel, modelMerged, memorySpaces, updateGroup, idStart, &ModelSpecMerged::genMergedCustomConnectivityRemapUpdateGroups,
+        [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelCustomUpdate); },
+        [&modelMerged, this](EnvironmentExternalBase &env, CustomConnectivityRemapUpdateGroupMerged &cg)
+        {
+            EnvironmentGroupMergedField<CustomConnectivityRemapUpdateGroupMerged> groupEnv(env, cg);
+            buildStandardEnvironment(groupEnv);
+
+            // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
+            const size_t blockSize = getKernelBlockSize(KernelInitializeSparse);
+            const std::string blockSizeStr = std::to_string(blockSize);
+            groupEnv.printLine("const unsigned int numBlocks = ($(num_pre) + " + blockSizeStr + " - 1) / " + blockSizeStr + ";");
+            groupEnv.printLine("unsigned int idx = $(id);");
+
+            // Loop through blocks
+            groupEnv.getStream() << "for(unsigned int r = 0; r < numBlocks; r++)";
+            {
+                CodeStream::Scope b(groupEnv.getStream());
+
+                // Calculate number of rows to process in this block
+                groupEnv.getStream() << "const unsigned numRowsInBlock = (r == (numBlocks - 1))";
+                groupEnv.getStream() << " ? ((" << groupEnv["num_pre"] << " - 1) % " << blockSize << ") + 1";
+                groupEnv.getStream() << " : " << blockSize << ";" << std::endl;
+
+                // Use threads to copy block of sparse structure into shared memory
+                genSharedMemBarrier(groupEnv.getStream());
+                groupEnv.getStream() << "if (" << getThreadID() << " < numRowsInBlock)";
+                {
+                    CodeStream::Scope b(groupEnv.getStream());
+                    groupEnv.printLine("$(_sh_row_length)[" + getThreadID() + "] = $(_row_length)[(r * " + blockSizeStr + ") + " + getThreadID() + "];");
+                }
+                genSharedMemBarrier(groupEnv.getStream());
+
+                // Loop through rows
+                groupEnv.getStream() << "for(unsigned int i = 0; i < numRowsInBlock; i++)";
+                {
+                    CodeStream::Scope b(groupEnv.getStream());
+
+                    // If there is a synapse for this thread to initialise
+                    groupEnv.print("if($(id) < $(_sh_row_length)[i])");
+                    {
+                        CodeStream::Scope b(groupEnv.getStream());
+
+                        genRemap(groupEnv);
+                    }
+
+                    // If matrix is ragged, advance index to next row by adding stride
+                    groupEnv.printLine("idx += $(_row_stride);");
+                }
+            }
+        });
+}
+//--------------------------------------------------------------------------
 void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
                                       BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const
 {
@@ -1668,18 +1730,7 @@ void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelS
                     if(sg.getArchetype().isPostSpikeRequired() || sg.getArchetype().isPostSpikeEventRequired()) {
                         CodeStream::Scope b(env.getStream());
 
-                        // Extract index of synapse's postsynaptic target
-                        env.printLine("const unsigned int postIndex = $(_ind)[idx];");
-
-                        // Atomically increment length of column of connectivity associated with this target
-                        // **NOTE** this returns previous length i.e. where to insert new entry
-                        env.printLine("const unsigned int colLocation = " + getAtomic(Type::Uint32) + "(&$(_col_length)[postIndex], 1);");
-
-                        // From this calculate index into column-major matrix
-                        env.printLine("const unsigned int colMajorIndex = (postIndex * $(_col_stride)) + colLocation;");
-
-                        // Add remapping entry at this location poining back to row-major index
-                        env.printLine("$(_remap)[colMajorIndex] = idx;");
+                        genRemap(env);
                     }
                 });
         });
@@ -1920,6 +1971,22 @@ void BackendSIMT::genCopyEventToGlobal(EnvironmentExternalBase &env, NeuronUpdat
     else {
         env.printLine("[$(batch)], $(_sh_spk_count" + suffix + ")[" + indexStr + "]);");
     }
+}
+//--------------------------------------------------------------------------
+void BackendSIMT::genRemap(EnvironmentExternalBase &env) const
+{
+    // Extract index of synapse's postsynaptic target
+    env.printLine("const unsigned int postIndex = $(_ind)[idx];");
+
+    // Atomically increment length of column of connectivity associated with this target
+    // **NOTE** this returns previous length i.e. where to insert new entry
+    env.printLine("const unsigned int colLocation = " + getAtomic(Type::Uint32) + "(&$(_col_length)[postIndex], 1);");
+
+    // From this calculate index into column-major matrix
+    env.printLine("const unsigned int colMajorIndex = (postIndex * $(_col_stride)) + colLocation;");
+
+    // Add remapping entry at this location poining back to row-major index
+    env.printLine("$(_remap)[colMajorIndex] = idx;");
 }
 //--------------------------------------------------------------------------
 const PresynapticUpdateStrategySIMT::Base *BackendSIMT::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg,

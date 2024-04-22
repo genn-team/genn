@@ -431,6 +431,8 @@ void buildStandardCustomConnectivityUpdateEnvironment(const BackendBase &backend
                  });
     env.addField(Type::Uint32, "_row_stride", "rowStride", 
                  [&backend](const auto&, const auto &cg, size_t) { return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup()); });
+    env.addField(Type::Uint32, "_col_stride", "colStride", 
+                 [&backend](const auto&, const auto &cg, size_t) { return cg.getSynapseGroup()->getMaxSourceConnections(); });
     
     // Connectivity fields
     auto *sg = env.getGroup().getArchetype().getSynapseGroup();
@@ -439,6 +441,10 @@ void buildStandardCustomConnectivityUpdateEnvironment(const BackendBase &backend
                      [](const auto &runtime, const auto &cg, size_t) { return runtime.getArray(*cg.getSynapseGroup(), "rowLength"); });
         env.addField(sg->getSparseIndType().createPointer(), "_ind", "ind",
                      [](const auto &runtime, const auto &cg, size_t) { return runtime.getArray(*cg.getSynapseGroup(), "ind"); });
+        env.addField(Type::Uint32.createPointer(), "_col_length", "colLength", 
+                     [](const auto &runtime, const auto &cg, size_t) { return runtime.getArray(*cg.getSynapseGroup(), "colLength"); });
+        env.addField(Type::Uint32.createPointer(), "_remap", "remap", 
+                     [](const auto &runtime, const auto &cg, size_t) { return runtime.getArray(*cg.getSynapseGroup(), "remap"); });
     }
 
     // If there are delays on presynaptic variable references
@@ -595,6 +601,11 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomUpd
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const
+{
+    buildStandardCustomConnectivityUpdateEnvironment(*this, env);
+}
+//-----------------------------------------------------------------------
+void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomConnectivityRemapUpdateGroupMerged> &env) const
 {
     buildStandardCustomConnectivityUpdateEnvironment(*this, env);
 }

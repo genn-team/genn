@@ -184,6 +184,31 @@ void genKernelIteration(EnvironmentExternalBase &env, G &g, size_t numKernelDims
     // Generate loops through kernel indices recursively
     generateRecursive(env, 0);
 }
+//--------------------------------------------------------------------------
+void genRemap(EnvironmentExternalBase &env)
+{
+    env.printLine("// Loop through synapses in corresponding matrix row");
+    env.print("for(unsigned int j = 0; j < $(_row_length)[i]; j++)");
+    {
+        CodeStream::Scope b(env.getStream());
+
+        // Calculate column length and remapping
+        env.printLine("// Calculate index of this synapse in the row-major matrix");
+        env.printLine("const unsigned int rowMajorIndex = (i * $(_row_stride)) + j;");
+
+        env.printLine("// Using this, lookup postsynaptic target");
+        env.printLine("const unsigned int postIndex = $(_ind)[rowMajorIndex];");
+
+        env.printLine("// From this calculate index of this synapse in the column-major matrix)");
+        env.printLine("const unsigned int colMajorIndex = (postIndex * $(_col_stride)) + $(_col_length)[postIndex];");
+
+        env.printLine("// Increment column length corresponding to this postsynaptic neuron");
+        env.printLine("$(_col_length)[postIndex]++;");
+
+        env.printLine("// Add remapping entry");
+        env.printLine("$(_remap)[colMajorIndex] = rowMajorIndex;");
+    }
+}
 }
 
 //--------------------------------------------------------------------------
@@ -821,7 +846,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                             }
                         }
                     });
-                
+ 
                 // Loop through merged custom connectivity update groups
                 modelMerged.genMergedCustomConnectivityUpdateGroups(
                     *this, memorySpaces, g,
@@ -857,10 +882,40 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                     });
             }
 
+            // Loop through merged custom connectivity remap update groups
+            {
+                Timer t(funcEnv.getStream(), "customUpdate" + g + "Remap", model.isTimingEnabled());
+                modelMerged.genMergedCustomConnectivityRemapUpdateGroups(
+                    *this, memorySpaces, g,
+                    [this, &funcEnv](auto &c)
+                    {
+                        CodeStream::Scope b(funcEnv.getStream());
+                        funcEnv.getStream() << "// merged custom connectivity remap update group " << c.getIndex() << std::endl;
+                        funcEnv.getStream() << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                        {
+                            CodeStream::Scope b(funcEnv.getStream());
+
+                            // Get reference to group
+                            funcEnv.getStream() << "const auto *group = &mergedCustomConnectivityRemapUpdateGroup" << c.getIndex() << "[g]; " << std::endl;
+                     
+                            // Create matching environment
+                            EnvironmentGroupMergedField<CustomConnectivityRemapUpdateGroupMerged> groupEnv(funcEnv, c);
+                            buildStandardEnvironment(groupEnv);
+                            
+                            groupEnv.printLine("// Loop through presynaptic neurons");
+                            groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
+                            {
+                                CodeStream::Scope b(groupEnv.getStream());
+
+                                genRemap(groupEnv);
+                            }
+                        }
+                    });
+            }
+
             // Loop through merged custom WU transpose update groups
             {
                 Timer t(funcEnv.getStream(), "customUpdate" + g + "Transpose", model.isTimingEnabled());
-                // Loop through merged custom connectivity update groups
                 modelMerged.genMergedCustomUpdateTransposeWUGroups(
                     *this, memorySpaces, g,
                     [this, &funcEnv](auto &c)
@@ -923,6 +978,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     modelMerged.genMergedCustomUpdateWUStructs(os, *this);
     modelMerged.genMergedCustomUpdateTransposeWUStructs(os, *this);
     modelMerged.genMergedCustomConnectivityUpdateStructs(os, *this);
+    modelMerged.genMergedCustomConnectivityRemapUpdateStructs(os, *this);
     modelMerged.genMergedCustomConnectivityHostUpdateStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
@@ -930,6 +986,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     modelMerged.genMergedCustomUpdateWUHostStructArrayPush(os, *this);
     modelMerged.genMergedCustomUpdateTransposeWUHostStructArrayPush(os, *this);
     modelMerged.genMergedCustomConnectivityUpdateHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomConnectivityRemapUpdateHostStructArrayPush(os, *this);
     modelMerged.genMergedCustomConnectivityHostUpdateStructArrayPush(os, *this);
 
     // Generate preamble
@@ -1260,23 +1317,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
                         // If postsynaptic learning is required
                         if(s.getArchetype().isPostSpikeRequired() || s.getArchetype().isPostSpikeEventRequired()) {
-                            groupEnv.printLine("// Loop through synapses in corresponding matrix row");
-                            groupEnv.print("for(unsigned int j = 0; j < $(_row_length)[i]; j++)");
-                            {
-                                CodeStream::Scope b(groupEnv.getStream());
-
-                                // Calculate column length and remapping
-                                groupEnv.printLine("// Calculate index of this synapse in the row-major matrix");
-                                groupEnv.printLine("const unsigned int rowMajorIndex = (i * $(_row_stride)) + j;");
-                                groupEnv.printLine("// Using this, lookup postsynaptic target");
-                                groupEnv.printLine("const unsigned int postIndex = $(_ind)[rowMajorIndex];");
-                                groupEnv.printLine("// From this calculate index of this synapse in the column-major matrix)");
-                                groupEnv.printLine("const unsigned int colMajorIndex = (postIndex * $(_col_stride)) + $(_col_length)[postIndex];");
-                                groupEnv.printLine("// Increment column length corresponding to this postsynaptic neuron");
-                                groupEnv.printLine("$(_col_length)[postIndex]++;");
-                                groupEnv.printLine("// Add remapping entry");
-                                groupEnv.printLine("$(_remap)[colMajorIndex] = rowMajorIndex;");
-                            }
+                            genRemap(groupEnv);
                         }
                     }
                 }

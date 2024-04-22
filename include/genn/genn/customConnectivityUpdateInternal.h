@@ -36,6 +36,7 @@ public:
     using CustomConnectivityUpdate::getDependentVariables;
     using CustomConnectivityUpdate::finalise;
     using CustomConnectivityUpdate::getHashDigest;
+    using CustomConnectivityUpdate::getRemapHashDigest;
     using CustomConnectivityUpdate::getInitHashDigest;
     using CustomConnectivityUpdate::getPreDelayNeuronGroup;
     using CustomConnectivityUpdate::getPostDelayNeuronGroup;

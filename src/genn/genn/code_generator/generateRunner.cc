@@ -174,6 +174,7 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
     for(const auto &g : customUpdateGroups) {
         genHostScalar(definitionsVar, runnerVarDecl, Type::Double, "customUpdate" + g + "Time", "0.0");
         genHostScalar(definitionsVar, runnerVarDecl, Type::Double, "customUpdate" + g + "TransposeTime", "0.0");
+        genHostScalar(definitionsVar, runnerVarDecl, Type::Double, "customUpdate" + g + "RemapTime", "0.0");
     }
     
     // If timing is actually enabled
@@ -206,6 +207,8 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
                              runnerStepTimeFinalise, "customUpdate" + g, false);
             backend.genTimer(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                              runnerStepTimeFinalise, "customUpdate" + g + "Transpose", false);
+            backend.genTimer(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                             runnerStepTimeFinalise, "customUpdate" + g + "Remap", false);
         }
 
         // Create init timer
@@ -434,6 +437,11 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
 
     // Loop through custom connectivity update groups
     for(const auto &m : modelMerged.getMergedCustomConnectivityUpdateGroups()) {
+        m.generateRunner(backend, definitions);
+    }
+
+    // Loop through custom connectivity remap update groups
+    for (const auto &m : modelMerged.getMergedCustomConnectivityRemapUpdateGroups()) {
         m.generateRunner(backend, definitions);
     }
 

@@ -34,6 +34,7 @@ enum Kernel
     KernelSynapseDendriticDelayUpdate,
     KernelCustomUpdate,
     KernelCustomTransposeUpdate,
+    KernelCustomConnectivityRemapUpdate,
     KernelMax
 };
 
@@ -215,6 +216,9 @@ protected:
 
     void genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
                                            BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const;
+
+    void genCustomConnectivityRemapUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
+                                                BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const;
 
     void genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
                              BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const;
@@ -481,6 +485,9 @@ private:
                       size_t index, bool trueSpike) const;
     void genCopyEventToGlobal(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                               unsigned int batchSize, size_t index, bool trueSpike) const;
+
+    //! Populate $(_remap) and $(_col_length) based on $(_ind), $(_row_stride) and $(_col_stride)
+    void genRemap(EnvironmentExternalBase &env) const;
 
     // Get appropriate presynaptic update strategy to use for this synapse group
     const PresynapticUpdateStrategySIMT::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const

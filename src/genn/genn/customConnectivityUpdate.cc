@@ -100,6 +100,12 @@ bool CustomConnectivityUpdate::isPostVarInitRequired() const
                        [](const auto &v){ return !Utils::areTokensEmpty(v.second.getCodeTokens()); });
 }
 //------------------------------------------------------------------------
+bool CustomConnectivityUpdate::canModifyConnectivity() const
+{
+    return (Utils::isIdentifierReferenced("remove_synapse", getRowUpdateCodeTokens())
+            || Utils::isIdentifierReferenced("add_synapse", getRowUpdateCodeTokens()));
+}
+//------------------------------------------------------------------------
 CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, SynapseGroupInternal *synapseGroup,
                                                    const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel,
                                                    const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers,
@@ -325,6 +331,19 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
     for(const auto &v : getVarReferences()) {
         Utils::updateHash(v.second.getVarDims(), hash);
     }
+
+    return hash.get_digest();
+}
+//------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getRemapHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    Utils::updateHash(getUpdateGroupName(), hash);
+
+    Utils::updateHash(getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()), hash);
+    Type::updateHash(getSynapseGroup()->getSparseIndType(), hash);
+    
 
     return hash.get_digest();
 }

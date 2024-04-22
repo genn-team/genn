@@ -108,6 +108,28 @@ private:
 };
 
 //----------------------------------------------------------------------------
+// GeNN::CodeGenerator::CustomConnectivityRemapUpdateGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT CustomConnectivityRemapUpdateGroupMerged : public GroupMerged<CustomConnectivityUpdateInternal>
+{
+public:
+    using GroupMerged::GroupMerged;
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    void generateRunner(const BackendBase& backend, CodeStream& definitions) const
+    {
+        generateRunnerBase(backend, definitions, name);
+    }
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
+
+//----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomConnectivityHostUpdateGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT CustomConnectivityHostUpdateGroupMerged : public GroupMerged<CustomConnectivityUpdateInternal>

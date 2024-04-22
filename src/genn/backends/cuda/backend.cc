@@ -1015,6 +1015,28 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                 genCustomTransposeUpdateWUKernel(funcEnv, modelMerged, memorySpaces, g, idCustomTransposeUpdateStart);
             }
         }
+
+        size_t idCustomConnectivityRemapUpdateStart = 0;
+        if (std::any_of(modelMerged.getMergedCustomConnectivityRemapUpdateGroups().cbegin(), modelMerged.getMergedCustomConnectivityRemapUpdateGroups().cend(),
+                        [&g](const auto &cg) { return (cg.getArchetype().getUpdateGroupName() == g); }))
+        {
+            genFilteredMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomConnectivityRemapUpdateGroups(),
+                                                  [&model, this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelCustomUpdate); },
+                                                  [g](const CustomConnectivityRemapUpdateGroupMerged &cg) { return cg.getArchetype().getUpdateGroupName() == g; });
+
+            customUpdateEnv.getStream() << "extern \"C\" __global__ void " << KernelNames[KernelCustomConnectivityRemapUpdate] << g << "()" << std::endl;
+            {
+                CodeStream::Scope b(customUpdateEnv.getStream());
+
+                EnvironmentExternal funcEnv(customUpdateEnv);
+                funcEnv.getStream() << "const unsigned int id = " << getKernelBlockSize(KernelCustomUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
+
+                funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
+                funcEnv.getStream() << "// Custom connectiviy remap updates" << std::endl;
+                genCustomConnectivityRemapUpdateKernel(funcEnv, modelMerged, memorySpaces, g, idCustomConnectivityRemapUpdateStart);
+            }
+        }
+
         customUpdateEnv.getStream() << "void update" << g << "(unsigned long long timestep)";
         {
             CodeStream::Scope b(customUpdateEnv.getStream());
@@ -1050,6 +1072,15 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                 funcEnv.printLine("CHECK_CUDA_ERRORS(cudaPeekAtLastError());");
             }
 
+            // Launch custom connectivity remap update kernel if required
+            if (idCustomConnectivityRemapUpdateStart > 0) {
+                CodeStream::Scope b(funcEnv.getStream());
+                genKernelDimensions(funcEnv.getStream(), KernelCustomUpdate, idCustomConnectivityRemapUpdateStart, 1);
+                Timer t(funcEnv.getStream(), "customUpdate" + g + "Remap", model.isTimingEnabled());
+                funcEnv.printLine(KernelNames[KernelCustomConnectivityRemapUpdate] + g + "<<<grid, threads>>>();");
+                funcEnv.printLine("CHECK_CUDA_ERRORS(cudaPeekAtLastError());");
+            }
+
             // If NCCL reductions are enabled
             if(getPreferences<Preferences>().enableNCCLReductions) {
                 // Loop through custom update host reduction groups and
@@ -1075,7 +1106,10 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
             if(model.isTimingEnabled()) {
                 // Synchronise last event
                 funcEnv.getStream() << "CHECK_CUDA_ERRORS(cudaEventSynchronize(customUpdate" << g;
-                if(idCustomTransposeUpdateStart > 0) {
+                if (idCustomConnectivityRemapUpdateStart > 0) {
+                    funcEnv.getStream() << "Remap";
+                }
+                else if(idCustomTransposeUpdateStart > 0) {
                     funcEnv.getStream() << "Transpose";
                 }
                 funcEnv.getStream() << "Stop)); " << std::endl;
@@ -1092,6 +1126,12 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                     funcEnv.getStream() << "CHECK_CUDA_ERRORS(cudaEventElapsedTime(&tmp, customUpdate" << g << "TransposeStart, customUpdate" << g << "TransposeStop));" << std::endl;
                     funcEnv.getStream() << "customUpdate" << g << "TransposeTime += tmp / 1000.0;" << std::endl;
                 }
+                if (idCustomConnectivityRemapUpdateStart > 0) {
+                    CodeGenerator::CodeStream::Scope b(funcEnv.getStream());
+                    funcEnv.getStream() << "float tmp;" << std::endl;
+                    funcEnv.getStream() << "CHECK_CUDA_ERRORS(cudaEventElapsedTime(&tmp, customUpdate" << g << "RemapStart, customUpdate" << g << "RemapStop));" << std::endl;
+                    funcEnv.getStream() << "customUpdate" << g << "RemapTime += tmp / 1000.0;" << std::endl;
+                }
             }
         }
     }
@@ -1103,6 +1143,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     modelMerged.genMergedCustomUpdateHostReductionStructs(os, *this);
     modelMerged.genMergedCustomWUUpdateHostReductionStructs(os, *this);
     modelMerged.genMergedCustomConnectivityUpdateStructs(os, *this);
+    modelMerged.genMergedCustomConnectivityRemapUpdateStructs(os, *this);
     modelMerged.genMergedCustomConnectivityHostUpdateStructs(os, *this);
 
     // Generate arrays of merged structs and functions to push them
@@ -1110,6 +1151,7 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateWUGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomConnectivityUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomConnectivityRemapUpdateGroups());
     modelMerged.genMergedCustomConnectivityHostUpdateStructArrayPush(os, *this);
     modelMerged.genMergedCustomUpdateHostReductionHostStructArrayPush(os, *this);
     modelMerged.genMergedCustomWUUpdateHostReductionHostStructArrayPush(os, *this);

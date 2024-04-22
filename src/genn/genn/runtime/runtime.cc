@@ -452,22 +452,22 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
     for(const auto &c : getModel().getCustomConnectivityUpdates()) {
         // Allocate presynaptic variables
         LOGD_RUNTIME << "Allocating memory for custom connectivity update '" << c.first << "'";
+        const auto* sg = c.second.getSynapseGroup();
         createNeuronVarArrays<CustomConnectivityUpdatePreVarAdapter>(
-            &c.second, c.second.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(),
+            &c.second, sg->getSrcNeuronGroup()->getNumNeurons(),
             batchSize, 1, false);
         
         // Allocate postsynaptic variables
         createNeuronVarArrays<CustomConnectivityUpdatePostVarAdapter>(
-            &c.second, c.second.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(),
+            &c.second, sg->getTrgNeuronGroup()->getNumNeurons(),
             batchSize, 1, false);
 
         // Allocate variables
         createVarArrays<CustomConnectivityUpdateVarAdapter>(
                 &c.second, batchSize, false, 
-                [&c, this](const std::string&, VarAccessDim varDims)
+                [sg, this](const std::string&, VarAccessDim varDims)
                 {
-                    return getNumSynapseVarElements(varDims, m_Backend.get(), 
-                                                    *c.second.getSynapseGroup());
+                    return getNumSynapseVarElements(varDims, m_Backend.get(), *sg);
                 });
         
         // Create arrays for custom connectivity update extra global parameters
@@ -479,8 +479,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 
         // If custom connectivity update group needs per-row RNGs
         if(Utils::isRNGRequired(c.second.getRowUpdateCodeTokens())) {
-            auto rng = m_Backend.get().createPopulationRNG(
-                c.second.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons());
+            auto rng = m_Backend.get().createPopulationRNG(sg->getSrcNeuronGroup()->getNumNeurons());
             if(rng) {
                 const auto r = m_CustomConnectivityUpdateArrays[&c.second].try_emplace("rowRNG", std::move(rng));
                 if(!r.second) {
@@ -637,10 +636,24 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         pushMergedGroup(m);
     }
 
+    // Push custom connectivity remap update groups
+    for (const auto &m : m_ModelMerged.get().getMergedCustomConnectivityRemapUpdateGroups()) {
+        addMergedArrays(m);
+        pushMergedGroup(m);
+    }
+
     // Push custom connectivity host update groups
     for(const auto &m : m_ModelMerged.get().getMergedCustomConnectivityHostUpdateGroups()) {
         addMergedArrays(m);
         pushMergedGroup(m);
+    }
+
+    // Loop through merged custom connectivity remap update groups and add 
+    // Column length arrays associated with each synapse group to map
+    for (const auto &m : m_ModelMerged.get().getMergedCustomConnectivityRemapUpdateGroups()) {
+        auto &colLengthArrays = m_CustomUpdateColLengthArrays[m.getArchetype().getUpdateGroupName()];
+        std::transform(m.getGroups().cbegin(), m.getGroups().cend(), std::back_inserter(colLengthArrays),
+                       [this](auto r){ return getArray(*r.get().getSynapseGroup(), "colLength"); });
     }
 }
 //----------------------------------------------------------------------------
@@ -677,6 +690,27 @@ void Runtime::stepTime()
 
     // Advance time
     m_Timestep++;
+}
+//----------------------------------------------------------------------------
+void Runtime::customUpdate(const std::string &name)
+{
+    // If there are column length arrays that must be zeroed 
+    // before making connectivity update in this group
+    auto colLengthArrays = m_CustomUpdateColLengthArrays.find(name);
+    if(colLengthArrays != m_CustomUpdateColLengthArrays.cend()) {
+        // Loop through arrays and zero
+        for(auto *a : colLengthArrays->second) {
+            if(m_Backend.get().isArrayDeviceObjectRequired()) {
+                a->memsetDeviceObject(0);
+            }
+            else {
+                a->memsetHostPointer(0);
+            }
+        }
+    }
+
+    // Run custom update
+    m_CustomUpdateFunctions.at(name)(getTimestep());
 }
 //----------------------------------------------------------------------------
 double Runtime::getTime() const

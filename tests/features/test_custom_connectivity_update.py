@@ -417,3 +417,123 @@ def test_custom_connectivity_update_delay(make_model, backend, precision):
     _check_connectivity(s_pop_2, lambda i: 63,
                         lambda i: _clear_bit(dense_bitarray, 60),
                         [(s_pop_2, "g", False)])
+
+@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_custom_connectivity_update_remap(make_model, backend, precision):
+    """
+    for j in range(16):
+        for i in range(4):
+            i_value = 1 << i
+            if ((j + 1) & i_value) != 0:
+                pre_inds.append(i)
+                post_inds.append(j)
+    """
+    decoder_model = create_sparse_connect_init_snippet(
+        "decoder",
+        row_build_code=
+        """
+        const unsigned int iValue = 1 << id_pre;
+        for(unsigned int j = 0; j < num_post; j++) {
+            if(((j + 1) & iValue) != 0) {
+                addSynapse(j);
+            }
+        }
+        """)
+    pre_reverse_model = create_neuron_model(
+        "pre_reverse",
+        var_name_types=[("x", "scalar")],
+        sim_code=
+        """
+        x = Isyn;
+        """)
+
+    static_pulse_reverse_post_model = create_weight_update_model(
+        "static_pulse_reverse_post",
+        post_spike_syn_code=
+        """
+        addToPre(g);
+        """,
+        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
+    
+    remove_ones_model = create_custom_connectivity_update_model(
+        "remove_synapse",
+        row_update_code=
+        """
+        if(id_pre == 0) {
+            for_each_synapse {
+                remove_synapse();
+            }
+        }
+        """)
+        
+    model = make_model(precision, "test_custom_connectivity_update_remap", backend=backend)
+    model.dt = 1.0
+
+    # Add presynaptic populations to sum reverse input
+    sparse_pre_n_pop = model.add_neuron_population(
+        "SparsePost", 4, pre_reverse_model,
+        {}, {"x": 0.0})
+
+    # Create spike source array to generate one-hot pattern to decode
+    post_n_pop = model.add_neuron_population(
+        "SpikeSource", 16, "SpikeSourceArray",
+        {}, {"startSpike": np.arange(16), "endSpike": np.arange(1, 17)})
+    post_n_pop.extra_global_params["spikeTimes"].set_init_values(np.arange(16.0))
+
+    # Add connectivity
+    sparse_s_pop = model.add_synapse_population(
+        "SparseSynapse", "SPARSE",
+        sparse_pre_n_pop, post_n_pop,
+        init_weight_update(static_pulse_reverse_post_model, {}, {"g": 1.0}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity(decoder_model))
+    
+    # Add custom update to remove a row
+    model.add_custom_connectivity_update(
+        "RemoveOnes", "RemoveSynapse", sparse_s_pop,
+        remove_ones_model)
+
+    # Build model and load
+    model.build()
+    model.load()
+
+    # Simulate 16 timesteps
+    output_place_values = 2 ** np.arange(4)
+    while model.timestep < 16:
+        model.step_time()
+        
+        # Pull state variable
+        sparse_pre_n_pop.vars["x"].pull_from_device()
+
+        # Convert to binary mask
+        output_binary = np.isclose(np.ones(4), sparse_pre_n_pop.vars["x"].view)
+
+        # Sum up active place values
+        output_value = np.sum(output_place_values[output_binary])
+        if output_value != (model.timestep - 1):
+            assert False, f"{sparse_pre_n_pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
+
+    # Run update to remove synapses
+    model.custom_update("RemoveSynapse")
+
+    # Reset time and start spike
+    model.timestep = 0
+    post_n_pop.vars["startSpike"].view[:] = np.arange(16)
+    post_n_pop.vars["startSpike"].push_to_device()
+
+    # Simulate another 16 timesteps
+    while model.timestep < 16:
+        model.step_time()
+        
+        # Pull state variable
+        sparse_pre_n_pop.vars["x"].pull_from_device()
+
+        # Convert to binary mask
+        output_binary = np.isclose(np.ones(4), sparse_pre_n_pop.vars["x"].view)
+
+        # Sum up active place values
+        output_value = np.sum(output_place_values[output_binary])
+        correct = (model.timestep - 1) & ~1
+        if output_value != correct:
+            assert False, f"{sparse_pre_n_pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"

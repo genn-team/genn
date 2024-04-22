@@ -307,10 +307,7 @@ public:
     void stepTime();
 
     //! Perform named custom update
-    void customUpdate(const std::string &name)
-    { 
-        m_CustomUpdateFunctions.at(name)(getTimestep());
-    }
+    void customUpdate(const std::string &name);
 
     //! Get current simulation timestep
     uint64_t getTimestep() const{ return m_Timestep; }
@@ -332,6 +329,7 @@ public:
     double getInitSparseTime() const{ return *(double*)getSymbol("initSparseTime"); }
     double getCustomUpdateTime(const std::string &name) const{ return *(double*)getSymbol("customUpdate" + name + "Time"); }
     double getCustomUpdateTransposeTime(const std::string &name) const{ return *(double*)getSymbol("customUpdate" + name + "TransposeTime"); }
+    double getCustomUpdateRemapTime(const std::string &name) const{ return *(double*)getSymbol("customUpdate" + name + "RemapTime"); }
     
     void pullRecordingBuffersFromDevice() const;
 
@@ -694,6 +692,9 @@ private:
 
     //! Functions to perform custom updates
     std::unordered_map<std::string, CustomUpdateFunction> m_CustomUpdateFunctions;
+
+    //! Arrays containing column length arrays which should be zeroed before updating connectivity
+    std::unordered_map<std::string, std::vector<ArrayBase*>> m_CustomUpdateColLengthArrays;
 
     //! Map containing mapping of dynamic arrays to their locations within merged groups
     MergedDynamicArrayMap m_MergedDynamicArrays;

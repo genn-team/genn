@@ -63,6 +63,30 @@ using namespace GeNN::CodeGenerator;
                        [](const CustomConnectivityUpdateInternal &cg) { return !Utils::areTokensEmpty(cg.getHostUpdateCodeTokens()); },
                        &CustomConnectivityUpdateInternal::getHashDigest);
 
+    // If the current backend requires postsynaptic
+    if (backend.isPostsynapticRemapRequired()) {
+        // Build map of (arbitrary) custom connectivity updates associated with name of each 
+        // synapse group which requires postsynaptic remap in each custom update group!
+        std::map<std::pair<std::string, std::string>, std::reference_wrapper<const CustomConnectivityUpdateInternal>> customConnectUpdateMap;
+        for (const auto& c : getModel().getCustomConnectivityUpdates()) {
+            const auto* sg = c.second.getSynapseGroup();
+            if (c.second.canModifyConnectivity() && (sg->isPostSpikeRequired() || sg->isPostSpikeEventRequired())) {
+                customConnectUpdateMap.emplace(std::piecewise_construct,
+                                               std::forward_as_tuple(c.second.getUpdateGroupName(), sg->getName()), 
+                                               std::forward_as_tuple(c.second));
+            }
+        }
+
+        // Copy custom connection updates into vector
+        std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> customConnectUpdates;
+        customConnectUpdates.reserve(customConnectUpdateMap.size());
+        std::transform(customConnectUpdateMap.cbegin(), customConnectUpdateMap.cend(), std::back_inserter(customConnectUpdates),
+                       [](const auto& c) { return c.second; });
+
+        createMergedGroups(customConnectUpdates, m_MergedCustomConnectivityRemapUpdateGroups,
+                        &CustomConnectivityUpdateInternal::getRemapHashDigest);
+         
+    }
     createMergedGroups(getModel().getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
                        [](const NeuronGroupInternal &g){ return (g.isDelayRequired() || g.isTrueSpikeRequired() || g.isSpikeEventRequired()); },
                        &NeuronGroupInternal::getSpikeQueueUpdateHashDigest);
@@ -222,6 +246,13 @@ void ModelSpecMerged::genMergedCustomConnectivityUpdateGroups(const BackendBase 
                                                               const std::string &updateGroupName, GenMergedGroupFn<CustomConnectivityUpdateGroupMerged> generateGroup)
 {
     genMergedCustomUpdateGroups(backend, memorySpaces, m_MergedCustomConnectivityUpdateGroups, 
+                                updateGroupName, generateGroup);
+}
+//----------------------------------------------------------------------------
+void ModelSpecMerged::genMergedCustomConnectivityRemapUpdateGroups(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces, 
+                                                                   const std::string &updateGroupName, GenMergedGroupFn<CustomConnectivityRemapUpdateGroupMerged> generateGroup)
+{
+    genMergedCustomUpdateGroups(backend, memorySpaces, m_MergedCustomConnectivityRemapUpdateGroups, 
                                 updateGroupName, generateGroup);
 }
 //----------------------------------------------------------------------------
@@ -623,19 +654,3 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getInitArchetypeHashDig
 
     return hash.get_digest();
 }
-//----------------------------------------------------------------------------
-/*bool ModelSpecMerged::anyPointerEGPs() const
-{
-    // Loop through grouped merged EGPs
-    for(const auto &e : m_MergedEGPs) {
-        // If there's any pointer EGPs, return true
-        // **TODO** without scalar EGPS, all EGPS are pointer EGPS!
-        if(std::any_of(e.second.cbegin(), e.second.cend(),
-                       [](const MergedEGPDestinations::value_type &g){ return g.second.type.isPointer(); }))
-        {
-            return true;
-        }
-    }
-
-    return false;
-}*/
