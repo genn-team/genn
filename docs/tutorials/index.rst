@@ -16,7 +16,7 @@ Create a model consisting of a population of Izhikevich neurons with heterogeneo
     comp_neuro_101/1_neurons.ipynb
 
 .. image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/genn-team/genn/blob/genn_5/docs/tutorials/comp_neuro_101/1_neurons.ipynb
+   :target: https://colab.research.google.com/github/genn-team/genn/blob/master/docs/tutorials/comp_neuro_101/1_neurons.ipynb
 
 Synapses
 --------
@@ -28,7 +28,7 @@ Create a simple balanced random network with two, sparsely connected populations
     comp_neuro_101/2_synapses.ipynb
 
 .. image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/genn-team/genn/blob/genn_5/docs/tutorials/comp_neuro_101/2_synapses.ipynb
+   :target: https://colab.research.google.com/github/genn-team/genn/blob/master/docs/tutorials/comp_neuro_101/2_synapses.ipynb
 
 MNIST inference
 ===============
@@ -44,7 +44,7 @@ Create a simple three layer network of integrate-and-fire neurons, densely conne
     mnist_inference/tutorial_1.ipynb
 
 .. image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/genn-team/genn/blob/genn_5/docs/tutorials/mnist_inference/tutorial_1.ipynb
+   :target: https://colab.research.google.com/github/genn-team/genn/blob/master/docs/tutorials/mnist_inference/tutorial_1.ipynb
 
 Classifying entire test set
 ---------------------------
@@ -56,7 +56,7 @@ Present entire MNIST test set to previous model and calculate accuracy.
     mnist_inference/tutorial_2.ipynb
 
 .. image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/genn-team/genn/blob/genn_5/docs/tutorials/mnist_inference/tutorial_2.ipynb
+   :target: https://colab.research.google.com/github/genn-team/genn/blob/master/docs/tutorials/mnist_inference/tutorial_2.ipynb
 
 
 Improve classification performance
@@ -69,7 +69,7 @@ Use parallel batching and custom updates to improve inference performance by ove
     mnist_inference/tutorial_3.ipynb
 
 .. image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/genn-team/genn/blob/genn_5/docs/tutorials/mnist_inference/tutorial_3.ipynb
+   :target: https://colab.research.google.com/github/genn-team/genn/blob/master/docs/tutorials/mnist_inference/tutorial_3.ipynb
 
 Insect-inspired MNIST classification
 ====================================
@@ -85,7 +85,7 @@ Create the first layer of *Projection Neurons* which convert input images into a
     mushroom_body/1_first_layer.ipynb
 
 .. image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/genn-team/genn/blob/genn_5/docs/tutorials/mushroom_body/1_first_layer.ipynb
+   :target: https://colab.research.google.com/github/genn-team/genn/blob/master/docs/tutorials/mushroom_body/1_first_layer.ipynb
 
 Kenyon Cells
 ------------
@@ -97,7 +97,7 @@ Add a second, randomly-connected layer of *Kenyon Cells* to the model.
     mushroom_body/2_second_layer.ipynb
 
 .. image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/genn-team/genn/blob/genn_5/docs/tutorials/mushroom_body/2_second_layer.ipynb
+   :target: https://colab.research.google.com/github/genn-team/genn/blob/master/docs/tutorials/mushroom_body/2_second_layer.ipynb
 
 Kenyon Cell gain control
 ------------------------
@@ -109,7 +109,7 @@ Add recurrent inhibition circuit, inspired by <i>Giant GABAergic Neuron</i> in l
     mushroom_body/3_second_layer_gain_control.ipynb
 
 .. image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/genn-team/genn/blob/genn_5/docs/tutorials/mushroom_body/3_second_layer_gain_control.ipynb
+   :target: https://colab.research.google.com/github/genn-team/genn/blob/master/docs/tutorials/mushroom_body/3_second_layer_gain_control.ipynb
 
 Mushroom Body Output Neurons
 ----------------------------
@@ -121,7 +121,7 @@ Add *Mushroom Body Output Neurons* with STDP learning and train model on MNIST t
     mushroom_body/4_third_layer.ipynb
 
 .. image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/genn-team/genn/blob/genn_5/docs/tutorials/mushroom_body/4_third_layer.ipynb
+   :target: https://colab.research.google.com/github/genn-team/genn/blob/master/docs/tutorials/mushroom_body/4_third_layer.ipynb
 
 Testing
 -------
@@ -133,4 +133,4 @@ Create a simplified copy of the model without learning, load in the trained weig
     mushroom_body/5_testing.ipynb
 
 .. image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/genn-team/genn/blob/genn_5/docs/tutorials/mushroom_body/5_testing.ipynb
+   :target: https://colab.research.google.com/github/genn-team/genn/blob/master/docs/tutorials/mushroom_body/5_testing.ipynb
