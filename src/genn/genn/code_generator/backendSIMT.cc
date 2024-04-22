@@ -934,7 +934,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                     CodeStream::Scope b(groupEnv.getStream());
 
                     // Split ID into lane and batch
-                    groupEnv.printLine("const unsigned int lane = $(id) % 32;");
+                    groupEnv.printLine("const unsigned int lane = $(id) % " + std::to_string(getNumLanes()) + ";");
                     groupEnv.add(Type::Uint32.addConst(), "batch", "batch",
                                  {groupEnv.addInitialiser("const unsigned int batch = $(id) / 32;")});
 
@@ -967,12 +967,8 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                     }
 
                     // Perform warp reduction into first lane
-                    // **YUCK** CUDA-specific
-                    for (unsigned int i = 16; i > 0; i /= 2) {
-                        for (const auto &r : reductionTargets) {
-                            batchEnv.printLine(getReductionOperation("_lr" + r.name, "__shfl_down_sync(0xFFFFFFFF, _lr" + r.name + ", " + std::to_string(i) + ")",
-                                                                     r.access, r.type) + ";");
-                        }
+                    for (const auto &r : reductionTargets) {
+                        genWarpReduction(batchEnv.getStream(), "_lr" + r.name, r.access, r.type);
                     }
 
                     // In first lane, loop through reduction targets and write reduced value back to memory

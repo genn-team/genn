@@ -522,6 +522,11 @@ std::string Backend::getBlockID(unsigned int axis) const
     }
 }
 //--------------------------------------------------------------------------
+unsigned int Backend::getNumLanes() const
+{
+    return 32;
+}
+//--------------------------------------------------------------------------
 std::string Backend::getAtomic(const Type::ResolvedType &type, AtomicOperation op, AtomicMemSpace) const
 {
     // If operation is an atomic add
@@ -539,6 +544,16 @@ std::string Backend::getAtomic(const Type::ResolvedType &type, AtomicOperation o
         assert(op == AtomicOperation::OR);
         assert(type == Type::Uint32 || type == Type::Int32);
         return "atomicOr";
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genWarpReduction(CodeStream& os, const std::string& variable,
+                               VarAccessMode access, const Type::ResolvedType& type) const
+{
+    for (unsigned int i = 16; i > 0; i /= 2) {
+        os << getReductionOperation(variable, "__shfl_down_sync(0xFFFFFFFF, " + variable + ", " + std::to_string(i) + ")",
+                                    access, type);
+        os <<  ";" << std::endl;
     }
 }
 //--------------------------------------------------------------------------

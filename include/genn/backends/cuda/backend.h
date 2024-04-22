@@ -179,6 +179,10 @@ public:
     //! Get the ID of the current thread block
     virtual std::string getBlockID(unsigned int axis = 0) const final;
 
+    //! How many 'lanes' does underlying hardware have?
+    /*! This is typically used for warp-shuffle algorithms */
+    virtual unsigned int getNumLanes() const final;
+
     //! Get the name of the count-leading-zeros function
     virtual std::string getCLZ() const final { return "__clz"; }
 
@@ -186,6 +190,10 @@ public:
     virtual std::string getAtomic(const Type::ResolvedType &type,
                                   AtomicOperation op = AtomicOperation::ADD, 
                                   AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const final;
+
+    //! Generate a warp reduction across getNumLanes lanes into lane 0
+    virtual void genWarpReduction(CodeStream& os, const std::string& variable,
+                                  VarAccessMode access, const Type::ResolvedType& type) const final;
 
     //! Generate a shared memory barrier
     virtual void genSharedMemBarrier(CodeStream &os) const final;

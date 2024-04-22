@@ -684,6 +684,7 @@ std::string BackendBase::getReductionOperation(const std::string &reduction, con
 {
     // If operation is sum, add output of custom update to sum
     assert(type.isNumeric());
+    assert(access & VarAccessModeAttribute::REDUCE);
     if(access & VarAccessModeAttribute::SUM) {
         return reduction + " += " + value;
     }
@@ -694,7 +695,7 @@ std::string BackendBase::getReductionOperation(const std::string &reduction, con
             return reduction + " = " + "max(" + reduction + ", " + value + ")";
             
         }
-        // Otherwise, generate gmax call
+        // Otherwise, generate fmax call
         else {
             return reduction + " = " + "fmax(" + reduction + ", " + value + ")";
         }
