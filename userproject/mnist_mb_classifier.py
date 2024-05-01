@@ -134,7 +134,7 @@ def get_parser():
     return parser
 
 if __name__ == "__main__":
-    args = parser.parse_args()
+    args = get_parser().parse_args()
 
     # Reshape and normalise  data
     images = mnist.test_images() if args.test else mnist.train_images()
