@@ -223,7 +223,7 @@ private:
             const auto resultType = std::visit(
                 Utils::Overload{
                     // If both operands are numeric
-                    [&leftType, &rightType, opType, this]
+                    [&leftType, &rightType, opType]
                     (const Type::ResolvedType::Value &rightValue, const Type::ResolvedType::Value &leftValue) -> std::optional<Type::ResolvedType>
                     {
                         // If operator requires integer operands
@@ -253,7 +253,7 @@ private:
                     },
                     // Otherwise, if both operands are pointers
                     // **TODO** don't pointer types need to be the same?
-                    [&binary, &leftType, &rightType, opType, this]
+                    [&leftType, &rightType, opType]
                     (const Type::ResolvedType::Pointer&, const Type::ResolvedType::Pointer&) -> std::optional<Type::ResolvedType>
                     {
                         // If operator is minus and pointer types match
@@ -266,7 +266,7 @@ private:
                         }
                     },
                     // Otherwise, if right is numeric and left is pointer
-                    [&binary, &leftType, &rightType, opType, this]
+                    [&leftType, opType]
                     (const Type::ResolvedType::Value &rightValue, const Type::ResolvedType::Pointer&) -> std::optional<Type::ResolvedType>
                     {
                         // If operator is valid and numeric type is integer
@@ -279,7 +279,7 @@ private:
                         }
                     },
                     // Otherwise, if right is pointer and left is numeric
-                    [&binary, &rightType, opType, this]
+                    [&rightType, opType]
                     (const Type::ResolvedType::Pointer&, const Type::ResolvedType::Value &leftValue) -> std::optional<Type::ResolvedType>
                     {
                         // n + P

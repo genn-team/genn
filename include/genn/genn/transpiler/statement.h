@@ -55,6 +55,8 @@ public:
 class Base
 {
 public:
+    virtual ~Base(){}
+
     virtual void accept(Visitor &visitor) const = 0;
 };
 

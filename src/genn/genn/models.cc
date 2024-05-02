@@ -95,7 +95,7 @@ NeuronGroup *VarReference::getDelayNeuronGroup() const
 { 
     return std::visit(
         Utils::Overload{
-            [this](const NGRef &ref)->NeuronGroup* {
+            [](const NGRef &ref)->NeuronGroup* {
                 return (ref.group->isDelayRequired() && ref.group->isVarQueueRequired(ref.var.name)) ? ref.group : nullptr;
             },
             [](const WUPreRef &ref)->NeuronGroup* {

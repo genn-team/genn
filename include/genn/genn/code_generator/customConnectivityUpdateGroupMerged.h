@@ -74,19 +74,6 @@ private:
         addPrivateVarRefAccess<A>(env, batchSize, [&indexSuffix](VarAccessMode, const typename A::RefType&){ return indexSuffix; });
     }
     
-    template<typename A>
-    void addPrivateVarAccess(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env, unsigned int batchSize, const std::string &indexSuffix)
-    {
-        // Loop through variable references
-        const A archetypeAdaptor(getArchetype());
-        for(const auto &v : archetypeAdaptor.getDefs()) {
-            // Add field with qualified type which indexes private pointer field
-            const auto resolvedType = v.type.resolve(getTypeContext());
-            const auto qualifiedType = (v.access & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
-            env.add(qualifiedType, v.name, "$(_" + v.name + ")[" + indexSuffix + "]");
-        }
-    }
-    
     template<typename V>
     void addTypes(GeNN::Transpiler::TypeChecker::EnvironmentBase &env, const std::vector<V> &vars, 
                   GeNN::Transpiler::ErrorHandlerBase &errorHandler, bool readOnly = false)

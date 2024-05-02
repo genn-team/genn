@@ -150,7 +150,7 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
             if (varDims & VarAccessDim::ELEMENT) {
                 backend.genVariableInit(
                     varEnv, count, "id",
-                    [&adaptor, &fieldGroup, &fieldSuffix, &group, &var, &resolvedType, &varInit, batchSize, count, numDelaySlots, varDims]
+                    [&adaptor, &fieldGroup, &group, &var, &resolvedType, &varInit, batchSize, count, numDelaySlots, varDims]
                     (EnvironmentExternalBase &env)
                     {
                         // Generate initial value into temporary variable
@@ -171,7 +171,7 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
             else {
                 backend.genPopVariableInit(
                     varEnv,
-                    [&adaptor, &fieldGroup, &fieldSuffix, &group, &resolvedType, &var, &varInit, batchSize, numDelaySlots, varDims]
+                    [&adaptor, &fieldGroup, &group, &resolvedType, &var, &varInit, batchSize, numDelaySlots, varDims]
                     (EnvironmentExternalBase &env)
                     {
                         // Generate initial value into temporary variable

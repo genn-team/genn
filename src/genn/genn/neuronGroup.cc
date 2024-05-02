@@ -45,7 +45,7 @@ void fuseSynapseGroups(const NeuronGroup *ng, const std::vector<SynapseGroupInte
     std::vector<SynapseGroupInternal*> syn = unfusedSyn;
 
     // Loop through un-merged synapse groups
-    for(unsigned int i = 0; !syn.empty(); i++) {
+    while(!syn.empty()) {
         // Remove last element from vector
         auto *a = syn.back();
         syn.pop_back();
