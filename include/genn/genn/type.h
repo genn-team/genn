@@ -62,7 +62,6 @@ public:
     NumericValue(int64_t value) : m_Value(value){}
     NumericValue(int value) : m_Value(int64_t{value}){}
     NumericValue(unsigned int value) : m_Value(uint64_t{value}){}
-    NumericValue(size_t value) : m_Value(uint64_t{value}){}
 
     //----------------------------------------------------------------------------
     // Public API
