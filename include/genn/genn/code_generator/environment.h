@@ -718,7 +718,7 @@ public:
     void addVarRefs(const std::string &indexSuffix, const std::string &fieldSuffix = "",
                     bool readOnly = false, bool hidden = false)
     {
-        addVarRefs<A>([&indexSuffix](VarAccess a, auto &) { return indexSuffix; }, 
+        addVarRefs<A>([&indexSuffix](VarAccess, auto&) { return indexSuffix; }, 
                       fieldSuffix, readOnly, hidden);
     }
 

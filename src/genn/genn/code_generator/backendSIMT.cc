@@ -480,7 +480,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
     genParallelGroup<NeuronUpdateGroupMerged>(
         neuronEnv, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedNeuronUpdateGroups,
         [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelNeuronUpdate); },
-        [batchSize, &modelMerged, this](EnvironmentExternalBase &popEnv, NeuronUpdateGroupMerged &ng)
+        [batchSize, this](EnvironmentExternalBase &popEnv, NeuronUpdateGroupMerged &ng)
         {
             CodeStream::Scope b(popEnv.getStream());
             EnvironmentGroupMergedField<NeuronUpdateGroupMerged> groupEnv(popEnv, ng);
@@ -588,7 +588,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                     // Generate code to copy spikes into global memory
                     ng.generateSpikes(
                         groupEnv,
-                        [batchSize, &queueOffset, &ng, this](EnvironmentExternalBase &env)
+                        [&queueOffset, this](EnvironmentExternalBase &env)
                         {
                             env.printLine("$(_spk)[" + queueOffset + "$(_sh_spk_pos)[0] + " + getThreadID() + "] = n;");
                         });
@@ -1163,7 +1163,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, Mod
     env.getStream() << getSharedPrefix() << " float shTile[" << blockSize << "][" << (blockSize + 1) << "];" << std::endl;
     genParallelGroup<CustomUpdateTransposeWUGroupMerged>(
         env, modelMerged, memorySpaces, updateGroup, idStart, &ModelSpecMerged::genMergedCustomUpdateTransposeWUGroups,
-        [batchSize, &modelMerged, this](const CustomUpdateWUInternal &cu) { return getPaddedNumCustomUpdateTransposeWUThreads(cu, batchSize); },
+        [batchSize, this](const CustomUpdateWUInternal &cu) { return getPaddedNumCustomUpdateTransposeWUThreads(cu, batchSize); },
         [batchSize, blockSize, this](EnvironmentExternalBase &env, CustomUpdateTransposeWUGroupMerged &cg)
         {
             EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> groupEnv(env, cg);
@@ -1319,7 +1319,7 @@ void BackendSIMT::genCustomConnectivityRemapUpdateKernel(EnvironmentExternalBase
     genParallelGroup<CustomConnectivityRemapUpdateGroupMerged>(
         envKernel, modelMerged, memorySpaces, updateGroup, idStart, &ModelSpecMerged::genMergedCustomConnectivityRemapUpdateGroups,
         [this](const CustomConnectivityUpdateInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelCustomUpdate); },
-        [&modelMerged, this](EnvironmentExternalBase &env, CustomConnectivityRemapUpdateGroupMerged &cg)
+        [this](EnvironmentExternalBase &env, CustomConnectivityRemapUpdateGroupMerged &cg)
         {
             EnvironmentGroupMergedField<CustomConnectivityRemapUpdateGroupMerged> groupEnv(env, cg);
             buildStandardEnvironment(groupEnv);

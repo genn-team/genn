@@ -315,7 +315,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                               addTypes(env, getArchetype().getModel()->getVarRefs(), errorHandler);
                               addTypes(env, getArchetype().getModel()->getPostVarRefs(), errorHandler, true);
                           },
-                          [batchSize, &backend, &indexType, &indexTypeName, &removeSynapseStream, this](auto &env, auto generateBody)
+                          [batchSize, &indexType, &indexTypeName, &removeSynapseStream, this](auto &env, auto generateBody)
                           {
                               env.print("for(int j = 0; j < $(_row_length)[$(id_pre)]; j++)");
                               {
@@ -410,7 +410,10 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
         // Expose row stride        
         groupEnv.addField(Type::Uint32.addConst(), "row_stride",
                           Type::Uint32, "rowStride", 
-                          [&backend](const auto&, const auto &cg, size_t) { return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup()); });
+                          [&backend](const auto&, const auto &cg, size_t) -> uint64_t 
+                          {
+                              return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup()); 
+                          });
 
         // If synapse group connectivity is accessible from the host
         // **TODO** variable locations probably need hashing in host update group hash

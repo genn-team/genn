@@ -279,7 +279,7 @@ void generateInit(std::ostream &stream, ModelSpecMerged &modelMerged, const Back
                 CodeStream::Scope b(init);
                 modelMerged.genMergedSynapseConnectivityHostInitGroups(
                     backend, memorySpaces,
-                    [&backend, &modelMerged, &init](auto &sg)
+                    [&backend, &init](auto &sg)
                     {
                         EnvironmentExternal env(init);
                         sg.generateInit(backend, env);

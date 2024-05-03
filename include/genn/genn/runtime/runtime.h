@@ -522,7 +522,7 @@ private:
         A adaptor(*group);
         createVarArrays<A>(
             group, batchSize, batched,
-            [&adaptor, group, numDelaySlots, numNeurons]
+            [&adaptor, numDelaySlots, numNeurons]
             (const std::string &varName, VarAccessDim varDims)
             {
                 const size_t numVarDelaySlots = adaptor.isVarDelayed(varName) ? numDelaySlots : 1;

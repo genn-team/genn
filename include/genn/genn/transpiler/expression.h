@@ -57,6 +57,8 @@ public:
 class Base
 {
 public:
+    virtual ~Base(){}
+
     virtual void accept(Visitor &visitor) const = 0;
     virtual bool isLValue() const{ return false; }
 };

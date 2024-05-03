@@ -66,7 +66,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(EnvironmentExternalBase &env,
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateGroupMerged> varEnv(
         *this, *this, getTypeContext(), cuEnv, "", "l", false,
-        [this, batchSize, &cuEnv](const std::string&, CustomUpdateVarAccess d)
+        [this, batchSize](const std::string&, CustomUpdateVarAccess d)
         {
             return getVarIndex(batchSize, getVarAccessDim(d, getArchetype().getDims()), "$(id)");
         });
@@ -74,7 +74,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(EnvironmentExternalBase &env,
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarRefCache<CustomUpdateVarRefAdapter, CustomUpdateGroupMerged> varRefEnv(
         *this, *this, getTypeContext(), varEnv, "", "l", false,
-        [this, batchSize, &varEnv](const std::string&, const Models::VarReference &v)
+        [this, batchSize](const std::string&, const Models::VarReference &v)
         { 
             return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, batchSize,
                                   v.getVarDims(), "$(id)");
@@ -199,7 +199,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(EnvironmentExternalBase
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateWUGroupMergedBase> varEnv(
         *this, *this, getTypeContext(), cuEnv, "", "l", false,
-        [this, batchSize, &cuEnv](const std::string&, CustomUpdateVarAccess d)
+        [this, batchSize](const std::string&, CustomUpdateVarAccess d)
         {
             return getVarIndex(batchSize, getVarAccessDim(d, getArchetype().getDims()), "$(id_syn)");
         });
@@ -207,7 +207,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(EnvironmentExternalBase
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarRefCache<CustomUpdateWUVarRefAdapter, CustomUpdateWUGroupMergedBase> varRefEnv(
         *this, *this, getTypeContext(), varEnv, "", "l", false,
-        [this, batchSize, &varEnv](const std::string&, const Models::WUVarReference &v)
+        [this, batchSize](const std::string&, const Models::WUVarReference &v)
         {
             return getVarRefIndex(batchSize, v.getVarDims(), "$(id_syn)");
         });
@@ -289,7 +289,7 @@ const std::string CustomWUUpdateHostReductionGroupMerged::name = "CustomWUUpdate
 void CustomWUUpdateHostReductionGroupMerged::generateCustomUpdate(EnvironmentGroupMergedField<CustomWUUpdateHostReductionGroupMerged> &env)
 {
     env.addField(Type::Uint32, "_size", "size",
-                 [](const auto &, const auto &c, size_t) 
+                 [](const auto &, const auto &c, size_t) -> uint64_t 
                  { 
                      return c.getSynapseGroup()->getMaxConnections() * (size_t)c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); 
                  });

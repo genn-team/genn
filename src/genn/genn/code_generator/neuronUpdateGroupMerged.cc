@@ -402,11 +402,11 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase
         const bool delayed = (getArchetype().getBackPropDelaySteps() != 0);
         EnvironmentLocalVarCache<SynapseWUPostVarAdapter, InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(
             *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
-            [batchSize, delayed, &synEnv, &ng](const std::string&, VarAccess d)
+            [batchSize, delayed, &ng](const std::string&, VarAccess d)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
             },
-            [batchSize, delayed, &synEnv, &ng](const std::string&, VarAccess d)
+            [batchSize, delayed, &ng](const std::string&, VarAccess d)
             {
                 return ng.getWriteVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
             },

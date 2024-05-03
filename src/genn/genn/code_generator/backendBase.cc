@@ -48,7 +48,10 @@ void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentG
                  Type::Uint32, "numTrgNeurons", 
                  [](const auto&, const auto  &cg, size_t) { return cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); });
     env.addField(Type::Uint32, "_row_stride", "rowStride", 
-                 [&backend](const auto&, const auto &cg, size_t) { return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup()); });
+                 [&backend](const auto&, const auto &cg, size_t) -> uint64_t
+                 {
+                     return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup());
+                 });
 
     // If underlying synapse group has kernel connectivity
     const auto *sg = env.getGroup().getArchetype().getSynapseGroup();
@@ -171,7 +174,10 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
                  Uint32, "numTrgNeurons", 
                  [](const auto&, const SynapseGroupInternal &sg, size_t) { return sg.getTrgNeuronGroup()->getNumNeurons(); });
     env.addField(Uint32, "_row_stride", "rowStride", 
-                 [&backend](const auto&, const SynapseGroupInternal &sg, size_t) { return backend.getSynapticMatrixRowStride(sg); });
+                 [&backend](const auto&, const SynapseGroupInternal &sg, size_t) -> uint64_t
+                 {
+                     return backend.getSynapticMatrixRowStride(sg);
+                 });
     env.addField(Uint32, "_col_stride", "colStride", 
                  [](const auto&, const SynapseGroupInternal &sg, size_t) { return sg.getMaxSourceConnections(); });
 
@@ -430,9 +436,9 @@ void buildStandardCustomConnectivityUpdateEnvironment(const BackendBase &backend
                      return sgInternal->getTrgNeuronGroup()->getNumNeurons();
                  });
     env.addField(Type::Uint32, "_row_stride", "rowStride", 
-                 [&backend](const auto&, const auto &cg, size_t) { return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup()); });
+                 [&backend](const auto&, const auto &cg, size_t) -> uint64_t { return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup()); });
     env.addField(Type::Uint32, "_col_stride", "colStride", 
-                 [&backend](const auto&, const auto &cg, size_t) { return cg.getSynapseGroup()->getMaxSourceConnections(); });
+                 [](const auto&, const auto &cg, size_t) { return cg.getSynapseGroup()->getMaxSourceConnections(); });
     
     // Connectivity fields
     auto *sg = env.getGroup().getArchetype().getSynapseGroup();
