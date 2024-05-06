@@ -25,7 +25,7 @@ For example, the single-threaded CPU backend could be manually selected with:
                       backend="single_threaded_cpu")
 
 When running models on a GPU, smaller models may not fully occupy the device. In some scenarios such as gradient-based training and parameter sweeping,
-this can be overcome by runing multiple copies of the same model at the same time (batching in Machine Learning speak).
+this can be overcome by running multiple copies of the same model at the same time (batching in Machine Learning speak).
 Batching can be enabled on a GeNN model with:
 
 ..  code-block:: python
