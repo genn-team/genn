@@ -636,19 +636,31 @@ TEST(NeuronGroup, FusePreOutput)
         initWeightUpdate<StaticPulseBack>({}, wumVarVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
     synTarget->setPreTargetVar("Isyn2");
-  
+    
+    // Create synapse group with different target variable
+    auto *synDelay = model.addSynapsePopulation(
+        "SynDelay", SynapseMatrixType::DENSE,
+        pre, post,
+        initWeightUpdate<StaticPulseBack>({}, wumVarVals),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    synDelay->setMaxAxonalBackDelayTimesteps(10);
+
     model.finalise();
     
     // Cast synapse groups to internal types
     auto synInternal = static_cast<SynapseGroupInternal*>(syn);
     auto syn2Internal = static_cast<SynapseGroupInternal*>(syn2);
     auto synTargetInternal = static_cast<SynapseGroupInternal*>(synTarget);
+    auto synDelayInternal = static_cast<SynapseGroupInternal *>(synDelay);
  
-    // Check that identically configured PSMs can be merged
+    // Check that identically configured prsynaptic outputs can be merged
     ASSERT_EQ(&synInternal->getFusedPreOutputTarget(), &syn2Internal->getFusedPreOutputTarget());
     
-    // Check that PSMs targetting different variables cannot be merged
+    // Check that presynaptic outputs targetting different variables cannot be merged
     ASSERT_NE(&synInternal->getFusedPreOutputTarget(), &synTargetInternal->getFusedPreOutputTarget());
+
+    // Check that presynaptic outpus with different maximum delays cannot be merged
+    ASSERT_NE(&synInternal->getFusedPreOutputTarget(), &synDelayInternal->getFusedPreOutputTarget());
 }
 
 TEST(NeuronGroup, FuseSpikeEvent)
