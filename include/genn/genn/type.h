@@ -416,14 +416,15 @@ inline static const ResolvedType Void = ResolvedType();
 //----------------------------------------------------------------------------
 // Standard function types
 //----------------------------------------------------------------------------
-inline static const ResolvedType AddToPre = ResolvedType::createFunction(Void, {Uint32});
-inline static const ResolvedType AddToPost = ResolvedType::createFunction(Void, {Uint32});
-inline static const ResolvedType AddToPostDenDelay = ResolvedType::createFunction(Void, {Uint32, Uint32});
 inline static const ResolvedType AllocatePushPullEGP = ResolvedType::createFunction(Void, {Uint32});
 inline static const ResolvedType PushPull = ResolvedType::createFunction(Void, {});
-
-
 inline static const ResolvedType Assert = ResolvedType::createFunction(Void, {Bool});
+
+//! Get type to add a weight type
+inline ResolvedType getAddToPrePost(ResolvedType weightType) { return ResolvedType::createFunction(Void, {weightType}); }
+
+//! Get type to add a weight type with delay
+inline ResolvedType getAddToPrePostDelay(ResolvedType weightType) { return ResolvedType::createFunction(Void, {weightType, Uint32}); }
 
 //! Apply C type promotion rules to numeric type
 GENN_EXPORT ResolvedType getPromotedType(const ResolvedType &type);
