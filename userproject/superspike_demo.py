@@ -478,7 +478,7 @@ if __name__ == "__main__":
         import matplotlib.pyplot as plt
         
         # Create plot
-        fig, axes = plt.subplots(3, len(input_spikes), sharex="col", sharey="row")
+        fig, axes = plt.subplots(3, len(input_spikes), sharex="col", sharey="row", squeeze=False)
 
         for i, spikes in enumerate(zip(input_spikes, hidden_spikes, output_spikes)):
             # Plot spikes
