@@ -1073,9 +1073,9 @@ TEST(ModelSpecMerged, CompareOutputLocationChanges)
     testSynapseVarLocation([](SynapseGroup *pop, VarLocation varLocation) {pop->setOutputLocation(varLocation); });
 }
 //--------------------------------------------------------------------------
-TEST(ModelSpecMerged, CompareDendriticDelayLocationChanges)
+TEST(ModelSpecMerged, CompareDelayLocationChanges)
 {
-    testSynapseVarLocation([](SynapseGroup *pop, VarLocation varLocation) {pop->setDendriticDelayLocation(varLocation); });
+    testSynapseVarLocation([](SynapseGroup *pop, VarLocation varLocation) {pop->setDelayLocation(varLocation); });
 }
 //--------------------------------------------------------------------------
 TEST(ModelSpecMerged, CompareCustomUpdateNameChanges)
