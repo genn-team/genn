@@ -228,7 +228,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             if (sg->isDendriticDelayRequired()) {
                 createArray(sg, "denDelay", getModel().getPrecision(), 
                             (size_t)sg->getMaxDendriticDelayTimesteps() * (size_t)sg->getTrgNeuronGroup()->getNumNeurons() * batchSize,
-                            sg->getDendriticDelayLocation(), false, 2);
+                            sg->getDelayLocation(), false, 2);
                 createArray(sg, "denDelayPtr", Type::Uint32, 1, VarLocation::DEVICE, false, 2);
             }
 
@@ -242,6 +242,13 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             createArray(sg, "outPre", getModel().getPrecision(), 
                         sg->getSrcNeuronGroup()->getNumNeurons() * batchSize,
                         sg->getOutputLocation(), false, 2);
+
+            if (sg->isAxonalBackDelayRequired()) {
+                createArray(sg, "axonalBackDelay", getModel().getPrecision(),
+                            (size_t)sg->getMaxAxonalBackDelayTimesteps() * (size_t)sg->getSrcNeuronGroup()->getNumNeurons() * batchSize,
+                            sg->getDelayLocation(), false, 2);
+                createArray(sg, "axonalBackDelayPtr", Type::Uint32, 1, VarLocation::DEVICE, false, 2);
+            }
         }
         
         // Create arrays for variables from fused incoming synaptic populations
