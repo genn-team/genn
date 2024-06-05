@@ -262,7 +262,7 @@ bool SynapseGroup::isZeroCopyEnabled() const
         return true;
     }
 
-    if(m_DendriticDelayLocation & VarLocationAttribute::ZERO_COPY) {
+    if(m_DelayLocation & VarLocationAttribute::ZERO_COPY) {
         return true;
     }
     
@@ -286,7 +286,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
     :   m_Name(name), m_ParallelismHint(ParallelismHint::POSTSYNAPTIC), m_NumThreadsPerSpike(1), m_AxonalDelaySteps(0), m_BackPropDelaySteps(0),
         m_MaxDendriticDelayTimesteps(1), m_MaxAxonalBackDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled),
-        m_OutputLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
+        m_OutputLocation(defaultVarLocation),  m_DelayLocation(defaultVarLocation),
         m_WUInitialiser(wumInitialiser), m_PSInitialiser(psmInitialiser), m_SparseConnectivityInitialiser(connectivityInitialiser),  m_ToeplitzConnectivityInitialiser(toeplitzInitialiser), 
         m_WUVarLocation(defaultVarLocation), m_WUPreVarLocation(defaultVarLocation), m_WUPostVarLocation(defaultVarLocation), m_WUExtraGlobalParamLocation(defaultExtraGlobalParamLocation), 
         m_PSVarLocation(defaultVarLocation),  m_PSExtraGlobalParamLocation(defaultExtraGlobalParamLocation), m_SparseConnectivityLocation(defaultSparseConnectivityLocation),
@@ -679,13 +679,22 @@ bool SynapseGroup::isDendriticDelayRequired() const
             || Utils::isIdentifierReferenced("addToPostDelay", getWUInitialiser().getSynapseDynamicsCodeTokens()));
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::isAxonalBackDelayRequired() const
+{
+    return (Utils::isIdentifierReferenced("addToPreDelay", getWUInitialiser().getPreSpikeSynCodeTokens())
+            || Utils::isIdentifierReferenced("addToPreDelay", getWUInitialiser().getPreEventSynCodeTokens())
+            || Utils::isIdentifierReferenced("addToPreDelay", getWUInitialiser().getPostEventSynCodeTokens())
+            || Utils::isIdentifierReferenced("addToPreDelay", getWUInitialiser().getSynapseDynamicsCodeTokens()));
+}
+//----------------------------------------------------------------------------
 bool SynapseGroup::isPresynapticOutputRequired() const
 {
-    return (Utils::isIdentifierReferenced("addToPre", getWUInitialiser().getPreSpikeSynCodeTokens())
-            || Utils::isIdentifierReferenced("addToPre", getWUInitialiser().getPreEventSynCodeTokens())
-            || Utils::isIdentifierReferenced("addToPre", getWUInitialiser().getPostEventSynCodeTokens())
-            || Utils::isIdentifierReferenced("addToPre", getWUInitialiser().getPostSpikeSynCodeTokens())
-            || Utils::isIdentifierReferenced("addToPre", getWUInitialiser().getSynapseDynamicsCodeTokens()));
+    const std::unordered_set<std::string> identifiers{"addToPre", "addToPreDelay"};
+    return (Utils::areIdentifiersReferenced(identifiers, getWUInitialiser().getPreSpikeSynCodeTokens())
+            || Utils::areIdentifiersReferenced(identifiers, getWUInitialiser().getPreEventSynCodeTokens())
+            || Utils::areIdentifiersReferenced(identifiers, getWUInitialiser().getPostEventSynCodeTokens())
+            || Utils::areIdentifiersReferenced(identifiers, getWUInitialiser().getPostSpikeSynCodeTokens())
+            || Utils::areIdentifiersReferenced(identifiers, getWUInitialiser().getSynapseDynamicsCodeTokens()));
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isPostsynapticOutputRequired() const
@@ -830,6 +839,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
     Utils::updateHash(getAxonalDelaySteps(), hash);
     Utils::updateHash(getBackPropDelaySteps(), hash);
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
+    Utils::updateHash(getMaxAxonalBackDelayTimesteps(), hash);
     Type::updateHash(getSparseIndType(), hash);
     Utils::updateHash(getNumThreadsPerSpike(), hash);
     Utils::updateHash(getParallelismHint(), hash);
@@ -1163,6 +1173,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPreOutputInitHashDigest
     assert(ng == getSrcNeuronGroup());
 
     boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getMaxAxonalBackDelayTimesteps(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
@@ -1172,6 +1183,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPreOutputHashDigest(con
 
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getPreTargetVar(), hash);
+    Utils::updateHash(getMaxAxonalBackDelayTimesteps(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
@@ -1193,7 +1205,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getVarLocationHashDigest()
 {
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getOutputLocation(), hash);
-    Utils::updateHash(getDendriticDelayLocation(), hash);
+    Utils::updateHash(getDelayLocation(), hash);
     Utils::updateHash(getSparseConnectivityLocation(), hash);
     m_WUVarLocation.updateHash(hash);
     m_WUPreVarLocation.updateHash(hash);

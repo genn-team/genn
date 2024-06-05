@@ -111,8 +111,8 @@ public:
     /*! This is ignored for simulations on hardware with a single memory space */
     void setSparseConnectivityLocation(VarLocation loc) { m_SparseConnectivityLocation = loc; }
 
-    //! Set variable mode used for this synapse group's dendritic delay buffers
-    void setDendriticDelayLocation(VarLocation loc) { m_DendriticDelayLocation = loc; }
+    //! Set variable mode used for this synapse group's dendritic and backward axonal delay buffers
+    void setDelayLocation(VarLocation loc) { m_DelayLocation = loc; }
 
     //! Sets the maximum number of target neurons any source neurons can connect to
     void setMaxConnections(unsigned int maxConnections);
@@ -165,8 +165,8 @@ public:
     //! Get variable mode used for sparse connectivity
     VarLocation getSparseConnectivityLocation() const{ return m_SparseConnectivityLocation; }
 
-    //! Get variable mode used for this synapse group's dendritic delay buffers
-    VarLocation getDendriticDelayLocation() const{ return m_DendriticDelayLocation; }
+    //! Get variable mode used for this synapse group's dendritic and backward axonal delay buffers
+    VarLocation getDelayLocation() const{ return m_DelayLocation; }
 
     //! Get location of weight update model synaptic state variable
     VarLocation getWUVarLocation(const std::string &varName) const{ return m_WUVarLocation.get(varName); }
@@ -336,6 +336,9 @@ protected:
     //! Does this synapse group require dendritic delay?
     bool isDendriticDelayRequired() const;
 
+    //! Does this synapse group require backward axonal delay?
+    bool isAxonalBackDelayRequired() const;
+
     //! Does this synapse group provide presynaptic output?
     bool isPresynapticOutputRequired() const; 
 
@@ -493,9 +496,9 @@ private:
     /*! This is ignored for simulations on hardware with a single memory space */
     VarLocation m_OutputLocation;
 
-    //! Location of this synapse group's dendritic delay buffers.
+    //! Location of this synapse group's dendritic and backward axonal delay buffers.
     /*! This is ignored for simulations on hardware with a single memory space */
-    VarLocation m_DendriticDelayLocation;
+    VarLocation m_DelayLocation;
 
     //! Initialiser used for creating weight update model
     WeightUpdateModels::Init m_WUInitialiser;
