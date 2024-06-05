@@ -100,17 +100,23 @@ bool isIdentifierReferenced(const std::string &identifierName, const std::vector
             
 }
 //--------------------------------------------------------------------------
-bool isRNGRequired(const std::vector<Transpiler::Token> &tokens)
+bool areIdentifiersReferenced(const std::unordered_set<std::string> &identifierNames,
+                              const std::vector<Transpiler::Token> &tokens)
 {
     assert(!tokens.empty());
 
     // Return true if any identifier's lexems are in set of random functions
-    return std::any_of(tokens.cbegin(), tokens.cend(), 
-                       [](const auto &t)
-                       { 
-                           return (t.type == Transpiler::Token::Type::IDENTIFIER && randomFuncs.find(t.lexeme) != randomFuncs.cend()); 
+    return std::any_of(tokens.cbegin(), tokens.cend(),
+                       [&identifierNames](const auto &t)
+                       {
+                           return (t.type == Transpiler::Token::Type::IDENTIFIER
+                                   && identifierNames.find(t.lexeme) != identifierNames.cend());
                        });
-
+}
+//--------------------------------------------------------------------------
+bool isRNGRequired(const std::vector<Transpiler::Token> &tokens)
+{
+    return areIdentifiersReferenced(randomFuncs, tokens);
 }
 //--------------------------------------------------------------------------
 bool isRNGRequired(const std::map<std::string, InitVarSnippet::Init> &varInitialisers)

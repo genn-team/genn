@@ -10,6 +10,7 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
+#include <unordered_set>
 #include <variant>
 #include <vector>
 
@@ -45,6 +46,10 @@ GENN_EXPORT bool areTokensEmpty(const std::vector<Transpiler::Token> &tokens);
 
 //! Checks whether the sequence of token references a given identifier
 GENN_EXPORT bool isIdentifierReferenced(const std::string &identifierName, const std::vector<Transpiler::Token> &tokens);
+
+//! Checks whether the sequence of token references any identifiers from set
+GENN_EXPORT bool areIdentifiersReferenced(const std::unordered_set<std::string> &identifierNames,
+                                          const std::vector<Transpiler::Token> &tokens);
 
 //! Checks whether the sequence of token includes an RNG function identifier
 GENN_EXPORT bool isRNGRequired(const std::vector<Transpiler::Token> &tokens);
