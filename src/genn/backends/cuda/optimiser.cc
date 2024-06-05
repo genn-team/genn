@@ -148,7 +148,7 @@ void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &
         regAllocGran = 256;
         maxBlocksPerSM = 32;
         if(deviceProps.minor != 0) {
-        	LOGW_BACKEND << "Unsupported CUDA device version: 9." << deviceProps.minor;
+            LOGW_BACKEND << "Unsupported CUDA device version: 9." << deviceProps.minor;
             LOGW_BACKEND << "This is a bug! Please report it at https://github.com/genn-team/genn.";
             LOGW_BACKEND << "Falling back to SM 9.0 parameters.";
         }
