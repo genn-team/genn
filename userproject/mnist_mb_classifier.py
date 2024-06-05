@@ -136,6 +136,8 @@ def get_parser():
 if __name__ == "__main__":
     args = get_parser().parse_args()
 
+    # Set the download url for the MNIST dataset
+    mnist.datasets_url = "https://storage.googleapis.com/cvdf-datasets/mnist/"
     # Reshape and normalise  data
     images = mnist.test_images() if args.test else mnist.train_images()
     images = np.reshape(images, (images.shape[0], -1)).astype(np.float32)
