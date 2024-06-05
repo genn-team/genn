@@ -125,15 +125,34 @@ void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &
         smemAllocGran = 256;
         warpAllocGran = 4;
         regAllocGran = 256;
-        maxBlocksPerSM = (deviceProps.minor == 0) ? 32 : 16;
+        maxBlocksPerSM = (deviceProps.minor == 5) ? 16 : 32;
+    }
+    else if (deviceProps.major == 8) {
+        smemAllocGran = 128;
+        warpAllocGran = 4;
+        regAllocGran = 256;
+
+        if (deviceProps.minor == 0) {
+            maxBlocksPerSM = 32;
+        }
+        else if (deviceProps.minor == 9) {
+            maxBlocksPerSM = 24;
+        }
+        else {
+            maxBlocksPerSM = 16;
+        }
     }
     else {
         smemAllocGran = 128;
         warpAllocGran = 4;
         regAllocGran = 256;
-        maxBlocksPerSM = (deviceProps.minor == 0) ? 32 : 16;
-
-        if(deviceProps.major > 8) {
+        maxBlocksPerSM = 32;
+        if(deviceProps.minor != 0) {
+        	LOGW_BACKEND << "Unsupported CUDA device version: 9." << deviceProps.minor;
+            LOGW_BACKEND << "This is a bug! Please report it at https://github.com/genn-team/genn.";
+            LOGW_BACKEND << "Falling back to SM 9.0 parameters.";
+        }
+        if(deviceProps.major > 9) {
             LOGW_BACKEND << "Unsupported CUDA device major version: " << deviceProps.major;
             LOGW_BACKEND << "This is a bug! Please report it at https://github.com/genn-team/genn.";
             LOGW_BACKEND << "Falling back to next latest SM version parameters.";
