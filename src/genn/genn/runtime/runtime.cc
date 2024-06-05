@@ -95,11 +95,6 @@ Runtime::Runtime(const filesystem::path &modelPath, const CodeGenerator::ModelSp
 
         m_StepTime = (StepTimeFunction)getSymbol("stepTime");
 
-        /*m_NCCLGenerateUniqueID = (VoidFunction)getSymbol("ncclGenerateUniqueID", true);
-        m_NCCLGetUniqueID = (UCharPtrFunction)getSymbol("ncclGetUniqueID", true);
-        m_NCCLInitCommunicator = (NCCLInitCommunicatorFunction)getSymbol("ncclInitCommunicator", true);
-        m_NCCLUniqueIDBytes = (unsigned int*)getSymbol("ncclUniqueIDBytes", true);*/
-
         // Build set of custom update group names
         std::unordered_set<std::string> customUpdateGroupNames;
         std::transform(getModel().getCustomUpdates().cbegin(), getModel().getCustomUpdates().cend(),
