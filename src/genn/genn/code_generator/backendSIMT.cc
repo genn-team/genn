@@ -851,11 +851,11 @@ void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSp
 
                 synEnv.add(Type::Uint32.addConst(), "id_syn", "$(id)");
 
-                synEnv.add(Type::AddToPostDenDelay, "addToPostDelay", 
+                synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay",
                            getAtomic(modelMerged.getModel().getPrecision()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
-                synEnv.add(Type::AddToPost, "addToPost", 
+                synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost",
                            getAtomic(modelMerged.getModel().getPrecision()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
-                synEnv.add(Type::AddToPre, "addToPre",
+                synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre",
                             getAtomic(modelMerged.getModel().getPrecision()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
                 
                 sg.generateSynapseUpdate(synEnv, batchSize, modelMerged.getModel().getDT());
@@ -1881,7 +1881,8 @@ void BackendSIMT::genPostsynapticUpdate(EnvironmentExternalBase &env, Postsynapt
 
                 synEnv.add(Type::Uint32.addConst(), "id_post", "$(_sh_spk)[j]");
 
-                synEnv.add(Type::AddToPre, "addToPre", getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
+                synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", 
+                           getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
 
                 if(trueSpike) {
                     sg.generateSpikeUpdate(synEnv, batchSize, dt);

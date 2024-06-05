@@ -133,11 +133,11 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
                        {synEnv.addInitialiser("const unsigned int ipost = $(_ind)[synAddress];")});
             synEnv.add(indexType.addConst(), "id_syn", "synAddress");
 
-            synEnv.add(Type::AddToPostDenDelay, "addToPostDelay",
+            synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay",
                        backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
-            synEnv.add(Type::AddToPost, "addToPost",
+            synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost",
                        backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
-            synEnv.add(Type::AddToPre, "addToPre", "lOutPre += ($(0))");
+            synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "lOutPre += ($(0))");
             
             if(trueSpike) {
                 sg.generateSpikeUpdate(synEnv, batchSize, dt);
@@ -296,26 +296,26 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
                 }
        
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
-                synEnv.add(Type::AddToPostDenDelay, "addToPostDelay",
+                synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay",
                            backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
                 
                 // If we should accumulate in register, add parameter to register
                 if(shouldAccumulateInRegister(sg)) {
-                    synEnv.add(Type::AddToPost, "addToPost", "linSyn += ($(0))");
+                    synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "linSyn += ($(0))");
                 }
                 // Otherwise, if we should use shared memory, add to shared memory
                 // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
                 else if(isSmallSharedMemoryPop(sg, backend)) {
-                    synEnv.add(Type::AddToPost, "addToPost", "$(_sh_out_post)[$(id_post)] += ($(0))");
+                    synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "$(_sh_out_post)[$(id_post)] += ($(0))");
                 }
                 // Otherwise, use global memory atomic
                 else {
-                    synEnv.add(Type::AddToPost, "addToPost",
+                    synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost",
                                backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
                 }
 
                 // Add presynaptic output to local variable
-                synEnv.add(Type::AddToPre, "addToPre", "lOutPre += ($(0))");
+                synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "lOutPre += ($(0))");
 
                 if(trueSpike) {
                     sg.generateSpikeUpdate(synEnv, batchSize, dt);
@@ -499,11 +499,11 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
             }
                     
             // Add correct functions for applying synaptic input
-            preUpdateEnv.add(Type::AddToPostDenDelay, "addToPostDelay",
+            preUpdateEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay",
                              backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
-            preUpdateEnv.add(Type::AddToPost, "addToPost",
+            preUpdateEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost",
                              backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
-            preUpdateEnv.add(Type::AddToPre, "addToPre", "lOutPre += ($(0))");
+            preUpdateEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "lOutPre += ($(0))");
 
             // Generate spike update
             if(trueSpike) {
@@ -681,9 +681,9 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
                     postEnv.add(Type::Uint32.addConst(), "id_post", "ipost",
                                 {postEnv.addInitialiser("const unsigned int ipost = ibit + ($(id) * 32);")});
 
-                    postEnv.add(Type::AddToPost, "addToPost",
+                    postEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost",
                                 "$(_sh_out_post)[(ibit * " + std::to_string(blockSize) + ") + " + backend.getThreadID() + "] += ($(0))");
-                    postEnv.add(Type::AddToPre, "addToPre", "lOutPre += ($(0))");
+                    postEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "lOutPre += ($(0))");
 
                     if(trueSpike) {
                         sg.generateSpikeUpdate(postEnv, batchSize, dt);
@@ -804,21 +804,21 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
         }
                     
         // Add correct functions for apply synaptic input
-        preUpdateEnv.add(Type::AddToPostDenDelay, "addToPostDelay",
+        preUpdateEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay",
                          backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
                 
         // If we should use shared memory, add to shared memory
         // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
         if(isSmallSharedMemoryPop(sg, backend)) {
-            preUpdateEnv.add(Type::AddToPost, "addToPost", "$(_sh_out_post)[$(id_post)] += ($(0))");
+            preUpdateEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "$(_sh_out_post)[$(id_post)] += ($(0))");
         }
         // Otherwise, use global memory atomic
         else {
-            preUpdateEnv.add(Type::AddToPost, "addToPost",
+            preUpdateEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost",
                              backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
         }
 
-        preUpdateEnv.add(Type::AddToPre, "addToPre", "lOutPre += ($(0))");
+        preUpdateEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "lOutPre += ($(0))");
 
         // Generate spike update
         if(trueSpike) {
