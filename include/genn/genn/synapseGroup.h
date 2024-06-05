@@ -123,6 +123,9 @@ public:
     //! Sets the maximum dendritic delay for synapses in this synapse group
     void setMaxDendriticDelayTimesteps(unsigned int maxDendriticDelay);
 
+    //! Sets the maximum backwards axonal delay for synapses in this synapse group
+    void setMaxAxonalBackDelayTimesteps(unsigned int maxAxonalBackDelay);
+
     //! Sets the number of delay steps used to delay events and variables between presynaptic neuron and synapse
     void setAxonalDelaySteps(unsigned int timesteps);
 
@@ -151,6 +154,7 @@ public:
     unsigned int getMaxConnections() const{ return m_MaxConnections; }
     unsigned int getMaxSourceConnections() const{ return m_MaxSourceConnections; }
     unsigned int getMaxDendriticDelayTimesteps() const{ return m_MaxDendriticDelayTimesteps; }
+    unsigned int getMaxAxonalBackDelayTimesteps() const { return m_MaxAxonalBackDelayTimesteps; }
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
     const auto &getKernelSize() const { return m_KernelSize; }
     size_t getKernelSizeFlattened() const;
@@ -466,6 +470,9 @@ private:
 
     //! Maximum dendritic delay timesteps supported for synapses in this population
     unsigned int m_MaxDendriticDelayTimesteps;
+
+    //! Maximum backwards axonal delay timesteps supported for synapses in this population
+    unsigned int m_MaxAxonalBackDelayTimesteps;
 
     //! Kernel size 
     std::vector<unsigned int> m_KernelSize;

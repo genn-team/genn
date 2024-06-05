@@ -162,6 +162,11 @@ void SynapseGroup::setMaxDendriticDelayTimesteps(unsigned int maxDendriticDelayT
     m_MaxDendriticDelayTimesteps = maxDendriticDelayTimesteps;
 }
 //----------------------------------------------------------------------------
+void SynapseGroup::setMaxAxonalBackDelayTimesteps(unsigned int maxAxonalBackDelay)
+{
+    m_MaxAxonalBackDelayTimesteps = maxAxonalBackDelay;
+}
+//----------------------------------------------------------------------------
 void SynapseGroup::setAxonalDelaySteps(unsigned int timesteps)
 {
     m_AxonalDelaySteps = timesteps;
@@ -279,7 +284,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
                            VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
                            VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled)
     :   m_Name(name), m_ParallelismHint(ParallelismHint::POSTSYNAPTIC), m_NumThreadsPerSpike(1), m_AxonalDelaySteps(0), m_BackPropDelaySteps(0),
-        m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup), 
+        m_MaxDendriticDelayTimesteps(1), m_MaxAxonalBackDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
         m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled),
         m_OutputLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
         m_WUInitialiser(wumInitialiser), m_PSInitialiser(psmInitialiser), m_SparseConnectivityInitialiser(connectivityInitialiser),  m_ToeplitzConnectivityInitialiser(toeplitzInitialiser), 
@@ -578,6 +583,13 @@ bool SynapseGroup::canPSBeFused(const NeuronGroup *ng) const
     return true;
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::canPreOutputBeFused(const NeuronGroup *ng) const
+{
+    // There are no variables or other non-constant objects, so these can presumably always be fused
+    assert(ng == getSrcNeuronGroup());
+    return true;
+}
+//----------------------------------------------------------------------------
 bool SynapseGroup::canWUSpikeEventBeFused(const NeuronGroup *ng) const
 {
     const bool presynaptic = (ng == getSrcNeuronGroup());
@@ -790,13 +802,6 @@ bool SynapseGroup::isPostTimeReferenced(const std::string &identifier) const
             || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPostSpikeCodeTokens())
             || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getPreSpikeSynCodeTokens())
             || Utils::isIdentifierReferenced(identifier, getWUInitialiser().getSynapseDynamicsCodeTokens()));
-}
-//----------------------------------------------------------------------------
-bool SynapseGroup::canPreOutputBeFused(const NeuronGroup *ng) const
-{
-    // There are no variables or other non-constant objects, so these can presumably always be fused
-    assert(ng == getSrcNeuronGroup());
-    return true;
 }
 //----------------------------------------------------------------------------
 const Type::ResolvedType &SynapseGroup::getSparseIndType() const
