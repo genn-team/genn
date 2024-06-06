@@ -73,8 +73,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
-                      unsigned int batchSize);
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env,
+                      NeuronUpdateGroupMerged &ng, unsigned int batchSize);
     };
 
     //----------------------------------------------------------------------------

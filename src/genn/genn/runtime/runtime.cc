@@ -239,15 +239,17 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         // Create arrays for fused pre-output variables
         for(const auto *sg : n.second.getFusedPreOutputOutSyn()) {
             LOGD_RUNTIME << "\tFused pre-output outgoing synapse group '" << sg->getName() << "'";
-            createArray(sg, "outPre", getModel().getPrecision(), 
-                        sg->getSrcNeuronGroup()->getNumNeurons() * batchSize,
-                        sg->getOutputLocation(), false, 2);
 
             if (sg->isAxonalBackDelayRequired()) {
-                createArray(sg, "axonalBackDelay", getModel().getPrecision(),
+                createArray(sg, "axBackDelay", getModel().getPrecision(),
                             (size_t)sg->getMaxAxonalBackDelayTimesteps() * (size_t)sg->getSrcNeuronGroup()->getNumNeurons() * batchSize,
                             sg->getDelayLocation(), false, 2);
-                createArray(sg, "axonalBackDelayPtr", Type::Uint32, 1, VarLocation::DEVICE, false, 2);
+                createArray(sg, "axBackDelayPtr", Type::Uint32, 1, VarLocation::DEVICE, false, 2);
+            }
+            else {
+                createArray(sg, "outPre", getModel().getPrecision(),
+                            sg->getSrcNeuronGroup()->getNumNeurons() * batchSize,
+                            sg->getOutputLocation(), false, 2);
             }
         }
         

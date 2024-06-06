@@ -160,23 +160,45 @@ bool NeuronUpdateGroupMerged::InSynPSM::isDerivedParamHeterogeneous( const std::
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::OutSynPreOutput
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::OutSynPreOutput::generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
-                                                        unsigned int batchSize)
+void NeuronUpdateGroupMerged::OutSynPreOutput::generate(const BackendBase &backend, EnvironmentExternalBase &env,
+                                                        NeuronUpdateGroupMerged &ng, unsigned int batchSize)
 {
     const std::string fieldSuffix =  "OutSyn" + std::to_string(getIndex());
     
-    // Create new environment to add out syn fields to neuron update group 
+    // Create new environment
     EnvironmentGroupMergedField<OutSynPreOutput, NeuronUpdateGroupMerged> outSynEnv(env, *this, ng);
     
-    outSynEnv.addField(getScalarType().createPointer(), "_out_pre", "outPre" + fieldSuffix,
-                       [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "outPre"); });
+    // If backwards axonal delay is required
+    if (getArchetype().isAxonalBackDelayRequired()) {
+        // Add backwards axonal delay buffer and pointer into it
+        outSynEnv.addField(getScalarType().createPointer(), "_ax_back_delay", "axBackDelay" + fieldSuffix,
+                        [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "axBackDelay"); });
+        outSynEnv.addField(Type::Uint32.createPointer(), "_ax_back_delay_ptr", "axBackDelayPtr" + fieldSuffix,
+                        [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "axBackDelayPtr"); });
 
-    // Add reverse insyn variable to 
-    const std::string idx = ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
-    outSynEnv.printLine("$(_" + getArchetype().getPreTargetVar() + ") += $(_out_pre)[" + idx + "];");
+        // Get reference to backwards axonal delay buffer input for this timestep
+        const std::string idx = ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
+        outSynEnv.printLine(backend.getPointerPrefix() + getScalarType().getName() + " *axDelayFront = &$(_ax_delay)[(*$(_ax_delay_ptr) * $(num_neurons)) + " + idx + "];");
 
-    // Zero it again
-    outSynEnv.printLine("$(_out_pre)[" + idx + "] = " + Type::writeNumeric(0.0, getScalarType()) + ";");
+        // Add delayed input from buffer to target
+        outSynEnv.printLine("$(_" + getArchetype().getPreTargetVar() + ") += *axDelayFront;");
+
+        // Zero delay buffer slot
+        outSynEnv.getStream() << "*axDelayFront = " << Type::writeNumeric(0.0, getScalarType()) << ";" << std::endl;
+    }
+    // Otherwise
+    else {
+        // Add out syn fields to neuron update group 
+        outSynEnv.addField(getScalarType().createPointer(), "_out_pre", "outPre" + fieldSuffix,
+                           [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "outPre"); });
+
+        // Add input from buffer to target
+        const std::string idx = ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
+        outSynEnv.printLine("$(_" + getArchetype().getPreTargetVar() + ") += $(_out_pre)[" + idx + "];");
+
+        // Zero buffer
+        outSynEnv.printLine("$(_out_pre)[" + idx + "] = " + Type::writeNumeric(0.0, getScalarType()) + ";");
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -664,7 +686,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // Loop through outgoing synapse groups with presynaptic output
     for (auto &sg : m_MergedOutSynPreOutputGroups) {
         CodeStream::Scope b(neuronChildVarEnv.getStream());
-        sg.generate(neuronChildVarEnv, *this, batchSize);
+        sg.generate(backend, neuronChildVarEnv, *this, batchSize);
     }
  
     // Loop through all of neuron group's current sources
