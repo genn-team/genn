@@ -192,7 +192,11 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
     // Presynaptic output fields
     env.addField(env.getGroup().getScalarType().createPointer(), "_out_pre", "outPre",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPreOutputTarget(), "outPre"); });
-                        
+    env.addField(env.getGroup().getScalarType().createPointer(), "_ax_delay", "axDelay",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPreOutputTarget(), "axDelay"); });
+    env.addField(Uint32.createPointer(), "_ax_delay_ptr", "axDelayPtr",
+                 [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g.getFusedPreOutputTarget(), "axDelayPtr"); });
+
     // Source neuron fields
     env.addField(Uint32.createPointer(), "_src_spk_que_ptr", "srcSpkQuePtr",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(*g.getSrcNeuronGroup(), "spkQuePtr"); });
