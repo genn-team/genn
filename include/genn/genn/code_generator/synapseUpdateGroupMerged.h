@@ -66,6 +66,8 @@ public:
 
     std::string getPostDenDelayIndex(unsigned int batchSize, const std::string &index, const std::string &offset) const;
 
+    std::string getPreAxBackDelayIndex(unsigned int batchSize, const std::string &index, const std::string &offset) const;
+
     std::string getPreVarIndex(bool delay, unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
     {
         return getPrePostVarIndex(delay, batchSize, varDims, index, "pre");

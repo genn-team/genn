@@ -135,6 +135,8 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
 
             synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay",
                        backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
+            synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPreDelay",
+                       backend.getAtomic(sg.getScalarType()) + "(&$(_ax_delay)[" + sg.getPreAxBackDelayIndex(batchSize, "$(id_pre)", "$(1)") + "], $(0))");
             synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost",
                        backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
             synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "lOutPre += ($(0))");
@@ -298,7 +300,9 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                 synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay",
                            backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
-                
+                synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPreDelay",
+                           backend.getAtomic(sg.getScalarType()) + "(&$(_ax_delay)[" + sg.getPreAxBackDelayIndex(batchSize, "$(id_pre)", "$(1)") + "], $(0))");
+
                 // If we should accumulate in register, add parameter to register
                 if(shouldAccumulateInRegister(sg)) {
                     synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "linSyn += ($(0))");
@@ -501,6 +505,8 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
             // Add correct functions for applying synaptic input
             preUpdateEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay",
                              backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
+            preUpdateEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPreDelay",
+                             backend.getAtomic(sg.getScalarType()) + "(&$(_ax_delay)[" + sg.getPreAxBackDelayIndex(batchSize, "$(id_pre)", "$(1)") + "], $(0))");
             preUpdateEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost",
                              backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
             preUpdateEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "lOutPre += ($(0))");
@@ -806,7 +812,9 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
         // Add correct functions for apply synaptic input
         preUpdateEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay",
                          backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
-                
+        preUpdateEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPreDelay",
+                         backend.getAtomic(sg.getScalarType()) + "(&$(_ax_delay)[" + sg.getPreAxBackDelayIndex(batchSize, "$(id_pre)", "$(1)") + "], $(0))");
+
         // If we should use shared memory, add to shared memory
         // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
         if(isSmallSharedMemoryPop(sg, backend)) {

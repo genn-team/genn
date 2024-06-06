@@ -536,6 +536,7 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
 
                                 // Add correct functions for apply synaptic input
                                 synEnv.add(Type::getAddToPrePostDelay(s.getScalarType()), "addToPostDelay", "$(_den_delay)[" + s.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");
+                                synEnv.add(Type::getAddToPrePostDelay(s.getScalarType()), "addToPreDelay", "$(_ax_delay)[" + s.getPreAxBackDelayIndex(1, "$(id_pre)", "$(1)") + "] += $(0)");
                                 synEnv.add(Type::getAddToPrePost(s.getScalarType()), "addToPost", "$(_out_post)[" + s.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
                                 synEnv.add(Type::getAddToPrePost(s.getScalarType()), "addToPre", "$(_out_pre)[" + s.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
                                 
@@ -1813,6 +1814,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     
             // Add correct functions for apply synaptic input
             preUpdateEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay", "$(_den_delay)[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");
+            preUpdateEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPreDelay", "$(_ax_delay)[" + sg.getPreAxBackDelayIndex(1, "$(id_pre)", "$(1)") + "] += $(0)");
             preUpdateEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
             preUpdateEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
 
@@ -1911,6 +1913,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     
                     // Add correct functions for apply synaptic input
                     synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay", "$(_den_delay)[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");
+                    synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPreDelay", "$(_ax_delay)[" + sg.getPreAxBackDelayIndex(1, "$(id_pre)", "$(1)") + "] += $(0)");
                     synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
                     synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
 
@@ -1943,6 +1946,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     
                     // Add correct functions for apply synaptic input
                     groupEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay", "$(_den_delay)[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");
+                    groupEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPreDelay", "$(_ax_delay)[" + sg.getPreAxBackDelayIndex(1, "$(id_pre)", "$(1)") + "] += $(0)");
                     groupEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
                     groupEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
 
@@ -1989,6 +1993,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     
                     // Add correct functions for apply synaptic input
                     synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay", "$(_den_delay)[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");
+                    synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPreDelay", "$(_ax_delay)[" + sg.getPreAxBackDelayIndex(1, "$(id_pre)", "$(1)") + "] += $(0)");
                     synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
                     synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
 

@@ -228,6 +228,18 @@ std::string SynapseGroupMergedBase::getPostDenDelayIndex(unsigned int batchSize,
     }
 }
 //--------------------------------------------------------------------------
+std::string SynapseGroupMergedBase::getPreAxBackDelayIndex(unsigned int batchSize, const std::string &index, const std::string &offset) const
+{
+    const std::string batchID = ((batchSize == 1) ? "" : "$(_pre_batch_offset) + ") + index;
+
+    if (offset.empty()) {
+        return "(*$(_ax_delay_ptr) * $(num_pre) + " + batchID;
+    }
+    else {
+        return "(((*$(_ax_delay_ptr) + " + offset + ") % " + std::to_string(getArchetype().getMaxAxonalBackDelayTimesteps()) + ") * $(num_pre)) + " + batchID;
+    }
+}
+//--------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getPrePrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
 {
     const bool batched = ((varDims & VarAccessDim::BATCH) && batchSize > 1);
