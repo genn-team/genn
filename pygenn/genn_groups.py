@@ -408,7 +408,17 @@ class SynapseGroupMixin(GroupMixin):
             return int(np.prod(self.kernel_size))
         else:
             raise Exception("Matrix format not supported")
-
+    
+    @property
+    @deprecated("This is now specified via the delay_location property alongside backward axonal delay location")
+    def dendritic_delay_location(self) -> VarLocation:
+        return self.delay_location
+    
+    @dendritic_delay_location.setter
+    @deprecated("This is now specified via the delay_location property alongside backward axonal delay location")
+    def dendritic_delay_location(self, loc):
+        self.delay_location = loc
+        
     @deprecated("Please access values directly on variable")
     def get_var_values(self, var_name):
         return self.vars[var_name].values
