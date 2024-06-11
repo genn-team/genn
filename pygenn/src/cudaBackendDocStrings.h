@@ -133,6 +133,8 @@ static const char *__doc_CodeGenerator_CUDA_Backend_genSynapseUpdate = R"doc()do
 
 static const char *__doc_CodeGenerator_CUDA_Backend_genTimer = R"doc()doc";
 
+static const char *__doc_CodeGenerator_CUDA_Backend_genWarpReduction = R"doc(Generate a warp reduction across getNumLanes lanes into lane 0)doc";
+
 static const char *__doc_CodeGenerator_CUDA_Backend_getAtomic = R"doc(Get name of atomic operation)doc";
 
 static const char *__doc_CodeGenerator_CUDA_Backend_getBlockID = R"doc(Get the ID of the current thread block)doc";
@@ -161,6 +163,10 @@ static const char *__doc_CodeGenerator_CUDA_Backend_getNCCLReductionType = R"doc
 static const char *__doc_CodeGenerator_CUDA_Backend_getNCCLType = R"doc()doc";
 
 static const char *__doc_CodeGenerator_CUDA_Backend_getNVCCFlags = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CUDA_Backend_getNumLanes =
+R"doc(How many 'lanes' does underlying hardware have?
+This is typically used for warp-shuffle algorithms)doc";
 
 static const char *__doc_CodeGenerator_CUDA_Backend_getPopulationRNGType = R"doc(Get type of population RNG)doc";
 
@@ -231,8 +237,6 @@ static const char *__doc_CodeGenerator_CUDA_Preferences_userNvccFlags = R"doc(NV
 static const char *__doc_CodeGenerator_CUDA_State = R"doc()doc";
 
 static const char *__doc_CodeGenerator_CUDA_State_State = R"doc()doc";
-
-static const char *__doc_CodeGenerator_CUDA_State_m_EnableNCCLReductions = R"doc()doc";
 
 static const char *__doc_CodeGenerator_CUDA_State_m_NCCLGenerateUniqueID = R"doc()doc";
 

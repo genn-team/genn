@@ -89,6 +89,8 @@ static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_20 =
 
 static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_21 = R"doc()doc";
 
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_22 = R"doc()doc";
+
 static const char *__doc_CodeGenerator_BackendBase_createArray =
 R"doc(Create backend-specific array object
 
@@ -331,6 +333,8 @@ static const char *__doc_CodeGenerator_BackendBase_m_PointerBytes = R"doc(How la
 static const char *__doc_CodeGenerator_BackendBase_m_Preferences = R"doc(Preferences)doc";
 
 static const char *__doc_CodeGenerator_BackendBase_setPointerBytes = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CustomConnectivityRemapUpdateGroupMerged = R"doc()doc";
 
 static const char *__doc_CodeGenerator_CustomConnectivityUpdateGroupMerged = R"doc()doc";
 
@@ -758,6 +762,8 @@ static const char *__doc_CustomConnectivityUpdate_CustomConnectivityUpdate_2 = R
 
 static const char *__doc_CustomConnectivityUpdate_CustomConnectivityUpdate_3 = R"doc()doc";
 
+static const char *__doc_CustomConnectivityUpdate_canModifyConnectivity = R"doc(Can this custom connectivty update actually modify connectivity)doc";
+
 static const char *__doc_CustomConnectivityUpdate_finalise = R"doc()doc";
 
 static const char *__doc_CustomConnectivityUpdate_getDependentVariables =
@@ -808,6 +814,13 @@ static const char *__doc_CustomConnectivityUpdate_getPreVarInitialisers = R"doc(
 static const char *__doc_CustomConnectivityUpdate_getPreVarLocation = R"doc(Get variable location for presynaptic state variable)doc";
 
 static const char *__doc_CustomConnectivityUpdate_getPreVarReferences = R"doc()doc";
+
+static const char *__doc_CustomConnectivityUpdate_getRemapHashDigest =
+R"doc(Updates hash with custom update.
+
+.. note::
+
+    this can only be called after model is finalized)doc";
 
 static const char *__doc_CustomConnectivityUpdate_getRowUpdateCodeTokens = R"doc()doc";
 
@@ -3368,8 +3381,6 @@ static const char *__doc_Snippet_DynamicParameterContainer_get = R"doc()doc";
 
 static const char *__doc_Snippet_DynamicParameterContainer_m_Dynamic = R"doc()doc";
 
-static const char *__doc_Snippet_DynamicParameterContainer_m_Snippet = R"doc()doc";
-
 static const char *__doc_Snippet_DynamicParameterContainer_set = R"doc()doc";
 
 static const char *__doc_Snippet_DynamicParameterContainer_updateHash = R"doc()doc";
@@ -3486,7 +3497,7 @@ static const char *__doc_SynapseGroup_getCustomUpdateReferences =
 R"doc(Gets custom updates which reference this synapse group
 Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes.)doc";
 
-static const char *__doc_SynapseGroup_getDendriticDelayLocation = R"doc(Get variable mode used for this synapse group's dendritic delay buffers)doc";
+static const char *__doc_SynapseGroup_getDelayLocation = R"doc(Get variable mode used for this synapse group's dendritic and backward axonal delay buffers)doc";
 
 static const char *__doc_SynapseGroup_getDendriticDelayUpdateHashDigest = R"doc()doc";
 
@@ -3507,6 +3518,8 @@ static const char *__doc_SynapseGroup_getKernelSize = R"doc()doc";
 static const char *__doc_SynapseGroup_getKernelSizeFlattened = R"doc()doc";
 
 static const char *__doc_SynapseGroup_getMatrixType = R"doc()doc";
+
+static const char *__doc_SynapseGroup_getMaxAxonalBackDelayTimesteps = R"doc()doc";
 
 static const char *__doc_SynapseGroup_getMaxConnections = R"doc()doc";
 
@@ -3623,6 +3636,8 @@ NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getWUVarLocation = R"doc(Get location of weight update model synaptic state variable)doc";
 
+static const char *__doc_SynapseGroup_isAxonalBackDelayRequired = R"doc(Does this synapse group require backward axonal delay?)doc";
+
 static const char *__doc_SynapseGroup_isDendriticDelayRequired = R"doc(Does this synapse group require dendritic delay?)doc";
 
 static const char *__doc_SynapseGroup_isPSModelFused = R"doc(Has this synapse group's postsynaptic model been fused with those from other synapse groups?)doc";
@@ -3707,8 +3722,8 @@ static const char *__doc_SynapseGroup_m_CustomUpdateReferences =
 R"doc(Custom updates which reference this synapse group.
 Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes.)doc";
 
-static const char *__doc_SynapseGroup_m_DendriticDelayLocation =
-R"doc(Location of this synapse group's dendritic delay buffers.
+static const char *__doc_SynapseGroup_m_DelayLocation =
+R"doc(Location of this synapse group's dendritic and backward axonal delay buffers.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_m_FusedPSTarget =
@@ -3746,6 +3761,8 @@ If this is nullptr, presynaptic weight update has not been fused)doc";
 static const char *__doc_SynapseGroup_m_KernelSize = R"doc(Kernel size)doc";
 
 static const char *__doc_SynapseGroup_m_MatrixType = R"doc(Connectivity type of synapses)doc";
+
+static const char *__doc_SynapseGroup_m_MaxAxonalBackDelayTimesteps = R"doc(Maximum backwards axonal delay timesteps supported for synapses in this population)doc";
 
 static const char *__doc_SynapseGroup_m_MaxConnections = R"doc(Maximum number of target neurons any source neuron can connect to)doc";
 
@@ -3821,7 +3838,7 @@ static const char *__doc_SynapseGroup_setAxonalDelaySteps = R"doc(Sets the numbe
 
 static const char *__doc_SynapseGroup_setBackPropDelaySteps = R"doc(Sets the number of delay steps used to delay events and variables between postsynaptic neuron and synapse)doc";
 
-static const char *__doc_SynapseGroup_setDendriticDelayLocation = R"doc(Set variable mode used for this synapse group's dendritic delay buffers)doc";
+static const char *__doc_SynapseGroup_setDelayLocation = R"doc(Set variable mode used for this synapse group's dendritic and backward axonal delay buffers)doc";
 
 static const char *__doc_SynapseGroup_setFusedPSTarget = R"doc()doc";
 
@@ -3832,6 +3849,8 @@ static const char *__doc_SynapseGroup_setFusedSpikeEventTarget = R"doc()doc";
 static const char *__doc_SynapseGroup_setFusedSpikeTarget = R"doc()doc";
 
 static const char *__doc_SynapseGroup_setFusedWUPrePostTarget = R"doc()doc";
+
+static const char *__doc_SynapseGroup_setMaxAxonalBackDelayTimesteps = R"doc(Sets the maximum backwards axonal delay for synapses in this synapse group)doc";
 
 static const char *__doc_SynapseGroup_setMaxConnections = R"doc(Sets the maximum number of target neurons any source neurons can connect to)doc";
 
@@ -4252,6 +4271,10 @@ static const char *__doc_Type_UnresolvedType_operator_ne = R"doc()doc";
 
 static const char *__doc_Type_UnresolvedType_resolve = R"doc()doc";
 
+static const char *__doc_Type_getAddToPrePost = R"doc(Get type to add a weight type)doc";
+
+static const char *__doc_Type_getAddToPrePostDelay = R"doc(Get type to add a weight type with delay)doc";
+
 static const char *__doc_Type_getCommonType = R"doc(Apply C rules to get common type between numeric types a and b)doc";
 
 static const char *__doc_Type_getPromotedType = R"doc(Apply C type promotion rules to numeric type)doc";
@@ -4285,6 +4308,8 @@ static const char *__doc_Utils_Overload = R"doc(Boilerplate for overloading base
 static const char *__doc_Utils_SHA1Hash = R"doc(Functor for generating a hash suitable for use in std::unordered_map etc (i.e. size_t size) from a SHA1 digests)doc";
 
 static const char *__doc_Utils_SHA1Hash_operator_call = R"doc()doc";
+
+static const char *__doc_Utils_areIdentifiersReferenced = R"doc(Checks whether the sequence of token references any identifiers from set)doc";
 
 static const char *__doc_Utils_areTokensEmpty =
 R"doc(Is this sequence of tokens empty?
