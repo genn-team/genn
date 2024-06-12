@@ -298,13 +298,13 @@ GeNN::Type::ResolvedType parseDeclarationSpecifiers(ParserState &parserState)
     // If there are any type qualifiers, add const
     // **THINK** this relies of const being only qualifier
     if(!typeQualifiers.empty()) {
-        type = type.addQualifier(Qualifier::CONSTANT);
+        type = type.addConst();
     }
     
     // Loop through levels of pointer indirection
     // **THINK** this relies of const being only qualifier
     for(const auto &p : pointerTypeQualifiers) {
-        type = type.createPointer(p.empty() ? Qualifier{0} : Qualifier::CONSTANT);
+        type = type.createPointer(!p.empty());
     }
     return type;
 }

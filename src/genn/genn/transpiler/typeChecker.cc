@@ -48,7 +48,7 @@ bool checkPointerTypeAssignement(const Type::ResolvedType &rightType, const Type
 bool checkForConstRemoval(const Type::ResolvedType &rightType, const Type::ResolvedType &leftType) 
 {
     // If const is being removed
-    if (rightType.hasQualifier(Type::Qualifier::CONSTANT) && !leftType.hasQualifier(Type::Qualifier::CONSTANT)) {
+    if (rightType.isConst && !leftType.isConst) {
         return false;
     }
 
@@ -195,7 +195,7 @@ private:
         const auto rightType = evaluateType(assignment.getValue());
 
         // If existing type is a const qualified and isn't being initialized, give error
-        if(leftType.hasQualifier(Type::Qualifier::CONSTANT)) {
+        if(leftType.isConst) {
             m_ErrorHandler.error(assignment.getOperator(), "Assignment of read-only variable");
             throw TypeCheckError();
         }
@@ -387,8 +387,8 @@ private:
         if (trueType.isNumeric() && falseType.isNumeric()) {
             // **TODO** check behaviour
             const auto commonType = Type::getCommonType(trueType, falseType);
-            if(trueType.hasQualifier(Type::Qualifier::CONSTANT) || falseType.hasQualifier(Type::Qualifier::CONSTANT)) {
-                setExpressionType(&conditional, commonType.addQualifier(Type::Qualifier::CONSTANT));
+            if(trueType.isConst || falseType.isConst) {
+                setExpressionType(&conditional, commonType.addConst());
             }
             else {
                 setExpressionType(&conditional, commonType);
@@ -428,7 +428,7 @@ private:
             setExpressionType(&literal, Type::Bool);
         }
         else if(literal.getValue().type == Token::Type::STRING) {
-            setExpressionType(&literal, Type::Int8.createPointer(Type::Qualifier::CONSTANT));
+            setExpressionType(&literal, Type::Int8.createPointer(true));
         }
         else {
             assert(false);
@@ -446,7 +446,7 @@ private:
     {
         // **TODO** more general lvalue thing
         const auto lhsType = evaluateType(postfixIncDec.getTarget());
-        if(lhsType.hasQualifier(Type::Qualifier::CONSTANT)) {
+        if(lhsType.isConst) {
             m_ErrorHandler.error(postfixIncDec.getOperator(), "Increment/decrement of read-only variable");
             throw TypeCheckError();
         }
@@ -459,7 +459,7 @@ private:
     {
         // **TODO** more general lvalue thing
         const auto rhsType = evaluateType(prefixIncDec.getTarget());
-         if(rhsType.hasQualifier(Type::Qualifier::CONSTANT)) {
+         if(rhsType.isConst) {
             m_ErrorHandler.error(prefixIncDec.getOperator(), "Increment/decrement of read-only variable");
             throw TypeCheckError();
         }
@@ -506,8 +506,8 @@ private:
                                 [c, a](const Type::ResolvedType::Value &cValue, const Type::ResolvedType::Value&) -> std::optional<int>
                                 {
                                     // If types are identical, match is exact
-                                    const auto unqualifiedA = a->removeQualifiers();
-                                    const auto unqualifiedC = c->removeQualifiers();
+                                    const auto unqualifiedA = a->removeConst();
+                                    const auto unqualifiedC = c->removeConst();
                                     if(unqualifiedC == unqualifiedA) {
                                         return 0;
                                     }
