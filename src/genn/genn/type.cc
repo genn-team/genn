@@ -126,7 +126,7 @@ bool NumericValue::operator >= (const NumericValue &other) const
 //----------------------------------------------------------------------------
 std::string ResolvedType::getName() const
 {
-    const std::string qualifier = hasQualifier(Type::Qualifier::CONSTANT) ? "const " : "";
+    const std::string qualifier = isConst ? "const " : "";
     return std::visit(
         Utils::Overload{
             [&qualifier](const Type::ResolvedType::Value &value)
@@ -240,8 +240,8 @@ ResolvedType getCommonType(const ResolvedType &a, const ResolvedType &b)
     // If either type is double, common type is double
     assert(a.isNumeric());
     assert(b.isNumeric());
-    const auto unqualifiedA = a.removeQualifiers();
-    const auto unqualifiedB = b.removeQualifiers();
+    const auto unqualifiedA = a.removeConst();
+    const auto unqualifiedB = b.removeConst();
     if(unqualifiedA == Double || unqualifiedB == Double) {
         return Double;
     }
@@ -408,7 +408,7 @@ void updateHash(const ResolvedType::Function &v, boost::uuids::detail::sha1 &has
 //----------------------------------------------------------------------------
 void updateHash(const ResolvedType &v, boost::uuids::detail::sha1 &hash)
 {
-    Utils::updateHash(v.qualifiers, hash);
+    Utils::updateHash(v.isConst, hash);
     Utils::updateHash(v.detail, hash);
 }
 //----------------------------------------------------------------------------
