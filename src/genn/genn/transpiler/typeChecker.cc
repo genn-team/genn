@@ -486,7 +486,7 @@ private:
                 // If  function is non-variadic and number of arguments 
                 // match or variadic and enough arguments are provided
                 const auto &argumentTypes = type.getFunction().argTypes;
-                const bool variadic = type.getFunction().variadic;
+                const bool variadic = type.getFunction().hasFlag(Type::FunctionFlags::VARIADIC);
                 if((!variadic && m_CallArguments.top().size() == argumentTypes.size())
                    || (variadic && m_CallArguments.top().size() >= argumentTypes.size()))
                 {

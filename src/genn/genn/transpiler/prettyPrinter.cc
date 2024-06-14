@@ -245,7 +245,7 @@ private:
             }
 
             // If function is variadic
-            if (type.getFunction().variadic) {
+            if (type.getFunction().hasFlag(Type::FunctionFlags::VARIADIC)) {
                 // If variadic placeholder is found
                 const std::string variadicPlaceholder = "$(@)";
                 const size_t found = name.find(variadicPlaceholder);
@@ -258,7 +258,7 @@ private:
                     // Replace variadic placeholder with all remaining arguments (after trimming trailing ", ")
                     std::string variadicArguments = variadicArgumentsStream.str();
                     name.replace(found, variadicPlaceholder.length(),
-                                    variadicArguments.substr(0, variadicArguments.length() - 2));
+                                 variadicArguments.substr(0, variadicArguments.length() - 2));
                 }
                 else {
                     throw std::runtime_error("Variadic function template for '" + variable.getName().lexeme + "' (" + name + ") has "
