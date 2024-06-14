@@ -179,6 +179,17 @@ TEST(TypeChecker, ArraySubscript)
 
     // Pointer to pointer, double indexing
 
+    // Array-subscript overload indexing
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::ResolvedType::createFunction(Type::Int32, {Type::Uint32},
+                                                                  Type::FunctionFlags::ARRAY_SUBSCRIPT_OVERRIDE),
+                               "overrideIntArray");
+        const auto type = typeCheckExpression("overrideIntArray[4]", typeEnvironment);
+        EXPECT_EQ(type, Type::Int32);
+        EXPECT_FALSE(type.isConst);
+    }
+
     // Float array indexing
     EXPECT_THROW({
         TestEnvironment typeEnvironment;
