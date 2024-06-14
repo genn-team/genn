@@ -166,21 +166,33 @@ private:
     //---------------------------------------------------------------------------
     virtual void visit(const Expression::ArraySubscript &arraySubscript) final
     {
+        // Evaluate index type and store on top of stack so it 
+        // can be used to type check array subscript override function
+        auto indexType = evaluateType(arraySubscript.getIndex());
+        if (!indexType.isNumeric() || !indexType.getNumeric().isIntegral) {
+            m_ErrorHandler.error(arraySubscript.getClosingSquareBracket(),
+                                    "Invalid subscript index type '" + indexType.getName() + "'");
+            throw TypeCheckError();
+        }
+        m_CallArguments.emplace();
+        m_CallArguments.top().reserve(1);
+        m_CallArguments.top().push_back(indexType);
+
         // Evaluate array type
         auto arrayType = evaluateType(arraySubscript.getArray());
+        
+        // Pop stack
+        m_CallArguments.pop();
 
-        // If pointer is indeed a pointer
+        // If array type is a pointer, expression type is value type
         if(arrayType.isPointer()) {
-            // Evaluate pointer type
-            auto indexType = evaluateType(arraySubscript.getIndex());
-            if (!indexType.isNumeric() || !indexType.getNumeric().isIntegral) {
-                m_ErrorHandler.error(arraySubscript.getClosingSquareBracket(),
-                                     "Invalid subscript index type '" + indexType.getName() + "'");
-                throw TypeCheckError();
-            }
-
-            // Use value type of array
             setExpressionType(&arraySubscript, *arrayType.getPointer().valueType);
+        }
+        // Otherwise, if 'array' is a function with the array subscript override, use function return type
+        else if(arrayType.isFunction() 
+                && arrayType.getFunction().hasFlag(Type::FunctionFlags::ARRAY_SUBSCRIPT_OVERRIDE))
+        {
+            setExpressionType(&arraySubscript, *arrayType.getFunction().returnType);
         }
         // Otherwise
         else {
@@ -311,6 +323,7 @@ private:
     {
         // Evaluate argument types and store in top of stack
         m_CallArguments.emplace();
+        m_CallArguments.top().reserve(call.getArguments().size());
         std::transform(call.getArguments().cbegin(), call.getArguments().cend(), std::back_inserter(m_CallArguments.top()),
                        [this](const auto &a){ return evaluateType(a.get()); });
 
@@ -320,8 +333,10 @@ private:
         // Pop stack
         m_CallArguments.pop();
 
-        // If callee's a function, type is return type of function
-        if (calleeType.isFunction()) {
+        // If callee's a function without the array subscript override f, type is return type of function
+        if (calleeType.isFunction() 
+            && !calleeType.getFunction().hasFlag(Type::FunctionFlags::ARRAY_SUBSCRIPT_OVERRIDE)) 
+        {
             setExpressionType(&call, *calleeType.getFunction().returnType);
         }
         // Otherwise
