@@ -29,23 +29,25 @@
 #define CREATE_NUMERIC(TYPE, RANK, FFI_TYPE, L_SUFFIX) ResolvedType::createNumeric<TYPE>(#TYPE, RANK, FFI_TYPE, L_SUFFIX)
 
 //----------------------------------------------------------------------------
-// GeNN::Type::Flags
+// GeNN::Type::FunctionFlags
 //----------------------------------------------------------------------------
 namespace GeNN::Type
 {
-enum class Flags : unsigned int
+//! Flags that can be applied to function types
+enum class FunctionFlags : unsigned int
 {
-    INDEXABLE   = (1 << 0)  //! [] operator can be applied to this type
+    VARIADIC                    = (1 << 0),  //! Function is variadic
+    ARRAY_SUBSCRIPT_OVERRIDE    = (1 << 1)   //! Function is used to override [] for something
 };
 
-inline bool operator & (Flags a, Flags b)
+inline bool operator & (FunctionFlags a, FunctionFlags b)
 {
     return (static_cast<unsigned int>(a) & static_cast<unsigned int>(b)) != 0;
 }
 
-inline Flags operator | (Flags a, Flags b)
+inline FunctionFlags operator | (FunctionFlags a, FunctionFlags b)
 {
-    return static_cast<Flags>(static_cast<unsigned int>(a) | static_cast<unsigned int>(b));
+    return static_cast<FunctionFlags>(static_cast<unsigned int>(a) | static_cast<unsigned int>(b));
 }
 
 //----------------------------------------------------------------------------
@@ -208,42 +210,48 @@ struct GENN_EXPORT ResolvedType
     //------------------------------------------------------------------------
     struct Function
     {
-        Function(const ResolvedType &returnType, const std::vector<ResolvedType> &argTypes, bool variadic=false) 
-        :   returnType(std::make_unique<ResolvedType const>(returnType)), argTypes(argTypes), variadic(variadic)
+        Function(const ResolvedType &returnType, const std::vector<ResolvedType> &argTypes, 
+                 FunctionFlags flags = FunctionFlags{0}) 
+        :   returnType(std::make_unique<ResolvedType const>(returnType)), argTypes(argTypes), flags(flags)
         {}
         Function(const Function &other)
         :   returnType(std::make_unique<ResolvedType const>(*other.returnType)), 
-            argTypes(other.argTypes), variadic(other.variadic)
+            argTypes(other.argTypes), flags(other.flags)
         {}
 
         std::unique_ptr<ResolvedType const> returnType;
         std::vector<ResolvedType> argTypes;
-        bool variadic;
+        FunctionFlags flags;
 
         bool operator == (const Function &other) const
         {
-            return (std::tie(*returnType, argTypes, variadic) 
-                    == std::tie(*other.returnType, other.argTypes, other.variadic));
+            return (std::tie(*returnType, argTypes, flags) 
+                    == std::tie(*other.returnType, other.argTypes, other.flags));
         }
 
         bool operator != (const Function &other) const
         {
-            return (std::tie(*returnType, argTypes, variadic) 
-                    != std::tie(*other.returnType, other.argTypes, other.variadic));
+            return (std::tie(*returnType, argTypes, flags) 
+                    != std::tie(*other.returnType, other.argTypes, other.flags));
         }
 
         bool operator < (const Function &other) const
         {
-            return (std::tie(*returnType, argTypes, variadic) 
-                    < std::tie(*other.returnType, other.argTypes, other.variadic));
+            return (std::tie(*returnType, argTypes, flags) 
+                    < std::tie(*other.returnType, other.argTypes, other.flags));
         }
 
         Function &operator = (const Function &other)
         {
            returnType.reset(new ResolvedType(*other.returnType));
            argTypes = other.argTypes;
-           variadic = other.variadic;
+           flags = other.flags;
            return *this;
+        }
+
+        bool hasFlag(FunctionFlags flag) const
+        {
+            return (flags & flag);
         }
     };
     
@@ -285,6 +293,7 @@ struct GENN_EXPORT ResolvedType
 
     ResolvedType addConst() const{ return ResolvedType(*this, true); }
     ResolvedType removeConst() const{ return ResolvedType(*this, false); }
+
     std::string getName() const;
     size_t getSize(size_t pointerBytes) const;
 
@@ -333,9 +342,10 @@ struct GENN_EXPORT ResolvedType
         return ResolvedType{Value{name, sizeof(T), ffiType, device, std::nullopt}, isConst};
     }
 
-    static ResolvedType createFunction(const ResolvedType &returnType, const std::vector<ResolvedType> &argTypes, bool variadic=false)
+    static ResolvedType createFunction(const ResolvedType &returnType, const std::vector<ResolvedType> &argTypes,
+                                       FunctionFlags flags=FunctionFlags{0})
     {
-        return ResolvedType{Function{returnType, argTypes, variadic}, false};
+        return ResolvedType{Function{returnType, argTypes, flags}, false};
     }
 };
 
