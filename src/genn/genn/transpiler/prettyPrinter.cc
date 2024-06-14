@@ -100,10 +100,35 @@ private:
     //---------------------------------------------------------------------------
     virtual void visit(const Expression::ArraySubscript &arraySubscript) final
     {
+        // Cache reference to current reference
+        std::reference_wrapper<EnvironmentBase> oldEnvironment = m_Environment; 
+
+        // Push new vector of arguments onto call argument stack and 
+        // reserve memory to hold index argument
+        m_CallArguments.emplace();
+        m_CallArguments.top().reserve(1);
+        {
+            // Create new call argument environment and set to current
+            EnvironmentCallArgument environment(oldEnvironment.get());
+            m_Environment = environment;
+
+            // Pretty print array index
+            arraySubscript.getIndex()->accept(*this);
+
+            // Add pretty printed argument to vector on top of stack
+            m_CallArguments.top().push_back(environment.getString());
+        }
+
+        // Restore old environment
+        m_Environment = oldEnvironment;
+
+        // Pretty print array
+        // **NOTE** like with Expression::Call, when this reaches an
+        // Expression::Identifier, the indexing will get created from m_CallArguments
         arraySubscript.getArray()->accept(*this);
-        m_Environment.get().getStream() << "[";
-        arraySubscript.getIndex()->accept(*this);
-        m_Environment.get().getStream() << "]";
+
+        // Pop stack
+        m_CallArguments.pop();
     }
 
     virtual void visit(const Expression::Assignment &assignement) final
@@ -262,10 +287,18 @@ private:
                 }
                 else {
                     throw std::runtime_error("Variadic function template for '" + variable.getName().lexeme + "' (" + name + ") has "
-                                                "insufficient placeholders for " + std::to_string(m_CallArguments.top().size()) + " argument call and no variadic placeholder '$(@)'");
+                                             "insufficient placeholders for " + std::to_string(m_CallArguments.top().size()) + " argument call and no variadic placeholder '$(@)'");
                 }
             }
         }
+        // Otherwise, if there are argumetns, they are presumably for array indexing
+        else if(!m_CallArguments.empty() && !m_CallArguments.top().empty()){
+            assert(m_CallArguments.top().size() == 1);
+
+            // Add standard indexing to name
+            name += "[" + m_CallArguments.top().front() + "]";
+        }
+        
         // Print out name
         // **NOTE** this will apply any remaining substitutions
         m_Environment.get().print(name);
