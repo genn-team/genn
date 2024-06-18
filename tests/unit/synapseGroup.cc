@@ -989,6 +989,31 @@ TEST(SynapseGroup, IsDendriticDelayRequired)
     ASSERT_TRUE(static_cast<SynapseGroupInternal*>(synContinuous)->isDendriticDelayRequired());
 }
 
+TEST(SynapseGroup, SetMaxDendriticDelayTimesteps)
+{
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
+
+    ModelSpecInternal model;
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+
+    ParamValues staticPulseDendriticParamVals{{"g", 0.1}, {"d", 1}};
+
+    auto *syn = model.addSynapsePopulation(
+        "Syn", SynapseMatrixType::DENSE,
+        pre, post,
+        initWeightUpdate<StaticPulseDendriticDelayConstantWeight>(staticPulseDendriticParamVals, {}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+
+    try {
+        model.finalise();
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+}
+
 TEST(SynapseGroup, InvalidName)
 {
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
