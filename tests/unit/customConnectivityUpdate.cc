@@ -374,13 +374,15 @@ TEST(CustomConnectivityUpdate, CompareDifferentDependentVars)
         pre, post,
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, {{"g", 1.0}, {"d", 1.0}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
-    
+    sg1->setMaxDendriticDelayTimesteps(1);
+
     auto *sg2 = model.addSynapsePopulation(
         "Synapses2", SynapseMatrixType::SPARSE,
         pre, post,
         initWeightUpdate<StaticPulseDendriticDelayReverse>({}, {{"g", 1.0}, {"d", 1.0}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
-    
+    sg2->setMaxDendriticDelayTimesteps(1);
+
     auto *sg3 = model.addSynapsePopulation(
         "Synapses3", SynapseMatrixType::SPARSE,
         pre, post,
@@ -462,34 +464,34 @@ TEST(CustomConnectivityUpdate, CompareRemap)
     stdpSG3->setNarrowSparseIndEnabled(true);
     
     // Create  custom updates to passively count synapse in static and STDP - neither should result in remap
-    auto *staticCountCCU = model.addCustomConnectivityUpdate<CountPositive>("StaticCountCCU", "Count", staticSG,
-                                                                            {}, {}, countPreVarValues, {},
-                                                                            {{"g", createWUVarRef(staticSG, "g")}});
-    auto *stdp1CountCCU = model.addCustomConnectivityUpdate<CountPositive>("STDP1CountCCU", "Count", stdpSG1,
-                                                                           {}, {}, countPreVarValues, {},
-                                                                           {{"g", createWUVarRef(stdpSG1, "g")}});
+    model.addCustomConnectivityUpdate<CountPositive>("StaticCountCCU", "Count", staticSG,
+                                                     {}, {}, countPreVarValues, {},
+                                                     {{"g", createWUVarRef(staticSG, "g")}});
+    model.addCustomConnectivityUpdate<CountPositive>("STDP1CountCCU", "Count", stdpSG1,
+                                                     {}, {}, countPreVarValues, {},
+                                                     {{"g", createWUVarRef(stdpSG1, "g")}});
 
     // Create custom update to remove connections from static synapse - no need for remap
-    auto *staticRemove1CCU = model.addCustomConnectivityUpdate<RemoveSynapse>("StaticRemove1CCU", "Remove1", staticSG,
-                                                                             {}, {{"a", 1.0}});
+    model.addCustomConnectivityUpdate<RemoveSynapse>("StaticRemove1CCU", "Remove1", staticSG,
+                                                     {}, {{"a", 1.0}});
 
     // Create two custom updates to remove connections from STDP sg 1 - needs one remap
-    auto *stdp1Remove1CCU1 = model.addCustomConnectivityUpdate<RemoveSynapse>("STDP1Remove1CCU1", "Remove1", stdpSG1,
-                                                                             {}, {{"a", 1.0}});
-    auto *stdp1Remove1CCU2 = model.addCustomConnectivityUpdate<RemoveSynapse>("STDP1Remove1CCU2", "Remove1", stdpSG1,
-                                                                            {}, {{"a", 1.0}});
+    model.addCustomConnectivityUpdate<RemoveSynapse>("STDP1Remove1CCU1", "Remove1", stdpSG1,
+                                                     {}, {{"a", 1.0}});
+    model.addCustomConnectivityUpdate<RemoveSynapse>("STDP1Remove1CCU2", "Remove1", stdpSG1,
+                                                     {}, {{"a", 1.0}});
 
     // Create custom update to remove connections from STDP sg 1 in different group - needs one remap
-    auto *stdp1Remove2CCU = model.addCustomConnectivityUpdate<RemoveSynapse>("STDP1Remove2CCU", "Remove2", stdpSG1,
-                                                                             {}, {{"a", 1.0}});
+    model.addCustomConnectivityUpdate<RemoveSynapse>("STDP1Remove2CCU", "Remove2", stdpSG1,
+                                                     {}, {{"a", 1.0}});
     
     // Create custom update to remove connections from STDP sg 3 which has narrowed indices - needs one remap
-    auto *stdp3Remove1CCU = model.addCustomConnectivityUpdate<RemoveSynapse>("STDP3Remove1CCU", "Remove1", stdpSG3,
-                                                                             {}, { {"a", 1.0} });
+    model.addCustomConnectivityUpdate<RemoveSynapse>("STDP3Remove1CCU", "Remove1", stdpSG3,
+                                                     {}, { {"a", 1.0} });
 
     // Create custom update to remove connections from STDP sg 2 in different group - needs one remap
-    auto *stdp2Remove1CCU = model.addCustomConnectivityUpdate<RemoveSynapse>("STDP2Remove1CCU", "Remove1", stdpSG2,
-                                                                             {}, {{"a", 1.0}});
+    model.addCustomConnectivityUpdate<RemoveSynapse>("STDP2Remove1CCU", "Remove1", stdpSG2,
+                                                     {}, {{"a", 1.0}});
 
     model.finalise();
 
