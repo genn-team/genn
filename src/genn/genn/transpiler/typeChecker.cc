@@ -166,14 +166,16 @@ private:
     //---------------------------------------------------------------------------
     virtual void visit(const Expression::ArraySubscript &arraySubscript) final
     {
-        // Evaluate index type and store on top of stack so it 
-        // can be used to type check array subscript override function
+        // Evaluate index type
         auto indexType = evaluateType(arraySubscript.getIndex());
         if (!indexType.isNumeric() || !indexType.getNumeric().isIntegral) {
             m_ErrorHandler.error(arraySubscript.getClosingSquareBracket(),
                                     "Invalid subscript index type '" + indexType.getName() + "'");
             throw TypeCheckError();
         }
+
+        // Place index type on top of stack so it can be used
+        // to type check array subscript override function
         m_CallArguments.emplace();
         m_CallArguments.top().reserve(1);
         m_CallArguments.top().push_back(indexType);
@@ -322,10 +324,13 @@ private:
     virtual void visit(const Expression::Call &call) final
     {
         // Evaluate argument types and store in top of stack
-        m_CallArguments.emplace();
-        m_CallArguments.top().reserve(call.getArguments().size());
-        std::transform(call.getArguments().cbegin(), call.getArguments().cend(), std::back_inserter(m_CallArguments.top()),
+        std::vector<Type::ResolvedType> arguments;
+        arguments.reserve(call.getArguments().size());
+        std::transform(call.getArguments().cbegin(), call.getArguments().cend(), std::back_inserter(arguments),
                        [this](const auto &a){ return evaluateType(a.get()); });
+
+        // Push arguments onto stack
+        m_CallArguments.push(arguments);
 
         // Evaluate callee type
         auto calleeType = evaluateType(call.getCallee());
