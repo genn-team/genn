@@ -178,6 +178,14 @@ TEST(TypeChecker, ArraySubscript)
     }
 
     // Pointer to pointer, double indexing
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::Int32.createPointer().createPointer(), "intPtrArray");
+        const auto type = typeCheckExpression("intPtrArray[4][4]", typeEnvironment);
+        EXPECT_EQ(type, Type::Int32);
+        EXPECT_FALSE(type.isConst);
+    }
+
 
     // Array-subscript overload indexing
     {
@@ -189,6 +197,34 @@ TEST(TypeChecker, ArraySubscript)
         EXPECT_EQ(type, Type::Int32);
         EXPECT_FALSE(type.isConst);
     }
+
+    // Array-subscript overloading indexing followed by standard indexing
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::ResolvedType::createFunction(Type::Int32.createPointer(), {Type::Uint32},
+                                                                  Type::FunctionFlags::ARRAY_SUBSCRIPT_OVERRIDE),
+                               "overrideIntArray");
+        const auto type = typeCheckExpression("overrideIntArray[4][4]", typeEnvironment);
+        EXPECT_EQ(type, Type::Int32);
+        EXPECT_FALSE(type.isConst);
+    }
+
+    // Call standard function with []
+    EXPECT_THROW({
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::ResolvedType::createFunction(Type::Int32, {Type::Uint32}),
+                               "overrideIntArray");
+        typeCheckExpression("overrideIntArray[4]", typeEnvironment);}, 
+        TypeChecker::TypeCheckError);
+
+    // Call array-subscript operator overload with ()
+    EXPECT_THROW({
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::ResolvedType::createFunction(Type::Int32, {Type::Uint32},
+                                                                  Type::FunctionFlags::ARRAY_SUBSCRIPT_OVERRIDE),
+                               "overrideIntArray");
+        typeCheckExpression("overrideIntArray(4)", typeEnvironment);}, 
+        TypeChecker::TypeCheckError);
 
     // Float array indexing
     EXPECT_THROW({
