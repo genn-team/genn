@@ -335,6 +335,8 @@ TEST(SynapseGroup, CompareWUDifferentModel)
         ng0, ng1,
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, staticPulseDendriticVarVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    sg1->setMaxDendriticDelayTimesteps(1);
+
     // Finalize model
     model.finalise();
 
@@ -1000,7 +1002,7 @@ TEST(SynapseGroup, SetMaxDendriticDelayTimesteps)
 
     ParamValues staticPulseDendriticParamVals{{"g", 0.1}, {"d", 1}};
 
-    auto *syn = model.addSynapsePopulation(
+    model.addSynapsePopulation(
         "Syn", SynapseMatrixType::DENSE,
         pre, post,
         initWeightUpdate<StaticPulseDendriticDelayConstantWeight>(staticPulseDendriticParamVals, {}),

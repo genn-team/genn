@@ -469,21 +469,24 @@ TEST(NeuronGroup, FusePSM)
         pre, post,
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, wumVarVals),
         initPostsynaptic<PostsynapticModels::ExpCurr>(psmParamVals, {}));
-    
+    syn->setMaxDendriticDelayTimesteps(1);
+
     // Create second synapse group
     auto *syn2 = model.addSynapsePopulation(
         "Syn2", SynapseMatrixType::DENSE,
         pre, post,
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, wumVarVals),
         initPostsynaptic<PostsynapticModels::ExpCurr>(psmParamVals, {}));
-    
+    syn2->setMaxDendriticDelayTimesteps(1);
+
     // Create synapse group with different value for PSM parameter
     auto *synParam = model.addSynapsePopulation(
         "SynParam", SynapseMatrixType::DENSE,
         pre, post,
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, wumVarVals),
         initPostsynaptic<PostsynapticModels::ExpCurr>(psmParamVals2, {}));
-    
+    synParam->setMaxDendriticDelayTimesteps(1);
+
     // Create synapse group with different target variable
     auto *synTarget = model.addSynapsePopulation(
         "SynTarget", SynapseMatrixType::DENSE,
@@ -491,7 +494,8 @@ TEST(NeuronGroup, FusePSM)
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, wumVarVals),
         initPostsynaptic<PostsynapticModels::ExpCurr>(psmParamVals, {}));
     synTarget->setPostTargetVar("Isyn2");
-    
+    synTarget->setMaxDendriticDelayTimesteps(1);
+
     // Create synapse group with different max dendritic delay
     auto *synDelay = model.addSynapsePopulation(
         "SynDelay", SynapseMatrixType::DENSE,
@@ -499,7 +503,7 @@ TEST(NeuronGroup, FusePSM)
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, wumVarVals),
         initPostsynaptic<PostsynapticModels::ExpCurr>(psmParamVals, {}));
     synDelay->setMaxDendriticDelayTimesteps(20);
-    
+
     model.finalise();
     
     // Cast synapse groups to internal types
@@ -552,13 +556,15 @@ TEST(NeuronGroup, FuseVarPSM)
         pre, post,
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, wumVarVals),
         initPostsynaptic<AlphaCurr>(psmParamVals, psmVarValsConst1));
-    
+    syn1->setMaxDendriticDelayTimesteps(1);
+
     // Create second synapse group with same model and constant initialisers
     auto *syn2 = model.addSynapsePopulation(
         "Syn2", SynapseMatrixType::DENSE,
         pre, post,
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, wumVarVals),
         initPostsynaptic<AlphaCurr>(psmParamVals, psmVarValsConst1));
+    syn2->setMaxDendriticDelayTimesteps(1);
 
     // Create third synapse group with same model and different constant initialisers
     auto *syn3 = model.addSynapsePopulation(
@@ -566,14 +572,15 @@ TEST(NeuronGroup, FuseVarPSM)
         pre, post,
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, wumVarVals),
         initPostsynaptic<AlphaCurr>(psmParamVals, psmVarValsConst2));
-    
+    syn3->setMaxDendriticDelayTimesteps(1);
+
      // Create fourth synapse group with same model and random variable initialisers
     auto *syn4 = model.addSynapsePopulation(
         "Syn4", SynapseMatrixType::DENSE,
         pre, post,
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, wumVarVals),
         initPostsynaptic<AlphaCurr>(psmParamVals, psmVarValsRand));
-    
+    syn4->setMaxDendriticDelayTimesteps(1);
     
     // **TODO** third safe group with different variable initialisers
     model.finalise();
