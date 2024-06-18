@@ -8,6 +8,7 @@
 
 // GeNN includes
 #include "gennUtils.h"
+#include "logging.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
 #include "type.h"
@@ -158,7 +159,9 @@ void SynapseGroup::setMaxSourceConnections(unsigned int maxConnections)
 //----------------------------------------------------------------------------
 void SynapseGroup::setMaxDendriticDelayTimesteps(unsigned int maxDendriticDelayTimesteps)
 {
-    // **TODO** constraints on this
+    if(maxDendriticDelayTimesteps < 1) {
+        throw std::runtime_error("setMaxDendriticDelayTimesteps: A minimum of one dendritic delay timestep is required.");
+    }
     m_MaxDendriticDelayTimesteps = maxDendriticDelayTimesteps;
 }
 //----------------------------------------------------------------------------
@@ -279,7 +282,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
                            VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
                            VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled)
     :   m_Name(name), m_ParallelismHint(ParallelismHint::POSTSYNAPTIC), m_NumThreadsPerSpike(1), m_AxonalDelaySteps(0), m_BackPropDelaySteps(0),
-        m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup), 
+        m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup), 
         m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled),
         m_OutputLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
         m_WUInitialiser(wumInitialiser), m_PSInitialiser(psmInitialiser), m_SparseConnectivityInitialiser(connectivityInitialiser),  m_ToeplitzConnectivityInitialiser(toeplitzInitialiser), 
@@ -490,6 +493,11 @@ void SynapseGroup::finalise(double dt)
     m_WUInitialiser.finalise(dt);
     m_SparseConnectivityInitialiser.finalise(dt);
     m_ToeplitzConnectivityInitialiser.finalise(dt);
+
+    // If weight update uses dendritic delay but maximum number of delay timesteps hasn't been specified
+    if(isDendriticDelayRequired() && !m_MaxDendriticDelayTimesteps.has_value()) {
+        throw std::runtime_error("Synapse group '" + getName() + "' uses a weight update model with dendritic delays but maximum dendritic delay timesteps has not been set");
+    }
 
     // Loop through presynaptic variable references
     for(const auto &v : getWUInitialiser().getPreNeuronVarReferences()) {
