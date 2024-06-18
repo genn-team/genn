@@ -102,25 +102,22 @@ private:
     {
         // Cache reference to current reference
         std::reference_wrapper<EnvironmentBase> oldEnvironment = m_Environment; 
+    
+        // Create new call argument environment and set to current
+        EnvironmentCallArgument environment(oldEnvironment.get());
+        m_Environment = environment;
 
-        // Push new vector of arguments onto call argument stack and 
-        // reserve memory to hold index argument
-        m_CallArguments.emplace();
-        m_CallArguments.top().reserve(1);
-        {
-            // Create new call argument environment and set to current
-            EnvironmentCallArgument environment(oldEnvironment.get());
-            m_Environment = environment;
-
-            // Pretty print array index
-            arraySubscript.getIndex()->accept(*this);
-
-            // Add pretty printed argument to vector on top of stack
-            m_CallArguments.top().push_back(environment.getString());
-        }
+        // Pretty print array index
+        arraySubscript.getIndex()->accept(*this);
 
         // Restore old environment
         m_Environment = oldEnvironment;
+
+        // Push arguments to top of stack
+        m_CallArguments.emplace(std::piecewise_construct,
+                                std::forward_as_tuple(true),
+                                std::forward_as_tuple());
+        m_CallArguments.top().second.push_back(environment.getString());
 
         // Pretty print array
         // **NOTE** like with Expression::Call, when this reaches an
@@ -150,12 +147,9 @@ private:
         // Cache reference to current reference
         std::reference_wrapper<EnvironmentBase> oldEnvironment = m_Environment; 
         
-        // Push new vector of arguments onto call argument stack and 
-        // reserve memory to hold all arguments
-        m_CallArguments.emplace();
-        m_CallArguments.top().reserve(call.getArguments().size());
-
         // Loop through call arguments
+        std::vector<std::string> arguments;
+        arguments.reserve(call.getArguments().size());
         for (const auto &a : call.getArguments()) {
             // Create new call argument environment and set to current
             EnvironmentCallArgument environment(oldEnvironment.get());
@@ -164,13 +158,18 @@ private:
             // Pretty print argument
             a->accept(*this);
             
-            // Add pretty printed argument to vector on top of stack
-            m_CallArguments.top().push_back(environment.getString());
+            // Add pretty printed argument to vector
+            arguments.push_back(environment.getString());
          }
 
         // Restore old environment
         m_Environment = oldEnvironment;
-         
+        
+        // Push arguments to top of stack
+        m_CallArguments.emplace(std::piecewise_construct,
+                                std::forward_as_tuple(false), 
+                                std::forward_as_tuple(arguments));
+        
         // Pretty print callee
         call.getCallee()->accept(*this);
 
@@ -252,7 +251,7 @@ private:
 
             // Loop through call arguments on top of stack
             size_t i = 0;
-            for (i = 0; i < m_CallArguments.top().size(); i++) {
+            for (i = 0; i < m_CallArguments.top().second.size(); i++) {
                 // If name contains a $(i) placeholder to replace with this argument, replace with pretty-printed argument
                 const std::string placeholder = "$(" + std::to_string(i) + ")";
 
@@ -264,7 +263,7 @@ private:
                 
                 // Keep replacing placeholders
                 do {
-                    name.replace(found, placeholder.length(), m_CallArguments.top().at(i));
+                    name.replace(found, placeholder.length(), m_CallArguments.top().second.at(i));
                     found = name.find(placeholder, found);
                 } while(found != std::string::npos);
             }
@@ -277,7 +276,7 @@ private:
                 if (found != std::string::npos) {
                     // Concatenate together all remaining arguments
                     std::ostringstream variadicArgumentsStream;
-                    std::copy(m_CallArguments.top().cbegin() + i, m_CallArguments.top().cend(),
+                    std::copy(m_CallArguments.top().second.cbegin() + i, m_CallArguments.top().second.cend(),
                                 std::ostream_iterator<std::string>(variadicArgumentsStream, ", "));
 
                     // Replace variadic placeholder with all remaining arguments (after trimming trailing ", ")
@@ -287,16 +286,16 @@ private:
                 }
                 else {
                     throw std::runtime_error("Variadic function template for '" + variable.getName().lexeme + "' (" + name + ") has "
-                                             "insufficient placeholders for " + std::to_string(m_CallArguments.top().size()) + " argument call and no variadic placeholder '$(@)'");
+                                             "insufficient placeholders for " + std::to_string(m_CallArguments.top().second.size()) + " argument call and no variadic placeholder '$(@)'");
                 }
             }
         }
-        // Otherwise, if there are argumetns, they are presumably for array indexing
-        else if(!m_CallArguments.empty() && !m_CallArguments.top().empty()){
-            assert(m_CallArguments.top().size() == 1);
+        // Otherwise, if there are array subscript arguments on top of stack
+        else if(!m_CallArguments.empty() && m_CallArguments.top().first){
+            assert(m_CallArguments.top().second.size() == 1);
 
             // Add standard indexing to name
-            name += "[" + m_CallArguments.top().front() + "]";
+            name += "[" + m_CallArguments.top().second.front() + "]";
         }
         
         // Print out name
@@ -476,7 +475,7 @@ private:
     const Type::TypeContext &m_Context;
     const TypeChecker::ResolvedTypeMap &m_ResolvedTypes;
     StatementHandler m_ForEachSynapseHandler;
-    std::stack<std::vector<std::string>> m_CallArguments;
+    std::stack<std::pair<bool, std::vector<std::string>>> m_CallArguments;
 };
 }   // Anonymous namespace
 
