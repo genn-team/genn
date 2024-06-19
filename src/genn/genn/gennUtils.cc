@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <algorithm>
+#include <optional>
 
 // Standard C includes
 #include <cctype>
@@ -98,6 +99,43 @@ bool isIdentifierReferenced(const std::string &identifierName, const std::vector
                            return (t.type == Transpiler::Token::Type::IDENTIFIER && t.lexeme == identifierName); 
                        });
             
+}
+//--------------------------------------------------------------------------
+bool isIdentifierDelayed(const std::string &identifierName, const std::vector<Transpiler::Token> &tokens)
+{
+    // Loop through tokens
+    std::optional<bool> delayed;
+    for(auto t = tokens.cbegin(); t != tokens.cend(); t++) {
+        // If token is an identifier with correct name
+        if(t->type == Transpiler::Token::Type::IDENTIFIER && t->lexeme == identifierName) {
+            // If token isn't last in sequence and it's followed by a left square bracket
+            const auto tNext = std::next(t);
+            if(tNext != tokens.cend() && tNext->type == Transpiler::Token::Type::LEFT_SQUARE_BRACKET) {
+                // If identifier hasn't been encountered before, mark as delayed
+                if(!delayed.has_value()) {
+                    delayed = true;
+                }
+                // Otherwise, if this identifier was previous encountered without delay, give error
+                else if(!delayed.value()) {
+                    throw std::runtime_error("Identifier '" + identifierName + "' referenced both with and without delay");
+                }
+            }
+            // Otherwise
+            else {
+                // If identifier hasn't been encountered before, mark as non-delayed
+                if(!delayed.has_value()) {
+                    delayed = false;
+                }
+                // Otherwise, if this identifier was previous encountered with delay, give error
+                else if(delayed.value()) {
+                    throw std::runtime_error("Identifier '" + identifierName + "' referenced both with and without delay");
+                }
+            }
+        }
+    }
+
+    // Return true if identifier encountered delayed
+    return delayed.value_or(false);
 }
 //--------------------------------------------------------------------------
 bool isRNGRequired(const std::vector<Transpiler::Token> &tokens)
