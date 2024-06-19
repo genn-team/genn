@@ -46,6 +46,9 @@ GENN_EXPORT bool areTokensEmpty(const std::vector<Transpiler::Token> &tokens);
 //! Checks whether the sequence of token references a given identifier
 GENN_EXPORT bool isIdentifierReferenced(const std::string &identifierName, const std::vector<Transpiler::Token> &tokens);
 
+//! Checks whether the sequence of tokens references a given identifier with a delay
+GENN_EXPORT bool isIdentifierDelayed(const std::string &identifierName, const std::vector<Transpiler::Token> &tokens);
+
 //! Checks whether the sequence of token includes an RNG function identifier
 GENN_EXPORT bool isRNGRequired(const std::vector<Transpiler::Token> &tokens);
 
