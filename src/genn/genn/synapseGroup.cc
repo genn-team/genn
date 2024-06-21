@@ -499,6 +499,30 @@ void SynapseGroup::finalise(double dt)
         throw std::runtime_error("Synapse group '" + getName() + "' uses a weight update model with dendritic delays but maximum dendritic delay timesteps has not been set");
     }
 
+    // Determine whether any postsynaptic variable references are accessed with delay
+    // **NOTE** this isn't done lazily because Utils::isIdentifierDelayed also checks for consistency
+    bool dendriticVarDelay = false;
+    for(const auto &v : getWUInitialiser().getPostNeuronVarReferences()) {
+        dendriticVarDelay |= Utils::isIdentifierDelayed(v.first, getWUInitialiser().getPreSpikeSynCodeTokens());
+        dendriticVarDelay |= Utils::isIdentifierDelayed(v.first, getWUInitialiser().getPreEventSynCodeTokens());
+        dendriticVarDelay |= Utils::isIdentifierDelayed(v.first, getWUInitialiser().getPostEventSynCodeTokens());
+        dendriticVarDelay |= Utils::isIdentifierDelayed(v.first, getWUInitialiser().getPostSpikeSynCodeTokens());
+        dendriticVarDelay |= Utils::isIdentifierDelayed(v.first, getWUInitialiser().getSynapseDynamicsCodeTokens());
+    }
+    for(const auto &v : getWUInitialiser().getSnippet()->getPostVars()) {
+        dendriticVarDelay |= Utils::isIdentifierDelayed(v.name, getWUInitialiser().getPreSpikeSynCodeTokens());
+        dendriticVarDelay |= Utils::isIdentifierDelayed(v.name, getWUInitialiser().getPreEventSynCodeTokens());
+        dendriticVarDelay |= Utils::isIdentifierDelayed(v.name, getWUInitialiser().getPostEventSynCodeTokens());
+        dendriticVarDelay |= Utils::isIdentifierDelayed(v.name, getWUInitialiser().getPostSpikeSynCodeTokens());
+        dendriticVarDelay |= Utils::isIdentifierDelayed(v.name, getWUInitialiser().getSynapseDynamicsCodeTokens());
+    }
+
+    // If there are any dendritically delayed variables, ensure postsynaptic neuron 
+    // group has enough delay slots to encompass maximum dendritic delay timesteps
+    if(dendriticVarDelay) {
+        m_TrgNeuronGroup->checkNumDelaySlots(getMaxDendriticDelayTimesteps());
+    }
+
     // Loop through presynaptic variable references
     for(const auto &v : getWUInitialiser().getPreNeuronVarReferences()) {
         // If variable reference is referenced in synapse code, mark variable 
@@ -517,6 +541,7 @@ void SynapseGroup::finalise(double dt)
     for(const auto &v : getWUInitialiser().getPostNeuronVarReferences()) {
         // If variable reference is referenced in synapse code, mark variable 
         // reference target as requiring queuing on target neuron group
+        // **NOTE** this will also detect delayed references
         if(Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPreSpikeSynCodeTokens())
            || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPreEventSynCodeTokens())
            || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPostEventSynCodeTokens())
