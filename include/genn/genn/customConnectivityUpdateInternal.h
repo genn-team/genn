@@ -85,13 +85,13 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CU.getPreVarLocation(varName); }
 
-    std::vector<Models::Base::Var> getDefs() const{ return m_CU.getModel()->getPreVars(); }
+    auto getDefs() const{ return m_CU.getModel()->getPreVars(); }
 
-    const std::map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getPreVarInitialisers(); }
+    const auto &getInitialisers() const{ return m_CU.getPreVarInitialisers(); }
 
-    bool isVarDelayed(const std::string &) const { return false; }
+    bool isVarDelayed(const std::string&) const { return false; }
 
-    const CustomConnectivityUpdate &getTarget() const{ return m_CU; }
+    const auto &getTarget() const{ return m_CU; }
 
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 
@@ -116,13 +116,13 @@ public:
     //----------------------------------------------------------------------------
     VarLocation getLoc(const std::string &varName) const{ return m_CU.getPostVarLocation(varName); }
 
-    std::vector<Models::Base::Var> getDefs() const{ return m_CU.getModel()->getPostVars(); }
+    auto getDefs() const{ return m_CU.getModel()->getPostVars(); }
 
-    const std::map<std::string, InitVarSnippet::Init> &getInitialisers() const{ return m_CU.getPostVarInitialisers(); }
+    const auto &getInitialisers() const{ return m_CU.getPostVarInitialisers(); }
 
-    bool isVarDelayed(const std::string &) const { return false; }
+    bool isVarDelayed(const std::string&) const { return false; }
 
-    const CustomConnectivityUpdate &getTarget() const{ return m_CU; }
+    const auto &getTarget() const{ return m_CU; }
 
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
     
