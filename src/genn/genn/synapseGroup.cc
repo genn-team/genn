@@ -494,11 +494,6 @@ void SynapseGroup::finalise(double dt)
     m_SparseConnectivityInitialiser.finalise(dt);
     m_ToeplitzConnectivityInitialiser.finalise(dt);
 
-    // If weight update uses dendritic delay but maximum number of delay timesteps hasn't been specified
-    if(isDendriticDelayRequired() && !m_MaxDendriticDelayTimesteps.has_value()) {
-        throw std::runtime_error("Synapse group '" + getName() + "' uses a weight update model with dendritic delays but maximum dendritic delay timesteps has not been set");
-    }
-
     // Determine whether any postsynaptic variable references are accessed with delay
     // **NOTE** this isn't done lazily because Utils::isIdentifierDelayed also checks for consistency
     bool dendriticVarDelay = false;
@@ -521,6 +516,11 @@ void SynapseGroup::finalise(double dt)
     // group has enough delay slots to encompass maximum dendritic delay timesteps
     if(dendriticVarDelay) {
         m_TrgNeuronGroup->checkNumDelaySlots(getMaxDendriticDelayTimesteps());
+    }
+
+     // If weight update uses dendritic delay but maximum number of delay timesteps hasn't been specified
+    if((dendriticVarDelay || isDendriticDelayRequired()) && !m_MaxDendriticDelayTimesteps.has_value()) {
+        throw std::runtime_error("Synapse group '" + getName() + "' uses a weight update model with dendritic delays but maximum dendritic delay timesteps has not been set");
     }
 
     // Loop through presynaptic variable references
