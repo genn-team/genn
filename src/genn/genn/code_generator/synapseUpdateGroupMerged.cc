@@ -36,6 +36,8 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
                                      v.getVarDims(), "$(id_pre)");
         }, 
         "", true);
+
+    // **TODO** handle dendritic delay
     synEnv.template addVarRefs<SynapseWUPostNeuronVarRefAdapter>(
         [&sg, batchSize](VarAccessMode, const Models::VarReference &v)
         {
@@ -50,6 +52,8 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
         { 
             return sg.getPreWUVarIndex(batchSize, getVarAccessDim(a), "$(id_pre)");
         }, "", true);
+
+     // **TODO** handle dendritic delay
     synEnv.template addVars<SynapseWUPostVarAdapter>(
         [&sg, batchSize](VarAccess a, const std::string&) 
         { 

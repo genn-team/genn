@@ -96,12 +96,14 @@ NeuronGroup *VarReference::getDelayNeuronGroup() const
     return std::visit(
         Utils::Overload{
             [](const NGRef &ref)->NeuronGroup* {
+                // **NOTE** this will also work fine with dendritic delay
                 return (ref.group->isDelayRequired() && ref.group->isVarQueueRequired(ref.var.name)) ? ref.group : nullptr;
             },
             [](const WUPreRef &ref)->NeuronGroup* {
                 return (ref.group->getAxonalDelaySteps() > 0) ? ref.group->getSrcNeuronGroup() : nullptr;
             },
             [](const WUPostRef &ref)->NeuronGroup* {
+                // **TODO** also check if variable is dendritcally delayed
                 return (ref.group->getBackPropDelaySteps() > 0) ? ref.group->getTrgNeuronGroup() : nullptr;
             },
             [](const auto&)->NeuronGroup* { return nullptr; }},
