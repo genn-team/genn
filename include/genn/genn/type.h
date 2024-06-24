@@ -426,6 +426,12 @@ inline ResolvedType getAddToPrePost(ResolvedType weightType) { return ResolvedTy
 //! Get type to add a weight type with delay
 inline ResolvedType getAddToPrePostDelay(ResolvedType weightType) { return ResolvedType::createFunction(Void, {weightType, Uint32}); }
 
+//! Get type for array subscript overload functions
+inline ResolvedType getArraySubscript(ResolvedType valueType) { return ResolvedType::createFunction(valueType, {Int32}, FunctionFlags::ARRAY_SUBSCRIPT_OVERRIDE); }
+
+//----------------------------------------------------------------------------
+// Type helper functions
+//----------------------------------------------------------------------------
 //! Apply C type promotion rules to numeric type
 GENN_EXPORT ResolvedType getPromotedType(const ResolvedType &type);
 
