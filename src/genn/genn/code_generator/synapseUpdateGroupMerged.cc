@@ -38,6 +38,7 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
         "", true);
 
     // **TODO** handle dendritic delay
+    // **NOTE** getDelayNeuronGroup should work fine in this context
     synEnv.template addVarRefs<SynapseWUPostNeuronVarRefAdapter>(
         [&sg, batchSize](VarAccessMode, const Models::VarReference &v)
         {
@@ -53,7 +54,8 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
             return sg.getPreWUVarIndex(batchSize, getVarAccessDim(a), "$(id_pre)");
         }, "", true);
 
-     // **TODO** handle dendritic delay
+    // **TODO** handle dendritic delay
+    // **NOTE** getPostWUVarIndex only checks backpropdelay steps
     synEnv.template addVars<SynapseWUPostVarAdapter>(
         [&sg, batchSize](VarAccess a, const std::string&) 
         { 
