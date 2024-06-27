@@ -39,12 +39,16 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
 
     // **TODO** handle dendritic delay
     // **NOTE** getDelayNeuronGroup should work fine in this context
-    synEnv.template addVarRefs<SynapseWUPostNeuronVarRefAdapter>(
+    synEnv.template addVarRefsHet<SynapseWUPostNeuronVarRefAdapter>(
         [&sg, batchSize](VarAccessMode, const Models::VarReference &v)
         {
             return sg.getPostVarIndex(v.getDelayNeuronGroup() != nullptr, batchSize,
                                       v.getVarDims(), "$(id_post)");
         }, 
+        [&sg, batchSize](VarAccessMode, const Models::VarReference &v)
+        {
+            return sg.getPostVarHetDelayIndex(batchSize, v.getVarDims(), "$(id_post)");
+        },
         "", true);
 
     // Substitute names of pre and postsynaptic weight update variable
@@ -252,6 +256,33 @@ std::string SynapseGroupMergedBase::getPostPrevSpikeTimeIndex(bool delay, unsign
     else {
         return (batched ? "$(_post_batch_offset) + " : "") + index;
     }
+}
+//----------------------------------------------------------------------------
+std::string SynapseGroupMergedBase::getPostVarHetDelayIndex(unsigned int batchSize, VarAccessDim varDims,
+                                                            const std::string &index) const
+{
+    const bool batched = ((varDims & VarAccessDim::BATCH) && batchSize > 1);
+    const unsigned int numTrgDelaySlots = getArchetype().getTrgNeuronGroup()->getNumDelaySlots();
+
+    const std::string delaySlot = "((*$(_trg_spk_que_ptr) + " + std::to_string(numTrgDelaySlots) + " - $(0)) % " + std::to_string(numTrgDelaySlots) + ")";
+    if (!(varDims & VarAccessDim::ELEMENT)) {
+        if(batched) {
+            return "($(batch) * " + std::to_string(numTrgDelaySlots) + ") " + delaySlot;
+        }
+        else {
+            return delaySlot;
+        }
+    }
+    else {
+        const std::string delayOffset = "(" + delaySlot + " * $(num_post))";
+        if(batched) {
+            return delayOffset + "($(_post_batch_offset) * " + std::to_string(numTrgDelaySlots) + ") + " + index;
+        }
+        else {
+            return delayOffset + " + " + index;
+        }
+    }
+
 }
 //--------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getSynVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
