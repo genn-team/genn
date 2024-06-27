@@ -249,6 +249,8 @@ public:
 
     bool isVarDelayed(const std::string&) const{ return (m_SG.getBackPropDelaySteps() != 0); }
 
+    bool isVarDelayedInSynCode(const std::string &name) const{ return m_SG.getWUInitialiser().isIdentifierDelayedInSynCode(name); }
+
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 
 private:
@@ -323,6 +325,8 @@ public:
     auto getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getPostNeuronVarRefs(); }
 
     const auto &getInitialisers() const{ return m_SG.getWUInitialiser().getPostNeuronVarReferences(); }
+
+    bool isVarDelayedInSynCode(const std::string &name) const{ return m_SG.getWUInitialiser().isIdentifierDelayedInSynCode(name); }
 
 private:
     //----------------------------------------------------------------------------

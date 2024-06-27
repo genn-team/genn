@@ -183,6 +183,8 @@ public:
     const auto &getPreDynamicsCodeTokens() const{ return m_PreDynamicsCodeTokens; }
     const auto &getPostDynamicsCodeTokens() const{ return m_PostDynamicsCodeTokens; }
 
+    bool isIdentifierDelayedInSynCode(const std::string &name) const;
+    
     void finalise(double dt);
     
 private:

@@ -89,6 +89,9 @@ public:
         return ((batchSize == 1) ? "" : "$(_pre_batch_offset) + ") + index;
     }
 
+    std::string getPostVarHetDelayIndex(unsigned int batchSize, VarAccessDim varDims,
+                                        const std::string &index) const;
+
     std::string getSynVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
     std::string getKernelVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
     
