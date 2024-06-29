@@ -18,7 +18,7 @@ pre_neuron_model = create_neuron_model(
     """
     x = (id == (int)t) ? 1.0 : 0.0;
     """,
-    var_name_types=[("x", "scalar")])
+    vars=[("x", "scalar")])
 
 post_neuron_model = create_neuron_model(
     "post_neuron",
@@ -26,7 +26,7 @@ post_neuron_model = create_neuron_model(
     """
     x = Isyn;
     """,
-    var_name_types=[("x", "scalar")])
+    vars=[("x", "scalar")])
 
 decoder_model = create_sparse_connect_init_snippet(
     "decoder",
@@ -53,7 +53,7 @@ decoder_dense_model = create_var_init_snippet(
 def test_forward(make_model, backend, precision):
     continous_weight_update_model = create_weight_update_model(
         "continous_weight_update",
-        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)],
+        vars=[("g", "scalar", VarAccess.READ_ONLY)],
         pre_neuron_var_refs=[("x", "scalar", VarAccessMode.READ_ONLY)],
         synapse_dynamics_code=
         """
@@ -241,7 +241,7 @@ def test_forward(make_model, backend, precision):
 def test_forward_den_delay(make_model, backend, precision):
     continous_den_delay_wum = create_weight_update_model(
         "continous_den_delay",
-        var_name_types=[("g", "scalar", VarAccess.READ_ONLY),
+        vars=[("g", "scalar", VarAccess.READ_ONLY),
                         ("d", "uint8_t", VarAccess.READ_ONLY)],
         pre_neuron_var_refs=[("x", "scalar", VarAccessMode.READ_ONLY)],
         synapse_dynamics_code=
@@ -326,11 +326,11 @@ def test_reverse(make_model, backend, precision):
         y = Isyn;
         x = (id == (int)t) ? 1.0 : 0.0;
         """,
-        var_name_types=[("x", "scalar"), ("y", "scalar")])
+        vars=[("x", "scalar"), ("y", "scalar")])
 
     continous_reverse_model = create_weight_update_model(
         "continous_reverse",
-        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)],
+        vars=[("g", "scalar", VarAccess.READ_ONLY)],
         pre_neuron_var_refs=[("x", "scalar", VarAccessMode.READ_ONLY)],
         synapse_dynamics_code=
         """

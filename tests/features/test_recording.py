@@ -23,7 +23,7 @@ spike_event_source_array_model = create_neuron_model(
         output = false;
     }
     """,
-    var_name_types=[("startSpike", "unsigned int"), ("endSpike", "unsigned int", VarAccess.READ_ONLY_DUPLICATE),
+    vars=[("startSpike", "unsigned int"), ("endSpike", "unsigned int", VarAccess.READ_ONLY_DUPLICATE),
                     ("output", "bool")],
     extra_global_params=[("spikeTimes", "scalar*")])
 

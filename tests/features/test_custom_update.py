@@ -29,30 +29,30 @@ empty_neuron_model = create_neuron_model("empty")
 def test_custom_update(make_model, backend, precision, batch_size):
     neuron_model = create_neuron_model(
         "neuron",
-        var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE),
+        vars=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE),
                         ("XShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
 
     current_source_model = create_current_source_model(
         "current_source",
-        var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE),
+        vars=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE),
                         ("XShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
 
     weight_update_model = create_weight_update_model(
         "weight_update",
-        var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
-        pre_var_name_types=[("preX", "scalar", VarAccess.READ_ONLY_DUPLICATE),
+        vars=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
+        pre_vars=[("preX", "scalar", VarAccess.READ_ONLY_DUPLICATE),
                             ("preXShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)],
-        post_var_name_types=[("postX", "scalar", VarAccess.READ_ONLY_DUPLICATE),
+        post_vars=[("postX", "scalar", VarAccess.READ_ONLY_DUPLICATE),
                              ("postXShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
 
     postsynaptic_update_model = create_postsynaptic_model(
         "postsynaptic_update",
-        var_name_types=[("psmX", "scalar", VarAccess.READ_ONLY_DUPLICATE),
+        vars=[("psmX", "scalar", VarAccess.READ_ONLY_DUPLICATE),
                         ("psmXShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
 
     custom_update_model = create_custom_update_model(
         "custom_update",
-        var_name_types=[("X", "scalar", CustomUpdateVarAccess.READ_ONLY)],
+        vars=[("X", "scalar", CustomUpdateVarAccess.READ_ONLY)],
         var_refs=[("R", "scalar")])
 
     set_time_custom_update_model = create_custom_update_model(
@@ -62,7 +62,7 @@ def test_custom_update(make_model, backend, precision, batch_size):
          V = (batch * 1000.0) + t;
          R = (batch * 1000.0) + t;
          """,
-         var_name_types=[("V", "scalar")],
+         vars=[("V", "scalar")],
          var_refs=[("R", "scalar", VarAccessMode.READ_WRITE)])
 
     set_time_shared_custom_update_model = create_custom_update_model(
@@ -220,12 +220,12 @@ def test_custom_update(make_model, backend, precision, batch_size):
 def test_custom_update_delay(make_model, backend, precision, batch_size):
     neuron_model = create_neuron_model(
         "neuron",
-        var_name_types=[("V", "scalar", VarAccess.READ_ONLY_DUPLICATE),
+        vars=[("V", "scalar", VarAccess.READ_ONLY_DUPLICATE),
                         ("U", "scalar", VarAccess.READ_ONLY_DUPLICATE)])
 
     weight_update_model = create_weight_update_model(
         "weight_update",
-        var_name_types=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
+        vars=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
         pre_neuron_var_refs=[("V", "scalar", VarAccessMode.READ_ONLY)],
         synapse_dynamics_code=
         """
@@ -233,8 +233,8 @@ def test_custom_update_delay(make_model, backend, precision, batch_size):
         """)
     pre_weight_update_model = create_weight_update_model(
         "pre_weight_update",
-        pre_var_name_types=[("pre", "scalar")],
-        var_name_types=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
+        pre_vars=[("pre", "scalar")],
+        vars=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
         pre_neuron_var_refs=[("V", "scalar", VarAccessMode.READ_ONLY)],
         synapse_dynamics_code=
         """
@@ -319,7 +319,7 @@ def test_custom_update_delay(make_model, backend, precision, batch_size):
 def test_custom_update_transpose(make_model, backend, precision, batch_size):
     static_pulse_duplicate_model = create_weight_update_model(
         "static_pulse_duplicate",
-        var_name_types=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
+        vars=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
         pre_spike_syn_code=
         """
         addToPost(g);
@@ -375,7 +375,7 @@ def test_custom_update_transpose(make_model, backend, precision, batch_size):
 def test_custom_update_neuron_reduce(make_model, backend, precision, batch_size):
     reduction_neuron_model = create_neuron_model(
         "reduction_neuron",
-        var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE),
+        vars=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE),
                         ("Y", "scalar", VarAccess.READ_ONLY_DUPLICATE)])
 
     softmax_1_custom_update_model = create_custom_update_model(
@@ -384,7 +384,7 @@ def test_custom_update_neuron_reduce(make_model, backend, precision, batch_size)
         """
         MaxX = X;
         """,
-        var_name_types=[("MaxX", "scalar", CustomUpdateVarAccess.REDUCE_NEURON_MAX)],
+        vars=[("MaxX", "scalar", CustomUpdateVarAccess.REDUCE_NEURON_MAX)],
         var_refs=[("X", "scalar", VarAccessMode.READ_ONLY)])
 
     softmax_2_custom_update_model = create_custom_update_model(
@@ -393,7 +393,7 @@ def test_custom_update_neuron_reduce(make_model, backend, precision, batch_size)
         """
         SumExpX = exp(X - MaxX);
         """,
-        var_name_types=[("SumExpX", "scalar", CustomUpdateVarAccess.REDUCE_NEURON_SUM)],
+        vars=[("SumExpX", "scalar", CustomUpdateVarAccess.REDUCE_NEURON_SUM)],
         var_refs=[("X", "scalar", VarAccessMode.READ_ONLY),
                   ("MaxX", "scalar", VarAccessMode.READ_ONLY)])
 
@@ -456,12 +456,12 @@ def test_custom_update_batch_reduction(make_model, backend, precision, batch_siz
     # **TODO** once VarAccess is refactored, we should really be able to reduce neuron shared across batch dimension
     neuron_model = create_neuron_model(
         "neuron",
-        var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE),
+        vars=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE),
                         ("SumX", "scalar", VarAccess.READ_ONLY)])
 
     weight_update_model = create_weight_update_model(
         "weight_update",
-        var_name_types=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE),
+        vars=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE),
                         ("SumX", "scalar", VarAccess.READ_ONLY)])
    
     reduction_custom_update_model = create_custom_update_model(
@@ -471,7 +471,7 @@ def test_custom_update_batch_reduction(make_model, backend, precision, batch_siz
         SumX = X;
         MaxX = X;
         """,
-        var_name_types=[("MaxX", "scalar", CustomUpdateVarAccess.REDUCE_BATCH_MAX)],
+        vars=[("MaxX", "scalar", CustomUpdateVarAccess.REDUCE_BATCH_MAX)],
         var_refs=[("X", "scalar", VarAccessMode.READ_ONLY),
                   ("SumX", "scalar", VarAccessMode.REDUCE_SUM)])
 

@@ -14,7 +14,7 @@ from pygenn import (create_neuron_model, create_var_ref,
 # into synapse during various kinds of synaptic event
 pre_learn_post_weight_update_model = create_weight_update_model(
     "pre_learn_post_weight_update",
-    var_name_types=[("w", "scalar")],
+    vars=[("w", "scalar")],
     pre_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
     
     post_spike_syn_code=
@@ -24,7 +24,7 @@ pre_learn_post_weight_update_model = create_weight_update_model(
 
 pre_sim_weight_update_model = create_weight_update_model(
     "pre_sim_weight_update",
-    var_name_types=[("w", "scalar")],
+    vars=[("w", "scalar")],
     pre_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
 
     pre_spike_syn_code=
@@ -34,7 +34,7 @@ pre_sim_weight_update_model = create_weight_update_model(
 
 pre_event_weight_update_model = create_weight_update_model(
     "pre_sim_weight_update",
-    var_name_types=[("w", "scalar")],
+    vars=[("w", "scalar")],
     pre_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
 
     pre_event_syn_code=
@@ -50,7 +50,7 @@ pre_event_weight_update_model = create_weight_update_model(
 # into synapse during various kinds of synaptic event
 post_sim_weight_update_model = create_weight_update_model(
     "post_sim_weight_update",
-    var_name_types=[("w", "scalar")],
+    vars=[("w", "scalar")],
     post_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
 
     pre_spike_syn_code=
@@ -60,7 +60,7 @@ post_sim_weight_update_model = create_weight_update_model(
 
 post_learn_post_weight_update_model = create_weight_update_model(
     "post_learn_post_weight_update",
-    var_name_types=[("w", "scalar")],
+    vars=[("w", "scalar")],
     post_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
 
     post_spike_syn_code=
@@ -70,7 +70,7 @@ post_learn_post_weight_update_model = create_weight_update_model(
 
 post_event_weight_update_model = create_weight_update_model(
     "pre_sim_weight_update",
-    var_name_types=[("w", "scalar")],
+    vars=[("w", "scalar")],
     post_neuron_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
 
     pre_event_syn_code=
@@ -97,7 +97,7 @@ def test_pre_post_neuron_var(make_model, backend, precision, delay):
         """
         t >= (scalar)id && fmod(t - (scalar)id, 10.0) < 1e-4
         """,
-        var_name_types=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)])
+        vars=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)])
 
     # Neuron model which updates a state variable with time + per-neuron shift
     shift_pattern_neuron_model = create_neuron_model(
@@ -106,7 +106,7 @@ def test_pre_post_neuron_var(make_model, backend, precision, delay):
         """
         s = t + shift;
         """,
-        var_name_types=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)])
+        vars=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)])
 
 
     model = make_model(precision, "test_pre_post_neuron_var", backend=backend)

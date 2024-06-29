@@ -37,8 +37,8 @@ def test_wu_var(make_model, backend, precision, fuse, delay):
     # during various kinds of synaptic event
     pre_learn_post_weight_update_model = create_weight_update_model(
         "pre_learn_post_weight_update",
-        var_name_types=[("w", "scalar")],
-        pre_var_name_types=[("s", "scalar")],
+        vars=[("w", "scalar")],
+        pre_vars=[("s", "scalar")],
         
         post_spike_syn_code=
         """
@@ -51,8 +51,8 @@ def test_wu_var(make_model, backend, precision, fuse, delay):
     
     pre_sim_weight_update_model = create_weight_update_model(
         "pre_sim_weight_update",
-        var_name_types=[("w", "scalar")],
-        pre_var_name_types=[("s", "scalar")],
+        vars=[("w", "scalar")],
+        pre_vars=[("s", "scalar")],
 
         pre_spike_syn_code=
         """
@@ -65,8 +65,8 @@ def test_wu_var(make_model, backend, precision, fuse, delay):
     
     pre_synapse_dynamics_weight_update_model = create_weight_update_model(
         "pre_synapse_dynamics_weight_update",
-        var_name_types=[("w", "scalar")],
-        pre_var_name_types=[("s", "scalar")],
+        vars=[("w", "scalar")],
+        pre_vars=[("s", "scalar")],
 
         synapse_dynamics_code=
         """
@@ -82,8 +82,8 @@ def test_wu_var(make_model, backend, precision, fuse, delay):
     # during various kinds of synaptic event
     post_learn_post_weight_update_model = create_weight_update_model(
         "post_learn_post_weight_update",
-        var_name_types=[("w", "scalar")],
-        post_var_name_types=[("s", "scalar")],
+        vars=[("w", "scalar")],
+        post_vars=[("s", "scalar")],
         
         post_spike_syn_code=
         """
@@ -96,8 +96,8 @@ def test_wu_var(make_model, backend, precision, fuse, delay):
     
     post_sim_weight_update_model = create_weight_update_model(
         "post_sim_weight_update",
-        var_name_types=[("w", "scalar")],
-        post_var_name_types=[("s", "scalar")],
+        vars=[("w", "scalar")],
+        post_vars=[("s", "scalar")],
 
         pre_spike_syn_code=
         """
@@ -110,8 +110,8 @@ def test_wu_var(make_model, backend, precision, fuse, delay):
     
     post_synapse_dynamics_weight_update_model = create_weight_update_model(
         "post_synapse_dynamics_weight_update",
-        var_name_types=[("w", "scalar")],
-        post_var_name_types=[("s", "scalar")],
+        vars=[("w", "scalar")],
+        post_vars=[("s", "scalar")],
         
         synapse_dynamics_code=
         """
@@ -225,8 +225,8 @@ def test_wu_var_cont(make_model, backend, precision, fuse, delay):
     # during various kinds of synaptic event
     pre_learn_post_weight_update_model = create_weight_update_model(
         "pre_learn_post_weight_update",
-        var_name_types=[("w", "scalar")],
-        pre_var_name_types=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
+        vars=[("w", "scalar")],
+        pre_vars=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
         
         post_spike_syn_code=
         """
@@ -239,8 +239,8 @@ def test_wu_var_cont(make_model, backend, precision, fuse, delay):
 
     pre_sim_weight_update_model = create_weight_update_model(
         "pre_sim_weight_update",
-        var_name_types=[("w", "scalar")],
-        pre_var_name_types=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
+        vars=[("w", "scalar")],
+        pre_vars=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
 
         pre_spike_syn_code=
         """
@@ -256,8 +256,8 @@ def test_wu_var_cont(make_model, backend, precision, fuse, delay):
     # during various kinds of synaptic event
     post_learn_post_weight_update_model = create_weight_update_model(
         "post_learn_post_weight_update",
-        var_name_types=[("w", "scalar")],
-        post_var_name_types=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
+        vars=[("w", "scalar")],
+        post_vars=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
         
         post_spike_syn_code=
         """
@@ -270,8 +270,8 @@ def test_wu_var_cont(make_model, backend, precision, fuse, delay):
     
     post_sim_weight_update_model = create_weight_update_model(
         "post_sim_weight_update",
-        var_name_types=[("w", "scalar")],
-        post_var_name_types=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
+        vars=[("w", "scalar")],
+        post_vars=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
 
         pre_spike_syn_code=
         """
