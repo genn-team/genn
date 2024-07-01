@@ -145,6 +145,7 @@ public:
     typedef std::vector<DerivedParam> DerivedParamVec;
     typedef std::function<unsigned int(unsigned int, unsigned int, const std::map<std::string, Type::NumericValue> &)> CalcMaxLengthFunc;
     typedef std::function<std::vector<unsigned int>(const std::map<std::string, Type::NumericValue> &)> CalcKernelSizeFunc;
+    typedef std::function<unsigned int(const std::map<std::string, Type::NumericValue> &)> CalcNumChannelFunc;
 
     //----------------------------------------------------------------------------
     // Declared virtuals

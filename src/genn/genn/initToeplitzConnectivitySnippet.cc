@@ -22,6 +22,7 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     Snippet::Base::updateHash(hash);
 
     Utils::updateHash(getDiagonalBuildCode(), hash);
+    Utils::updateHash(getCalcPreChannelCode(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
@@ -42,6 +43,7 @@ Init::Init(const Base *snippet, const std::map<std::string, Type::NumericValue> 
 
     // Scan code tokens
     m_DiagonalBuildCodeTokens = Utils::scanCode(getSnippet()->getDiagonalBuildCode(), "Toeplitz connectivity diagonal build code");
+    m_CalcPreChannelCodeTokens = Utils::scanCode(getSnippet()->getCalcPreChannelCode(), "Toeplitz connectivity calculate pre channel code");
 }
 //----------------------------------------------------------------------------
 bool Init::isRNGRequired() const

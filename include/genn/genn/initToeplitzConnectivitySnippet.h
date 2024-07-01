@@ -19,9 +19,11 @@
 // Macros
 //----------------------------------------------------------------------------
 #define SET_DIAGONAL_BUILD_CODE(CODE) virtual std::string getDiagonalBuildCode() const override{ return CODE; }
+#define SET_CALC_PRE_CHANNEL_CODE(CODE) virtual std::string getCalcPreChannelCode() const override{ return CODE; }
 
 #define SET_CALC_MAX_ROW_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return FUNC; }
 #define SET_CALC_KERNEL_SIZE_FUNC(...) virtual CalcKernelSizeFunc getCalcKernelSizeFunc() const override{ return __VA_ARGS__; }
+#define SET_CALC_NUM_PRE_CHANNELS_FUNC(...) virtual CalcNumChannelFunc getCalcNumPreChannelFunc() const override{ return __VA_ARGS__; }
 
 #define SET_MAX_ROW_LENGTH(MAX_ROW_LENGTH) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return [](unsigned int, unsigned int, const std::map<std::string, Type::NumericValue> &){ return MAX_ROW_LENGTH; }; }
 
@@ -39,11 +41,17 @@ public:
     //----------------------------------------------------------------------------
     virtual std::string getDiagonalBuildCode() const{ return ""; }
 
+    virtual std::string getCalcPreChannelCode() const{ return ""; }
+
     //! Get function to calculate the maximum row length of this connector based on the parameters and the size of the pre and postsynaptic population
     virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const{ return CalcMaxLengthFunc(); }
 
-    //! Get function to calculate kernel size required for this conenctor based on its parameters
+    //! Get function to calculate kernel size required for this conenctor, based on its parameters
     virtual CalcKernelSizeFunc getCalcKernelSizeFunc() const{ return CalcKernelSizeFunc(); }
+
+    //! Get function to calculate number of channels presynaptic events 
+    //! will be split into for this connector, based on its parameters
+    virtual CalcNumChannelFunc getCalcNumPreChannelFunc() const{ return CalcNumChannelFunc(); }
 
     //------------------------------------------------------------------------
     // Public methods
@@ -69,11 +77,13 @@ public:
     bool isRNGRequired() const;
     
     const auto &getDiagonalBuildCodeTokens() const{ return m_DiagonalBuildCodeTokens; }
+    const auto &getCalcPreChannelCodeTokens() const{ return m_CalcPreChannelCodeTokens; }
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     std::vector<Transpiler::Token> m_DiagonalBuildCodeTokens;
+    std::vector<Transpiler::Token> m_CalcPreChannelCodeTokens;
 
 };
 
@@ -123,7 +133,6 @@ public:
         "for_each_synapse {\n"
         "    const int preRow = (id_pre / conv_ic) / conv_iw;\n"
         "    const int preCol = (id_pre / conv_ic) % conv_iw;\n"
-        "    const int preChan = id_pre % conv_ic;\n"
         "    // If we haven't gone off edge of output\n"
         "    const int postRow = preRow + kernRow - conv_bh;\n"
         "    const int postCol = preCol + kernCol - conv_bw;\n"
@@ -132,21 +141,26 @@ public:
         "        const int postInd = ((postRow * conv_ow * conv_oc) +\n"
         "                             (postCol * conv_oc) +\n"
         "                              kernOutChan);\n"
-        "        addSynapse(postInd,  flipKernRow, flipKernCol, preChan, kernOutChan);\n"
+        "        addSynapse(postInd, flipKernRow, flipKernCol, id_chan, kernOutChan);\n"
         "     }\n"
         "}\n");
+    SET_CALC_PRE_CHANNEL_CODE("id_pre % conv_ic");
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int, unsigned int, const ParamValues &pars)
         {
             return (pars.at("conv_kh").cast<unsigned int>() * pars.at("conv_kw").cast<unsigned int>() * pars.at("conv_oc").cast<unsigned int>());
         });
-
     SET_CALC_KERNEL_SIZE_FUNC(
         [](const ParamValues &pars)->std::vector<unsigned int>
         {
             return {pars.at("conv_kh").cast<unsigned int>(), pars.at("conv_kw").cast<unsigned int>(),
                     pars.at("conv_ic").cast<unsigned int>(), pars.at("conv_oc").cast<unsigned int>()};
+        });
+    SET_CALC_NUM_PRE_CHANNELS_FUNC(
+        [](const ParamValues &pars)
+        {
+            return pars.at("conv_ic").cast<unsigned int>();
         });
 };
 
@@ -193,7 +207,6 @@ public:
         "    // Convert spike ID into row, column and channel going INTO pool\n"
         "    const int prePoolInRow = (id_pre / pool_ic) / pool_iw;\n"
         "    const int prePoolInCol = (id_pre / pool_ic) % pool_iw;\n"
-        "    const int preChan = id_pre % pool_ic;\n"
         "    // Calculate row and column going OUT of pool\n"
         "    const int poolPreOutRow = prePoolInRow / pool_sh;\n"
         "    const int poolStrideRow = poolPreOutRow * pool_sh;\n"
@@ -208,10 +221,11 @@ public:
         "           const int postInd = ((postRow * conv_ow * conv_oc) +\n"
         "                                 (postCol * conv_oc) +\n"
         "                                 kernOutChan);\n"
-        "           addSynapse(postInd,  flipKernRow, flipKernCol, preChan, kernOutChan);\n"
+        "           addSynapse(postInd,  flipKernRow, flipKernCol, id_chan, kernOutChan);\n"
         "       }\n"
         "    }\n"
         "}\n");
+    SET_CALC_PRE_CHANNEL_CODE("id_pre % conv_ic");
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int, unsigned int, const ParamValues &pars)
@@ -224,6 +238,11 @@ public:
         {
             return {pars.at("conv_kh").cast<unsigned int>(), pars.at("conv_kw").cast<unsigned int>(),
                     pars.at("pool_ic").cast<unsigned int>(), pars.at("conv_oc").cast<unsigned int>()};
+        });
+    SET_CALC_NUM_PRE_CHANNELS_FUNC(
+        [](const ParamValues &pars)
+        {
+            return pars.at("conv_ic").cast<unsigned int>();
         });
 };
 }   // namespace GeNN::InitToeplitzConnectivitySnippet
