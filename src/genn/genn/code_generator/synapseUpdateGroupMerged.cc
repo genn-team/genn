@@ -28,7 +28,7 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
     synEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getWUInitialiser, &G::isWUDerivedParamHeterogeneous);
     synEnv.addExtraGlobalParams(wu->getExtraGlobalParams());
 
-    // Add referenced pre and postsynaptic neuron variables
+    // Add referenced presynaptic neuron variables
     synEnv.template addVarRefs<SynapseWUPreNeuronVarRefAdapter>(
         [&sg, batchSize](VarAccessMode, const Models::VarReference &v)
         {
@@ -37,8 +37,8 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
         }, 
         "", true);
 
-    // **TODO** handle dendritic delay
-    // **NOTE** getDelayNeuronGroup should work fine in this context
+
+    // Add referenced postsynaptic neuron variables which may have heterogeneous delays
     synEnv.template addVarRefsHet<SynapseWUPostNeuronVarRefAdapter>(
         [&sg, batchSize](VarAccessMode, const Models::VarReference &v)
         {
@@ -55,7 +55,7 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
     synEnv.template addVars<SynapseWUPreVarAdapter>(
         [&sg, batchSize](VarAccess a, const std::string&) 
         { 
-            return sg.getPreWUVarIndex(batchSize, getVarAccessDim(a), "$(id_pre)");
+            return sg.getPreVarIndex(sg.getArchetype().getAxonalDelaySteps() != 0, batchSize, getVarAccessDim(a), "$(id_pre)");
         }, "", true);
 
     // **TODO** handle dendritic delay
@@ -63,7 +63,7 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
     synEnv.template addVars<SynapseWUPostVarAdapter>(
         [&sg, batchSize](VarAccess a, const std::string&) 
         { 
-            return sg.getPostWUVarIndex(batchSize, getVarAccessDim(a), "$(id_post)");
+            return sg.getPostVarIndex(sg.getArchetype().getBackPropDelaySteps() != 0, batchSize, getVarAccessDim(a), "$(id_post)");
         }, "", true);
 
     
