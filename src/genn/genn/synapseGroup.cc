@@ -494,33 +494,25 @@ void SynapseGroup::finalise(double dt)
     m_SparseConnectivityInitialiser.finalise(dt);
     m_ToeplitzConnectivityInitialiser.finalise(dt);
 
-    // Determine whether any postsynaptic variable references are accessed with delay
-    // **NOTE** this isn't done lazily because Utils::isIdentifierDelayed also checks for consistency
-    bool dendriticVarDelay = false;
-    for(const auto &v : getWUInitialiser().getPostNeuronVarReferences()) {
-        dendriticVarDelay |= Utils::isIdentifierDelayed(v.first, getWUInitialiser().getPreSpikeSynCodeTokens());
-        dendriticVarDelay |= Utils::isIdentifierDelayed(v.first, getWUInitialiser().getPreEventSynCodeTokens());
-        dendriticVarDelay |= Utils::isIdentifierDelayed(v.first, getWUInitialiser().getPostEventSynCodeTokens());
-        dendriticVarDelay |= Utils::isIdentifierDelayed(v.first, getWUInitialiser().getPostSpikeSynCodeTokens());
-        dendriticVarDelay |= Utils::isIdentifierDelayed(v.first, getWUInitialiser().getSynapseDynamicsCodeTokens());
-    }
-    for(const auto &v : getWUInitialiser().getSnippet()->getPostVars()) {
-        dendriticVarDelay |= Utils::isIdentifierDelayed(v.name, getWUInitialiser().getPreSpikeSynCodeTokens());
-        dendriticVarDelay |= Utils::isIdentifierDelayed(v.name, getWUInitialiser().getPreEventSynCodeTokens());
-        dendriticVarDelay |= Utils::isIdentifierDelayed(v.name, getWUInitialiser().getPostEventSynCodeTokens());
-        dendriticVarDelay |= Utils::isIdentifierDelayed(v.name, getWUInitialiser().getPostSpikeSynCodeTokens());
-        dendriticVarDelay |= Utils::isIdentifierDelayed(v.name, getWUInitialiser().getSynapseDynamicsCodeTokens());
-    }
+    // Determine whether any postsynaptic neuron variable references or postsynaptic 
+    // weight update model variables are accessed with heterogeneous delays in synapse code
+    const auto &postNeuronVarRefs = getWUInitialiser().getPostNeuronVarReferences();
+    const auto postWUVars = getWUInitialiser().getSnippet()->getPostVars();
+    const bool heterogeneousVarDelay = 
+        (std::any_of(postNeuronVarRefs.cbegin(), postNeuronVarRefs.cend(),
+                     [](const auto &v){ return getWUInitialiser().isVarHeterogeneouslyDelayedInSynCode(v.first); })
+         || std::any_of(postWUVars.cbegin(), postWUVars.cend(),
+                        [](const auto &v){ return getWUInitialiser().isVarHeterogeneouslyDelayedInSynCode(v.name); }));
 
-    // If there are any dendritically delayed variables, ensure postsynaptic neuron 
-    // group has enough delay slots to encompass maximum dendritic delay timesteps
-    if(dendriticVarDelay) {
+    // If there are any dendritically delayed variables, ensure postsynaptic 
+    // neuron group has enough delay slots to encompass maximum dendritic delay timesteps
+    if(heterogeneousVarDelay) {
         m_TrgNeuronGroup->checkNumDelaySlots(getMaxDendriticDelayTimesteps());
     }
 
      // If weight update uses dendritic delay but maximum number of delay timesteps hasn't been specified
-    if((dendriticVarDelay || isDendriticOutputDelayRequired()) && !m_MaxDendriticDelayTimesteps.has_value()) {
-        throw std::runtime_error("Synapse group '" + getName() + "' uses a weight update model with dendritic delays but maximum dendritic delay timesteps has not been set");
+    if((heterogeneousVarDelay || isDendriticOutputDelayRequired()) && !m_MaxDendriticDelayTimesteps.has_value()) {
+        throw std::runtime_error("Synapse group '" + getName() + "' uses a weight update model with heterogeneous dendritic delays but maximum dendritic delay timesteps has not been set");
     }
 
     // Loop through presynaptic variable references
