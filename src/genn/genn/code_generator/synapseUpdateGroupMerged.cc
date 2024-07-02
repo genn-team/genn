@@ -37,7 +37,6 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
         }, 
         "", true);
 
-
     // Add referenced postsynaptic neuron variables which may have heterogeneous delays
     synEnv.template addVarRefsHet<SynapseWUPostNeuronVarRefAdapter>(
         [&sg, batchSize](VarAccessMode, const Models::VarReference &v)
@@ -51,22 +50,24 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
         },
         "", true);
 
-    // Substitute names of pre and postsynaptic weight update variable
+    // Substitute names of preynaptic weight update variables
     synEnv.template addVars<SynapseWUPreVarAdapter>(
         [&sg, batchSize](VarAccess a, const std::string&) 
         { 
             return sg.getPreVarIndex(sg.getArchetype().getAxonalDelaySteps() != 0, batchSize, getVarAccessDim(a), "$(id_pre)");
         }, "", true);
 
-    // **TODO** handle dendritic delay
-    // **NOTE** getPostWUVarIndex only checks backpropdelay steps
-    synEnv.template addVars<SynapseWUPostVarAdapter>(
+   // Substitute names of postsynaptic weight update variables which may have heterogeneous delays
+    synEnv.template addVarsHet<SynapseWUPostVarAdapter>(
         [&sg, batchSize](VarAccess a, const std::string&) 
         { 
             return sg.getPostVarIndex(sg.getArchetype().getBackPropDelaySteps() != 0, batchSize, getVarAccessDim(a), "$(id_post)");
+        },
+        [&sg, batchSize](VarAccess a, const std::string&)
+        {
+            return sg.getPostVarHetDelayIndex(batchSize, getVarAccessDim(a), "$(id_post)");
         }, "", true);
 
-    
     // If this synapse group has a kernel
     if (!sg.getArchetype().getKernelSize().empty()) {
         // Add substitution
