@@ -184,7 +184,7 @@ public:
     const auto &getPostDynamicsCodeTokens() const{ return m_PostDynamicsCodeTokens; }
 
     bool isVarHeterogeneouslyDelayedInSynCode(const std::string &name) const;
-    
+
     void finalise(double dt);
     
 private:
