@@ -561,19 +561,16 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
 
                         // Create an environment which caches neuron variable fields in local variables if they are accessed
                         // **NOTE** we do this right at the top so that local copies can be used by child groups
-                        // **NOTE** always copy variables if variable is delayed
                         EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> wuVarEnv(
                             ng, ng, ng.getTypeContext(), wuEnv, "", "l", true,
-                            [batchSize, &ng](const std::string &varName, VarAccess d)
+                            [batchSize, &ng](const std::string &varName, VarAccess d, bool delayed)
                             {
-                                const bool delayed = (ng.getArchetype().isVarQueueRequired(varName) && ng.getArchetype().isDelayRequired());
                                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
                             },
-                            [batchSize, &ng](const std::string &varName, VarAccess d)
+                            [batchSize, &ng](const std::string &varName, VarAccess d, bool delayed)
                             {
-                                const bool delayed = (ng.getArchetype().isVarQueueRequired(varName) && ng.getArchetype().isDelayRequired());
                                 return ng.getWriteVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
-                            });
+                            }, false);
                         ng.generateWUVarUpdate(wuEnv, batchSize);
                     }
 
