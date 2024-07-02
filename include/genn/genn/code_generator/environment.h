@@ -704,7 +704,7 @@ public:
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
             const auto qualifiedType = (readOnly || (getVarAccessMode(v.access) & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
             const auto name = hidden ? ("_" + v.name) : v.name;
-            if(archetypeAdaptor.isVarDelayedInSynCode(v.name)) {
+            if(archetypeAdaptor.isVarHeterogeneouslyDelayed(v.name)) {
                 addField(Type::getArraySubscript(resolvedType), name,
                          resolvedType.createPointer(), v.name + fieldSuffix,
                          [v](auto &runtime, const auto &g, size_t) 
@@ -765,7 +765,7 @@ public:
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
             const auto qualifiedType = (readOnly || (v.access & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
             const auto name = hidden ? ("_" + v.name) : v.name;
-            if(archetypeAdaptor.isVarDelayedInSynCode(v.name)) {
+            if(archetypeAdaptor.isVarHeterogeneouslyDelayed(v.name)) {
                 addField(Type::getArraySubscript(resolvedType), name,
                          resolvedType.createPointer(), v.name + fieldSuffix,
                          [v](auto &runtime, const auto &g, size_t) 
