@@ -986,9 +986,9 @@ TEST(SynapseGroup, IsDendriticDelayRequired)
         initWeightUpdate<ContinuousDenDelay>(contDenDelayParamVars, {}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(syn)->isDendriticDelayRequired());
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(synGraded)->isDendriticDelayRequired());
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(synContinuous)->isDendriticDelayRequired());
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(syn)->isDendriticOutputDelayRequired());
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(synGraded)->isDendriticOutputDelayRequired());
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(synContinuous)->isDendriticOutputDelayRequired());
 }
 
 TEST(SynapseGroup, SetMaxDendriticDelayTimesteps)

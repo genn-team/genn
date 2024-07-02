@@ -519,7 +519,7 @@ void SynapseGroup::finalise(double dt)
     }
 
      // If weight update uses dendritic delay but maximum number of delay timesteps hasn't been specified
-    if((dendriticVarDelay || isDendriticDelayRequired()) && !m_MaxDendriticDelayTimesteps.has_value()) {
+    if((dendriticVarDelay || isDendriticOutputDelayRequired()) && !m_MaxDendriticDelayTimesteps.has_value()) {
         throw std::runtime_error("Synapse group '" + getName() + "' uses a weight update model with dendritic delays but maximum dendritic delay timesteps has not been set");
     }
 
@@ -692,7 +692,7 @@ bool SynapseGroup::canWUMPrePostUpdateBeFused(const NeuronGroup *ng) const
     return true;
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::isDendriticDelayRequired() const
+bool SynapseGroup::isDendriticOutputDelayRequired() const
 {
     return (Utils::isIdentifierReferenced("addToPostDelay", getWUInitialiser().getPreSpikeSynCodeTokens())
             || Utils::isIdentifierReferenced("addToPostDelay", getWUInitialiser().getPreEventSynCodeTokens())
@@ -711,7 +711,7 @@ bool SynapseGroup::isPresynapticOutputRequired() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isPostsynapticOutputRequired() const
 {
-    if(isDendriticDelayRequired()) {
+    if(isDendriticOutputDelayRequired()) {
         return true;
     }
     else {

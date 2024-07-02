@@ -28,7 +28,7 @@ bool isSmallSharedMemoryPop(const PresynapticUpdateGroupMerged &sg,
         return false;
     }
     // Otherwise, if dendritic delays are required, shared memory approach cannot be used so return false
-    else if(sg.getArchetype().isDendriticDelayRequired()) {
+    else if(sg.getArchetype().isDendriticOutputDelayRequired()) {
         return false;
     }
     // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if all neuron groups targetted
@@ -383,7 +383,7 @@ bool PostSpan::shouldAccumulateInRegister(const PresynapticUpdateGroupMerged &sg
 {
     // If no dendritic delays are required and data structure is dense, we can accumulate output directly into register
     const auto matrixType = sg.getArchetype().getMatrixType();
-    return (!sg.getArchetype().isDendriticDelayRequired()
+    return (!sg.getArchetype().isDendriticOutputDelayRequired()
             && ((matrixType & SynapseMatrixConnectivity::DENSE) || (matrixType & SynapseMatrixConnectivity::BITMASK)));
 }
 
@@ -583,7 +583,7 @@ bool PostSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const Prefere
     // if synapse groups with bitmask connectivity and no dendritic delays request postsynaptic parallelism
     return ((sg.getParallelismHint() == SynapseGroup::ParallelismHint::WORD_PACKED_BITMASK)
             && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK)
-            && !sg.isDendriticDelayRequired());
+            && !sg.isDendriticOutputDelayRequired());
 }
 //----------------------------------------------------------------------------
 void PostSpanBitmask::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 

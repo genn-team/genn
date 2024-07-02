@@ -230,7 +230,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                         sg->getTrgNeuronGroup()->getNumNeurons() * batchSize,
                         sg->getOutputLocation(), false, 2);
             
-            if (sg->isDendriticDelayRequired()) {
+            if (sg->isDendriticOutputDelayRequired()) {
                 createArray(sg, "denDelay", getModel().getPrecision(), 
                             (size_t)sg->getMaxDendriticDelayTimesteps() * (size_t)sg->getTrgNeuronGroup()->getNumNeurons() * batchSize,
                             sg->getDendriticDelayLocation(), false, 2);
