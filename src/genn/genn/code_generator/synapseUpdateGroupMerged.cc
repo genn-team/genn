@@ -305,7 +305,7 @@ std::string SynapseGroupMergedBase::getPostVarHetDelayIndex(unsigned int batchSi
     else {
         const std::string delayOffset = "(" + delaySlot + " * $(num_post))";
         if(batched) {
-            return delayOffset + "($(_post_batch_offset) * " + std::to_string(numTrgDelaySlots) + ") + " + index;
+            return delayOffset + " + ($(_post_batch_offset) * " + std::to_string(numTrgDelaySlots) + ") + " + index;
         }
         else {
             return delayOffset + " + " + index;
