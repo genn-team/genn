@@ -500,9 +500,9 @@ void SynapseGroup::finalise(double dt)
     const auto postWUVars = getWUInitialiser().getSnippet()->getPostVars();
     const bool heterogeneousVarDelay = 
         (std::any_of(postNeuronVarRefs.cbegin(), postNeuronVarRefs.cend(),
-                     [](const auto &v){ return getWUInitialiser().isVarHeterogeneouslyDelayedInSynCode(v.first); })
+                     [this](const auto &v){ return getWUInitialiser().isVarHeterogeneouslyDelayedInSynCode(v.first); })
          || std::any_of(postWUVars.cbegin(), postWUVars.cend(),
-                        [](const auto &v){ return getWUInitialiser().isVarHeterogeneouslyDelayedInSynCode(v.name); }));
+                        [this](const auto &v){ return getWUInitialiser().isVarHeterogeneouslyDelayedInSynCode(v.name); }));
 
     // If there are any dendritically delayed variables, ensure postsynaptic 
     // neuron group has enough delay slots to encompass maximum dendritic delay timesteps
