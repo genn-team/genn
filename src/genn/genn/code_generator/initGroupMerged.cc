@@ -325,7 +325,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
         });
 
     // If dendritic delays are required
-    if(getArchetype().isDendriticDelayRequired()) {
+    if(getArchetype().isDendriticOutputDelayRequired()) {
         // Add field for dendritic delay buffer and zero
         groupEnv.addField(getScalarType().createPointer(), "_den_delay", "denDelay" + fieldSuffix,
                           [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "denDelay"); });

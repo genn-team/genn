@@ -330,8 +330,8 @@ protected:
     //! model been fused with those from other synapse groups?
     bool isWUPostModelFused() const { return m_FusedWUPostTarget != nullptr; }
 
-    //! Does this synapse group require dendritic delay?
-    bool isDendriticDelayRequired() const;
+    //! Is this synapse group's output dendritically delayed?
+    bool isDendriticOutputDelayRequired() const;
 
     //! Does this synapse group provide presynaptic output?
     bool isPresynapticOutputRequired() const; 

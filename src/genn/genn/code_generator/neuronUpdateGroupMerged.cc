@@ -92,7 +92,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     psmEnv.printLine(getScalarType().getName() + " linSyn = $(_out_post)[" + idx + "];");
 
     // If dendritic delay is required
-    if (getArchetype().isDendriticDelayRequired()) {
+    if (getArchetype().isDendriticOutputDelayRequired()) {
         // Add dendritic delay buffer and pointer into it
         psmEnv.addField(getScalarType().createPointer(), "_den_delay", "denDelay" + fieldSuffix,
                         [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "denDelay");});

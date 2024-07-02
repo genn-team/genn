@@ -58,7 +58,7 @@ public:
     using SynapseGroup::isPreSpikeFused;
     using SynapseGroup::isWUPreModelFused;
     using SynapseGroup::isWUPostModelFused;
-    using SynapseGroup::isDendriticDelayRequired;
+    using SynapseGroup::isDendriticOutputDelayRequired;
     using SynapseGroup::isPresynapticOutputRequired; 
     using SynapseGroup::isPostsynapticOutputRequired;
     using SynapseGroup::isProceduralConnectivityRNGRequired;
