@@ -333,6 +333,12 @@ protected:
     //! Is this synapse group's output dendritically delayed?
     bool isDendriticOutputDelayRequired() const;
 
+    //! Is the named postsynaptic weight update model variable heterogeneously delayed?
+    bool isWUPostVarHeterogeneouslyDelayed(const std::string &var) const;
+
+    //! Are any postsynaptic weight update model variable heterogeneously delayed?
+    bool areAnyWUPostVarHeterogeneouslyDelayed() const;
+
     //! Does this synapse group provide presynaptic output?
     bool isPresynapticOutputRequired() const; 
 
@@ -503,6 +509,10 @@ private:
     //! Initialiser used for creating toeplitz connectivity
     InitToeplitzConnectivitySnippet::Init m_ToeplitzConnectivityInitialiser;
 
+    //! Set of names of postsynaptic weight update 
+    //! model variables which are heterogeneously delayed
+    std::set<std::string> m_HeterogeneouslyDelayedWUPostVars;
+    
     //! Location of individual per-synapse state variables.
     /*! This is ignored for simulations on hardware with a single memory space */
     LocationContainer m_WUVarLocation;

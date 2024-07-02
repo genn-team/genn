@@ -563,11 +563,11 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                         // **NOTE** we do this right at the top so that local copies can be used by child groups
                         EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> wuVarEnv(
                             ng, ng, ng.getTypeContext(), wuEnv, "", "l", true,
-                            [batchSize, &ng](const std::string &varName, VarAccess d, bool delayed)
+                            [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
                             {
                                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
                             },
-                            [batchSize, &ng](const std::string &varName, VarAccess d, bool delayed)
+                            [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
                             {
                                 return ng.getWriteVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
                             }, false);

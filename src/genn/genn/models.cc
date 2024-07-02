@@ -103,8 +103,8 @@ NeuronGroup *VarReference::getDelayNeuronGroup() const
                 return (ref.group->getAxonalDelaySteps() > 0) ? ref.group->getSrcNeuronGroup() : nullptr;
             },
             [](const WUPostRef &ref)->NeuronGroup* {
-                // **TODO** also check if variable is dendritcally delayed
-                return (ref.group->getBackPropDelaySteps() > 0) ? ref.group->getTrgNeuronGroup() : nullptr;
+                return (ref.group->getBackPropDelaySteps() > 0 
+                        || ref.group->getWUInitialiser().isVarHeterogeneouslyDelayedInSynCode(ref.var.name)) ? ref.group->getTrgNeuronGroup() : nullptr;
             },
             [](const auto&)->NeuronGroup* { return nullptr; }},
         m_Detail);
