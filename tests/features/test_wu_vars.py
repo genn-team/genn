@@ -37,8 +37,8 @@ def test_wu_var(make_model, backend, precision, fuse, delay):
     # during various kinds of synaptic event
     pre_learn_post_weight_update_model = create_weight_update_model(
         "pre_learn_post_weight_update",
-        var_name_types=[("w", "scalar")],
-        pre_var_name_types=[("s", "scalar")],
+        vars=[("w", "scalar")],
+        pre_vars=[("s", "scalar")],
         
         post_spike_syn_code=
         """
@@ -51,8 +51,8 @@ def test_wu_var(make_model, backend, precision, fuse, delay):
     
     pre_sim_weight_update_model = create_weight_update_model(
         "pre_sim_weight_update",
-        var_name_types=[("w", "scalar")],
-        pre_var_name_types=[("s", "scalar")],
+        vars=[("w", "scalar")],
+        pre_vars=[("s", "scalar")],
 
         pre_spike_syn_code=
         """
@@ -65,8 +65,8 @@ def test_wu_var(make_model, backend, precision, fuse, delay):
     
     pre_synapse_dynamics_weight_update_model = create_weight_update_model(
         "pre_synapse_dynamics_weight_update",
-        var_name_types=[("w", "scalar")],
-        pre_var_name_types=[("s", "scalar")],
+        vars=[("w", "scalar")],
+        pre_vars=[("s", "scalar")],
 
         synapse_dynamics_code=
         """
@@ -82,8 +82,8 @@ def test_wu_var(make_model, backend, precision, fuse, delay):
     # during various kinds of synaptic event
     post_learn_post_weight_update_model = create_weight_update_model(
         "post_learn_post_weight_update",
-        var_name_types=[("w", "scalar")],
-        post_var_name_types=[("s", "scalar")],
+        vars=[("w", "scalar")],
+        post_vars=[("s", "scalar")],
         
         post_spike_syn_code=
         """
@@ -96,8 +96,8 @@ def test_wu_var(make_model, backend, precision, fuse, delay):
     
     post_sim_weight_update_model = create_weight_update_model(
         "post_sim_weight_update",
-        var_name_types=[("w", "scalar")],
-        post_var_name_types=[("s", "scalar")],
+        vars=[("w", "scalar")],
+        post_vars=[("s", "scalar")],
 
         pre_spike_syn_code=
         """
@@ -110,12 +110,60 @@ def test_wu_var(make_model, backend, precision, fuse, delay):
     
     post_synapse_dynamics_weight_update_model = create_weight_update_model(
         "post_synapse_dynamics_weight_update",
-        var_name_types=[("w", "scalar")],
-        post_var_name_types=[("s", "scalar")],
+        vars=[("w", "scalar")],
+        post_vars=[("s", "scalar")],
         
         synapse_dynamics_code=
         """
         w = s;
+        """,
+        post_spike_code=
+        """
+        s = t;
+        """)
+    
+    # Weight update models which update a POSTSYNAPTIC variable 
+    # when a POSTSYNAPTIC spike is received and copy it into synapse 
+    # during various kinds of synaptic event
+    post_learn_post_delay_weight_update_model = create_weight_update_model(
+        "post_learn_post_delay_weight_update",
+        vars=[("w", "scalar")],
+        params=[("d", "int")],
+        post_vars=[("s", "scalar")],
+        
+        post_spike_syn_code=
+        """
+        w = s[d];
+        """,
+        post_spike_code=
+        """
+        s = t;
+        """)
+    
+    post_sim_delay_weight_update_model = create_weight_update_model(
+        "post_sim_delay_weight_update",
+        vars=[("w", "scalar")],
+        params=[("d", "int")],
+        post_vars=[("s", "scalar")],
+
+        pre_spike_syn_code=
+        """
+        w = s[d];
+        """,
+        post_spike_code=
+        """
+        s = t;
+        """)
+    
+    post_synapse_dynamics_delay_weight_update_model = create_weight_update_model(
+        "post_synapse_dynamics_delay_weight_update",
+        vars=[("w", "scalar")],
+        params=[("d", "int")],
+        post_vars=[("s", "scalar")],
+        
+        synapse_dynamics_code=
+        """
+        w = s[d];
         """,
         post_spike_code=
         """
@@ -184,6 +232,32 @@ def test_wu_var(make_model, backend, precision, fuse, delay):
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     s_post_synapse_dynamics_sparse_pop.back_prop_delay_steps = delay
+    
+    # Add synapse models testing various ways of reading post WU vars with delays
+    s_post_learn_post_delay_sparse_pop = model.add_synapse_population(
+        "PostLearnPostDelaySparseSynapses", "SPARSE",
+        pre_n_pop, post_n_pop,
+        init_weight_update(post_learn_post_delay_weight_update_model, {"d": delay}, {"w": float_min}, {}, {"s": float_min}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity("OneToOne"))
+    s_post_learn_post_delay_sparse_pop.max_dendritic_delay_timesteps = delay + 1
+    
+    s_post_sim_delay_sparse_pop = model.add_synapse_population(
+        "PostSimDelaySparseSynapses", "SPARSE",
+        pre_n_pop, post_n_pop,
+        init_weight_update(post_sim_delay_weight_update_model, {"d": delay}, {"w": float_min}, {}, {"s": float_min}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity("OneToOne"))
+    s_post_sim_delay_sparse_pop.max_dendritic_delay_timesteps = delay + 1
+    
+    s_post_synapse_dynamics_delay_sparse_pop = model.add_synapse_population(
+        "PostSynapseDynamicsDelaySparseSynapses", "SPARSE",
+        pre_n_pop, post_n_pop,
+        init_weight_update(post_synapse_dynamics_delay_weight_update_model, {"d": delay}, {"w": float_min}, {}, {"s": float_min}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity("OneToOne"))
+    s_post_synapse_dynamics_delay_sparse_pop.max_dendritic_delay_timesteps = delay + 1
+
 
     # Build model and load
     model.build()
@@ -192,6 +266,8 @@ def test_wu_var(make_model, backend, precision, fuse, delay):
     # Pull all synaptic connectivity from device
     synapse_groups = [s_post_sim_sparse_pop, s_post_learn_post_sparse_pop,
                       s_post_synapse_dynamics_sparse_pop, 
+                      s_post_learn_post_delay_sparse_pop, s_post_sim_delay_sparse_pop,
+                      s_post_synapse_dynamics_delay_sparse_pop,
                       s_pre_sim_sparse_pop, s_pre_learn_post_sparse_pop,
                       s_pre_synapse_dynamics_sparse_pop]
     for s in synapse_groups:
@@ -225,8 +301,8 @@ def test_wu_var_cont(make_model, backend, precision, fuse, delay):
     # during various kinds of synaptic event
     pre_learn_post_weight_update_model = create_weight_update_model(
         "pre_learn_post_weight_update",
-        var_name_types=[("w", "scalar")],
-        pre_var_name_types=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
+        vars=[("w", "scalar")],
+        pre_vars=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
         
         post_spike_syn_code=
         """
@@ -239,8 +315,8 @@ def test_wu_var_cont(make_model, backend, precision, fuse, delay):
 
     pre_sim_weight_update_model = create_weight_update_model(
         "pre_sim_weight_update",
-        var_name_types=[("w", "scalar")],
-        pre_var_name_types=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
+        vars=[("w", "scalar")],
+        pre_vars=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
 
         pre_spike_syn_code=
         """
@@ -256,8 +332,8 @@ def test_wu_var_cont(make_model, backend, precision, fuse, delay):
     # during various kinds of synaptic event
     post_learn_post_weight_update_model = create_weight_update_model(
         "post_learn_post_weight_update",
-        var_name_types=[("w", "scalar")],
-        post_var_name_types=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
+        vars=[("w", "scalar")],
+        post_vars=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
         
         post_spike_syn_code=
         """
@@ -270,12 +346,45 @@ def test_wu_var_cont(make_model, backend, precision, fuse, delay):
     
     post_sim_weight_update_model = create_weight_update_model(
         "post_sim_weight_update",
-        var_name_types=[("w", "scalar")],
-        post_var_name_types=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
+        vars=[("w", "scalar")],
+        post_vars=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
 
         pre_spike_syn_code=
         """
         w = s;
+        """,
+        post_dynamics_code=
+        """
+        s = t + shift;
+        """)
+    
+    # Weight update models which update a POSTSYNAPTIC variable 
+    # when a POSTSYNAPTIC spike is received and copy it into synapse 
+    # during various kinds of synaptic event
+    post_learn_post_delay_weight_update_model = create_weight_update_model(
+        "post_learn_post_weight_update",
+        vars=[("w", "scalar")],
+        params=[("d", "int")],
+        post_vars=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
+        
+        post_spike_syn_code=
+        """
+        w = s[d];
+        """,
+        post_dynamics_code=
+        """
+        s = t + shift;
+        """)
+    
+    post_sim_delay_weight_update_model = create_weight_update_model(
+        "post_sim_weight_update",
+        vars=[("w", "scalar")],
+        params=[("d", "int")],
+        post_vars=[("s", "scalar"), ("shift", "scalar", VarAccess.READ_ONLY)],
+
+        pre_spike_syn_code=
+        """
+        w = s[d];
         """,
         post_dynamics_code=
         """
@@ -326,6 +435,22 @@ def test_wu_var_cont(make_model, backend, precision, fuse, delay):
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     s_post_sim_sparse_pop.back_prop_delay_steps = delay
+    
+    # Add synapse models testing various ways of reading post WU vars
+    s_post_learn_post_delay_sparse_pop = model.add_synapse_population(
+        "PostLearnPostDelaySparseSynapses", "SPARSE",
+        post_n_pop, pre_n_pop,
+        init_weight_update(post_learn_post_delay_weight_update_model, {"d": delay}, {"w": float_min}, {}, {"s": float_min, "shift": shift}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity("OneToOne"))
+    s_post_learn_post_delay_sparse_pop.max_dendritic_delay_timesteps = delay + 1
+    s_post_sim_delay_sparse_pop = model.add_synapse_population(
+        "PostSimDelaySparseSynapses", "SPARSE",
+        pre_n_pop, post_n_pop,
+        init_weight_update(post_sim_delay_weight_update_model, {"d": delay}, {"w": float_min}, {}, {"s": float_min, "shift": shift}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity("OneToOne"))
+    s_post_sim_delay_sparse_pop.max_dendritic_delay_timesteps = delay + 1
 
     # Build model and load
     model.build()
@@ -334,6 +459,8 @@ def test_wu_var_cont(make_model, backend, precision, fuse, delay):
     # Pull all synaptic connectivity from device
     synapse_groups = [s_post_sim_sparse_pop, 
                       s_post_learn_post_sparse_pop,
+                      s_post_learn_post_delay_sparse_pop,
+                      s_post_sim_delay_sparse_pop,
                       s_pre_sim_sparse_pop, 
                       s_pre_learn_post_sparse_pop]
     for s in synapse_groups:

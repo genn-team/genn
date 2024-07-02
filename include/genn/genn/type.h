@@ -29,23 +29,25 @@
 #define CREATE_NUMERIC(TYPE, RANK, FFI_TYPE, L_SUFFIX) ResolvedType::createNumeric<TYPE>(#TYPE, RANK, FFI_TYPE, L_SUFFIX)
 
 //----------------------------------------------------------------------------
-// GeNN::Type::Qualifier
+// GeNN::Type::FunctionFlags
 //----------------------------------------------------------------------------
 namespace GeNN::Type
 {
-enum class Qualifier : unsigned int
+//! Flags that can be applied to function types
+enum class FunctionFlags : unsigned int
 {
-    CONSTANT   = (1 << 0)
+    VARIADIC                    = (1 << 0),  //! Function is variadic
+    ARRAY_SUBSCRIPT_OVERRIDE    = (1 << 1)   //! Function is used to override [] for something
 };
 
-inline bool operator & (Qualifier a, Qualifier b)
+inline bool operator & (FunctionFlags a, FunctionFlags b)
 {
     return (static_cast<unsigned int>(a) & static_cast<unsigned int>(b)) != 0;
 }
 
-inline Qualifier operator | (Qualifier a, Qualifier b)
+inline FunctionFlags operator | (FunctionFlags a, FunctionFlags b)
 {
-    return static_cast<Qualifier>(static_cast<unsigned int>(a) | static_cast<unsigned int>(b));
+    return static_cast<FunctionFlags>(static_cast<unsigned int>(a) | static_cast<unsigned int>(b));
 }
 
 //----------------------------------------------------------------------------
@@ -208,63 +210,69 @@ struct GENN_EXPORT ResolvedType
     //------------------------------------------------------------------------
     struct Function
     {
-        Function(const ResolvedType &returnType, const std::vector<ResolvedType> &argTypes, bool variadic=false) 
-        :   returnType(std::make_unique<ResolvedType const>(returnType)), argTypes(argTypes), variadic(variadic)
+        Function(const ResolvedType &returnType, const std::vector<ResolvedType> &argTypes, 
+                 FunctionFlags flags = FunctionFlags{0}) 
+        :   returnType(std::make_unique<ResolvedType const>(returnType)), argTypes(argTypes), flags(flags)
         {}
         Function(const Function &other)
         :   returnType(std::make_unique<ResolvedType const>(*other.returnType)), 
-            argTypes(other.argTypes), variadic(other.variadic)
+            argTypes(other.argTypes), flags(other.flags)
         {}
 
         std::unique_ptr<ResolvedType const> returnType;
         std::vector<ResolvedType> argTypes;
-        bool variadic;
+        FunctionFlags flags;
 
         bool operator == (const Function &other) const
         {
-            return (std::tie(*returnType, argTypes, variadic) 
-                    == std::tie(*other.returnType, other.argTypes, other.variadic));
+            return (std::tie(*returnType, argTypes, flags) 
+                    == std::tie(*other.returnType, other.argTypes, other.flags));
         }
 
         bool operator != (const Function &other) const
         {
-            return (std::tie(*returnType, argTypes, variadic) 
-                    != std::tie(*other.returnType, other.argTypes, other.variadic));
+            return (std::tie(*returnType, argTypes, flags) 
+                    != std::tie(*other.returnType, other.argTypes, other.flags));
         }
 
         bool operator < (const Function &other) const
         {
-            return (std::tie(*returnType, argTypes, variadic) 
-                    < std::tie(*other.returnType, other.argTypes, other.variadic));
+            return (std::tie(*returnType, argTypes, flags) 
+                    < std::tie(*other.returnType, other.argTypes, other.flags));
         }
 
         Function &operator = (const Function &other)
         {
            returnType.reset(new ResolvedType(*other.returnType));
            argTypes = other.argTypes;
-           variadic = other.variadic;
+           flags = other.flags;
            return *this;
+        }
+
+        bool hasFlag(FunctionFlags flag) const
+        {
+            return (flags & flag);
         }
     };
     
-    ResolvedType(const Value &value, Qualifier qualifiers = Qualifier{0})
-    :   qualifiers(qualifiers), detail(value)
+    ResolvedType(const Value &value, bool isConst = false)
+    :   isConst(isConst), detail(value)
     {}
-    ResolvedType(const Pointer &pointer, Qualifier qualifiers = Qualifier{0})
-    :   qualifiers(qualifiers), detail(pointer)
+    ResolvedType(const Pointer &pointer, bool isConst = false)
+    :   isConst(isConst), detail(pointer)
     {}
     ResolvedType(const Function &function)
-    :   qualifiers(Qualifier{0}), detail(function)
+    :   isConst(false), detail(function)
     {}
-    ResolvedType(const ResolvedType &other, Qualifier qualifiers) : qualifiers(qualifiers), detail(other.detail)
+    ResolvedType(const ResolvedType &other, bool isConst) : isConst(isConst), detail(other.detail)
     {}
-    explicit ResolvedType(Qualifier qualifiers = Qualifier{0}) : qualifiers(qualifiers), detail(std::monostate{})
+    explicit ResolvedType(bool isConst = false) : isConst(isConst), detail(std::monostate{})
     {}
 
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    Qualifier qualifiers;
+    bool isConst;
 
     std::variant<Value, Pointer, Function, std::monostate> detail;
     
@@ -283,19 +291,17 @@ struct GENN_EXPORT ResolvedType
     const Function &getFunction() const{ return std::get<Function>(detail); }
     const Numeric &getNumeric() const{ return *getValue().numeric; }
 
-    ResolvedType addQualifier(Qualifier qualifier) const{ return ResolvedType(*this, qualifiers | qualifier); }
-    ResolvedType removeQualifiers() const{ return ResolvedType(*this, Qualifier{0}); }
-    ResolvedType addConst() const{ return addQualifier(Qualifier::CONSTANT); }
-    bool hasQualifier(Qualifier qualifier) const{ return (qualifiers & qualifier); }
+    ResolvedType addConst() const{ return ResolvedType(*this, true); }
+    ResolvedType removeConst() const{ return ResolvedType(*this, false); }
 
     std::string getName() const;
     size_t getSize(size_t pointerBytes) const;
 
     ffi_type *getFFIType() const;
 
-    ResolvedType createPointer(Qualifier qualifiers = Qualifier{0}) const
+    ResolvedType createPointer(bool isConst = false) const
     {
-        return ResolvedType(Pointer{*this}, qualifiers);
+        return ResolvedType(Pointer{*this}, isConst);
     }
 
     //------------------------------------------------------------------------
@@ -303,17 +309,17 @@ struct GENN_EXPORT ResolvedType
     //------------------------------------------------------------------------
     bool operator == (const ResolvedType &other) const
     {
-        return (std::tie(qualifiers, detail) == std::tie(other.qualifiers, other.detail));
+        return (std::tie(isConst, detail) == std::tie(other.isConst, other.detail));
     }
 
     bool operator != (const ResolvedType &other) const
     {
-        return (std::tie(qualifiers, detail) != std::tie(other.qualifiers, other.detail));
+        return (std::tie(isConst, detail) != std::tie(other.isConst, other.detail));
     }
 
     bool operator < (const ResolvedType &other) const
     {
-        return (std::tie(qualifiers, detail) < std::tie(other.qualifiers, other.detail));
+        return (std::tie(isConst, detail) < std::tie(other.isConst, other.detail));
     }
 
     //------------------------------------------------------------------------
@@ -321,24 +327,25 @@ struct GENN_EXPORT ResolvedType
     //------------------------------------------------------------------------
     template<typename T>
     static ResolvedType createNumeric(const std::string &name, int rank, ffi_type *ffiType, 
-                                      const std::string &literalSuffix = "", Qualifier qualifiers = Qualifier{0}, bool device = false)
+                                      const std::string &literalSuffix = "", bool isConst = false, bool device = false)
     {
         return ResolvedType{Value{name, sizeof(T), ffiType, device, Numeric{rank, std::numeric_limits<T>::min(), std::numeric_limits<T>::max(),
                                                                             std::numeric_limits<T>::lowest(), std::numeric_limits<T>::max_digits10,
                                                                             std::is_signed<T>::value, std::is_integral<T>::value, literalSuffix}},
-                            qualifiers};
+                            isConst};
     }
 
     template<typename T>
-    static ResolvedType createValue(const std::string &name, Qualifier qualifiers = Qualifier{0}, 
+    static ResolvedType createValue(const std::string &name, bool isConst = false, 
                                     ffi_type *ffiType = nullptr, bool device = false)
     {
-        return ResolvedType{Value{name, sizeof(T), ffiType, device, std::nullopt}, qualifiers};
+        return ResolvedType{Value{name, sizeof(T), ffiType, device, std::nullopt}, isConst};
     }
 
-    static ResolvedType createFunction(const ResolvedType &returnType, const std::vector<ResolvedType> &argTypes, bool variadic=false)
+    static ResolvedType createFunction(const ResolvedType &returnType, const std::vector<ResolvedType> &argTypes,
+                                       FunctionFlags flags=FunctionFlags{0})
     {
-        return ResolvedType{Function{returnType, argTypes, variadic}, Qualifier{0}};
+        return ResolvedType{Function{returnType, argTypes, flags}, false};
     }
 };
 
@@ -409,15 +416,22 @@ inline static const ResolvedType Void = ResolvedType();
 //----------------------------------------------------------------------------
 // Standard function types
 //----------------------------------------------------------------------------
-inline static const ResolvedType AddToPre = ResolvedType::createFunction(Void, {Uint32});
-inline static const ResolvedType AddToPost = ResolvedType::createFunction(Void, {Uint32});
-inline static const ResolvedType AddToPostDenDelay = ResolvedType::createFunction(Void, {Uint32, Uint32});
 inline static const ResolvedType AllocatePushPullEGP = ResolvedType::createFunction(Void, {Uint32});
 inline static const ResolvedType PushPull = ResolvedType::createFunction(Void, {});
-
-
 inline static const ResolvedType Assert = ResolvedType::createFunction(Void, {Bool});
 
+//! Get type to add a weight type
+inline ResolvedType getAddToPrePost(ResolvedType weightType) { return ResolvedType::createFunction(Void, {weightType}); }
+
+//! Get type to add a weight type with delay
+inline ResolvedType getAddToPrePostDelay(ResolvedType weightType) { return ResolvedType::createFunction(Void, {weightType, Uint32}); }
+
+//! Get type for array subscript overload functions
+inline ResolvedType getArraySubscript(ResolvedType valueType) { return ResolvedType::createFunction(valueType, {Int32}, FunctionFlags::ARRAY_SUBSCRIPT_OVERRIDE); }
+
+//----------------------------------------------------------------------------
+// Type helper functions
+//----------------------------------------------------------------------------
 //! Apply C type promotion rules to numeric type
 GENN_EXPORT ResolvedType getPromotedType(const ResolvedType &type);
 

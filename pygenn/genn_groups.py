@@ -607,15 +607,15 @@ class SynapseGroupMixin(GroupMixin):
         # If population's postsynaptic weight update hasn't been 
         # fused, load weight update model postsynaptic variables
         if not self._wu_post_model_fused:
-            post_delay_group = (None if (self.back_prop_delay_steps == 0)
-                                else self.trg)
             self._load_vars(
                 wu_snippet.get_post_vars(),
                 lambda v, d: _get_neuron_var_shape(
                     get_var_access_dim(v.access), self.trg.num_neurons,
                     self._model.batch_size, d),
                 self.post_vars, self.get_wu_post_var_location,
-                lambda v: post_delay_group)
+                lambda v: (self.trg if self.back_prop_delay_steps > 0 
+                           or self._is_wu_post_var_heterogeneously_delayed(v.name)
+                           else None))
         
         # If this synapse group's postsynaptic model hasn't been fused
         if not self._ps_model_fused:

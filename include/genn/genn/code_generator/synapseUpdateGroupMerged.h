@@ -54,16 +54,6 @@ public:
         return getPostVarIndex(getArchetype().getTrgNeuronGroup()->isDelayRequired(), batchSize, varDims, index);
     }
 
-    std::string getPreWUVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
-    {
-        return getPreVarIndex(getArchetype().getAxonalDelaySteps() != 0, batchSize, varDims, index);
-    }
-    
-    std::string getPostWUVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
-    {
-        return getPostVarIndex(getArchetype().getBackPropDelaySteps() != 0, batchSize, varDims, index);
-    }
-
     std::string getPostDenDelayIndex(unsigned int batchSize, const std::string &index, const std::string &offset) const;
 
     std::string getPreVarIndex(bool delay, unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
@@ -88,6 +78,9 @@ public:
     {
         return ((batchSize == 1) ? "" : "$(_pre_batch_offset) + ") + index;
     }
+
+    std::string getPostVarHetDelayIndex(unsigned int batchSize, VarAccessDim varDims,
+                                        const std::string &index) const;
 
     std::string getSynVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
     std::string getKernelVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;

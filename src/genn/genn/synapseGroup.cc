@@ -8,6 +8,7 @@
 
 // GeNN includes
 #include "gennUtils.h"
+#include "logging.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
 #include "type.h"
@@ -158,7 +159,9 @@ void SynapseGroup::setMaxSourceConnections(unsigned int maxConnections)
 //----------------------------------------------------------------------------
 void SynapseGroup::setMaxDendriticDelayTimesteps(unsigned int maxDendriticDelayTimesteps)
 {
-    // **TODO** constraints on this
+    if(maxDendriticDelayTimesteps < 1) {
+        throw std::runtime_error("setMaxDendriticDelayTimesteps: A minimum of one dendritic delay timestep is required.");
+    }
     m_MaxDendriticDelayTimesteps = maxDendriticDelayTimesteps;
 }
 //----------------------------------------------------------------------------
@@ -279,7 +282,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
                            VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
                            VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled)
     :   m_Name(name), m_ParallelismHint(ParallelismHint::POSTSYNAPTIC), m_NumThreadsPerSpike(1), m_AxonalDelaySteps(0), m_BackPropDelaySteps(0),
-        m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup), 
+        m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup), 
         m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled),
         m_OutputLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
         m_WUInitialiser(wumInitialiser), m_PSInitialiser(psmInitialiser), m_SparseConnectivityInitialiser(connectivityInitialiser),  m_ToeplitzConnectivityInitialiser(toeplitzInitialiser), 
@@ -491,6 +494,31 @@ void SynapseGroup::finalise(double dt)
     m_SparseConnectivityInitialiser.finalise(dt);
     m_ToeplitzConnectivityInitialiser.finalise(dt);
 
+    // Determine whether any postsynaptic neuron variable references 
+    // are accessed with heterogeneous delays in synapse code
+    bool heterogeneousVarDelay = std::any_of(getWUInitialiser().getPostNeuronVarReferences().cbegin(), 
+                                             getWUInitialiser().getPostNeuronVarReferences().cend(),
+                                             [this](const auto &v)
+                                             { 
+                                                return getWUInitialiser().isVarHeterogeneouslyDelayedInSynCode(v.first);
+                                             });
+    for(const auto &v : getWUInitialiser().getSnippet()->getPostVars()) {
+        if(getWUInitialiser().isVarHeterogeneouslyDelayedInSynCode(v.name)) {
+            m_HeterogeneouslyDelayedWUPostVars.insert(v.name);
+            heterogeneousVarDelay = true;
+        }
+    }
+    // If there are any dendritically delayed variables, ensure postsynaptic 
+    // neuron group has enough delay slots to encompass maximum dendritic delay timesteps
+    if(heterogeneousVarDelay) {
+        m_TrgNeuronGroup->checkNumDelaySlots(getMaxDendriticDelayTimesteps());
+    }
+
+     // If weight update uses dendritic delay but maximum number of delay timesteps hasn't been specified
+    if((heterogeneousVarDelay || isDendriticOutputDelayRequired()) && !m_MaxDendriticDelayTimesteps.has_value()) {
+        throw std::runtime_error("Synapse group '" + getName() + "' uses a weight update model with heterogeneous dendritic delays but maximum dendritic delay timesteps has not been set");
+    }
+
     // Loop through presynaptic variable references
     for(const auto &v : getWUInitialiser().getPreNeuronVarReferences()) {
         // If variable reference is referenced in synapse code, mark variable 
@@ -509,6 +537,7 @@ void SynapseGroup::finalise(double dt)
     for(const auto &v : getWUInitialiser().getPostNeuronVarReferences()) {
         // If variable reference is referenced in synapse code, mark variable 
         // reference target as requiring queuing on target neuron group
+        // **NOTE** this will also detect delayed references
         if(Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPreSpikeSynCodeTokens())
            || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPreEventSynCodeTokens())
            || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPostEventSynCodeTokens())
@@ -659,12 +688,22 @@ bool SynapseGroup::canWUMPrePostUpdateBeFused(const NeuronGroup *ng) const
     return true;
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::isDendriticDelayRequired() const
+bool SynapseGroup::isDendriticOutputDelayRequired() const
 {
     return (Utils::isIdentifierReferenced("addToPostDelay", getWUInitialiser().getPreSpikeSynCodeTokens())
             || Utils::isIdentifierReferenced("addToPostDelay", getWUInitialiser().getPreEventSynCodeTokens())
             || Utils::isIdentifierReferenced("addToPostDelay", getWUInitialiser().getPostEventSynCodeTokens())
             || Utils::isIdentifierReferenced("addToPostDelay", getWUInitialiser().getSynapseDynamicsCodeTokens()));
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::isWUPostVarHeterogeneouslyDelayed(const std::string &var) const
+{
+    return (m_HeterogeneouslyDelayedWUPostVars.count(var) == 0) ? false : true;
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::areAnyWUPostVarHeterogeneouslyDelayed() const
+{
+    return !m_HeterogeneouslyDelayedWUPostVars.empty();
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isPresynapticOutputRequired() const
@@ -678,7 +717,7 @@ bool SynapseGroup::isPresynapticOutputRequired() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isPostsynapticOutputRequired() const
 {
-    if(isDendriticDelayRequired()) {
+    if(isDendriticOutputDelayRequired()) {
         return true;
     }
     else {
@@ -886,6 +925,8 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPrePostHashDigest(con
     else {
         Utils::updateHash(getWUInitialiser().getSnippet()->getPostHashDigest(), hash);
         Utils::updateHash((getBackPropDelaySteps() != 0), hash);
+        Utils::updateHash(m_HeterogeneouslyDelayedWUPostVars, hash);
+        
     }
     m_WUDynamicParams.updateHash(hash);
 
@@ -1049,6 +1090,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPrePostFuseHashDigest
     else {
         Utils::updateHash(getWUInitialiser().getSnippet()->getPostHashDigest(), hash);
         Utils::updateHash(getBackPropDelaySteps(), hash);
+        Utils::updateHash(m_HeterogeneouslyDelayedWUPostVars, hash);
     }
 
     // Loop through variable initialisers and hash first parameter.
@@ -1063,8 +1105,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPrePostFuseHashDigest
     // Loop through neuron variable references and update hash with 
     // name of target variable. These must be the same across merged group
     // as these variable references are just implemented as aliases for neuron variables
-    //const auto &neuronVarReferences = presynaptic ? getWUInitialiser().getPreNeuronVarReferences() : getWUInitialiser().getPostNeuronVarReferences();
-    const auto &neuronVarReferences = getWUInitialiser().getPreNeuronVarReferences();
+    const auto &neuronVarReferences = presynaptic ? getWUInitialiser().getPreNeuronVarReferences() : getWUInitialiser().getPostNeuronVarReferences();
     for(const auto &v : neuronVarReferences) {
         Utils::updateHash(v.second.getVarName(), hash);
     };
@@ -1134,6 +1175,11 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPrePostInitHashDigest
         Utils::updateHash(w.first, hash);
         Utils::updateHash(w.second.getHashDigest(), hash);
     }
+
+    if(!presynaptic) {
+        Utils::updateHash(m_HeterogeneouslyDelayedWUPostVars, hash);
+    }
+
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------

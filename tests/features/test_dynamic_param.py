@@ -24,7 +24,7 @@ def test_dynamic_param(make_model, backend, precision):
         x = t + shift + input;
         """,
         params=["input"],
-        var_name_types=[("x", "scalar"), ("shift", "scalar")])
+        vars=[("x", "scalar"), ("shift", "scalar")])
     
     postsynaptic_model = create_postsynaptic_model(
         "postsynaptic",
@@ -35,7 +35,7 @@ def test_dynamic_param(make_model, backend, precision):
         inSyn = 0;
         """,
         params=["psmInput"],
-        var_name_types=[("psmX", "scalar"), ("psmShift", "scalar")])
+        vars=[("psmX", "scalar"), ("psmShift", "scalar")])
 
     weight_update_model = create_weight_update_model(
         "weight_update",
@@ -44,7 +44,7 @@ def test_dynamic_param(make_model, backend, precision):
         x = t + shift + input;
         """,
         params=["input"],
-        var_name_types=[("x", "scalar"), ("shift", "scalar")])
+        vars=[("x", "scalar"), ("shift", "scalar")])
     
     
     current_source_model = create_current_source_model(
@@ -55,7 +55,7 @@ def test_dynamic_param(make_model, backend, precision):
         injectCurrent(0.0);
         """,
         params=["input"],
-        var_name_types=[("x", "scalar"), ("shift", "scalar")])
+        vars=[("x", "scalar"), ("shift", "scalar")])
     
     custom_update_model = create_custom_update_model(
         "custom_update",
@@ -65,7 +65,7 @@ def test_dynamic_param(make_model, backend, precision):
         """,
         params=["input"],
         var_refs=[("y", "scalar")],
-        var_name_types=[("x", "scalar"), ("shift", "scalar")])
+        vars=[("x", "scalar"), ("shift", "scalar")])
 
     custom_connectivity_update_model = create_custom_connectivity_update_model(
         "custom_connectivity_update",

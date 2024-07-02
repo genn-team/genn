@@ -335,6 +335,8 @@ TEST(SynapseGroup, CompareWUDifferentModel)
         ng0, ng1,
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, staticPulseDendriticVarVals),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    sg1->setMaxDendriticDelayTimesteps(1);
+
     // Finalize model
     model.finalise();
 
@@ -984,9 +986,34 @@ TEST(SynapseGroup, IsDendriticDelayRequired)
         initWeightUpdate<ContinuousDenDelay>(contDenDelayParamVars, {}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
 
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(syn)->isDendriticDelayRequired());
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(synGraded)->isDendriticDelayRequired());
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(synContinuous)->isDendriticDelayRequired());
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(syn)->isDendriticOutputDelayRequired());
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(synGraded)->isDendriticOutputDelayRequired());
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(synContinuous)->isDendriticOutputDelayRequired());
+}
+
+TEST(SynapseGroup, SetMaxDendriticDelayTimesteps)
+{
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
+
+    ModelSpecInternal model;
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+
+    ParamValues staticPulseDendriticParamVals{{"g", 0.1}, {"d", 1}};
+
+    model.addSynapsePopulation(
+        "Syn", SynapseMatrixType::DENSE,
+        pre, post,
+        initWeightUpdate<StaticPulseDendriticDelayConstantWeight>(staticPulseDendriticParamVals, {}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+
+    try {
+        model.finalise();
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
 }
 
 TEST(SynapseGroup, InvalidName)

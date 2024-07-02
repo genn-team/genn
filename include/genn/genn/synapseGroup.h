@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard includes
+#include <optional>
 #include <map>
 #include <string>
 #include <vector>
@@ -150,7 +151,7 @@ public:
     unsigned int getAxonalDelaySteps() const{ return m_AxonalDelaySteps; }
     unsigned int getMaxConnections() const{ return m_MaxConnections; }
     unsigned int getMaxSourceConnections() const{ return m_MaxSourceConnections; }
-    unsigned int getMaxDendriticDelayTimesteps() const{ return m_MaxDendriticDelayTimesteps; }
+    unsigned int getMaxDendriticDelayTimesteps() const{ return m_MaxDendriticDelayTimesteps.value_or(1); }
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
     const auto &getKernelSize() const { return m_KernelSize; }
     size_t getKernelSizeFlattened() const;
@@ -329,8 +330,14 @@ protected:
     //! model been fused with those from other synapse groups?
     bool isWUPostModelFused() const { return m_FusedWUPostTarget != nullptr; }
 
-    //! Does this synapse group require dendritic delay?
-    bool isDendriticDelayRequired() const;
+    //! Is this synapse group's output dendritically delayed?
+    bool isDendriticOutputDelayRequired() const;
+
+    //! Is the named postsynaptic weight update model variable heterogeneously delayed?
+    bool isWUPostVarHeterogeneouslyDelayed(const std::string &var) const;
+
+    //! Are any postsynaptic weight update model variable heterogeneously delayed?
+    bool areAnyWUPostVarHeterogeneouslyDelayed() const;
 
     //! Does this synapse group provide presynaptic output?
     bool isPresynapticOutputRequired() const; 
@@ -465,7 +472,7 @@ private:
     unsigned int m_MaxSourceConnections;
 
     //! Maximum dendritic delay timesteps supported for synapses in this population
-    unsigned int m_MaxDendriticDelayTimesteps;
+    std::optional<unsigned int> m_MaxDendriticDelayTimesteps;
 
     //! Kernel size 
     std::vector<unsigned int> m_KernelSize;
@@ -502,6 +509,10 @@ private:
     //! Initialiser used for creating toeplitz connectivity
     InitToeplitzConnectivitySnippet::Init m_ToeplitzConnectivityInitialiser;
 
+    //! Set of names of postsynaptic weight update 
+    //! model variables which are heterogeneously delayed
+    std::set<std::string> m_HeterogeneouslyDelayedWUPostVars;
+    
     //! Location of individual per-synapse state variables.
     /*! This is ignored for simulations on hardware with a single memory space */
     LocationContainer m_WUVarLocation;

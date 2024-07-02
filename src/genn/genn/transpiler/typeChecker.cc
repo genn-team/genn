@@ -48,7 +48,7 @@ bool checkPointerTypeAssignement(const Type::ResolvedType &rightType, const Type
 bool checkForConstRemoval(const Type::ResolvedType &rightType, const Type::ResolvedType &leftType) 
 {
     // If const is being removed
-    if (rightType.hasQualifier(Type::Qualifier::CONSTANT) && !leftType.hasQualifier(Type::Qualifier::CONSTANT)) {
+    if (rightType.isConst && !leftType.isConst) {
         return false;
     }
 
@@ -166,21 +166,35 @@ private:
     //---------------------------------------------------------------------------
     virtual void visit(const Expression::ArraySubscript &arraySubscript) final
     {
+        // Evaluate index type
+        auto indexType = evaluateType(arraySubscript.getIndex());
+        if (!indexType.isNumeric() || !indexType.getNumeric().isIntegral) {
+            m_ErrorHandler.error(arraySubscript.getClosingSquareBracket(),
+                                    "Invalid subscript index type '" + indexType.getName() + "'");
+            throw TypeCheckError();
+        }
+
+        // Place index type on top of stack so it can be used
+        // to type check array subscript override function
+        m_CallArguments.emplace();
+        m_CallArguments.top().reserve(1);
+        m_CallArguments.top().push_back(indexType);
+
         // Evaluate array type
         auto arrayType = evaluateType(arraySubscript.getArray());
+        
+        // Pop stack
+        m_CallArguments.pop();
 
-        // If pointer is indeed a pointer
+        // If array type is a pointer, expression type is value type
         if(arrayType.isPointer()) {
-            // Evaluate pointer type
-            auto indexType = evaluateType(arraySubscript.getIndex());
-            if (!indexType.isNumeric() || !indexType.getNumeric().isIntegral) {
-                m_ErrorHandler.error(arraySubscript.getClosingSquareBracket(),
-                                     "Invalid subscript index type '" + indexType.getName() + "'");
-                throw TypeCheckError();
-            }
-
-            // Use value type of array
             setExpressionType(&arraySubscript, *arrayType.getPointer().valueType);
+        }
+        // Otherwise, if 'array' is a function with the array subscript override, use function return type
+        else if(arrayType.isFunction() 
+                && arrayType.getFunction().hasFlag(Type::FunctionFlags::ARRAY_SUBSCRIPT_OVERRIDE))
+        {
+            setExpressionType(&arraySubscript, *arrayType.getFunction().returnType);
         }
         // Otherwise
         else {
@@ -195,7 +209,7 @@ private:
         const auto rightType = evaluateType(assignment.getValue());
 
         // If existing type is a const qualified and isn't being initialized, give error
-        if(leftType.hasQualifier(Type::Qualifier::CONSTANT)) {
+        if(leftType.isConst) {
             m_ErrorHandler.error(assignment.getOperator(), "Assignment of read-only variable");
             throw TypeCheckError();
         }
@@ -310,9 +324,13 @@ private:
     virtual void visit(const Expression::Call &call) final
     {
         // Evaluate argument types and store in top of stack
-        m_CallArguments.emplace();
-        std::transform(call.getArguments().cbegin(), call.getArguments().cend(), std::back_inserter(m_CallArguments.top()),
+        std::vector<Type::ResolvedType> arguments;
+        arguments.reserve(call.getArguments().size());
+        std::transform(call.getArguments().cbegin(), call.getArguments().cend(), std::back_inserter(arguments),
                        [this](const auto &a){ return evaluateType(a.get()); });
+
+        // Push arguments onto stack
+        m_CallArguments.push(arguments);
 
         // Evaluate callee type
         auto calleeType = evaluateType(call.getCallee());
@@ -320,8 +338,10 @@ private:
         // Pop stack
         m_CallArguments.pop();
 
-        // If callee's a function, type is return type of function
-        if (calleeType.isFunction()) {
+        // If callee's a function without the array subscript override f, type is return type of function
+        if (calleeType.isFunction() 
+            && !calleeType.getFunction().hasFlag(Type::FunctionFlags::ARRAY_SUBSCRIPT_OVERRIDE)) 
+        {
             setExpressionType(&call, *calleeType.getFunction().returnType);
         }
         // Otherwise
@@ -387,8 +407,8 @@ private:
         if (trueType.isNumeric() && falseType.isNumeric()) {
             // **TODO** check behaviour
             const auto commonType = Type::getCommonType(trueType, falseType);
-            if(trueType.hasQualifier(Type::Qualifier::CONSTANT) || falseType.hasQualifier(Type::Qualifier::CONSTANT)) {
-                setExpressionType(&conditional, commonType.addQualifier(Type::Qualifier::CONSTANT));
+            if(trueType.isConst || falseType.isConst) {
+                setExpressionType(&conditional, commonType.addConst());
             }
             else {
                 setExpressionType(&conditional, commonType);
@@ -428,7 +448,7 @@ private:
             setExpressionType(&literal, Type::Bool);
         }
         else if(literal.getValue().type == Token::Type::STRING) {
-            setExpressionType(&literal, Type::Int8.createPointer(Type::Qualifier::CONSTANT));
+            setExpressionType(&literal, Type::Int8.createPointer(true));
         }
         else {
             assert(false);
@@ -446,7 +466,7 @@ private:
     {
         // **TODO** more general lvalue thing
         const auto lhsType = evaluateType(postfixIncDec.getTarget());
-        if(lhsType.hasQualifier(Type::Qualifier::CONSTANT)) {
+        if(lhsType.isConst) {
             m_ErrorHandler.error(postfixIncDec.getOperator(), "Increment/decrement of read-only variable");
             throw TypeCheckError();
         }
@@ -459,7 +479,7 @@ private:
     {
         // **TODO** more general lvalue thing
         const auto rhsType = evaluateType(prefixIncDec.getTarget());
-         if(rhsType.hasQualifier(Type::Qualifier::CONSTANT)) {
+         if(rhsType.isConst) {
             m_ErrorHandler.error(prefixIncDec.getOperator(), "Increment/decrement of read-only variable");
             throw TypeCheckError();
         }
@@ -486,7 +506,7 @@ private:
                 // If  function is non-variadic and number of arguments 
                 // match or variadic and enough arguments are provided
                 const auto &argumentTypes = type.getFunction().argTypes;
-                const bool variadic = type.getFunction().variadic;
+                const bool variadic = type.getFunction().hasFlag(Type::FunctionFlags::VARIADIC);
                 if((!variadic && m_CallArguments.top().size() == argumentTypes.size())
                    || (variadic && m_CallArguments.top().size() >= argumentTypes.size()))
                 {
@@ -506,8 +526,8 @@ private:
                                 [c, a](const Type::ResolvedType::Value &cValue, const Type::ResolvedType::Value&) -> std::optional<int>
                                 {
                                     // If types are identical, match is exact
-                                    const auto unqualifiedA = a->removeQualifiers();
-                                    const auto unqualifiedC = c->removeQualifiers();
+                                    const auto unqualifiedA = a->removeConst();
+                                    const auto unqualifiedC = c->removeConst();
                                     if(unqualifiedC == unqualifiedA) {
                                         return 0;
                                     }

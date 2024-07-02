@@ -83,11 +83,11 @@ def _check_connectivity(sg, get_row_length_fn, get_connectivity_fn, var_checks=[
 def test_custom_connectivity_update(make_model, backend, precision, batch_size):
     neuron_model = create_neuron_model(
         "neuron",
-        var_name_types=[("V", "scalar")])
+        vars=[("V", "scalar")])
 
     weight_update_model = create_weight_update_model(
         "weight_update",
-        var_name_types=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE),
+        vars=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE),
                         ("d", "unsigned int", VarAccess.READ_ONLY)])
 
     # Snippet to initialise variable to hold its row-major index
@@ -286,7 +286,7 @@ def test_custom_connectivity_update_delay(make_model, backend, precision):
         """
         removeIdx = (id + (int)round(t / dt)) % 64;
         """,
-        var_name_types=[("removeIdx", "int")])
+        vars=[("removeIdx", "int")])
 
     post_neuron_model = create_neuron_model(
         "post_neuron",
@@ -294,14 +294,14 @@ def test_custom_connectivity_update_delay(make_model, backend, precision):
         """
         remove = ((id + (int)round(t / dt)) % 64) == 0;
         """,
-        var_name_types=[("remove", "bool")])
+        vars=[("remove", "bool")])
 
     # Weight update model that does something arbitrary stuff with 
     # presynaptic variable reference to make sure it gets delayed
     pre_weight_update_model = create_weight_update_model(
         "pre_weight_update",
         pre_neuron_var_refs=[("removeIdx", "int", VarAccessMode.READ_ONLY)],
-        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)],
+        vars=[("g", "scalar", VarAccess.READ_ONLY)],
         pre_spike_syn_code=
         """
         addToPost(g * (float)removeIdx);
@@ -312,7 +312,7 @@ def test_custom_connectivity_update_delay(make_model, backend, precision):
     post_weight_update_model = create_weight_update_model(
         "post_weight_update",
         post_neuron_var_refs=[("remove", "bool", VarAccessMode.READ_ONLY)],
-        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)],
+        vars=[("g", "scalar", VarAccess.READ_ONLY)],
         pre_spike_syn_code=
         """
         addToPost(g * (float)remove);
@@ -442,7 +442,7 @@ def test_custom_connectivity_update_remap(make_model, backend, precision):
         """)
     pre_reverse_model = create_neuron_model(
         "pre_reverse",
-        var_name_types=[("x", "scalar")],
+        vars=[("x", "scalar")],
         sim_code=
         """
         x = Isyn;
@@ -454,7 +454,7 @@ def test_custom_connectivity_update_remap(make_model, backend, precision):
         """
         addToPre(g);
         """,
-        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
+        vars=[("g", "scalar", VarAccess.READ_ONLY)])
     
     remove_ones_model = create_custom_connectivity_update_model(
         "remove_synapse",

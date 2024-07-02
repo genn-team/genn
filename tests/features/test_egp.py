@@ -49,21 +49,21 @@ def test_egp_var_init(make_model, backend, precision):
     
     nop_neuron_model = create_neuron_model(
         "nop_neuron",
-        var_name_types=[("repeat", "scalar")])
+        vars=[("repeat", "scalar")])
 
     nop_current_source_model = create_current_source_model(
         "nop_current_source",
-        var_name_types=[("repeat", "scalar")])
+        vars=[("repeat", "scalar")])
 
     nop_postsynaptic_update_model = create_postsynaptic_model(
         "nop_postsynaptic_update",
-        var_name_types=[("psm_repeat", "scalar")])
+        vars=[("psm_repeat", "scalar")])
 
     nop_weight_update_model = create_weight_update_model(
         "nop_weight_update",
-        var_name_types=[("repeat", "scalar")],
-        pre_var_name_types=[("pre_repeat", "scalar")],
-        post_var_name_types=[("post_repeat", "scalar")])
+        vars=[("repeat", "scalar")],
+        pre_vars=[("pre_repeat", "scalar")],
+        post_vars=[("post_repeat", "scalar")])
     
     model = make_model(precision, "test_egp_var_init", backend=backend)
 
@@ -143,7 +143,7 @@ def test_egp_ref(make_model, backend, precision):
         """
         x = e[id];
         """,
-        var_name_types=[("x", "scalar")],
+        vars=[("x", "scalar")],
         extra_global_params=[("e", "scalar*")])
     
     custom_update_model = create_custom_update_model(
