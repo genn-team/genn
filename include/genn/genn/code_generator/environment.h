@@ -694,38 +694,6 @@ public:
     }
 
     template<typename A>
-    void addVarsHet(GetVarIndexFn<A> getIndexFn, GetVarIndexFn<A> getDelayedIndexFn, 
-                    const std::string &fieldSuffix = "", bool readOnly = false, bool hidden = false)
-    {
-        // Loop through variable references
-        const A archetypeAdaptor(this->getGroup().getArchetype());
-        for(const auto &v : archetypeAdaptor.getDefs()) {
-            // If variable access is read-only, qualify type with const
-            const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
-            const auto qualifiedType = (readOnly || (getVarAccessMode(v.access) & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
-            const auto name = hidden ? ("_" + v.name) : v.name;
-            if(archetypeAdaptor.isVarHeterogeneouslyDelayed(v.name)) {
-                addField(Type::getArraySubscript(resolvedType), name,
-                         resolvedType.createPointer(), v.name + fieldSuffix,
-                         [v](auto &runtime, const auto &g, size_t) 
-                         { 
-                             return runtime.getArray(A(g).getTarget(), v.name);
-                         },
-                         getDelayedIndexFn(v.access, v.name));
-            }
-            else {
-                addField(qualifiedType, name,
-                         resolvedType.createPointer(), v.name + fieldSuffix,
-                         [v](auto &runtime, const auto &g, size_t) 
-                         { 
-                             return runtime.getArray(A(g).getTarget(), v.name);
-                         },
-                         getIndexFn(v.access, v.name));
-            }
-        }
-    }
-
-    template<typename A>
     void addVarRefs(GetVarRefIndexFn<A> getIndexFn,  const std::string &fieldSuffix = "",
                     bool readOnly = false, bool hidden = false)
     {
@@ -752,38 +720,6 @@ public:
     {
         addVarRefs<A>([&indexSuffix](VarAccess, auto&) { return indexSuffix; }, 
                       fieldSuffix, readOnly, hidden);
-    }
-
-    template<typename A>
-    void addVarRefsHet(GetVarRefIndexFn<A> getIndexFn, GetVarRefIndexFn<A> getDelayedIndexFn, 
-                       const std::string &fieldSuffix = "", bool readOnly = false, bool hidden = false)
-    {
-        // Loop through variable references
-        const A archetypeAdaptor(this->getGroup().getArchetype());
-        for(const auto &v : archetypeAdaptor.getDefs()) {
-            // If variable access is read-only, qualify type with const
-            const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
-            const auto qualifiedType = (readOnly || (v.access & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
-            const auto name = hidden ? ("_" + v.name) : v.name;
-            if(archetypeAdaptor.isVarHeterogeneouslyDelayed(v.name)) {
-                addField(Type::getArraySubscript(resolvedType), name,
-                         resolvedType.createPointer(), v.name + fieldSuffix,
-                         [v](auto &runtime, const auto &g, size_t) 
-                         { 
-                             return A(g).getInitialisers().at(v.name).getTargetArray(runtime); 
-                         },
-                         getDelayedIndexFn(v.access, archetypeAdaptor.getInitialisers().at(v.name)));
-            }
-            else {
-                addField(qualifiedType, name,
-                         resolvedType.createPointer(), v.name + fieldSuffix,
-                         [v](auto &runtime, const auto &g, size_t) 
-                         { 
-                             return A(g).getInitialisers().at(v.name).getTargetArray(runtime); 
-                         },
-                         getIndexFn(v.access, archetypeAdaptor.getInitialisers().at(v.name)));
-            }
-        }
     }
 
     template<typename A>
