@@ -37,18 +37,31 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
         }, 
         "", true);
 
-    // Add referenced postsynaptic neuron variables which may have heterogeneous delays
-    synEnv.template addVarRefsHet<SynapseWUPostNeuronVarRefAdapter>(
-        [&sg, batchSize](VarAccessMode, const Models::VarReference &v)
-        {
-            return sg.getPostVarIndex(v.getDelayNeuronGroup() != nullptr, batchSize,
-                                      v.getVarDims(), "$(id_post)");
-        }, 
-        [&sg, batchSize](VarAccessMode, const Models::VarReference &v)
-        {
-            return sg.getPostVarHetDelayIndex(batchSize, v.getVarDims(), "$(id_post)");
-        },
-        "", true);
+    // Loop through referenced postsynaptic neuron variables
+    for(const auto &v : sg.getArchetype().getWUInitialiser().getSnippet()->getPostNeuronVarRefs()) {
+        // If variable refernce is accessed with delay in synapse code tokens
+        const auto resolvedType = v.type.resolve(sg.getTypeContext());
+        const Models::VarReference &archetypeVarRef = sg.getArchetype().getWUInitialiser().getPostNeuronVarReferences().at(v.name);
+        if(Utils::isIdentifierDelayed(v.name, tokens)) {
+            synEnv.addField(Type::getArraySubscript(resolvedType.addConst()), v.name,
+                            resolvedType.createPointer(), v.name,
+                            [v](auto &runtime, const auto &g, size_t) 
+                            { 
+                                return g.getWUInitialiser().getPostNeuronVarReferences().at(v.name).getTargetArray(runtime); 
+                            },
+                            sg.getPostVarHetDelayIndex(batchSize, archetypeVarRef.getVarDims(), "$(id_post)"));
+        }
+        else {
+            synEnv.addField(resolvedType.addConst(), v.name,
+                            resolvedType.createPointer(), v.name,
+                            [v](auto &runtime, const auto &g, size_t) 
+                            { 
+                                return g.getWUInitialiser().getPostNeuronVarReferences().at(v.name).getTargetArray(runtime); 
+                            },
+                            sg.getPostVarIndex(archetypeVarRef.getDelayNeuronGroup() != nullptr, batchSize,
+                                               archetypeVarRef.getVarDims(), "$(id_post)"));
+        }
+    }
 
     // Substitute names of preynaptic weight update variables
     synEnv.template addVars<SynapseWUPreVarAdapter>(
@@ -57,17 +70,31 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
             return sg.getPreVarIndex(sg.getArchetype().getAxonalDelaySteps() != 0, batchSize, getVarAccessDim(a), "$(id_pre)");
         }, "", true);
 
-   // Substitute names of postsynaptic weight update variables which may have heterogeneous delays
-    synEnv.template addVarsHet<SynapseWUPostVarAdapter>(
-        [&sg, batchSize](VarAccess a, const std::string&) 
-        { 
-            return sg.getPostVarIndex(sg.getArchetype().getBackPropDelaySteps() != 0, batchSize, getVarAccessDim(a), "$(id_post)");
-        },
-        [&sg, batchSize](VarAccess a, const std::string&)
-        {
-            return sg.getPostVarHetDelayIndex(batchSize, getVarAccessDim(a), "$(id_post)");
-        }, "", true);
-
+    // Loop through postsynaptic weight update variables
+    for(const auto &v : sg.getArchetype().getWUInitialiser().getSnippet()->getPostVars()) {
+        // If variable is accessed with delay in synapse code tokens
+        const auto resolvedType = v.type.resolve(sg.getTypeContext());
+        if(Utils::isIdentifierDelayed(v.name, tokens)) {
+            synEnv.addField(Type::getArraySubscript(resolvedType.addConst()), v.name,
+                            resolvedType.createPointer(), v.name,
+                            [v](auto &runtime, const auto &g, size_t) 
+                            { 
+                                return runtime.getArray(g.getFusedWUPostTarget(), v.name);
+                            },
+                            sg.getPostVarHetDelayIndex(batchSize, getVarAccessDim(v.access), "$(id_post)"));
+        }
+        else {
+            synEnv.addField(resolvedType.addConst(), v.name,
+                            resolvedType.createPointer(), v.name,
+                            [v](auto &runtime, const auto &g, size_t) 
+                            { 
+                                return runtime.getArray(g.getFusedWUPostTarget(), v.name);
+                            },
+                            sg.getPostVarIndex(sg.getArchetype().getBackPropDelaySteps() != 0, batchSize,
+                                               getVarAccessDim(v.access), "$(id_post)"));
+        }
+    }
+    
     // If this synapse group has a kernel
     if (!sg.getArchetype().getKernelSize().empty()) {
         // Add substitution

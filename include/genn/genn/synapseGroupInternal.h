@@ -247,9 +247,7 @@ public:
 
     const SynapseGroup &getTarget() const{ return m_SG.getFusedWUPostTarget(); }
 
-    bool isVarDelayed(const std::string &name) const{ return (m_SG.getBackPropDelaySteps() != 0) || isVarHeterogeneouslyDelayed(name); }
-
-    bool isVarHeterogeneouslyDelayed(const std::string &name) const{ return m_SG.getWUInitialiser().isVarHeterogeneouslyDelayedInSynCode(name); }
+    bool isVarDelayed(const std::string &name) const{ return (m_SG.getBackPropDelaySteps() != 0) || m_SG.getWUInitialiser().isVarHeterogeneouslyDelayedInSynCode(name); }
 
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 
@@ -325,8 +323,6 @@ public:
     auto getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getPostNeuronVarRefs(); }
 
     const auto &getInitialisers() const{ return m_SG.getWUInitialiser().getPostNeuronVarReferences(); }
-
-    bool isVarHeterogeneouslyDelayed(const std::string &name) const{ return m_SG.getWUInitialiser().isVarHeterogeneouslyDelayedInSynCode(name); }
 
 private:
     //----------------------------------------------------------------------------
