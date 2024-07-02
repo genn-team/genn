@@ -407,15 +407,18 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase
 void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                                                                    unsigned int batchSize)
 {
-    // If this group has a delay and no postsynaptic dynamics (which will already perform this copying)
-    if(getArchetype().getBackPropDelaySteps() != 0 && Utils::areTokensEmpty(getArchetype().getWUInitialiser().getPostDynamicsCodeTokens())) {
+    // If this group has no postsynaptic dynamics (which will already perform this copying)
+    if(Utils::areTokensEmpty(getArchetype().getWUInitialiser().getPostDynamicsCodeTokens())) {
          // Create environment and add fields for variable 
         EnvironmentGroupMergedField<InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(env, *this, ng);
         varEnv.addVarPointers<SynapseWUPostVarAdapter>("InSynWUMPost" + std::to_string(getIndex()), false);
         
-        // Loop through variables and copy between read and write delay slots
+        // Loop through variables
         for(const auto &v : getArchetype().getWUInitialiser().getSnippet()->getPostVars()) {
-            if(getVarAccessMode(v.access) == VarAccessMode::READ_WRITE) {
+            // If variable is delayed, copy between read and write delay slots
+            if(getArchetype().getBackPropDelaySteps() != 0 
+               || getArchetype().isWUPostVarHeterogeneouslyDelayed(v.name)) 
+            {
                 const VarAccessDim varDims = getVarAccessDim(v.access);
                 varEnv.print("$(" + v.name + ")[" + ng.getWriteVarIndex(true, batchSize, varDims, "$(id)") + "] = ");
                 varEnv.printLine("$(" + v.name + ")[" + ng.getReadVarIndex(true, batchSize, varDims, "$(id)") + "];");
@@ -616,11 +619,11 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // **NOTE** we do this right at the top so that local copies can be used by child groups
     EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronChildVarEnv(
         *this, *this, getTypeContext(), neuronChildEnv, "", "l", true,
-        [batchSize, this](const std::string &varName, VarAccess d, bool delayed)
+        [batchSize, this](const std::string&, VarAccess d, bool delayed)
         {
             return getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
         },
-        [batchSize, this](const std::string &varName, VarAccess d, bool delayed)
+        [batchSize, this](const std::string&, VarAccess d, bool delayed)
         {
             return getWriteVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
         });
@@ -771,11 +774,12 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
                                              });
 
             // Are there any incoming synapse groups with postsynaptic code
-            // which have back-propagation delay and no postsynaptic dynamics
+            // which have back-propagation delay or heterogeneous delays and no postsynaptic dynamics
             const bool postVars = std::any_of(getMergedInSynWUMPostCodeGroups().cbegin(), getMergedInSynWUMPostCodeGroups().cend(),
                                               [](const auto &sg)
                                               {
-                                                  return ((sg.getArchetype().getBackPropDelaySteps() != 0)
+                                                  return (((sg.getArchetype().getBackPropDelaySteps() != 0)
+                                                            || sg.getArchetype().areAnyWUPostVarHeterogeneouslyDelayed())
                                                            && Utils::areTokensEmpty(sg.getArchetype().getWUInitialiser().getPostDynamicsCodeTokens()));
                                               });
 

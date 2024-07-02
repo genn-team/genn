@@ -84,14 +84,15 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
                             sg.getPostVarHetDelayIndex(batchSize, getVarAccessDim(v.access), "$(id_post)"));
         }
         else {
+            const bool delayed = (sg.getArchetype().getBackPropDelaySteps() != 0
+                                  || sg.getArchetype().isWUPostVarHeterogeneouslyDelayed(v.name));
             synEnv.addField(resolvedType.addConst(), v.name,
                             resolvedType.createPointer(), v.name,
                             [v](auto &runtime, const auto &g, size_t) 
                             { 
                                 return runtime.getArray(g.getFusedWUPostTarget(), v.name);
                             },
-                            sg.getPostVarIndex(sg.getArchetype().getBackPropDelaySteps() != 0, batchSize,
-                                               getVarAccessDim(v.access), "$(id_post)"));
+                            sg.getPostVarIndex(delayed, batchSize, getVarAccessDim(v.access), "$(id_post)"));
         }
     }
     
