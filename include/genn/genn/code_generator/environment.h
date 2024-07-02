@@ -807,41 +807,35 @@ public:
     using GroupInternal = typename G::GroupInternal;
     using AdapterDef = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
     using AdapterAccess = typename AdapterDef::AccessType;
-    using GetIndexFn = std::function<std::string(const std::string&, AdapterAccess)>;
-    using ShouldAlwaysCopyFn = std::function<bool(const std::string&, AdapterAccess)>;
+    using GetIndexFn = std::function<std::string(const std::string&, AdapterAccess, bool)>;
 
     VarCachePolicy(GetIndexFn getReadIndex, GetIndexFn getWriteIndex,
-                   ShouldAlwaysCopyFn shouldAlwaysCopy = ShouldAlwaysCopyFn())
+                   bool alwaysCopyIfDelayed = true)
     :   m_GetReadIndex(getReadIndex), m_GetWriteIndex(getWriteIndex), 
-        m_ShouldAlwaysCopy(shouldAlwaysCopy)
+        m_AlwaysCopyIfDelayed(alwaysCopyIfDelayed)
     {}
 
-    VarCachePolicy(GetIndexFn getIndex, ShouldAlwaysCopyFn shouldAlwaysCopy = ShouldAlwaysCopyFn())
+    VarCachePolicy(GetIndexFn getIndex, bool alwaysCopyIfDelayed = true)
     :   m_GetReadIndex(getIndex), m_GetWriteIndex(getIndex),
-        m_ShouldAlwaysCopy(shouldAlwaysCopy)
+        m_AlwaysCopyIfDelayed(alwaysCopyIfDelayed)
     {}
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    bool shouldAlwaysCopy(G&, const AdapterDef &var) const
+    bool shouldAlwaysCopy(G &group, const AdapterDef &var) const
     {
-        if(m_ShouldAlwaysCopy) {
-            return m_ShouldAlwaysCopy(var.name, var.access);
-        }
-        else {
-            return false;
-        }
+        return A(group.getArchetype()).isVarDelayed(var.name) && m_AlwaysCopyIfDelayed;
     }
 
-    std::string getReadIndex(G&, const AdapterDef &var) const
+    std::string getReadIndex(G &group, const AdapterDef &var) const
     {
-        return m_GetReadIndex(var.name, var.access);
+        return m_GetReadIndex(var.name, var.access, A(group.getArchetype()).isVarDelayed(var.name));
     }
 
-    std::string getWriteIndex(G&, const AdapterDef &var) const
+    std::string getWriteIndex(G &group, const AdapterDef &var) const
     {
-        return m_GetWriteIndex(var.name, var.access);
+        return m_GetWriteIndex(var.name, var.access, A(group.getArchetype()).isVarDelayed(var.name));
     }
 
     const Runtime::ArrayBase *getArray(const Runtime::Runtime &runtime, const GroupInternal &g, const AdapterDef &var) const
@@ -855,7 +849,7 @@ private:
     //------------------------------------------------------------------------
     GetIndexFn m_GetReadIndex;
     GetIndexFn m_GetWriteIndex;
-    ShouldAlwaysCopyFn m_ShouldAlwaysCopy;
+    bool m_AlwaysCopyIfDelayed;
 };
 
 //------------------------------------------------------------------------
