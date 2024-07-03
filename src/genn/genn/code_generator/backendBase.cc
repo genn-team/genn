@@ -353,7 +353,7 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
 
         if(batchSize > 1) {
             env.add(Uint32, "_post_batch_delay_slot", "postBatchDelaySlot",
-                    {env.addInitialiser("const unsigned int postBatchDelaySlot =$(_post_delay_slot) + ($(batch) * " + std::to_string(numTrgDelaySlots) + ");")});
+                    {env.addInitialiser("const unsigned int postBatchDelaySlot = $(_post_delay_slot) + ($(batch) * " + std::to_string(numTrgDelaySlots) + ");")});
             env.add(Uint32, "_post_batch_delay_offset", "postBatchDelayOffset",
                     {env.addInitialiser("const unsigned int postBatchDelayOffset = $(_post_delay_offset) + ($(_post_batch_offset) * " + std::to_string(numTrgDelaySlots) + ");")});
         }
@@ -366,6 +366,13 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
             env.add(Uint32, "_post_prev_spike_time_batch_delay_offset", "postPrevSpikeTimeBatchDelayOffset",
                     {env.addInitialiser("const unsigned int postPrevSpikeTimeBatchDelayOffset = $(_post_prev_spike_time_delay_offset) + ($(_post_batch_offset) * " + std::to_string(numTrgDelaySlots) + ");")});
         }
+    }
+
+    // If synapse group has dendritic delay and batching is enabled
+    const unsigned int maxDendriticDelayTimesteps = env.getGroup().getArchetype().getMaxDendriticDelayTimesteps();
+    if(maxDendriticDelayTimesteps > 1 && batchSize > 1) {
+         env.add(Uint32, "_post_batch_den_delay_offset", "postBatchDenDelayOffset",
+                {env.addInitialiser("const unsigned int postBatchDenDelayOffset = $(_post_batch_offset) * " + std::to_string(maxDendriticDelayTimesteps) + ";")});
     }
 }
 //--------------------------------------------------------------------------

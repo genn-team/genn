@@ -100,7 +100,8 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
                         [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "denDelayPtr");});
 
         // Get reference to dendritic delay buffer input for this timestep
-        psmEnv.printLine(backend.getPointerPrefix() + getScalarType().getName() + " *denDelayFront = &$(_den_delay)[(*$(_den_delay_ptr) * $(num_neurons)) + " + idx + "];");
+        const std::string denOffset = (batchSize > 1) ? "($(_batch_offset) * " + std::to_string(getArchetype().getMaxDendriticDelayTimesteps()) + ") + $(id)" : "$(id)";
+        psmEnv.printLine(backend.getPointerPrefix() + getScalarType().getName() + " *denDelayFront = &$(_den_delay)[(*$(_den_delay_ptr) * $(num_neurons)) + " + denOffset + "];");
 
         // Add delayed input from buffer into inSyn
         psmEnv.getStream() << "linSyn += *denDelayFront;" << std::endl;
