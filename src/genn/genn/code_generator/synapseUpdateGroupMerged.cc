@@ -106,31 +106,37 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
     // Calculate axonal delays to add to (somatic) spike times and subsitute in presynaptic spike and spike-like event times
     const std::string timeStr = sg.getTimeType().getName();
     const std::string axonalDelayMs = Type::writeNumeric(dt * (double)(sg.getArchetype().getAxonalDelaySteps() + 1u), sg.getTimeType());
-    const bool preDelay = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired();
-    const std::string preSTIndex = sg.getPreVarIndex(preDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id_pre)");
-    const std::string prevPreSTIndex = sg.getPrePrevSpikeTimeIndex(preDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id_pre)");
+    const bool preSpikeDelay = sg.getArchetype().getSrcNeuronGroup()->isSpikeDelayRequired();
+    const bool preSpikeEventDelay = sg.getArchetype().getSrcNeuronGroup()->isSpikeEventDelayRequired();
+    const std::string preSTIndex = sg.getPreVarIndex(preSpikeDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id_pre)");
+    const std::string preSETIndex = sg.getPreVarIndex(preSpikeEventDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id_pre)");
+    const std::string prevPreSTIndex = sg.getPrePrevSpikeTimeIndex(preSpikeDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id_pre)");
+    const std::string prevPreSETIndex = sg.getPrePrevSpikeTimeIndex(preSpikeEventDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id_pre)");
     synEnv.add(sg.getTimeType().addConst(), "st_pre", "stPre",
                {synEnv.addInitialiser("const " + timeStr + " stPre = " + axonalDelayMs + " + $(_src_st)[" + preSTIndex + "];")});
     synEnv.add(sg.getTimeType().addConst(), "prev_st_pre", "prevSTPre",
                {synEnv.addInitialiser("const " + timeStr + " prevSTPre = " + axonalDelayMs + " + $(_src_prev_st)[" + prevPreSTIndex + "];")});
     synEnv.add(sg.getTimeType().addConst(), "set_pre", "setPre",
-               {synEnv.addInitialiser("const " + timeStr + " setPre = " + axonalDelayMs + " + $(_src_set)[" + preSTIndex + "];")});
+               {synEnv.addInitialiser("const " + timeStr + " setPre = " + axonalDelayMs + " + $(_src_set)[" + preSETIndex + "];")});
     synEnv.add(sg.getTimeType().addConst(), "prev_set_pre", "prevSETPre",
-               {synEnv.addInitialiser("const " + timeStr + " prevSETPre = " + axonalDelayMs + " + $(_src_prev_set)[" + prevPreSTIndex + "];")});
+               {synEnv.addInitialiser("const " + timeStr + " prevSETPre = " + axonalDelayMs + " + $(_src_prev_set)[" + prevPreSETIndex + "];")});
 
     // Calculate backprop delay to add to (somatic) spike times and substitute in postsynaptic spike times
     const std::string backPropDelayMs = Type::writeNumeric(dt * (double)(sg.getArchetype().getBackPropDelaySteps() + 1u), sg.getTimeType());
-    const bool postDelay = sg.getArchetype().getTrgNeuronGroup()->isDelayRequired();
-    const std::string postSTIndex = sg.getPostVarIndex(postDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id_post)");
-    const std::string prevPostSTIndex = sg.getPostPrevSpikeTimeIndex(postDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id_post)");
+    const bool postSpikeDelay = sg.getArchetype().getTrgNeuronGroup()->isSpikeDelayRequired();
+    const bool postSpikeEventDelay = sg.getArchetype().getTrgNeuronGroup()->isSpikeEventDelayRequired();
+    const std::string postSTIndex = sg.getPostVarIndex(postSpikeDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id_post)");
+    const std::string postSETIndex = sg.getPostVarIndex(postSpikeEventDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id_post)");
+    const std::string prevPostSTIndex = sg.getPostPrevSpikeTimeIndex(postSpikeDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id_post)");
+    const std::string prevPostSETIndex = sg.getPostPrevSpikeTimeIndex(postSpikeEventDelay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id_post)");
     synEnv.add(sg.getTimeType().addConst(), "st_post", "stPost",
                {synEnv.addInitialiser("const " + timeStr + " stPost = " + backPropDelayMs + " + $(_trg_st)[" + postSTIndex + "];")});
     synEnv.add(sg.getTimeType().addConst(), "prev_st_post", "prevSTPost",
                {synEnv.addInitialiser("const " + timeStr + " prevSTPost = " + backPropDelayMs + " + $(_trg_prev_st)[" + prevPostSTIndex + "];")});
     synEnv.add(sg.getTimeType().addConst(), "set_post", "setPost",
-               {synEnv.addInitialiser("const " + timeStr + " setPost = " + backPropDelayMs + " + $(_trg_set)[" + postSTIndex + "];")});
+               {synEnv.addInitialiser("const " + timeStr + " setPost = " + backPropDelayMs + " + $(_trg_set)[" + postSETIndex + "];")});
     synEnv.add(sg.getTimeType().addConst(), "prev_set_post", "prevSETPost",
-               {synEnv.addInitialiser("const " + timeStr + " prevSETPost = " + backPropDelayMs + " + $(_trg_prev_set)[" + prevPostSTIndex + "];")});
+               {synEnv.addInitialiser("const " + timeStr + " prevSETPost = " + backPropDelayMs + " + $(_trg_prev_set)[" + prevPostSETIndex + "];")});
     
     // If weights are individual, substitute variables for values stored in global memory
     if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
@@ -233,10 +239,10 @@ bool SynapseGroupMergedBase::isToeplitzConnectivityInitDerivedParamHeterogeneous
     return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getToeplitzConnectivityInitialiser().getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
-std::string SynapseGroupMergedBase::getPreSlot(unsigned int batchSize) const
+std::string SynapseGroupMergedBase::getPreSlot(bool delay, unsigned int batchSize) const
 {
     // **TODO** this is basically VarAccessDim::BATCH
-    if(getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
+    if(delay) {
         return  (batchSize == 1) ? "$(_pre_delay_slot)" : "$(_pre_batch_delay_slot)";
     }
     else {
@@ -244,10 +250,10 @@ std::string SynapseGroupMergedBase::getPreSlot(unsigned int batchSize) const
     }
 }
 //----------------------------------------------------------------------------
-std::string SynapseGroupMergedBase::getPostSlot(unsigned int batchSize) const
+std::string SynapseGroupMergedBase::getPostSlot(bool delay, unsigned int batchSize) const
 {
     // **TODO** this is basically VarAccessDim::BATCH
-    if(getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
+    if(delay) {
         return  (batchSize == 1) ? "$(_post_delay_slot)" : "$(_post_batch_delay_slot)";
     }
     else {

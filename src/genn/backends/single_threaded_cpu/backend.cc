@@ -375,7 +375,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
                                 // Update event time
                                 if(n.getArchetype().isSpikeTimeRequired()) {
-                                    const std::string queueOffset = n.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
+                                    const std::string queueOffset = n.getArchetype().isSpikeDelayRequired() ? "$(_write_delay_offset) + " : "";
                                     env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
                                 }
 
@@ -398,7 +398,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
                                         genEmitEvent(env, n, false);
 
                                         if(n.getArchetype().isSpikeEventTimeRequired()) {
-                                            const std::string queueOffset = n.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
+                                            const std::string queueOffset = n.getArchetype().isSpikeEventDelayRequired() ? "$(_write_delay_offset) + " : "";
                                             env.printLine("$(_set)[" + queueOffset + "$(id)] = $(t);");
                                         }
 
@@ -1788,6 +1788,8 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "_event";
 
+    const bool delayRequired = (trueSpike ? sg.getArchetype().getSrcNeuronGroup()->isSpikeDelayRequired()
+                                : sg.getArchetype().getSrcNeuronGroup()->isSpikeEventDelayRequired());
     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ) {
         // Create environment for generating presynaptic update code into seperate CodeStream
         std::ostringstream preUpdateStream;
@@ -1847,11 +1849,11 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "addSynapse", 0}, addSynapseType, errorHandler);
                     env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_pre", 0}, Type::Uint32.addConst(), errorHandler);
                 },
-                [addSynapseType, trueSpike, &eventSuffix, &preUpdateStream, &sg](auto &env, auto generateBody)
+                [addSynapseType, delayRequired, trueSpike, &eventSuffix, &preUpdateStream](auto &env, auto generateBody)
                 {
                     // Detect spike events or spikes and do the update
                     env.getStream() << "// process presynaptic events: " << (trueSpike ? "True Spikes" : "Spike type events") << std::endl;
-                    if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
+                    if(delayRequired) {
                         env.print("for (unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[$(_pre_delay_slot)]; i++)");
                     }
                     else {
@@ -1861,7 +1863,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                         CodeStream::Scope b(env.getStream());
                         EnvironmentExternal bodyEnv(env);
 
-                        const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "$(_pre_delay_offset) + " : "";
+                        const std::string queueOffset = delayRequired ? "$(_pre_delay_offset) + " : "";
                         bodyEnv.printLine("const unsigned int ipre = $(_src_spk" + eventSuffix + ")[" + queueOffset + "i];");
                         
                         // Add presynaptic index
@@ -1879,7 +1881,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
     else {
         // Detect spike events or spikes and do the update
         env.getStream() << "// process presynaptic events: " << (trueSpike ? "True Spikes" : "Spike type events") << std::endl;
-        if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
+        if(delayRequired) {
             env.print("for (unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[$(_pre_delay_slot)]; i++)");
         }
         else {
@@ -1890,7 +1892,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
             EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(env, sg);
 
 
-            const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "$(_pre_delay_offset) + " : "";
+            const std::string queueOffset = delayRequired ? "$(_pre_delay_offset) + " : "";
             groupEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
                          {groupEnv.addInitialiser("const unsigned int idPre = $(_src_spk" + eventSuffix + ")[" + queueOffset + "i];")});
 
@@ -2028,7 +2030,9 @@ void Backend::genPostsynapticUpdate(EnvironmentExternalBase &env, PostsynapticUp
     const std::string eventSuffix = trueSpike ? "" : "_event";
 
     // Get number of postsynaptic spikes
-    if (sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
+    const bool delayRequired = (trueSpike ? sg.getArchetype().getTrgNeuronGroup()->isSpikeDelayRequired()
+                                : sg.getArchetype().getTrgNeuronGroup()->isSpikeEventDelayRequired());
+    if (delayRequired) {
         env.printLine("const unsigned int numSpikes = $(_trg_spk_cnt" + eventSuffix + ")[$(_post_delay_slot)];");
     }
     else {
@@ -2041,7 +2045,7 @@ void Backend::genPostsynapticUpdate(EnvironmentExternalBase &env, PostsynapticUp
         CodeStream::Scope b(env.getStream());
 
         // **TODO** prod types
-        const std::string offsetTrueSpkPost = sg.getArchetype().getTrgNeuronGroup()->isDelayRequired() ? "$(_post_delay_offset) + " : "";
+        const std::string offsetTrueSpkPost = delayRequired ? "$(_post_delay_offset) + " : "";
         env.printLine("const unsigned int spike = $(_trg_spk" + eventSuffix + ")[" + offsetTrueSpkPost + "j];");
 
         // Loop through column of presynaptic neurons
@@ -2091,7 +2095,7 @@ void Backend::genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpi
 {
     const std::string suffix = trueSpike ? "" : "_event";
     const std::string time = trueSpike ? "st" : "set";
-    if(ng.getArchetype().isDelayRequired()) {
+    if(trueSpike ? ng.getArchetype().isSpikeDelayRequired() : ng.getArchetype().isSpikeEventDelayRequired()) {
         // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
         env.print("for(unsigned int i = 0; i < $(_spk_cnt" + suffix + ")[lastTimestepDelaySlot]; i++)");
         {
@@ -2111,10 +2115,12 @@ void Backend::genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpi
 //--------------------------------------------------------------------------
 void Backend::genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike) const
 {
-    const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "$(_write_delay_offset) + " : "";
+    const bool delayRequired = (trueSpike ? ng.getArchetype().isSpikeDelayRequired()
+                                : ng.getArchetype().isSpikeEventDelayRequired());
+    const std::string queueOffset = delayRequired ? "$(_write_delay_offset) + " : "";
     const std::string suffix = trueSpike ? "" : "_event";
     env.print("$(_spk" + suffix + ")[" + queueOffset + "$(_spk_cnt" + suffix + ")");
-    if(ng.getArchetype().isDelayRequired()) {
+    if(delayRequired) {
         env.print("[*$(_spk_que_ptr)]++]");
     }
     else {

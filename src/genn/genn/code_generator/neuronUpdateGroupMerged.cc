@@ -246,7 +246,7 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
      
     // Expose spike event times to neuron code
     const std::string timePrecision = getTimeType().getName();
-    const std::string spikeTimeReadIndex = ng.getReadVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
+    const std::string spikeTimeReadIndex = ng.getReadVarIndex(ng.getArchetype().isSpikeDelayRequired(), batchSize,
                                                               VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
     synEnv.add(getTimeType().addConst(), "set", "lseT", 
                {synEnv.addInitialiser("const " + timePrecision + " lseT = $(_set)[" + spikeTimeReadIndex + "];")});
@@ -334,7 +334,7 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventConditionInternal(Envi
         genEmitSpikeLikeEvent(env, *this);
     }
     // If delays are required and event times are required
-    if(ng.getArchetype().isDelayRequired() 
+    if(ng.getArchetype().isSpikeEventDelayRequired()
        && (ng.getArchetype().isSpikeEventTimeRequired() || ng.getArchetype().isPrevSpikeEventTimeRequired())) 
     {
         env.print("else");
@@ -381,7 +381,7 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase
 
         // Substitute spike time
         // **NOTE** previous spike time is meaningless in neuron kernel
-        const std::string spikeTimeReadIndex = ng.getReadVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
+        const std::string spikeTimeReadIndex = ng.getReadVarIndex(ng.getArchetype().isSpikeDelayRequired(), batchSize,
                                                                   VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
         synEnv.add(getTimeType().addConst(), "st_post", "lsTPost", 
                    {synEnv.addInitialiser("const " + getTimeType().getName() + " lsTPost = $(_st)[" + spikeTimeReadIndex + "];")});
@@ -471,7 +471,7 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase
 
         // Substitute spike time
         // **NOTE** previous spike time is meaningless in neuron kernel
-        const std::string spikeTimeReadIndex = ng.getReadVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
+        const std::string spikeTimeReadIndex = ng.getReadVarIndex(ng.getArchetype().isSpikeDelayRequired(), batchSize,
                                                                   VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
         synEnv.add(getTimeType().addConst(), "st_pre", "lsTPre", 
                    {synEnv.addInitialiser("const " + getTimeType().getName() + " lsTPre = $(_st)[" + spikeTimeReadIndex + "];")});
@@ -668,7 +668,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     
     // Substitute spike time
     // **NOTE** previous spike time is meaningless in neuron kernel
-    const std::string spikeTimeReadIndex = getReadVarIndex(getArchetype().isDelayRequired(), batchSize, 
+    const std::string spikeTimeReadIndex = getReadVarIndex(getArchetype().isSpikeDelayRequired(), batchSize,
                                                            VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
     neuronEnv.add(getTimeType().addConst(), "st", "lsT", 
                   {neuronEnv.addInitialiser("const " + getTimeType().getName() + " lsT = $(_st)[" + spikeTimeReadIndex + "];")});
@@ -784,19 +784,24 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
                                               });
 
             // If spike times, presynaptic variables or postsynaptic variables are required, add if clause
-            if(getArchetype().isSpikeTimeRequired() || getArchetype().isPrevSpikeTimeRequired() || preVars || postVars) {
+            if((getArchetype().isSpikeTimeRequired() && getArchetype().isSpikeQueueRequired()) 
+               || (getArchetype().isPrevSpikeTimeRequired() && getArchetype().isSpikeEventQueueRequired()) 
+               || preVars || postVars) 
+            {
                 neuronEnv.getStream() << "else";
                 CodeStream::Scope b(neuronEnv.getStream());
                 
-                 // If spike times are required, copy times between delay slots
-                const std::string spikeTimeWriteIndex = getWriteVarIndex(true, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
-                if(getArchetype().isSpikeTimeRequired()) {
-                    neuronEnv.printLine("$(_st)[" + spikeTimeWriteIndex + "] = $(st);");
-                }
+                // If spike times are required, copy times between delay slots
+                if(getArchetype().isSpikeQueueRequired()) {
+                    const std::string spikeTimeWriteIndex = getWriteVarIndex(true, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
+                    if(getArchetype().isSpikeTimeRequired()) {
+                        neuronEnv.printLine("$(_st)[" + spikeTimeWriteIndex + "] = $(st);");
+                    }
 
-                // If previous spike times are required, copy times between delay slots
-                if(getArchetype().isPrevSpikeTimeRequired()) {
-                    neuronEnv.printLine("$(_prev_st)[" + spikeTimeWriteIndex + "] = $(_prev_st)[" + spikeTimeReadIndex + "];");
+                    // If previous spike times are required, copy times between delay slots
+                    if(getArchetype().isPrevSpikeTimeRequired()) {
+                        neuronEnv.printLine("$(_prev_st)[" + spikeTimeWriteIndex + "] = $(_prev_st)[" + spikeTimeReadIndex + "];");
+                    }
                 }
 
                 // Loop through outgoing synapse groups with some sort of presynaptic code
@@ -927,7 +932,7 @@ void NeuronSpikeQueueUpdateGroupMerged::SynSpike::generate(EnvironmentExternalBa
                         [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getFusedEventArray(ng, i, g, "Spk"); });
 
     // Update spike count
-    if(ng.getArchetype().isDelayRequired()) {
+    if(ng.getArchetype().isSpikeDelayRequired()) {
         synSpkEnv.print("$(_spk_cnt)[*$(_spk_que_ptr)");
         if(batchSize > 1) {
             synSpkEnv.print(" + (batch * " + std::to_string(ng.getArchetype().getNumDelaySlots()) + ")");
@@ -961,7 +966,7 @@ void NeuronSpikeQueueUpdateGroupMerged::SynSpikeEvent::generate(EnvironmentExter
                         [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getFusedEventArray(ng, i, g, "SpkEvent"); });
 
     // Update spike count
-    if(ng.getArchetype().isDelayRequired()) {
+    if(ng.getArchetype().isSpikeEventDelayRequired()) {
         synSpkEnv.print("$(_spk_cnt_event)[*$(_spk_que_ptr)");
         if(batchSize > 1) {
             synSpkEnv.print(" + (batch * " + std::to_string(ng.getArchetype().getNumDelaySlots()) + ")");
