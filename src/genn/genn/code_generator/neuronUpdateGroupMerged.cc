@@ -246,7 +246,7 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
      
     // Expose spike event times to neuron code
     const std::string timePrecision = getTimeType().getName();
-    const std::string spikeTimeReadIndex = ng.getReadVarIndex(ng.getArchetype().isSpikeDelayRequired(), batchSize,
+    const std::string spikeTimeReadIndex = ng.getReadVarIndex(ng.getArchetype().isSpikeEventDelayRequired(), batchSize,
                                                               VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)");
     synEnv.add(getTimeType().addConst(), "set", "lseT", 
                {synEnv.addInitialiser("const " + timePrecision + " lseT = $(_set)[" + spikeTimeReadIndex + "];")});
