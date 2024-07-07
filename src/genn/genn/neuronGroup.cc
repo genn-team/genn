@@ -379,10 +379,10 @@ NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronMo
                          const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers,
                          VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_NumNeurons(numNeurons), m_Model(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
-    m_NumDelaySlots(1), m_RecordingZeroCopyEnabled(false), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
-    m_SpikeTimeLocation(defaultVarLocation), m_PrevSpikeTimeLocation(defaultVarLocation), m_SpikeEventTimeLocation(defaultVarLocation), 
-    m_PrevSpikeEventTimeLocation(defaultVarLocation), m_VarLocation(defaultVarLocation), m_ExtraGlobalParamLocation(defaultExtraGlobalParamLocation),
-    m_SpikeRecordingEnabled(false), m_SpikeEventRecordingEnabled(false)
+    m_NumDelaySlots(1), m_RecordingZeroCopyEnabled(false), m_SpikeQueueRequired(false), m_SpikeEventQueueRequired(false), 
+    m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation), m_SpikeTimeLocation(defaultVarLocation), 
+    m_PrevSpikeTimeLocation(defaultVarLocation), m_SpikeEventTimeLocation(defaultVarLocation), m_PrevSpikeEventTimeLocation(defaultVarLocation), 
+    m_VarLocation(defaultVarLocation), m_ExtraGlobalParamLocation(defaultExtraGlobalParamLocation), m_SpikeRecordingEnabled(false), m_SpikeEventRecordingEnabled(false)
 {
     // Validate names
     Utils::validatePopName(name, "Neuron group");
@@ -568,6 +568,8 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
     Utils::updateHash(isSpikeEventRecordingEnabled(), hash);
     Utils::updateHash(getNumDelaySlots(), hash);
     Utils::updateHash(m_VarQueueRequired, hash);
+    Utils::updateHash(isSpikeQueueRequired(), hash);
+    Utils::updateHash(isSpikeEventQueueRequired(), hash);
     m_DynamicParams.updateHash(hash);
 
     // Update hash with number of fused spike conditions
@@ -607,6 +609,8 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getInitHashDigest() const
     Utils::updateHash(isSimRNGRequired(), hash);
     Utils::updateHash(getNumDelaySlots(), hash);
     Utils::updateHash(m_VarQueueRequired, hash);
+    Utils::updateHash(isSpikeQueueRequired(), hash);
+    Utils::updateHash(isSpikeEventQueueRequired(), hash);
     Utils::updateHash(getModel()->getVars(), hash);
 
     // Include variable initialiser hashes

@@ -547,6 +547,30 @@ void SynapseGroup::finalise(double dt)
             getTrgNeuronGroup()->setVarQueueRequired(v.second.getVarName());
         }
     }
+
+    // If synapse group has axonal delaysa
+    if(getAxonalDelaySteps() > 0) {
+        // If it has presynaptic spike triggered code, mark source neuron group as requiring a spike queue
+        if(isPreSpikeRequired()) {
+            getSrcNeuronGroup()->setSpikeQueueRequired();
+        }
+        // If it has presynaptic spike-like-event triggered code, mark source neuron group as requiring a spike event queue
+        if(isPreSpikeEventRequired()) {
+            getSrcNeuronGroup()->setSpikeEventQueueRequired();
+        }
+    }
+
+    // If synapse group has backpropagation delays
+    if(getBackPropDelaySteps() > 0) {
+        // If it has postsynaptic spike triggered code, mark target neuron group as requiring a spike queue
+        if(isPostSpikeRequired()) {
+            getTrgNeuronGroup()->setSpikeQueueRequired();
+        }
+        // If it has postsynaptic spike-like-event triggered code, mark target neuron group as requiring a spike queue
+        if(isPostSpikeEventRequired()) {
+            getTrgNeuronGroup()->setSpikeEventQueueRequired();
+        }
+    }
 }
 //----------------------------------------------------------------------------
 const SynapseGroup &SynapseGroup::getFusedSpikeTarget(const NeuronGroup *ng) const
