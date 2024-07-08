@@ -379,7 +379,7 @@ NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronMo
                          const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers,
                          VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_NumNeurons(numNeurons), m_Model(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
-    m_NumDelaySlots(1), m_RecordingZeroCopyEnabled(false), m_SpikeQueueRequired(false), m_SpikeEventQueueRequired(false), 
+    m_NumDelaySlots(1), m_SpikeQueueRequired(false), m_SpikeEventQueueRequired(false), m_RecordingZeroCopyEnabled(false), 
     m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation), m_SpikeTimeLocation(defaultVarLocation), 
     m_PrevSpikeTimeLocation(defaultVarLocation), m_SpikeEventTimeLocation(defaultVarLocation), m_PrevSpikeEventTimeLocation(defaultVarLocation), 
     m_VarLocation(defaultVarLocation), m_ExtraGlobalParamLocation(defaultExtraGlobalParamLocation), m_SpikeRecordingEnabled(false), m_SpikeEventRecordingEnabled(false)
