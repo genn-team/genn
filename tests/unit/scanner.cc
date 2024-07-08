@@ -150,7 +150,7 @@ TEST(Scanner, String)
 TEST(Scanner, IsIdentifierDelayed)
 {
     TestErrorHandler errorHandler;
-    const auto tokens = Scanner::scanSource("X[10] Z Y[3] Y[0] X Z", errorHandler);
+    const auto tokens = Scanner::scanSource("X[10] W Z Y[3] Y[0] X Z W[10]", errorHandler);
     ASSERT_FALSE(errorHandler.hasError());
 
     // Check delayed tokens
@@ -160,9 +160,11 @@ TEST(Scanner, IsIdentifierDelayed)
     ASSERT_FALSE(Utils::isIdentifierDelayed("Z", tokens));
 
     // Check non-existent tokens aren't delayed
-    ASSERT_FALSE(Utils::isIdentifierDelayed("W", tokens));
+    ASSERT_FALSE(Utils::isIdentifierDelayed("T", tokens));
 
     // Check error is thrown if identifier is referenced with and without delay
     EXPECT_THROW({ Utils::isIdentifierDelayed("X", tokens); }, 
+        std::runtime_error);
+    EXPECT_THROW({ Utils::isIdentifierDelayed("W", tokens); }, 
         std::runtime_error);
 }
