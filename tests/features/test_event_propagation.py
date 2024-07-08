@@ -260,13 +260,16 @@ def test_forward(make_model, backend, precision):
             if output_value != (model.timestep - 1):
                 assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
+@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
+                                                 ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_forward_den_delay(make_model, backend, precision):
+def test_forward_den_delay(make_model, backend, precision, batch_size):
     model = make_model(precision, "test_forward_den_delay", backend=backend)
     model.dt = 1.0
+    model.batch_size = batch_size
 
     # Create spike source array to generate one-hot pattern to decode
+    # **NOTE** startSpike and endSpike will be broadcast across batch dimension
     ss_pop = model.add_neuron_population("SpikeSource", 10, "SpikeSourceArray",
                                          {}, {"startSpike": np.arange(10), "endSpike": np.arange(1, 11)})
     ss_pop.extra_global_params["spikeTimes"].set_init_values(np.arange(10.0))
@@ -324,8 +327,9 @@ def test_forward_den_delay(make_model, backend, precision):
             pop.vars["x"].pull_from_device()
 
             # If not close to correct value, error
-            if not np.isclose(pop.vars["x"].view[0], correct):
-                assert False, f"{pop.name} decoding incorrect ({pop.vars['x'].view[0]} rather than {correct})"
+            # **NOTE** all close to handle batching
+            if not np.allclose(pop.vars["x"].view, correct):
+                assert False, f"{pop.name} decoding incorrect ({pop.vars['x'].view} rather than {correct})"
 
 
 @pytest.mark.parametrize("backend", ["cuda"])

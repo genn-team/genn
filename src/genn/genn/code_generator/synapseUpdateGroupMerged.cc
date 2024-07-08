@@ -218,14 +218,10 @@ std::string SynapseGroupMergedBase::getPostSlot(unsigned int batchSize) const
 //----------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getPostDenDelayIndex(unsigned int batchSize, const std::string &index, const std::string &offset) const
 {
-    const std::string batchID = ((batchSize == 1) ? "" : "$(_post_batch_offset) + ") + index;
+    assert(!offset.empty());
+    const std::string batchID = ((batchSize == 1) ? "" : "$(_post_batch_den_delay_offset) + ") + index;
 
-    if(offset.empty()) {
-        return "(*$(_den_delay_ptr) * $(num_post) + " + batchID;
-    }
-    else {
-        return "(((*$(_den_delay_ptr) + " + offset + ") % " + std::to_string(getArchetype().getMaxDendriticDelayTimesteps()) + ") * $(num_post)) + " + batchID;
-    }
+    return "(((*$(_den_delay_ptr) + " + offset + ") % " + std::to_string(getArchetype().getMaxDendriticDelayTimesteps()) + ") * $(num_post)) + " + batchID;
 }
 //--------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getPrePrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
