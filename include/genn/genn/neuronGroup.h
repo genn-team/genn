@@ -154,6 +154,9 @@ protected:
     // Set a variable as requiring queueing
     void setVarQueueRequired(const std::string &varName){ m_VarQueueRequired.insert(varName); }
 
+    void setSpikeQueueRequired(){ m_SpikeQueueRequired = true; }
+    void setSpikeEventQueueRequired(){ m_SpikeEventQueueRequired = true; }
+
     void addInSyn(SynapseGroupInternal *synapseGroup){ m_InSyn.push_back(synapseGroup); }
     void addOutSyn(SynapseGroupInternal *synapseGroup){ m_OutSyn.push_back(synapseGroup); }
 
@@ -224,6 +227,13 @@ protected:
 
     bool isVarQueueRequired(const std::string &var) const;
 
+    bool isSpikeQueueRequired() const{ return m_SpikeQueueRequired; }
+
+    bool isSpikeEventQueueRequired() const{ return m_SpikeEventQueueRequired; }
+
+    bool isSpikeDelayRequired() const{ return isDelayRequired() && isSpikeQueueRequired(); }
+    bool isSpikeEventDelayRequired() const{ return isDelayRequired() && isSpikeEventQueueRequired(); }
+
     //! Updates hash with neuron group
     /*! \note this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
@@ -272,6 +282,12 @@ private:
 
     //! Set of names of variable requiring queueing
     std::set<std::string> m_VarQueueRequired;
+
+    //! Is queueing required for spikes?
+    bool m_SpikeQueueRequired;
+
+    //! Is queueing required for spike-like events?
+    bool m_SpikeEventQueueRequired;
     
     //! Should zero-copy memory (if available) be used 
     //! for spike and spike-like event recording?

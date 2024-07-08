@@ -29,7 +29,7 @@ def test_sim(make_model, backend, precision, batch_size):
         uniform = gennrand_uniform();
         normal = gennrand_normal();
         """,
-        var_name_types=[("uniform", "scalar"), ("normal", "scalar")])
+        vars=[("uniform", "scalar"), ("normal", "scalar")])
 
     current_source_model = create_current_source_model(
         "current_source",
@@ -39,7 +39,7 @@ def test_sim(make_model, backend, precision, batch_size):
         normal = gennrand_normal();
         injectCurrent(0.0);
         """,
-        var_name_types=[("uniform", "scalar"), ("normal", "scalar")])
+        vars=[("uniform", "scalar"), ("normal", "scalar")])
 
     custom_connectivity_update_model = create_custom_connectivity_update_model(
         "custom_connectivity_update",
@@ -149,21 +149,21 @@ def test_init(make_model, backend, precision):
 
     nop_neuron_model = create_neuron_model(
         "nop_neuron",
-        var_name_types=create_vars())
+        vars=create_vars())
 
     nop_current_source_model = create_current_source_model(
         "nop_current_source",
-        var_name_types=create_vars())
+        vars=create_vars())
 
     nop_postsynaptic_update_model = create_postsynaptic_model(
         "nop_postsynaptic_update",
-        var_name_types=create_vars("psm_"))
+        vars=create_vars("psm_"))
 
     nop_weight_update_model = create_weight_update_model(
         "nop_weight_update",
-        var_name_types=create_vars(),
-        pre_var_name_types=create_vars("pre_"),
-        post_var_name_types=create_vars("post_"))
+        vars=create_vars(),
+        pre_vars=create_vars("pre_"),
+        post_vars=create_vars("post_"))
         
     model = make_model(precision, "test_init", backend=backend)
 

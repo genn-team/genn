@@ -2,6 +2,7 @@
 #include "gtest/gtest.h"
 
 // GeNN includes
+#include "gennUtils.h"
 #include "type.h"
 
 // GeNN transpiler includes
@@ -144,4 +145,26 @@ TEST(Scanner, String)
 
     ASSERT_EQ(tokens[0].lexeme, "\"hello world\"");
     ASSERT_EQ(tokens[1].lexeme, "\"pre-processor\"");
+}
+//--------------------------------------------------------------------------
+TEST(Scanner, IsIdentifierDelayed)
+{
+    TestErrorHandler errorHandler;
+    const auto tokens = Scanner::scanSource("X[10] W Z Y[3] Y[0] X Z W[10]", errorHandler);
+    ASSERT_FALSE(errorHandler.hasError());
+
+    // Check delayed tokens
+    ASSERT_TRUE(Utils::isIdentifierDelayed("Y", tokens));
+
+    // Check non-delayed tokens
+    ASSERT_FALSE(Utils::isIdentifierDelayed("Z", tokens));
+
+    // Check non-existent tokens aren't delayed
+    ASSERT_FALSE(Utils::isIdentifierDelayed("T", tokens));
+
+    // Check error is thrown if identifier is referenced with and without delay
+    EXPECT_THROW({ Utils::isIdentifierDelayed("X", tokens); }, 
+        std::runtime_error);
+    EXPECT_THROW({ Utils::isIdentifierDelayed("W", tokens); }, 
+        std::runtime_error);
 }

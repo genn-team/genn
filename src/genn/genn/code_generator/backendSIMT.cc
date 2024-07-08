@@ -561,36 +561,32 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
 
                         // Create an environment which caches neuron variable fields in local variables if they are accessed
                         // **NOTE** we do this right at the top so that local copies can be used by child groups
-                        // **NOTE** always copy variables if variable is delayed
                         EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> wuVarEnv(
                             ng, ng, ng.getTypeContext(), wuEnv, "", "l", true,
-                            [batchSize, &ng](const std::string &varName, VarAccess d)
+                            [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
                             {
-                                const bool delayed = (ng.getArchetype().isVarQueueRequired(varName) && ng.getArchetype().isDelayRequired());
                                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
                             },
-                            [batchSize, &ng](const std::string &varName, VarAccess d)
+                            [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
                             {
-                                const bool delayed = (ng.getArchetype().isVarQueueRequired(varName) && ng.getArchetype().isDelayRequired());
                                 return ng.getWriteVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
-                            });
+                            }, false);
                         ng.generateWUVarUpdate(wuEnv, batchSize);
                     }
 
-                    const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
-                                                                        VarAccessDim::BATCH | VarAccessDim::ELEMENT, "");
-
+                    const std::string spikeQueueOffset = ng.getWriteVarIndex(ng.getArchetype().isSpikeDelayRequired(), batchSize,
+                                                                             VarAccessDim::BATCH | VarAccessDim::ELEMENT, "");
                     // Update event time
                     if(ng.getArchetype().isSpikeTimeRequired()) {
-                        groupEnv.printLine("$(_st)[" + queueOffset + "n] = $(t);");
+                        groupEnv.printLine("$(_st)[" + spikeQueueOffset + "n] = $(t);");
                     }
                    
                     // Generate code to copy spikes into global memory
                     ng.generateSpikes(
                         groupEnv,
-                        [&queueOffset, this](EnvironmentExternalBase &env)
+                        [&spikeQueueOffset, this](EnvironmentExternalBase &env)
                         {
-                            env.printLine("$(_spk)[" + queueOffset + "$(_sh_spk_pos)[0] + " + getThreadID() + "] = n;");
+                            env.printLine("$(_spk)[" + spikeQueueOffset + "$(_sh_spk_pos)[0] + " + getThreadID() + "] = n;");
                         });
                 }
             }
@@ -604,15 +600,13 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                         CodeStream::Scope b(env.getStream());
                         env.printLine("const unsigned int n = $(_sh_spk_event)[" + std::to_string(sg.getIndex()) + "][" + getThreadID() + "];");
 
-                        if(ng.getArchetype().isSpikeEventTimeRequired()) {
-                            const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
-                                                                                VarAccessDim::BATCH | VarAccessDim::ELEMENT, "");
-                            env.printLine("$(_set)[" + queueOffset + "n] = $(t);");
+                        const std::string spikeEventQueueOffset = ng.getWriteVarIndex(ng.getArchetype().isSpikeEventDelayRequired(), batchSize,
+                                                                                      VarAccessDim::BATCH | VarAccessDim::ELEMENT, "");
+                        if(ng.getArchetype().isSpikeEventTimeRequired()) { 
+                            env.printLine("$(_set)[" + spikeEventQueueOffset + "n] = $(t);");
                         }
 
-                        const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, 
-                                                                            VarAccessDim::BATCH | VarAccessDim::ELEMENT, "");
-                        env.printLine("$(_spk_event)[" + queueOffset + "$(_sh_spk_pos_event)[" + std::to_string(sg.getIndex()) + "] + " + getThreadID() + "] = n;");
+                        env.printLine("$(_spk_event)[" + spikeEventQueueOffset + "$(_sh_spk_pos_event)[" + std::to_string(sg.getIndex()) + "] + " + getThreadID() + "] = n;");
                     }
                 });
 
@@ -851,11 +845,11 @@ void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSp
 
                 synEnv.add(Type::Uint32.addConst(), "id_syn", "$(id)");
 
-                synEnv.add(Type::AddToPostDenDelay, "addToPostDelay", 
+                synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay",
                            getAtomic(modelMerged.getModel().getPrecision()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
-                synEnv.add(Type::AddToPost, "addToPost", 
+                synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost",
                            getAtomic(modelMerged.getModel().getPrecision()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
-                synEnv.add(Type::AddToPre, "addToPre",
+                synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre",
                             getAtomic(modelMerged.getModel().getPrecision()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
                 
                 sg.generateSynapseUpdate(synEnv, batchSize, modelMerged.getModel().getDT());
@@ -1828,8 +1822,10 @@ void BackendSIMT::genPostsynapticUpdate(EnvironmentExternalBase &env, Postsynapt
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "_event";
+    const bool delay = (trueSpike ? sg.getArchetype().getTrgNeuronGroup()->isSpikeQueueRequired()
+                        : sg.getArchetype().getTrgNeuronGroup()->isSpikeEventQueueRequired());
 
-    env.printLine("const unsigned int numSpikes = $(_trg_spk_cnt" + eventSuffix + ")[" + sg.getPostSlot(batchSize) + "];");
+    env.printLine("const unsigned int numSpikes = $(_trg_spk_cnt" + eventSuffix + ")[" + sg.getPostSlot(delay, batchSize) + "];");
             
     env.getStream() << "const unsigned int numSpikeBlocks = (numSpikes + " << getKernelBlockSize(KernelPostsynapticUpdate) - 1 << ") / " << getKernelBlockSize(KernelPostsynapticUpdate) << ";" << std::endl;
     env.getStream() << "for (unsigned int r = 0; r < numSpikeBlocks; r++)";
@@ -1841,7 +1837,7 @@ void BackendSIMT::genPostsynapticUpdate(EnvironmentExternalBase &env, Postsynapt
         {
             CodeStream::Scope b(env.getStream());
             const std::string index = "(r * " + std::to_string(getKernelBlockSize(KernelPostsynapticUpdate)) + ") + " + getThreadID();
-            env.printLine("const unsigned int spk = $(_trg_spk" + eventSuffix + ")[" + sg.getPostVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, index) + "];");
+            env.printLine("const unsigned int spk = $(_trg_spk" + eventSuffix + ")[" + sg.getPostVarIndex(delay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, index) + "];");
             env.getStream() << "shSpk[" << getThreadID() << "] = spk;" << std::endl;
 
             if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -1881,7 +1877,8 @@ void BackendSIMT::genPostsynapticUpdate(EnvironmentExternalBase &env, Postsynapt
 
                 synEnv.add(Type::Uint32.addConst(), "id_post", "$(_sh_spk)[j]");
 
-                synEnv.add(Type::AddToPre, "addToPre", getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
+                synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", 
+                           getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
 
                 if(trueSpike) {
                     sg.generateSpikeUpdate(synEnv, batchSize, dt);
@@ -1903,7 +1900,7 @@ void BackendSIMT::genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPre
 {
     const std::string suffix = trueSpike ? "" : "_event";
     const std::string time = trueSpike ? "st" : "set";
-    if(ng.getArchetype().isDelayRequired()) {
+    if(trueSpike ? ng.getArchetype().isSpikeDelayRequired() : ng.getArchetype().isSpikeEventDelayRequired()) {
         // If there is a spike for this thread, set previous spike time to time of last timestep
         // **NOTE** spkQuePtr is updated below so this already points to last timestep
         env.print("if($(id) < $(_spk_cnt" + suffix + ")[lastTimestepDelaySlot])");
@@ -1961,7 +1958,7 @@ void BackendSIMT::genCopyEventToGlobal(EnvironmentExternalBase &env, NeuronUpdat
     const std::string suffix = trueSpike ? "" : "_event";
 
     env.print("$(_sh_spk_pos" + suffix + ")[" + indexStr + "] = " + getAtomic(Type::Uint32) + "(&$(_spk_cnt" + suffix + ")");
-    if(ng.getArchetype().isDelayRequired()) {
+    if(trueSpike ? ng.getArchetype().isSpikeDelayRequired() : ng.getArchetype().isSpikeEventDelayRequired()) {
         env.print("[*$(_spk_que_ptr)");
         if(batchSize > 1) {
             env.getStream() << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";

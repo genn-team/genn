@@ -54,7 +54,7 @@ def test_spike_times(make_model, backend, precision):
     # Neuron model which fires at t = id ms and every 10 ms after that
     pattern_spike_neuron_model = create_neuron_model(
         "pattern_spike_neuron",
-        var_name_types=[("a", "scalar")],
+        vars=[("a", "scalar")],
         sim_code=
         """
         a = st;
@@ -66,8 +66,8 @@ def test_spike_times(make_model, backend, precision):
 
     pre_weight_update_model = create_weight_update_model(
         "pre_weight_update",
-        var_name_types=[("a", "scalar"), ("b", "scalar")],
-        pre_var_name_types=[("c", "scalar")],
+        vars=[("a", "scalar"), ("b", "scalar")],
+        pre_vars=[("c", "scalar")],
         sim_code=
         """
         a = prev_st_pre;
@@ -83,7 +83,7 @@ def test_spike_times(make_model, backend, precision):
 
     post_weight_update_model = create_weight_update_model(
         "post_weight_update",
-        var_name_types=[("a", "scalar"), ("b", "scalar")],
+        vars=[("a", "scalar"), ("b", "scalar")],
         pre_spike_syn_code=
         """
         a = st_post;
@@ -161,7 +161,7 @@ def test_spike_event_times(make_model, backend, precision):
 
     pre_weight_update_model = create_weight_update_model(
         "pre_weight_update",
-        var_name_types=[("a", "scalar"), ("b", "scalar")],
+        vars=[("a", "scalar"), ("b", "scalar")],
         pre_event_syn_code=
         """
         a = prev_set_pre;
@@ -177,7 +177,7 @@ def test_spike_event_times(make_model, backend, precision):
 
     post_weight_update_model = create_weight_update_model(
         "post_weight_update",
-        var_name_types=[("a", "scalar"), ("b", "scalar")],
+        vars=[("a", "scalar"), ("b", "scalar")],
         pre_spike_syn_code=
         """
         a = set_post;

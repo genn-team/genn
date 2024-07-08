@@ -666,8 +666,11 @@ PYBIND11_MODULE(_genn, m)
              pybind11::arg("param_name"), pybind11::arg("dynamic") = true,
              DOC(SynapseGroup, setPSParamDynamic))
         WRAP_METHOD("get_ps_var_location", SynapseGroup, getPSVarLocation)
-        WRAP_METHOD("set_ps_var_location", SynapseGroup, setPSVarLocation);
-    
+        WRAP_METHOD("set_ps_var_location", SynapseGroup, setPSVarLocation)
+        
+        // **NOTE** we use the 'publicist' pattern to expose some protected methods
+        .def("_is_wu_post_var_heterogeneously_delayed", &SynapseGroupInternal::isWUPostVarHeterogeneouslyDelayed);
+        
     //------------------------------------------------------------------------
     // genn.NumericValue
     //------------------------------------------------------------------------

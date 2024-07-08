@@ -18,7 +18,7 @@ pre_neuron_model = create_neuron_model(
     """
     x = (id == (int)t) ? 1.0 : 0.0;
     """,
-    var_name_types=[("x", "scalar")])
+    vars=[("x", "scalar")])
 
 post_neuron_model = create_neuron_model(
     "post_neuron",
@@ -26,7 +26,7 @@ post_neuron_model = create_neuron_model(
     """
     x = Isyn;
     """,
-    var_name_types=[("x", "scalar")])
+    vars=[("x", "scalar")])
 
 decoder_model = create_sparse_connect_init_snippet(
     "decoder",
@@ -53,7 +53,7 @@ decoder_dense_model = create_var_init_snippet(
 def test_forward(make_model, backend, precision):
     continous_weight_update_model = create_weight_update_model(
         "continous_weight_update",
-        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)],
+        vars=[("g", "scalar", VarAccess.READ_ONLY)],
         pre_neuron_var_refs=[("x", "scalar", VarAccessMode.READ_ONLY)],
         synapse_dynamics_code=
         """
@@ -241,7 +241,7 @@ def test_forward(make_model, backend, precision):
 def test_forward_den_delay(make_model, backend, precision):
     continous_den_delay_wum = create_weight_update_model(
         "continous_den_delay",
-        var_name_types=[("g", "scalar", VarAccess.READ_ONLY),
+        vars=[("g", "scalar", VarAccess.READ_ONLY),
                         ("d", "uint8_t", VarAccess.READ_ONLY)],
         pre_neuron_var_refs=[("x", "scalar", VarAccessMode.READ_ONLY)],
         synapse_dynamics_code=
@@ -326,11 +326,11 @@ def test_reverse(make_model, backend, precision):
         y = Isyn;
         x = (id == (int)t) ? 1.0 : 0.0;
         """,
-        var_name_types=[("x", "scalar"), ("y", "scalar")])
+        vars=[("x", "scalar"), ("y", "scalar")])
 
     continous_reverse_model = create_weight_update_model(
         "continous_reverse",
-        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)],
+        vars=[("g", "scalar", VarAccess.READ_ONLY)],
         pre_neuron_var_refs=[("x", "scalar", VarAccessMode.READ_ONLY)],
         synapse_dynamics_code=
         """
@@ -401,3 +401,73 @@ def test_reverse(make_model, backend, precision):
 
         assert np.sum(pre_n_pop.vars["y"].view) == (model.timestep - 1)
         assert np.sum(pre_pre_n_pop.vars["y"].view) == (model.timestep - 1)
+
+@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_reverse_den_delay(make_model, backend, precision):
+    continous_reverse_delay_model = create_weight_update_model(
+        "continous_reverse_delay",
+        vars=[("g", "scalar", VarAccess.READ_ONLY),
+              ("d", "uint8_t", VarAccess.READ_ONLY)],
+        post_neuron_var_refs=[("x", "scalar", VarAccessMode.READ_ONLY)],
+        synapse_dynamics_code=
+        """
+        addToPre(g * x[d]);
+        """)
+
+    model = make_model(precision, "test_reverse_den_delay", backend=backend)
+    model.dt = 1.0
+
+    # Add postsynptic population to connect to
+    post_n_pop = model.add_neuron_population(
+        "Post", 10, pre_neuron_model,
+        {}, {"x": 0.0})
+
+    delay = np.arange(9, -1, -1)
+    
+    # Create neuron model to read addToPre input
+    dense_n_pop = model.add_neuron_population(
+        "DensePre", 1, post_neuron_model,
+        {}, {"x": 0.0})
+    dense_s_pop = model.add_synapse_population(
+        "DenseSynapse", "DENSE",
+        dense_n_pop, post_n_pop,
+        init_weight_update(continous_reverse_delay_model, {}, 
+                           {"g": 1.0, "d": delay},
+                           post_var_refs={"x": create_var_ref(post_n_pop, "x")}),
+        init_postsynaptic("DeltaCurr"))
+    dense_s_pop.max_dendritic_delay_timesteps = 10
+    
+    # Create neuron model to read addToPre input
+    sparse_n_pop = model.add_neuron_population(
+        "SparsePre", 1, post_neuron_model,
+        {}, {"x": 0.0})
+    sparse_s_pop = model.add_synapse_population(
+        "SparseSynapse", "SPARSE",
+        sparse_n_pop, post_n_pop,
+        init_weight_update(continous_reverse_delay_model, {}, 
+                           {"g": 1.0, "d": delay},
+                           post_var_refs={"x": create_var_ref(post_n_pop, "x")}),
+        init_postsynaptic("DeltaCurr"))
+    sparse_s_pop.set_sparse_connections(np.zeros(10, dtype=int), np.arange(10))
+    sparse_s_pop.max_dendritic_delay_timesteps = 10
+
+    # Build model and load
+    model.build()
+    model.load()
+
+    # Simulate for 11 timesteps
+    output_populations = [dense_n_pop, sparse_n_pop]
+    while model.timestep < 11:
+        model.step_time()
+
+        # Loop through output populations
+        correct = 10.0 if model.timestep == 11 else 0.0
+        for pop in output_populations:
+            # Pull state variable
+            pop.vars["x"].pull_from_device()
+
+            # If not close to correct value, error
+            if not np.isclose(pop.vars["x"].view[0], correct):
+                assert False, f"{pop.name} decoding incorrect ({pop.vars['x'].view[0]} rather than {correct})"
+

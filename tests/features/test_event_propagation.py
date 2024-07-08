@@ -18,7 +18,7 @@ post_neuron_model = create_neuron_model(
     """
     x = Isyn;
     """,
-    var_name_types=[("x", "scalar")])
+    vars=[("x", "scalar")])
 
 decoder_model = create_sparse_connect_init_snippet(
     "decoder",
@@ -42,7 +42,7 @@ decoder_dense_model = create_var_init_snippet(
 
 static_event_pulse_model = create_weight_update_model(
     "static_event_pulse",
-    var_name_types=[("g", "scalar")],
+    vars=[("g", "scalar")],
     pre_event_threshold_condition_code=
     """
     (unsigned int)round(t) == id
@@ -562,7 +562,7 @@ def test_reverse(make_model, backend, precision):
 
     pre_reverse_spike_source_model = create_neuron_model(
         "pre_reverse_spike_source",
-        var_name_types=[("startSpike", "unsigned int"), 
+        vars=[("startSpike", "unsigned int"), 
                         ("endSpike", "unsigned int", VarAccess.READ_ONLY_DUPLICATE),
                         ("x", "scalar")],
         extra_global_params=[("spikeTimes", "scalar*")],
@@ -581,7 +581,7 @@ def test_reverse(make_model, backend, precision):
     
     pre_model = create_neuron_model(
         "pre",
-        var_name_types=[("x", "scalar")],
+        vars=[("x", "scalar")],
         extra_global_params=[("spikeTimes", "scalar*")],
         sim_code=
         """
@@ -594,7 +594,7 @@ def test_reverse(make_model, backend, precision):
         """
         addToPre(g);
         """,
-        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
+        vars=[("g", "scalar", VarAccess.READ_ONLY)])
     
     static_pulse_reverse_constant_weight_model = create_weight_update_model(
         "static_pulse_reverse_constant_weight",
@@ -605,7 +605,7 @@ def test_reverse(make_model, backend, precision):
 
     static_event_pulse_reverse_model = create_weight_update_model(
         "static_event_pulse_reverse",
-        var_name_types=[("g", "scalar")],
+        vars=[("g", "scalar")],
         pre_event_threshold_condition_code=
         """
         (unsigned int)round(t) == id
@@ -696,7 +696,7 @@ def test_reverse(make_model, backend, precision):
 def test_reverse_post(make_model, backend, precision):
     pre_reverse_model = create_neuron_model(
         "pre_reverse",
-        var_name_types=[("x", "scalar")],
+        vars=[("x", "scalar")],
         sim_code=
         """
         x = Isyn;
@@ -708,7 +708,7 @@ def test_reverse_post(make_model, backend, precision):
         """
         addToPre(g);
         """,
-        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
+        vars=[("g", "scalar", VarAccess.READ_ONLY)])
     
     static_pulse_reverse_event_post_model = create_weight_update_model(
         "static_pulse_reverse_event_post",
@@ -720,7 +720,7 @@ def test_reverse_post(make_model, backend, precision):
         """
         (unsigned int)round(t) == id
         """,
-        var_name_types=[("g", "scalar", VarAccess.READ_ONLY)])
+        vars=[("g", "scalar", VarAccess.READ_ONLY)])
 
     model = make_model(precision, "test_reverse_post", backend=backend)
     model.dt = 1.0

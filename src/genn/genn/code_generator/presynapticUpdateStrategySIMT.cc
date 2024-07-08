@@ -28,7 +28,7 @@ bool isSmallSharedMemoryPop(const PresynapticUpdateGroupMerged &sg,
         return false;
     }
     // Otherwise, if dendritic delays are required, shared memory approach cannot be used so return false
-    else if(sg.getArchetype().isDendriticDelayRequired()) {
+    else if(sg.getArchetype().isDendriticOutputDelayRequired()) {
         return false;
     }
     // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if all neuron groups targetted
@@ -88,6 +88,7 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "_eevnt";
     const size_t numThreadsPerSpike = sg.getArchetype().getNumThreadsPerSpike();
+    const bool delay = trueSpike ? sg.getArchetype().getSrcNeuronGroup()->isSpikeQueueRequired() : sg.getArchetype().getSrcNeuronGroup()->isSpikeEventQueueRequired();
 
     if(numThreadsPerSpike > 1) {
         env.getStream() << "const unsigned int spike = " << env["id"] << " / " << numThreadsPerSpike << ";" << std::endl;
@@ -101,11 +102,11 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
         env.getStream() << sg.getScalarType().getName() << " lOutPre = " << Type::writeNumeric(0.0, sg.getScalarType()) << ";" << std::endl;
     }
     
-    env.print("if (spike < $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(batchSize) + "])");
+    env.print("if (spike < $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(delay, batchSize) + "])");
     {
         CodeStream::Scope b(env.getStream());
 
-        env.printLine("const unsigned int preInd = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "spike") + "];");
+        env.printLine("const unsigned int preInd = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(delay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "spike") + "];");
 
         const auto indexType = backend.getSynapseIndexType(sg);
         const auto indexTypeName = indexType.getName();
@@ -133,11 +134,11 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
                        {synEnv.addInitialiser("const unsigned int ipost = $(_ind)[synAddress];")});
             synEnv.add(indexType.addConst(), "id_syn", "synAddress");
 
-            synEnv.add(Type::AddToPostDenDelay, "addToPostDelay",
+            synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay",
                        backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
-            synEnv.add(Type::AddToPost, "addToPost",
+            synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost",
                        backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
-            synEnv.add(Type::AddToPre, "addToPre", "lOutPre += ($(0))");
+            synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "lOutPre += ($(0))");
             
             if(trueSpike) {
                 sg.generateSpikeUpdate(synEnv, batchSize, dt);
@@ -226,8 +227,8 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "_event";
-
-    env.printLine("const unsigned int numSpikes = $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(batchSize) + "];");
+    const bool delay = trueSpike ? sg.getArchetype().getSrcNeuronGroup()->isSpikeQueueRequired() : sg.getArchetype().getSrcNeuronGroup()->isSpikeEventQueueRequired();
+    env.printLine("const unsigned int numSpikes = $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(delay, batchSize) + "];");
     env.getStream() << "const unsigned int numSpikeBlocks = (numSpikes + " << backend.getKernelBlockSize(KernelPresynapticUpdate) << " - 1) / " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ";" << std::endl;
 
     env.getStream() << "for (unsigned int r = 0; r < numSpikeBlocks; r++)";
@@ -240,7 +241,7 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
         {
             CodeStream::Scope b(env.getStream());
             const std::string index = "(r * " + std::to_string(backend.getKernelBlockSize(KernelPresynapticUpdate)) + ") + " + backend.getThreadID();
-            env.printLine("const unsigned int spk = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, index) + "];");
+            env.printLine("const unsigned int spk = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(delay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, index) + "];");
             env.printLine("$(_sh_spk" +  eventSuffix + ")[" + backend.getThreadID() + "] = spk;");
             if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 env.printLine("$(_sh_row_length)[" + backend.getThreadID() + "] = $(_row_length)[spk];");
@@ -296,26 +297,26 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
                 }
        
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
-                synEnv.add(Type::AddToPostDenDelay, "addToPostDelay",
+                synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay",
                            backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
                 
                 // If we should accumulate in register, add parameter to register
                 if(shouldAccumulateInRegister(sg)) {
-                    synEnv.add(Type::AddToPost, "addToPost", "linSyn += ($(0))");
+                    synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "linSyn += ($(0))");
                 }
                 // Otherwise, if we should use shared memory, add to shared memory
                 // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
                 else if(isSmallSharedMemoryPop(sg, backend)) {
-                    synEnv.add(Type::AddToPost, "addToPost", "$(_sh_out_post)[$(id_post)] += ($(0))");
+                    synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "$(_sh_out_post)[$(id_post)] += ($(0))");
                 }
                 // Otherwise, use global memory atomic
                 else {
-                    synEnv.add(Type::AddToPost, "addToPost",
+                    synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost",
                                backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
                 }
 
                 // Add presynaptic output to local variable
-                synEnv.add(Type::AddToPre, "addToPre", "lOutPre += ($(0))");
+                synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "lOutPre += ($(0))");
 
                 if(trueSpike) {
                     sg.generateSpikeUpdate(synEnv, batchSize, dt);
@@ -383,7 +384,7 @@ bool PostSpan::shouldAccumulateInRegister(const PresynapticUpdateGroupMerged &sg
 {
     // If no dendritic delays are required and data structure is dense, we can accumulate output directly into register
     const auto matrixType = sg.getArchetype().getMatrixType();
-    return (!sg.getArchetype().isDendriticDelayRequired()
+    return (!sg.getArchetype().isDendriticOutputDelayRequired()
             && ((matrixType & SynapseMatrixConnectivity::DENSE) || (matrixType & SynapseMatrixConnectivity::BITMASK)));
 }
 
@@ -428,6 +429,7 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
     const std::string eventSuffix = trueSpike ? "" : "_event";
     const size_t numThreadsPerSpike = sg.getArchetype().getNumThreadsPerSpike();
     const std::string numThreadsPerSpikeStr = std::to_string(numThreadsPerSpike);
+    const bool delay = trueSpike ? sg.getArchetype().getSrcNeuronGroup()->isSpikeQueueRequired() : sg.getArchetype().getSrcNeuronGroup()->isSpikeEventQueueRequired();
 
     EnvironmentExternal groupEnv(env);
     if(numThreadsPerSpike > 1) {
@@ -441,7 +443,7 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
     }
 
     // If there is a spike for this thread to process
-    groupEnv.print("if ($(_spike) < $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(batchSize) + "])");
+    groupEnv.print("if ($(_spike) < $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(delay, batchSize) + "])");
     {
         CodeStream::Scope b(groupEnv.getStream());
         
@@ -452,7 +454,7 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
         // Create environment and add presynaptic index
         EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(groupEnv, sg);
         synEnv.add(Type::Uint32.addConst(), "id_pre", "preInd",
-                   {synEnv.addInitialiser("const unsigned int preInd = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(_spike)") + "];")});
+                   {synEnv.addInitialiser("const unsigned int preInd = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(delay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(_spike)") + "];")});
 
         // **YUCK** add a hidden copy of num_post so we can overwrite deeper in here without losing access to original
         synEnv.add(Type::Uint32.addConst(), "_num_post", "$(num_post)");
@@ -499,11 +501,11 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
             }
                     
             // Add correct functions for applying synaptic input
-            preUpdateEnv.add(Type::AddToPostDenDelay, "addToPostDelay",
+            preUpdateEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay",
                              backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
-            preUpdateEnv.add(Type::AddToPost, "addToPost",
+            preUpdateEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost",
                              backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
-            preUpdateEnv.add(Type::AddToPre, "addToPre", "lOutPre += ($(0))");
+            preUpdateEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "lOutPre += ($(0))");
 
             // Generate spike update
             if(trueSpike) {
@@ -583,7 +585,7 @@ bool PostSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const Prefere
     // if synapse groups with bitmask connectivity and no dendritic delays request postsynaptic parallelism
     return ((sg.getParallelismHint() == SynapseGroup::ParallelismHint::WORD_PACKED_BITMASK)
             && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK)
-            && !sg.isDendriticDelayRequired());
+            && !sg.isDendriticOutputDelayRequired());
 }
 //----------------------------------------------------------------------------
 void PostSpanBitmask::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
@@ -615,8 +617,9 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
 
     // Get blocksize
     const size_t blockSize = backend.getKernelBlockSize(KernelPresynapticUpdate);
+    const bool delay = trueSpike ? sg.getArchetype().getSrcNeuronGroup()->isSpikeQueueRequired() : sg.getArchetype().getSrcNeuronGroup()->isSpikeEventQueueRequired();
 
-    env.printLine("const unsigned int numSpikes = $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(batchSize) + "];");
+    env.printLine("const unsigned int numSpikes = $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(delay, batchSize) + "];");
     env.getStream() << "const unsigned int numSpikeBlocks = (numSpikes + " << blockSize << " - 1) / " << blockSize << ";" << std::endl;
 
 
@@ -631,7 +634,7 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
         {
             CodeStream::Scope b(env.getStream());
             const std::string index = "(r * " + std::to_string(backend.getKernelBlockSize(KernelPresynapticUpdate)) + ") + " + backend.getThreadID();
-            env.printLine("const unsigned int spk = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, index) + "];");
+            env.printLine("const unsigned int spk = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(delay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, index) + "];");
             env.printLine("$(_sh_spk" + eventSuffix + ")[" + backend.getThreadID() + "] = spk;");
         }
         backend.genSharedMemBarrier(env.getStream());
@@ -681,9 +684,9 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
                     postEnv.add(Type::Uint32.addConst(), "id_post", "ipost",
                                 {postEnv.addInitialiser("const unsigned int ipost = ibit + ($(id) * 32);")});
 
-                    postEnv.add(Type::AddToPost, "addToPost",
+                    postEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost",
                                 "$(_sh_out_post)[(ibit * " + std::to_string(blockSize) + ") + " + backend.getThreadID() + "] += ($(0))");
-                    postEnv.add(Type::AddToPre, "addToPre", "lOutPre += ($(0))");
+                    postEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "lOutPre += ($(0))");
 
                     if(trueSpike) {
                         sg.generateSpikeUpdate(postEnv, batchSize, dt);
@@ -781,6 +784,8 @@ size_t PostSpanToeplitz::getSharedMemoryPerThread(const PresynapticUpdateGroupMe
 void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
                                  unsigned int batchSize, double dt, bool trueSpike) const
 {
+    const bool delay = trueSpike ? sg.getArchetype().getSrcNeuronGroup()->isSpikeQueueRequired() : sg.getArchetype().getSrcNeuronGroup()->isSpikeEventQueueRequired();
+
     // Create environment for generating presynaptic update code into seperate CodeStream
     std::ostringstream preUpdateStream;
     CodeStream preUpdate(preUpdateStream);
@@ -804,21 +809,21 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
         }
                     
         // Add correct functions for apply synaptic input
-        preUpdateEnv.add(Type::AddToPostDenDelay, "addToPostDelay",
+        preUpdateEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay",
                          backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
                 
         // If we should use shared memory, add to shared memory
         // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
         if(isSmallSharedMemoryPop(sg, backend)) {
-            preUpdateEnv.add(Type::AddToPost, "addToPost", "$(_sh_out_post)[$(id_post)] += ($(0))");
+            preUpdateEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "$(_sh_out_post)[$(id_post)] += ($(0))");
         }
         // Otherwise, use global memory atomic
         else {
-            preUpdateEnv.add(Type::AddToPost, "addToPost",
+            preUpdateEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost",
                              backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
         }
 
-        preUpdateEnv.add(Type::AddToPre, "addToPre", "lOutPre += ($(0))");
+        preUpdateEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "lOutPre += ($(0))");
 
         // Generate spike update
         if(trueSpike) {
@@ -846,13 +851,13 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
             env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "addSynapse", 0}, addSynapseType, errorHandler);
             env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_pre", 0}, Type::Uint32.addConst(), errorHandler);
         },
-        [addSynapseType, batchSize, trueSpike, &preUpdateStream, &backend, &sg]
+        [addSynapseType, batchSize, delay, trueSpike, &preUpdateStream, &backend, &sg]
         (auto &env, auto generateBody)
         {
             // Get suffix based on type of events
             const std::string eventSuffix = trueSpike ? "" : "_event";
 
-            env.printLine("const unsigned int numSpikes = $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(batchSize) + "];");
+            env.printLine("const unsigned int numSpikes = $(_src_spk_cnt" + eventSuffix + ")[" + sg.getPreSlot(delay, batchSize) + "];");
             env.getStream() << "const unsigned int numSpikeBlocks = (numSpikes + " << backend.getKernelBlockSize(KernelPresynapticUpdate) << " - 1) / " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ";" << std::endl;
 
             env.getStream() << "for (unsigned int r = 0; r < numSpikeBlocks; r++)";
@@ -865,7 +870,7 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
                 {
                     CodeStream::Scope b(env.getStream());
                     const std::string index = "(r * " + std::to_string(backend.getKernelBlockSize(KernelPresynapticUpdate)) + ") + " + backend.getThreadID();
-                    env.printLine("const unsigned int spk = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, index) + "];");
+                    env.printLine("const unsigned int spk = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(delay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, index) + "];");
                     env.printLine("$(_sh_spk" +  eventSuffix + ")[" + backend.getThreadID() + "] = spk;");
                 }
                 backend.genSharedMemBarrier(env.getStream());

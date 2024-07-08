@@ -41,28 +41,8 @@ public:
     //! Should the Toeplitz connectivity initialization parameter be implemented heterogeneously?
     bool isToeplitzConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const;
 
-    std::string getPreSlot(unsigned int batchSize) const;
-    std::string getPostSlot(unsigned int batchSize) const;
-
-    std::string getPreVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
-    {
-        return getPreVarIndex(getArchetype().getSrcNeuronGroup()->isDelayRequired(), batchSize, varDims, index);
-    }
-    
-    std::string getPostVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
-    {
-        return getPostVarIndex(getArchetype().getTrgNeuronGroup()->isDelayRequired(), batchSize, varDims, index);
-    }
-
-    std::string getPreWUVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
-    {
-        return getPreVarIndex(getArchetype().getAxonalDelaySteps() != 0, batchSize, varDims, index);
-    }
-    
-    std::string getPostWUVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
-    {
-        return getPostVarIndex(getArchetype().getBackPropDelaySteps() != 0, batchSize, varDims, index);
-    }
+    std::string getPreSlot(bool delay, unsigned int batchSize) const;
+    std::string getPostSlot(bool delay, unsigned int batchSize) const;
 
     std::string getPostDenDelayIndex(unsigned int batchSize, const std::string &index, const std::string &offset) const;
 
@@ -88,6 +68,9 @@ public:
     {
         return ((batchSize == 1) ? "" : "$(_pre_batch_offset) + ") + index;
     }
+
+    std::string getPostVarHetDelayIndex(unsigned int batchSize, VarAccessDim varDims,
+                                        const std::string &index) const;
 
     std::string getSynVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
     std::string getKernelVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;

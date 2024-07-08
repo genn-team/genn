@@ -58,7 +58,9 @@ public:
     using SynapseGroup::isPreSpikeFused;
     using SynapseGroup::isWUPreModelFused;
     using SynapseGroup::isWUPostModelFused;
-    using SynapseGroup::isDendriticDelayRequired;
+    using SynapseGroup::isDendriticOutputDelayRequired;
+    using SynapseGroup::isWUPostVarHeterogeneouslyDelayed;
+    using SynapseGroup::areAnyWUPostVarHeterogeneouslyDelayed;
     using SynapseGroup::isPresynapticOutputRequired; 
     using SynapseGroup::isPostsynapticOutputRequired;
     using SynapseGroup::isProceduralConnectivityRNGRequired;
@@ -247,7 +249,7 @@ public:
 
     const SynapseGroup &getTarget() const{ return m_SG.getFusedWUPostTarget(); }
 
-    bool isVarDelayed(const std::string&) const{ return (m_SG.getBackPropDelaySteps() != 0); }
+    bool isVarDelayed(const std::string &name) const{ return (m_SG.getBackPropDelaySteps() != 0) || m_SG.isWUPostVarHeterogeneouslyDelayed(name); }
 
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 

@@ -23,6 +23,8 @@ public:
     
     using NeuronGroup::checkNumDelaySlots;
     using NeuronGroup::setVarQueueRequired;
+    using NeuronGroup::setSpikeQueueRequired;
+    using NeuronGroup::setSpikeEventQueueRequired;
     using NeuronGroup::addInSyn;
     using NeuronGroup::addOutSyn;
     using NeuronGroup::finalise;
@@ -49,6 +51,10 @@ public:
     using NeuronGroup::isRecordingEnabled;
     using NeuronGroup::isVarInitRequired;
     using NeuronGroup::isVarQueueRequired;
+    using NeuronGroup::isSpikeQueueRequired;
+    using NeuronGroup::isSpikeEventQueueRequired;
+    using NeuronGroup::isSpikeDelayRequired;
+    using NeuronGroup::isSpikeEventDelayRequired;
     using NeuronGroup::getHashDigest;
     using NeuronGroup::getInitHashDigest;
     using NeuronGroup::getSpikeQueueUpdateHashDigest;

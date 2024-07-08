@@ -298,6 +298,7 @@ TEST(CustomUpdates, VarReferenceTypeChecks)
         pre, post,
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, {{"g", 1.0}, {"d", 4}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    sg1->setMaxDendriticDelayTimesteps(1);
 
     VarValues sumVarValues{{"sum", 0.0}};
     WUVarReferences sumVarReferences1{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg1, "g")}};
@@ -465,12 +466,14 @@ TEST(CustomUpdates, WUVarSynapseGroupChecks)
         pre, post,
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, {{"g", 1.0}, {"d", 4}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    sg1->setMaxDendriticDelayTimesteps(1);
+
     auto *sg2 = model.addSynapsePopulation(
         "Synapses2", SynapseMatrixType::DENSE,
         pre, post,
         initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, {{"g", 1.0}, {"d", 4}}),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
-
+    sg2->setMaxDendriticDelayTimesteps(1);
 
     VarValues sumVarValues{{"sum", 0.0}};
     WUVarReferences sumVarReferences1{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg1, "g")}};
@@ -1111,6 +1114,7 @@ TEST(CustomUpdates, CompareDifferentWUBatched)
         pre, post,
         initWeightUpdate<StaticPulseDendriticDelaySplit>({}, synVarInit),
         initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    sg1->setMaxDendriticDelayTimesteps(1);
 
     // Add one custom update which sums duplicated variables (g and d), another which sums shared variables (gCommon and dCommon) and another which sums one of each
     WUVarReferences sumVarReferences1{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg1, "d")}};

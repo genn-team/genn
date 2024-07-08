@@ -30,7 +30,7 @@ def test_num(make_model, backend, precision, batch_size):
     # Models which set state variables to double one of the num_XXX variables
     neuron_model = create_neuron_model(
         "neuron",
-        var_name_types=[("num_neurons_test", "unsigned int"),
+        vars=[("num_neurons_test", "unsigned int"),
                         ("num_batch_test", "unsigned int")],
         sim_code=
         """
@@ -40,7 +40,7 @@ def test_num(make_model, backend, precision, batch_size):
 
     current_source_model = create_current_source_model(
         "current_source",
-        var_name_types=[("num_neurons_test", "unsigned int"),
+        vars=[("num_neurons_test", "unsigned int"),
                         ("num_batch_test", "unsigned int")],
         injection_code=
         """
@@ -50,12 +50,12 @@ def test_num(make_model, backend, precision, batch_size):
 
     weight_update_model = create_weight_update_model(
         "weight_update",
-        var_name_types=[("num_pre_syn_test", "unsigned int"),
+        vars=[("num_pre_syn_test", "unsigned int"),
                         ("num_post_syn_test", "unsigned int"),
                         ("num_batch_syn_test", "unsigned int")],
-        pre_var_name_types=[("num_neurons_pre_test", "unsigned int"),
+        pre_vars=[("num_neurons_pre_test", "unsigned int"),
                             ("num_batch_pre_test", "unsigned int")],
-        post_var_name_types=[("num_neurons_post_test", "unsigned int"),
+        post_vars=[("num_neurons_post_test", "unsigned int"),
                              ("num_batch_post_test", "unsigned int")],
         
         synapse_dynamics_code=
@@ -77,7 +77,7 @@ def test_num(make_model, backend, precision, batch_size):
 
     postsynaptic_update_model = create_postsynaptic_model(
         "postsynaptic_update",
-        var_name_types=[("num_neurons_test", "unsigned int"),
+        vars=[("num_neurons_test", "unsigned int"),
                         ("num_batch_test", "unsigned int")],
         sim_code=
         """
@@ -87,7 +87,7 @@ def test_num(make_model, backend, precision, batch_size):
 
     custom_update_model = create_custom_update_model(
         "custom_update",
-        var_name_types=[("num_neurons_test", "unsigned int"),
+        vars=[("num_neurons_test", "unsigned int"),
                         ("num_batch_test", "unsigned int")],
         var_refs=[("ref", "unsigned int", VarAccessMode.READ_ONLY)],
         update_code=
@@ -98,7 +98,7 @@ def test_num(make_model, backend, precision, batch_size):
 
     custom_update_wu_model = create_custom_update_model(
         "custom_update_wu",
-        var_name_types=[("num_pre_syn_test", "unsigned int"),
+        vars=[("num_pre_syn_test", "unsigned int"),
                         ("num_post_syn_test", "unsigned int"),
                         ("num_batch_syn_test", "unsigned int")],
         var_refs=[("ref", "unsigned int", VarAccessMode.READ_ONLY)],

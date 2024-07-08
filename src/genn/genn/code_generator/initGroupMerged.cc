@@ -62,7 +62,7 @@ void genScalarFill(EnvironmentExternalBase &env, const std::string &target, cons
 //--------------------------------------------------------------------------
 template<typename G>
 void genInitEvents(const BackendBase &backend, EnvironmentGroupMergedField<G, NeuronInitGroupMerged> &env, 
-                   NeuronInitGroupMerged &ng, const std::string &fieldSuffix, bool trueSpike, unsigned int batchSize)
+                   NeuronInitGroupMerged &ng, const std::string &fieldSuffix, bool trueSpike, bool delayRequired, unsigned int batchSize)
 {
     // Add spike count
     const std::string suffix = trueSpike ? "" : "Event";
@@ -74,24 +74,24 @@ void genInitEvents(const BackendBase &backend, EnvironmentGroupMergedField<G, Ne
 
     // Generate code to zero spikes across all delay slots and batches
     backend.genVariableInit(env, "num_neurons", "id",
-        [batchSize, &ng] (EnvironmentExternalBase &varEnv)
+        [batchSize, delayRequired, &ng] (EnvironmentExternalBase &varEnv)
         {
             genVariableFill(varEnv, "_event", "0", "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT,
-                            batchSize, ng.getArchetype().isDelayRequired(), ng.getArchetype().getNumDelaySlots());
+                            batchSize, delayRequired, ng.getArchetype().getNumDelaySlots());
         });
     
     // Generate code to zero spike count across all delay slots and batches
     backend.genPopVariableInit(env,
-        [batchSize, &ng] (EnvironmentExternalBase &spikeCountEnv)
+        [batchSize, delayRequired, &ng] (EnvironmentExternalBase &spikeCountEnv)
         {
             genScalarFill(spikeCountEnv, "_event_cnt", "0", VarAccessDim::BATCH | VarAccessDim::ELEMENT, 
-                          batchSize, ng.getArchetype().isDelayRequired(), ng.getArchetype().getNumDelaySlots());
+                          batchSize, delayRequired, ng.getArchetype().getNumDelaySlots());
         });
 }
 //------------------------------------------------------------------------
 template<typename G>
 void genInitEventTime(const BackendBase &backend, EnvironmentExternalBase &env, G &group, NeuronInitGroupMerged &fieldGroup, 
-                      const std::string &fieldSuffix, const std::string &varName, unsigned int batchSize)
+                      const std::string &fieldSuffix, const std::string &varName, bool delayRequired, unsigned int batchSize)
 {
     EnvironmentGroupMergedField<G, NeuronInitGroupMerged> timeEnv(env, group, fieldGroup);
     timeEnv.addField(group.getTimeType().createPointer(), "_time", varName + fieldSuffix,
@@ -100,22 +100,22 @@ void genInitEventTime(const BackendBase &backend, EnvironmentExternalBase &env, 
 
     // Generate variable initialisation code
     backend.genVariableInit(timeEnv, "num_neurons", "id",
-        [batchSize, varName, &fieldGroup] (EnvironmentExternalBase &varEnv)
+        [batchSize, delayRequired, varName, &fieldGroup] (EnvironmentExternalBase &varEnv)
         {
             genVariableFill(varEnv, "_time", "-TIME_MAX", "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT, 
-                            batchSize, fieldGroup.getArchetype().isDelayRequired(), fieldGroup.getArchetype().getNumDelaySlots());
+                            batchSize, delayRequired, fieldGroup.getArchetype().getNumDelaySlots());
         });
 }
 //------------------------------------------------------------------------
 void genInitEventTime(const BackendBase &backend, EnvironmentExternalBase &env, NeuronInitGroupMerged &group, 
-                      const std::string &varName, unsigned int batchSize)
+                      const std::string &varName, bool delayRequired, unsigned int batchSize)
 {
     // Generate variable initialisation code
     backend.genVariableInit(env, "num_neurons", "id",
-        [batchSize, varName, &group] (EnvironmentExternalBase &varEnv)
+        [batchSize, delayRequired, varName, &group] (EnvironmentExternalBase &varEnv)
         {
             genVariableFill(varEnv, varName, "-TIME_MAX", "id", "$(num_neurons)", VarAccessDim::BATCH | VarAccessDim::ELEMENT, 
-                            batchSize, group.getArchetype().isDelayRequired(), group.getArchetype().getNumDelaySlots());
+                            batchSize, delayRequired, group.getArchetype().getNumDelaySlots());
         });
 }
 //------------------------------------------------------------------------
@@ -274,7 +274,9 @@ void NeuronInitGroupMerged::SynSpike::generate(const BackendBase &backend, Envir
     EnvironmentGroupMergedField<SynSpike, NeuronInitGroupMerged> groupEnv(env, *this, ng);
 
     // Initialise spikes
-    genInitEvents(backend, groupEnv, ng, fieldSuffix, true, batchSize);
+    genInitEvents(backend, groupEnv, ng, fieldSuffix, true, 
+                  ng.getArchetype().isSpikeDelayRequired(), 
+                  batchSize);
 }
 
 //----------------------------------------------------------------------------
@@ -289,16 +291,19 @@ void NeuronInitGroupMerged::SynSpikeEvent::generate(const BackendBase &backend, 
     EnvironmentGroupMergedField<SynSpikeEvent, NeuronInitGroupMerged> groupEnv(env, *this, ng);
 
     // Initialise spike-like events
-    genInitEvents(backend, groupEnv, ng, fieldSuffix, false, batchSize);
+    genInitEvents(backend, groupEnv, ng, fieldSuffix, false, 
+                  ng.getArchetype().isSpikeEventDelayRequired(), batchSize);
 
     // Initialize spike-like-event times
     if(ng.getArchetype().isSpikeEventTimeRequired()) {
-        genInitEventTime(backend, groupEnv, *this, ng, fieldSuffix, "SET", batchSize);
+        genInitEventTime(backend, groupEnv, *this, ng, fieldSuffix, "SET",
+                         ng.getArchetype().isSpikeEventDelayRequired(), batchSize);
     }
 
     // Initialize previous spike-like-event times
     if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
-        genInitEventTime(backend, groupEnv, *this, ng, fieldSuffix, "PrevSET", batchSize);
+        genInitEventTime(backend, groupEnv, *this, ng, fieldSuffix, "PrevSET",
+                         ng.getArchetype().isSpikeEventDelayRequired(), batchSize);
     }
 }
 
@@ -325,7 +330,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
         });
 
     // If dendritic delays are required
-    if(getArchetype().isDendriticDelayRequired()) {
+    if(getArchetype().isDendriticOutputDelayRequired()) {
         // Add field for dendritic delay buffer and zero
         groupEnv.addField(getScalarType().createPointer(), "_den_delay", "denDelay" + fieldSuffix,
                           [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "denDelay"); });
@@ -490,12 +495,14 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, Environment
 
     // Initialize spike times
     if(getArchetype().isSpikeTimeRequired()) {
-        genInitEventTime(backend, groupEnv, *this, "_st", batchSize);
+        genInitEventTime(backend, groupEnv, *this, "_st",
+                         getArchetype().isSpikeDelayRequired(), batchSize);
     }
 
     // Initialize previous spike times
     if(getArchetype().isPrevSpikeTimeRequired()) {
-        genInitEventTime(backend, groupEnv, *this, "_prev_st", batchSize);
+        genInitEventTime(backend, groupEnv, *this, "_prev_st",
+                         getArchetype().isSpikeDelayRequired(), batchSize);
     }
 
     // Initialise neuron variables

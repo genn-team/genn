@@ -263,7 +263,7 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
         }
 
         // If this synapse group requires dendritic delay, it requires a pre-synapse reset
-        if(s.second.isDendriticDelayRequired()) {
+        if(s.second.isDendriticOutputDelayRequired()) {
             numPreSynapseResetGroups++;
         }
     }

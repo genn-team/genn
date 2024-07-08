@@ -98,7 +98,7 @@ using namespace GeNN::CodeGenerator;
     std::vector<std::reference_wrapper<const SynapseGroupInternal>> synapseGroupsWithDendriticDelay;
     for(const auto &n : getModel().getNeuronGroups()) {
         for(const auto *sg : n.second.getFusedPSMInSyn()) {
-            if(sg->isDendriticDelayRequired()) {
+            if(sg->isDendriticOutputDelayRequired()) {
                 synapseGroupsWithDendriticDelay.push_back(std::cref(*sg));
             }
         }

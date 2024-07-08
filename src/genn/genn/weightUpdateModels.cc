@@ -170,6 +170,15 @@ Init::Init(const Base *snippet, const std::map<std::string, Type::NumericValue> 
     m_PostDynamicsCodeTokens = Utils::scanCode(getSnippet()->getPostDynamicsCode(), "Weight update model postsynaptic dynamics code");
 }
 //----------------------------------------------------------------------------
+bool Init::isVarHeterogeneouslyDelayedInSynCode(const std::string &name) const
+{
+    return (Utils::isIdentifierDelayed(name, getPreSpikeSynCodeTokens()) 
+            || Utils::isIdentifierDelayed(name, getPreEventSynCodeTokens())
+            || Utils::isIdentifierDelayed(name, getPostEventSynCodeTokens())
+            || Utils::isIdentifierDelayed(name, getPostSpikeSynCodeTokens())
+            || Utils::isIdentifierDelayed(name, getSynapseDynamicsCodeTokens()));
+}
+//----------------------------------------------------------------------------
 void Init::finalise(double dt)
 {
     // Superclass
