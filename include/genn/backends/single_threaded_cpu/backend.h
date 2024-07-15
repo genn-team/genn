@@ -118,6 +118,10 @@ public:
     virtual void genKernelSynapseVariableInit(EnvironmentExternalBase &env, SynapseInitGroupMerged &sg, HandlerEnv handler) const final;
     virtual void genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const final;
 
+    //! Get suitable atomic *lhsPointer += rhsValue or *lhsPointer |= rhsValue style operation
+    virtual std::string getAtomicOperation(const std::string &lhsPointer, const std::string &rhsValue,
+                                           const Type::ResolvedType &type, AtomicOperation op = AtomicOperation::ADD) const final;
+
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free) const final;
     virtual void genTimer(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise, 
                           const std::string &name, bool updateInStepTime) const final;

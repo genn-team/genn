@@ -15,7 +15,7 @@ using namespace GeNN::CodeGenerator;
 namespace
 {
 template<typename G>
-void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<Transpiler::Token> &tokens, const std::string &errorContext,
+void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBase &env, const std::vector<Transpiler::Token> &tokens, const std::string &errorContext,
                                G &sg, unsigned int batchSize, double dt)
 {
     const auto *wu = sg.getArchetype().getWUInitialiser().getSnippet();
@@ -182,13 +182,25 @@ void applySynapseSubstitutions(EnvironmentExternalBase &env, const std::vector<T
     else if(sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
         assert(!sg.getArchetype().getKernelSize().empty());
 
-        synEnv.template addVars<SynapseWUVarAdapter>(
-            [&sg, batchSize](VarAccess a, const std::string&) 
-            { 
-                return sg.getKernelVarIndex(batchSize, getVarAccessDim(a), "$(id_kernel)");
-            }, "", true);
-    }
+        // Add hidden fields with pointers to weight update model variables
+        synEnv.template addVarPointers<SynapseWUVarAdapter>("", true);
 
+        // Loop through weight update model variables
+        for(const auto &v : sg.getArchetype().getWUInitialiser().getSnippet()->getVars()) {
+            // Resolve types
+            const auto resolvedType = v.type.resolve(sg.getTypeContext());
+            
+            // Add read-only accessors to de-reference pointers
+            const std::string var = "$(_" + v.name + ")[" + sg.getKernelVarIndex(batchSize, getVarAccessDim(v.access), "$(id_kernel)") + "]";
+            synEnv.add(resolvedType.addConst(), v.name, var);
+
+            // If variable is read-write, also add function to add to it atomically
+            if(getVarAccessMode(v.access) & VarAccessModeAttribute::READ_WRITE) {
+                synEnv.add(Type::ResolvedType::createFunction(resolvedType, {resolvedType}), "atomic_add_" + v.name,
+                           backend.getAtomicOperation("&" + var, "$(0)", resolvedType));
+            }
+        }
+    }
 
     // Pretty print code back to environment
     Transpiler::ErrorHandler errorHandler("Synapse group '" + sg.getArchetype().getName() + "' weight update model " + errorContext);
@@ -411,16 +423,18 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest() 
 //----------------------------------------------------------------------------
 const std::string PresynapticUpdateGroupMerged::name = "PresynapticUpdate";
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateSpikeEventUpdate(EnvironmentExternalBase &env, 
+void PresynapticUpdateGroupMerged::generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
                                                             unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getPreEventSynCodeTokens(), "presynaptic event code", *this, batchSize, dt);
+    applySynapseSubstitutions(backend, env, getArchetype().getWUInitialiser().getPreEventSynCodeTokens(), 
+                              "presynaptic event code", *this, batchSize, dt);
 }
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateSpikeUpdate(EnvironmentExternalBase &env, 
+void PresynapticUpdateGroupMerged::generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
                                                        unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getPreSpikeSynCodeTokens(), "sim code", *this, batchSize, dt);
+    applySynapseSubstitutions(backend, env, getArchetype().getWUInitialiser().getPreSpikeSynCodeTokens(),
+                              "sim code", *this, batchSize, dt);
 }
 //----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateProceduralConnectivity(EnvironmentExternalBase &env)
@@ -466,16 +480,18 @@ void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(EnvironmentExter
 //----------------------------------------------------------------------------
 const std::string PostsynapticUpdateGroupMerged::name = "PostsynapticUpdate";
 //----------------------------------------------------------------------------
-void PostsynapticUpdateGroupMerged::generateSpikeEventUpdate(EnvironmentExternalBase &env, 
+void PostsynapticUpdateGroupMerged::generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
                                                              unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getPostEventSynCodeTokens(), "postsynaptic event code", *this, batchSize, dt);
+    applySynapseSubstitutions(backend, env, getArchetype().getWUInitialiser().getPostEventSynCodeTokens(),
+                              "postsynaptic event code", *this, batchSize, dt);
 }
 //----------------------------------------------------------------------------
-void PostsynapticUpdateGroupMerged::generateSpikeUpdate(EnvironmentExternalBase &env, 
+void PostsynapticUpdateGroupMerged::generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
                                                         unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getPostSpikeSynCodeTokens(), "learn post code", *this, batchSize, dt);
+    applySynapseSubstitutions(backend, env, getArchetype().getWUInitialiser().getPostSpikeSynCodeTokens(), 
+                              "learn post code", *this, batchSize, dt);
 }
 
 //----------------------------------------------------------------------------
@@ -483,10 +499,11 @@ void PostsynapticUpdateGroupMerged::generateSpikeUpdate(EnvironmentExternalBase 
 //----------------------------------------------------------------------------
 const std::string SynapseDynamicsGroupMerged::name = "SynapseDynamics";
 //----------------------------------------------------------------------------
-void SynapseDynamicsGroupMerged::generateSynapseUpdate(EnvironmentExternalBase &env, 
+void SynapseDynamicsGroupMerged::generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
                                                        unsigned int batchSize, double dt)
 {
-    applySynapseSubstitutions(env, getArchetype().getWUInitialiser().getSynapseDynamicsCodeTokens(), "synapse dynamics", *this, batchSize, dt);
+    applySynapseSubstitutions(backend, env, getArchetype().getWUInitialiser().getSynapseDynamicsCodeTokens(), 
+                              "synapse dynamics", *this, batchSize, dt);
 }
 
 
