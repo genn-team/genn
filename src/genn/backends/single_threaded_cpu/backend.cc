@@ -1607,11 +1607,11 @@ std::string Backend::getAtomicOperation(const std::string &lhsPointer, const std
                                         const Type::ResolvedType &type, AtomicOperation op) const
 {
     if(op == AtomicOperation::ADD) {
-        return "(*" + lhsPointer + " += " + rhsValue + ")";
+        return "(*(" + lhsPointer + ") += (" + rhsValue + "))";
     }
     else if(op == AtomicOperation::OR) {
         assert(type == Type::Uint32 || type == Type::Int32);
-        return "(" + lhsPointer + " |= " + rhsValue + ")";
+        return "(*(" + lhsPointer + ") |= (" + rhsValue + "))";
     }
     else {
         assert(false);
