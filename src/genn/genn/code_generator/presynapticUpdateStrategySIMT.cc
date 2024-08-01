@@ -47,6 +47,12 @@ bool isSmallSharedMemoryPop(const PresynapticUpdateGroupMerged &sg, const Backen
         return false;
     }
 }
+bool isPresynapticOutputRequired(const PresynapticUpdateGroupMerged &sg, bool trueSpike)
+{
+    const auto code = (trueSpike ? sg.getArchetype().getWUModel()->getSimCode()
+                       : sg.getArchetype().getWUModel()->getEventCode());
+    return (code.find("$(addToPre") != std::string::npos);
+}
 }   // Anonymous namespace
 
 //----------------------------------------------------------------------------
@@ -102,7 +108,7 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
         os << "const unsigned int spike = " << popSubs["id"] << ";" << std::endl;
     }
 
-    if(sg.getArchetype().isPresynapticOutputRequired()) {
+    if(isPresynapticOutputRequired(sg, trueSpike)) {
         os << "scalar lrevInSyn= 0.0;" << std::endl;
     }
     
@@ -168,7 +174,7 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
                                             backend.getAtomic(model.getPrecision()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, "ipost") + "], $(0))");
             }
 
-            if(sg.getArchetype().isPresynapticOutputRequired()) {
+            if(isPresynapticOutputRequired(sg, trueSpike)) {
                 synSubs.addFuncSubstitution("addToPre", 1, "lrevInSyn += $(0)");
             }
             
@@ -186,9 +192,9 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
         }
         
         // Should this be in the Postamble?
-        if(sg.getArchetype().isPresynapticOutputRequired()) {
+        if(isPresynapticOutputRequired(sg, trueSpike)) {
             // write lrevInSyn to global memory if not 0
-            os << "if(lrevInSyn != 0.0) " << backend.getAtomic(model.getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, "preInd") + "], lrevInSyn);" << std::endl;
+            os << backend.getAtomic(model.getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, "preInd") + "], lrevInSyn);" << std::endl;
         }
         
     }
@@ -290,7 +296,7 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
             CodeStream::Scope b(os);
 
             // Create local variable to hold presynaptic output from all threads in warp
-            if(sg.getArchetype().isPresynapticOutputRequired()) {
+            if(isPresynapticOutputRequired(sg, trueSpike)) {
                 os << "scalar lrevInSyn= 0.0;" << std::endl;
             }
             
@@ -373,7 +379,7 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
                     }
                 }
 
-                if(sg.getArchetype().isPresynapticOutputRequired()) {
+                if(isPresynapticOutputRequired(sg, trueSpike)) {
                     synSubs.addFuncSubstitution("addToPre", 1, "lrevInSyn += $(0)");
                 }
 
@@ -396,7 +402,7 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
                 }
             }
 
-            if (sg.getArchetype().isPresynapticOutputRequired()) {
+            if (isPresynapticOutputRequired(sg, trueSpike)) {
                 // Perform warp reduction into first lane
                 // **YUCK** CUDA-specific
                 for (unsigned int i = 16; i > 0; i /= 2) {
@@ -514,7 +520,7 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
         os << "const unsigned int spike = " << popSubs["id"] << ";" << std::endl;
     }
 
-    if(sg.getArchetype().isPresynapticOutputRequired()) {
+    if(isPresynapticOutputRequired(sg, trueSpike)) {
         os << "scalar lrevInSyn= 0.0;" << std::endl;
     }
 
@@ -610,7 +616,7 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
                                                       backend.getAtomic(model.getPrecision()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
         }
         
-        if(sg.getArchetype().isPresynapticOutputRequired()) {
+        if(isPresynapticOutputRequired(sg, trueSpike)) {
             synSubs.addFuncSubstitution("addToPre", 1, "lrevInSyn += $(0)");
         }
         
@@ -635,7 +641,7 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
         }
 
         // Should this be in the Postamble?
-        if(sg.getArchetype().isPresynapticOutputRequired()) {
+        if(isPresynapticOutputRequired(sg, trueSpike)) {
             // write lrevInSyn to global memory if not 0
             os << "if(lrevInSyn != 0.0) " << backend.getAtomic(model.getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, "preInd") + "], lrevInSyn);" << std::endl;
         }
@@ -776,7 +782,7 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerg
                     synSubs.addVarSubstitution("id_post", "ipost");
                     synSubs.addFuncSubstitution("addToInSyn", 1, "shLg[(ibit * " + std::to_string(blockSize) + ") + " + backend.getThreadID() + "] += $(0)");
 
-                    if(sg.getArchetype().isPresynapticOutputRequired()) {
+                    if(isPresynapticOutputRequired(sg, trueSpike)) {
                         synSubs.addFuncSubstitution("addToPre", 1,
                                                     backend.getAtomic(modelMerged.getModel().getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, synSubs["id_pre"]) + "], $(0))");
                     }
@@ -976,7 +982,7 @@ void PostSpanToeplitz::genUpdate(CodeStream &os, const ModelSpecMerged &modelMer
                     }
                 }
 
-                if(sg.getArchetype().isPresynapticOutputRequired()) {
+                if(isPresynapticOutputRequired(sg, trueSpike)) {
                     presynapticUpdateSubs.addFuncSubstitution("addToPre", 1,
                                                               backend.getAtomic(model.getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, presynapticUpdateSubs["id_pre"]) + "], $(0))");
                 }
