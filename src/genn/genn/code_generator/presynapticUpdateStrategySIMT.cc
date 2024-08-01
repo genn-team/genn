@@ -288,6 +288,12 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
         os << "for (unsigned int j = 0; j < numSpikesInBlock; j++)";
         {
             CodeStream::Scope b(os);
+
+            // Create local variable to hold presynaptic output from all threads in warp
+            if(sg.getArchetype().isPresynapticOutputRequired()) {
+                os << "scalar lrevInSyn= 0.0;" << std::endl;
+            }
+            
             os << "// only work on existing neurons" << std::endl;
             os << "if (" << popSubs["id"] << " < group->rowStride)";
             {
@@ -368,10 +374,9 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
                 }
 
                 if(sg.getArchetype().isPresynapticOutputRequired()) {
-                    synSubs.addFuncSubstitution("addToPre", 1,
-                                                backend.getAtomic(model.getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, synSubs["id_pre"]) + "], $(0))");
+                    synSubs.addFuncSubstitution("addToPre", 1, "lrevInSyn += $(0)");
                 }
-                
+
                 if(trueSpike) {
                     sg.generateSpikeUpdate(backend, os, modelMerged, synSubs);
                 }
@@ -388,6 +393,22 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
                 }
                 else if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                     os << CodeStream::CB(135); // end if (B(dd_gp" << sg.getName() << "[gid / 32], gid
+                }
+            }
+
+            if (sg.getArchetype().isPresynapticOutputRequired()) {
+                // Perform warp reduction into first lane
+                // **YUCK** CUDA-specific
+                for (unsigned int i = 16; i > 0; i /= 2) {
+                    os << "lrevInSyn += __shfl_down_sync(0xFFFFFFFF, lrevInSyn, " << i <<  ");" << std::endl;
+                }
+
+                // Issue atomic add on first lane of warp
+                os << "if((" + backend.getThreadID() + " % 32) == 0)";
+                {
+                    CodeStream::Scope b(os);
+
+                    os << backend.getAtomic(model.getPrecision()) << "(&group->revInSyn[" << sg.getPreISynIndex(batchSize, "shSpk" + eventSuffix + "[j]") << "], lrevInSyn);" << std::endl;
                 }
             }
         }
