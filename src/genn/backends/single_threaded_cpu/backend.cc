@@ -102,12 +102,12 @@ public:
 
 
     //! Copy entire array to device
-    virtual void pushToDevice() final
+    virtual void pushToDevice(bool) final
     {
     }
 
     //! Copy entire array from device
-    virtual void pullFromDevice() final
+    virtual void pullFromDevice(bool) final
     {
     }
 

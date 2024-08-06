@@ -109,10 +109,10 @@ public:
     virtual void free() = 0;
 
     //! Copy entire array to device
-    virtual void pushToDevice() = 0;
+    virtual void pushToDevice(bool async = false) = 0;
 
     //! Copy entire array from device
-    virtual void pullFromDevice() = 0;
+    virtual void pullFromDevice(bool async = false) = 0;
 
     //! Copy a 1D slice of elements to device 
     /*! \param offset   Offset in elements to start copying from

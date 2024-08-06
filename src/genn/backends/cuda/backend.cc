@@ -174,26 +174,36 @@ public:
         setCount(0);
     }
     //! Copy entire array to device
-    virtual void pushToDevice() final
+    virtual void pushToDevice(bool async) final
     {
         if(!(getLocation() & VarLocationAttribute::DEVICE) || !(getLocation() & VarLocationAttribute::HOST)) {
             throw std::runtime_error("Cannot push array that isn't present on host and device");
         }
 
         if(!(getLocation() & VarLocationAttribute::ZERO_COPY)) {
-            CHECK_CUDA_ERRORS(cudaMemcpy(getDevicePointer(), getHostPointer(), getSizeBytes(), cudaMemcpyHostToDevice));
+            if(async) {
+                CHECK_CUDA_ERRORS(cudaMemcpyAsync(getDevicePointer(), getHostPointer(), getSizeBytes(), cudaMemcpyHostToDevice));
+            }
+            else {
+                CHECK_CUDA_ERRORS(cudaMemcpy(getDevicePointer(), getHostPointer(), getSizeBytes(), cudaMemcpyHostToDevice));
+            }
         }
     }
 
     //! Copy entire array from device
-    virtual void pullFromDevice() final
+    virtual void pullFromDevice(bool async) final
     {
         if(!(getLocation() & VarLocationAttribute::DEVICE) || !(getLocation() & VarLocationAttribute::HOST)) {
             throw std::runtime_error("Cannot pull array that isn't present on host and device");
         }
 
         if(!(getLocation() & VarLocationAttribute::ZERO_COPY)) {
-            CHECK_CUDA_ERRORS(cudaMemcpy(getHostPointer(), getDevicePointer(), getSizeBytes(), cudaMemcpyDeviceToHost));
+            if(async) {
+                CHECK_CUDA_ERRORS(cudaMemcpyAsync(getHostPointer(), getDevicePointer(), getSizeBytes(), cudaMemcpyDeviceToHost));
+            }
+            else {
+                CHECK_CUDA_ERRORS(cudaMemcpy(getHostPointer(), getDevicePointer(), getSizeBytes(), cudaMemcpyDeviceToHost));
+            }
         }
     }
 

@@ -40,8 +40,8 @@ PYBIND11_MODULE(_runtime, m)
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
-        .def("push_to_device", &ArrayBase::pushToDevice)
-        .def("pull_from_device", &ArrayBase::pullFromDevice)
+        .def("push_to_device", &ArrayBase::pushToDevice, pybind11::arg("async") = false)
+        .def("pull_from_device", &ArrayBase::pullFromDevice, pybind11::arg("async") = false)
         .def("push_slice_1d_to_device", &ArrayBase::pushSlice1DToDevice)
         .def("pull_slice_1d_from_device", &ArrayBase::pullSlice1DFromDevice);
     
