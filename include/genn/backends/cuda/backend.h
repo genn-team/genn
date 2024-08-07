@@ -249,6 +249,12 @@ public:
     /*! \param count        number of RNGs required*/
     virtual std::unique_ptr<Runtime::ArrayBase> createPopulationRNG(size_t count) const final;
 
+    // On backends that support multiple streams, Ccreate a parallel stream of execution
+    virtual std::unique_ptr<GeNN::Runtime::StreamBase> createStream() const final;
+
+    //! On backend that support multiple streams, synchronise them all
+    virtual void synchroniseStreams() const final;
+
     //! Generate code to allocate variable with a size known at runtime
     virtual void genLazyVariableDynamicAllocation(CodeStream &os, 
                                                   const Type::ResolvedType &type, const std::string &name, VarLocation loc, 

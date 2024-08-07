@@ -102,6 +102,43 @@ private:
     const bool m_SynchroniseOnStop;
 };
 
+
+//--------------------------------------------------------------------------
+// CodeGenerator::CUDA::Stream
+//--------------------------------------------------------------------------
+class Stream : public Runtime::StreamBase
+{
+public:
+    Stream()
+    {
+        CHECK_CUDA_ERRORS(cudaStreamCreate(&m_Stream));
+    }
+
+    virtual ~Stream()
+    {
+        CHECK_CUDA_ERRORS(cudaStreamDestroy(m_Stream));
+    }
+
+    //------------------------------------------------------------------------
+    // StreamBase virtuals
+    //------------------------------------------------------------------------
+    virtual void synchronise() final
+    {
+        CHECK_CUDA_ERRORS(cudaStreamSynchronize(m_Stream));
+    }
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    cudaStream_t getStream() const{ return m_Stream; }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    cudaStream_t m_Stream;
+};
+
 //--------------------------------------------------------------------------
 // Array
 //--------------------------------------------------------------------------
@@ -124,7 +161,7 @@ public:
             free();
         }
     }
-    
+
     //------------------------------------------------------------------------
     // ArrayBase virtuals
     //------------------------------------------------------------------------
@@ -174,7 +211,7 @@ public:
         setCount(0);
     }
     //! Copy entire array to device
-    virtual void pushToDevice(bool async) final
+    virtual void pushToDevice(bool async, const Runtime::StreamBase *stream) final
     {
         if(!(getLocation() & VarLocationAttribute::DEVICE) || !(getLocation() & VarLocationAttribute::HOST)) {
             throw std::runtime_error("Cannot push array that isn't present on host and device");
@@ -182,16 +219,20 @@ public:
 
         if(!(getLocation() & VarLocationAttribute::ZERO_COPY)) {
             if(async) {
-                CHECK_CUDA_ERRORS(cudaMemcpyAsync(getDevicePointer(), getHostPointer(), getSizeBytes(), cudaMemcpyHostToDevice));
+                CHECK_CUDA_ERRORS(cudaMemcpyAsync(getDevicePointer(), getHostPointer(), getSizeBytes(),
+                                                  cudaMemcpyHostToDevice, getStream(stream)));
             }
             else {
+                if(stream) {
+                     throw std::runtime_error("Stream cannot be specified when pushing array synchronously");
+                }
                 CHECK_CUDA_ERRORS(cudaMemcpy(getDevicePointer(), getHostPointer(), getSizeBytes(), cudaMemcpyHostToDevice));
             }
         }
     }
 
     //! Copy entire array from device
-    virtual void pullFromDevice(bool async) final
+    virtual void pullFromDevice(bool async, const Runtime::StreamBase *stream) final
     {
         if(!(getLocation() & VarLocationAttribute::DEVICE) || !(getLocation() & VarLocationAttribute::HOST)) {
             throw std::runtime_error("Cannot pull array that isn't present on host and device");
@@ -199,9 +240,13 @@ public:
 
         if(!(getLocation() & VarLocationAttribute::ZERO_COPY)) {
             if(async) {
-                CHECK_CUDA_ERRORS(cudaMemcpyAsync(getHostPointer(), getDevicePointer(), getSizeBytes(), cudaMemcpyDeviceToHost));
+                CHECK_CUDA_ERRORS(cudaMemcpyAsync(getHostPointer(), getDevicePointer(), getSizeBytes(),
+                                                  cudaMemcpyDeviceToHost, getStream(stream)));
             }
             else {
+                if(stream) {
+                     throw std::runtime_error("Stream cannot be specified when pulling array synchronously");
+                }
                 CHECK_CUDA_ERRORS(cudaMemcpy(getHostPointer(), getDevicePointer(), getSizeBytes(), cudaMemcpyDeviceToHost));
             }
         }
@@ -210,7 +255,8 @@ public:
     //! Copy a 1D slice of elements to device 
     /*! \param offset   Offset in elements to start copying from
         \param count    Number of elements to copy*/
-    virtual void pushSlice1DToDevice(size_t offset, size_t count) final
+    virtual void pushSlice1DToDevice(size_t offset, size_t count, bool async,
+                                     const Runtime::StreamBase *stream) final
     {
         if(!(getLocation() & VarLocationAttribute::DEVICE) || !(getLocation() & VarLocationAttribute::HOST)) {
             throw std::runtime_error("Cannot push array that isn't present on host and device");
@@ -225,15 +271,25 @@ public:
             // Convert offset and count to bytes and copy
             const size_t offsetBytes = offset * getType().getValue().size;
             const size_t countBytes = count * getType().getValue().size;
-            CHECK_CUDA_ERRORS(cudaMemcpy(getDevicePointer() + offsetBytes, getHostPointer() + offsetBytes, 
-                                         countBytes, cudaMemcpyHostToDevice));
+            if(async) {
+                CHECK_CUDA_ERRORS(cudaMemcpyAsync(getDevicePointer() + offsetBytes, getHostPointer() + offsetBytes, 
+                                                  countBytes, cudaMemcpyHostToDevice, getStream(stream)));
+            }
+            else {
+                if(stream) {
+                     throw std::runtime_error("Stream cannot be specified when pushing array synchronously");
+                }
+                CHECK_CUDA_ERRORS(cudaMemcpy(getDevicePointer() + offsetBytes, getHostPointer() + offsetBytes, 
+                                             countBytes, cudaMemcpyHostToDevice));
+            }
         }
     }
 
     //! Copy a 1D slice of elements from device 
     /*! \param offset   Offset in elements to start copying from
         \param count    Number of elements to copy*/
-    virtual void pullSlice1DFromDevice(size_t offset, size_t count) final
+    virtual void pullSlice1DFromDevice(size_t offset, size_t count, bool async,
+                                       const Runtime::StreamBase *stream) final
     {
         if(!(getLocation() & VarLocationAttribute::DEVICE) || !(getLocation() & VarLocationAttribute::HOST)) {
             throw std::runtime_error("Cannot pull array that isn't present on host and device");
@@ -248,16 +304,34 @@ public:
             // Convert offset and count to bytes and copy
             const size_t offsetBytes = offset * getType().getValue().size;
             const size_t countBytes = count * getType().getValue().size;
-            CHECK_CUDA_ERRORS(cudaMemcpy(getHostPointer() + offsetBytes, getDevicePointer() + offsetBytes, 
-                                         countBytes, cudaMemcpyDeviceToHost));
+            if(async) {
+                CHECK_CUDA_ERRORS(cudaMemcpyAsync(getHostPointer() + offsetBytes, getDevicePointer() + offsetBytes, 
+                                                  countBytes, cudaMemcpyDeviceToHost, getStream(stream)));
+
+            }
+            else {
+                if(stream) {
+                     throw std::runtime_error("Stream cannot be specified when pulling array synchronously");
+                }
+                CHECK_CUDA_ERRORS(cudaMemcpy(getHostPointer() + offsetBytes, getDevicePointer() + offsetBytes, 
+                                             countBytes, cudaMemcpyDeviceToHost));
+            }
         }
 
     }
 
     //! Memset the host pointer
-    virtual void memsetDeviceObject(int value) final
+    virtual void memsetDeviceObject(int value, bool async, const Runtime::StreamBase *stream) final
     {
-        CHECK_CUDA_ERRORS(cudaMemset(m_DevicePointer, value, getSizeBytes()));
+        if(async) {
+            CHECK_CUDA_ERRORS(cudaMemsetAsync(m_DevicePointer, value, getSizeBytes(), getStream(stream)));
+        }
+        else {
+            if(stream) {
+                throw std::runtime_error("Stream cannot be specified when memsetting array synchronously");
+            }
+            CHECK_CUDA_ERRORS(cudaMemset(m_DevicePointer, value, getSizeBytes()));
+        }
     }
 
     //! Serialise backend-specific device object to bytes
@@ -286,6 +360,16 @@ public:
     std::byte *getDevicePointer() const{ return m_DevicePointer; }
 
 private:
+    cudaStream_t getStream(const Runtime::StreamBase *stream) const
+    {
+        if(stream) {
+            return static_cast<const Stream*>(stream)->getStream();
+        }
+        else {
+            return (cudaStream_t)0;
+        }
+    }
+
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
@@ -1785,6 +1869,16 @@ std::unique_ptr<Runtime::ArrayBase> Backend::createArray(const Type::ResolvedTyp
 std::unique_ptr<Runtime::ArrayBase> Backend::createPopulationRNG(size_t count) const
 {
     return createArray(CURandState, count, VarLocation::DEVICE, false);
+}
+//--------------------------------------------------------------------------
+std::unique_ptr<GeNN::Runtime::StreamBase> Backend::createStream() const
+{
+    return std::make_unique<Stream>();
+}
+//--------------------------------------------------------------------------
+void Backend::synchroniseStreams() const
+{
+    CHECK_CUDA_ERRORS(cudaDeviceSynchronize());
 }
 //--------------------------------------------------------------------------
 void Backend::genLazyVariableDynamicAllocation(CodeStream &os, 

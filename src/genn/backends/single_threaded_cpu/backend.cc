@@ -73,14 +73,14 @@ public:
             allocate(count);
         }
     }
-    
+
     virtual ~Array()
     {
         if(getCount() > 0) {
             free();
         }
     }
-    
+
     //------------------------------------------------------------------------
     // ArrayBase virtuals
     //------------------------------------------------------------------------
@@ -102,31 +102,33 @@ public:
 
 
     //! Copy entire array to device
-    virtual void pushToDevice(bool) final
+    virtual void pushToDevice(bool, const Runtime::StreamBase*) final
     {
     }
 
     //! Copy entire array from device
-    virtual void pullFromDevice(bool) final
+    virtual void pullFromDevice(bool, const Runtime::StreamBase*) final
     {
     }
 
     //! Copy a 1D slice of elements to device 
     /*! \param offset   Offset in elements to start copying from
         \param count    Number of elements to copy*/
-    virtual void pushSlice1DToDevice(size_t, size_t) final
+    virtual void pushSlice1DToDevice(size_t, size_t, bool,
+                                     const Runtime::StreamBase*) final
     {
     }
 
-    //! Copy a 1D slice of elements from device 
+    //! Copy a 1D slice of elements from device
     /*! \param offset   Offset in elements to start copying from
         \param count    Number of elements to copy*/
-    virtual void pullSlice1DFromDevice(size_t, size_t) final
+    virtual void pullSlice1DFromDevice(size_t, size_t, bool,
+                                       const Runtime::StreamBase*) final
     {
     }
-    
+
     //! Memset the host pointer
-    virtual void memsetDeviceObject(int) final
+    virtual void memsetDeviceObject(int, bool, const Runtime::StreamBase*) final
     {
         throw std::runtime_error("Single-threaded CPU arrays have no device objects");
     }
@@ -141,6 +143,24 @@ public:
     virtual void serialiseHostObject(std::vector<std::byte>&, bool) const
     {
         throw std::runtime_error("Single-threaded CPU arrays have no host objects");
+    }
+};
+
+//--------------------------------------------------------------------------
+// CodeGenerator::SingleThreadedCPU::Stream
+//--------------------------------------------------------------------------
+class Stream : public Runtime::StreamBase
+{
+public:
+    Stream()
+    {
+    }
+
+    //------------------------------------------------------------------------
+    // StreamBase virtuals
+    //------------------------------------------------------------------------
+    virtual void synchronise() final
+    {
     }
 };
 
@@ -1505,6 +1525,15 @@ std::unique_ptr<Runtime::ArrayBase> Backend::createArray(const Type::ResolvedTyp
                                                          VarLocation location, bool uninitialized) const
 {
     return std::make_unique<Array>(type, count, location, uninitialized);
+}
+//--------------------------------------------------------------------------
+std::unique_ptr<Runtime::StreamBase> Backend::createStream() const
+{
+    return std::make_unique<Stream>();
+}
+//--------------------------------------------------------------------------
+void Backend::synchroniseStreams() const
+{
 }
 //--------------------------------------------------------------------------
 void Backend::genLazyVariableDynamicAllocation(CodeStream &os, 

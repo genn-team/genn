@@ -74,6 +74,7 @@ namespace Runtime
 class ArrayBase;
 class Runtime;
 class StateBase;
+class StreamBase;
 }
 }
 
@@ -205,6 +206,12 @@ public:
     //! Create array of backend-specific population RNGs (if they are initialised on host this will occur here)
     /*! \param count        number of RNGs required*/
     virtual std::unique_ptr<GeNN::Runtime::ArrayBase> createPopulationRNG(size_t count) const = 0;
+
+    // On backends that support multiple streams, Ccreate a parallel stream of execution
+    virtual std::unique_ptr<GeNN::Runtime::StreamBase> createStream() const = 0;
+
+    //! On backend that support multiple streams, synchronise them all
+    virtual void synchroniseStreams() const = 0;
 
     //! Generate code to allocate variable with a size known at runtime
     virtual void genLazyVariableDynamicAllocation(CodeStream &os, 

@@ -88,10 +88,26 @@ private:                                                                        
     }
 
 //--------------------------------------------------------------------------
-// GeNN::Runtime::ArrayBase
+// GeNN::Runtime::StreamBase
 //--------------------------------------------------------------------------
 namespace GeNN::Runtime
 {
+class GENN_EXPORT StreamBase
+{
+public:
+    virtual ~StreamBase()
+    {
+    }
+
+    //------------------------------------------------------------------------
+    // Declared virtuals
+    //------------------------------------------------------------------------
+    virtual void synchronise() = 0;
+};
+
+//--------------------------------------------------------------------------
+// GeNN::Runtime::ArrayBase
+//--------------------------------------------------------------------------
 class GENN_EXPORT ArrayBase
 {
 public:
@@ -109,23 +125,37 @@ public:
     virtual void free() = 0;
 
     //! Copy entire array to device
-    virtual void pushToDevice(bool async = false) = 0;
+    /*! \param async    If supported, should asynchronous operation be used
+        \param stream   If copying asynchronously, what stream should copy be performed on */
+    virtual void pushToDevice(bool async = false, const StreamBase *stream = nullptr) = 0;
 
     //! Copy entire array from device
-    virtual void pullFromDevice(bool async = false) = 0;
+    /*! \param async    If supported, should asynchronous operation be used
+        \param stream   If copying asynchronously, what stream should copy be performed on */
+    virtual void pullFromDevice(bool async = false, const StreamBase *stream = nullptr) = 0;
 
-    //! Copy a 1D slice of elements to device 
+    //! Copy a 1D slice of elements to device
     /*! \param offset   Offset in elements to start copying from
-        \param count    Number of elements to copy*/
-    virtual void pushSlice1DToDevice(size_t offset, size_t count) = 0;
+        \param count    Number of elements to copy
+        \param async    If supported, should asynchronous operation be used
+        \param stream   If copying asynchronously, what stream should copy be performed on*/
+    virtual void pushSlice1DToDevice(size_t offset, size_t count, bool async = false,
+                                     const StreamBase *stream = nullptr) = 0;
 
-    //! Copy a 1D slice of elements from device 
+    //! Copy a 1D slice of elements from device
     /*! \param offset   Offset in elements to start copying from
-        \param count    Number of elements to copy*/
-    virtual void pullSlice1DFromDevice(size_t offset, size_t count) = 0;
+        \param count    Number of elements to copy
+        \param async    If supported, should asynchronous operation be used
+        \param stream   If copying asynchronously, what stream should copy be performed on*/
+    virtual void pullSlice1DFromDevice(size_t offset, size_t count, bool async = false,
+                                       const StreamBase *stream = nullptr) = 0;
 
-    //! Memset the host pointer
-    virtual void memsetDeviceObject(int value) = 0;
+    //! Memset the device array
+    /*! \param value    Value to memset with
+        \param async    If supported, should asynchronous operation be used
+        \param stream   If copying asynchronously, what stream should memset be performed on*/
+    virtual void memsetDeviceObject(int value, bool async = false,
+                                    const StreamBase *stream = nullptr) = 0;
 
     //! Serialise backend-specific device object to bytes
     virtual void serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToPointer) const = 0;
@@ -181,6 +211,9 @@ private:
     std::byte *m_HostPointer;
 };
 
+//--------------------------------------------------------------------------
+// GeNN::Runtime::StateBase
+//--------------------------------------------------------------------------
 class GENN_EXPORT StateBase
 {
 public:
