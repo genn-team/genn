@@ -24,6 +24,15 @@ using namespace pybind11::literals;
 PYBIND11_MODULE(_runtime, m) 
 {
     //------------------------------------------------------------------------
+    // runtime.StreamBase
+    //------------------------------------------------------------------------
+    pybind11::class_<StreamBase>(m, "StreamBase")
+        //--------------------------------------------------------------------
+        // Methods
+        //--------------------------------------------------------------------
+        .def("synchronise", &StreamBase::synchronise);
+        
+    //------------------------------------------------------------------------
     // runtime.ArrayBase
     //------------------------------------------------------------------------
     pybind11::class_<ArrayBase>(m, "ArrayBase")
@@ -40,10 +49,16 @@ PYBIND11_MODULE(_runtime, m)
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
-        .def("push_to_device", &ArrayBase::pushToDevice, pybind11::arg("async") = false)
-        .def("pull_from_device", &ArrayBase::pullFromDevice, pybind11::arg("async") = false)
-        .def("push_slice_1d_to_device", &ArrayBase::pushSlice1DToDevice)
-        .def("pull_slice_1d_from_device", &ArrayBase::pullSlice1DFromDevice);
+        .def("push_to_device", &ArrayBase::pushToDevice, 
+             pybind11::arg("async") = false, pybind11::arg("stream") = nullptr)
+        .def("pull_from_device", &ArrayBase::pullFromDevice,
+             pybind11::arg("async") = false, pybind11::arg("stream") = nullptr)
+        .def("push_slice_1d_to_device", &ArrayBase::pushSlice1DToDevice,
+             pybind11::arg("offset"), pybind11::arg("count"),
+             pybind11::arg("async") = false, pybind11::arg("stream") = nullptr)
+        .def("pull_slice_1d_from_device", &ArrayBase::pullSlice1DFromDevice,
+             pybind11::arg("offset"), pybind11::arg("count"),
+             pybind11::arg("async") = false, pybind11::arg("stream") = nullptr);
     
     //------------------------------------------------------------------------
     // runtime.StateBase
