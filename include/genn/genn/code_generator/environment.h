@@ -1001,8 +1001,15 @@ public:
 
             // Resolve type, add qualifier if required and return
             const auto resolvedType = var->second.second.type.resolve(m_Context.get());
-            const auto qualifiedType = (var->second.second.access & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
-            return {qualifiedType};
+            if(var->second.second.access & VarAccessModeAttribute::READ_ONLY) {
+                return  {resolvedType.addConst()};
+            }
+            else if(var->second.second.access & VarAccessModeAttribute::REDUCE) {
+                return {resolvedType.addWriteOnly()};
+            }
+            else {
+                return {resolvedType};
+            }
         }
     }
 
