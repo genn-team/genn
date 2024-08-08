@@ -46,8 +46,8 @@ enum class VarAccessMode : unsigned int
 //! Flags defining dimensions this variables has
 enum class VarAccessDim : unsigned int
 {
-    ELEMENT     = (1 << 5), //!< This variable stores separate values for each element i.e. neuron or synapse
-    BATCH       = (1 << 6), //!< This variable stores separate values for each batch
+    ELEMENT     = (1 << 6), //!< This variable stores separate values for each element i.e. neuron or synapse
+    BATCH       = (1 << 7), //!< This variable stores separate values for each batch
 };
 
 //! Supported combinations of access mode and dimension for neuron and synapse variables

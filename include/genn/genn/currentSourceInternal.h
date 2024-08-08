@@ -51,7 +51,7 @@ public:
 
     const auto &getInitialisers() const{ return m_CS.getVarInitialisers(); }
 
-    bool isVarDelayed(const std::string&) const{ return false; }
+    std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const{ return std::nullopt; }
 
     const auto &getTarget() const{ return m_CS; }
 

@@ -89,7 +89,7 @@ public:
 
     const auto &getInitialisers() const{ return m_CU.getPreVarInitialisers(); }
 
-    bool isVarDelayed(const std::string&) const { return false; }
+    std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const{ return std::nullopt; }
 
     const auto &getTarget() const{ return m_CU; }
 
@@ -120,7 +120,7 @@ public:
 
     const auto &getInitialisers() const{ return m_CU.getPostVarInitialisers(); }
 
-    bool isVarDelayed(const std::string&) const { return false; }
+    std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const{ return std::nullopt; }
 
     const auto &getTarget() const{ return m_CU; }
 

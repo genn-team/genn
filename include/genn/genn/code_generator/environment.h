@@ -825,17 +825,17 @@ public:
     //------------------------------------------------------------------------
     bool shouldAlwaysCopy(G &group, const AdapterDef &var) const
     {
-        return A(group.getArchetype()).isVarDelayed(var.name) && m_AlwaysCopyIfDelayed;
+        return A(group.getArchetype()).getNumVarDelaySlots(var.name).has_value() && m_AlwaysCopyIfDelayed;
     }
 
     std::string getReadIndex(G &group, const AdapterDef &var) const
     {
-        return m_GetReadIndex(var.name, var.access, A(group.getArchetype()).isVarDelayed(var.name));
+        return m_GetReadIndex(var.name, var.access, A(group.getArchetype()).getNumVarDelaySlots(var.name).has_value());
     }
 
     std::string getWriteIndex(G &group, const AdapterDef &var) const
     {
-        return m_GetWriteIndex(var.name, var.access, A(group.getArchetype()).isVarDelayed(var.name));
+        return m_GetWriteIndex(var.name, var.access, A(group.getArchetype()).getNumVarDelaySlots(var.name).has_value());
     }
 
     const Runtime::ArrayBase *getArray(const Runtime::Runtime &runtime, const GroupInternal &g, const AdapterDef &var) const
@@ -976,8 +976,14 @@ public:
 
         // Loop through referenced definitions again
         for(const auto &v : referencedDefs) {
-            // If we should always copy variable or variable is read-write
-            if(this->shouldAlwaysCopy(m_Group.get(), v) || (getVarAccessMode(v.access) == VarAccessMode::READ_WRITE)) {
+            // If writes to this variable should be broadcast
+            /*const auto numVarDelaySlots = archetypeAdapter.getNumVarDelaySlots(v.name);
+            if(numVarDelaySlots && (v.access & VarAccessModeAttribute::BROADCAST)) {
+                //getContextStream() << "for(int i = 0; i < 
+                //getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getWriteIndex(m_Group.get(), v), *this) << "]";
+            }
+            // Otherwise, if we should always copy variable or variable is read-write
+            else */if(this->shouldAlwaysCopy(m_Group.get(), v) || (getVarAccessMode(v.access) == VarAccessMode::READ_WRITE)) {
                 getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getWriteIndex(m_Group.get(), v), *this) << "]";
                 getContextStream() << " = _" << m_LocalPrefix << v.name << ";" << std::endl;
             }
@@ -1001,10 +1007,11 @@ public:
 
             // Resolve type, add qualifier if required and return
             const auto resolvedType = var->second.second.type.resolve(m_Context.get());
-            if(var->second.second.access & VarAccessModeAttribute::READ_ONLY) {
-                return  {resolvedType.addConst()};
+            const auto access = var->second.second.access;
+            if(access & VarAccessModeAttribute::READ_ONLY) {
+                return {resolvedType.addConst()};
             }
-            else if(var->second.second.access & VarAccessModeAttribute::REDUCE) {
+            else if((access & VarAccessModeAttribute::REDUCE) || (access & VarAccessModeAttribute::BROADCAST)) {
                 return {resolvedType.addWriteOnly()};
             }
             else {

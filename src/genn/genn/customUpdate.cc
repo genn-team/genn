@@ -162,6 +162,7 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     // Check variable reference types
     Models::checkVarReferenceTypes(m_VarReferences, getModel()->getVarRefs());
 
+    // **TODO** BROADCAST checks here
     // Check only one type of reduction is specified
     const bool batchReduction = isBatchReduction();
     const bool neuronReduction = isNeuronReduction();
@@ -272,10 +273,11 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     if (std::any_of(vars.cbegin(), vars.cend(),
                     [](const auto &v)
                     {
-                        return (v.access == CustomUpdateVarAccess::READ_ONLY_SHARED_NEURON);
+                        return (v.access == CustomUpdateVarAccess::READ_ONLY_SHARED_NEURON
+                                || v.access == CustomUpdateVarAccess::BROADCAST_DELAY);
                     }))
     {
-        throw std::runtime_error("Custom weight updates cannot use models with SHARED_NEURON variables.");
+        throw std::runtime_error("Custom weight updates cannot use models with BROADCAST_DELAY or SHARED_NEURON variables.");
     }
 
     // Give error if references point to different synapse groups

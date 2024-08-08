@@ -211,8 +211,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                                                             &NeuronGroup::isParamDynamic);
 
         // Create arrays for neuron state variables
-        createNeuronVarArrays<NeuronVarAdapter>(&n.second, n.second.getNumNeurons(), 
-                                                batchSize, n.second.getNumDelaySlots(), true);
+        createNeuronVarArrays<NeuronVarAdapter>(&n.second, n.second.getNumNeurons(), batchSize, true);
         
         // Create arrays for neuron extra global parameters
         createEGPArrays<NeuronEGPAdapter>(&n.second);
@@ -220,7 +219,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         // Create arrays for current source variables and extra global parameters
         for (const auto *cs : n.second.getCurrentSources()) {
             LOGD_RUNTIME << "\tChild current source '" << cs->getName() << "'";
-            createNeuronVarArrays<CurrentSourceVarAdapter>(cs, n.second.getNumNeurons(), batchSize, 1, true);
+            createNeuronVarArrays<CurrentSourceVarAdapter>(cs, n.second.getNumNeurons(), batchSize, true);
             createEGPArrays<CurrentSourceEGPAdapter>(cs);
             createDynamicParamDestinations<CurrentSourceInternal>(*cs, cs->getModel()->getParams(),
                                                                   &CurrentSourceInternal::isParamDynamic, 2);
@@ -241,7 +240,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
             }
 
             // Create arrays for postsynaptic model state variables
-            createNeuronVarArrays<SynapsePSMVarAdapter>(sg, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize, 1, true);
+            createNeuronVarArrays<SynapsePSMVarAdapter>(sg, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize, true);
         }
 
         // Create arrays for fused pre-output variables
@@ -256,14 +255,14 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         for(const auto *sg: n.second.getFusedWUPreOutSyn()) {
             LOGD_RUNTIME << "\tFused WU pre incoming synapse group '" << sg->getName() << "'";
             createNeuronVarArrays<SynapseWUPreVarAdapter>(sg, sg->getSrcNeuronGroup()->getNumNeurons(), 
-                                                          batchSize, sg->getSrcNeuronGroup()->getNumDelaySlots(), true, 2);
+                                                          batchSize, true, 2);
         }
         
         // Create arrays for variables from fused outgoing synaptic populations
         for(const auto *sg: n.second.getFusedWUPostInSyn()) {
             LOGD_RUNTIME << "\tFused WU post outgoing synapse group '" << sg->getName() << "'";
             createNeuronVarArrays<SynapseWUPostVarAdapter>(sg, sg->getTrgNeuronGroup()->getNumNeurons(), 
-                                                           batchSize, sg->getTrgNeuronGroup()->getNumDelaySlots(), true, 2);
+                                                           batchSize, true, 2);
         }
 
         // Create arrays for spikes
@@ -428,7 +427,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
     // Allocate custom update variables
     for(const auto &c : getModel().getCustomUpdates()) {
         LOGD_RUNTIME << "Allocating memory for custom update '" << c.first << "'";
-        createNeuronVarArrays<CustomUpdateVarAdapter>(&c.second, c.second.getNumNeurons(), batchSize, 1, 
+        createNeuronVarArrays<CustomUpdateVarAdapter>(&c.second, c.second.getNumNeurons(), batchSize, 
                                                       c.second.getDims() & VarAccessDim::BATCH);
         // Create arrays for custom update extra global parameters
         createEGPArrays<CustomUpdateEGPAdapter>(&c.second);
@@ -462,12 +461,12 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         const auto* sg = c.second.getSynapseGroup();
         createNeuronVarArrays<CustomConnectivityUpdatePreVarAdapter>(
             &c.second, sg->getSrcNeuronGroup()->getNumNeurons(),
-            batchSize, 1, false);
+            batchSize, false);
         
         // Allocate postsynaptic variables
         createNeuronVarArrays<CustomConnectivityUpdatePostVarAdapter>(
             &c.second, sg->getTrgNeuronGroup()->getNumNeurons(),
-            batchSize, 1, false);
+            batchSize, false);
 
         // Allocate variables
         createVarArrays<CustomConnectivityUpdateVarAdapter>(
