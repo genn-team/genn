@@ -240,6 +240,14 @@ TEST(TypeChecker, ArraySubscript)
         typeEnvironment.define(Type::Int32.createPointer(), "indexArray");
         typeCheckExpression("intArray[indexArray]", typeEnvironment);}, 
         TypeChecker::TypeCheckError);
+
+    // Write-only indexing
+    EXPECT_THROW({
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::Int32.createPointer(), "intArray");
+        typeEnvironment.define(Type::Int32.addWriteOnly(), "index");
+        typeCheckExpression("intArray[index]", typeEnvironment);}, 
+        TypeChecker::TypeCheckError);
 }
 //--------------------------------------------------------------------------
 TEST(TypeChecker, Assignment)
@@ -248,20 +256,29 @@ TEST(TypeChecker, Assignment)
     {
         TestEnvironment typeEnvironment;
         typeEnvironment.define(Type::Int32.createPointer(), "intArray");
-        typeCheckStatements(
-            "*intArray = 7;\n",
-            typeEnvironment);
+        typeCheckExpression("*intArray = 7", typeEnvironment);
     }
 
     // Array subscript assignment
     {
         TestEnvironment typeEnvironment;
         typeEnvironment.define(Type::Int32.createPointer(), "intArray");
-        typeCheckStatements(
-            "intArray[5] = 7;\n",
-            typeEnvironment);
+        typeCheckExpression("intArray[5] = 7", typeEnvironment);
     }
-    // **TODO** other assignements i.e. += -= %=
+
+    // Write-only assignment
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::Int32.addWriteOnly(), "test");
+        typeCheckExpression("test = 7", typeEnvironment);
+    }
+
+    // Write-only += assignement
+    EXPECT_THROW({
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::Int32.addWriteOnly(), "test");
+        typeCheckExpression("test += 7", typeEnvironment);}, 
+        TypeChecker::TypeCheckError);
 }
 //--------------------------------------------------------------------------
 TEST(TypeChecker, Binary)
@@ -323,6 +340,22 @@ TEST(TypeChecker, Binary)
         const auto type = typeCheckExpression("offset + intArray", typeEnvironment);
         EXPECT_EQ(*type.getPointer().valueType, Type::Int32);       
     }
+
+    // Integer + write only integer
+    EXPECT_THROW({
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::Int32.addWriteOnly(), "int1");
+        typeEnvironment.define(Type::Int32, "int2");
+        typeCheckExpression("int1 + int2", typeEnvironment);},
+        TypeChecker::TypeCheckError);
+
+    // Write only integer + integer
+    EXPECT_THROW({
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::Int32, "int1");
+        typeEnvironment.define(Type::Int32.addWriteOnly(), "int2");
+        typeCheckExpression("int1 + int2", typeEnvironment);},
+        TypeChecker::TypeCheckError);
 
     /*integer only (opType == Token::Type::PERCENT || opType == Token::Type::SHIFT_LEFT
                     || opType == Token::Type::SHIFT_RIGHT || opType == Token::Type::CARET
@@ -391,6 +424,14 @@ TEST(TypeChecker, Call)
         const auto type = typeCheckExpression("printf(\"hello world %d, %f\", 12, cos(5.0f))", stdLibraryEnv);
         EXPECT_EQ(type, Type::Int32);
     }
+
+     // Function call with write-only argument
+    EXPECT_THROW({
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::ResolvedType::createFunction(Type::Int32, {Type::Int32}), "func");
+        typeEnvironment.define(Type::Int32.addWriteOnly(), "int2");
+        typeCheckExpression("func(int2)", typeEnvironment);},
+        TypeChecker::TypeCheckError);
 }
 //--------------------------------------------------------------------------
 TEST(TypeChecker, Cast)
@@ -510,6 +551,13 @@ TEST(TypeChecker, IncDec)
         TestEnvironment typeEnvironment;
         typeEnvironment.define(Type::Int32.createPointer(true), "intArray");
         typeCheckExpression("intArray++", typeEnvironment);},
+        TypeChecker::TypeCheckError);
+    
+   // Can't increment write-only number
+   EXPECT_THROW({
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::Int32.addWriteOnly(), "intVal");
+        typeCheckExpression("intVal++", typeEnvironment);},
         TypeChecker::TypeCheckError);
 }
 //--------------------------------------------------------------------------
