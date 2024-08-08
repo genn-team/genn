@@ -213,9 +213,14 @@ private:
             m_ErrorHandler.error(assignment.getOperator(), "Assignment of read-only variable");
             throw TypeCheckError();
         }
+        // If LHS is write-only and the operator isn't a plain assignement
+        else if(leftType.isValue() && leftType.getValue().isWriteOnly && assignment.getOperator().type != Token::Type::EQUAL) {
+            m_ErrorHandler.error(assignment.getOperator(), "Invalid operator for assignement of write-only variable");
+            throw TypeCheckError();
+        }
         // If RHS is write-only, cannot be assigned
         else if(rightType.isValue() && rightType.getValue().isWriteOnly) {
-            m_ErrorHandler.error(assignment.getOperator(), "Write-only operand type '" + rightType.getName() + "'");
+            m_ErrorHandler.error(assignment.getOperator(), "Invalid operand type '" + rightType.getName() + "'");
             throw TypeCheckError();
         }
         // Otherwise, if implicit conversion fails, give error
