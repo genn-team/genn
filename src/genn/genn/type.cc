@@ -124,6 +124,13 @@ bool NumericValue::operator >= (const NumericValue &other) const
 //----------------------------------------------------------------------------
 // GeNN::Type::ResolvedType
 //----------------------------------------------------------------------------
+ResolvedType ResolvedType::addWriteOnly() const
+{
+    auto value = getValue();
+    value.isWriteOnly = true;
+    return ResolvedType{value, isConst};
+}
+//----------------------------------------------------------------------------
 std::string ResolvedType::getName() const
 {
     const std::string qualifier = isConst ? "const " : "";
