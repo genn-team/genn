@@ -30,25 +30,25 @@ def test_custom_update(make_model, backend, precision, batch_size):
     neuron_model = create_neuron_model(
         "neuron",
         vars=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE),
-                        ("XShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
+              ("XShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
 
     current_source_model = create_current_source_model(
         "current_source",
         vars=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE),
-                        ("XShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
+              ("XShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
 
     weight_update_model = create_weight_update_model(
         "weight_update",
         vars=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
         pre_vars=[("preX", "scalar", VarAccess.READ_ONLY_DUPLICATE),
-                            ("preXShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)],
+                  ("preXShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)],
         post_vars=[("postX", "scalar", VarAccess.READ_ONLY_DUPLICATE),
-                             ("postXShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
+                   ("postXShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
 
     postsynaptic_update_model = create_postsynaptic_model(
         "postsynaptic_update",
         vars=[("psmX", "scalar", VarAccess.READ_ONLY_DUPLICATE),
-                        ("psmXShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
+              ("psmXShared", "scalar", VarAccess.READ_ONLY_SHARED_NEURON)])
 
     custom_update_model = create_custom_update_model(
         "custom_update",
@@ -221,7 +221,7 @@ def test_custom_update_delay(make_model, backend, precision, batch_size):
     neuron_model = create_neuron_model(
         "neuron",
         vars=[("V", "scalar", VarAccess.READ_ONLY_DUPLICATE),
-                        ("U", "scalar", VarAccess.READ_ONLY_DUPLICATE)])
+              ("U", "scalar", VarAccess.READ_ONLY_DUPLICATE)])
 
     weight_update_model = create_weight_update_model(
         "weight_update",
@@ -376,7 +376,7 @@ def test_custom_update_neuron_reduce(make_model, backend, precision, batch_size)
     reduction_neuron_model = create_neuron_model(
         "reduction_neuron",
         vars=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE),
-                        ("Y", "scalar", VarAccess.READ_ONLY_DUPLICATE)])
+              ("Y", "scalar", VarAccess.READ_ONLY_DUPLICATE)])
 
     softmax_1_custom_update_model = create_custom_update_model(
         "softmax_1",
@@ -457,12 +457,12 @@ def test_custom_update_batch_reduction(make_model, backend, precision, batch_siz
     neuron_model = create_neuron_model(
         "neuron",
         vars=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE),
-                        ("SumX", "scalar", VarAccess.READ_ONLY)])
+              ("SumX", "scalar", VarAccess.READ_ONLY)])
 
     weight_update_model = create_weight_update_model(
         "weight_update",
         vars=[("X", "scalar", VarAccess.READ_ONLY_DUPLICATE),
-                        ("SumX", "scalar", VarAccess.READ_ONLY)])
+              ("SumX", "scalar", VarAccess.READ_ONLY)])
    
     reduction_custom_update_model = create_custom_update_model(
         "reduction_custom_update",
