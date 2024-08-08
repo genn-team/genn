@@ -99,6 +99,12 @@ void BackendSIMT::genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env
     handler(varEnv);
 }
 //--------------------------------------------------------------------------
+std::string BackendSIMT::getAtomicOperation(const std::string &lhsPointer, const std::string &rhsValue,
+                                            const Type::ResolvedType &type, AtomicOperation op) const
+{
+    return getAtomic(type, op) + "(" + lhsPointer + ", " + rhsValue + ")";
+}
+//--------------------------------------------------------------------------
 bool BackendSIMT::isGlobalHostRNGRequired(const ModelSpecInternal &model) const
 {
     // Host RNG is required if any synapse groups or custom connectivity updates require a host RNG
@@ -852,7 +858,7 @@ void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSp
                 synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre",
                             getAtomic(modelMerged.getModel().getPrecision()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
                 
-                sg.generateSynapseUpdate(synEnv, batchSize, modelMerged.getModel().getDT());
+                sg.generateSynapseUpdate(*this, synEnv, batchSize, modelMerged.getModel().getDT());
 
                 if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     synEnv.getStream() << CodeStream::CB(1);
@@ -1881,10 +1887,10 @@ void BackendSIMT::genPostsynapticUpdate(EnvironmentExternalBase &env, Postsynapt
                            getAtomic(sg.getScalarType()) + "(&$(_out_pre)[" + sg.getPreISynIndex(batchSize, "$(id_pre)") + "], $(0))");
 
                 if(trueSpike) {
-                    sg.generateSpikeUpdate(synEnv, batchSize, dt);
+                    sg.generateSpikeUpdate(*this, synEnv, batchSize, dt);
                 }
                 else {
-                    sg.generateSpikeEventUpdate(synEnv, batchSize, dt);
+                    sg.generateSpikeEventUpdate(*this, synEnv, batchSize, dt);
                 }
 
                 if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {

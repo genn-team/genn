@@ -124,6 +124,16 @@ struct PreferencesBase
 class GENN_EXPORT BackendBase
 {
 public:
+    //------------------------------------------------------------------------
+    // Enumerations
+    //------------------------------------------------------------------------
+    //! What atomic operation is required
+    enum class AtomicOperation
+    {
+        ADD,
+        OR,
+    };
+
     //--------------------------------------------------------------------------
     // Typedefines
     //--------------------------------------------------------------------------
@@ -235,6 +245,10 @@ public:
     virtual void genDenseSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const = 0;
     virtual void genKernelSynapseVariableInit(EnvironmentExternalBase &env, SynapseInitGroupMerged &sg, HandlerEnv handler) const = 0;
     virtual void genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const = 0;
+
+    //! Get suitable atomic *lhsPointer += rhsValue or *lhsPointer |= rhsValue style operation
+    virtual std::string getAtomicOperation(const std::string &lhsPointer, const std::string &rhsValue,
+                                           const Type::ResolvedType &type, AtomicOperation op = AtomicOperation::ADD) const = 0;
 
     //! Generate a single RNG instance
     /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */

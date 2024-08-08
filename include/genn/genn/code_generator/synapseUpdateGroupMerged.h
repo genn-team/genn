@@ -102,9 +102,9 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
-    void generateSpikeEventUpdate(EnvironmentExternalBase &env, 
+    void generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
                                   unsigned int batchSize, double dt);
-    void generateSpikeUpdate(EnvironmentExternalBase &env, 
+    void generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
                              unsigned int batchSize, double dt);
     void generateProceduralConnectivity(EnvironmentExternalBase &env);
     void generateToeplitzConnectivity(EnvironmentExternalBase &env,
@@ -130,9 +130,9 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
-    void generateSpikeEventUpdate(EnvironmentExternalBase &env, 
+    void generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
                                   unsigned int batchSize, double dt);
-    void generateSpikeUpdate(EnvironmentExternalBase &env, 
+    void generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
                              unsigned int batchSize, double dt);
     
     //----------------------------------------------------------------------------
@@ -154,7 +154,7 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
-    void generateSynapseUpdate(EnvironmentExternalBase &env, 
+    void generateSynapseUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
                                unsigned int batchSize, double dt);
 
     //----------------------------------------------------------------------------

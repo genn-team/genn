@@ -59,13 +59,6 @@ public:
     //------------------------------------------------------------------------
     // Enumerations
     //------------------------------------------------------------------------
-    //! What atomic operation is required
-    enum class AtomicOperation
-    {
-        ADD,
-        OR,
-    };
-
     //! What memory space atomic operation is required
     enum class AtomicMemSpace
     {
@@ -143,6 +136,10 @@ public:
     
     virtual void genKernelSynapseVariableInit(EnvironmentExternalBase &env, SynapseInitGroupMerged &sg, HandlerEnv handler) const final;
     virtual void genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const final;
+
+    //! Get suitable atomic *lhsPointer += rhsValue or *lhsPointer |= rhsValue style operation
+    virtual std::string getAtomicOperation(const std::string &lhsPointer, const std::string &rhsValue,
+                                           const Type::ResolvedType &type, AtomicOperation op = AtomicOperation::ADD) const final;
 
     //! Should 'scalar' variables be implemented on device or can host variables be used directly?
     virtual bool isDeviceScalarRequired() const final { return true; }
