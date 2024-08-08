@@ -694,7 +694,7 @@ Statement::StatementPtr parseSelectionStatement(ParserState &parserState)
             elseBranch = parseStatement(parserState);
         }
 
-        return std::make_unique<Statement::If>(std::move(condition),
+        return std::make_unique<Statement::If>(keyword, std::move(condition),
                                                std::move(thenBranch),
                                                std::move(elseBranch));
     }
@@ -719,23 +719,25 @@ Statement::StatementPtr parseIterationStatement(ParserState &parserState)
 
     // If this is a while statement
     if(parserState.previous().type == Token::Type::WHILE) {
+        const auto whileToken = parserState.previous();
         parserState.consume(Token::Type::LEFT_PAREN, "Expect '(' after 'while'");
         auto condition = parseExpression(parserState);
         parserState.consume(Token::Type::RIGHT_PAREN, "Expect ')' after 'while'");
         auto body = parseStatement(parserState);
 
-        return std::make_unique<Statement::While>(std::move(condition), 
+        return std::make_unique<Statement::While>(whileToken, std::move(condition), 
                                                   std::move(body));
     }
     // Otherwise, if this is a do statement 
     else if(parserState.previous().type == Token::Type::DO) {
         auto body = parseStatement(parserState);
         parserState.consume(Token::Type::WHILE, "Expected 'while' after 'do' statement body");
+        const auto whileToken = parserState.previous();
         parserState.consume(Token::Type::LEFT_PAREN, "Expect '(' after 'while'");
         auto condition = parseExpression(parserState);
         parserState.consume(Token::Type::RIGHT_PAREN, "Expect ')' after 'while'");
         parserState.consume(Token::Type::SEMICOLON, "Expect ';' after while");
-        return std::make_unique<Statement::Do>(std::move(condition), 
+        return std::make_unique<Statement::Do>(whileToken, std::move(condition), 
                                                std::move(body));
     }
     // Otherwise, if this is a for_each_synapse statement
@@ -747,6 +749,7 @@ Statement::StatementPtr parseIterationStatement(ParserState &parserState)
     }
     // Otherwise, it's a for statement
     else {
+        const auto forToken = parserState.previous();
         parserState.consume(Token::Type::LEFT_PAREN, "Expect '(' after 'for'");
 
         // If statement starts with a semicolon - no initialiser
@@ -781,7 +784,7 @@ Statement::StatementPtr parseIterationStatement(ParserState &parserState)
 
         // Return for statement
         // **NOTE** we could "de-sugar" into a while statement but this makes pretty-printing easier
-        return std::make_unique<Statement::For>(std::move(initialiser), 
+        return std::make_unique<Statement::For>(forToken, std::move(initialiser), 
                                                 std::move(condition),
                                                 std::move(increment),
                                                 std::move(body));
