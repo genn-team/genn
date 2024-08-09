@@ -304,12 +304,14 @@ PYBIND11_MODULE(_genn, m)
         WRAP_ENUM(VarAccessModeAttribute, READ_WRITE)
         WRAP_ENUM(VarAccessModeAttribute, REDUCE)
         WRAP_ENUM(VarAccessModeAttribute, SUM)
-        WRAP_ENUM(VarAccessModeAttribute, MAX);
+        WRAP_ENUM(VarAccessModeAttribute, MAX)
+        WRAP_ENUM(VarAccessModeAttribute, BROADCAST);
 
     //! Supported combination of VarAccessModeAttribute
     pybind11::enum_<VarAccessMode>(m, "VarAccessMode")
         WRAP_ENUM(VarAccessMode, READ_WRITE)
         WRAP_ENUM(VarAccessMode, READ_ONLY)
+        WRAP_ENUM(VarAccessMode, BROADCAST)
         WRAP_ENUM(VarAccessMode, REDUCE_SUM)
         WRAP_ENUM(VarAccessMode, REDUCE_MAX)
 
@@ -341,6 +343,7 @@ PYBIND11_MODULE(_genn, m)
     pybind11::enum_<CustomUpdateVarAccess>(m, "CustomUpdateVarAccess", DOC(CustomUpdateVarAccess))
         WRAP_ENUM(CustomUpdateVarAccess, READ_WRITE)
         WRAP_ENUM(CustomUpdateVarAccess, READ_ONLY)
+        WRAP_ENUM(CustomUpdateVarAccess, BROADCAST_DELAY)
         WRAP_ENUM(CustomUpdateVarAccess, READ_ONLY_SHARED)
         WRAP_ENUM(CustomUpdateVarAccess, READ_ONLY_SHARED_NEURON)
         WRAP_ENUM(CustomUpdateVarAccess, REDUCE_BATCH_SUM)
