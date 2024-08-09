@@ -57,6 +57,17 @@ public:
 
     const auto &getInitialisers() const{ return m_CU.getVarReferences(); }
 
+    std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const
+    {
+        const auto *delayNeuronGroup = m_CU.getVarReferences().at(varName).getDelayNeuronGroup();
+        if(delayNeuronGroup) {
+            return delayNeuronGroup->getNumDelaySlots();
+        }
+        else {
+            return std::nullopt;
+        }
+    }
+
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -117,6 +128,8 @@ public:
     auto getDefs() const{ return m_CU.getModel()->getVarRefs(); }
 
     const auto &getInitialisers() const{ return m_CU.getVarReferences(); }
+
+    std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const { return std::nullopt; }
 
 private:
     //----------------------------------------------------------------------------
