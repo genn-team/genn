@@ -304,9 +304,9 @@ def test_custom_update_delay(make_model, backend, precision, batch_size):
     model.load()
 
     # Simulate 20 timesteps
-    vars = [(pre_pop, pre_pop.vars["V"]),
-            (pre_pop, pre_pop.vars["U"]),
-            (syn2_pop, syn2_pop.pre_vars["pre"])]
+    vars = [(pre_pop, pre_pop.vars["V"], True),
+            (pre_pop, pre_pop.vars["U"], False),
+            (syn2_pop, syn2_pop.pre_vars["pre"], True)]
     while model.timestep < 20:
         model.step_time()
 
@@ -316,8 +316,8 @@ def test_custom_update_delay(make_model, backend, precision, batch_size):
 
             # Loop through variables
             correct = np.arange(0, batch_size * 1000, 1000) + ((model.timestep // 10) * 10) 
-            correct = np.repeat(correct[:,np.newaxis], 10, axis=1)
-            for pop, var in vars:
+            correct = np.reshape(correct, (batch_size, 1))
+            for pop, var, _ in vars:
                 # Pull
                 var.pull_from_device()
 
@@ -328,18 +328,17 @@ def test_custom_update_delay(make_model, backend, precision, batch_size):
             model.custom_update("TestBroadcast")
    
             # Loop through variables
-            """
             correct = np.arange(0, batch_size * 2000, 2000) + ((model.timestep // 10) * 10) 
-            correct = np.repeat(correct[:,np.newaxis], 10, axis=1)
-            for pop, var in vars:
+            correct = np.reshape(correct, (batch_size, 1))
+            correct_delay = np.reshape(correct, (batch_size, 1, 1))
+            for pop, var, delay in vars:
                 # Pull
                 var.pull_from_device()
 
-                # Compare to correct value
-                print(var.view.shape, correct.shape)
-                if not np.allclose(var.view, correct):
+                # Compare to correct value                
+                if not np.allclose(var.view, correct_delay if delay else correct):
                     assert False, f"{pop.name} var {var.name} has wrong value ({var.current_view} rather than {correct})"
-            """
+
 
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
