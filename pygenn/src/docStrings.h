@@ -89,6 +89,8 @@ static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_20 =
 
 static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_21 = R"doc()doc";
 
+static const char *__doc_CodeGenerator_BackendBase_buildStandardEnvironment_22 = R"doc()doc";
+
 static const char *__doc_CodeGenerator_BackendBase_createArray =
 R"doc(Create backend-specific array object
 
@@ -332,6 +334,8 @@ static const char *__doc_CodeGenerator_BackendBase_m_Preferences = R"doc(Prefere
 
 static const char *__doc_CodeGenerator_BackendBase_setPointerBytes = R"doc()doc";
 
+static const char *__doc_CodeGenerator_CustomConnectivityRemapUpdateGroupMerged = R"doc()doc";
+
 static const char *__doc_CodeGenerator_CustomConnectivityUpdateGroupMerged = R"doc()doc";
 
 static const char *__doc_CodeGenerator_CustomConnectivityUpdatePostInitGroupMerged = R"doc()doc";
@@ -508,11 +512,11 @@ static const char *__doc_CurrentSourceVarAdapter_getInitialisers = R"doc()doc";
 
 static const char *__doc_CurrentSourceVarAdapter_getLoc = R"doc()doc";
 
+static const char *__doc_CurrentSourceVarAdapter_getNumVarDelaySlots = R"doc()doc";
+
 static const char *__doc_CurrentSourceVarAdapter_getTarget = R"doc()doc";
 
 static const char *__doc_CurrentSourceVarAdapter_getVarDims = R"doc()doc";
-
-static const char *__doc_CurrentSourceVarAdapter_isVarDelayed = R"doc()doc";
 
 static const char *__doc_CurrentSourceVarAdapter_m_CS = R"doc()doc";
 
@@ -680,11 +684,11 @@ static const char *__doc_CustomConnectivityUpdatePostVarAdapter_getInitialisers 
 
 static const char *__doc_CustomConnectivityUpdatePostVarAdapter_getLoc = R"doc()doc";
 
+static const char *__doc_CustomConnectivityUpdatePostVarAdapter_getNumVarDelaySlots = R"doc()doc";
+
 static const char *__doc_CustomConnectivityUpdatePostVarAdapter_getTarget = R"doc()doc";
 
 static const char *__doc_CustomConnectivityUpdatePostVarAdapter_getVarDims = R"doc()doc";
-
-static const char *__doc_CustomConnectivityUpdatePostVarAdapter_isVarDelayed = R"doc()doc";
 
 static const char *__doc_CustomConnectivityUpdatePostVarAdapter_m_CU = R"doc()doc";
 
@@ -708,11 +712,11 @@ static const char *__doc_CustomConnectivityUpdatePreVarAdapter_getInitialisers =
 
 static const char *__doc_CustomConnectivityUpdatePreVarAdapter_getLoc = R"doc()doc";
 
+static const char *__doc_CustomConnectivityUpdatePreVarAdapter_getNumVarDelaySlots = R"doc()doc";
+
 static const char *__doc_CustomConnectivityUpdatePreVarAdapter_getTarget = R"doc()doc";
 
 static const char *__doc_CustomConnectivityUpdatePreVarAdapter_getVarDims = R"doc()doc";
-
-static const char *__doc_CustomConnectivityUpdatePreVarAdapter_isVarDelayed = R"doc()doc";
 
 static const char *__doc_CustomConnectivityUpdatePreVarAdapter_m_CU = R"doc()doc";
 
@@ -757,6 +761,8 @@ static const char *__doc_CustomConnectivityUpdate_CustomConnectivityUpdate = R"d
 static const char *__doc_CustomConnectivityUpdate_CustomConnectivityUpdate_2 = R"doc()doc";
 
 static const char *__doc_CustomConnectivityUpdate_CustomConnectivityUpdate_3 = R"doc()doc";
+
+static const char *__doc_CustomConnectivityUpdate_canModifyConnectivity = R"doc(Can this custom connectivty update actually modify connectivity)doc";
 
 static const char *__doc_CustomConnectivityUpdate_finalise = R"doc()doc";
 
@@ -808,6 +814,13 @@ static const char *__doc_CustomConnectivityUpdate_getPreVarInitialisers = R"doc(
 static const char *__doc_CustomConnectivityUpdate_getPreVarLocation = R"doc(Get variable location for presynaptic state variable)doc";
 
 static const char *__doc_CustomConnectivityUpdate_getPreVarReferences = R"doc()doc";
+
+static const char *__doc_CustomConnectivityUpdate_getRemapHashDigest =
+R"doc(Updates hash with custom update.
+
+.. note::
+
+    this can only be called after model is finalized)doc";
 
 static const char *__doc_CustomConnectivityUpdate_getRowUpdateCodeTokens = R"doc()doc";
 
@@ -1045,6 +1058,8 @@ static const char *__doc_CustomUpdateVarAccess =
 R"doc(Supported combinations of access mode and dimension for custom update variables.
 The axes are defined 'subtractively', i.e. VarAccessDim::BATCH indicates that this axis should be removed.)doc";
 
+static const char *__doc_CustomUpdateVarAccess_BROADCAST_DELAY = R"doc(This variable has the same dimensions as whatever the custom update is attached to and writes to it get broadcast across delay slots)doc";
+
 static const char *__doc_CustomUpdateVarAccess_READ_ONLY = R"doc(This variable can only be read from and has the same dimensions as whatever the custom update is attached to)doc";
 
 static const char *__doc_CustomUpdateVarAccess_READ_ONLY_SHARED =
@@ -1075,11 +1090,11 @@ static const char *__doc_CustomUpdateVarAdapter_getInitialisers = R"doc()doc";
 
 static const char *__doc_CustomUpdateVarAdapter_getLoc = R"doc()doc";
 
+static const char *__doc_CustomUpdateVarAdapter_getNumVarDelaySlots = R"doc()doc";
+
 static const char *__doc_CustomUpdateVarAdapter_getTarget = R"doc()doc";
 
 static const char *__doc_CustomUpdateVarAdapter_getVarDims = R"doc()doc";
-
-static const char *__doc_CustomUpdateVarAdapter_isVarDelayed = R"doc()doc";
 
 static const char *__doc_CustomUpdateVarAdapter_m_CU = R"doc()doc";
 
@@ -1090,6 +1105,8 @@ static const char *__doc_CustomUpdateVarRefAdapter_CustomUpdateVarRefAdapter = R
 static const char *__doc_CustomUpdateVarRefAdapter_getDefs = R"doc()doc";
 
 static const char *__doc_CustomUpdateVarRefAdapter_getInitialisers = R"doc()doc";
+
+static const char *__doc_CustomUpdateVarRefAdapter_getNumVarDelaySlots = R"doc()doc";
 
 static const char *__doc_CustomUpdateVarRefAdapter_m_CU = R"doc()doc";
 
@@ -1114,6 +1131,8 @@ static const char *__doc_CustomUpdateWUVarRefAdapter_CustomUpdateWUVarRefAdapter
 static const char *__doc_CustomUpdateWUVarRefAdapter_getDefs = R"doc()doc";
 
 static const char *__doc_CustomUpdateWUVarRefAdapter_getInitialisers = R"doc()doc";
+
+static const char *__doc_CustomUpdateWUVarRefAdapter_getNumVarDelaySlots = R"doc()doc";
 
 static const char *__doc_CustomUpdateWUVarRefAdapter_m_CU = R"doc()doc";
 
@@ -2732,11 +2751,19 @@ be used for spike and spike-like event recording)doc";
 
 static const char *__doc_NeuronGroup_isSimRNGRequired = R"doc(Does this neuron group require an RNG to simulate?)doc";
 
+static const char *__doc_NeuronGroup_isSpikeDelayRequired = R"doc()doc";
+
+static const char *__doc_NeuronGroup_isSpikeEventDelayRequired = R"doc()doc";
+
+static const char *__doc_NeuronGroup_isSpikeEventQueueRequired = R"doc()doc";
+
 static const char *__doc_NeuronGroup_isSpikeEventRecordingEnabled = R"doc(Is spike event recording enabled for this population?)doc";
 
 static const char *__doc_NeuronGroup_isSpikeEventRequired = R"doc()doc";
 
 static const char *__doc_NeuronGroup_isSpikeEventTimeRequired = R"doc()doc";
+
+static const char *__doc_NeuronGroup_isSpikeQueueRequired = R"doc()doc";
 
 static const char *__doc_NeuronGroup_isSpikeRecordingEnabled = R"doc(Is spike recording enabled for this population?)doc";
 
@@ -2812,6 +2839,8 @@ static const char *__doc_NeuronGroup_m_SpikeEventLocation =
 R"doc(Location of spike-like events from neuron group.
 This is ignored for simulations on hardware with a single memory space)doc";
 
+static const char *__doc_NeuronGroup_m_SpikeEventQueueRequired = R"doc(Is queueing required for spike-like events?)doc";
+
 static const char *__doc_NeuronGroup_m_SpikeEventRecordingEnabled = R"doc(Is spike event recording enabled?)doc";
 
 static const char *__doc_NeuronGroup_m_SpikeEventTimeLocation =
@@ -2821,6 +2850,8 @@ This is ignored for simulations on hardware with a single memory space)doc";
 static const char *__doc_NeuronGroup_m_SpikeLocation =
 R"doc(Location of spikes from neuron group.
 This is ignored for simulations on hardware with a single memory space)doc";
+
+static const char *__doc_NeuronGroup_m_SpikeQueueRequired = R"doc(Is queueing required for spikes?)doc";
 
 static const char *__doc_NeuronGroup_m_SpikeRecordingEnabled = R"doc(Is spike recording enabled for this population?)doc";
 
@@ -2861,6 +2892,8 @@ static const char *__doc_NeuronGroup_setSpikeEventLocation =
 R"doc(Set location of this neuron group's output spike events.
 This is ignored for simulations on hardware with a single memory space)doc";
 
+static const char *__doc_NeuronGroup_setSpikeEventQueueRequired = R"doc()doc";
+
 static const char *__doc_NeuronGroup_setSpikeEventRecordingEnabled = R"doc(Enables and disable spike event recording for this population)doc";
 
 static const char *__doc_NeuronGroup_setSpikeEventTimeLocation =
@@ -2870,6 +2903,8 @@ This is ignored for simulations on hardware with a single memory space)doc";
 static const char *__doc_NeuronGroup_setSpikeLocation =
 R"doc(Set location of this neuron group's output spikes.
 This is ignored for simulations on hardware with a single memory space)doc";
+
+static const char *__doc_NeuronGroup_setSpikeQueueRequired = R"doc()doc";
 
 static const char *__doc_NeuronGroup_setSpikeRecordingEnabled = R"doc(Enables and disable spike recording for this population)doc";
 
@@ -3187,11 +3222,11 @@ static const char *__doc_NeuronVarAdapter_getInitialisers = R"doc()doc";
 
 static const char *__doc_NeuronVarAdapter_getLoc = R"doc()doc";
 
+static const char *__doc_NeuronVarAdapter_getNumVarDelaySlots = R"doc()doc";
+
 static const char *__doc_NeuronVarAdapter_getTarget = R"doc()doc";
 
 static const char *__doc_NeuronVarAdapter_getVarDims = R"doc()doc";
-
-static const char *__doc_NeuronVarAdapter_isVarDelayed = R"doc()doc";
 
 static const char *__doc_NeuronVarAdapter_m_NG = R"doc()doc";
 
@@ -3368,8 +3403,6 @@ static const char *__doc_Snippet_DynamicParameterContainer_get = R"doc()doc";
 
 static const char *__doc_Snippet_DynamicParameterContainer_m_Dynamic = R"doc()doc";
 
-static const char *__doc_Snippet_DynamicParameterContainer_m_Snippet = R"doc()doc";
-
 static const char *__doc_Snippet_DynamicParameterContainer_set = R"doc()doc";
 
 static const char *__doc_Snippet_DynamicParameterContainer_updateHash = R"doc()doc";
@@ -3453,6 +3486,8 @@ static const char *__doc_SynapseGroup_SynapseGroup_3 = R"doc()doc";
 static const char *__doc_SynapseGroup_addCustomUpdateReference = R"doc(Add reference to custom connectivity update, referencing this synapse group)doc";
 
 static const char *__doc_SynapseGroup_addCustomUpdateReference_2 = R"doc(Add reference to custom update, referencing this synapse group)doc";
+
+static const char *__doc_SynapseGroup_areAnyWUPostVarHeterogeneouslyDelayed = R"doc(Are any postsynaptic weight update model variable heterogeneously delayed?)doc";
 
 static const char *__doc_SynapseGroup_canPSBeFused = R"doc(Can postsynaptic update component of this synapse group be safely fused with others whose hashes match so only one needs simulating at all?)doc";
 
@@ -3623,7 +3658,7 @@ NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getWUVarLocation = R"doc(Get location of weight update model synaptic state variable)doc";
 
-static const char *__doc_SynapseGroup_isDendriticDelayRequired = R"doc(Does this synapse group require dendritic delay?)doc";
+static const char *__doc_SynapseGroup_isDendriticOutputDelayRequired = R"doc(Is this synapse group's output dendritically delayed?)doc";
 
 static const char *__doc_SynapseGroup_isPSModelFused = R"doc(Has this synapse group's postsynaptic model been fused with those from other synapse groups?)doc";
 
@@ -3682,6 +3717,8 @@ static const char *__doc_SynapseGroup_isWUParamDynamic = R"doc(Is weight update 
 static const char *__doc_SynapseGroup_isWUPostModelFused =
 R"doc(Has the postsynaptic component of this synapse group's weight update
 model been fused with those from other synapse groups?)doc";
+
+static const char *__doc_SynapseGroup_isWUPostVarHeterogeneouslyDelayed = R"doc(Is the named postsynaptic weight update model variable heterogeneously delayed?)doc";
 
 static const char *__doc_SynapseGroup_isWUPostVarInitRequired = R"doc(Is var init code required for any presynaptic variables in this synapse group's weight update model?)doc";
 
@@ -3742,6 +3779,10 @@ If this is nullptr, postsynaptic weight update  has not been fused)doc";
 static const char *__doc_SynapseGroup_m_FusedWUPreTarget =
 R"doc(Synapse group presynaptic weight update has been fused with.
 If this is nullptr, presynaptic weight update has not been fused)doc";
+
+static const char *__doc_SynapseGroup_m_HeterogeneouslyDelayedWUPostVars =
+R"doc(Set of names of postsynaptic weight update
+model variables which are heterogeneously delayed)doc";
 
 static const char *__doc_SynapseGroup_m_KernelSize = R"doc(Kernel size)doc";
 
@@ -3967,11 +4008,11 @@ static const char *__doc_SynapsePSMVarAdapter_getInitialisers = R"doc()doc";
 
 static const char *__doc_SynapsePSMVarAdapter_getLoc = R"doc()doc";
 
+static const char *__doc_SynapsePSMVarAdapter_getNumVarDelaySlots = R"doc()doc";
+
 static const char *__doc_SynapsePSMVarAdapter_getTarget = R"doc()doc";
 
 static const char *__doc_SynapsePSMVarAdapter_getVarDims = R"doc()doc";
-
-static const char *__doc_SynapsePSMVarAdapter_isVarDelayed = R"doc()doc";
 
 static const char *__doc_SynapsePSMVarAdapter_m_SG = R"doc()doc";
 
@@ -4005,11 +4046,11 @@ static const char *__doc_SynapseWUPostVarAdapter_getInitialisers = R"doc()doc";
 
 static const char *__doc_SynapseWUPostVarAdapter_getLoc = R"doc()doc";
 
+static const char *__doc_SynapseWUPostVarAdapter_getNumVarDelaySlots = R"doc()doc";
+
 static const char *__doc_SynapseWUPostVarAdapter_getTarget = R"doc()doc";
 
 static const char *__doc_SynapseWUPostVarAdapter_getVarDims = R"doc()doc";
-
-static const char *__doc_SynapseWUPostVarAdapter_isVarDelayed = R"doc()doc";
 
 static const char *__doc_SynapseWUPostVarAdapter_m_SG = R"doc()doc";
 
@@ -4033,11 +4074,11 @@ static const char *__doc_SynapseWUPreVarAdapter_getInitialisers = R"doc()doc";
 
 static const char *__doc_SynapseWUPreVarAdapter_getLoc = R"doc()doc";
 
+static const char *__doc_SynapseWUPreVarAdapter_getNumVarDelaySlots = R"doc()doc";
+
 static const char *__doc_SynapseWUPreVarAdapter_getTarget = R"doc()doc";
 
 static const char *__doc_SynapseWUPreVarAdapter_getVarDims = R"doc()doc";
-
-static const char *__doc_SynapseWUPreVarAdapter_isVarDelayed = R"doc()doc";
 
 static const char *__doc_SynapseWUPreVarAdapter_m_SG = R"doc()doc";
 
@@ -4056,6 +4097,12 @@ static const char *__doc_SynapseWUVarAdapter_getTarget = R"doc()doc";
 static const char *__doc_SynapseWUVarAdapter_getVarDims = R"doc()doc";
 
 static const char *__doc_SynapseWUVarAdapter_m_SG = R"doc()doc";
+
+static const char *__doc_Type_FunctionFlags = R"doc(Flags that can be applied to function types)doc";
+
+static const char *__doc_Type_FunctionFlags_ARRAY_SUBSCRIPT_OVERRIDE = R"doc(Function is variadic)doc";
+
+static const char *__doc_Type_FunctionFlags_VARIADIC = R"doc()doc";
 
 static const char *__doc_Type_NumericValue =
 R"doc(ResolvedType::Numeric has various values attached e.g. min and max. These
@@ -4090,10 +4137,6 @@ static const char *__doc_Type_NumericValue_operator_lt = R"doc()doc";
 
 static const char *__doc_Type_NumericValue_operator_ne = R"doc()doc";
 
-static const char *__doc_Type_Qualifier = R"doc()doc";
-
-static const char *__doc_Type_Qualifier_CONSTANT = R"doc()doc";
-
 static const char *__doc_Type_ResolvedType = R"doc()doc";
 
 static const char *__doc_Type_ResolvedType_Function = R"doc()doc";
@@ -4104,6 +4147,10 @@ static const char *__doc_Type_ResolvedType_Function_Function_2 = R"doc()doc";
 
 static const char *__doc_Type_ResolvedType_Function_argTypes = R"doc()doc";
 
+static const char *__doc_Type_ResolvedType_Function_flags = R"doc()doc";
+
+static const char *__doc_Type_ResolvedType_Function_hasFlag = R"doc()doc";
+
 static const char *__doc_Type_ResolvedType_Function_operator_assign = R"doc()doc";
 
 static const char *__doc_Type_ResolvedType_Function_operator_eq = R"doc()doc";
@@ -4113,8 +4160,6 @@ static const char *__doc_Type_ResolvedType_Function_operator_lt = R"doc()doc";
 static const char *__doc_Type_ResolvedType_Function_operator_ne = R"doc()doc";
 
 static const char *__doc_Type_ResolvedType_Function_returnType = R"doc()doc";
-
-static const char *__doc_Type_ResolvedType_Function_variadic = R"doc()doc";
 
 static const char *__doc_Type_ResolvedType_Numeric = R"doc()doc";
 
@@ -4172,6 +4217,8 @@ static const char *__doc_Type_ResolvedType_Value_device = R"doc()doc";
 
 static const char *__doc_Type_ResolvedType_Value_ffiType = R"doc()doc";
 
+static const char *__doc_Type_ResolvedType_Value_isWriteOnly = R"doc()doc";
+
 static const char *__doc_Type_ResolvedType_Value_name = R"doc()doc";
 
 static const char *__doc_Type_ResolvedType_Value_numeric = R"doc()doc";
@@ -4186,7 +4233,7 @@ static const char *__doc_Type_ResolvedType_Value_size = R"doc()doc";
 
 static const char *__doc_Type_ResolvedType_addConst = R"doc()doc";
 
-static const char *__doc_Type_ResolvedType_addQualifier = R"doc()doc";
+static const char *__doc_Type_ResolvedType_addWriteOnly = R"doc()doc";
 
 static const char *__doc_Type_ResolvedType_createFunction = R"doc()doc";
 
@@ -4212,7 +4259,7 @@ static const char *__doc_Type_ResolvedType_getSize = R"doc()doc";
 
 static const char *__doc_Type_ResolvedType_getValue = R"doc()doc";
 
-static const char *__doc_Type_ResolvedType_hasQualifier = R"doc()doc";
+static const char *__doc_Type_ResolvedType_isConst = R"doc()doc";
 
 static const char *__doc_Type_ResolvedType_isFunction = R"doc()doc";
 
@@ -4221,6 +4268,8 @@ static const char *__doc_Type_ResolvedType_isNumeric = R"doc()doc";
 static const char *__doc_Type_ResolvedType_isPointer = R"doc()doc";
 
 static const char *__doc_Type_ResolvedType_isPointerToPointer = R"doc()doc";
+
+static const char *__doc_Type_ResolvedType_isScalar = R"doc()doc";
 
 static const char *__doc_Type_ResolvedType_isValue = R"doc()doc";
 
@@ -4232,9 +4281,7 @@ static const char *__doc_Type_ResolvedType_operator_lt = R"doc()doc";
 
 static const char *__doc_Type_ResolvedType_operator_ne = R"doc()doc";
 
-static const char *__doc_Type_ResolvedType_qualifiers = R"doc()doc";
-
-static const char *__doc_Type_ResolvedType_removeQualifiers = R"doc()doc";
+static const char *__doc_Type_ResolvedType_removeConst = R"doc()doc";
 
 static const char *__doc_Type_UnresolvedType = R"doc()doc";
 
@@ -4251,6 +4298,12 @@ static const char *__doc_Type_UnresolvedType_operator_lt = R"doc()doc";
 static const char *__doc_Type_UnresolvedType_operator_ne = R"doc()doc";
 
 static const char *__doc_Type_UnresolvedType_resolve = R"doc()doc";
+
+static const char *__doc_Type_getAddToPrePost = R"doc(Get type to add a weight type)doc";
+
+static const char *__doc_Type_getAddToPrePostDelay = R"doc(Get type to add a weight type with delay)doc";
+
+static const char *__doc_Type_getArraySubscript = R"doc(Get type for array subscript overload functions)doc";
 
 static const char *__doc_Type_getCommonType = R"doc(Apply C rules to get common type between numeric types a and b)doc";
 
@@ -4296,6 +4349,8 @@ static const char *__doc_Utils_clz = R"doc(Count leading zeros)doc";
 static const char *__doc_Utils_handleLegacyEGPType =
 R"doc(Extra global parameters used to support both pointer and non-pointer types. Now only the behaviour that used to
 be provided by pointer types is provided but, internally, non-pointer types are used. This handles pointer types specified by string.)doc";
+
+static const char *__doc_Utils_isIdentifierDelayed = R"doc(Checks whether the sequence of tokens references a given identifier with a delay)doc";
 
 static const char *__doc_Utils_isIdentifierReferenced = R"doc(Checks whether the sequence of token references a given identifier)doc";
 
@@ -4349,6 +4404,8 @@ static const char *__doc_VarAccessModeAttribute =
 R"doc(Flags defining attributes of var access models
 Read-only and read-write are separate flags rather than read and write so you can test mode & VarAccessMode::READ_ONLY)doc";
 
+static const char *__doc_VarAccessModeAttribute_BROADCAST = R"doc(Writes to this variable get broadcast)doc";
+
 static const char *__doc_VarAccessModeAttribute_MAX = R"doc(This variable's reduction operation is a maximum)doc";
 
 static const char *__doc_VarAccessModeAttribute_READ_ONLY = R"doc(This variable can only be read from)doc";
@@ -4358,6 +4415,8 @@ static const char *__doc_VarAccessModeAttribute_READ_WRITE = R"doc(This variable
 static const char *__doc_VarAccessModeAttribute_REDUCE = R"doc(This variable is a reduction target)doc";
 
 static const char *__doc_VarAccessModeAttribute_SUM = R"doc(This variable's reduction operation is a summation)doc";
+
+static const char *__doc_VarAccessMode_BROADCAST = R"doc(This variable can only be broadcast i.e. written to)doc";
 
 static const char *__doc_VarAccessMode_READ_ONLY = R"doc(This variable can only be read from)doc";
 
@@ -4510,6 +4569,8 @@ static const char *__doc_WeightUpdateModels_Init_getSynapseDynamicsCodeTokens = 
 static const char *__doc_WeightUpdateModels_Init_getVarInitialisers = R"doc()doc";
 
 static const char *__doc_WeightUpdateModels_Init_isRNGRequired = R"doc()doc";
+
+static const char *__doc_WeightUpdateModels_Init_isVarHeterogeneouslyDelayedInSynCode = R"doc()doc";
 
 static const char *__doc_WeightUpdateModels_Init_m_PostDynamicsCodeTokens = R"doc()doc";
 
