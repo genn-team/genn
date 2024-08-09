@@ -737,8 +737,8 @@ std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(C
         os, cg, batchSize, idx,
         [batchSize, &cg](const Models::VarReference &varRef, const std::string &index)
         {
-            return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr, batchSize,
-                                     varRef.getVarDims(), index);
+            return cg.getVarRefIndex(varRef.getDelayNeuronGroup(), batchSize,
+                                     varRef.getVarDims(), index, "");
         });
 }
 //-----------------------------------------------------------------------

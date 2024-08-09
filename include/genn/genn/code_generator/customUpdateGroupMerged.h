@@ -29,7 +29,8 @@ public:
                               BackendBase::GroupHandlerEnv<CustomUpdateGroupMerged> genPostamble);
 
     std::string getVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
-    std::string getVarRefIndex(bool delay, unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
+    std::string getVarRefIndex(const NeuronGroup *delayNeuronGroup, unsigned int batchSize, VarAccessDim varDims,
+                               const std::string &index, const std::string &delaySlot) const;
 
     //----------------------------------------------------------------------------
     // Static constants

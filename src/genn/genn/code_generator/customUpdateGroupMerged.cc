@@ -74,10 +74,10 @@ void CustomUpdateGroupMerged::generateCustomUpdate(EnvironmentExternalBase &env,
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarRefCache<CustomUpdateVarRefAdapter, CustomUpdateGroupMerged> varRefEnv(
         *this, *this, getTypeContext(), varEnv, "", "l", false,
-        [this, batchSize](const std::string&, const Models::VarReference &v)
-        { 
-            return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, batchSize,
-                                  v.getVarDims(), "$(id)");
+        [this, batchSize](const std::string&, const Models::VarReference &v, const std::string &delaySlot)
+        {
+            return getVarRefIndex(v.getDelayNeuronGroup(), batchSize,
+                                  v.getVarDims(), "$(id)", delaySlot);
         });
 
     Transpiler::ErrorHandler errorHandler("Custom update '" + getArchetype().getName() + "' update code");
@@ -104,25 +104,45 @@ std::string CustomUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAcce
     }
 }
 //----------------------------------------------------------------------------
-std::string CustomUpdateGroupMerged::getVarRefIndex(bool delay, unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
+std::string CustomUpdateGroupMerged::getVarRefIndex(const NeuronGroup *delayNeuronGroup, unsigned int batchSize, VarAccessDim varDims, 
+                                                    const std::string &index, const std::string &delaySlot) const
 {
     // If delayed, variable is shared, the batch size is one or this custom update isn't batched, batch delay offset isn't required
-    if(delay) {
+    if(delayNeuronGroup != nullptr) {
+        const std::string numDelaySlotsStr = std::to_string(delayNeuronGroup->getNumDelaySlots());
         const bool batched = ((varDims & VarAccessDim::BATCH) && batchSize > 1);
         if (!(varDims & VarAccessDim::ELEMENT)) {
-            return batched ? "$(_batch_delay_slot)" : "$(_delay_slot)";
+            //$(batch) * " + numDelaySlotsStr + ") + $(_delay_slot);
+            if(delaySlot.empty()) {
+                return batched ? "$(_batch_delay_slot)" : "$(_delay_slot)";
+            }
+            else {
+                return batched ? ("($(batch) * " + numDelaySlotsStr + ") + " + delaySlot) : delaySlot;
+            }
         }
         else if (batched) {
             assert(!index.empty());
-            return "$(_batch_delay_offset) + " + index;
+            if(delaySlot.empty()) {
+                return "$(_batch_delay_offset) + " + index;
+            }
+            else {
+                return "(" + delaySlot + " * $(num_neurons)) + ($(_batch_offset) * " + numDelaySlotsStr + ") + " + index;
+            }
+            
         }
         
         else {
             assert(!index.empty());
-            return "$(_delay_offset) + " + index;
+            if(delaySlot.empty()) {
+                return "$(_delay_offset) + " + index;
+            }
+            else {
+                return "(" + delaySlot + " * $(num_neurons)) + " + index;
+            }
         }
     }
     else {
+        assert(delaySlot.empty());
         return getVarIndex(batchSize, varDims, index);
     }    
 }
@@ -207,8 +227,9 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(EnvironmentExternalBase
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarRefCache<CustomUpdateWUVarRefAdapter, CustomUpdateWUGroupMergedBase> varRefEnv(
         *this, *this, getTypeContext(), varEnv, "", "l", false,
-        [this, batchSize](const std::string&, const Models::WUVarReference &v)
+        [this, batchSize](const std::string&, const Models::WUVarReference &v, const std::string &delaySlot)
         {
+            assert(delaySlot.empty());
             return getVarRefIndex(batchSize, v.getVarDims(), "$(id_syn)");
         });
 

@@ -828,13 +828,15 @@ public:
         return A(group.getArchetype()).getNumVarDelaySlots(var.name).has_value() && m_AlwaysCopyIfDelayed;
     }
 
-    std::string getReadIndex(G &group, const AdapterDef &var) const
+    std::string getReadIndex(G &group, const AdapterDef &var, const std::string &delaySlot) const
     {
+        assert(delaySlot.empty());
         return m_GetReadIndex(var.name, var.access, A(group.getArchetype()).getNumVarDelaySlots(var.name).has_value());
     }
 
-    std::string getWriteIndex(G &group, const AdapterDef &var) const
+    std::string getWriteIndex(G &group, const AdapterDef &var, const std::string &delaySlot) const
     {
+        assert(delaySlot.empty());
         return m_GetWriteIndex(var.name, var.access, A(group.getArchetype()).getNumVarDelaySlots(var.name).has_value());
     }
 
@@ -862,7 +864,7 @@ class VarRefCachePolicy
 protected:
     using GroupInternal = typename G::GroupInternal;
     using AdapterDef = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
-    using GetIndexFn = std::function<std::string(const std::string&, const typename A::RefType&)>;
+    using GetIndexFn = std::function<std::string(const std::string&, const typename A::RefType&, const std::string&)>;
 
     VarRefCachePolicy(GetIndexFn getReadIndex, GetIndexFn getWriteIndex)
     :   m_GetReadIndex(getReadIndex), m_GetWriteIndex(getWriteIndex)
@@ -882,14 +884,17 @@ protected:
         return false;
     }
     
-    std::string getReadIndex(G &g, const AdapterDef &var) const
+    std::string getReadIndex(G &g, const AdapterDef &var, const std::string &delaySlot) const
     {
-        return m_GetReadIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
+        assert(delaySlot.empty());
+        return m_GetReadIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name),
+                              delaySlot);
     }
 
-    std::string getWriteIndex(G &g, const AdapterDef &var) const
+    std::string getWriteIndex(G &g, const AdapterDef &var, const std::string &delaySlot) const
     {
-        return m_GetWriteIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name));
+        return m_GetWriteIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name),
+                               delaySlot);
     }
 
     const Runtime::ArrayBase *getArray(const Runtime::Runtime &runtime, const GroupInternal &g, const AdapterDef &var) const
@@ -962,11 +967,11 @@ public:
             }
             getContextStream() << resolvedType.getName() << " _" << m_LocalPrefix << v.name;
 
-            // If this isn't a reduction, read value from memory
+            // If this isn't a reduction or broadcast, read value from memory
             // **NOTE** by not initialising these variables for reductions, 
             // compilers SHOULD emit a warning if user code doesn't set it to something
-            if(!(v.access & VarAccessModeAttribute::REDUCE)) {
-                getContextStream() << " = group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getReadIndex(m_Group.get(), v), *this) << "]";
+            if(!(v.access & VarAccessModeAttribute::REDUCE) && !(v.access & VarAccessModeAttribute::BROADCAST)) {
+                getContextStream() << " = group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getReadIndex(m_Group.get(), v, ""), *this) << "]";
             }
             getContextStream() << ";" << std::endl;
         }
@@ -977,14 +982,20 @@ public:
         // Loop through referenced definitions again
         for(const auto &v : referencedDefs) {
             // If writes to this variable should be broadcast
-            /*const auto numVarDelaySlots = archetypeAdapter.getNumVarDelaySlots(v.name);
+            const auto numVarDelaySlots = archetypeAdapter.getNumVarDelaySlots(v.name);
             if(numVarDelaySlots && (v.access & VarAccessModeAttribute::BROADCAST)) {
-                //getContextStream() << "for(int i = 0; i < 
-                //getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getWriteIndex(m_Group.get(), v), *this) << "]";
+                getContextStream() << "for(int d = 0; d < " << numVarDelaySlots.value() << "; d++)";
+                {
+                    CodeStream::Scope b(getContextStream());
+                    getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getWriteIndex(m_Group.get(), v, "d"), *this) << "]";
+                    getContextStream() << " = _" << m_LocalPrefix << v.name << ";" << std::endl;
+                }
             }
-            // Otherwise, if we should always copy variable or variable is read-write
-            else */if(this->shouldAlwaysCopy(m_Group.get(), v) || (getVarAccessMode(v.access) == VarAccessMode::READ_WRITE)) {
-                getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getWriteIndex(m_Group.get(), v), *this) << "]";
+            // Otherwise, if we should always copy variable, variable is read-write or variable is broadcast
+            else if(this->shouldAlwaysCopy(m_Group.get(), v) || (getVarAccessMode(v.access) == VarAccessMode::READ_WRITE)
+                    || (v.access & VarAccessModeAttribute::BROADCAST)) 
+            {
+                getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getWriteIndex(m_Group.get(), v, ""), *this) << "]";
                 getContextStream() << " = _" << m_LocalPrefix << v.name << ";" << std::endl;
             }
         }
