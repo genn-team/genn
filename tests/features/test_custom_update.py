@@ -252,6 +252,14 @@ def test_custom_update_delay(make_model, backend, precision, batch_size):
          R = (batch * 1000.0) + t;
          """,
          var_refs=[("R", "scalar", VarAccessMode.READ_WRITE)])
+    
+    broadcast_time_custom_update_model = create_custom_update_model(
+        "set_time_custom_update",
+         update_code=
+         """
+         R = (batch * 2000.0) + t;
+         """,
+         var_refs=[("R", "scalar", VarAccessMode.BROADCAST)])
 
     model = make_model(precision, "test_custom_update_delay", backend=backend)
     model.dt = 1.0
@@ -284,7 +292,13 @@ def test_custom_update_delay(make_model, backend, precision, batch_size):
                             {}, {}, {"R": create_wu_pre_var_ref(syn2_pop, "pre")})
     model.add_custom_update("NeuronNoDelaySetTime", "Test", set_time_custom_update_model,
                             {}, {}, {"R": create_var_ref(pre_pop, "U")})
-    
+    model.add_custom_update("NeuronDelayBroadcastTime", "TestBroadcast", broadcast_time_custom_update_model,
+                            {}, {}, {"R": create_var_ref(pre_pop, "V")})
+    model.add_custom_update("WUPreDelayBroadcastTime", "TestBroadcast", broadcast_time_custom_update_model,
+                            {}, {}, {"R": create_wu_pre_var_ref(syn2_pop, "pre")})
+    model.add_custom_update("NeuronNoDelayBroadcastTime", "TestBroadcast", broadcast_time_custom_update_model,
+                            {}, {}, {"R": create_var_ref(pre_pop, "U")})
+
     # Build model and load
     model.build()
     model.load()
@@ -301,9 +315,8 @@ def test_custom_update_delay(make_model, backend, precision, batch_size):
             model.custom_update("Test")
 
             # Loop through variables
-            correct = [(1000 * b) + ((model.timestep // 10) * 10) 
-                       for b in range(batch_size)]
-            correct = np.reshape(correct, (batch_size, 1))
+            correct = np.arange(0, batch_size * 1000, 1000) + ((model.timestep // 10) * 10) 
+            correct = np.repeat(correct[:,np.newaxis], 10, axis=1)
             for pop, var in vars:
                 # Pull
                 var.pull_from_device()
@@ -311,7 +324,22 @@ def test_custom_update_delay(make_model, backend, precision, batch_size):
                 # Compare to correct value
                 if not np.allclose(var.current_view, correct):
                     assert False, f"{pop.name} var {var.name} has wrong value ({var.current_view} rather than {correct})"
+            
+            model.custom_update("TestBroadcast")
+   
+            # Loop through variables
+            """
+            correct = np.arange(0, batch_size * 2000, 2000) + ((model.timestep // 10) * 10) 
+            correct = np.repeat(correct[:,np.newaxis], 10, axis=1)
+            for pop, var in vars:
+                # Pull
+                var.pull_from_device()
 
+                # Compare to correct value
+                print(var.view.shape, correct.shape)
+                if not np.allclose(var.view, correct):
+                    assert False, f"{pop.name} var {var.name} has wrong value ({var.current_view} rather than {correct})"
+            """
 
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
                                                  ("cuda", 1), ("cuda", 5)])
