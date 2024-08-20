@@ -172,6 +172,18 @@ inline Models::VarReference createWUPostVarRef(SynapseGroup *sg, const std::stri
     return Models::VarReference::createWUPostVarRef(sg, varName);
 }
 
+//! Creates a reference to a synapse group's postsynaptic output buffer
+inline Models::VarReference createOutPostVarRef(SynapseGroup *sg)
+{
+    return Models::VarReference::createOutPostRef(sg);
+}
+
+//! Creates a reference to a synapse group's presynaptic output buffer
+inline Models::VarReference createOutPreVarRef(SynapseGroup *sg)
+{
+    return Models::VarReference::createOutPreRef(sg);
+}
+
 //! Creates a reference to a weight update model variable.
 inline Models::WUVarReference createWUVarRef(SynapseGroup *sg, const std::string &varName,
                                              SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "")

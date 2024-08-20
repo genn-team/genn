@@ -173,13 +173,13 @@ public:
     // Public API
     //------------------------------------------------------------------------
     // Get type of variable
-    const Type::UnresolvedType &getVarType() const;
+    Type::UnresolvedType getVarType() const;
 
     // Get dimensions of variable
     VarAccessDim getVarDims() const;
 
     //! Get name of targetted variable
-    const std::string &getVarName() const;
+    std::string getVarName() const;
 
     //! Get size of variable
     unsigned int getNumNeurons() const;
@@ -213,8 +213,25 @@ public:
     static VarReference createPSMVarRef(SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPreVarRef(SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPostVarRef(SynapseGroup *sg, const std::string &varName);
+    static VarReference createOutPostRef(SynapseGroup *sg);
+    static VarReference createOutPreRef(SynapseGroup *sg);
 
 private:
+    //------------------------------------------------------------------------
+    // InternalRef
+    //------------------------------------------------------------------------
+    struct InternalRef
+    {
+        enum class Type
+        {
+            OUT_POST,
+            OUT_PRE,
+        };
+
+        SynapseGroupInternal *group;
+        Type type;
+    };
+
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
@@ -226,10 +243,10 @@ private:
     DEFINE_REF_DETAIL_STRUCT(CURef, CustomUpdateInternal, Base::CustomUpdateVar);
     DEFINE_REF_DETAIL_STRUCT(CCUPreRef, CustomConnectivityUpdateInternal, Base::Var);
     DEFINE_REF_DETAIL_STRUCT(CCUPostRef, CustomConnectivityUpdateInternal, Base::Var);
-
+ 
     //! Variant type used to store 'detail'
     using DetailType = std::variant<NGRef, PSMRef, WUPreRef, WUPostRef, CSRef, 
-                                    CURef, CCUPreRef, CCUPostRef>;
+                                    CURef, CCUPreRef, CCUPostRef, InternalRef>;
 
     VarReference(const DetailType &detail) : m_Detail(detail)
     {}
@@ -264,7 +281,7 @@ public:
     // Public API
     //------------------------------------------------------------------------
     // Get type of variable
-    const Type::UnresolvedType &getVarType() const;
+    Type::UnresolvedType getVarType() const;
 
     // Get dimensions of variable
     VarAccessDim getVarDims() const;

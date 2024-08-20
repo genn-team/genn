@@ -26,10 +26,15 @@ Base::EGPRef::EGPRef(const std::string &n, const std::string &t)
 //----------------------------------------------------------------------------
 // VarReference
 //----------------------------------------------------------------------------
-const Type::UnresolvedType &VarReference::getVarType() const
+Type::UnresolvedType VarReference::getVarType() const
 {
     return std::visit(
-        [](const auto &ref){ return std::cref(ref.var.type); },
+        Utils::Overload{
+            [](const InternalRef &ref)
+            {
+                return Type::UnresolvedType("scalar");
+            },
+            [](const auto &ref){ return ref.var.type; }},
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -55,22 +60,37 @@ VarAccessDim VarReference::getVarDims() const
             { 
                 return clearVarAccessDim(getVarAccessDim(ref.var.access), VarAccessDim::BATCH); 
             },
+            // Otherwise, if reference is internal
+            [](const InternalRef &ref) 
+            {
+                return static_cast<VarAccessDim>(static_cast<unsigned int>(VarAccessDim::ELEMENT) | static_cast<unsigned int>(VarAccessDim::BATCH));
+            },
             // Otherwise, use dimensionality directly
             [](const auto &ref) { return getVarAccessDim(ref.var.access); }},
         m_Detail);
 }
 //----------------------------------------------------------------------------
-const std::string &VarReference::getVarName() const
+std::string VarReference::getVarName() const
 {
     return std::visit(
-        [](const auto &ref){ return std::cref(ref.var.name); },
+        Utils::Overload{
+            [](const InternalRef &ref) -> std::string
+            {
+                if(ref.type == InternalRef::Type::OUT_POST) {
+                    return "outPost";
+                }
+                else {
+                    return "outPre";
+                }
+            },
+            [](const auto &ref){ return ref.var.name; }},
         m_Detail);
 }
 //----------------------------------------------------------------------------
 unsigned int VarReference::getNumNeurons() const
 {
     return std::visit(
-            Utils::Overload{
+        Utils::Overload{
             [](const NGRef &ref) { return ref.group->getNumNeurons(); },
             [](const PSMRef &ref) { return ref.group->getTrgNeuronGroup()->getNumNeurons(); },
             [](const WUPreRef &ref) { return ref.group->getSrcNeuronGroup()->getNumNeurons(); },
@@ -78,7 +98,16 @@ unsigned int VarReference::getNumNeurons() const
             [](const CSRef &ref) { return ref.group->getTrgNeuronGroup()->getNumNeurons(); },
             [](const CURef &ref) { return ref.group->getNumNeurons(); },
             [](const CCUPreRef &ref) { return ref.group->getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); },
-            [](const CCUPostRef &ref) { return ref.group->getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); }},
+            [](const CCUPostRef &ref) { return ref.group->getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); },
+            [](const InternalRef &ref)
+            {
+                if(ref.type == InternalRef::Type::OUT_POST) {
+                    return ref.group->getTrgNeuronGroup()->getNumNeurons();
+                }
+                else {
+                    return ref.group->getSrcNeuronGroup()->getNumNeurons();
+                }
+            }},
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -117,6 +146,15 @@ const Runtime::ArrayBase *VarReference::getTargetArray(const Runtime::Runtime &r
             [&runtime](const PSMRef &ref) { return runtime.getArray(ref.group->getFusedPSTarget(), ref.var.name); },
             [&runtime](const WUPreRef &ref) { return runtime.getArray(ref.group->getFusedWUPreTarget(), ref.var.name); },
             [&runtime](const WUPostRef &ref) { return runtime.getArray(ref.group->getFusedWUPostTarget(), ref.var.name); },
+            [&runtime](const InternalRef &ref) 
+            {
+                if(ref.type == InternalRef::Type::OUT_POST) {
+                    return runtime.getArray(ref.group->getFusedPSTarget(), "outPost");
+                }
+                else {
+                    return runtime.getArray(ref.group->getFusedPreOutputTarget(), "outPre");
+                }
+            },
             [&runtime](const auto &ref) { return runtime.getArray(*ref.group, ref.var.name); }},
         m_Detail);
 }
@@ -133,7 +171,7 @@ CustomUpdate *VarReference::getReferencedCustomUpdate() const
 bool VarReference::operator < (const VarReference &other) const
 {
     // **NOTE** variable and target names are enough to guarantee uniqueness
-    const std::string &varName = getVarName();
+    const std::string varName = getVarName();
     const std::string &targetName = getTargetName();
     const std::string &otherVarName = other.getVarName();
     const std::string &otherTargetName = other.getTargetName();
@@ -230,6 +268,18 @@ VarReference VarReference::createWUPostVarRef(SynapseGroup *sg, const std::strin
     }
 }
 //----------------------------------------------------------------------------
+VarReference VarReference::createOutPostRef(SynapseGroup *sg)
+{
+    return VarReference(InternalRef{static_cast<SynapseGroupInternal*>(sg),
+                                    InternalRef::Type::OUT_POST});
+}
+//----------------------------------------------------------------------------
+VarReference VarReference::createOutPreRef(SynapseGroup *sg)
+{
+    return VarReference(InternalRef{static_cast<SynapseGroupInternal*>(sg),
+                                    InternalRef::Type::OUT_PRE});
+}
+//----------------------------------------------------------------------------
 const std::string &VarReference::getTargetName() const 
 { 
     return std::visit(
@@ -237,6 +287,15 @@ const std::string &VarReference::getTargetName() const
             [](const PSMRef &ref) { return std::cref(ref.group->getFusedPSTarget().getName()); },
             [](const WUPreRef &ref) { return std::cref(ref.group->getFusedWUPreTarget().getName()); },
             [](const WUPostRef &ref) { return std::cref(ref.group->getFusedWUPostTarget().getName()); },
+            [](const InternalRef &ref) 
+            {
+                if(ref.type == InternalRef::Type::OUT_POST) {
+                    return std::cref(ref.group->getFusedPSTarget().getName());
+                }
+                else {
+                    return std::cref(ref.group->getFusedPreOutputTarget().getName());
+                }
+            },
             [](const auto &ref) { return std::cref(ref.group->getName()); }},
         m_Detail);
 }
@@ -244,10 +303,10 @@ const std::string &VarReference::getTargetName() const
 //----------------------------------------------------------------------------
 // WUVarReference
 //----------------------------------------------------------------------------
-const Type::UnresolvedType &WUVarReference::getVarType() const
+Type::UnresolvedType WUVarReference::getVarType() const
 {
     return std::visit(
-        [](const auto &ref){ return std::cref(ref.var.type); },
+        [](const auto &ref){ return ref.var.type; },
         m_Detail);
 }
 //----------------------------------------------------------------------------
