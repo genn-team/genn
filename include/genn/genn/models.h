@@ -216,14 +216,31 @@ public:
     static VarReference createPSMVarRef(SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPreVarRef(SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPostVarRef(SynapseGroup *sg, const std::string &varName);
-    static VarReference createOutPostRef(SynapseGroup *sg);
-    static VarReference createDenDelayRef(SynapseGroup *sg);
+    static VarReference createOutPostVarRef(SynapseGroup *sg);
+    static VarReference createDenDelayVarRef(SynapseGroup *sg);
+    static VarReference createSpikeTimeVarRef(NeuronGroup *ng);
+    static VarReference createPrevSpikeTimeVarRef(NeuronGroup *ng);
 
 private:
     //------------------------------------------------------------------------
-    // InternalRef
+    // InternalNGRef
     //------------------------------------------------------------------------
-    struct InternalRef
+    struct InternalNGRef
+    {
+        enum class Type
+        {
+            SPIKE_TIME,
+            PREV_SPIKE_TIME,
+        };
+
+        NeuronGroupInternal *group;
+        Type type;
+    };
+
+    //------------------------------------------------------------------------
+    // InternalSGRef
+    //------------------------------------------------------------------------
+    struct InternalSGRef
     {
         enum class Type
         {
@@ -249,7 +266,8 @@ private:
  
     //! Variant type used to store 'detail'
     using DetailType = std::variant<NGRef, PSMRef, WUPreRef, WUPostRef, CSRef, 
-                                    CURef, CCUPreRef, CCUPostRef, InternalRef>;
+                                    CURef, CCUPreRef, CCUPostRef, InternalNGRef,
+                                    InternalSGRef>;
 
     VarReference(const DetailType &detail) : m_Detail(detail)
     {}

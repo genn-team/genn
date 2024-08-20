@@ -30,10 +30,8 @@ Type::UnresolvedType VarReference::getVarType() const
 {
     return std::visit(
         Utils::Overload{
-            [](const InternalRef&)
-            {
-                return Type::UnresolvedType("scalar");
-            },
+            [](const InternalSGRef&) { return Type::UnresolvedType("scalar"); },
+            [](const InternalNGRef&) { return Type::UnresolvedType("scalar"); },
             [](const auto &ref){ return ref.var.type; }},
         m_Detail);
 }
@@ -61,7 +59,12 @@ VarAccessDim VarReference::getVarDims() const
                 return clearVarAccessDim(getVarAccessDim(ref.var.access), VarAccessDim::BATCH); 
             },
             // Otherwise, if reference is internal
-            [](const InternalRef&) 
+            [](const InternalNGRef&) 
+            {
+                return static_cast<VarAccessDim>(static_cast<unsigned int>(VarAccessDim::ELEMENT) | static_cast<unsigned int>(VarAccessDim::BATCH));
+            },
+            // Otherwise, if reference is internal
+            [](const InternalSGRef&) 
             {
                 return static_cast<VarAccessDim>(static_cast<unsigned int>(VarAccessDim::ELEMENT) | static_cast<unsigned int>(VarAccessDim::BATCH));
             },
@@ -74,9 +77,18 @@ std::string VarReference::getVarName() const
 {
     return std::visit(
         Utils::Overload{
-            [](const InternalRef &ref)->std::string
+            [](const InternalNGRef &ref)->std::string
             {
-                if(ref.type == InternalRef::Type::OUT_POST) {
+                if(ref.type == InternalNGRef::Type::SPIKE_TIME) {
+                    return "sT";
+                }
+                else {
+                    return "prevST";
+                }
+            },
+            [](const InternalSGRef &ref)->std::string
+            {
+                if(ref.type == InternalSGRef::Type::OUT_POST) {
                     return "outPost";
                 }
                 else {
@@ -99,10 +111,8 @@ unsigned int VarReference::getNumNeurons() const
             [](const CURef &ref) { return ref.group->getNumNeurons(); },
             [](const CCUPreRef &ref) { return ref.group->getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); },
             [](const CCUPostRef &ref) { return ref.group->getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); },
-            [](const InternalRef &ref)
-            {
-                return ref.group->getTrgNeuronGroup()->getNumNeurons();
-            }},
+            [](const InternalNGRef &ref) { return ref.group->getNumNeurons(); },
+            [](const InternalSGRef &ref) { return ref.group->getTrgNeuronGroup()->getNumNeurons(); }},
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -130,6 +140,9 @@ NeuronGroup *VarReference::getDelayNeuronGroup() const
                 return (ref.group->getBackPropDelaySteps() > 0 
                         || ref.group->getWUInitialiser().isVarHeterogeneouslyDelayedInSynCode(ref.var.name)) ? ref.group->getTrgNeuronGroup() : nullptr;
             },
+            [](const InternalNGRef &ref)->NeuronGroup* {
+                return ref.group->isSpikeQueueRequired() ? ref.group : nullptr;
+            },
             [](const auto&)->NeuronGroup* { return nullptr; }},
         m_Detail);
 }
@@ -138,9 +151,9 @@ SynapseGroup *VarReference::getDenDelaySynapseGroup() const
 {
     return std::visit(
         Utils::Overload{
-            [](const InternalRef &ref)->SynapseGroup*
+            [](const InternalSGRef &ref)->SynapseGroup*
             {
-                if(ref.type == InternalRef::Type::DEN_DELAY) {
+                if(ref.type == InternalSGRef::Type::DEN_DELAY) {
                     return ref.group;
                 }
                 else {
@@ -158,9 +171,18 @@ const Runtime::ArrayBase *VarReference::getTargetArray(const Runtime::Runtime &r
             [&runtime](const PSMRef &ref) { return runtime.getArray(ref.group->getFusedPSTarget(), ref.var.name); },
             [&runtime](const WUPreRef &ref) { return runtime.getArray(ref.group->getFusedWUPreTarget(), ref.var.name); },
             [&runtime](const WUPostRef &ref) { return runtime.getArray(ref.group->getFusedWUPostTarget(), ref.var.name); },
-            [&runtime](const InternalRef &ref) 
+            [&runtime](const InternalNGRef &ref) 
             {
-                if(ref.type == InternalRef::Type::OUT_POST) {
+                if(ref.type == InternalNGRef::Type::SPIKE_TIME) {
+                    return runtime.getArray(*ref.group, "sT");
+                }
+                else {
+                    return runtime.getArray(*ref.group, "prevST");
+                }
+            },
+            [&runtime](const InternalSGRef &ref) 
+            {
+                if(ref.type == InternalSGRef::Type::OUT_POST) {
                     return runtime.getArray(ref.group->getFusedPSTarget(), "outPost");
                 }
                 else {
@@ -280,21 +302,33 @@ VarReference VarReference::createWUPostVarRef(SynapseGroup *sg, const std::strin
     }
 }
 //----------------------------------------------------------------------------
-VarReference VarReference::createOutPostRef(SynapseGroup *sg)
+VarReference VarReference::createOutPostVarRef(SynapseGroup *sg)
 {
-    return VarReference(InternalRef{static_cast<SynapseGroupInternal*>(sg),
-                                    InternalRef::Type::OUT_POST});
+    return VarReference(InternalSGRef{static_cast<SynapseGroupInternal*>(sg),
+                                      InternalSGRef::Type::OUT_POST});
 }
 //----------------------------------------------------------------------------
-VarReference VarReference::createDenDelayRef(SynapseGroup *sg)
+VarReference VarReference::createDenDelayVarRef(SynapseGroup *sg)
 {
     auto *sgInternal = static_cast<SynapseGroupInternal*>(sg);
     if(sgInternal->isDendriticOutputDelayRequired()) {
-        return VarReference(InternalRef{sgInternal, InternalRef::Type::DEN_DELAY});
+        return VarReference(InternalSGRef{sgInternal, InternalSGRef::Type::DEN_DELAY});
     }
     else {
         throw std::runtime_error("Synapse group does not have dendritic delay buffer to reference");
     }
+}
+//----------------------------------------------------------------------------
+VarReference VarReference::createSpikeTimeVarRef(NeuronGroup *ng)
+{
+    return VarReference(InternalNGRef{static_cast<NeuronGroupInternal*>(ng), 
+                                      InternalNGRef::Type::SPIKE_TIME});
+}
+//----------------------------------------------------------------------------
+VarReference VarReference::createPrevSpikeTimeVarRef(NeuronGroup *ng)
+{
+    return VarReference(InternalNGRef{static_cast<NeuronGroupInternal*>(ng), 
+                                      InternalNGRef::Type::PREV_SPIKE_TIME});
 }
 //----------------------------------------------------------------------------
 const std::string &VarReference::getTargetName() const 
@@ -304,7 +338,7 @@ const std::string &VarReference::getTargetName() const
             [](const PSMRef &ref) { return std::cref(ref.group->getFusedPSTarget().getName()); },
             [](const WUPreRef &ref) { return std::cref(ref.group->getFusedWUPreTarget().getName()); },
             [](const WUPostRef &ref) { return std::cref(ref.group->getFusedWUPostTarget().getName()); },
-            [](const InternalRef &ref) 
+            [](const InternalSGRef &ref) 
             {
                 return std::cref(ref.group->getFusedPSTarget().getName());
             },

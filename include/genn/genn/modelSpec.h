@@ -175,13 +175,25 @@ inline Models::VarReference createWUPostVarRef(SynapseGroup *sg, const std::stri
 //! Creates a reference to a synapse group's postsynaptic output buffer
 inline Models::VarReference createOutPostVarRef(SynapseGroup *sg)
 {
-    return Models::VarReference::createOutPostRef(sg);
+    return Models::VarReference::createOutPostVarRef(sg);
 }
 
 //! Creates a reference to a synapse group's dendritic delay buffer
 inline Models::VarReference createDenDelayVarRef(SynapseGroup *sg)
 {
-    return Models::VarReference::createDenDelayRef(sg);
+    return Models::VarReference::createDenDelayVarRef(sg);
+}
+
+//! Creates a reference to a neuron group's spike times
+inline Models::VarReference createSpikeTimeVarRef(NeuronGroup *ng)
+{
+    return Models::VarReference::createSpikeTimeVarRef(ng);
+}
+
+//! Creates a reference to a neuron group's previous spike times
+inline Models::VarReference createPrevSpikeTimeVarRef(NeuronGroup *ng)
+{
+    return Models::VarReference::createPrevSpikeTimeVarRef(ng);
 }
 
 //! Creates a reference to a weight update model variable.
