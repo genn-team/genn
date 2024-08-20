@@ -14,9 +14,11 @@ import mnist
 import numpy as np
 from copy import copy
 from argparse import ArgumentParser
-from pygenn import (create_current_source_model, create_neuron_model,
-                    create_weight_update_model, init_sparse_connectivity,
-                    init_postsynaptic, init_weight_update, GeNNModel)
+from pygenn import (create_current_source_model, create_custom_update_model,
+                    create_neuron_model, create_out_post_var_ref, 
+                    create_var_ref, create_weight_update_model, 
+                    init_sparse_connectivity, init_postsynaptic, 
+                    init_weight_update, GeNNModel)
 from tqdm.auto import tqdm
 
 # ----------------------------------------------------------------------------
@@ -124,6 +126,51 @@ symmetric_stdp = create_weight_update_model(
     g = fmin(wMax, fmax(wMin, newWeight));
     """)
 
+# Custom update for resetting neuron state
+pn_reset = create_custom_update_model(
+    "pn_reset",
+    params=["Vreset"],
+    var_refs=[("V", "scalar"), ("RefracTime", "scalar")],
+    update_code=
+    """
+    V = Vreset;
+    RefracTime = 0.0;
+    """)
+
+kc_reset = create_custom_update_model(
+    "kc_reset",
+    params=["Vreset"],
+    var_refs=[("PNOutPost", "scalar"), ("GGNOutPost", "scalar"),
+              ("V", "scalar"), ("RefracTime", "scalar")],
+    update_code=
+    """
+    PNOutPost = 0.0;
+    GGNOutPost = 0.0;
+    V = Vreset;
+    RefracTime = 0.0;
+    """)
+
+ggn_reset = create_custom_update_model(
+    "ggn_reset",
+    params=["Vreset"],
+    var_refs=[("V", "scalar")],
+    update_code=
+    """
+    V = Vreset;
+    """)
+
+mbon_reset = create_custom_update_model(
+    "mbon_reset",
+    params=["Vreset"],
+    var_refs=[("OutPost", "scalar"), ("V", "scalar"),
+              ("RefracTime", "scalar")],
+    update_code=
+    """
+    OutPost = 0.0;
+    V = Vreset;
+    RefracTime = 0.0;
+    """)
+
 # ----------------------------------------------------------------------------
 # CLI
 # ----------------------------------------------------------------------------
@@ -171,10 +218,10 @@ if __name__ == "__main__":
     # Create synapse populations
     pn_kc_connectivity = None if args.test else init_sparse_connectivity("FixedNumberPreWithReplacement", {"num": PN_KC_FAN_IN})
     pn_kc = model.add_synapse_population("pn_kc", "SPARSE",
-                                        pn, kc,
-                                        init_weight_update("StaticPulseConstantWeight", {"g": PN_KC_WEIGHT}),
-                                        init_postsynaptic("ExpCurr", {"tau": PN_KC_TAU_SYN}),
-                                        pn_kc_connectivity)
+                                         pn, kc,
+                                         init_weight_update("StaticPulseConstantWeight", {"g": PN_KC_WEIGHT}),
+                                         init_postsynaptic("ExpCurr", {"tau": PN_KC_TAU_SYN}),
+                                         pn_kc_connectivity)
 
     # Load saved connectivity if testing
     if args.test:
@@ -182,21 +229,41 @@ if __name__ == "__main__":
         pn_kc.set_sparse_connections(pn_kc_ind[0], pn_kc_ind[1])
 
     kc_ggn = model.add_synapse_population("kc_ggn", "DENSE",
-                                        kc, ggn,
-                                        init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
-                                        init_postsynaptic("DeltaCurr"))
+                                          kc, ggn,
+                                          init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
+                                          init_postsynaptic("DeltaCurr"))
 
     ggn_kc = model.add_synapse_population("ggn_kc", "DENSE",
-                                        ggn, kc,
-                                        init_weight_update("StaticPulseConstantWeight", {"g": -5.0}),
-                                        init_postsynaptic("ExpCurr", {"tau": 5.0}))
+                                          ggn, kc,
+                                          init_weight_update("StaticPulseConstantWeight", {"g": -5.0}),
+                                          init_postsynaptic("ExpCurr", {"tau": 5.0}))
 
     kc_mbon_weight_update = (init_weight_update("StaticPulse", {}, {"g": np.load("kc_mbon_g.npy")}) if args.test
                             else init_weight_update(symmetric_stdp, KC_MBON_PARAMS, {"g": 0.0}))
     kc_mbon = model.add_synapse_population("kc_mbon", "DENSE",
-                                        kc, mbon,
-                                        kc_mbon_weight_update,
-                                        init_postsynaptic("ExpCurr", {"tau": KC_MBON_TAU_SYN}))
+                                          kc, mbon,
+                                          kc_mbon_weight_update,
+                                          init_postsynaptic("ExpCurr", {"tau": KC_MBON_TAU_SYN}))
+
+    # Add custom updates to reset model state between examples
+    model.add_custom_update("pn_reset", "Reset", pn_reset,
+                            {"Vreset": LIF_PARAMS["Vreset"]},
+                            var_refs={"V": create_var_ref(pn, "V"),
+                                      "RefracTime": create_var_ref(pn, "RefracTime")})
+    model.add_custom_update("kc_reset", "Reset", kc_reset,
+                            {"Vreset": LIF_PARAMS["Vreset"]},
+                            var_refs={"V": create_var_ref(kc, "V"),
+                                      "RefracTime": create_var_ref(kc, "RefracTime"),
+                                      "PNOutPost": create_out_post_var_ref(pn_kc),
+                                      "GGNOutPost": create_out_post_var_ref(ggn_kc)})
+    model.add_custom_update("ggn_reset", "Reset", ggn_reset,
+                            {"Vreset": 0.0},
+                            var_refs={"V": create_var_ref(ggn, "V")})
+    model.add_custom_update("mbon_reset", "Reset", mbon_reset,
+                            {"Vreset": LIF_PARAMS["Vreset"]},
+                            var_refs={"V": create_var_ref(mbon, "V"),
+                                      "RefracTime": create_var_ref(mbon, "RefracTime"),
+                                      "OutPost": create_out_post_var_ref(kc_mbon)})
 
     # Convert present time into timesteps
     present_timesteps = int(round(PRESENT_TIME_MS / DT))
@@ -208,19 +275,6 @@ if __name__ == "__main__":
     def reset_spike_times(pop):
         pop.spike_times.view[:] = -np.finfo(np.float32).max
         pop.spike_times.push_to_device()
-
-    def reset_out_post(pop):
-        pop.out_post.view[:] = 0.0
-        pop.out_post.push_to_device()
-
-    def reset_neuron(pop, var_init):
-        # Reset variables
-        for var_name, var_val in var_init.items():
-            var = pop.vars[var_name]
-
-            # Reset to initial value and push to device
-            var.view[:] = var_val
-            var.push_to_device()
 
     # Present images
     num_correct = 0
@@ -240,20 +294,12 @@ if __name__ == "__main__":
             model.step_time()
 
         # Reset neuron state
-        reset_neuron(pn, lif_init)
-        reset_neuron(kc, lif_init)
-        reset_neuron(ggn, if_init)
-        reset_neuron(mbon, lif_init)
+        model.custom_update("Reset")
 
         # Reset spike times
         if not args.test:
             reset_spike_times(kc)
             reset_spike_times(mbon)
-
-        # Reset synapse state
-        reset_out_post(pn_kc)
-        reset_out_post(ggn_kc)
-        reset_out_post(kc_mbon)
 
         if args.test:
             # Download spikes from GPU
@@ -266,7 +312,7 @@ if __name__ == "__main__":
                     num_correct += 1
 
     if args.test:
-        print(f"\n{num_correct}/{images.shape[0]} correct ({(num_correct * 100.0) / images.shape[0]} %%)")
+        print(f"\n{num_correct}/{images.shape[0]} correct ({(num_correct * 100.0) / images.shape[0]} %)")
     else:
         pn_kc.pull_connectivity_from_device()
         kc_mbon.vars["g"].pull_from_device()
