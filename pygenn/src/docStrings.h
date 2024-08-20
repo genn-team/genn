@@ -2483,6 +2483,18 @@ static const char *__doc_Models_VarReference_CSRef = R"doc()doc";
 
 static const char *__doc_Models_VarReference_CURef = R"doc()doc";
 
+static const char *__doc_Models_VarReference_InternalRef = R"doc()doc";
+
+static const char *__doc_Models_VarReference_InternalRef_Type = R"doc()doc";
+
+static const char *__doc_Models_VarReference_InternalRef_Type_OUT_POST = R"doc()doc";
+
+static const char *__doc_Models_VarReference_InternalRef_Type_OUT_PRE = R"doc()doc";
+
+static const char *__doc_Models_VarReference_InternalRef_group = R"doc()doc";
+
+static const char *__doc_Models_VarReference_InternalRef_type = R"doc()doc";
+
 static const char *__doc_Models_VarReference_NGRef = R"doc()doc";
 
 static const char *__doc_Models_VarReference_PSMRef = R"doc()doc";
@@ -2492,6 +2504,10 @@ static const char *__doc_Models_VarReference_VarReference = R"doc()doc";
 static const char *__doc_Models_VarReference_WUPostRef = R"doc()doc";
 
 static const char *__doc_Models_VarReference_WUPreRef = R"doc()doc";
+
+static const char *__doc_Models_VarReference_createOutPostRef = R"doc()doc";
+
+static const char *__doc_Models_VarReference_createOutPreRef = R"doc()doc";
 
 static const char *__doc_Models_VarReference_createPSMVarRef = R"doc()doc";
 
@@ -4735,6 +4751,10 @@ static const char *__doc_createEGPRef_3 = R"doc(Creates a reference to a custom 
 static const char *__doc_createEGPRef_4 = R"doc(Creates a reference to a custom weight update extra global parameter.)doc";
 
 static const char *__doc_createEGPRef_5 = R"doc(Creates a reference to a custom connectivity update extra global parameter.)doc";
+
+static const char *__doc_createOutPostVarRef = R"doc(Creates a reference to a synapse group's postsynaptic output buffer)doc";
+
+static const char *__doc_createOutPreVarRef = R"doc(Creates a reference to a synapse group's presynaptic output buffer)doc";
 
 static const char *__doc_createPSMEGPRef = R"doc(Creates a reference to a postsynaptic model extra global parameter.)doc";
 
