@@ -16,9 +16,9 @@ from copy import copy
 from argparse import ArgumentParser
 from pygenn import (create_current_source_model, create_custom_update_model,
                     create_neuron_model, create_out_post_var_ref, 
-                    create_var_ref, create_weight_update_model, 
-                    init_sparse_connectivity, init_postsynaptic, 
-                    init_weight_update, GeNNModel)
+                    create_spike_time_var_ref, create_var_ref, 
+                    create_weight_update_model, init_sparse_connectivity,
+                    init_postsynaptic, init_weight_update, GeNNModel)
 from tqdm.auto import tqdm
 
 # ----------------------------------------------------------------------------
@@ -171,6 +171,15 @@ mbon_reset = create_custom_update_model(
     RefracTime = 0.0;
     """)
 
+# Custom update for resetting spike times
+reset_st = create_custom_update_model(
+    "reset_st",
+    var_refs=[("SpikeTimes", "scalar")],
+    update_code=
+    f"""
+    SpikeTimes = {-np.finfo(np.float32).max};
+    """)
+
 # ----------------------------------------------------------------------------
 # CLI
 # ----------------------------------------------------------------------------
@@ -265,16 +274,18 @@ if __name__ == "__main__":
                                       "RefracTime": create_var_ref(mbon, "RefracTime"),
                                       "OutPost": create_out_post_var_ref(kc_mbon)})
 
+    if not args.test:
+        model.add_custom_update("kc_reset_st", "ResetST", reset_st,
+                                var_refs={"SpikeTimes": create_spike_time_var_ref(kc)})
+        model.add_custom_update("mbon_reset_st", "ResetST", reset_st,
+                                var_refs={"SpikeTimes": create_spike_time_var_ref(mbon)})
+
     # Convert present time into timesteps
     present_timesteps = int(round(PRESENT_TIME_MS / DT))
 
     # Build model and load it
     model.build()
     model.load(num_recording_timesteps=present_timesteps)
-
-    def reset_spike_times(pop):
-        pop.spike_times.view[:] = -np.finfo(np.float32).max
-        pop.spike_times.push_to_device()
 
     # Present images
     num_correct = 0
@@ -298,12 +309,11 @@ if __name__ == "__main__":
 
         # Reset spike times
         if not args.test:
-            reset_spike_times(kc)
-            reset_spike_times(mbon)
+            model.custom_update("ResetST")
 
         if args.test:
             # Download spikes from GPU
-            model.pull_recording_buffers_from_device();
+            model.pull_recording_buffers_from_device()
 
             # Determine the classification and count correct
             mbon_spike_times, mbon_spike_ids = mbon.spike_recording_data[0]
