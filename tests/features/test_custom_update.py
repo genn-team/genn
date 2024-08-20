@@ -8,6 +8,7 @@ from scipy.special import softmax
 from pygenn import (create_current_source_model, 
                     create_custom_update_model,
                     create_neuron_model,
+                    create_out_post_var_ref,
                     create_postsynaptic_model,
                     create_weight_update_model,
                     create_var_ref,
@@ -338,6 +339,73 @@ def test_custom_update_delay(make_model, backend, precision, batch_size):
                 # Compare to correct value                
                 if not np.allclose(var.view, correct_delay if delay else correct):
                     assert False, f"{pop.name} var {var.name} has wrong value ({var.current_view} rather than {correct})"
+
+
+@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
+                                                 ("cuda", 1), ("cuda", 5)])
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_custom_update_internal(make_model, backend, precision, batch_size):
+    # Create neuron model to spike in first time step
+    neuron_model = create_neuron_model(
+        "neuron_model",
+        threshold_condition_code=
+        """
+        round(t) == 0.0
+        """)
+
+    # Create custom update model to zero OutPost
+    custom_update_model = create_custom_update_model(
+        "custom_update",
+        var_refs=[("OutPost", "scalar")],
+        update_code=
+        """
+        OutPost = 0.0;
+        """,)
+
+    model = make_model(precision, "test_custom_update_internal", backend=backend)
+    model.dt = 1.0
+    model.batch_size = batch_size
+    
+    # Create pre and postsynaptic populations
+    pre_n_pop = model.add_neuron_population("PreNeurons", 100, neuron_model); 
+    post_n_pop = model.add_neuron_population("PostNeurons", 100, empty_neuron_model); 
+    
+    # Connect with one-to-one connectivity and exponential synapse
+    s_pop = model.add_synapse_population(
+        "Synapses", "SPARSE",
+        pre_n_pop, post_n_pop,
+        init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
+        init_postsynaptic("ExpCurr", {"tau": 10.0}),
+        init_sparse_connectivity("OneToOne"))
+  
+    # Create custom update to calculate transpose
+    cu = model.add_custom_update(
+        "Zero", "Zero", custom_update_model,
+        {}, {}, {"OutPost": create_out_post_var_ref(s_pop)})
+    
+    # Build model and load
+    model.build()
+    model.load()
+    
+    # Simulate timestep where spikes will be emitted
+    model.step_time()
+
+    # Simulate timestep where spikes will be processed and delivered
+    model.step_time()
+
+    # Check out_post is correct
+    s_pop.out_post.pull_from_device()
+    assert np.allclose(s_pop.out_post.view, np.exp(-1.0 / 10.0))
+    
+    # Run custom update to zero out_post
+    model.custom_update("Zero")
+
+    # Simulate another timestep and
+    model.step_time()
+
+    # Check out_post is zeroed
+    s_pop.out_post.pull_from_device()
+    assert np.allclose(s_pop.out_post.view, 0.0)
 
 
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
