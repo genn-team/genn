@@ -30,7 +30,7 @@ Type::UnresolvedType VarReference::getVarType() const
 {
     return std::visit(
         Utils::Overload{
-            [](const InternalRef &ref)
+            [](const InternalRef&)
             {
                 return Type::UnresolvedType("scalar");
             },
@@ -61,7 +61,7 @@ VarAccessDim VarReference::getVarDims() const
                 return clearVarAccessDim(getVarAccessDim(ref.var.access), VarAccessDim::BATCH); 
             },
             // Otherwise, if reference is internal
-            [](const InternalRef &ref) 
+            [](const InternalRef&) 
             {
                 return static_cast<VarAccessDim>(static_cast<unsigned int>(VarAccessDim::ELEMENT) | static_cast<unsigned int>(VarAccessDim::BATCH));
             },
