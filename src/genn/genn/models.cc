@@ -74,13 +74,13 @@ std::string VarReference::getVarName() const
 {
     return std::visit(
         Utils::Overload{
-            [](const InternalRef &ref) -> std::string
+            [](const InternalRef &ref)->std::string
             {
                 if(ref.type == InternalRef::Type::OUT_POST) {
                     return "outPost";
                 }
                 else {
-                    return "outPre";
+                    return "denDelay";
                 }
             },
             [](const auto &ref){ return ref.var.name; }},
@@ -101,12 +101,7 @@ unsigned int VarReference::getNumNeurons() const
             [](const CCUPostRef &ref) { return ref.group->getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); },
             [](const InternalRef &ref)
             {
-                if(ref.type == InternalRef::Type::OUT_POST) {
-                    return ref.group->getTrgNeuronGroup()->getNumNeurons();
-                }
-                else {
-                    return ref.group->getSrcNeuronGroup()->getNumNeurons();
-                }
+                return ref.group->getTrgNeuronGroup()->getNumNeurons();
             }},
         m_Detail);
 }
@@ -139,6 +134,23 @@ NeuronGroup *VarReference::getDelayNeuronGroup() const
         m_Detail);
 }
 //----------------------------------------------------------------------------
+SynapseGroup *VarReference::getDenDelaySynapseGroup() const
+{
+    return std::visit(
+        Utils::Overload{
+            [](const InternalRef &ref)->SynapseGroup*
+            {
+                if(ref.type == InternalRef::Type::DEN_DELAY) {
+                    return ref.group;
+                }
+                else {
+                    return nullptr;
+                }
+            },
+            [](const auto&)->SynapseGroup* { return nullptr; }},
+        m_Detail);
+}
+//----------------------------------------------------------------------------
 const Runtime::ArrayBase *VarReference::getTargetArray(const Runtime::Runtime &runtime) const
 { 
     return std::visit(
@@ -152,7 +164,7 @@ const Runtime::ArrayBase *VarReference::getTargetArray(const Runtime::Runtime &r
                     return runtime.getArray(ref.group->getFusedPSTarget(), "outPost");
                 }
                 else {
-                    return runtime.getArray(ref.group->getFusedPreOutputTarget(), "outPre");
+                    return runtime.getArray(ref.group->getFusedPSTarget(), "denDelay");
                 }
             },
             [&runtime](const auto &ref) { return runtime.getArray(*ref.group, ref.var.name); }},
@@ -274,10 +286,15 @@ VarReference VarReference::createOutPostRef(SynapseGroup *sg)
                                     InternalRef::Type::OUT_POST});
 }
 //----------------------------------------------------------------------------
-VarReference VarReference::createOutPreRef(SynapseGroup *sg)
+VarReference VarReference::createDenDelayRef(SynapseGroup *sg)
 {
-    return VarReference(InternalRef{static_cast<SynapseGroupInternal*>(sg),
-                                    InternalRef::Type::OUT_PRE});
+    auto *sgInternal = static_cast<SynapseGroupInternal*>(sg);
+    if(sgInternal->isDendriticOutputDelayRequired()) {
+        return VarReference(InternalRef{sgInternal, InternalRef::Type::DEN_DELAY});
+    }
+    else {
+        throw std::runtime_error("Synapse group does not have dendritic delay buffer to reference");
+    }
 }
 //----------------------------------------------------------------------------
 const std::string &VarReference::getTargetName() const 
@@ -289,12 +306,7 @@ const std::string &VarReference::getTargetName() const
             [](const WUPostRef &ref) { return std::cref(ref.group->getFusedWUPostTarget().getName()); },
             [](const InternalRef &ref) 
             {
-                if(ref.type == InternalRef::Type::OUT_POST) {
-                    return std::cref(ref.group->getFusedPSTarget().getName());
-                }
-                else {
-                    return std::cref(ref.group->getFusedPreOutputTarget().getName());
-                }
+                return std::cref(ref.group->getFusedPSTarget().getName());
             },
             [](const auto &ref) { return std::cref(ref.group->getName()); }},
         m_Detail);

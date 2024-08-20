@@ -178,10 +178,10 @@ inline Models::VarReference createOutPostVarRef(SynapseGroup *sg)
     return Models::VarReference::createOutPostRef(sg);
 }
 
-//! Creates a reference to a synapse group's presynaptic output buffer
-inline Models::VarReference createOutPreVarRef(SynapseGroup *sg)
+//! Creates a reference to a synapse group's dendritic delay buffer
+inline Models::VarReference createDenDelayVarRef(SynapseGroup *sg)
 {
-    return Models::VarReference::createOutPreRef(sg);
+    return Models::VarReference::createDenDelayRef(sg);
 }
 
 //! Creates a reference to a weight update model variable.

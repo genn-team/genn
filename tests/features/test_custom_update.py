@@ -7,6 +7,7 @@ from pygenn import CustomUpdateVarAccess, VarAccess, VarAccessMode
 from scipy.special import softmax
 from pygenn import (create_current_source_model, 
                     create_custom_update_model,
+                    create_den_delay_var_ref,
                     create_neuron_model,
                     create_out_post_var_ref,
                     create_postsynaptic_model,
@@ -354,13 +355,22 @@ def test_custom_update_internal(make_model, backend, precision, batch_size):
         """)
 
     # Create custom update model to zero OutPost
-    custom_update_model = create_custom_update_model(
-        "custom_update",
+    zero_custom_update_model = create_custom_update_model(
+        "zero_custom_update",
         var_refs=[("OutPost", "scalar")],
         update_code=
         """
         OutPost = 0.0;
-        """,)
+        """)
+
+    zero_den_delay_custom_update_model = create_custom_update_model(
+        "zero_den_delay_custom_update",
+        var_refs=[("OutPost", "scalar"), ("DenDelay", "scalar", VarAccessMode.BROADCAST)],
+        update_code=
+        """
+        OutPost = 0.0;
+        DenDelay = 0.0;
+        """)
 
     model = make_model(precision, "test_custom_update_internal", backend=backend)
     model.dt = 1.0
@@ -377,35 +387,54 @@ def test_custom_update_internal(make_model, backend, precision, batch_size):
         init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
         init_postsynaptic("ExpCurr", {"tau": 10.0}),
         init_sparse_connectivity("OneToOne"))
+
+    s_pop_den_delay = model.add_synapse_population(
+        "DenDelaySynapses", "SPARSE",
+        pre_n_pop, post_n_pop,
+        init_weight_update("StaticPulseDendriticDelay", {}, 
+                           {"g": 1.0, "d": np.repeat(np.arange(5), 20)}),
+        init_postsynaptic("ExpCurr", {"tau": 10.0}))
+    s_pop_den_delay.set_sparse_connections(np.arange(100), np.arange(100))        
+    s_pop_den_delay.max_dendritic_delay_timesteps = 6
   
     # Create custom update to calculate transpose
-    cu = model.add_custom_update(
-        "Zero", "Zero", custom_update_model,
+    model.add_custom_update(
+        "Zero", "Zero", zero_custom_update_model,
         {}, {}, {"OutPost": create_out_post_var_ref(s_pop)})
-    
+    model.add_custom_update(
+        "ZeroDenDelay", "Zero", zero_den_delay_custom_update_model,
+        {}, {}, {"OutPost": create_out_post_var_ref(s_pop_den_delay),
+                 "DenDelay": create_den_delay_var_ref(s_pop_den_delay)})
+
     # Build model and load
     model.build()
     model.load()
-    
+
     # Simulate timestep where spikes will be emitted
     model.step_time()
 
-    # Simulate timestep where spikes will be processed and delivered
+    # Simulate timestep where non-delayed spikes will be processed and delivered
     model.step_time()
 
-    # Check out_post is correct
+    # Check out_post is correct (first 20 neurons have a dendritic delay of zero)
     s_pop.out_post.pull_from_device()
-    assert np.allclose(s_pop.out_post.view, np.exp(-1.0 / 10.0))
-    
+    s_pop_den_delay.out_post.pull_from_device()
+    correct_out_post = np.exp(-1.0 / 10.0)
+    assert np.allclose(s_pop.out_post.view, correct_out_post)
+    assert np.allclose(s_pop_den_delay.out_post.view[:,:20], correct_out_post)
+
     # Run custom update to zero out_post
     model.custom_update("Zero")
 
-    # Simulate another timestep and
-    model.step_time()
+    # Simulate for 5 more timesteps to ensure dendritic delay buffer has been fully processed
+    for i in range(5):
+        model.step_time()
 
-    # Check out_post is zeroed
-    s_pop.out_post.pull_from_device()
-    assert np.allclose(s_pop.out_post.view, 0.0)
+        # Check out_post is zeroed
+        s_pop.out_post.pull_from_device()
+        s_pop_den_delay.out_post.pull_from_device()
+        assert np.allclose(s_pop.out_post.view, 0.0)
+        assert np.allclose(s_pop_den_delay.out_post.view, 0.0)
 
 
 @pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 

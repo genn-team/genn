@@ -1176,6 +1176,8 @@ static const char *__doc_CustomUpdate_finalise = R"doc()doc";
 
 static const char *__doc_CustomUpdate_getDelayNeuronGroup = R"doc()doc";
 
+static const char *__doc_CustomUpdate_getDenDelaySynapseGroup = R"doc()doc";
+
 static const char *__doc_CustomUpdate_getHashDigest =
 R"doc(Updates hash with custom update
 
@@ -1203,6 +1205,8 @@ static const char *__doc_CustomUpdate_isBatchReduction = R"doc()doc";
 static const char *__doc_CustomUpdate_isNeuronReduction = R"doc()doc";
 
 static const char *__doc_CustomUpdate_m_DelayNeuronGroup = R"doc()doc";
+
+static const char *__doc_CustomUpdate_m_DenDelaySynapseGroup = R"doc()doc";
 
 static const char *__doc_CustomUpdate_m_NumNeurons =
 R"doc(Number of neurons custom update operates over.
@@ -2487,9 +2491,9 @@ static const char *__doc_Models_VarReference_InternalRef = R"doc()doc";
 
 static const char *__doc_Models_VarReference_InternalRef_Type = R"doc()doc";
 
-static const char *__doc_Models_VarReference_InternalRef_Type_OUT_POST = R"doc()doc";
+static const char *__doc_Models_VarReference_InternalRef_Type_DEN_DELAY = R"doc()doc";
 
-static const char *__doc_Models_VarReference_InternalRef_Type_OUT_PRE = R"doc()doc";
+static const char *__doc_Models_VarReference_InternalRef_Type_OUT_POST = R"doc()doc";
 
 static const char *__doc_Models_VarReference_InternalRef_group = R"doc()doc";
 
@@ -2505,9 +2509,9 @@ static const char *__doc_Models_VarReference_WUPostRef = R"doc()doc";
 
 static const char *__doc_Models_VarReference_WUPreRef = R"doc()doc";
 
-static const char *__doc_Models_VarReference_createOutPostRef = R"doc()doc";
+static const char *__doc_Models_VarReference_createDenDelayRef = R"doc()doc";
 
-static const char *__doc_Models_VarReference_createOutPreRef = R"doc()doc";
+static const char *__doc_Models_VarReference_createOutPostRef = R"doc()doc";
 
 static const char *__doc_Models_VarReference_createPSMVarRef = R"doc()doc";
 
@@ -2526,6 +2530,8 @@ static const char *__doc_Models_VarReference_createWUPostVarRef = R"doc()doc";
 static const char *__doc_Models_VarReference_createWUPreVarRef = R"doc()doc";
 
 static const char *__doc_Models_VarReference_getDelayNeuronGroup = R"doc(If variable is delayed, get neuron group which manages its delay)doc";
+
+static const char *__doc_Models_VarReference_getDenDelaySynapseGroup = R"doc(If reference is to dendritic delay buffer, get synapse group which manages its delay)doc";
 
 static const char *__doc_Models_VarReference_getNumNeurons = R"doc(Get size of variable)doc";
 
@@ -4742,6 +4748,8 @@ static const char *__doc_binomialInverseCDF = R"doc()doc";
 
 static const char *__doc_clearVarAccessDim = R"doc()doc";
 
+static const char *__doc_createDenDelayVarRef = R"doc(Creates a reference to a synapse group's dendritic delay buffer)doc";
+
 static const char *__doc_createEGPRef = R"doc(Creates a reference to a neuron group extra global parameter.)doc";
 
 static const char *__doc_createEGPRef_2 = R"doc(Creates a reference to a current source extra global parameter.)doc";
@@ -4753,8 +4761,6 @@ static const char *__doc_createEGPRef_4 = R"doc(Creates a reference to a custom 
 static const char *__doc_createEGPRef_5 = R"doc(Creates a reference to a custom connectivity update extra global parameter.)doc";
 
 static const char *__doc_createOutPostVarRef = R"doc(Creates a reference to a synapse group's postsynaptic output buffer)doc";
-
-static const char *__doc_createOutPreVarRef = R"doc(Creates a reference to a synapse group's presynaptic output buffer)doc";
 
 static const char *__doc_createPSMEGPRef = R"doc(Creates a reference to a postsynaptic model extra global parameter.)doc";
 

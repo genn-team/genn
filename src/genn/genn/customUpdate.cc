@@ -149,7 +149,8 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
                            const std::map<std::string, InitVarSnippet::Init> &varInitialisers, const std::map<std::string, Models::VarReference> &varReferences,
                            const std::map<std::string, Models::EGPReference> &egpReferences, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, egpReferences, defaultVarLocation, defaultExtraGlobalParamLocation),
-    m_VarReferences(varReferences), m_NumNeurons(varReferences.empty() ? 0 : varReferences.begin()->second.getNumNeurons()), m_DelayNeuronGroup(nullptr)
+    m_VarReferences(varReferences), m_NumNeurons(varReferences.empty() ? 0 : varReferences.begin()->second.getNumNeurons()), 
+    m_DelayNeuronGroup(nullptr), m_DenDelaySynapseGroup(nullptr)
 {
     // Validate parameters, variables and variable references
     getModel()->validate(getParams(), getVarInitialisers(), getVarReferences(), getEGPReferences(),
@@ -190,18 +191,33 @@ void CustomUpdate::finalise(double dt, unsigned int batchSize)
     // Check variable reference batching
     checkVarReferenceDims(m_VarReferences, batchSize);
 
-    // If any variable references have delays
-    auto delayRef = std::find_if(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                                 [](const auto &v) { return v.second.getDelayNeuronGroup() != nullptr; });
-    if(delayRef != m_VarReferences.cend()) {
+    // If any variable references have delay dictated by a neuron group
+    auto neuronDelayRef = std::find_if(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                                       [](const auto &v) { return v.second.getDelayNeuronGroup() != nullptr; });
+    if(neuronDelayRef != m_VarReferences.cend()) {
         // Set the delay neuron group 
-        m_DelayNeuronGroup = delayRef->second.getDelayNeuronGroup();
+        m_DelayNeuronGroup = neuronDelayRef->second.getDelayNeuronGroup();
 
         // If any of the variable references are delayed with a different group, give an error
         if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
                        [this](const auto &v) { return (v.second.getDelayNeuronGroup() != nullptr) && (v.second.getDelayNeuronGroup() != m_DelayNeuronGroup); }))
         {
             throw std::runtime_error("Referenced variables with delays in custom update '" + getName() + "' must all refer to same neuron group.");
+        }
+    }
+
+    // If any variable references have delay dictated by a synapse group
+    auto synapseDenDelayRef = std::find_if(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                                           [](const auto &v) { return v.second.getDenDelaySynapseGroup() != nullptr; });
+    if(synapseDenDelayRef != m_VarReferences.cend()) {
+        // Set the delay synapse group 
+        m_DenDelaySynapseGroup = synapseDenDelayRef->second.getDenDelaySynapseGroup();
+
+        // If any of the variable references are delayed with a different group, give an error
+        if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                       [this](const auto &v) { return (v.second.getDenDelaySynapseGroup() != nullptr) && (v.second.getDenDelaySynapseGroup() != m_DenDelaySynapseGroup); }))
+        {
+            throw std::runtime_error("Referenced dendritic delay buffers in custom update '" + getName() + "' must all belong to same synapse group.");
         }
     }
 }
@@ -213,18 +229,24 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getHashDigest() const
     CustomUpdateBase::updateHash(hash);
 
     // Update hash with whether delay is required
-    const bool delayed = (getDelayNeuronGroup() != nullptr);
-    Utils::updateHash(delayed, hash);
+    const bool neuronDelayed = (getDelayNeuronGroup() != nullptr);
+    const bool synapseDelayed = (getDenDelaySynapseGroup() != nullptr);
+    Utils::updateHash(neuronDelayed, hash);
+    Utils::updateHash(synapseDelayed, hash);
 
     // If it is, also update hash with number of delay slots
-    if(delayed) {
+    if(neuronDelayed) {
         Utils::updateHash(getDelayNeuronGroup()->getNumDelaySlots(), hash);
+    }
+    if(synapseDelayed) {
+        Utils::updateHash(getDenDelaySynapseGroup()->getMaxDendriticDelayTimesteps(), hash);
     }
 
     // Loop through variable references
     for(const auto &v : getVarReferences()) {
         // Update hash with whether variable references require delay
         Utils::updateHash((v.second.getDelayNeuronGroup() == nullptr), hash);
+        Utils::updateHash((v.second.getDenDelaySynapseGroup() == nullptr), hash);
 
         // Update hash with target variable dimensions as this effects indexing code
         Utils::updateHash(v.second.getVarDims(), hash);

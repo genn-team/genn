@@ -412,6 +412,24 @@ void buildStandardCustomUpdateEnvironment(EnvironmentGroupMergedField<G> &env, u
                     {env.addInitialiser("const unsigned int batchDelayOffset = $(_delay_offset) + ($(_batch_offset) * " + numDelaySlotsStr + ");")});
         }
     }
+
+    // If dendritic delays are required
+    if(env.getGroup().getArchetype().getDenDelaySynapseGroup() != nullptr) {
+        // Add den delay pointer field
+        env.addField(Type::Uint32.createPointer(), "_den_delay_ptr", "denDelayPtr", 
+                     [](const auto &runtime, const auto &cg, size_t) 
+                     { 
+                         return runtime.getArray(*cg.getDenDelaySynapseGroup(), "denDelayPtr"); 
+                     });
+
+        
+        if(batched) {
+            env.add(Type::Uint32, "_batch_den_delay_offset", "batchDenDelayOffset",
+                    {env.addInitialiser("const unsigned int batchDenDelayOffset = $(_batch_offset) * " 
+                                        + std::to_string(env.getGroup().getArchetype().getDenDelaySynapseGroup()->getMaxDendriticDelayTimesteps()) 
+                                        + ";")});
+        }
+    }
 }
 //--------------------------------------------------------------------------
 template<typename G>
@@ -737,8 +755,8 @@ std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(C
         os, cg, batchSize, idx,
         [batchSize, &cg](const Models::VarReference &varRef, const std::string &index)
         {
-            return cg.getVarRefIndex(varRef.getDelayNeuronGroup(), batchSize,
-                                     varRef.getVarDims(), index, "");
+            return cg.getVarRefIndex(varRef.getDelayNeuronGroup(), varRef.getDenDelaySynapseGroup(),
+                                     batchSize, varRef.getVarDims(), index, "");
         });
 }
 //-----------------------------------------------------------------------

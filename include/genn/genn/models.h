@@ -190,6 +190,9 @@ public:
     //! If variable is delayed, get neuron group which manages its delay
     NeuronGroup *getDelayNeuronGroup() const;
     
+    //! If reference is to dendritic delay buffer, get synapse group which manages its delay
+    SynapseGroup *getDenDelaySynapseGroup() const;
+
     //! Get array associated with referenced variable
     const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime) const;
 
@@ -214,7 +217,7 @@ public:
     static VarReference createWUPreVarRef(SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPostVarRef(SynapseGroup *sg, const std::string &varName);
     static VarReference createOutPostRef(SynapseGroup *sg);
-    static VarReference createOutPreRef(SynapseGroup *sg);
+    static VarReference createDenDelayRef(SynapseGroup *sg);
 
 private:
     //------------------------------------------------------------------------
@@ -225,7 +228,7 @@ private:
         enum class Type
         {
             OUT_POST,
-            OUT_PRE,
+            DEN_DELAY,
         };
 
         SynapseGroupInternal *group;

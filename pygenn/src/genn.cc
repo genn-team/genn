@@ -392,7 +392,7 @@ PYBIND11_MODULE(_genn, m)
     m.def("create_pre_var_ref", &createPreVarRef, pybind11::return_value_policy::move, DOC(createPreVarRef));
     m.def("create_post_var_ref", &createPostVarRef, pybind11::return_value_policy::move, DOC(createPostVarRef));
     m.def("create_out_post_var_ref", &createOutPostVarRef, pybind11::return_value_policy::move, DOC(createOutPostVarRef));
-    m.def("create_out_pre_var_ref", &createOutPreVarRef, pybind11::return_value_policy::move, DOC(createOutPreVarRef));    
+    m.def("create_den_delay_var_ref", &createDenDelayVarRef, pybind11::return_value_policy::move, DOC(createDenDelayVarRef));    
     m.def("create_wu_var_ref", pybind11::overload_cast<SynapseGroup*, const std::string&, SynapseGroup*, const std::string&>(&createWUVarRef),
           "sg"_a, "var_name"_a, "transpose_sg"_a = nullptr, "transpose_var_name"_a = "", 
           pybind11::return_value_policy::move, DOC(createWUVarRef));
