@@ -451,6 +451,45 @@ TEST(CustomUpdates, VarMixedDelayChecks)
     }
 }
 //--------------------------------------------------------------------------
+TEST(CustomUpdates, VarMixedDenDelayChecks)
+{
+    ModelSpecInternal model;
+
+    // Add two neuron group to model
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
+    auto *pre1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre1", 10, paramVals, varVals);
+    auto *pre2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre2", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+
+    // Add synapse groups to force pre1's v to be delayed by 10 timesteps and pre2's v to be delayed by 5 timesteps
+    auto *syn1 = model.addSynapsePopulation(
+        "Syn1", SynapseMatrixType::DENSE,
+        pre1, post,
+        initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, {{"g", 0.1}, {"d", 1}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    syn1->setMaxDendriticDelayTimesteps(2);
+
+    auto *syn2 = model.addSynapsePopulation(
+        "Syn2", SynapseMatrixType::DENSE,
+        pre2, post,
+        initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, {{"g", 0.1}, {"d", 2}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    syn2->setMaxDendriticDelayTimesteps(3);
+
+    VarValues sumVarValues{{"sum", 0.0}};
+    VarReferences sumVarReferences2{{"a", createDenDelayVarRef(syn1)}, {"b", createDenDelayVarRef(syn2)}};
+    model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
+                               {}, sumVarValues, sumVarReferences2);
+
+    try {
+        model.finalise();
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+}
+//--------------------------------------------------------------------------
 TEST(CustomUpdates, WUVarSynapseGroupChecks)
 {
     ModelSpecInternal model;
