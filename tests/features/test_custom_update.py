@@ -11,6 +11,8 @@ from pygenn import (create_current_source_model,
                     create_neuron_model,
                     create_out_post_var_ref,
                     create_postsynaptic_model,
+                    create_prev_spike_time_var_ref,
+                    create_spike_time_var_ref,
                     create_weight_update_model,
                     create_var_ref,
                     create_psm_var_ref,
@@ -346,6 +348,9 @@ def test_custom_update_delay(make_model, backend, precision, batch_size):
                                                  ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_update_internal(make_model, backend, precision, batch_size):
+    st_init = -np.finfo(np.float32 if precision is types.Float
+                        else np.float64).max
+
     # Create neuron model to spike in first time step
     neuron_model = create_neuron_model(
         "neuron_model",
@@ -372,12 +377,31 @@ def test_custom_update_internal(make_model, backend, precision, batch_size):
         DenDelay = 0.0;
         """)
 
+    reset_st_custom_update_model = create_custom_update_model(
+        "reset_st_custom_update_model",
+        var_refs=[("ST", "timepoint", VarAccessMode.BROADCAST),
+                  ("PrevST", "timepoint", VarAccessMode.BROADCAST)],
+        update_code=
+        f"""
+        ST = {st_init};
+        PrevST = {st_init};
+        """)
+
+    weight_update_model = create_weight_update_model(
+        "weight_update",
+        vars=[("g", "scalar", VarAccess.READ_ONLY_DUPLICATE)],
+        pre_spike_syn_code=
+        """
+        addToPost(g + st_pre + prev_st_pre);
+        """)
+
     model = make_model(precision, "test_custom_update_internal", backend=backend)
     model.dt = 1.0
     model.batch_size = batch_size
     
     # Create pre and postsynaptic populations
-    pre_n_pop = model.add_neuron_population("PreNeurons", 100, neuron_model); 
+    pre_n_pop = model.add_neuron_population("PreNeurons", 100, neuron_model);
+    pre_n_pop_2 = model.add_neuron_population("PreNeurons2", 100, neuron_model);
     post_n_pop = model.add_neuron_population("PostNeurons", 100, empty_neuron_model); 
     
     # Connect with one-to-one connectivity and exponential synapse
@@ -396,15 +420,38 @@ def test_custom_update_internal(make_model, backend, precision, batch_size):
         init_postsynaptic("ExpCurr", {"tau": 10.0}))
     s_pop_den_delay.set_sparse_connections(np.arange(100), np.arange(100))        
     s_pop_den_delay.max_dendritic_delay_timesteps = 6
-  
+
+    s_pop_spike_time = model.add_synapse_population(
+        "SpikeTimeSynapses", "SPARSE",
+        pre_n_pop, post_n_pop,
+        init_weight_update(weight_update_model, {}, {"g": 1.0}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity("OneToOne"))
+
+    s_pop_spike_time_delay = model.add_synapse_population(
+        "SpikeTimeDelaySynapses", "SPARSE",
+        pre_n_pop_2, post_n_pop,
+        init_weight_update(weight_update_model, {}, {"g": 1.0}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity("OneToOne"))
+    s_pop_spike_time_delay.axonal_delay_steps = 5
+
     # Create custom update to calculate transpose
     model.add_custom_update(
-        "Zero", "Zero", zero_custom_update_model,
+        "Zero", "Reset", zero_custom_update_model,
         {}, {}, {"OutPost": create_out_post_var_ref(s_pop)})
     model.add_custom_update(
-        "ZeroDenDelay", "Zero", zero_den_delay_custom_update_model,
+        "ZeroDenDelay", "Reset", zero_den_delay_custom_update_model,
         {}, {}, {"OutPost": create_out_post_var_ref(s_pop_den_delay),
                  "DenDelay": create_den_delay_var_ref(s_pop_den_delay)})
+    model.add_custom_update(
+        "ZeroST", "Reset", reset_st_custom_update_model,
+        {}, {}, {"ST": create_spike_time_var_ref(pre_n_pop),
+                 "PrevST": create_prev_spike_time_var_ref(pre_n_pop)})
+    model.add_custom_update(
+        "ZeroSTDelay", "Reset", reset_st_custom_update_model,
+        {}, {}, {"ST": create_spike_time_var_ref(pre_n_pop_2),
+                 "PrevST": create_prev_spike_time_var_ref(pre_n_pop_2)})
 
     # Build model and load
     model.build()
@@ -423,8 +470,34 @@ def test_custom_update_internal(make_model, backend, precision, batch_size):
     assert np.allclose(s_pop.out_post.view, correct_out_post)
     assert np.allclose(s_pop_den_delay.out_post.view[:,:20], correct_out_post)
 
-    # Run custom update to zero out_post
-    model.custom_update("Zero")
+    # Check spike times are correct
+    pre_n_pop.spike_times.pull_from_device()
+    pre_n_pop.prev_spike_times.pull_from_device()
+    pre_n_pop_2.spike_times.pull_from_device()
+    pre_n_pop_2.prev_spike_times.pull_from_device()
+    assert np.allclose(pre_n_pop.spike_times.view, 0)
+    assert np.allclose(pre_n_pop.prev_spike_times.view, 0)
+
+    batch_spike_times = np.reshape(pre_n_pop_2.spike_times.view,
+                                   (batch_size, 6, 100))
+    batch_prev_spike_times = np.reshape(pre_n_pop_2.prev_spike_times.view,
+                                        (batch_size, 6, 100))
+    assert np.allclose(batch_spike_times[:,0,:], st_init)
+    assert np.allclose(batch_spike_times[:,1:3,:], 0)
+    assert np.allclose(batch_spike_times[:,3:,:], st_init)
+
+    # Run custom update to reset things
+    model.custom_update("Reset")
+
+    # Check spike times are correct
+    pre_n_pop.spike_times.pull_from_device()
+    pre_n_pop.prev_spike_times.pull_from_device()
+    pre_n_pop_2.spike_times.pull_from_device()
+    pre_n_pop_2.prev_spike_times.pull_from_device()
+    assert np.allclose(pre_n_pop.spike_times.view, st_init)
+    assert np.allclose(pre_n_pop.prev_spike_times.view, st_init)
+    assert np.allclose(pre_n_pop_2.spike_times.view, st_init)
+    assert np.allclose(pre_n_pop_2.prev_spike_times.view, st_init)
 
     # Simulate for 5 more timesteps to ensure dendritic delay buffer has been fully processed
     for i in range(5):
