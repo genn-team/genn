@@ -24,8 +24,8 @@ public:
 
     SET_PARAMS({});
     SET_VARS({{"V","scalar"}, {"U", "scalar"},
-                     {"a", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}, {"b", "scalar", VarAccess::READ_ONLY_SHARED_NEURON},
-                     {"c", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}, {"d", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});
+              {"a", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}, {"b", "scalar", VarAccess::READ_ONLY_SHARED_NEURON},
+              {"c", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}, {"d", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});
 };
 IMPLEMENT_SNIPPET(IzhikevichVariableShared);
 
@@ -35,9 +35,9 @@ public:
     DECLARE_SNIPPET(StaticPulseDendriticDelaySplit);
 
     SET_VARS({{"gCommon", "scalar", VarAccess::READ_ONLY}, 
-                      {"g", "scalar", VarAccess::READ_ONLY_DUPLICATE}, 
-                      {"dCommon", "scalar", VarAccess::READ_ONLY},
-                      {"d", "scalar", VarAccess::READ_ONLY_DUPLICATE}});
+              {"g", "scalar", VarAccess::READ_ONLY_DUPLICATE}, 
+              {"dCommon", "scalar", VarAccess::READ_ONLY},
+              {"d", "scalar", VarAccess::READ_ONLY_DUPLICATE}});
 
     SET_PRE_SPIKE_SYN_CODE("addToPostDelay(gCommon + g, dCommon + d);\n");
 };
@@ -985,6 +985,76 @@ TEST(CustomUpdates, CompareDifferentDelay)
     // Check correct groups are merged
     // **NOTE** delay groups don't matter for initialization
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateGroups().size() == 3);
+    ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateInitGroups().size() == 1);
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, CompareDifferentDenDelay)
+{
+    ModelSpecInternal model;
+
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+
+    auto *syn1 = model.addSynapsePopulation(
+        "Syn1", SynapseMatrixType::DENSE,
+        pre, post,
+        initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, {{"g", 0.1}, {"d", 1}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    syn1->setMaxDendriticDelayTimesteps(5);
+
+    auto *syn2 = model.addSynapsePopulation(
+        "Syn2", SynapseMatrixType::DENSE,
+        pre, post,
+        initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, {{"g", 0.1}, {"d", 1}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    syn2->setMaxDendriticDelayTimesteps(5);
+
+    auto *syn3 = model.addSynapsePopulation(
+        "Syn3", SynapseMatrixType::DENSE,
+        pre, post,
+        initWeightUpdate<WeightUpdateModels::StaticPulseDendriticDelay>({}, {{"g", 0.1}, {"d", 1}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+    syn3->setMaxDendriticDelayTimesteps(10);
+
+    // Add three custom updates in two different update groups
+    VarReferences sumVarReferences1{{"a", createDenDelayVarRef(syn1)}, {"b", createDenDelayVarRef(syn1)}};
+    VarReferences sumVarReferences2{{"a", createDenDelayVarRef(syn2)}, {"b", createDenDelayVarRef(syn2)}};
+    VarReferences sumVarReferences3{{"a", createDenDelayVarRef(syn3)}, {"b", createDenDelayVarRef(syn3)}};
+    auto *sum1 = model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
+                                            {}, {{"sum", 0.0}}, sumVarReferences1);
+    auto *sum2 = model.addCustomUpdate<Sum>("Sum2", "CustomUpdate",
+                                            {}, {{"sum", 0.0}}, sumVarReferences2);
+    auto *sum3 = model.addCustomUpdate<Sum>("Sum3", "CustomUpdate",
+                                            {}, {{"sum", 0.0}}, sumVarReferences3);
+
+    // Finalize model
+    model.finalise();
+
+    // No delay group can't be merged with any others
+    CustomUpdateInternal *sum1Internal = static_cast<CustomUpdateInternal*>(sum1);
+    CustomUpdateInternal *sum2Internal = static_cast<CustomUpdateInternal*>(sum2);
+    CustomUpdateInternal *sum3Internal = static_cast<CustomUpdateInternal*>(sum3);
+
+    // Dendritic delay groups matter for simulation
+    ASSERT_EQ(sum1Internal->getHashDigest(), sum2Internal->getHashDigest());
+    ASSERT_NE(sum1Internal->getHashDigest(), sum3Internal->getHashDigest());
+
+    // Dendritic delay groups don't matter for initialisation
+    ASSERT_EQ(sum1Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
+    ASSERT_EQ(sum1Internal->getInitHashDigest(), sum3Internal->getInitHashDigest());
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
+
+    // Check correct groups are merged
+    // **NOTE** delay groups don't matter for initialization
+    ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateGroups().size() == 2);
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateInitGroups().size() == 1);
 }
 //--------------------------------------------------------------------------
