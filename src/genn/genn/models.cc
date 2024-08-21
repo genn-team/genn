@@ -31,7 +31,7 @@ Type::UnresolvedType VarReference::getVarType() const
     return std::visit(
         Utils::Overload{
             [](const InternalSGRef&) { return Type::UnresolvedType("scalar"); },
-            [](const InternalNGRef&) { return Type::UnresolvedType("scalar"); },
+            [](const InternalNGRef&) { return Type::UnresolvedType("timepoint"); },
             [](const auto &ref){ return ref.var.type; }},
         m_Detail);
 }
