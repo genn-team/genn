@@ -133,7 +133,7 @@ The resulting initialisation snippet can then be used in the dictionary in the u
 
 Variables references
 --------------------
-As well as variables and parameters, various types of models have variable references which are used to reference variables belonging to other populations.
+As well as variables and parameters, various types of models have variable references which are used to reference variables associated with other populations.
 For example, postsynaptic update models can reference variables in the postsynaptic neuron model and custom updates are 'attached' to other populations based on their variable references.
 
 Variable reference can be created to various types of per-neuron variable using:
@@ -152,7 +152,31 @@ References can also be created to various types of per-neuron variable owned by 
 .. autofunction:: pygenn.create_wu_post_var_ref
     :noindex:
 
-While references of these types can be used interchangably in the same custom update, as long as all referenced variables have the same delays and belong to populations of the same size, per-synapse weight update model variables must be referenced with slightly different syntax:
+Finally, references can be made to various internal variables.
+This is particularly useful when implementing custom updates to reset model state between trials.
+Postsynaptic synaptic output is summed into a postsynaptic output variable where postsynaptic dynamics are applied.
+When models have postsynaptic dynamics, especially those with long time constants, these variables can be reset using:
+
+.. autofunction:: pygenn.create_out_post_var_ref
+    :noindex:
+
+When models use dendritic delays, postsynaptic outputs are buffered and can persist for :attr:`.SynapseGroup.max_dendritic_delay_timesteps` timesteps.
+These can be zeroed using:
+
+.. autofunction:: pygenn.create_den_delay_var_ref
+    :noindex:
+
+Additionally, many STDP learning rules rely on tracking the times of previous spikes.
+If a spike occurs shortly before the end of a trial, this can influence STDP learning in the next trial.
+Therefore spike times should be reset to a large negative number e.g. :code:`np.finfo(np.float32).min`
+
+.. autofunction:: pygenn.create_spike_time_var_ref
+    :noindex:
+
+.. autofunction:: pygenn.create_prev_spike_time_var_ref
+    :noindex:
+
+While references to all these types of per-neuron variable can be used interchangably in the same custom update, as long as all referenced variables have the same delays and belong to populations of the same size, per-synapse weight update model variables must be referenced with slightly different syntax:
 
 .. autofunction:: pygenn.create_wu_var_ref
     :noindex:
