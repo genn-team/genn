@@ -118,6 +118,7 @@ New neuron models are defined by calling:
 .. autofunction:: pygenn.create_neuron_model
     :noindex:
 
+.. _section-weight-update-models:
 Weight update models
 --------------------
 Weight update models define the event-driven and time-driven behaviour of synapses and what output they deliver to postsynaptic (and presynaptic) neurons.
