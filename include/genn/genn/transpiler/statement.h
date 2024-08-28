@@ -132,14 +132,16 @@ class Do : public Acceptable<Do>
 {
     using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
 public:
-    Do(ExpressionPtr condition, StatementPtr body)
-    :  m_Condition(std::move(condition)), m_Body(std::move(body))
+    Do(Token whileToken, ExpressionPtr condition, StatementPtr body)
+    :   m_While(whileToken), m_Condition(std::move(condition)), m_Body(std::move(body))
     {}
 
-    const ExpressionPtr::element_type *getCondition() const { return m_Condition.get(); }
+    const Token &getWhile() const { return m_While; }
+    const auto *getCondition() const { return m_Condition.get(); }
     const Base *getBody() const { return m_Body.get(); }
 
 private:
+    Token m_While;
     ExpressionPtr m_Condition;
     StatementPtr m_Body;
 };
@@ -168,16 +170,19 @@ class For : public Acceptable<For>
 {
     using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
 public:
-    For(StatementPtr initialiser, ExpressionPtr condition, ExpressionPtr increment, StatementPtr body)
-    :  m_Initialiser(std::move(initialiser)), m_Condition(std::move(condition)), m_Increment(std::move(increment)), m_Body(std::move(body))
+    For(Token forToken, StatementPtr initialiser, ExpressionPtr condition, ExpressionPtr increment, StatementPtr body)
+    :   m_For(forToken), m_Initialiser(std::move(initialiser)), m_Condition(std::move(condition)),
+        m_Increment(std::move(increment)), m_Body(std::move(body))
     {}
 
+    const Token &getFor() const { return m_For; }
     const Base *getInitialiser() const { return m_Initialiser.get(); }
-    const ExpressionPtr::element_type *getCondition() const { return m_Condition.get(); }
-    const ExpressionPtr::element_type *getIncrement() const { return m_Increment.get(); }
+    const auto *getCondition() const { return m_Condition.get(); }
+    const auto *getIncrement() const { return m_Increment.get(); }
     const Base *getBody() const { return m_Body.get(); }
 
 private:
+    Token m_For;
     StatementPtr m_Initialiser;
     ExpressionPtr m_Condition;
     ExpressionPtr m_Increment;
@@ -209,15 +214,17 @@ class If : public Acceptable<If>
 {
     using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
 public:
-    If(ExpressionPtr condition, StatementPtr thenBranch, StatementPtr elseBranch)
-    :  m_Condition(std::move(condition)), m_ThenBranch(std::move(thenBranch)), m_ElseBranch(std::move(elseBranch))
+    If(Token ifToken, ExpressionPtr condition, StatementPtr thenBranch, StatementPtr elseBranch)
+    :   m_If(ifToken), m_Condition(std::move(condition)), m_ThenBranch(std::move(thenBranch)), m_ElseBranch(std::move(elseBranch))
     {}
 
-    const ExpressionPtr::element_type *getCondition() const { return m_Condition.get(); }
+    const Token &getIf() const { return m_If; }
+    const auto *getCondition() const { return m_Condition.get(); }
     const Base *getThenBranch() const { return m_ThenBranch.get(); }
     const Base *getElseBranch() const { return m_ElseBranch.get(); }
 
 private:
+    Token m_If;
     ExpressionPtr m_Condition;
     StatementPtr m_ThenBranch;
     StatementPtr m_ElseBranch;
@@ -235,7 +242,7 @@ public:
     {}
 
     const Token &getKeyword() const { return m_Keyword; }
-    const ExpressionPtr::element_type *getValue() const { return m_Value.get(); }
+    const auto *getValue() const { return m_Value.get(); }
     const Base *getBody() const { return m_Body.get(); }
 
 private:
@@ -257,7 +264,7 @@ public:
     {}
 
     const Token &getSwitch() const { return m_Switch; }
-    const ExpressionPtr::element_type *getCondition() const { return m_Condition.get(); }
+    const auto *getCondition() const { return m_Condition.get(); }
     const Base *getBody() const { return m_Body.get(); }
     
 private:
@@ -295,14 +302,16 @@ class While : public Acceptable<While>
 {
     using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr;
 public:
-    While(ExpressionPtr condition, StatementPtr body)
-    :  m_Condition(std::move(condition)), m_Body(std::move(body))
+    While(Token whileToken, ExpressionPtr condition, StatementPtr body)
+    :   m_While(whileToken), m_Condition(std::move(condition)), m_Body(std::move(body))
     {}
 
+    const Token &getWhile() const{ return m_While; }
     const ExpressionPtr::element_type *getCondition() const { return m_Condition.get(); }
     const Base *getBody() const { return m_Body.get(); }
 
 private:
+    Token m_While;
     ExpressionPtr m_Condition;
     StatementPtr m_Body;
 };

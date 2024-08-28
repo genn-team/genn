@@ -150,6 +150,7 @@ struct GENN_EXPORT ResolvedType
         size_t size;
         ffi_type *ffiType;
         bool device;
+        bool isWriteOnly;
         std::optional<Numeric> numeric;
         
         //------------------------------------------------------------------------
@@ -157,17 +158,17 @@ struct GENN_EXPORT ResolvedType
         //------------------------------------------------------------------------
         bool operator == (const Value &other) const
         {
-            return (std::tie(size, numeric, device) == std::tie(other.size, other.numeric, other.device));
+            return (std::tie(size, numeric, device, isWriteOnly) == std::tie(other.size, other.numeric, other.device, other.isWriteOnly));
         }
 
         bool operator != (const Value &other) const
         {
-            return (std::tie(size, numeric, device) != std::tie(other.size, other.numeric, other.device));
+            return (std::tie(size, numeric, device, isWriteOnly) != std::tie(other.size, other.numeric, other.device, other.isWriteOnly));
         }
 
         bool operator < (const Value &other) const
         {
-            return (std::tie(size, numeric, device) < std::tie(other.size, other.numeric, other.device));
+            return (std::tie(size, numeric, device, isWriteOnly) < std::tie(other.size, other.numeric, other.device, other.isWriteOnly));
         }
     };
 
@@ -285,6 +286,7 @@ struct GENN_EXPORT ResolvedType
     bool isFunction() const{ return std::holds_alternative<Function>(detail); }
     bool isNumeric() const{ return isValue() && getValue().numeric; }
     bool isVoid() const{ return std::holds_alternative<std::monostate>(detail); }
+    bool isScalar() const{ return isPointer() || (isNumeric() && !getValue().isWriteOnly); }
 
     const Value &getValue() const{ return std::get<Value>(detail); }
     const Pointer &getPointer() const{ return std::get<Pointer>(detail); }
@@ -293,6 +295,7 @@ struct GENN_EXPORT ResolvedType
 
     ResolvedType addConst() const{ return ResolvedType(*this, true); }
     ResolvedType removeConst() const{ return ResolvedType(*this, false); }
+    ResolvedType addWriteOnly() const;
 
     std::string getName() const;
     size_t getSize(size_t pointerBytes) const;
@@ -329,9 +332,10 @@ struct GENN_EXPORT ResolvedType
     static ResolvedType createNumeric(const std::string &name, int rank, ffi_type *ffiType, 
                                       const std::string &literalSuffix = "", bool isConst = false, bool device = false)
     {
-        return ResolvedType{Value{name, sizeof(T), ffiType, device, Numeric{rank, std::numeric_limits<T>::min(), std::numeric_limits<T>::max(),
-                                                                            std::numeric_limits<T>::lowest(), std::numeric_limits<T>::max_digits10,
-                                                                            std::is_signed<T>::value, std::is_integral<T>::value, literalSuffix}},
+        return ResolvedType{Value{name, sizeof(T), ffiType, device, false, 
+                                  Numeric{rank, std::numeric_limits<T>::min(), std::numeric_limits<T>::max(),
+                                          std::numeric_limits<T>::lowest(), std::numeric_limits<T>::max_digits10,
+                                          std::is_signed<T>::value, std::is_integral<T>::value, literalSuffix}},
                             isConst};
     }
 
@@ -339,7 +343,7 @@ struct GENN_EXPORT ResolvedType
     static ResolvedType createValue(const std::string &name, bool isConst = false, 
                                     ffi_type *ffiType = nullptr, bool device = false)
     {
-        return ResolvedType{Value{name, sizeof(T), ffiType, device, std::nullopt}, isConst};
+        return ResolvedType{Value{name, sizeof(T), ffiType, device, false, std::nullopt}, isConst};
     }
 
     static ResolvedType createFunction(const ResolvedType &returnType, const std::vector<ResolvedType> &argTypes,

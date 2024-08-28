@@ -80,7 +80,15 @@ public:
 
     const auto &getInitialisers() const{ return m_NG.getVarInitialisers(); }
 
-    bool isVarDelayed(const std::string &varName) const{ return m_NG.isDelayRequired() && m_NG.isVarQueueRequired(varName); }
+    std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const
+    { 
+        if(m_NG.isDelayRequired() && m_NG.isVarQueueRequired(varName)) {
+            return m_NG.getNumDelaySlots();
+        }
+        else {
+            return std::nullopt; 
+        }
+    }
 
     const NeuronGroup &getTarget() const{ return m_NG; }
 

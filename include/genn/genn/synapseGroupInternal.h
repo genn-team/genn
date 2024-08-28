@@ -110,7 +110,7 @@ public:
 
     const SynapseGroup &getTarget() const{ return m_SG.getFusedPSTarget(); }
 
-    bool isVarDelayed(const std::string &) const { return false; }
+    std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const{ return std::nullopt; }
 
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 
@@ -218,7 +218,15 @@ public:
 
     const SynapseGroup &getTarget() const{ return m_SG.getFusedWUPreTarget(); }
 
-    bool isVarDelayed(const std::string&) const{ return (m_SG.getAxonalDelaySteps() != 0); }
+    std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const
+    {
+        if(m_SG.getAxonalDelaySteps() != 0) {
+            return m_SG.getSrcNeuronGroup()->getNumDelaySlots();
+        }
+        else {
+            return std::nullopt;
+        }
+    }
 
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 
@@ -249,7 +257,15 @@ public:
 
     const SynapseGroup &getTarget() const{ return m_SG.getFusedWUPostTarget(); }
 
-    bool isVarDelayed(const std::string &name) const{ return (m_SG.getBackPropDelaySteps() != 0) || m_SG.isWUPostVarHeterogeneouslyDelayed(name); }
+    std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const
+    {
+        if(m_SG.getBackPropDelaySteps() != 0 || m_SG.isWUPostVarHeterogeneouslyDelayed(varName)) {
+            return m_SG.getTrgNeuronGroup()->getNumDelaySlots();
+        }
+        else {
+            return std::nullopt;
+        }
+    }
 
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 

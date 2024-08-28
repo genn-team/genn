@@ -231,7 +231,7 @@ public:
 
     const auto &getInitialisers() const{ return m_CU.getVarInitialisers(); }
 
-    bool isVarDelayed(const std::string &) const { return false; }
+    std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const{ return std::nullopt; }
 
     const CustomUpdateBase &getTarget() const{ return m_CU; }
 
@@ -303,6 +303,7 @@ protected:
     bool isNeuronReduction() const { return isReduction(getVarReferences(), VarAccessDim::ELEMENT); }
 
     const NeuronGroup *getDelayNeuronGroup() const { return m_DelayNeuronGroup; }
+    const SynapseGroup *getDenDelaySynapseGroup() const { return m_DenDelaySynapseGroup; } 
 
     //! Get vector of other custom updates referenced by this custom update
     std::vector<CustomUpdate*> getReferencedCustomUpdates() const
@@ -329,6 +330,8 @@ private:
     unsigned int m_NumNeurons;
 
     const NeuronGroup *m_DelayNeuronGroup;
+
+    const SynapseGroup *m_DenDelaySynapseGroup;
 };
 
 //------------------------------------------------------------------------

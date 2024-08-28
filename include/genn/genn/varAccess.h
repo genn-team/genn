@@ -21,6 +21,7 @@ enum class VarAccessModeAttribute : unsigned int
     REDUCE      = (1 << 2), //!< This variable is a reduction target
     SUM         = (1 << 3), //!< This variable's reduction operation is a summation
     MAX         = (1 << 4), //!< This variable's reduction operation is a maximum
+    BROADCAST   = (1 << 5), //!< Writes to this variable get broadcast
 };
 
 //! Supported combination of VarAccessModeAttribute
@@ -32,6 +33,9 @@ enum class VarAccessMode : unsigned int
     //! This variable can only be read from
     READ_ONLY   = static_cast<unsigned int>(VarAccessModeAttribute::READ_ONLY),
 
+    //! This variable can only be broadcast i.e. written to
+    BROADCAST   = static_cast<unsigned int>(VarAccessModeAttribute::BROADCAST),
+
     //! This variable is a target for a reduction with a sum operation
     REDUCE_SUM  = static_cast<unsigned int>(VarAccessModeAttribute::REDUCE) | static_cast<unsigned int>(VarAccessModeAttribute::SUM),
 
@@ -42,8 +46,8 @@ enum class VarAccessMode : unsigned int
 //! Flags defining dimensions this variables has
 enum class VarAccessDim : unsigned int
 {
-    ELEMENT     = (1 << 5), //!< This variable stores separate values for each element i.e. neuron or synapse
-    BATCH       = (1 << 6), //!< This variable stores separate values for each batch
+    ELEMENT     = (1 << 6), //!< This variable stores separate values for each element i.e. neuron or synapse
+    BATCH       = (1 << 7), //!< This variable stores separate values for each batch
 };
 
 //! Supported combinations of access mode and dimension for neuron and synapse variables
@@ -71,6 +75,9 @@ enum class CustomUpdateVarAccess : unsigned int
     
     //! This variable can only be read from and has the same dimensions as whatever the custom update is attached to
     READ_ONLY                   = static_cast<unsigned int>(VarAccessMode::READ_ONLY),
+
+    //! This variable has the same dimensions as whatever the custom update is attached to and writes to it get broadcast across delay slots
+    BROADCAST_DELAY             = static_cast<unsigned int>(VarAccessMode::BROADCAST),
 
     /*! This variable can only be read from and has the same dimensions as whatever 
       the custom update is attached to aside from being shared across batches */
@@ -132,13 +139,13 @@ inline VarAccessDim clearVarAccessDim(VarAccessDim a, VarAccessDim b)
 //! Extract variable dimensions from its access enumeration
 inline VarAccessDim getVarAccessDim(VarAccess v)
 {
-    return static_cast<VarAccessDim>(static_cast<unsigned int>(v) & ~0x1F);
+    return static_cast<VarAccessDim>(static_cast<unsigned int>(v) & ~0x3F);
 }
 
 //! Extract custom update variable dimensions from its access enumeration and dimensions of the custom update itself
 inline VarAccessDim getVarAccessDim(CustomUpdateVarAccess v, VarAccessDim popDims)
 {
-    return clearVarAccessDim(popDims, static_cast<VarAccessDim>(static_cast<unsigned int>(v) & ~0x1F));
+    return clearVarAccessDim(popDims, static_cast<VarAccessDim>(static_cast<unsigned int>(v) & ~0x3F));
 }
 
 inline VarAccessMode getVarAccessMode(VarAccessMode v)
@@ -148,11 +155,11 @@ inline VarAccessMode getVarAccessMode(VarAccessMode v)
 
 inline VarAccessMode getVarAccessMode(VarAccess v)
 {
-    return static_cast<VarAccessMode>(static_cast<unsigned int>(v) & 0x1F);
+    return static_cast<VarAccessMode>(static_cast<unsigned int>(v) & 0x3F);
 }
 
 inline VarAccessMode getVarAccessMode(CustomUpdateVarAccess v)
 {
-    return static_cast<VarAccessMode>(static_cast<unsigned int>(v) & 0x1F);
+    return static_cast<VarAccessMode>(static_cast<unsigned int>(v) & 0x3F);
 }
 }   // namespace GeNN

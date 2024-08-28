@@ -304,12 +304,14 @@ PYBIND11_MODULE(_genn, m)
         WRAP_ENUM(VarAccessModeAttribute, READ_WRITE)
         WRAP_ENUM(VarAccessModeAttribute, REDUCE)
         WRAP_ENUM(VarAccessModeAttribute, SUM)
-        WRAP_ENUM(VarAccessModeAttribute, MAX);
+        WRAP_ENUM(VarAccessModeAttribute, MAX)
+        WRAP_ENUM(VarAccessModeAttribute, BROADCAST);
 
     //! Supported combination of VarAccessModeAttribute
     pybind11::enum_<VarAccessMode>(m, "VarAccessMode")
         WRAP_ENUM(VarAccessMode, READ_WRITE)
         WRAP_ENUM(VarAccessMode, READ_ONLY)
+        WRAP_ENUM(VarAccessMode, BROADCAST)
         WRAP_ENUM(VarAccessMode, REDUCE_SUM)
         WRAP_ENUM(VarAccessMode, REDUCE_MAX)
 
@@ -341,6 +343,7 @@ PYBIND11_MODULE(_genn, m)
     pybind11::enum_<CustomUpdateVarAccess>(m, "CustomUpdateVarAccess", DOC(CustomUpdateVarAccess))
         WRAP_ENUM(CustomUpdateVarAccess, READ_WRITE)
         WRAP_ENUM(CustomUpdateVarAccess, READ_ONLY)
+        WRAP_ENUM(CustomUpdateVarAccess, BROADCAST_DELAY)
         WRAP_ENUM(CustomUpdateVarAccess, READ_ONLY_SHARED)
         WRAP_ENUM(CustomUpdateVarAccess, READ_ONLY_SHARED_NEURON)
         WRAP_ENUM(CustomUpdateVarAccess, REDUCE_BATCH_SUM)
@@ -388,6 +391,10 @@ PYBIND11_MODULE(_genn, m)
     m.def("create_wu_post_var_ref", &createWUPostVarRef, pybind11::return_value_policy::move, DOC(createWUPostVarRef));
     m.def("create_pre_var_ref", &createPreVarRef, pybind11::return_value_policy::move, DOC(createPreVarRef));
     m.def("create_post_var_ref", &createPostVarRef, pybind11::return_value_policy::move, DOC(createPostVarRef));
+    m.def("create_out_post_var_ref", &createOutPostVarRef, pybind11::return_value_policy::move, DOC(createOutPostVarRef));
+    m.def("create_den_delay_var_ref", &createDenDelayVarRef, pybind11::return_value_policy::move, DOC(createDenDelayVarRef));    
+    m.def("create_spike_time_var_ref", &createSpikeTimeVarRef, pybind11::return_value_policy::move, DOC(createSpikeTimeVarRef));
+    m.def("create_prev_spike_time_var_ref", &createPrevSpikeTimeVarRef, pybind11::return_value_policy::move, DOC(createPrevSpikeTimeVarRef));    
     m.def("create_wu_var_ref", pybind11::overload_cast<SynapseGroup*, const std::string&, SynapseGroup*, const std::string&>(&createWUVarRef),
           "sg"_a, "var_name"_a, "transpose_sg"_a = nullptr, "transpose_var_name"_a = "", 
           pybind11::return_value_policy::move, DOC(createWUVarRef));

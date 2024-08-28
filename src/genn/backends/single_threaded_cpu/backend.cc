@@ -2150,8 +2150,8 @@ void Backend::genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateG
         env, cg, idxName,
         [&cg](const Models::VarReference &varRef, const std::string &index)
         {
-            return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr, 1,
-                                     varRef.getVarDims(), index);
+            return cg.getVarRefIndex(varRef.getDelayNeuronGroup(), varRef.getDenDelaySynapseGroup(),
+                                     1, varRef.getVarDims(), index, "");
         });
 }
 //--------------------------------------------------------------------------

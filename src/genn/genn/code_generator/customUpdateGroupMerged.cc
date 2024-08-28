@@ -74,10 +74,10 @@ void CustomUpdateGroupMerged::generateCustomUpdate(EnvironmentExternalBase &env,
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarRefCache<CustomUpdateVarRefAdapter, CustomUpdateGroupMerged> varRefEnv(
         *this, *this, getTypeContext(), varEnv, "", "l", false,
-        [this, batchSize](const std::string&, const Models::VarReference &v)
-        { 
-            return getVarRefIndex(v.getDelayNeuronGroup() != nullptr, batchSize,
-                                  v.getVarDims(), "$(id)");
+        [this, batchSize](const std::string&, const Models::VarReference &v, const std::string &delaySlot)
+        {
+            return getVarRefIndex(v.getDelayNeuronGroup(), v.getDenDelaySynapseGroup(),
+                                  batchSize, v.getVarDims(), "$(id)", delaySlot);
         });
 
     Transpiler::ErrorHandler errorHandler("Custom update '" + getArchetype().getName() + "' update code");
@@ -104,25 +104,64 @@ std::string CustomUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAcce
     }
 }
 //----------------------------------------------------------------------------
-std::string CustomUpdateGroupMerged::getVarRefIndex(bool delay, unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
+std::string CustomUpdateGroupMerged::getVarRefIndex(const NeuronGroup *delayNeuronGroup, const SynapseGroup *denDelaySynapseGroup,
+                                                    unsigned int batchSize, VarAccessDim varDims, 
+                                                    const std::string &index, const std::string &delaySlot) const
 {
-    // If delayed, variable is shared, the batch size is one or this custom update isn't batched, batch delay offset isn't required
-    if(delay) {
+    // If delayed via associated neuron delay
+    if(delayNeuronGroup != nullptr) {
+        const std::string numDelaySlotsStr = std::to_string(delayNeuronGroup->getNumDelaySlots());
         const bool batched = ((varDims & VarAccessDim::BATCH) && batchSize > 1);
         if (!(varDims & VarAccessDim::ELEMENT)) {
-            return batched ? "$(_batch_delay_slot)" : "$(_delay_slot)";
+            //$(batch) * " + numDelaySlotsStr + ") + $(_delay_slot);
+            if(delaySlot.empty()) {
+                return batched ? "$(_batch_delay_slot)" : "$(_delay_slot)";
+            }
+            else {
+                return batched ? ("($(batch) * " + numDelaySlotsStr + ") + " + delaySlot) : delaySlot;
+            }
         }
         else if (batched) {
             assert(!index.empty());
-            return "$(_batch_delay_offset) + " + index;
+            if(delaySlot.empty()) {
+                return "$(_batch_delay_offset) + " + index;
+            }
+            else {
+                return "(" + delaySlot + " * $(num_neurons)) + ($(_batch_offset) * " + numDelaySlotsStr + ") + " + index;
+            }
+            
         }
         
         else {
             assert(!index.empty());
-            return "$(_delay_offset) + " + index;
+            if(delaySlot.empty()) {
+                return "$(_delay_offset) + " + index;
+            }
+            else {
+                return "(" + delaySlot + " * $(num_neurons)) + " + index;
+            }
         }
     }
+    // If delayed via associated synapse dendritic delay
+    else if(denDelaySynapseGroup != nullptr) {
+        // This only applies to references to dendritic delay buffer
+        // which always have ELEMENT | BATCH dimensionality
+        assert(varDims & VarAccessDim::ELEMENT);
+        assert(varDims & VarAccessDim::BATCH);
+        assert(!index.empty());
+
+        // Calculate index
+        const std::string batchID = ((batchSize == 1) ? "" : "$(_batch_den_delay_offset) + ") + index;
+        if(delaySlot.empty()) {
+            return "(*$(_den_delay_ptr) * $(num_neurons)) + " + batchID;
+        }
+        else {
+            return "(" + delaySlot + " * $(num_neurons)) + " + batchID;
+        }    
+    }
+    // Otherwise, there is no delay
     else {
+        assert(delaySlot.empty());
         return getVarIndex(batchSize, varDims, index);
     }    
 }
@@ -207,8 +246,9 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(EnvironmentExternalBase
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarRefCache<CustomUpdateWUVarRefAdapter, CustomUpdateWUGroupMergedBase> varRefEnv(
         *this, *this, getTypeContext(), varEnv, "", "l", false,
-        [this, batchSize](const std::string&, const Models::WUVarReference &v)
+        [this, batchSize](const std::string&, const Models::WUVarReference &v, const std::string &delaySlot)
         {
+            assert(delaySlot.empty());
             return getVarRefIndex(batchSize, v.getVarDims(), "$(id_syn)");
         });
 

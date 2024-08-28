@@ -112,6 +112,7 @@ using namespace GeNN::CodeGenerator;
                            return (ng.isSpikeEventRequired() || ng.isTrueSpikeRequired()
                                    || ng.isSpikeTimeRequired() || ng.isPrevSpikeTimeRequired()
                                    || ng.isSpikeEventTimeRequired() || ng.isPrevSpikeEventTimeRequired()
+                                   || !ng.getFusedPSMInSyn().empty() || !ng.getFusedPreOutputOutSyn().empty()
                                    || ng.isVarInitRequired());
                        },
                        &NeuronGroupInternal::getInitHashDigest);

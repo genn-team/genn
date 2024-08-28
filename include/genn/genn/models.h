@@ -173,13 +173,13 @@ public:
     // Public API
     //------------------------------------------------------------------------
     // Get type of variable
-    const Type::UnresolvedType &getVarType() const;
+    Type::UnresolvedType getVarType() const;
 
     // Get dimensions of variable
     VarAccessDim getVarDims() const;
 
     //! Get name of targetted variable
-    const std::string &getVarName() const;
+    std::string getVarName() const;
 
     //! Get size of variable
     unsigned int getNumNeurons() const;
@@ -190,6 +190,9 @@ public:
     //! If variable is delayed, get neuron group which manages its delay
     NeuronGroup *getDelayNeuronGroup() const;
     
+    //! If reference is to dendritic delay buffer, get synapse group which manages its delay
+    SynapseGroup *getDenDelaySynapseGroup() const;
+
     //! Get array associated with referenced variable
     const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime) const;
 
@@ -213,8 +216,42 @@ public:
     static VarReference createPSMVarRef(SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPreVarRef(SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPostVarRef(SynapseGroup *sg, const std::string &varName);
+    static VarReference createOutPostVarRef(SynapseGroup *sg);
+    static VarReference createDenDelayVarRef(SynapseGroup *sg);
+    static VarReference createSpikeTimeVarRef(NeuronGroup *ng);
+    static VarReference createPrevSpikeTimeVarRef(NeuronGroup *ng);
 
 private:
+    //------------------------------------------------------------------------
+    // InternalNGRef
+    //------------------------------------------------------------------------
+    struct InternalNGRef
+    {
+        enum class Type
+        {
+            SPIKE_TIME,
+            PREV_SPIKE_TIME,
+        };
+
+        NeuronGroupInternal *group;
+        Type type;
+    };
+
+    //------------------------------------------------------------------------
+    // InternalSGRef
+    //------------------------------------------------------------------------
+    struct InternalSGRef
+    {
+        enum class Type
+        {
+            OUT_POST,
+            DEN_DELAY,
+        };
+
+        SynapseGroupInternal *group;
+        Type type;
+    };
+
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
@@ -226,10 +263,11 @@ private:
     DEFINE_REF_DETAIL_STRUCT(CURef, CustomUpdateInternal, Base::CustomUpdateVar);
     DEFINE_REF_DETAIL_STRUCT(CCUPreRef, CustomConnectivityUpdateInternal, Base::Var);
     DEFINE_REF_DETAIL_STRUCT(CCUPostRef, CustomConnectivityUpdateInternal, Base::Var);
-
+ 
     //! Variant type used to store 'detail'
     using DetailType = std::variant<NGRef, PSMRef, WUPreRef, WUPostRef, CSRef, 
-                                    CURef, CCUPreRef, CCUPostRef>;
+                                    CURef, CCUPreRef, CCUPostRef, InternalNGRef,
+                                    InternalSGRef>;
 
     VarReference(const DetailType &detail) : m_Detail(detail)
     {}
@@ -264,7 +302,7 @@ public:
     // Public API
     //------------------------------------------------------------------------
     // Get type of variable
-    const Type::UnresolvedType &getVarType() const;
+    Type::UnresolvedType getVarType() const;
 
     // Get dimensions of variable
     VarAccessDim getVarDims() const;

@@ -168,9 +168,9 @@ private:
     {
         // Evaluate index type
         auto indexType = evaluateType(arraySubscript.getIndex());
-        if (!indexType.isNumeric() || !indexType.getNumeric().isIntegral) {
+        if (!indexType.isNumeric() || !indexType.getNumeric().isIntegral || indexType.getValue().isWriteOnly) {
             m_ErrorHandler.error(arraySubscript.getClosingSquareBracket(),
-                                    "Invalid subscript index type '" + indexType.getName() + "'");
+                                 "Invalid subscript index type '" + indexType.getName() + "'");
             throw TypeCheckError();
         }
 
@@ -213,9 +213,19 @@ private:
             m_ErrorHandler.error(assignment.getOperator(), "Assignment of read-only variable");
             throw TypeCheckError();
         }
+        // If LHS is write-only and the operator isn't a plain assignement
+        else if(leftType.isValue() && leftType.getValue().isWriteOnly && assignment.getOperator().type != Token::Type::EQUAL) {
+            m_ErrorHandler.error(assignment.getOperator(), "Invalid operator for assignement of write-only variable");
+            throw TypeCheckError();
+        }
+        // If RHS is write-only, cannot be assigned
+        else if(rightType.isValue() && rightType.getValue().isWriteOnly) {
+            m_ErrorHandler.error(assignment.getOperator(), "Invalid operand type '" + rightType.getName() + "'");
+            throw TypeCheckError();
+        }
         // Otherwise, if implicit conversion fails, give error
         else if (!checkImplicitConversion(rightType, leftType, assignment.getOperator().type)) {
-            m_ErrorHandler.error(assignment.getOperator(), "Invalid operand types '" + leftType.getName() + "' and '" + rightType.getName());
+            m_ErrorHandler.error(assignment.getOperator(), "Invalid operand types '" + leftType.getName() + "' and '" + rightType.getName() + "'");
             throw TypeCheckError();
         }
 
@@ -225,14 +235,12 @@ private:
     virtual void visit(const Expression::Binary &binary) final
     {
         const auto opType = binary.getOperator().type;
+        const auto leftType = evaluateType(binary.getLeft());
         const auto rightType = evaluateType(binary.getRight());
         if (opType == Token::Type::COMMA) {
             setExpressionType(&binary, rightType);
         }
         else {
-            // If we're subtracting two pointers
-            const auto leftType = evaluateType(binary.getLeft());
-
             // Visit permutations of left and right types
             const auto resultType = std::visit(
                 Utils::Overload{
@@ -240,6 +248,13 @@ private:
                     [&leftType, &rightType, opType]
                     (const Type::ResolvedType::Value &rightValue, const Type::ResolvedType::Value &leftValue) -> std::optional<Type::ResolvedType>
                     {
+                        // If either type is write only or non-numeric, error
+                        if(leftValue.isWriteOnly || rightValue.isWriteOnly 
+                           || !leftType.isNumeric() || !rightType.isNumeric()) 
+                        {
+                            return std::nullopt;
+                        }
+
                         // If operator requires integer operands
                         if (opType == Token::Type::PERCENT || opType == Token::Type::SHIFT_LEFT
                             || opType == Token::Type::SHIFT_RIGHT || opType == Token::Type::CARET
@@ -283,9 +298,13 @@ private:
                     [&leftType, opType]
                     (const Type::ResolvedType::Value &rightValue, const Type::ResolvedType::Pointer&) -> std::optional<Type::ResolvedType>
                     {
+                        // If right type is write only or non-numeric, error
+                        if(rightValue.isWriteOnly || !rightValue.numeric) {
+                            return std::nullopt;
+                        }
                         // If operator is valid and numeric type is integer
                         // P + n or P - n
-                        if ((opType == Token::Type::PLUS || opType == Token::Type::MINUS) && rightValue.numeric->isIntegral) {
+                        else if ((opType == Token::Type::PLUS || opType == Token::Type::MINUS) && rightValue.numeric->isIntegral) {
                             return leftType;
                         }
                         else {
@@ -296,8 +315,12 @@ private:
                     [&rightType, opType]
                     (const Type::ResolvedType::Pointer&, const Type::ResolvedType::Value &leftValue) -> std::optional<Type::ResolvedType>
                     {
+                        // If left type is write only or non-numeric, error
+                        if(leftValue.isWriteOnly || !leftValue.numeric) {
+                            return std::nullopt;
+                        }
                         // n + P
-                        if (opType == Token::Type::PLUS && leftValue.numeric->isIntegral) {
+                        else if (opType == Token::Type::PLUS && leftValue.numeric->isIntegral) {
                             return rightType;
                         }
                         else {
@@ -326,9 +349,17 @@ private:
         // Evaluate argument types and store in top of stack
         std::vector<Type::ResolvedType> arguments;
         arguments.reserve(call.getArguments().size());
-        std::transform(call.getArguments().cbegin(), call.getArguments().cend(), std::back_inserter(arguments),
-                       [this](const auto &a){ return evaluateType(a.get()); });
-
+        for(const auto &arg : call.getArguments()) {
+            const auto argType = evaluateType(arg.get());
+            
+            // If argument is write-only, throw
+            if(argType.isValue() && argType.getValue().isWriteOnly) {
+                m_ErrorHandler.error(call.getClosingParen(), "Write-only argument type '" + argType.getName() + "'");
+                throw TypeCheckError();
+            }
+            arguments.push_back(argType);
+        }
+        
         // Push arguments onto stack
         m_CallArguments.push(arguments);
 
@@ -361,7 +392,7 @@ private:
                 // If types are numeric, any cast goes
                 [&cast](const Type::ResolvedType::Value &rightValue, const Type::ResolvedType::Value &castValue) -> std::optional<Type::ResolvedType>
                 {
-                    if (rightValue.numeric && castValue.numeric) {
+                    if (rightValue.numeric && castValue.numeric && !rightValue.isWriteOnly) {
                         return cast.getType();
                     }
                     else {
@@ -401,7 +432,12 @@ private:
 
     virtual void visit(const Expression::Conditional &conditional) final
     {
-        evaluateType(conditional.getCondition());
+        const auto conditionType = evaluateType(conditional.getCondition());
+        if(!conditionType.isScalar()) {
+            m_ErrorHandler.error(conditional.getQuestion(), "Invalid condition type '" + conditionType.getName() + "'");
+            throw TypeCheckError();
+        }
+        
         const auto trueType = evaluateType(conditional.getTrue());
         const auto falseType = evaluateType(conditional.getFalse());
         if (trueType.isNumeric() && falseType.isNumeric()) {
@@ -457,17 +493,24 @@ private:
 
     virtual void visit(const Expression::Logical &logical) final
     {
-        logical.getLeft()->accept(*this);
-        logical.getRight()->accept(*this);
-        setExpressionType(&logical, Type::Int32);
+        const auto leftType = evaluateType(logical.getLeft());
+        const auto rightType = evaluateType(logical.getRight());
+
+        if(leftType.isScalar() && rightType.isScalar()) {
+            setExpressionType(&logical, Type::Int32);
+        }
+        else {
+            m_ErrorHandler.error(logical.getOperator(), "Invalid operand types '" + leftType.getName() + "' and '" + rightType.getName());
+            throw TypeCheckError();
+        }
     }
 
     virtual void visit(const Expression::PostfixIncDec &postfixIncDec) final
     {
         // **TODO** more general lvalue thing
         const auto lhsType = evaluateType(postfixIncDec.getTarget());
-        if(lhsType.isConst) {
-            m_ErrorHandler.error(postfixIncDec.getOperator(), "Increment/decrement of read-only variable");
+        if(lhsType.isConst || !lhsType.isScalar()) {
+            m_ErrorHandler.error(postfixIncDec.getOperator(),"Invalid operand type '" + lhsType.getName() + "'");
             throw TypeCheckError();
         }
         else {
@@ -479,8 +522,8 @@ private:
     {
         // **TODO** more general lvalue thing
         const auto rhsType = evaluateType(prefixIncDec.getTarget());
-         if(rhsType.isConst) {
-            m_ErrorHandler.error(prefixIncDec.getOperator(), "Increment/decrement of read-only variable");
+        if(rhsType.isConst || !rhsType.isScalar()) {
+            m_ErrorHandler.error(prefixIncDec.getOperator(),"Invalid operand type '" + rhsType.getName() + "'");
             throw TypeCheckError();
         }
         else {
@@ -603,7 +646,7 @@ private:
         const auto rightType = evaluateType(unary.getRight());
 
         // If operator is pointer de-reference
-        if (unary.getOperator().type == Token::Type::STAR) {
+         if (unary.getOperator().type == Token::Type::STAR) {
             if (rightType.isPointer()) {
                  setExpressionType(&unary, *rightType.getPointer().valueType);
             }
@@ -614,7 +657,7 @@ private:
             }
         }
         // Otherwise
-        else if (rightType.isNumeric()) {
+        else if (rightType.isNumeric() && !rightType.getValue().isWriteOnly) {
             // If operator is arithmetic, return promoted type
             if (unary.getOperator().type == Token::Type::PLUS || unary.getOperator().type == Token::Type::MINUS) {
                 // **THINK** const through these?
@@ -692,7 +735,12 @@ private:
         doStatement.getBody()->accept(*this);
         assert(m_ActiveLoopStatements.top() == &doStatement);
         m_ActiveLoopStatements.pop();
-        doStatement.getCondition()->accept(*this);
+        
+        const auto conditionType = evaluateType(doStatement.getCondition());
+        if(!conditionType.isScalar()) {
+            m_ErrorHandler.error(doStatement.getWhile(), "Invalid condition expression type '" + conditionType.getName() + "'");
+            throw TypeCheckError();
+        }
     }
 
     virtual void visit(const Statement::Expression &expression) final
@@ -717,11 +765,19 @@ private:
         }
 
         if (forStatement.getCondition()) {
-            forStatement.getCondition()->accept(*this);
+            const auto conditionType = evaluateType(forStatement.getCondition());
+            if(!conditionType.isScalar()) {
+                m_ErrorHandler.error(forStatement.getFor(), "Invalid condition expression type '" + conditionType.getName() + "'");
+                throw TypeCheckError();
+            }
         }
 
         if (forStatement.getIncrement()) {
-            forStatement.getIncrement()->accept(*this);
+            const auto incrementType = evaluateType(forStatement.getIncrement());
+            if(!incrementType.isScalar()) {
+                m_ErrorHandler.error(forStatement.getFor(), "Invalid increment expression type '" + incrementType.getName() + "'");
+                throw TypeCheckError();
+            }
         }
 
         m_ActiveLoopStatements.emplace(&forStatement);
@@ -761,7 +817,12 @@ private:
 
     virtual void visit(const Statement::If &ifStatement) final
     {
-        ifStatement.getCondition()->accept(*this);
+        const auto conditionType = evaluateType(ifStatement.getCondition());
+        if(!conditionType.isScalar()) {
+            m_ErrorHandler.error(ifStatement.getIf(), "Invalid condition expression type '" + conditionType.getName() + "'");
+            throw TypeCheckError();
+        }
+
         ifStatement.getThenBranch()->accept(*this);
         if (ifStatement.getElseBranch()) {
             ifStatement.getElseBranch()->accept(*this);
@@ -790,7 +851,7 @@ private:
     virtual void visit(const Statement::Switch &switchStatement) final
     {
         auto condType = evaluateType(switchStatement.getCondition());
-        if (!condType.isNumeric() || !condType.getNumeric().isIntegral) {
+        if (!condType.isNumeric() || !condType.getNumeric().isIntegral || condType.getValue().isWriteOnly) {
             m_ErrorHandler.error(switchStatement.getSwitch(),
                                  "Invalid condition '" + condType.getName() + "'");
             throw TypeCheckError();
@@ -822,8 +883,12 @@ private:
 
     virtual void visit(const Statement::While &whileStatement) final
     {
-        whileStatement.getCondition()->accept(*this);
-        
+        const auto conditionType = evaluateType(whileStatement.getCondition());
+        if(!conditionType.isScalar()) {
+            m_ErrorHandler.error(whileStatement.getWhile(), "Invalid condition expression type '" + conditionType.getName() + "'");
+            throw TypeCheckError();
+        }
+
         m_ActiveLoopStatements.emplace(&whileStatement);
         whileStatement.getBody()->accept(*this);
         assert(m_ActiveLoopStatements.top() == &whileStatement);

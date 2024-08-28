@@ -517,15 +517,15 @@ private:
         \param batched          Should these variables ever be batched*/
     template<typename A, typename G>
     void createNeuronVarArrays(const G *group, size_t numNeurons, size_t batchSize, 
-                               size_t numDelaySlots, bool batched, unsigned int logIndent = 1)
+                               bool batched, unsigned int logIndent = 1)
     {
         A adaptor(*group);
         createVarArrays<A>(
             group, batchSize, batched,
-            [&adaptor, numDelaySlots, numNeurons]
+            [&adaptor, numNeurons]
             (const std::string &varName, VarAccessDim varDims)
             {
-                const size_t numVarDelaySlots = adaptor.isVarDelayed(varName) ? numDelaySlots : 1;
+                const size_t numVarDelaySlots = adaptor.getNumVarDelaySlots(varName).value_or(1);
                 const size_t numElements = ((varDims & VarAccessDim::ELEMENT) ? numNeurons : 1);
                 return numVarDelaySlots * numElements;
             },

@@ -128,6 +128,14 @@ void NeuronGroup::setParamDynamic(const std::string &paramName, bool dynamic)
 //----------------------------------------------------------------------------
 bool NeuronGroup::isSpikeTimeRequired() const
 {
+    // If spike time is referenced in neuron code strings, return true
+    if(Utils::isIdentifierReferenced("st", getSimCodeTokens())
+       || Utils::isIdentifierReferenced("st", getThresholdConditionCodeTokens())
+       || Utils::isIdentifierReferenced("st", getResetCodeTokens()))
+    {
+        return true;
+    }
+
     // If any INCOMING synapse groups require POSTSYNAPTIC spike times, return true
     if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
                    [](SynapseGroup *sg){ return sg->isPostSpikeTimeRequired(); }))
