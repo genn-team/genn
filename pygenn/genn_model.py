@@ -27,12 +27,12 @@ from .genn_groups import (CurrentSourceMixin, CustomConnectivityUpdateMixin,
                           CustomUpdateMixin, CustomUpdateWUMixin,
                           NeuronGroupMixin, SynapseGroupMixin)
 
-from distutils.spawn import find_executable
 from importlib import import_module
 from os import path, environ
 from platform import system
 from psutil import cpu_count
 from setuptools import msvc
+from shutil import which
 from subprocess import check_call  # to call make
 from textwrap import dedent
 from warnings import warn
@@ -83,8 +83,7 @@ if system() == "Windows":
     # Find MSBuild in path
     # **NOTE** we need to do this because setting the path via 
     # check_call's env kwarg does not effect finding the executable
-    # **NOTE** shutil.which would be nicer, but isn't in Python < 3.3
-    _msbuild = find_executable("msbuild",  _msvc_env["PATH"])
+    _msbuild = which("msbuild",  path=_msvc_env["PATH"])
 
     # If Python version is newer than 3.8 and CUDA path is in environment
     if sys.version_info >= (3, 8) and "CUDA_PATH" in environ:
