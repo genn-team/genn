@@ -631,6 +631,10 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getInitHashDigest() const
     // **NOTE** nothing else is required as logic of initialisation only depends on number of delay slots
     Utils::updateHash(getFusedSpike().size(), hash);
 
+    // Update hash with number of fused spike event conditions
+    // **NOTE** nothing else is required as logic of initialisation only depends on number of delay slots
+    Utils::updateHash(getFusedSpikeEvent().size(), hash);
+
     // Update hash with hash list built from current sources
     updateHashList(this, getCurrentSources(), hash, &CurrentSourceInternal::getInitHashDigest);
 
