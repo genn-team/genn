@@ -1945,7 +1945,7 @@ void Backend::genMSBuildImportProps(std::ostream &os) const
 {
     // Import CUDA props file
     os << "\t<ImportGroup Label=\"ExtensionSettings\">" << std::endl;
-    os << "\t\t<Import Project=\"$(VCTargetsPath)\\BuildCustomizations\\CUDA $(CudaVersion).props\" />" << std::endl;
+    os << "\t\t<Import Project=\"$(CUDA_PATH)\\extras\\visual_studio_integration\\MSBuildExtensions\\CUDA $(CudaVersion).props\" />" << std::endl;
     os << "\t</ImportGroup>" << std::endl;
 }
 //--------------------------------------------------------------------------
@@ -1999,7 +1999,7 @@ void Backend::genMSBuildCompileModule(const std::string &moduleName, std::ostrea
 void Backend::genMSBuildImportTarget(std::ostream &os) const
 {
     os << "\t<ImportGroup Label=\"ExtensionTargets\">" << std::endl;
-    os << "\t\t<Import Project=\"$(VCTargetsPath)\\BuildCustomizations\\CUDA $(CudaVersion).targets\" />" << std::endl;
+    os << "\t\t<Import Project=\"$(CUDA_PATH)\\extras\\visual_studio_integration\\MSBuildExtensions\\CUDA $(CudaVersion).targets\" />" << std::endl;
     os << "\t</ImportGroup>" << std::endl;
 }
 //--------------------------------------------------------------------------
