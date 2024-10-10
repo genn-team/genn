@@ -394,14 +394,14 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
         // Add fields for number of pre and postsynaptic neurons
         groupEnv.addField(Type::Uint32.addConst(), "num_pre",
                           Type::Uint32, "numSrcNeurons", 
-                          [](const auto&, const auto &cg, size_t) 
+                          [](const auto &cg, size_t) 
                           { 
                               const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
                               return sgInternal->getSrcNeuronGroup()->getNumNeurons();
                           });
         groupEnv.addField(Type::Uint32.addConst(), "num_post",
                           Type::Uint32, "numTrgNeurons", 
-                          [](const auto&, const auto &cg, size_t) 
+                          [](const auto &cg, size_t) 
                           { 
                               const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
                               return sgInternal->getSrcNeuronGroup()->getNumNeurons();
@@ -410,7 +410,7 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
         // Expose row stride        
         groupEnv.addField(Type::Uint32.addConst(), "row_stride",
                           Type::Uint32, "rowStride", 
-                          [&backend](const auto&, const auto &cg, size_t) -> uint64_t 
+                          [&backend](const auto &cg, size_t) -> uint64_t 
                           {
                               return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup()); 
                           });

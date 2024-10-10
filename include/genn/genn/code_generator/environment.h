@@ -404,8 +404,11 @@ class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<Enviro
 {
     using GroupInternal = typename G::GroupInternal;
     using GroupExternal = typename GroupInternal::GroupExternal;
-    
-    using GetFieldNumericValueFunc = std::function<Type::NumericValue(const GroupInternal &, size_t)>;
+    using NonNumericFieldValue =  std::variant<const Runtime::ArrayBase*,
+                                               std::pair<Type::NumericValue, 
+                                                         Runtime::MergedDynamicFieldDestinations&>>;
+    using GetFieldNonNumericValueFunc = std::function<NonNumericFieldValue(Runtime::Runtime&, const GroupInternal&, size_t)>;
+    using GetFieldNumericValueFunc = std::function<Type::NumericValue(const GroupInternal&, size_t)>;
     using IsHeterogeneousFn = bool (G::*)(const std::string&) const;
     using IsDynamicFn = bool (GroupInternal::*)(const std::string&) const;
     using IsVarInitHeterogeneousFn = bool (G::*)(const std::string&, const std::string&) const;
@@ -438,19 +441,44 @@ public:
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
     void addField(const GeNN::Type::ResolvedType &type, const std::string &name,
-                  const GeNN::Type::ResolvedType &fieldType, const std::string &fieldName, typename G::GetFieldValueFunc getFieldValue,
-                  const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD, 
+                  const GeNN::Type::ResolvedType &fieldType, const std::string &fieldName, 
+                  GetFieldNumericValueFunc getFieldValue)
+    {
+        typename G::Field field{fieldName, fieldType, GroupMergedFieldType::STANDARD,
+                                [getFieldValue](Runtime::Runtime&, const auto &g, size_t i){ return getFieldValue(g, i); }};
+        this->addInternal(type, name, std::make_tuple(false, LazyString{"", *this}, std::make_optional(field)));
+    }
+
+    //! Map a type (for type-checking) and a group merged field to back it to an identifier
+    void addField(const GeNN::Type::ResolvedType &type, const std::string &name,
+                  const GeNN::Type::ResolvedType &fieldType, const std::string &fieldName, 
+                  GetFieldNonNumericValueFunc getFieldValue, const std::string &indexSuffix = "", 
+                  GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD, 
                   const std::vector<size_t> &initialisers = {})
     {
-        typename G::Field field{fieldName, fieldType, mergedFieldType, getFieldValue};
+        typename G::Field field{fieldName, fieldType, mergedFieldType,
+                                [getFieldValue](Runtime::Runtime &r, const GroupInternal &g, size_t i)
+                                {
+                                    return std::visit(
+                                        Utils::Overload{
+                                            [](const auto &res)->typename G::FieldValue { return res; }},
+                                        getFieldValue(r, g, i));
+                                }};
         this->addInternal(type, name, std::make_tuple(false, LazyString{indexSuffix, *this}, std::make_optional(field)),
                           initialisers);
     }
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
     void addField(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &fieldName, 
-                  typename G::GetFieldValueFunc getFieldValue, const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
-                  const std::vector<size_t> &initialisers = {})
+                  GetFieldNumericValueFunc getFieldValue)
+    {
+         addField(type, name, type, fieldName, getFieldValue);
+    }
+
+    //! Map a type (for type-checking) and a group merged field to back it to an identifier
+    void addField(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &fieldName, 
+                  GetFieldNonNumericValueFunc getFieldValue, const std::string &indexSuffix = "", 
+                  GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD, const std::vector<size_t> &initialisers = {})
     {
          addField(type, name, type, fieldName, getFieldValue, indexSuffix, mergedFieldType, initialisers);
     }
@@ -475,7 +503,7 @@ public:
             // Otherwise, if parameter is heterogeneous across merged group
             else if(std::invoke(isHeterogeneous, this->getGroup(), p.name)) {
                 addField(resolvedType.addConst(), p.name, resolvedType, p.name + fieldSuffix,
-                         [p, getParamValues](auto&, const auto &g, size_t)
+                         [p, getParamValues](const auto &g, size_t)
                          {
                              return std::invoke(getParamValues, g).at(p.name);
                          });
@@ -499,7 +527,7 @@ public:
             assert(!resolvedType.isPointer());
             if (std::invoke(isHeterogeneous, this->getGroup(), d.name)) {
                 addField(resolvedType.addConst(), d.name, resolvedType, d.name + fieldSuffix,
-                         [d, getDerivedParamValues](auto&, const auto &g, size_t)
+                         [d, getDerivedParamValues](const auto &g, size_t)
                          {
                              return std::invoke(getDerivedParamValues, g).at(d.name);
                          });
@@ -572,7 +600,7 @@ public:
             else if(std::invoke(isHeterogeneous, this->getGroup(), p.name)) {
                 addField(resolvedType.addConst(), p.name,
                          resolvedType, p.name + fieldSuffix,
-                         [p, getInitialiser](auto&, const auto &g, size_t)
+                         [p, getInitialiser](const auto &g, size_t)
                          {
                              return std::invoke(getInitialiser, g).getParams().at(p.name);
                          });
@@ -598,7 +626,7 @@ public:
             assert(!resolvedType.isPointer());
             if (std::invoke(isHeterogeneous, this->getGroup(), d.name)) {
                 addField(resolvedType.addConst(), d.name, resolvedType, d.name + fieldSuffix,
-                         [d, getInitialiser](auto&, const auto &g, size_t)
+                         [d, getInitialiser](const auto &g, size_t)
                          {
                              return std::invoke(getInitialiser, g).getDerivedParams().at(d.name);
                          });
@@ -624,7 +652,7 @@ public:
             assert(!resolvedType.isPointer());
             if(std::invoke(isHeterogeneous, this->getGroup(), varName, p.name)) {
                 addField(resolvedType.addConst(), p.name, resolvedType, p.name + varName + fieldSuffix,
-                         [p, varName](auto&, const auto &g, size_t)
+                         [p, varName](const auto &g, size_t)
                          {
                              return A(g).getInitialisers().at(varName).getParams().at(p.name);
                          });
@@ -650,7 +678,7 @@ public:
             assert(!resolvedType.isPointer());
             if(std::invoke(isHeterogeneous, this->getGroup(), varName, d.name)) {
                 addField(resolvedType.addConst(), d.name, resolvedType, d.name + varName + fieldSuffix,
-                         [d, varName](auto&, const auto &g, size_t)
+                         [d, varName](const auto &g, size_t)
                          {
                              return A(g).getInitialisers().at(varName).getDerivedParams().at(d.name);
                          });
