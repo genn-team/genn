@@ -278,7 +278,7 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
     env.add(Uint32.addConst(), "num_batch", std::to_string(batchSize));
     if(batchSize > 1) {
         // Calculate batch offsets into pre and postsynaptic populations
-        env.add(Uint32.addConst(), "_prema_batch_offset", "preBatchOffset",
+        env.add(Uint32.addConst(), "_pre_batch_offset", "preBatchOffset",
                 {env.addInitialiser("const unsigned int preBatchOffset = $(num_pre) * $(batch);")});
         env.add(Uint32.addConst(), "_post_batch_offset", "postBatchOffset",
                 {env.addInitialiser("const unsigned int postBatchOffset = $(num_post) * $(batch);")});
