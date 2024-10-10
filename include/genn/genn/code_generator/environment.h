@@ -444,9 +444,28 @@ public:
                   const GeNN::Type::ResolvedType &fieldType, const std::string &fieldName, 
                   GetFieldNumericValueFunc getFieldValue)
     {
-        typename G::Field field{fieldName, fieldType, GroupMergedFieldType::STANDARD,
-                                [getFieldValue](Runtime::Runtime&, const auto &g, size_t i){ return getFieldValue(g, i); }};
-        this->addInternal(type, name, std::make_tuple(false, LazyString{"", *this}, std::make_optional(field)));
+        // Get value of field for archetype group
+        const auto archetypeValue = getFieldValue(this->getGroup().getArchetype(), 0);
+
+        // Determine if this is heterogeneous across groups
+        bool heterogeneous = false;
+        for(size_t i = 0; i < this->getGroup().getGroups().size(); i++) {
+            if(getFieldValue(this->getGroup().getGroups()[i], i) != archetypeValue) {
+                heterogeneous = true;
+                break;
+            }
+        }
+
+        // If type isn't const or values are heterogeneous, add field
+        if(!type.isConst || heterogeneous) {
+            typename G::Field field{fieldName, fieldType, GroupMergedFieldType::STANDARD,
+                                    [getFieldValue](Runtime::Runtime&, const auto &g, size_t i){ return getFieldValue(g, i); }};
+            this->addInternal(type, name, std::make_tuple(false, LazyString{"", *this}, std::make_optional(field)));
+        }
+        // Otherwise, just add value
+        else {
+            this->add(type, name, Type::writeNumeric(archetypeValue, type));
+        }
     }
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
