@@ -311,7 +311,7 @@ const std::string CustomUpdateHostReductionGroupMerged::name = "CustomUpdateHost
 void CustomUpdateHostReductionGroupMerged::generateCustomUpdate(EnvironmentGroupMergedField<CustomUpdateHostReductionGroupMerged> &env)
 {
     env.addField(Type::Uint32, "_size", "size",
-                 [](const auto &, const auto &c, size_t) { return c.getNumNeurons(); });
+                 [](const auto &c, size_t) { return c.getNumNeurons(); });
     
     // If some variables are delayed, add delay pointer
     if(getArchetype().getDelayNeuronGroup() != nullptr) {
@@ -329,7 +329,7 @@ const std::string CustomWUUpdateHostReductionGroupMerged::name = "CustomWUUpdate
 void CustomWUUpdateHostReductionGroupMerged::generateCustomUpdate(EnvironmentGroupMergedField<CustomWUUpdateHostReductionGroupMerged> &env)
 {
     env.addField(Type::Uint32, "_size", "size",
-                 [](const auto &, const auto &c, size_t) -> uint64_t 
+                 [](const auto &c, size_t) -> uint64_t 
                  { 
                      return c.getSynapseGroup()->getMaxConnections() * (size_t)c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); 
                  });

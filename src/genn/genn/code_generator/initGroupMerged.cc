@@ -773,10 +773,10 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
         // Create substitutions
         groupEnv.addField(Type::Uint32.addConst(), "num_pre",
                           Type::Uint32, "numSrcNeurons", 
-                          [](const auto &, const SynapseGroupInternal &sg, size_t) { return sg.getSrcNeuronGroup()->getNumNeurons(); });
+                          [](const SynapseGroupInternal &sg, size_t) { return sg.getSrcNeuronGroup()->getNumNeurons(); });
         groupEnv.addField(Type::Uint32.addConst(), "num_post",
                           Type::Uint32, "numTrgNeurons", 
-                          [](const auto &, const SynapseGroupInternal &sg, size_t) { return sg.getTrgNeuronGroup()->getNumNeurons(); });
+                          [](const SynapseGroupInternal &sg, size_t) { return sg.getTrgNeuronGroup()->getNumNeurons(); });
         groupEnv.add(Type::Uint32.addConst(), "num_threads", std::to_string(numThreads));
 
         groupEnv.addInitialiserParams("", &SynapseGroupInternal::getSparseConnectivityInitialiser,
