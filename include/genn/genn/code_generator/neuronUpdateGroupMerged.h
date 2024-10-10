@@ -28,12 +28,6 @@ public:
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
-
-        //! Should the current source parameter be implemented heterogeneously?
-        bool isParamHeterogeneous(const std::string &paramName) const;
-
-        //! Should the current source derived parameter be implemented heterogeneously?
-        bool isDerivedParamHeterogeneous(const std::string &paramName) const;
     };
 
     //----------------------------------------------------------------------------
@@ -53,12 +47,6 @@ public:
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
-
-        //! Should the current source parameter be implemented heterogeneously?
-        bool isParamHeterogeneous(const std::string &paramName) const;
-
-        //! Should the current source derived parameter be implemented heterogeneously?
-        bool isDerivedParamHeterogeneous(const std::string &paramName) const;
     };
 
     //----------------------------------------------------------------------------
@@ -115,12 +103,7 @@ public:
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
-    
-        //! Should the current source parameter be implemented heterogeneously?
-        bool isParamHeterogeneous(const std::string &paramName) const;
 
-        //! Should the current source derived parameter be implemented heterogeneously?
-        bool isDerivedParamHeterogeneous(const std::string &paramName) const;
     private:
         void generateEventConditionInternal(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                                             unsigned int batchSize, BackendBase::GroupHandlerEnv<SynSpikeEvent> genEmitSpikeLikeEvent,
@@ -149,12 +132,6 @@ public:
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
-
-        //! Should the current source parameter be implemented heterogeneously?
-        bool isParamHeterogeneous(const std::string &paramName) const;
-
-        //! Should the current source derived parameter be implemented heterogeneously?
-        bool isDerivedParamHeterogeneous(const std::string &paramName) const;
     };
 
     //----------------------------------------------------------------------------
@@ -177,12 +154,6 @@ public:
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
-
-        //! Should the current source parameter be implemented heterogeneously?
-        bool isParamHeterogeneous(const std::string &paramName) const;
-
-        //! Should the current source derived parameter be implemented heterogeneously?
-        bool isDerivedParamHeterogeneous(const std::string &paramName) const;
     };
 
     NeuronUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext,
@@ -219,12 +190,6 @@ public:
     const std::vector<SynSpikeEvent> &getMergedSpikeEventGroups() const{ return m_MergedSpikeEventGroups; }
     const std::vector<InSynWUMPostCode> &getMergedInSynWUMPostCodeGroups() const { return m_MergedInSynWUMPostCodeGroups; }
     const std::vector<OutSynWUMPreCode> &getMergedOutSynWUMPreCodeGroups() const { return m_MergedOutSynWUMPreCodeGroups; }
-    
-    //! Should the parameter be implemented heterogeneously?
-    bool isParamHeterogeneous(const std::string &paramName) const;
-
-    //! Should the derived parameter be implemented heterogeneously?
-    bool isDerivedParamHeterogeneous(const std::string &paramName) const;
 
     //----------------------------------------------------------------------------
     // Static constants

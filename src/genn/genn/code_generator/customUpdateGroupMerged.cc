@@ -164,29 +164,9 @@ std::string CustomUpdateGroupMerged::getVarRefIndex(const NeuronGroup *delayNeur
         return getVarIndex(batchSize, varDims, index);
     }    
 }
-//----------------------------------------------------------------------------
-bool CustomUpdateGroupMerged::isParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const auto &cg) { return cg.getParams(); });
-}
-//----------------------------------------------------------------------------    
-bool CustomUpdateGroupMerged::isDerivedParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const auto &cg) { return cg.getDerivedParams(); });
-}
 
 // ----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomUpdateWUGroupMergedBase
-//----------------------------------------------------------------------------
-bool CustomUpdateWUGroupMergedBase::isParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const CustomUpdateWUInternal &cg) { return cg.getParams(); });
-}
-//----------------------------------------------------------------------------
-bool CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const CustomUpdateWUInternal &cg) { return cg.getDerivedParams(); });
-}
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomUpdateWUGroupMergedBase::getHashDigest() const
 {

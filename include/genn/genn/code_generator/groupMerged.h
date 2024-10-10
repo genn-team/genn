@@ -116,21 +116,6 @@ protected:
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
-    //! Helper to test whether parameter values are heterogeneous within merged group
-    template<typename P>
-    bool isParamValueHeterogeneous(const std::string &name, P getParamValuesFn) const
-    {
-        // Get value of parameter in archetype group
-        const auto archetypeValue = getParamValuesFn(getArchetype()).at(name);
-
-        // Return true if any parameter values differ from the archetype value
-        return std::any_of(getGroups().cbegin(), getGroups().cend(),
-                           [&name, archetypeValue, getParamValuesFn](const GroupInternal &g)
-                           {
-                               return (getParamValuesFn(g).at(name) != archetypeValue);
-                           });
-    }
-
     //! Helper to update hash with the hash of calling getHashableFn on each group
     template<typename H>
     void updateHash(H getHashableFn, boost::uuids::detail::sha1 &hash) const

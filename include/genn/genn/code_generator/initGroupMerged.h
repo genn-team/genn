@@ -20,28 +20,6 @@ class InitGroupMergedBase : public B
 public:
     using B::B;
 
-    //----------------------------------------------------------------------------
-    // Public API
-    //----------------------------------------------------------------------------
-    //! Should the var init parameter be implemented heterogeneously?
-    bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
-    {
-        return this->isParamValueHeterogeneous(paramName, 
-                                               [&varName](const auto &g)
-                                               { 
-                                                   return A(g).getInitialisers().at(varName).getParams(); 
-                                               });
-    }
-
-    //! Should the var init derived parameter be implemented heterogeneously?
-    bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
-    {
-        return this->isParamValueHeterogeneous(paramName, 
-                                               [&varName](const auto &g) 
-                                               { 
-                                                   return A(g).getInitialisers().at(varName).getDerivedParams();
-                                               });
-    }
 protected:
     //----------------------------------------------------------------------------
     // Protected methods
@@ -307,18 +285,6 @@ public:
     void generateSparseColumnInit(EnvironmentExternalBase &env);
     void generateKernelInit(EnvironmentExternalBase &env, unsigned int batchSize);
 
-    //! Should the var init parameter be implemented heterogeneously?
-    bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-
-    //! Should the var init derived parameter be implemented heterogeneously?
-    bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-    
-    //! Should the sparse connectivity initialization parameter be implemented heterogeneously?
-    bool isSparseConnectivityInitParamHeterogeneous(const std::string &paramName) const;
-
-    //! Should the sparse connectivity initialization parameter be implemented heterogeneously?
-    bool isSparseConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const;
-
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
@@ -355,16 +321,6 @@ public:
     // Static constants
     //----------------------------------------------------------------------------
     static const std::string name;
-
-private:
-    //------------------------------------------------------------------------
-    // Private methods
-    //------------------------------------------------------------------------
-    //! Should the connectivity initialization parameter be implemented heterogeneously for EGP init?
-    bool isConnectivityInitParamHeterogeneous(const std::string &paramName) const;
-
-    //! Should the connectivity initialization derived parameter be implemented heterogeneously for EGP init?
-    bool isConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const;
 };
 
 // ----------------------------------------------------------------------------

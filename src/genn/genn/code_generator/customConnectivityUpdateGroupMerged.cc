@@ -351,16 +351,6 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                               }
                           });
 }
-//----------------------------------------------------------------------------
-bool CustomConnectivityUpdateGroupMerged::isParamHeterogeneous(const std::string &name) const
-{
-    return isParamValueHeterogeneous(name, [](const CustomConnectivityUpdateInternal &cg) { return cg.getParams(); });
-}
-//----------------------------------------------------------------------------
-bool CustomConnectivityUpdateGroupMerged::isDerivedParamHeterogeneous(const std::string &name) const
-{
-    return isParamValueHeterogeneous(name, [](const CustomConnectivityUpdateInternal &cg) { return cg.getDerivedParams(); });
-}
 
 // ----------------------------------------------------------------------------
 // CustomConnectivityRemapUpdateGroupMerged
@@ -509,14 +499,4 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
         Transpiler::ErrorHandler errorHandler("Custom connectivity '" + getArchetype().getName() + "' host update code");
         prettyPrintStatements(getArchetype().getHostUpdateCodeTokens(), getTypeContext(), groupEnv, errorHandler);
     }
-}
-//----------------------------------------------------------------------------
-bool CustomConnectivityHostUpdateGroupMerged::isParamHeterogeneous(const std::string &name) const
-{
-    return isParamValueHeterogeneous(name, [](const CustomConnectivityUpdateInternal &cg) { return cg.getParams(); });
-}
-//----------------------------------------------------------------------------
-bool CustomConnectivityHostUpdateGroupMerged::isDerivedParamHeterogeneous(const std::string &name) const
-{
-    return isParamValueHeterogeneous(name, [](const CustomConnectivityUpdateInternal &cg) { return cg.getDerivedParams(); });
 }

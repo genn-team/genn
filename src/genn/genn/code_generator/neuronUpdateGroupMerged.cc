@@ -59,16 +59,6 @@ void NeuronUpdateGroupMerged::CurrentSource::updateHash(boost::uuids::detail::sh
     updateParamHash([](const CurrentSourceInternal &g) { return g.getParams(); }, hash);
     updateParamHash([](const CurrentSourceInternal &g) { return g.getDerivedParams(); }, hash);
 }
-//----------------------------------------------------------------------------
-bool NeuronUpdateGroupMerged::CurrentSource::isParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const CurrentSourceInternal &cs) { return cs.getParams(); });
-}
-//----------------------------------------------------------------------------
-bool NeuronUpdateGroupMerged::CurrentSource::isDerivedParamHeterogeneous( const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const CurrentSourceInternal &cs) { return cs.getDerivedParams(); });
-}
 
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::InSynPSM
@@ -112,8 +102,8 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
 
     // Add parameters, derived parameters and extra global parameters to environment
     psmEnv.addInitialiserParams(fieldSuffix, &SynapseGroupInternal::getPSInitialiser, 
-                                &InSynPSM::isParamHeterogeneous, &SynapseGroupInternal::isPSParamDynamic);
-    psmEnv.addInitialiserDerivedParams(fieldSuffix, &SynapseGroupInternal::getPSInitialiser, &InSynPSM::isDerivedParamHeterogeneous);
+                                &SynapseGroupInternal::isPSParamDynamic);
+    psmEnv.addInitialiserDerivedParams(fieldSuffix, &SynapseGroupInternal::getPSInitialiser);
     psmEnv.addExtraGlobalParams(psm->getExtraGlobalParams(), "", fieldSuffix);
     
     // Add neuron variable references
@@ -146,16 +136,6 @@ void NeuronUpdateGroupMerged::InSynPSM::updateHash(boost::uuids::detail::sha1 &h
 {
     updateParamHash([](const SynapseGroupInternal &g) { return g.getPSInitialiser().getParams(); }, hash);
     updateParamHash([](const SynapseGroupInternal &g) { return g.getPSInitialiser().getDerivedParams(); }, hash);
-}
-//----------------------------------------------------------------------------
-bool NeuronUpdateGroupMerged::InSynPSM::isParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getPSInitialiser().getParams(); });
-}
-//----------------------------------------------------------------------------
-bool NeuronUpdateGroupMerged::InSynPSM::isDerivedParamHeterogeneous( const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getPSInitialiser().getDerivedParams(); });
 }
 
 //----------------------------------------------------------------------------
@@ -255,8 +235,8 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
 
     // Add parameters, derived parameters and extra global parameters to environment
     synEnv.addInitialiserParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser, 
-                                &SynSpikeEvent::isParamHeterogeneous, &SynapseGroupInternal::isWUParamDynamic);
-    synEnv.addInitialiserDerivedParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser, &SynSpikeEvent::isDerivedParamHeterogeneous);
+                                &SynapseGroupInternal::isWUParamDynamic);
+    synEnv.addInitialiserDerivedParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser);
     synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), "", fieldSuffix);
 
     // **NOTE** for an incoming and outgoing synapse group to be merged together, the getPreEventHashDigest and getPostEventHashDigest 
@@ -311,16 +291,6 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::updateHash(boost::uuids::detail::sh
     updateParamHash([](const SynapseGroupInternal &g) { return g.getWUInitialiser().getDerivedParams(); }, hash);
 }
 //----------------------------------------------------------------------------
-bool NeuronUpdateGroupMerged::SynSpikeEvent::isParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getWUInitialiser().getParams(); });
-}
-//----------------------------------------------------------------------------
-bool NeuronUpdateGroupMerged::SynSpikeEvent::isDerivedParamHeterogeneous( const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getWUInitialiser().getDerivedParams(); });
-}
-//----------------------------------------------------------------------------
 void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventConditionInternal(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                                                                             unsigned int batchSize, BackendBase::GroupHandlerEnv<SynSpikeEvent> genEmitSpikeLikeEvent,
                                                                             const std::vector<Transpiler::Token> &conditionTokens, const std::string &errorContext)
@@ -372,8 +342,8 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase
         
         // Add parameters, derived parameters and extra global parameters to environment
         synEnv.addInitialiserParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser, 
-                                    &InSynWUMPostCode::isParamHeterogeneous, &SynapseGroupInternal::isWUParamDynamic);
-        synEnv.addInitialiserDerivedParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser, &InSynWUMPostCode::isDerivedParamHeterogeneous);
+                                    &SynapseGroupInternal::isWUParamDynamic);
+        synEnv.addInitialiserDerivedParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser);
         synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), "", fieldSuffix);
 
         // If we're generating dynamics code, add local neuron variable references
@@ -432,16 +402,6 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::updateHash(boost::uuids::detail:
     updateParamHash([](const SynapseGroupInternal &g) { return g.getWUInitialiser().getParams(); }, hash);
     updateParamHash([](const SynapseGroupInternal &g) { return g.getWUInitialiser().getDerivedParams(); }, hash);
 }
-//----------------------------------------------------------------------------
-bool NeuronUpdateGroupMerged::InSynWUMPostCode::isParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getWUInitialiser().getParams(); });
-}
-//----------------------------------------------------------------------------
-bool NeuronUpdateGroupMerged::InSynWUMPostCode::isDerivedParamHeterogeneous( const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getWUInitialiser().getDerivedParams(); });
-}
 
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::OutSynWUMPreCode
@@ -462,8 +422,8 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase
         
         // Add parameters, derived parameters and extra global parameters to environment
         synEnv.addInitialiserParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser, 
-                                    &OutSynWUMPreCode::isParamHeterogeneous, &SynapseGroupInternal::isWUParamDynamic);
-        synEnv.addInitialiserDerivedParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser, &OutSynWUMPreCode::isDerivedParamHeterogeneous);
+                                    &SynapseGroupInternal::isWUParamDynamic);
+        synEnv.addInitialiserDerivedParams(fieldSuffix, &SynapseGroupInternal::getWUInitialiser);
         synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), "", fieldSuffix);
 
         // If we're generating dynamics code, add local neuron variable references
@@ -518,16 +478,6 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::updateHash(boost::uuids::detail:
 {
     updateParamHash([](const SynapseGroupInternal &g) { return g.getWUInitialiser().getParams(); }, hash);
     updateParamHash([](const SynapseGroupInternal &g) { return g.getWUInitialiser().getDerivedParams(); }, hash);
-}
-//----------------------------------------------------------------------------
-bool NeuronUpdateGroupMerged::OutSynWUMPreCode::isParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getWUInitialiser().getParams(); });
-}
-//----------------------------------------------------------------------------
-bool NeuronUpdateGroupMerged::OutSynWUMPreCode::isDerivedParamHeterogeneous( const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getWUInitialiser().getDerivedParams(); });
 }
 
 //----------------------------------------------------------------------------
@@ -903,16 +853,6 @@ std::string NeuronUpdateGroupMerged::getWriteVarIndex(bool delay, unsigned int b
     else {
         return getVarIndex(batchSize, varDims, index);
     }
-}
-//----------------------------------------------------------------------------
-bool NeuronUpdateGroupMerged::isParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const NeuronGroupInternal &ng) { return ng.getParams(); });
-}
-//----------------------------------------------------------------------------
-bool NeuronUpdateGroupMerged::isDerivedParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const NeuronGroupInternal &ng) { return ng.getDerivedParams(); });
 }
 
 //----------------------------------------------------------------------------

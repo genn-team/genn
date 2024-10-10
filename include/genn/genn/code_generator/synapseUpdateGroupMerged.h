@@ -17,30 +17,6 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    //! Should the weight update model parameter be implemented heterogeneously?
-    bool isWUParamHeterogeneous(const std::string &paramName) const;
-
-    //! Should the weight update model derived parameter be implemented heterogeneously?
-    bool isWUDerivedParamHeterogeneous(const std::string &paramName) const;
-
-    //! Should the weight update model variable initialization parameter be implemented heterogeneously?
-    bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-    
-    //! Should the weight update model variable initialization derived parameter be implemented heterogeneously?
-    bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
-
-    //! Should the sparse connectivity initialization parameter be implemented heterogeneously?
-    bool isSparseConnectivityInitParamHeterogeneous(const std::string &paramName) const;
-
-    //! Should the sparse connectivity initialization parameter be implemented heterogeneously?
-    bool isSparseConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const;
-
-    //! Should the Toeplitz connectivity initialization parameter be implemented heterogeneously?
-    bool isToeplitzConnectivityInitParamHeterogeneous(const std::string &paramName) const;
-
-    //! Should the Toeplitz connectivity initialization parameter be implemented heterogeneously?
-    bool isToeplitzConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const;
-
     std::string getPreSlot(bool delay, unsigned int batchSize) const;
     std::string getPostSlot(bool delay, unsigned int batchSize) const;
 

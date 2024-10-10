@@ -47,9 +47,6 @@ private:
     //----------------------------------------------------------------------------
     // Private methods
     //----------------------------------------------------------------------------
-    bool isParamHeterogeneous(const std::string &name) const;
-    bool isDerivedParamHeterogeneous(const std::string &name) const;
-
     template<typename A>
     void addPrivateVarRefAccess(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env, unsigned int batchSize, 
                                 std::function<std::string(VarAccessMode, const typename A::RefType&)> getIndexFn)
@@ -143,9 +140,6 @@ private:
     //----------------------------------------------------------------------------
     // Private methods
     //----------------------------------------------------------------------------
-    bool isParamHeterogeneous(const std::string &name) const;
-    bool isDerivedParamHeterogeneous(const std::string &name) const;
-
     template<typename A>
     void addVars(EnvironmentGroupMergedField<CustomConnectivityHostUpdateGroupMerged> &env, const std::string &count, const BackendBase &backend)
     {
