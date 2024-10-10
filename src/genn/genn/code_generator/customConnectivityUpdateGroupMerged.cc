@@ -108,10 +108,8 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     // Substitute parameter and derived parameter names
     const auto *cm = getArchetype().getModel();
     updateEnv.addParams(cm->getParams(), "", &CustomConnectivityUpdateInternal::getParams, 
-                        &CustomConnectivityUpdateGroupMerged::isParamHeterogeneous,
                         &CustomConnectivityUpdateInternal::isParamDynamic);
-    updateEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomConnectivityUpdateInternal::getDerivedParams, 
-                               &CustomConnectivityUpdateGroupMerged::isDerivedParamHeterogeneous);
+    updateEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomConnectivityUpdateInternal::getDerivedParams);
     updateEnv.addExtraGlobalParams(cm->getExtraGlobalParams());
     updateEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs());
     
@@ -454,10 +452,8 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
         // Substitute parameter and derived parameter names
         const auto *cm = getArchetype().getModel();
         groupEnv.addParams(cm->getParams(), "", &CustomConnectivityUpdateInternal::getParams, 
-                           &CustomConnectivityHostUpdateGroupMerged::isParamHeterogeneous,
                            &CustomConnectivityUpdateInternal::isParamDynamic);
-        groupEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomConnectivityUpdateInternal::getDerivedParams, 
-                                  &CustomConnectivityHostUpdateGroupMerged::isDerivedParamHeterogeneous);
+        groupEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomConnectivityUpdateInternal::getDerivedParams);
 
         // Loop through EGPs
         for(const auto &egp : cm->getExtraGlobalParams()) {

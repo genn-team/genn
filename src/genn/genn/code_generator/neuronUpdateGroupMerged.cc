@@ -30,8 +30,8 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(EnvironmentExternalBase &e
 
     // Substitute parameter and derived parameter names
     csEnv.addParams(cm->getParams(), fieldSuffix, &CurrentSourceInternal::getParams,
-                    &CurrentSource::isParamHeterogeneous, &CurrentSourceInternal::isParamDynamic);
-    csEnv.addDerivedParams(cm->getDerivedParams(), fieldSuffix, &CurrentSourceInternal::getDerivedParams, &CurrentSource::isDerivedParamHeterogeneous);
+                    &CurrentSourceInternal::isParamDynamic);
+    csEnv.addDerivedParams(cm->getDerivedParams(), fieldSuffix, &CurrentSourceInternal::getDerivedParams);
     csEnv.addExtraGlobalParams(cm->getExtraGlobalParams(), "", fieldSuffix);
 
     // Add neuron variable references
@@ -662,8 +662,8 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
 
     // Substitute parameter and derived parameter names
     neuronEnv.addParams(nm->getParams(), "", &NeuronGroupInternal::getParams,
-                        &NeuronUpdateGroupMerged::isParamHeterogeneous, &NeuronGroupInternal::isParamDynamic);
-    neuronEnv.addDerivedParams(nm->getDerivedParams(), "", &NeuronGroupInternal::getDerivedParams, &NeuronUpdateGroupMerged::isDerivedParamHeterogeneous);
+                        &NeuronGroupInternal::isParamDynamic);
+    neuronEnv.addDerivedParams(nm->getDerivedParams(), "", &NeuronGroupInternal::getDerivedParams);
     neuronEnv.addExtraGlobalParams(nm->getExtraGlobalParams());
     
     // Substitute spike time
