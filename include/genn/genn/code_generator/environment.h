@@ -478,8 +478,7 @@ public:
                                 [getFieldValue](Runtime::Runtime &r, const GroupInternal &g, size_t i)
                                 {
                                     return std::visit(
-                                        Utils::Overload{
-                                            [](const auto &res)->typename G::FieldValue { return res; }},
+                                        [](const auto &res)->typename G::FieldValue { return res; },
                                         getFieldValue(r, g, i));
                                 }};
         this->addInternal(type, name, std::make_tuple(false, LazyString{indexSuffix, *this}, std::make_optional(field)),
