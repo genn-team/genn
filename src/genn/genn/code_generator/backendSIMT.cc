@@ -831,9 +831,8 @@ void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSp
                 EnvironmentGroupMergedField<SynapseDynamicsGroupMerged> synEnv(groupEnv, sg);
 
                 if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    // **OPTIMIZE * *we can do a fast constant divide optimization here and use the result to calculate the remainder
                     synEnv.printLine("const unsigned int row = " + getFastDivide("$(id)", "_row_stride") + ";");
-                    synEnv.printLine("const unsigned int col = $(id) % $(_row_stride);");
+                    synEnv.printLine("const unsigned int col = $(id) - (row * $(_row_stride));");
 
                     synEnv.add(Type::Uint32.addConst(), "id_pre", "row");
                     synEnv.add(Type::Uint32.addConst(), "id_post", "$(_ind)[$(id)]");
@@ -842,11 +841,10 @@ void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSp
                     synEnv.getStream() << CodeStream::OB(1);
                 }
                 else {
-                    // **OPTIMIZE** we can do a fast constant divide optimization here and use the result to calculate the remainder
                     synEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
                                {synEnv.addInitialiser("const unsigned int idPre = " + getFastDivide("$(id)", "_row_stride") + ";")});
                     synEnv.add(Type::Uint32.addConst(), "id_post", "idPost",
-                               {synEnv.addInitialiser("const unsigned int idPost = ($(id) % $(_row_stride));")});    
+                               {synEnv.addInitialiser("const unsigned int idPost = $(id) - ($(id_pre) * $(_row_stride));")});    
                 }
 
                 synEnv.add(Type::Uint32.addConst(), "id_syn", "$(id)");
@@ -985,16 +983,18 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
             // Otherwise, if this update is per-element
             else if (cg.getArchetype().getDims() & VarAccessDim::ELEMENT) {
                 if((cg.getArchetype().getDims() & VarAccessDim::BATCH) && (batchSize > 1)) {
-                    // Split ID into intra-batch ID and batch
-                    // **TODO** fast-divide style optimisations here
-                    const std::string blockSizeStr = std::to_string(blockSize);
-                    const size_t paddedSizeInit = groupEnv.addInitialiser("const unsigned int paddedSize = " + blockSizeStr + " * (($(num_neurons) + " + blockSizeStr + " - 1) / " + blockSizeStr + ");");
+                    // Add additional field with padded number of neurons
+                    groupEnv.addFastDivideField("_padded_num_neurons", "paddedNumNeurons",
+                                                [blockSize](const CustomUpdateInternal &cg, size_t) -> uint32_t
+                                                {
+                                                    return padSize(cg.getNumNeurons(), blockSize);
+                                                });
     
                     // Replace id in substitution with intra-batch ID and add batch
                     groupEnv.add(Type::Uint32.addConst(), "id", "bid",
-                                 {paddedSizeInit, groupEnv.addInitialiser("const unsigned int bid = $(_id) % paddedSize;")});
+                                 {groupEnv.addInitialiser("const unsigned int bid = " + getFastDivide("$(_id)", "_padded_num_neurons") + ";")});
                     groupEnv.add(Type::Uint32.addConst(), "batch", "batch",
-                                 {paddedSizeInit, groupEnv.addInitialiser("const unsigned int batch = $(_id) / paddedSize;")});
+                                 {groupEnv.addInitialiser("const unsigned int batch = $(_id) - ($(id) * $(_padded_num_neurons));")});
                 }
                 // Otherwise, just substitute "batch" for 0
                 else {
@@ -1055,7 +1055,7 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
                 // If it's batched
                 if((cg.getArchetype().getDims() & VarAccessDim::BATCH) && (batchSize > 1)) {
                     // Split ID into intra-batch ID and batch
-                    // **TODO** fast-divide style optimisations here
+                    // **TODO** fast-divide style optimisations her
                     const std::string blockSizeStr = std::to_string(blockSize);
                     const size_t paddedSizeInit = groupEnv.addInitialiser("const unsigned int paddedSize = " + blockSizeStr + " * (($(_size) + " + blockSizeStr + " - 1) / " + blockSizeStr + ");");
     
@@ -1082,9 +1082,8 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
                 }
                 else {
                     if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                        // **OPTIMIZE * *we can do a fast constant divide optimization here and use the result to calculate the remainder
                         synEnv.printLine("const unsigned int row = " + getFastDivide("$(id)", "_row_stride") + ";");
-                        synEnv.printLine("const unsigned int col = $(id) % $(_row_stride);");
+                        synEnv.printLine("const unsigned int col = $(id) - (row * $(_row_stride));");
 
                         synEnv.add(Type::Uint32.addConst(), "id_pre", "row");
                         synEnv.add(Type::Uint32.addConst(), "id_post", "$(_ind)[$(id)]");
@@ -1093,11 +1092,10 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
                         synEnv.getStream() << CodeStream::OB(2);
                     }
                     else {
-                        // **OPTIMIZE** we can do a fast constant divide optimization here and use the result to calculate the remainder
                         synEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
                                    {synEnv.addInitialiser("const unsigned int idPre = " + getFastDivide("$(id)", "_row_stride") + ";")});
                         synEnv.add(Type::Uint32.addConst(), "id_post", "idPost",
-                                   {synEnv.addInitialiser("const unsigned int idPost = $(id) % $(_row_stride);")});
+                                   {synEnv.addInitialiser("const unsigned int idPost = $(id) - ($(id_pre) * $(_row_stride));")});
                     }
                 }
 
@@ -1870,7 +1868,6 @@ void BackendSIMT::genPostsynapticUpdate(EnvironmentExternalBase &env, Postsynapt
                     synEnv.add(Type::Uint32.addConst(), "id_syn", "synAddress",
                                 {synEnv.addInitialiser("const unsigned int synAddress = $(_remap)[($(_sh_spk)[j] * $(_col_stride)) + $(id)];")});
 
-                    // **OPTIMIZE** we can do a fast constant divide optimization here
                     synEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
                                 {synEnv.addInitialiser("const unsigned int idPre = " + getFastDivide("$(id_syn)", "_row_stride") + ";")});
                 }
