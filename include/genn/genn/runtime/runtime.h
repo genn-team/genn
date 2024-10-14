@@ -572,6 +572,10 @@ private:
     template<typename G>
     void pushMergedGroup(const G &g)
     {
+        if(g.getFields().empty()) {
+            LOGD_RUNTIME << "Skipping empty merged group '" << G::name << "' index: " << g.getIndex();
+            return;
+        }
         LOGD_RUNTIME << "Pushing merged group '" << G::name << "' index: " << g.getIndex();
 
         // Loop through groups
