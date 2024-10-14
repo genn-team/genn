@@ -345,25 +345,26 @@ private:
 
             // Implement merged group array in previously assigned memory space
             os << g.getMemorySpace() << " Merged" << T::name << "Group" << g.getIndex() << " d_merged" << T::name << "Group" << g.getIndex() << "[" << g.getGroups().size() << "];" << std::endl;
+            if(!g.getFields().empty()) {
+                // Write function to update
+                os << "void pushMerged" << T::name << "Group" << g.getIndex() << "ToDevice(unsigned int idx, ";
+                g.generateStructFieldArgumentDefinitions(os, *this);
+                os << ")";
+                {
+                    CodeStream::Scope b(os);
 
-            // Write function to update
-            os << "void pushMerged" << T::name << "Group" << g.getIndex() << "ToDevice(unsigned int idx, ";
-            g.generateStructFieldArgumentDefinitions(os, *this);
-            os << ")";
-            {
-                CodeStream::Scope b(os);
+                    // Loop through sorted fields and build struct on the stack
+                    os << "Merged" << T::name << "Group" << g.getIndex() << " group = {";
+                    const auto sortedFields = g.getSortedFields(*this);
+                    for(const auto &f : sortedFields) {
+                        os << f.name << ", ";
+                    }
+                    os << "};" << std::endl;
 
-                // Loop through sorted fields and build struct on the stack
-                os << "Merged" << T::name << "Group" << g.getIndex() << " group = {";
-                const auto sortedFields = g.getSortedFields(*this);
-                for(const auto &f : sortedFields) {
-                    os << f.name << ", ";
+                    // Push to device
+                    os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbolAsync(d_merged" << T::name << "Group" << g.getIndex() << ", &group, ";
+                    os << "sizeof(Merged" << T::name << "Group" << g.getIndex() << "), idx * sizeof(Merged" << T::name << "Group" << g.getIndex() << ")));" << std::endl;
                 }
-                os << "};" << std::endl;
-
-                // Push to device
-                os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbolAsync(d_merged" << T::name << "Group" << g.getIndex() << ", &group, ";
-                os << "sizeof(Merged" << T::name << "Group" << g.getIndex() << "), idx * sizeof(Merged" << T::name << "Group" << g.getIndex() << ")));" << std::endl;
             }
         }
     }
