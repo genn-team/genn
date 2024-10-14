@@ -832,7 +832,7 @@ void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSp
 
                 if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     // **OPTIMIZE * *we can do a fast constant divide optimization here and use the result to calculate the remainder
-                    synEnv.printLine("const unsigned int row = $(id) / $(_row_stride);");
+                    synEnv.printLine("const unsigned int row = " + getFastDivide("$(id)", "_row_stride") + ";");
                     synEnv.printLine("const unsigned int col = $(id) % $(_row_stride);");
 
                     synEnv.add(Type::Uint32.addConst(), "id_pre", "row");
@@ -844,7 +844,7 @@ void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSp
                 else {
                     // **OPTIMIZE** we can do a fast constant divide optimization here and use the result to calculate the remainder
                     synEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
-                               {synEnv.addInitialiser("const unsigned int idPre = ($(id) / $(_row_stride));")});
+                               {synEnv.addInitialiser("const unsigned int idPre = " + getFastDivide("$(id)", "_row_stride") + ";")});
                     synEnv.add(Type::Uint32.addConst(), "id_post", "idPost",
                                {synEnv.addInitialiser("const unsigned int idPost = ($(id) % $(_row_stride));")});    
                 }
@@ -1083,7 +1083,7 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
                 else {
                     if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                         // **OPTIMIZE * *we can do a fast constant divide optimization here and use the result to calculate the remainder
-                        synEnv.printLine("const unsigned int row = $(id) / $(_row_stride);");
+                        synEnv.printLine("const unsigned int row = " + getFastDivide("$(id)", "_row_stride") + ";");
                         synEnv.printLine("const unsigned int col = $(id) % $(_row_stride);");
 
                         synEnv.add(Type::Uint32.addConst(), "id_pre", "row");
@@ -1095,9 +1095,9 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
                     else {
                         // **OPTIMIZE** we can do a fast constant divide optimization here and use the result to calculate the remainder
                         synEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
-                                   {synEnv.addInitialiser("const unsigned int idPre = $(id) / $(_row_stride)")});
+                                   {synEnv.addInitialiser("const unsigned int idPre = " + getFastDivide("$(id)", "_row_stride") + ";")});
                         synEnv.add(Type::Uint32.addConst(), "id_post", "idPost",
-                                   {synEnv.addInitialiser("const unsigned int idPost = $(id) % $(_row_stride)")});
+                                   {synEnv.addInitialiser("const unsigned int idPost = $(id) % $(_row_stride);")});
                     }
                 }
 
@@ -1872,7 +1872,7 @@ void BackendSIMT::genPostsynapticUpdate(EnvironmentExternalBase &env, Postsynapt
 
                     // **OPTIMIZE** we can do a fast constant divide optimization here
                     synEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
-                                {synEnv.addInitialiser("const unsigned int idPre = $(id_syn) / $(_row_stride);")});
+                                {synEnv.addInitialiser("const unsigned int idPre = " + getFastDivide("$(id_syn)", "_row_stride") + ";")});
                 }
                 else {
                     synEnv.add(Type::Uint32.addConst(), "id_syn", "synAddress",

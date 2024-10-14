@@ -409,6 +409,7 @@ class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<Enviro
                                                          Runtime::MergedDynamicFieldDestinations&>>;
     using GetFieldNonNumericValueFunc = std::function<NonNumericFieldValue(Runtime::Runtime&, const GroupInternal&, size_t)>;
     using GetFieldNumericValueFunc = std::function<Type::NumericValue(const GroupInternal&, size_t)>;
+    using GetFieldUint32ValueFunc = std::function<uint32_t(const GroupInternal&, size_t)>;
     using IsDynamicFn = bool (GroupInternal::*)(const std::string&) const;
     using IsVarInitHeterogeneousFn = bool (G::*)(const std::string&, const std::string&) const;
     using GetParamValuesFn = const std::map<std::string, Type::NumericValue> &(GroupInternal::*)(void) const;
@@ -498,6 +499,59 @@ public:
                   GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD, const std::vector<size_t> &initialisers = {})
     {
          addField(type, name, type, fieldName, getFieldValue, indexSuffix, mergedFieldType, initialisers);
+    }
+
+    void addFastDivideField(const std::string &name, const std::string &fieldName, 
+                            GetFieldUint32ValueFunc getFieldValue)
+    {
+        // Add main field
+        addField(GeNN::Type::Uint32.addConst(), name,
+                 GeNN::Type::Uint32, fieldName,
+                 getFieldValue);
+
+        // Add M field
+        addField(GeNN::Type::Uint32.addConst(), name + "_m",
+                 GeNN::Type::Uint32, fieldName + "M",
+                 [getFieldValue](const GroupInternal &g, size_t i)
+                 {
+                     return (uint32_t)std::floor(std::log2(getFieldValue(g, i)));
+                 });
+        
+        // Add A field
+        addField(GeNN::Type::Uint32.addConst(), name + "_a",
+                 GeNN::Type::Uint32, fieldName + "A",
+                 [getFieldValue](const GroupInternal &g, size_t i) -> uint32_t
+                 {
+                     const uint32_t uintMax = std::numeric_limits<uint32_t>::max();
+                     const uint32_t d = getFieldValue(g, i);
+                     const uint32_t m = (uint32_t)std::floor(std::log2(d));
+                     if(d == (1ul << m)) {
+                         return uintMax;
+                     }
+                     else {
+                         const uint32_t t = (1ul << (m + 32)) / d;
+                         const uint32_t r = ((t * d) + d) & uintMax;
+                         return (r <= (1ul << m)) ? (t + 1ul) : t;
+                     }
+                 });
+
+        // Add B field
+        addField(GeNN::Type::Uint32, name + "_b",
+                 GeNN::Type::Uint32.addConst(), fieldName + "B",
+                 [getFieldValue](const GroupInternal &g, size_t i) -> uint32_t
+                 {
+                     const uint32_t uintMax = std::numeric_limits<uint32_t>::max();
+                     const uint32_t d = getFieldValue(g, i);
+                     const uint32_t m = (uint32_t)std::floor(std::log2(d));
+                     if(d == (1ul << m)) {
+                         return uintMax;
+                     }
+                     else {
+                         const uint32_t t = (1ul << (m + 32ul)) / d;
+                         const uint32_t r = ((t * d) + d) & uintMax;
+                         return (r <= (1ul << m)) ? 0 : t;
+                     }
+                 });
     }
 
     void addParams(const Snippet::Base::ParamVec &params, const std::string &fieldSuffix, 

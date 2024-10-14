@@ -173,11 +173,11 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
     env.addField(Uint32.addConst(), "num_post",
                  Uint32, "numTrgNeurons", 
                  [](const SynapseGroupInternal &sg, size_t) { return sg.getTrgNeuronGroup()->getNumNeurons(); });
-    env.addField(Uint32, "_row_stride", "rowStride", 
-                 [&backend](const SynapseGroupInternal &sg, size_t) -> uint64_t
-                 {
-                     return backend.getSynapticMatrixRowStride(sg);
-                 });
+    env.addFastDivideField("_row_stride", "rowStride", 
+                           [&backend](const SynapseGroupInternal &sg, size_t) -> uint32_t
+                           {
+                               return backend.getSynapticMatrixRowStride(sg);
+                           });
     env.addField(Uint32, "_col_stride", "colStride", 
                  [](const SynapseGroupInternal &sg, size_t) { return sg.getMaxSourceConnections(); });
 
