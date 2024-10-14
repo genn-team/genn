@@ -536,8 +536,8 @@ public:
                  });
 
         // Add B field
-        addField(GeNN::Type::Uint32, name + "_b",
-                 GeNN::Type::Uint32.addConst(), fieldName + "B",
+        addField(GeNN::Type::Uint32.addConst(), name + "_b",
+                 GeNN::Type::Uint32, fieldName + "B",
                  [getFieldValue](const GroupInternal &g, size_t i) -> uint32_t
                  {
                      const uint32_t uintMax = std::numeric_limits<uint32_t>::max();
