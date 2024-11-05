@@ -1290,11 +1290,18 @@ def create_weight_update_model(
 
     where, once again, ``inc`` is the amount to add to the postsynaptic neuron's ``inSyn`` variable and ``delay`` is the length of the dendritic delay in timesteps.
     By implementing ``delay`` as a weight update model variable, heterogeneous synaptic delays can be implemented.
-    For an example, see WeightUpdateModels::StaticPulseDendriticDelay for a simple synapse update model with heterogeneous dendritic delays.
+    For an example, see :func:`.weight_update_models.StaticPulseDendriticDelay` for a simple synapse update model with heterogeneous dendritic delays.
+    These delays can also be used to provide delayed access to ``post_vars`` and ``post_neuron_var_refs`` using ``[]`` syntax. For example,
 
-    When using dendritic delays, the *maximum* dendritic delay for a synapse populations must be specified via the
-    :attr:`SynapseGroup.max_dendritic_delay_timesteps` property. One can also define synaptic effects that occur in the reverse direction,
-    i.e. terms that are added to a target variable in the _presynaptic_ neuron using the ``addToPre(inc)`` function. For example,
+    ..  code-block:: python
+
+        pre_spike_syn_code="variable -= postVar[delay];"
+
+    where, ``variable`` is a per-synapse variable; ``postVar`` is either a postsynaptic variable or postsynaptic variable reference; 
+    and ``delay`` is some sort of integer expression. When using dendritic delays, the *maximum* dendritic delay for a synapse populations 
+    must be specified via the :attr:`SynapseGroup.max_dendritic_delay_timesteps` property. One can also define synaptic effects that 
+    occur in the reverse direction, i.e. terms that are added to a target variable in the _presynaptic_ neuron using the ``addToPre(inc)`` function.
+    For example,
 
     ..  code-block:: python
 
