@@ -1,28 +1,30 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tutorials &mdash; PyGeNN  documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
-      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css" />
-      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css" />
-      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=d2d258e8" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
 
   
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../_static/doctools.js"></script>
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -98,12 +100,12 @@
            <div itemprop="articleBody">
              
   <section id="tutorials">
-<h1>Tutorials<a class="headerlink" href="#tutorials" title="Permalink to this heading"></a></h1>
+<h1>Tutorials<a class="headerlink" href="#tutorials" title="Link to this heading"></a></h1>
 <section id="compneuro-101">
-<h2>CompNeuro 101<a class="headerlink" href="#compneuro-101" title="Permalink to this heading"></a></h2>
+<h2>CompNeuro 101<a class="headerlink" href="#compneuro-101" title="Link to this heading"></a></h2>
 <p>Building spiking neural network models in GeNN</p>
 <section id="neurons">
-<h3>Neurons<a class="headerlink" href="#neurons" title="Permalink to this heading"></a></h3>
+<h3>Neurons<a class="headerlink" href="#neurons" title="Link to this heading"></a></h3>
 <p>Create a model consisting of a population of Izhikevich neurons with heterogeneous parameters, driven by a stimulus current. Simulate and record state variables.</p>
 <div class="toctree-wrapper compound">
 <ul>
@@ -118,7 +120,7 @@
 <a class="reference external image-reference" href="https://colab.research.google.com/github/genn-team/genn/blob/master/docs/tutorials/comp_neuro_101/1_neurons.ipynb"><img alt="https://colab.research.google.com/assets/colab-badge.svg" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
 </section>
 <section id="synapses">
-<h3>Synapses<a class="headerlink" href="#synapses" title="Permalink to this heading"></a></h3>
+<h3>Synapses<a class="headerlink" href="#synapses" title="Link to this heading"></a></h3>
 <p>Create a simple balanced random network with two, sparsely connected populations of leaky integrate-and-fire neurons. Simulate and record spikes.</p>
 <div class="toctree-wrapper compound">
 <ul>
@@ -134,10 +136,10 @@
 </section>
 </section>
 <section id="mnist-inference">
-<h2>MNIST inference<a class="headerlink" href="#mnist-inference" title="Permalink to this heading"></a></h2>
+<h2>MNIST inference<a class="headerlink" href="#mnist-inference" title="Link to this heading"></a></h2>
 <p>Perform MNIST inference by converting a pre-trained ANN to an SNN</p>
 <section id="presenting-a-single-image">
-<h3>Presenting a single image<a class="headerlink" href="#presenting-a-single-image" title="Permalink to this heading"></a></h3>
+<h3>Presenting a single image<a class="headerlink" href="#presenting-a-single-image" title="Link to this heading"></a></h3>
 <p>Create a simple three layer network of integrate-and-fire neurons, densely connected with pre-trained weights. Present a single MNIST image and visualise spiking activity.</p>
 <div class="toctree-wrapper compound">
 <ul>
@@ -154,7 +156,7 @@
 <a class="reference external image-reference" href="https://colab.research.google.com/github/genn-team/genn/blob/master/docs/tutorials/mnist_inference/tutorial_1.ipynb"><img alt="https://colab.research.google.com/assets/colab-badge.svg" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
 </section>
 <section id="classifying-entire-test-set">
-<h3>Classifying entire test set<a class="headerlink" href="#classifying-entire-test-set" title="Permalink to this heading"></a></h3>
+<h3>Classifying entire test set<a class="headerlink" href="#classifying-entire-test-set" title="Link to this heading"></a></h3>
 <p>Present entire MNIST test set to previous model and calculate accuracy.</p>
 <div class="toctree-wrapper compound">
 <ul>
@@ -171,7 +173,7 @@
 <a class="reference external image-reference" href="https://colab.research.google.com/github/genn-team/genn/blob/master/docs/tutorials/mnist_inference/tutorial_2.ipynb"><img alt="https://colab.research.google.com/assets/colab-badge.svg" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
 </section>
 <section id="improve-classification-performance">
-<h3>Improve classification performance<a class="headerlink" href="#improve-classification-performance" title="Permalink to this heading"></a></h3>
+<h3>Improve classification performance<a class="headerlink" href="#improve-classification-performance" title="Link to this heading"></a></h3>
 <p>Use parallel batching and custom updates to improve inference performance by over 30x compared to previous tutorial.</p>
 <div class="toctree-wrapper compound">
 <ul>
@@ -189,10 +191,10 @@
 </section>
 </section>
 <section id="insect-inspired-mnist-classification">
-<h2>Insect-inspired MNIST classification<a class="headerlink" href="#insect-inspired-mnist-classification" title="Permalink to this heading"></a></h2>
+<h2>Insect-inspired MNIST classification<a class="headerlink" href="#insect-inspired-mnist-classification" title="Link to this heading"></a></h2>
 <p>Train a model of the insect mushroom body using an STDP learning rule to classify MNIST.</p>
 <section id="projection-neurons">
-<h3>Projection Neurons<a class="headerlink" href="#projection-neurons" title="Permalink to this heading"></a></h3>
+<h3>Projection Neurons<a class="headerlink" href="#projection-neurons" title="Link to this heading"></a></h3>
 <p>Create the first layer of <em>Projection Neurons</em> which convert input images into a sparse temporal code.</p>
 <div class="toctree-wrapper compound">
 <ul>
@@ -213,7 +215,7 @@
 <a class="reference external image-reference" href="https://colab.research.google.com/github/genn-team/genn/blob/master/docs/tutorials/mushroom_body/1_first_layer.ipynb"><img alt="https://colab.research.google.com/assets/colab-badge.svg" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
 </section>
 <section id="kenyon-cells">
-<h3>Kenyon Cells<a class="headerlink" href="#kenyon-cells" title="Permalink to this heading"></a></h3>
+<h3>Kenyon Cells<a class="headerlink" href="#kenyon-cells" title="Link to this heading"></a></h3>
 <p>Add a second, randomly-connected layer of <em>Kenyon Cells</em> to the model.</p>
 <div class="toctree-wrapper compound">
 <ul>
@@ -233,7 +235,7 @@
 <a class="reference external image-reference" href="https://colab.research.google.com/github/genn-team/genn/blob/master/docs/tutorials/mushroom_body/2_second_layer.ipynb"><img alt="https://colab.research.google.com/assets/colab-badge.svg" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
 </section>
 <section id="kenyon-cell-gain-control">
-<h3>Kenyon Cell gain control<a class="headerlink" href="#kenyon-cell-gain-control" title="Permalink to this heading"></a></h3>
+<h3>Kenyon Cell gain control<a class="headerlink" href="#kenyon-cell-gain-control" title="Link to this heading"></a></h3>
 <p>Add recurrent inhibition circuit, inspired by &lt;i&gt;Giant GABAergic Neuron&lt;/i&gt; in locusts, to improve sparse coding of the Kenyon Cells.</p>
 <div class="toctree-wrapper compound">
 <ul>
@@ -253,7 +255,7 @@
 <a class="reference external image-reference" href="https://colab.research.google.com/github/genn-team/genn/blob/master/docs/tutorials/mushroom_body/3_second_layer_gain_control.ipynb"><img alt="https://colab.research.google.com/assets/colab-badge.svg" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
 </section>
 <section id="mushroom-body-output-neurons">
-<h3>Mushroom Body Output Neurons<a class="headerlink" href="#mushroom-body-output-neurons" title="Permalink to this heading"></a></h3>
+<h3>Mushroom Body Output Neurons<a class="headerlink" href="#mushroom-body-output-neurons" title="Link to this heading"></a></h3>
 <p>Add <em>Mushroom Body Output Neurons</em> with STDP learning and train model on MNIST training set.</p>
 <div class="toctree-wrapper compound">
 <ul>
@@ -274,7 +276,7 @@
 <a class="reference external image-reference" href="https://colab.research.google.com/github/genn-team/genn/blob/master/docs/tutorials/mushroom_body/4_third_layer.ipynb"><img alt="https://colab.research.google.com/assets/colab-badge.svg" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
 </section>
 <section id="testing">
-<h3>Testing<a class="headerlink" href="#testing" title="Permalink to this heading"></a></h3>
+<h3>Testing<a class="headerlink" href="#testing" title="Link to this heading"></a></h3>
 <p>Create a simplified copy of the model without learning, load in the trained weights and calculate inference accuracy on MNIST test set.</p>
 <div class="toctree-wrapper compound">
 <ul>

@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Classification of the entire test set &mdash; PyGeNN  documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css?v=d2d258e8" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css?v=f4aeca0c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css" />
 
   
@@ -18,11 +18,11 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -102,10 +102,10 @@
            <div itemprop="articleBody">
              
   <section id="Classification-of-the-entire-test-set">
-<h1>Classification of the entire test set<a class="headerlink" href="#Classification-of-the-entire-test-set" title="Permalink to this heading"></a></h1>
+<h1>Classification of the entire test set<a class="headerlink" href="#Classification-of-the-entire-test-set" title="Link to this heading"></a></h1>
 <p>In this tutorial we’re going to take the model we developed in the previous tutorial, run it on the entire MNIST testing set and calculate the overall classification accuracy.</p>
 <section id="Install-PyGeNN-wheel-from-Google-Drive">
-<h2>Install PyGeNN wheel from Google Drive<a class="headerlink" href="#Install-PyGeNN-wheel-from-Google-Drive" title="Permalink to this heading"></a></h2>
+<h2>Install PyGeNN wheel from Google Drive<a class="headerlink" href="#Install-PyGeNN-wheel-from-Google-Drive" title="Link to this heading"></a></h2>
 <p>Download wheel file</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -153,7 +153,7 @@ env: CUDA_PATH=/usr/local/cuda
 </div>
 </section>
 <section id="Download-pre-trained-weights-and-MNIST-test-data">
-<h2>Download pre-trained weights and MNIST test data<a class="headerlink" href="#Download-pre-trained-weights-and-MNIST-test-data" title="Permalink to this heading"></a></h2>
+<h2>Download pre-trained weights and MNIST test data<a class="headerlink" href="#Download-pre-trained-weights-and-MNIST-test-data" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -180,7 +180,7 @@ To: /content/weights_1_2.npy
 </div>
 </section>
 <section id="Install-MNIST-package">
-<h2>Install MNIST package<a class="headerlink" href="#Install-MNIST-package" title="Permalink to this heading"></a></h2>
+<h2>Install MNIST package<a class="headerlink" href="#Install-MNIST-package" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -203,7 +203,7 @@ Successfully installed mnist-0.2.2
 </div>
 </section>
 <section id="Build-model">
-<h2>Build model<a class="headerlink" href="#Build-model" title="Permalink to this heading"></a></h2>
+<h2>Build model<a class="headerlink" href="#Build-model" title="Link to this heading"></a></h2>
 <p>As well as the standard modules and required PyGeNN functions and classes we used in the first tutorial, also import <code class="docutils literal notranslate"><span class="pre">time.perf_counter</span></code> for measuring the performance of our classifier and <code class="docutils literal notranslate"><span class="pre">tqdm.tqdm</span></code> for drawing progress bars</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -305,7 +305,8 @@ Successfully installed mnist-0.2.2
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">testing_images</span> <span class="o">=</span> <span class="n">mnist</span><span class="o">.</span><span class="n">test_images</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mnist</span><span class="o">.</span><span class="n">datasets_url</span> <span class="o">=</span> <span class="s2">&quot;https://storage.googleapis.com/cvdf-datasets/mnist/&quot;</span>
+<span class="n">testing_images</span> <span class="o">=</span> <span class="n">mnist</span><span class="o">.</span><span class="n">test_images</span><span class="p">()</span>
 <span class="n">testing_labels</span> <span class="o">=</span> <span class="n">mnist</span><span class="o">.</span><span class="n">test_labels</span><span class="p">()</span>
 
 <span class="n">testing_images</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">testing_images</span><span class="p">,</span> <span class="p">(</span><span class="n">testing_images</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
@@ -316,7 +317,7 @@ Successfully installed mnist-0.2.2
 </div>
 </section>
 <section id="Simulate-model">
-<h2>Simulate model<a class="headerlink" href="#Simulate-model" title="Permalink to this heading"></a></h2>
+<h2>Simulate model<a class="headerlink" href="#Simulate-model" title="Link to this heading"></a></h2>
 <p>In this tutorial we’re going to not only inject current but also access the new spike count variable in the output population and reset the voltages throughout the model. Therefore we need to create some additional memory views</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:

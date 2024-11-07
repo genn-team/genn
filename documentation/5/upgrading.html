@@ -1,27 +1,27 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Upgrading from GeNN 4 &mdash; PyGeNN  documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css" />
-      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css" />
-      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css" />
-      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css?v=d2d258e8" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css?v=f4aeca0c" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css?v=2082cf3c" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css?v=1277b6f3" />
 
   
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="_static/doctools.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -86,11 +86,11 @@
            <div itemprop="articleBody">
              
   <section id="upgrading-from-genn-4">
-<h1>Upgrading from GeNN 4<a class="headerlink" href="#upgrading-from-genn-4" title="Permalink to this heading"></a></h1>
+<h1>Upgrading from GeNN 4<a class="headerlink" href="#upgrading-from-genn-4" title="Link to this heading"></a></h1>
 <p>GeNN 5 does not aim to be a backward-compatible upgrade.
 In PyGeNN we have strived to add backward compatibility where possible but most models will need to be updated.</p>
 <section id="genncode">
-<h2>GeNNCode<a class="headerlink" href="#genncode" title="Permalink to this heading"></a></h2>
+<h2>GeNNCode<a class="headerlink" href="#genncode" title="Link to this heading"></a></h2>
 <p>In GeNN 4, GeNNCode was passed directly to the underlying compiler whereas, in GeNN 5, it is parsed and only a subset of C99 language features are supported.
 In PyGeNN,</p>
 <ul class="simple">
@@ -99,7 +99,7 @@ In PyGeNN,</p>
 </ul>
 </section>
 <section id="syntax-changes">
-<h2>Syntax changes<a class="headerlink" href="#syntax-changes" title="Permalink to this heading"></a></h2>
+<h2>Syntax changes<a class="headerlink" href="#syntax-changes" title="Link to this heading"></a></h2>
 <p>In order to streamline the modelling process and reduce the number of ways to achieve the same thing,
 several areas of GeNN syntax have changed:</p>
 <ul>

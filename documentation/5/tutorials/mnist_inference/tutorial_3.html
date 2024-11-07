@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Faster classification of the whole test set &mdash; PyGeNN  documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css?v=d2d258e8" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css?v=f4aeca0c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css" />
 
   
@@ -18,11 +18,11 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -102,13 +102,13 @@
            <div itemprop="articleBody">
              
   <section id="Faster-classification-of-the-whole-test-set">
-<h1>Faster classification of the whole test set<a class="headerlink" href="#Faster-classification-of-the-whole-test-set" title="Permalink to this heading"></a></h1>
+<h1>Faster classification of the whole test set<a class="headerlink" href="#Faster-classification-of-the-whole-test-set" title="Link to this heading"></a></h1>
 <p>The model we developed in the previous tutorial classified MNIST successfully but was rather slow. Like ANNs, to maximise performance when simulating small SNNs like this on a GPU, we need to simulate multiple copies of the model at once and run them on <strong>batches</strong> of input images. In this tutorial we will modify our model to do just that as well as off-loading further computation to the GPU to improve performance.</p>
 <section id="Install-PyGeNN-wheel-from-Google-Drive">
-<h2>Install PyGeNN wheel from Google Drive<a class="headerlink" href="#Install-PyGeNN-wheel-from-Google-Drive" title="Permalink to this heading"></a></h2>
+<h2>Install PyGeNN wheel from Google Drive<a class="headerlink" href="#Install-PyGeNN-wheel-from-Google-Drive" title="Link to this heading"></a></h2>
 <p>Download wheel file</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">get_ipython</span><span class="p">()):</span>
@@ -129,33 +129,31 @@
 <div class="highlight"><pre>
 Requirement already satisfied: gdown in /usr/local/lib/python3.10/dist-packages (5.1.0)
 Requirement already satisfied: beautifulsoup4 in /usr/local/lib/python3.10/dist-packages (from gdown) (4.12.3)
-Requirement already satisfied: filelock in /usr/local/lib/python3.10/dist-packages (from gdown) (3.13.1)
+Requirement already satisfied: filelock in /usr/local/lib/python3.10/dist-packages (from gdown) (3.13.4)
 Requirement already satisfied: requests[socks] in /usr/local/lib/python3.10/dist-packages (from gdown) (2.31.0)
 Requirement already satisfied: tqdm in /usr/local/lib/python3.10/dist-packages (from gdown) (4.66.2)
 Requirement already satisfied: soupsieve&gt;1.2 in /usr/local/lib/python3.10/dist-packages (from beautifulsoup4-&gt;gdown) (2.5)
 Requirement already satisfied: charset-normalizer&lt;4,&gt;=2 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (3.3.2)
-Requirement already satisfied: idna&lt;4,&gt;=2.5 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (3.6)
+Requirement already satisfied: idna&lt;4,&gt;=2.5 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (3.7)
 Requirement already satisfied: urllib3&lt;3,&gt;=1.21.1 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (2.0.7)
 Requirement already satisfied: certifi&gt;=2017.4.17 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (2024.2.2)
 Requirement already satisfied: PySocks!=1.5.7,&gt;=1.5.6 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (1.7.1)
 Downloading...
 From: https://drive.google.com/uc?id=1V_GzXUDzcFz9QDIpxAD8QNEglcSipssW
 To: /content/pygenn-5.0.0-cp310-cp310-linux_x86_64.whl
-100% 8.29M/8.29M [00:00&lt;00:00, 182MB/s]
+100% 8.38M/8.38M [00:00&lt;00:00, 17.4MB/s]
 Processing ./pygenn-5.0.0-cp310-cp310-linux_x86_64.whl
 Requirement already satisfied: numpy&gt;=1.17 in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (1.25.2)
-Requirement already satisfied: deprecated in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (1.2.14)
 Requirement already satisfied: psutil in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (5.9.5)
-Requirement already satisfied: wrapt&lt;2,&gt;=1.10 in /usr/local/lib/python3.10/dist-packages (from deprecated-&gt;pygenn==5.0.0) (1.14.1)
 pygenn is already installed with the same version as the provided wheel. Use --force-reinstall to force an installation of the wheel.
 env: CUDA_PATH=/usr/local/cuda
 </pre></div></div>
 </div>
 </section>
 <section id="Download-pre-trained-weights-and-MNIST-test-data">
-<h2>Download pre-trained weights and MNIST test data<a class="headerlink" href="#Download-pre-trained-weights-and-MNIST-test-data" title="Permalink to this heading"></a></h2>
+<h2>Download pre-trained weights and MNIST test data<a class="headerlink" href="#Download-pre-trained-weights-and-MNIST-test-data" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>gdown<span class="w"> </span>1cmNL8W0QZZtn3dPHiOQnVjGAYTk6Rhpc
@@ -171,18 +169,18 @@ env: CUDA_PATH=/usr/local/cuda
 Downloading...
 From: https://drive.google.com/uc?id=1cmNL8W0QZZtn3dPHiOQnVjGAYTk6Rhpc
 To: /content/weights_0_1.npy
-100% 402k/402k [00:00&lt;00:00, 50.3MB/s]
+100% 402k/402k [00:00&lt;00:00, 105MB/s]
 Downloading...
 From: https://drive.google.com/uc?id=131lCXLEH6aTXnBZ9Nh4eJLSy5DQ6LKSF
 To: /content/weights_1_2.npy
-100% 5.25k/5.25k [00:00&lt;00:00, 23.2MB/s]
+100% 5.25k/5.25k [00:00&lt;00:00, 21.5MB/s]
 </pre></div></div>
 </div>
 </section>
 <section id="Install-MNIST-package">
-<h2>Install MNIST package<a class="headerlink" href="#Install-MNIST-package" title="Permalink to this heading"></a></h2>
+<h2>Install MNIST package<a class="headerlink" href="#Install-MNIST-package" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>mnist
@@ -200,10 +198,10 @@ Requirement already satisfied: numpy in /usr/local/lib/python3.10/dist-packages 
 </div>
 </section>
 <section id="Build-model">
-<h2>Build model<a class="headerlink" href="#Build-model" title="Permalink to this heading"></a></h2>
+<h2>Build model<a class="headerlink" href="#Build-model" title="Link to this heading"></a></h2>
 <p>Import standard module and PyGeNN functionality as before and configure simulation parameters</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mnist</span>
@@ -222,7 +220,7 @@ Requirement already satisfied: numpy in /usr/local/lib/python3.10/dist-packages 
 </div>
 <p>As we’re going to use it in a few places, we add an additional simulation parameter to define the batch size.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">BATCH_SIZE</span> <span class="o">=</span> <span class="mi">128</span>
@@ -231,7 +229,7 @@ Requirement already satisfied: numpy in /usr/local/lib/python3.10/dist-packages 
 </div>
 <p>Define the custom neuron and synapse models in exactly the same way as before</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Very simple integrate-and-fire neuron model</span>
@@ -256,7 +254,7 @@ Requirement already satisfied: numpy in /usr/local/lib/python3.10/dist-packages 
 <p>As we increase the batch size of our model, the cost of resetting the spike counts and membrane voltages will increase. To counteract this, we can offload tasks like this to the GPU using a <em>custom update</em> model. These are defined using very similar syntax to neuron and synapse models but have one additional feature - variable references. These allow custom updates to be <em>attached</em> to existing neuron or synapse populations to modify their variables outside of the standard neuron and synapse
 updates.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">reset_model</span> <span class="o">=</span> <span class="n">create_custom_update_model</span><span class="p">(</span>
@@ -271,7 +269,7 @@ updates.</p>
 </div>
 <p>Create a new model in exactly the same way as before</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">GeNNModel</span><span class="p">(</span><span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="s2">&quot;tutorial_3&quot;</span><span class="p">)</span>
@@ -281,7 +279,7 @@ updates.</p>
 </div>
 <p>Set the model batch size</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">BATCH_SIZE</span>
@@ -290,7 +288,7 @@ updates.</p>
 </div>
 <p>Build model, load weights and create neuron, synapse and current source populations as before</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load weights</span>
@@ -322,7 +320,7 @@ updates.</p>
 </div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">neurons</span><span class="p">:</span>
@@ -334,13 +332,14 @@ updates.</p>
 </div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Build and load our model</span>
 <span class="n">model</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
 <span class="n">model</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
 
+<span class="n">mnist</span><span class="o">.</span><span class="n">datasets_url</span> <span class="o">=</span> <span class="s2">&quot;https://storage.googleapis.com/cvdf-datasets/mnist/&quot;</span>
 <span class="n">testing_images</span> <span class="o">=</span> <span class="n">mnist</span><span class="o">.</span><span class="n">test_images</span><span class="p">()</span>
 <span class="n">testing_labels</span> <span class="o">=</span> <span class="n">mnist</span><span class="o">.</span><span class="n">test_labels</span><span class="p">()</span>
 
@@ -352,7 +351,7 @@ updates.</p>
 </div>
 <p>First of all, we determine where to split our test data to achieve our batch size and then use <code class="docutils literal notranslate"><span class="pre">np.split</span></code> to perform the splitting operation (the last batch will contain &lt; <code class="docutils literal notranslate"><span class="pre">BATCH_SIZE</span></code> stimuli as 128 does not divide 10000 evenly)</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">batch_splits</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">BATCH_SIZE</span><span class="p">,</span> <span class="n">testing_images</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">BATCH_SIZE</span><span class="p">)</span>
@@ -364,10 +363,10 @@ updates.</p>
 </div>
 </section>
 <section id="Simulate-model">
-<h2>Simulate model<a class="headerlink" href="#Simulate-model" title="Permalink to this heading"></a></h2>
+<h2>Simulate model<a class="headerlink" href="#Simulate-model" title="Link to this heading"></a></h2>
 <p>Our batched simulation loop looks very similar to the loop we defined in the previous tutorial however: * We now loop over <em>batches</em> of images and labels rather than individual ones * When we copy images into the input current view, we only copy as many images as are present in this batch to handle the remainder in the final batch * We specify an axis for <code class="docutils literal notranslate"><span class="pre">np.argmax</span></code> so that we get the neuron with the largest spike count in each batch</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">current_input_magnitude</span> <span class="o">=</span> <span class="n">current_input</span><span class="o">.</span><span class="n">vars</span><span class="p">[</span><span class="s2">&quot;magnitude&quot;</span><span class="p">]</span>
@@ -407,7 +406,7 @@ updates.</p>
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "15e7a28075234a688d35420b0d90cd3a"}</script></div>
+<script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "e52e8044c42c46d682fa95bcb7f53fab"}</script></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
@@ -416,12 +415,12 @@ updates.</p>
 <div class="highlight"><pre>
 
 Accuracy 97.54%%
-Time 0.34431284400000095 seconds
+Time 0.28141129400000864 seconds
 </pre></div></div>
 </div>
 <p>And…we get a speed up of over 30x compared to the previous tutorial</p>
 <script type="application/vnd.jupyter.widget-state+json">
-{"15e7a28075234a688d35420b0d90cd3a": {"model_module": "@jupyter-widgets/controls", "model_name": "HBoxModel", "model_module_version": "1.5.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_f9f0f9264cab41e28e8d566a8a8fa580", "IPY_MODEL_777c9f0e53bd4ef1b6fd2d73ad5306c9", "IPY_MODEL_1767b26843a0422fafe61c5dc2817cf5"], "layout": "IPY_MODEL_b586c61e42c64631ac79e44e5e716f94"}}, "f9f0f9264cab41e28e8d566a8a8fa580": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "model_module_version": "1.5.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HTMLView", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_673a35933b934bbf8688e720f829045a", "placeholder": "\u200b", "style": "IPY_MODEL_0e8ec39043cf45a19c0e2d8ae180ef8b", "value": "100%"}}, "777c9f0e53bd4ef1b6fd2d73ad5306c9": {"model_module": "@jupyter-widgets/controls", "model_name": "FloatProgressModel", "model_module_version": "1.5.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "FloatProgressModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "ProgressView", "bar_style": "success", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_559829b46976432c8e21a11b7a6fddcb", "max": 79, "min": 0, "orientation": "horizontal", "style": "IPY_MODEL_fdf6330a16a94010ad46847e57aa8dbf", "value": 79}}, "1767b26843a0422fafe61c5dc2817cf5": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "model_module_version": "1.5.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HTMLView", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_0eefe97369fa4e91b591ee1ac2568a16", "placeholder": "\u200b", "style": "IPY_MODEL_514826e392cc400796831ac477a1d9c3", "value": "\u200779/79\u2007[00:00&lt;00:00,\u2007245.92it/s]"}}, "b586c61e42c64631ac79e44e5e716f94": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "673a35933b934bbf8688e720f829045a": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "0e8ec39043cf45a19c0e2d8ae180ef8b": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "model_module_version": "1.5.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "description_width": ""}}, "559829b46976432c8e21a11b7a6fddcb": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "fdf6330a16a94010ad46847e57aa8dbf": {"model_module": "@jupyter-widgets/controls", "model_name": "ProgressStyleModel", "model_module_version": "1.5.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "ProgressStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "bar_color": null, "description_width": ""}}, "0eefe97369fa4e91b591ee1ac2568a16": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "514826e392cc400796831ac477a1d9c3": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "model_module_version": "1.5.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "description_width": ""}}}
+{"e52e8044c42c46d682fa95bcb7f53fab": {"model_module": "@jupyter-widgets/controls", "model_name": "HBoxModel", "model_module_version": "1.5.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_b59fbc72dba94f4fa809231c05640c66", "IPY_MODEL_dc4989f3a58442ce83de37ac916a0403", "IPY_MODEL_3d86add0efb449059aa63ae48b33fef8"], "layout": "IPY_MODEL_f7418e0b10d0488cb2c9dd1bd5764208"}}, "b59fbc72dba94f4fa809231c05640c66": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "model_module_version": "1.5.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HTMLView", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_44b5d0e667c4400b9e870f6a941d4146", "placeholder": "\u200b", "style": "IPY_MODEL_0fcf7fa1f40d41cda4897095a1e54556", "value": "100%"}}, "dc4989f3a58442ce83de37ac916a0403": {"model_module": "@jupyter-widgets/controls", "model_name": "FloatProgressModel", "model_module_version": "1.5.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "FloatProgressModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "ProgressView", "bar_style": "success", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_cc04830147424649a823a853696bd9f6", "max": 79, "min": 0, "orientation": "horizontal", "style": "IPY_MODEL_575665753d7c4fbfbf1613f3c12e40e4", "value": 79}}, "3d86add0efb449059aa63ae48b33fef8": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "model_module_version": "1.5.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HTMLView", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_abd7296b31c94a97adf5005affef1341", "placeholder": "\u200b", "style": "IPY_MODEL_7bd8056178df4906ac21615f6458118a", "value": "\u200779/79\u2007[00:00&lt;00:00,\u2007245.49it/s]"}}, "f7418e0b10d0488cb2c9dd1bd5764208": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "44b5d0e667c4400b9e870f6a941d4146": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "0fcf7fa1f40d41cda4897095a1e54556": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "model_module_version": "1.5.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "description_width": ""}}, "cc04830147424649a823a853696bd9f6": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "575665753d7c4fbfbf1613f3c12e40e4": {"model_module": "@jupyter-widgets/controls", "model_name": "ProgressStyleModel", "model_module_version": "1.5.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "ProgressStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "bar_color": null, "description_width": ""}}, "abd7296b31c94a97adf5005affef1341": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "7bd8056178df4906ac21615f6458118a": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "model_module_version": "1.5.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "description_width": ""}}}
 </script></section>
 </section>
 

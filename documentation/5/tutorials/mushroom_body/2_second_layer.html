@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Adding Kenyon Cells &mdash; PyGeNN  documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css?v=d2d258e8" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css?v=f4aeca0c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css" />
 
   
@@ -18,11 +18,11 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -102,10 +102,10 @@
            <div itemprop="articleBody">
              
   <section id="Adding-Kenyon-Cells">
-<h1>Adding Kenyon Cells<a class="headerlink" href="#Adding-Kenyon-Cells" title="Permalink to this heading"></a></h1>
+<h1>Adding Kenyon Cells<a class="headerlink" href="#Adding-Kenyon-Cells" title="Link to this heading"></a></h1>
 <p>In this second tutorial we add a large population of Kenyon Cells to the mushroom body and visualize their spiking activity in response to latency coded MNIST digits.</p>
 <section id="Install-PyGeNN-wheel-from-Google-Drive">
-<h2>Install PyGeNN wheel from Google Drive<a class="headerlink" href="#Install-PyGeNN-wheel-from-Google-Drive" title="Permalink to this heading"></a></h2>
+<h2>Install PyGeNN wheel from Google Drive<a class="headerlink" href="#Install-PyGeNN-wheel-from-Google-Drive" title="Link to this heading"></a></h2>
 <p>Download wheel file</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -153,7 +153,7 @@ env: CUDA_PATH=/usr/local/cuda
 </div>
 </section>
 <section id="Install-MNIST-package">
-<h2>Install MNIST package<a class="headerlink" href="#Install-MNIST-package" title="Permalink to this heading"></a></h2>
+<h2>Install MNIST package<a class="headerlink" href="#Install-MNIST-package" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -176,7 +176,7 @@ Successfully installed mnist-0.2.2
 </div>
 </section>
 <section id="Build-tutorial-model">
-<h2>Build tutorial model<a class="headerlink" href="#Build-tutorial-model" title="Permalink to this heading"></a></h2>
+<h2>Build tutorial model<a class="headerlink" href="#Build-tutorial-model" title="Link to this heading"></a></h2>
 <p>Import modules</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -189,6 +189,7 @@ Successfully installed mnist-0.2.2
 <span class="kn">from</span> <span class="nn">pygenn</span> <span class="kn">import</span> <span class="p">(</span><span class="n">create_current_source_model</span><span class="p">,</span> <span class="n">init_postsynaptic</span><span class="p">,</span>
                     <span class="n">init_sparse_connectivity</span><span class="p">,</span> <span class="n">init_weight_update</span><span class="p">,</span> <span class="n">GeNNModel</span><span class="p">)</span>
 
+<span class="n">mnist</span><span class="o">.</span><span class="n">datasets_url</span> <span class="o">=</span> <span class="s2">&quot;https://storage.googleapis.com/cvdf-datasets/mnist/&quot;</span>
 <span class="n">training_images</span> <span class="o">=</span> <span class="n">mnist</span><span class="o">.</span><span class="n">train_images</span><span class="p">()</span>
 <span class="n">training_images</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">training_images</span><span class="p">,</span> <span class="p">(</span><span class="n">training_images</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
 
@@ -199,7 +200,7 @@ Successfully installed mnist-0.2.2
 </div>
 </section>
 <section id="Parameters">
-<h2>Parameters<a class="headerlink" href="#Parameters" title="Permalink to this heading"></a></h2>
+<h2>Parameters<a class="headerlink" href="#Parameters" title="Link to this heading"></a></h2>
 <p>Define some model parameters</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -254,7 +255,7 @@ Successfully installed mnist-0.2.2
 </div>
 </section>
 <section id="Custom-models">
-<h2>Custom models<a class="headerlink" href="#Custom-models" title="Permalink to this heading"></a></h2>
+<h2>Custom models<a class="headerlink" href="#Custom-models" title="Link to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -269,7 +270,7 @@ Successfully installed mnist-0.2.2
 </div>
 </section>
 <section id="Model-definition">
-<h2>Model definition<a class="headerlink" href="#Model-definition" title="Permalink to this heading"></a></h2>
+<h2>Model definition<a class="headerlink" href="#Model-definition" title="Link to this heading"></a></h2>
 <p>Create a new model called “mnist_mb_second_layer” as before but add a second population of <code class="docutils literal notranslate"><span class="pre">NUM_KC</span></code> neurons to represent the Kenyon Cells.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -309,7 +310,7 @@ Successfully installed mnist-0.2.2
 </div>
 </section>
 <section id="Build-model">
-<h2>Build model<a class="headerlink" href="#Build-model" title="Permalink to this heading"></a></h2>
+<h2>Build model<a class="headerlink" href="#Build-model" title="Link to this heading"></a></h2>
 <p>Generate code and load it into PyGeNN allocating a large enough spike recording buffer to cover <code class="docutils literal notranslate"><span class="pre">PRESENT_TIME_MS</span></code> (after converting from ms to timesteps)</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -326,7 +327,7 @@ Successfully installed mnist-0.2.2
 </div>
 </section>
 <section id="Simulate-tutorial-model">
-<h2>Simulate tutorial model<a class="headerlink" href="#Simulate-tutorial-model" title="Permalink to this heading"></a></h2>
+<h2>Simulate tutorial model<a class="headerlink" href="#Simulate-tutorial-model" title="Link to this heading"></a></h2>
 <p>As well as resetting the state of every neuron after presenting each stimuli, because we have now added synapses with their own dynamics, these also need to be reset. This function resets neuron state variables selected by the keys of a dictionary to the values specifed in the dictionary values and pushes the new values to the GPU.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:

@@ -1,27 +1,27 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Simulating networks &mdash; PyGeNN  documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css" />
-      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css" />
-      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css" />
-      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css?v=d2d258e8" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css?v=f4aeca0c" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css?v=2082cf3c" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css?v=1277b6f3" />
 
   
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="_static/doctools.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -86,7 +86,7 @@
            <div itemprop="articleBody">
              
   <section id="simulating-networks">
-<h1>Simulating networks<a class="headerlink" href="#simulating-networks" title="Permalink to this heading"></a></h1>
+<h1>Simulating networks<a class="headerlink" href="#simulating-networks" title="Link to this heading"></a></h1>
 <p>Once you have built a network using the <a class="reference internal" href="source/pygenn.html#pygenn.GeNNModel" title="pygenn.GeNNModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">GeNNModel</span></code></a> API described in <a class="reference internal" href="building_networks.html#section-building-networks"><span class="std std-ref">Building networks</span></a> and
 before you can simulate it you first need to launch the GeNN code generator using <a class="reference internal" href="source/pygenn.html#pygenn.GeNNModel.build" title="pygenn.GeNNModel.build"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GeNNModel.build()</span></code></a>
 and then load the model into memory using <a class="reference internal" href="source/pygenn.html#pygenn.GeNNModel.load" title="pygenn.GeNNModel.load"><code class="xref py py-meth docutils literal notranslate"><span class="pre">GeNNModel.load()</span></code></a>.
@@ -104,7 +104,7 @@ If no errors are reported, the simplest simulation looks like the following:</p>
 On GPU platforms like CUDA, the above simulation will run asynchronously with the loop
 launching the kernels to simulate each timestep but not synchronising with the CPU at any point.</p>
 <section id="spike-recording">
-<span id="section-spike-recording"></span><h2>Spike recording<a class="headerlink" href="#spike-recording" title="Permalink to this heading"></a></h2>
+<span id="section-spike-recording"></span><h2>Spike recording<a class="headerlink" href="#spike-recording" title="Link to this heading"></a></h2>
 <p>Because recording spikes and spike-like events is a common requirement and their sparse nature can make them inefficient to access,
 GeNN has a dedicated events recording system which collects events, emitted over a number of timesteps, in GPU memory before transferring to the host.
 Spike recording can be enabled on chosen neuron groups by setting the <a class="reference internal" href="source/pygenn.html#pygenn.NeuronGroup.spike_recording_enabled" title="pygenn.NeuronGroup.spike_recording_enabled"><code class="xref py py-attr docutils literal notranslate"><span class="pre">NeuronGroup.spike_recording_enabled</span></code></a> and <a class="reference internal" href="source/pygenn.html#pygenn.NeuronGroup.spike_event_recording_enabled" title="pygenn.NeuronGroup.spike_event_recording_enabled"><code class="xref py py-attr docutils literal notranslate"><span class="pre">NeuronGroup.spike_event_recording_enabled</span></code></a> properties.
@@ -129,14 +129,14 @@ For example, the previous example could be extended to record spikes from a <a c
 <p>If batching was enabled, spike recording data from batch <code class="docutils literal notranslate"><span class="pre">b</span></code> would be accessed with e.g. <code class="docutils literal notranslate"><span class="pre">pop.spike_recording_data[b]</span></code>.</p>
 </section>
 <section id="variables">
-<h2>Variables<a class="headerlink" href="#variables" title="Permalink to this heading"></a></h2>
+<h2>Variables<a class="headerlink" href="#variables" title="Link to this heading"></a></h2>
 <p>In real simulations, as well as spikes, you often want to interact with model state variables as the simulation runs.
 State variables are encapsulated in <a class="reference internal" href="source/pygenn.html#pygenn.model_preprocessor.VariableBase" title="pygenn.model_preprocessor.VariableBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygenn.model_preprocessor.VariableBase</span></code></a> objects and all populations own dictionaries of these, accessible by variable name.
 For example all groups have <code class="xref py py-attr docutils literal notranslate"><span class="pre">GroupMixin.vars</span></code> whereas, synapse groups additionally have <code class="xref py py-attr docutils literal notranslate"><span class="pre">SynapseGroupMixin.pre_vars</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">SynapseGroupMixin.post_vars</span></code>.
 By default, copies of GeNN variables are allocated both on the GPU device and the host from where they can be accessed from Python.
 However, if variable’s location is set to <a class="reference internal" href="source/pygenn.html#pygenn.VarLocation.DEVICE" title="pygenn.VarLocation.DEVICE"><code class="xref py py-attr docutils literal notranslate"><span class="pre">VarLocation.DEVICE</span></code></a>, they cannot be accessed from Python.</p>
 <section id="pushing-and-pulling">
-<span id="section-pull-push"></span><h3>Pushing and pulling<a class="headerlink" href="#pushing-and-pulling" title="Permalink to this heading"></a></h3>
+<span id="section-pull-push"></span><h3>Pushing and pulling<a class="headerlink" href="#pushing-and-pulling" title="Link to this heading"></a></h3>
 <p>The contents of the host copy of a variable can be ‘pushed’ to the GPU device by calling <a class="reference internal" href="source/pygenn.html#pygenn.model_preprocessor.ArrayBase.push_to_device" title="pygenn.model_preprocessor.ArrayBase.push_to_device"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pygenn.model_preprocessor.ArrayBase.push_to_device()</span></code></a>
 and ‘pulled’ from the GPU device into the host copy by calling <a class="reference internal" href="source/pygenn.html#pygenn.model_preprocessor.ArrayBase.pull_from_device" title="pygenn.model_preprocessor.ArrayBase.pull_from_device"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pygenn.model_preprocessor.ArrayBase.pull_from_device()</span></code></a>.
 In practice this takes the shape of, for example,</p>
@@ -151,7 +151,7 @@ In practice this takes the shape of, for example,</p>
 <p>When using the single-threaded CPU backend, these operations do nothing but we recommend leaving them in place so models will work transparantly across all backends.</p>
 </section>
 <section id="values-and-views">
-<h3>Values and views<a class="headerlink" href="#values-and-views" title="Permalink to this heading"></a></h3>
+<h3>Values and views<a class="headerlink" href="#values-and-views" title="Link to this heading"></a></h3>
 <p>To access the data associated with a variable, you can use the <code class="docutils literal notranslate"><span class="pre">current_values</span></code> property. For example to save the current values of a variable:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;values.npy&quot;</span><span class="p">,</span> <span class="n">pop</span><span class="o">.</span><span class="n">vars</span><span class="p">[</span><span class="s2">&quot;V&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">current_values</span><span class="p">)</span>
 </pre></div>
@@ -180,7 +180,7 @@ Additionally, you can can <em>directly</em> access the memory owned by GeNN usin
 </section>
 </section>
 <section id="extra-global-parameters">
-<span id="section-extra-global-parameters"></span><h2>Extra global parameters<a class="headerlink" href="#extra-global-parameters" title="Permalink to this heading"></a></h2>
+<span id="section-extra-global-parameters"></span><h2>Extra global parameters<a class="headerlink" href="#extra-global-parameters" title="Link to this heading"></a></h2>
 <p>Extra global parameters behave very much like variables.
 They are encapsulated in <a class="reference internal" href="source/pygenn.html#pygenn.model_preprocessor.ExtraGlobalParameter" title="pygenn.model_preprocessor.ExtraGlobalParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygenn.model_preprocessor.ExtraGlobalParameter</span></code></a> objects which are derived from the same
 <a class="reference internal" href="source/pygenn.html#pygenn.model_preprocessor.ArrayBase" title="pygenn.model_preprocessor.ArrayBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">pygenn.model_preprocessor.ArrayBase</span></code></a> base class and thus share much of the functionality described above.
@@ -205,7 +205,7 @@ called “X” to hold 100 elements which are initially all zero you could do th
 </div>
 </section>
 <section id="dynamic-parameters">
-<span id="section-dynamic-parameters"></span><h2>Dynamic parameters<a class="headerlink" href="#dynamic-parameters" title="Permalink to this heading"></a></h2>
+<span id="section-dynamic-parameters"></span><h2>Dynamic parameters<a class="headerlink" href="#dynamic-parameters" title="Link to this heading"></a></h2>
 <p>As discussed previously, when building a model, parameters can be made dynamic e.g. by calling <a class="reference internal" href="source/pygenn.html#pygenn.NeuronGroup.set_param_dynamic" title="pygenn.NeuronGroup.set_param_dynamic"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pygenn.NeuronGroup.set_param_dynamic()</span></code></a> on a <a class="reference internal" href="source/pygenn.html#pygenn.NeuronGroup" title="pygenn.NeuronGroup"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronGroup</span></code></a>.
 The values of these parameters can then be set at runtime using the <code class="xref py py-meth docutils literal notranslate"><span class="pre">pygenn.GroupMixin.set_dynamic_param_value()</span></code> method. For example to increase the value of a
 parameter called “tau” on a population <code class="docutils literal notranslate"><span class="pre">pop</span></code>, you could do the following:</p>

@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Adding synapses &mdash; PyGeNN  documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css?v=d2d258e8" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css?v=f4aeca0c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css" />
 
   
@@ -18,11 +18,11 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -102,10 +102,10 @@
            <div itemprop="articleBody">
              
   <section id="Adding-synapses">
-<h1>Adding synapses<a class="headerlink" href="#Adding-synapses" title="Permalink to this heading"></a></h1>
+<h1>Adding synapses<a class="headerlink" href="#Adding-synapses" title="Link to this heading"></a></h1>
 <p>This tutorial explains how to add synapses to connect the neuron populations we talked about in the previous tutorial into a balanced random network model.</p>
 <section id="Install-PyGeNN-wheel-from-Google-Drive">
-<h2>Install PyGeNN wheel from Google Drive<a class="headerlink" href="#Install-PyGeNN-wheel-from-Google-Drive" title="Permalink to this heading"></a></h2>
+<h2>Install PyGeNN wheel from Google Drive<a class="headerlink" href="#Install-PyGeNN-wheel-from-Google-Drive" title="Link to this heading"></a></h2>
 <p>Download wheel file</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -165,7 +165,7 @@ env: CUDA_PATH=/usr/local/cuda
 </div>
 </section>
 <section id="Build-model">
-<h2>Build model<a class="headerlink" href="#Build-model" title="Permalink to this heading"></a></h2>
+<h2>Build model<a class="headerlink" href="#Build-model" title="Link to this heading"></a></h2>
 <p>Create a new model called “tutorial2” with floating point precision and set the simulation timestep to 1ms</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -292,7 +292,7 @@ is used for spiking synapses without any sort of learning. This has a single par
 </div>
 </section>
 <section id="Simulate-model">
-<h2>Simulate model<a class="headerlink" href="#Simulate-model" title="Permalink to this heading"></a></h2>
+<h2>Simulate model<a class="headerlink" href="#Simulate-model" title="Link to this heading"></a></h2>
 <p>Simulate the model for 1000 timesteps</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:

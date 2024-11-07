@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Presenting latency-coded inputs &mdash; PyGeNN  documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css?v=d2d258e8" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css?v=f4aeca0c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css" />
 
   
@@ -18,11 +18,11 @@
     <script src="../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-        <script src="../../_static/jquery.js"></script>
-        <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -102,10 +102,10 @@
            <div itemprop="articleBody">
              
   <section id="Presenting-latency-coded-inputs">
-<h1>Presenting latency-coded inputs<a class="headerlink" href="#Presenting-latency-coded-inputs" title="Permalink to this heading"></a></h1>
+<h1>Presenting latency-coded inputs<a class="headerlink" href="#Presenting-latency-coded-inputs" title="Link to this heading"></a></h1>
 <p>In this first tutorial we build an input layer of spiking “projection neurons” for our mushroom body model which converts MNIST digits into latency-coded spikes.</p>
 <section id="Install-PyGeNN-wheel-from-Google-Drive">
-<h2>Install PyGeNN wheel from Google Drive<a class="headerlink" href="#Install-PyGeNN-wheel-from-Google-Drive" title="Permalink to this heading"></a></h2>
+<h2>Install PyGeNN wheel from Google Drive<a class="headerlink" href="#Install-PyGeNN-wheel-from-Google-Drive" title="Link to this heading"></a></h2>
 <p>Download wheel file</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -153,7 +153,7 @@ env: CUDA_PATH=/usr/local/cuda
 </div>
 </section>
 <section id="Install-MNIST-package">
-<h2>Install MNIST package<a class="headerlink" href="#Install-MNIST-package" title="Permalink to this heading"></a></h2>
+<h2>Install MNIST package<a class="headerlink" href="#Install-MNIST-package" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -176,7 +176,7 @@ Successfully installed mnist-0.2.2
 </div>
 </section>
 <section id="Build-tutorial-model">
-<h2>Build tutorial model<a class="headerlink" href="#Build-tutorial-model" title="Permalink to this heading"></a></h2>
+<h2>Build tutorial model<a class="headerlink" href="#Build-tutorial-model" title="Link to this heading"></a></h2>
 <p>Import modules</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -195,7 +195,8 @@ Successfully installed mnist-0.2.2
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">training_images</span> <span class="o">=</span> <span class="n">mnist</span><span class="o">.</span><span class="n">train_images</span><span class="p">()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mnist</span><span class="o">.</span><span class="n">datasets_url</span> <span class="o">=</span> <span class="s2">&quot;https://storage.googleapis.com/cvdf-datasets/mnist/&quot;</span>
+<span class="n">training_images</span> <span class="o">=</span> <span class="n">mnist</span><span class="o">.</span><span class="n">train_images</span><span class="p">()</span>
 <span class="n">training_images</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">training_images</span><span class="p">,</span> <span class="p">(</span><span class="n">training_images</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
 
 <span class="n">training_images</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">training_images</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
@@ -204,7 +205,7 @@ Successfully installed mnist-0.2.2
 </div>
 </section>
 <section id="Visualize-training-data">
-<h2>Visualize training data<a class="headerlink" href="#Visualize-training-data" title="Permalink to this heading"></a></h2>
+<h2>Visualize training data<a class="headerlink" href="#Visualize-training-data" title="Link to this heading"></a></h2>
 <p>Reshape first training image from 784 element vector to 28x28 matrix and visualize.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -224,7 +225,7 @@ Successfully installed mnist-0.2.2
 </div>
 </section>
 <section id="Parameters">
-<h2>Parameters<a class="headerlink" href="#Parameters" title="Permalink to this heading"></a></h2>
+<h2>Parameters<a class="headerlink" href="#Parameters" title="Link to this heading"></a></h2>
 <p>Define some model parameters</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -274,7 +275,7 @@ Successfully installed mnist-0.2.2
 </div>
 </section>
 <section id="Custom-models">
-<h2>Custom models<a class="headerlink" href="#Custom-models" title="Permalink to this heading"></a></h2>
+<h2>Custom models<a class="headerlink" href="#Custom-models" title="Link to this heading"></a></h2>
 <p>We are going to apply inputs to our model by treating scaled image pixels as neuronal input currents so here we define a simple model to inject the current specified by a state variable. Like all types of custom model in GeNN, the <code class="docutils literal notranslate"><span class="pre">var_name_types</span></code> kwarg is used to specify state variable names and types</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -290,7 +291,7 @@ Successfully installed mnist-0.2.2
 </div>
 </section>
 <section id="Model-definition">
-<h2>Model definition<a class="headerlink" href="#Model-definition" title="Permalink to this heading"></a></h2>
+<h2>Model definition<a class="headerlink" href="#Model-definition" title="Link to this heading"></a></h2>
 <p>Create a new model called “mnist_mb_first_layer” with floating point precision and set the simulation timestep to our chosen value</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -328,7 +329,7 @@ Successfully installed mnist-0.2.2
 </div>
 </section>
 <section id="Build-model">
-<h2>Build model<a class="headerlink" href="#Build-model" title="Permalink to this heading"></a></h2>
+<h2>Build model<a class="headerlink" href="#Build-model" title="Link to this heading"></a></h2>
 <p>Generate code and load it into PyGeNN allocating a large enough spike recording buffer to cover <code class="docutils literal notranslate"><span class="pre">PRESENT_TIME_MS</span></code> (after converting from ms to timesteps)</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -345,7 +346,7 @@ Successfully installed mnist-0.2.2
 </div>
 </section>
 <section id="Simulate-tutorial-model">
-<h2>Simulate tutorial model<a class="headerlink" href="#Simulate-tutorial-model" title="Permalink to this heading"></a></h2>
+<h2>Simulate tutorial model<a class="headerlink" href="#Simulate-tutorial-model" title="Link to this heading"></a></h2>
 <p>In order to ensure that the same stimulus causes exactly the same input each time it is presented, we want to reset the model’s state after presenting each stimulus. This function resets neuron state variables selected by the keys of a dictionary to the values specifed in the dictionary values and pushes the new values to the GPU.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:

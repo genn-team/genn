@@ -11,6 +11,7 @@ Below is a gallery of example projects developed by us using GeNN.
 
     <div class="sphx-glr-thumbnails">
 
+.. thumbnail-parent-div-open
 
 .. raw:: html
 
@@ -62,6 +63,8 @@ Below is a gallery of example projects developed by us using GeNN.
       <div class="sphx-glr-thumbnail-title">PyGeNN implementation of SuperSpike</div>
     </div>
 
+
+.. thumbnail-parent-div-close
 
 .. raw:: html
 
