@@ -25,6 +25,12 @@
 
 static const char *__doc_CodeGenerator_BackendBase = R"doc()doc";
 
+static const char *__doc_CodeGenerator_BackendBase_AtomicOperation = R"doc(What atomic operation is required)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_AtomicOperation_ADD = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_AtomicOperation_OR = R"doc()doc";
+
 static const char *__doc_CodeGenerator_BackendBase_BackendBase = R"doc()doc";
 
 static const char *__doc_CodeGenerator_BackendBase_ReductionTarget = R"doc(Simple struct to hold reduction targets)doc";
@@ -278,6 +284,8 @@ $Parameter ``preambleHandler``:
 static const char *__doc_CodeGenerator_BackendBase_genTimer = R"doc()doc";
 
 static const char *__doc_CodeGenerator_BackendBase_genVariableInit = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_getAtomicOperation = R"doc(Get suitable atomic *lhsPointer += rhsValue or *lhsPointer |= rhsValue style operation)doc";
 
 static const char *__doc_CodeGenerator_BackendBase_getDeviceMemoryBytes = R"doc(How many bytes of memory does 'device' have)doc";
 
