@@ -11,7 +11,7 @@ LABEL maintainer="J.C.Knight@sussex.ac.uk" \
 # Update APT database and upgrade any outdated packages and install Python, pip and pkgconfig
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -yq --no-install-recommends python3-dev python3-pip swig gosu nano libffi-dev
+    apt-get install -yq --no-install-recommends python3-dev python3-pip swig gosu nano libffi-dev pkg-config
 
 # Set environment variables
 ENV CUDA_PATH=/usr/local/cuda \
