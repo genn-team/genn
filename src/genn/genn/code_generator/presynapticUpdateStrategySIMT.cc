@@ -878,6 +878,7 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
                 env.getStream() << "// loop through all incoming spikes" << std::endl;
                 env.getStream() << "for (unsigned int j = 0; j < numSpikesInBlock; j++)";
                 {
+                    CodeStream::Scope b(env.getStream());
                     EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> spikeEnv(env, sg);
                     spikeEnv.add(Type::Uint32.addConst(), "id_pre", "$(_sh_spk" + eventSuffix + ")[j]");
 
