@@ -123,7 +123,10 @@ const auto libraryTypes = initLibraryTypes(
     std::make_pair("abs", std::make_pair(Type::ResolvedType::createFunction(Type::Int64, {Type::Int64}), "abs($(0))")),
 
     // Printf
-    std::make_pair("printf", std::make_pair(Type::ResolvedType::createFunction(Type::Int32, {Type::Int8.addConst().createPointer()}, Type::FunctionFlags::VARIADIC), "printf($(0), $(@))")));
+    std::make_pair("printf", std::make_pair(Type::ResolvedType::createFunction(Type::Int32, {Type::Int8.addConst().createPointer()}, Type::FunctionFlags::VARIADIC), "printf($(0), $(@))")),
+
+    // Assert
+    std::make_pair("assert", std::make_pair(Type::ResolvedType::createFunction(Type::Void, {Type::Bool}), "assert($(0))")));
 }
 
 const EnvironmentLibrary::Library floatRandomFunctions = {
