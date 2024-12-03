@@ -108,10 +108,8 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     // Substitute parameter and derived parameter names
     const auto *cm = getArchetype().getModel();
     updateEnv.addParams(cm->getParams(), "", &CustomConnectivityUpdateInternal::getParams, 
-                        &CustomConnectivityUpdateGroupMerged::isParamHeterogeneous,
                         &CustomConnectivityUpdateInternal::isParamDynamic);
-    updateEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomConnectivityUpdateInternal::getDerivedParams, 
-                               &CustomConnectivityUpdateGroupMerged::isDerivedParamHeterogeneous);
+    updateEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomConnectivityUpdateInternal::getDerivedParams);
     updateEnv.addExtraGlobalParams(cm->getExtraGlobalParams());
     updateEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs());
     
@@ -353,16 +351,6 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                               }
                           });
 }
-//----------------------------------------------------------------------------
-bool CustomConnectivityUpdateGroupMerged::isParamHeterogeneous(const std::string &name) const
-{
-    return isParamValueHeterogeneous(name, [](const CustomConnectivityUpdateInternal &cg) { return cg.getParams(); });
-}
-//----------------------------------------------------------------------------
-bool CustomConnectivityUpdateGroupMerged::isDerivedParamHeterogeneous(const std::string &name) const
-{
-    return isParamValueHeterogeneous(name, [](const CustomConnectivityUpdateInternal &cg) { return cg.getDerivedParams(); });
-}
 
 // ----------------------------------------------------------------------------
 // CustomConnectivityRemapUpdateGroupMerged
@@ -394,14 +382,14 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
         // Add fields for number of pre and postsynaptic neurons
         groupEnv.addField(Type::Uint32.addConst(), "num_pre",
                           Type::Uint32, "numSrcNeurons", 
-                          [](const auto&, const auto &cg, size_t) 
+                          [](const auto &cg, size_t) 
                           { 
                               const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
                               return sgInternal->getSrcNeuronGroup()->getNumNeurons();
                           });
         groupEnv.addField(Type::Uint32.addConst(), "num_post",
                           Type::Uint32, "numTrgNeurons", 
-                          [](const auto&, const auto &cg, size_t) 
+                          [](const auto &cg, size_t) 
                           { 
                               const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
                               return sgInternal->getSrcNeuronGroup()->getNumNeurons();
@@ -410,7 +398,7 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
         // Expose row stride        
         groupEnv.addField(Type::Uint32.addConst(), "row_stride",
                           Type::Uint32, "rowStride", 
-                          [&backend](const auto&, const auto &cg, size_t) -> uint64_t 
+                          [&backend](const auto &cg, size_t) -> uint64_t 
                           {
                               return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup()); 
                           });
@@ -454,10 +442,8 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
         // Substitute parameter and derived parameter names
         const auto *cm = getArchetype().getModel();
         groupEnv.addParams(cm->getParams(), "", &CustomConnectivityUpdateInternal::getParams, 
-                           &CustomConnectivityHostUpdateGroupMerged::isParamHeterogeneous,
                            &CustomConnectivityUpdateInternal::isParamDynamic);
-        groupEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomConnectivityUpdateInternal::getDerivedParams, 
-                                  &CustomConnectivityHostUpdateGroupMerged::isDerivedParamHeterogeneous);
+        groupEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomConnectivityUpdateInternal::getDerivedParams);
 
         // Loop through EGPs
         for(const auto &egp : cm->getExtraGlobalParams()) {
@@ -513,14 +499,4 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
         Transpiler::ErrorHandler errorHandler("Custom connectivity '" + getArchetype().getName() + "' host update code");
         prettyPrintStatements(getArchetype().getHostUpdateCodeTokens(), getTypeContext(), groupEnv, errorHandler);
     }
-}
-//----------------------------------------------------------------------------
-bool CustomConnectivityHostUpdateGroupMerged::isParamHeterogeneous(const std::string &name) const
-{
-    return isParamValueHeterogeneous(name, [](const CustomConnectivityUpdateInternal &cg) { return cg.getParams(); });
-}
-//----------------------------------------------------------------------------
-bool CustomConnectivityHostUpdateGroupMerged::isDerivedParamHeterogeneous(const std::string &name) const
-{
-    return isParamValueHeterogeneous(name, [](const CustomConnectivityUpdateInternal &cg) { return cg.getDerivedParams(); });
 }

@@ -53,9 +53,8 @@ void CustomUpdateGroupMerged::generateCustomUpdate(EnvironmentExternalBase &env,
     // Substitute parameter and derived parameter names
     const CustomUpdateModels::Base *cm = getArchetype().getModel();
     cuEnv.addParams(cm->getParams(), "", &CustomUpdateInternal::getParams, 
-                    &CustomUpdateGroupMerged::isParamHeterogeneous,
                     &CustomUpdateInternal::isParamDynamic);
-    cuEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomUpdateInternal::getDerivedParams, &CustomUpdateGroupMerged::isDerivedParamHeterogeneous);
+    cuEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomUpdateInternal::getDerivedParams);
     cuEnv.addExtraGlobalParams(cm->getExtraGlobalParams());
     cuEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs());
     
@@ -165,29 +164,9 @@ std::string CustomUpdateGroupMerged::getVarRefIndex(const NeuronGroup *delayNeur
         return getVarIndex(batchSize, varDims, index);
     }    
 }
-//----------------------------------------------------------------------------
-bool CustomUpdateGroupMerged::isParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const auto &cg) { return cg.getParams(); });
-}
-//----------------------------------------------------------------------------    
-bool CustomUpdateGroupMerged::isDerivedParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const auto &cg) { return cg.getDerivedParams(); });
-}
 
 // ----------------------------------------------------------------------------
 // GeNN::CodeGenerator::CustomUpdateWUGroupMergedBase
-//----------------------------------------------------------------------------
-bool CustomUpdateWUGroupMergedBase::isParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const CustomUpdateWUInternal &cg) { return cg.getParams(); });
-}
-//----------------------------------------------------------------------------
-bool CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const CustomUpdateWUInternal &cg) { return cg.getDerivedParams(); });
-}
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomUpdateWUGroupMergedBase::getHashDigest() const
 {
@@ -225,9 +204,8 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(EnvironmentExternalBase
     // Substitute parameter and derived parameter names
     const CustomUpdateModels::Base *cm = getArchetype().getModel();
     cuEnv.addParams(cm->getParams(), "", &CustomUpdateWUInternal::getParams, 
-                    &CustomUpdateWUGroupMergedBase::isParamHeterogeneous,
                     &CustomUpdateWUInternal::isParamDynamic);
-    cuEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomUpdateWUInternal::getDerivedParams, &CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous);
+    cuEnv.addDerivedParams(cm->getDerivedParams(), "", &CustomUpdateWUInternal::getDerivedParams);
     cuEnv.addExtraGlobalParams(cm->getExtraGlobalParams());
     cuEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs());
 
@@ -311,7 +289,7 @@ const std::string CustomUpdateHostReductionGroupMerged::name = "CustomUpdateHost
 void CustomUpdateHostReductionGroupMerged::generateCustomUpdate(EnvironmentGroupMergedField<CustomUpdateHostReductionGroupMerged> &env)
 {
     env.addField(Type::Uint32, "_size", "size",
-                 [](const auto &, const auto &c, size_t) { return c.getNumNeurons(); });
+                 [](const auto &c, size_t) { return c.getNumNeurons(); });
     
     // If some variables are delayed, add delay pointer
     if(getArchetype().getDelayNeuronGroup() != nullptr) {
@@ -329,7 +307,7 @@ const std::string CustomWUUpdateHostReductionGroupMerged::name = "CustomWUUpdate
 void CustomWUUpdateHostReductionGroupMerged::generateCustomUpdate(EnvironmentGroupMergedField<CustomWUUpdateHostReductionGroupMerged> &env)
 {
     env.addField(Type::Uint32, "_size", "size",
-                 [](const auto &, const auto &c, size_t) -> uint64_t 
+                 [](const auto &c, size_t) -> uint64_t 
                  { 
                      return c.getSynapseGroup()->getMaxConnections() * (size_t)c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); 
                  });

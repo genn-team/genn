@@ -37,13 +37,6 @@ public:
     // Static constants
     //----------------------------------------------------------------------------
     static const std::string name;
-
-private:
-    //----------------------------------------------------------------------------
-    // Private methods
-    //----------------------------------------------------------------------------
-    bool isParamHeterogeneous(const std::string &paramName) const;
-    bool isDerivedParamHeterogeneous(const std::string &paramName) const;
 };
 
 // ----------------------------------------------------------------------------
@@ -57,9 +50,6 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    bool isParamHeterogeneous(const std::string &paramName) const;
-    bool isDerivedParamHeterogeneous(const std::string &paramName) const;
-
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     void generateCustomUpdate(EnvironmentExternalBase &env, unsigned int batchSize,

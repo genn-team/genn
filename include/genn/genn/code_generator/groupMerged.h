@@ -116,21 +116,6 @@ protected:
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
-    //! Helper to test whether parameter values are heterogeneous within merged group
-    template<typename P>
-    bool isParamValueHeterogeneous(const std::string &name, P getParamValuesFn) const
-    {
-        // Get value of parameter in archetype group
-        const auto archetypeValue = getParamValuesFn(getArchetype()).at(name);
-
-        // Return true if any parameter values differ from the archetype value
-        return std::any_of(getGroups().cbegin(), getGroups().cend(),
-                           [&name, archetypeValue, getParamValuesFn](const GroupInternal &g)
-                           {
-                               return (getParamValuesFn(g).at(name) != archetypeValue);
-                           });
-    }
-
     //! Helper to update hash with the hash of calling getHashableFn on each group
     template<typename H>
     void updateHash(H getHashableFn, boost::uuids::detail::sha1 &hash) const
@@ -291,18 +276,19 @@ public:
     {
         // Implement merged group
         os << "static Merged" << name << "Group" << this->getIndex() << " merged" << name << "Group" << this->getIndex() << "[" << this->getGroups().size() << "];" << std::endl;
+        if(!getFields().empty()) {
+            // Write function to update
+            os << "void pushMerged" << name << "Group" << this->getIndex() << "ToDevice(unsigned int idx, ";
+            generateStructFieldArgumentDefinitions(os, backend);
+            os << ")";
+            {
+                CodeStream::Scope b(os);
 
-        // Write function to update
-        os << "void pushMerged" << name << "Group" << this->getIndex() << "ToDevice(unsigned int idx, ";
-        generateStructFieldArgumentDefinitions(os, backend);
-        os << ")";
-        {
-            CodeStream::Scope b(os);
-
-            // Loop through sorted fields and set array entry
-            const auto sortedFields = getSortedFields(backend);
-            for(const auto &f : sortedFields) {
-                os << "merged" << name << "Group" << this->getIndex() << "[idx]." << f.name << " = " << f.name << ";" << std::endl;
+                // Loop through sorted fields and set array entry
+                const auto sortedFields = getSortedFields(backend);
+                for(const auto &f : sortedFields) {
+                    os << "merged" << name << "Group" << this->getIndex() << "[idx]." << f.name << " = " << f.name << ";" << std::endl;
+                }
             }
         }
     }
@@ -380,9 +366,11 @@ protected:
     void generateRunnerBase(const BackendBase &backend, CodeStream &definitions, const std::string &name, bool host = false) const
     {
         // Generate definition for function to push group
-        definitions << "EXPORT_FUNC void pushMerged" << name << "Group" << this->getIndex() << "ToDevice(unsigned int idx, ";
-        generateStructFieldArgumentDefinitions(definitions, backend);
-        definitions << ");" << std::endl;
+        if(!getFields().empty()) {
+            definitions << "EXPORT_FUNC void pushMerged" << name << "Group" << this->getIndex() << "ToDevice(unsigned int idx, ";
+            generateStructFieldArgumentDefinitions(definitions, backend);
+            definitions << ");" << std::endl;
+        }
 
         // Loop through fields again to generate any dynamic field pushing functions that are required
         for(const auto &f : m_Fields) {
