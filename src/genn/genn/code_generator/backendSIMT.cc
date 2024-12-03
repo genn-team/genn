@@ -991,10 +991,10 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                                                 });
     
                     // Replace id in substitution with intra-batch ID and add batch
-                    groupEnv.add(Type::Uint32.addConst(), "id", "bid",
-                                 {groupEnv.addInitialiser("const unsigned int bid = " + getFastDivide("$(_id)", "_padded_num_neurons") + ";")});
                     groupEnv.add(Type::Uint32.addConst(), "batch", "batch",
-                                 {groupEnv.addInitialiser("const unsigned int batch = $(_id) - ($(id) * $(_padded_num_neurons));")});
+                                 {groupEnv.addInitialiser("const unsigned int batch = " + getFastDivide("$(_id)", "_padded_num_neurons") + ";")});
+                    groupEnv.add(Type::Uint32.addConst(), "id", "bid",
+                                 {groupEnv.addInitialiser("const unsigned int bid = $(_id) - ($(batch) * $(_padded_num_neurons));")});
                 }
                 // Otherwise, just substitute "batch" for 0
                 else {
