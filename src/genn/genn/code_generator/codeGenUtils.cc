@@ -33,7 +33,7 @@ void genTypeRange(CodeStream &os, const Type::ResolvedType &type, const std::str
 //----------------------------------------------------------------------------
 GENN_EXPORT std::string getFastDivide(const std::string &numerator, const std::string &divisorVar)
 {
-    return "((((uint64_t)(" + numerator + ") * $(" + divisorVar + "_a)) + $(" + divisorVar + "_b)) >> (32 + $(" + divisorVar + "_m)))";
+    return "((((uint64_t)(" + numerator + ") * $(" + divisorVar + "_a)) + $(" + divisorVar + "_b)) >> $(" + divisorVar + "_m))";
 }
 //----------------------------------------------------------------------------
 void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, 

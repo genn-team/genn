@@ -509,12 +509,12 @@ public:
                  GeNN::Type::Uint32, fieldName,
                  getFieldValue);
 
-        // Add M field
+        // Add M field (actually m + 32)
         addField(GeNN::Type::Uint32.addConst(), name + "_m",
                  GeNN::Type::Uint32, fieldName + "M",
                  [getFieldValue](const GroupInternal &g, size_t i)
                  {
-                     return (uint32_t)std::floor(std::log2(getFieldValue(g, i)));
+                     return 32 + (uint32_t)std::floor(std::log2(getFieldValue(g, i)));
                  });
         
         // Add A field
@@ -529,7 +529,7 @@ public:
                          return uintMax;
                      }
                      else {
-                         const uint32_t t = (1ul << (m + 32)) / d;
+                         const uint32_t t = (1ull << (m + 32)) / d;
                          const uint32_t r = ((t * d) + d) & uintMax;
                          return (r <= (1ul << m)) ? (t + 1ul) : t;
                      }
@@ -547,7 +547,7 @@ public:
                          return uintMax;
                      }
                      else {
-                         const uint32_t t = (1ul << (m + 32ul)) / d;
+                         const uint32_t t = (1ull << (m + 32)) / d;
                          const uint32_t r = ((t * d) + d) & uintMax;
                          return (r <= (1ul << m)) ? 0 : t;
                      }
