@@ -57,8 +57,6 @@ inline auto padSize(A size, B blockSize)
 
 GENN_EXPORT void genTypeRange(CodeStream &os, const Type::ResolvedType &type, const std::string &prefix);
 
-GENN_EXPORT std::string getFastDivide(const std::string &numerator, const std::string &divisorVar);
-
 //! Parse, type check and pretty print previously scanned vector of tokens representing an expression
 GENN_EXPORT void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, 
                                        Transpiler::TypeChecker::EnvironmentInternal &typeCheckEnv, Transpiler::PrettyPrinter::EnvironmentInternal &prettyPrintEnv,

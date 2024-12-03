@@ -831,7 +831,7 @@ void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSp
                 EnvironmentGroupMergedField<SynapseDynamicsGroupMerged> synEnv(groupEnv, sg);
 
                 if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    synEnv.printLine("const unsigned int row = " + getFastDivide("$(id)", "_row_stride") + ";");
+                    synEnv.printLine("const unsigned int row = " + getFastU32Divide("$(id)", "_row_stride") + ";");
                     synEnv.printLine("const unsigned int col = $(id) - (row * $(_row_stride));");
 
                     synEnv.add(Type::Uint32.addConst(), "id_pre", "row");
@@ -842,7 +842,7 @@ void BackendSIMT::genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSp
                 }
                 else {
                     synEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
-                               {synEnv.addInitialiser("const unsigned int idPre = " + getFastDivide("$(id)", "_row_stride") + ";")});
+                               {synEnv.addInitialiser("const unsigned int idPre = " + getFastU32Divide("$(id)", "_row_stride") + ";")});
                     synEnv.add(Type::Uint32.addConst(), "id_post", "idPost",
                                {synEnv.addInitialiser("const unsigned int idPost = $(id) - ($(id_pre) * $(_row_stride));")});    
                 }
@@ -992,7 +992,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
     
                     // Replace id in substitution with intra-batch ID and add batch
                     groupEnv.add(Type::Uint32.addConst(), "batch", "batch",
-                                 {groupEnv.addInitialiser("const unsigned int batch = " + getFastDivide("$(_id)", "_padded_num_neurons") + ";")});
+                                 {groupEnv.addInitialiser("const unsigned int batch = " + getFastU32Divide("$(_id)", "_padded_num_neurons") + ";")});
                     groupEnv.add(Type::Uint32.addConst(), "id", "bid",
                                  {groupEnv.addInitialiser("const unsigned int bid = $(_id) - ($(batch) * $(_padded_num_neurons));")});
                 }
@@ -1082,7 +1082,7 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
                 }
                 else {
                     if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                        synEnv.printLine("const unsigned int row = " + getFastDivide("$(id)", "_row_stride") + ";");
+                        synEnv.printLine("const unsigned int row = " + getFastU32Divide("$(id)", "_row_stride") + ";");
                         synEnv.printLine("const unsigned int col = $(id) - (row * $(_row_stride));");
 
                         synEnv.add(Type::Uint32.addConst(), "id_pre", "row");
@@ -1093,7 +1093,7 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
                     }
                     else {
                         synEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
-                                   {synEnv.addInitialiser("const unsigned int idPre = " + getFastDivide("$(id)", "_row_stride") + ";")});
+                                   {synEnv.addInitialiser("const unsigned int idPre = " + getFastU32Divide("$(id)", "_row_stride") + ";")});
                         synEnv.add(Type::Uint32.addConst(), "id_post", "idPost",
                                    {synEnv.addInitialiser("const unsigned int idPost = $(id) - ($(id_pre) * $(_row_stride));")});
                     }
@@ -1869,7 +1869,7 @@ void BackendSIMT::genPostsynapticUpdate(EnvironmentExternalBase &env, Postsynapt
                                 {synEnv.addInitialiser("const unsigned int synAddress = $(_remap)[($(_sh_spk)[j] * $(_col_stride)) + $(id)];")});
 
                     synEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
-                                {synEnv.addInitialiser("const unsigned int idPre = " + getFastDivide("$(id_syn)", "_row_stride") + ";")});
+                                {synEnv.addInitialiser("const unsigned int idPre = " + getFastU32Divide("$(id_syn)", "_row_stride") + ";")});
                 }
                 else {
                     synEnv.add(Type::Uint32.addConst(), "id_syn", "synAddress",

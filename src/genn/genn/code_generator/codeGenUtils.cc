@@ -31,11 +31,6 @@ void genTypeRange(CodeStream &os, const Type::ResolvedType &type, const std::str
     os << "#define " << prefix << "_MAX " << Type::writeNumeric(numeric.max, type) << std::endl;
 }
 //----------------------------------------------------------------------------
-GENN_EXPORT std::string getFastDivide(const std::string &numerator, const std::string &divisorVar)
-{
-    return "((((uint64_t)(" + numerator + ") * $(" + divisorVar + "_a)) + $(" + divisorVar + "_b)) >> $(" + divisorVar + "_m))";
-}
-//----------------------------------------------------------------------------
 void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, 
                                        Transpiler::TypeChecker::EnvironmentInternal &typeCheckEnv, Transpiler::PrettyPrinter::EnvironmentInternal &prettyPrintEnv,
                                        Transpiler::ErrorHandler &errorHandler)

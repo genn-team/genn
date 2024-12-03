@@ -6,6 +6,12 @@
 #include <unordered_map>
 #include <variant>
 
+// Lib divide includes
+extern "C"
+{
+#include "libdivide.h"
+}
+
 // GeNN includes
 #include "gennExport.h"
 #include "gennUtils.h"
@@ -509,48 +515,20 @@ public:
                  GeNN::Type::Uint32, fieldName,
                  getFieldValue);
 
-        // Add M field (actually m + 32)
-        addField(GeNN::Type::Uint32.addConst(), name + "_m",
-                 GeNN::Type::Uint32, fieldName + "M",
+        // Add "magic" field
+        addField(GeNN::Type::Uint32.addConst(), name + "_magic",
+                 GeNN::Type::Uint32, fieldName + "Magic",
                  [getFieldValue](const GroupInternal &g, size_t i)
                  {
-                     return 32 + (uint32_t)std::floor(std::log2(getFieldValue(g, i)));
+                     return libdivide_u32_branchfree_gen(getFieldValue(g, i)).magic;
                  });
         
-        // Add A field
-        addField(GeNN::Type::Uint32.addConst(), name + "_a",
-                 GeNN::Type::Uint32, fieldName + "A",
-                 [getFieldValue](const GroupInternal &g, size_t i) -> uint32_t
+        // Add "more" field
+        addField(GeNN::Type::Uint8.addConst(), name + "_more",
+                 GeNN::Type::Uint8, fieldName + "More",
+                 [getFieldValue](const GroupInternal &g, size_t i)
                  {
-                     const uint32_t uintMax = std::numeric_limits<uint32_t>::max();
-                     const uint32_t d = getFieldValue(g, i);
-                     const uint32_t m = (uint32_t)std::floor(std::log2(d));
-                     if(d == (1ul << m)) {
-                         return uintMax;
-                     }
-                     else {
-                         const uint32_t t = (1ull << (m + 32)) / d;
-                         const uint32_t r = ((t * d) + d) & uintMax;
-                         return (r <= (1ul << m)) ? (t + 1ul) : t;
-                     }
-                 });
-
-        // Add B field
-        addField(GeNN::Type::Uint32.addConst(), name + "_b",
-                 GeNN::Type::Uint32, fieldName + "B",
-                 [getFieldValue](const GroupInternal &g, size_t i) -> uint32_t
-                 {
-                     const uint32_t uintMax = std::numeric_limits<uint32_t>::max();
-                     const uint32_t d = getFieldValue(g, i);
-                     const uint32_t m = (uint32_t)std::floor(std::log2(d));
-                     if(d == (1ul << m)) {
-                         return uintMax;
-                     }
-                     else {
-                         const uint32_t t = (1ull << (m + 32)) / d;
-                         const uint32_t r = ((t * d) + d) & uintMax;
-                         return (r <= (1ul << m)) ? 0 : t;
-                     }
+                     return libdivide_u32_branchfree_gen(getFieldValue(g, i)).more;
                  });
     }
 
