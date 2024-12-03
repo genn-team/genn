@@ -6,6 +6,12 @@
 #include <unordered_map>
 #include <variant>
 
+// Lib divide includes
+extern "C"
+{
+#include "libdivide.h"
+}
+
 // GeNN includes
 #include "gennExport.h"
 #include "gennUtils.h"
@@ -409,6 +415,7 @@ class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<Enviro
                                                          Runtime::MergedDynamicFieldDestinations&>>;
     using GetFieldNonNumericValueFunc = std::function<NonNumericFieldValue(Runtime::Runtime&, const GroupInternal&, size_t)>;
     using GetFieldNumericValueFunc = std::function<Type::NumericValue(const GroupInternal&, size_t)>;
+    using GetFieldUint32ValueFunc = std::function<uint32_t(const GroupInternal&, size_t)>;
     using IsDynamicFn = bool (GroupInternal::*)(const std::string&) const;
     using IsVarInitHeterogeneousFn = bool (G::*)(const std::string&, const std::string&) const;
     using GetParamValuesFn = const std::map<std::string, Type::NumericValue> &(GroupInternal::*)(void) const;
@@ -498,6 +505,31 @@ public:
                   GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD, const std::vector<size_t> &initialisers = {})
     {
          addField(type, name, type, fieldName, getFieldValue, indexSuffix, mergedFieldType, initialisers);
+    }
+
+    void addFastDivideField(const std::string &name, const std::string &fieldName, 
+                            GetFieldUint32ValueFunc getFieldValue)
+    {
+        // Add main field
+        addField(GeNN::Type::Uint32.addConst(), name,
+                 GeNN::Type::Uint32, fieldName,
+                 getFieldValue);
+
+        // Add "magic" field
+        addField(GeNN::Type::Uint32.addConst(), name + "_magic",
+                 GeNN::Type::Uint32, fieldName + "Magic",
+                 [getFieldValue](const GroupInternal &g, size_t i)
+                 {
+                     return libdivide_u32_branchfree_gen(getFieldValue(g, i)).magic;
+                 });
+        
+        // Add "more" field
+        addField(GeNN::Type::Uint8.addConst(), name + "_more",
+                 GeNN::Type::Uint8, fieldName + "More",
+                 [getFieldValue](const GroupInternal &g, size_t i)
+                 {
+                     return libdivide_u32_branchfree_gen(getFieldValue(g, i)).more;
+                 });
     }
 
     void addParams(const Snippet::Base::ParamVec &params, const std::string &fieldSuffix, 
