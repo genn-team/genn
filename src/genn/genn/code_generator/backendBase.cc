@@ -47,11 +47,11 @@ void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentG
     env.addField(Type::Uint32.addConst(), "num_post",
                  Type::Uint32, "numTrgNeurons", 
                  [](const auto  &cg, size_t) { return cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); });
-    env.addField(Type::Uint32, "_row_stride", "rowStride", 
-                 [&backend](const auto &cg, size_t) -> uint64_t
-                 {
-                     return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup());
-                 });
+    env.addFastDivideField("_row_stride", "rowStride", 
+                           [&backend](const auto &g, size_t) -> uint32_t
+                           {
+                               return backend.getSynapticMatrixRowStride(*g.getSynapseGroup());
+                           });
 
     // If underlying synapse group has kernel connectivity
     const auto *sg = env.getGroup().getArchetype().getSynapseGroup();
