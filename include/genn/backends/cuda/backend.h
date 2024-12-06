@@ -162,10 +162,24 @@ public:
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendSIMT virtuals
     //--------------------------------------------------------------------------
+    //! On some older devices, shared memory atomics are actually slower than global memory atomics so should be avoided
+    virtual bool areSharedMemAtomicsSlow() const final;
+
     //! How many 'lanes' does underlying hardware have?
     /*! This is typically used for warp-shuffle algorithms */
     virtual unsigned int getNumLanes() const final;
 
+    //! Get name of atomic operation
+    virtual std::string getAtomic(const Type::ResolvedType &type,
+                                  AtomicOperation op = AtomicOperation::ADD, 
+                                  AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const final;
+
+    //! Get type of population RNG
+    virtual Type::ResolvedType getPopulationRNGType() const final;
+
+    //--------------------------------------------------------------------------
+    // CodeGenerator::BackendBase virtuals
+    //--------------------------------------------------------------------------
     //! Create backend-specific runtime state object
     /*! \param runtime  runtime object */
     virtual std::unique_ptr<GeNN::Runtime::StateBase> createState(const Runtime::Runtime &runtime) const final;
@@ -191,6 +205,12 @@ public:
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const final;
     virtual void genMSBuildImportTarget(std::ostream &os) const final;
 
+    //! How many bytes of memory does 'device' have
+    virtual size_t getDeviceMemoryBytes() const final{ return m_ChosenDevice.totalGlobalMem; }
+
+    //! Get hash digest of this backends identification and the preferences it has been configured with
+    virtual boost::uuids::detail::sha1::digest_type getHashDigest() const final;
+
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
@@ -199,7 +219,24 @@ public:
     int getRuntimeVersion() const{ return m_RuntimeVersion; }
     std::string getNVCCFlags() const;
 
-private:
+protected:
+    //--------------------------------------------------------------------------
+    // BackendCUDAHIP virtuals
+    //--------------------------------------------------------------------------
+    //! Get the safe amount of constant cache we can use
+    virtual size_t getChosenDeviceSafeConstMemBytes() const final
+    {
+        return m_ChosenDevice.totalConstMem - getPreferences<Preferences>().constantCacheOverhead;
+    }
+
+    //! Get library of RNG functions to use
+    virtual const EnvironmentLibrary::Library &getRNGFunctions(const Type::ResolvedType &precision) const final;
+
+    //! Generate HIP/CUDA specific bits of definitions preamble
+    virtual void genDefinitionsPreambleInternal(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+    
+    virtual void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY = 1) const final;
+
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------

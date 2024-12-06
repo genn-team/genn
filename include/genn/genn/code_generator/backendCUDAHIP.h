@@ -35,12 +35,6 @@ struct PreferencesCUDAHIP : public PreferencesBase
     //! Generate corresponding NCCL batch reductions
     bool enableNCCLReductions = false;
  
-    //! How much constant cache is already used and therefore can't be used by GeNN?
-    /*! Each of the four modules which includes CUDA headers(neuronUpdate, synapseUpdate, custom update, init and runner)
-        Takes 72 bytes of constant memory for a lookup table used by cuRAND. If your application requires
-        additional constant cache, increase this */
-    size_t constantCacheOverhead = 72 * 5;
-
     void updateHash(boost::uuids::detail::sha1 &hash) const
     {
         // Superclass 
@@ -48,7 +42,6 @@ struct PreferencesCUDAHIP : public PreferencesBase
 
         //! Update hash with preferences
         Utils::updateHash(enableNCCLReductions, hash);
-        Utils::updateHash(constantCacheOverhead, hash);
     }
 };
 
@@ -67,9 +60,6 @@ public:
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendSIMT virtuals
     //--------------------------------------------------------------------------
-    //! On some older devices, shared memory atomics are actually slower than global memory atomics so should be avoided
-    virtual bool areSharedMemAtomicsSlow() const final;
-
     //! Get the prefix to use for shared memory variables
     virtual std::string getSharedPrefix() const final{ return "__shared__ "; }
 
@@ -82,11 +72,6 @@ public:
 
     //! Get the name of the count-leading-zeros function
     virtual std::string getCLZ() const final { return "__clz"; }
-
-    //! Get name of atomic operation
-    virtual std::string getAtomic(const Type::ResolvedType &type,
-                                  AtomicOperation op = AtomicOperation::ADD, 
-                                  AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const final;
 
     //! Generate a warp reduction across getNumLanes lanes into lane 0
     virtual void genWarpReduction(CodeStream& os, const std::string& variable,
@@ -107,9 +92,6 @@ public:
 
     //! Generate code to skip ahead local copy of global RNG
     virtual std::string genGlobalRNGSkipAhead(CodeStream &os, const std::string &sequence) const final;
-
-    //! Get type of population RNG
-    virtual Type::ResolvedType getPopulationRNGType() const final;
 
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
@@ -180,25 +162,31 @@ public:
     //! Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels
     virtual bool isHostReductionRequired() const final { return getPreferences<PreferencesCUDAHIP>().enableNCCLReductions; }
 
-    //! How many bytes of memory does 'device' have
-    virtual size_t getDeviceMemoryBytes() const final{ return m_ChosenDevice.totalGlobalMem; }
-
     //! Some backends will have additional small, fast, memory spaces for read-only data which might
     //! Be well-suited to storing merged group structs. This method returns the prefix required to
     //! Place arrays in these and their size in preferential order
     virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const final;
 
-    //! Get hash digest of this backends identification and the preferences it has been configured with
-    virtual boost::uuids::detail::sha1::digest_type getHashDigest() const final;
+protected:
+    //--------------------------------------------------------------------------
+    // Declared virtuals
+    //--------------------------------------------------------------------------
+    //! Get the safe amount of constant cache we can use
+    virtual size_t getChosenDeviceSafeConstMemBytes() const = 0;
 
+    //! Get library of RNG functions to use
+    virtual const EnvironmentLibrary::Library &getRNGFunctions(const Type::ResolvedType &precision) const = 0;
+
+    //! Generate HIP/CUDA specific bits of definitions preamble
+    virtual void genDefinitionsPreambleInternal(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
+
+    virtual void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY = 1) const = 0;
 private:
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
     std::string getNCCLReductionType(VarAccessMode mode) const;
     std::string getNCCLType(const Type::ResolvedType &type) const;
-
-    void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY = 1) const;
 
     template<typename T>
     void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups) const
@@ -286,11 +274,5 @@ private:
             } 
         }
     }
-
-    //! Get the safe amount of constant cache we can use
-    size_t getChosenDeviceSafeConstMemBytes() const
-    {
-        return m_ChosenDevice.totalConstMem - getPreferences<Preferences>().constantCacheOverhead;
-    }
 };
-}   // GeNN::CUDA::CodeGenerator
+}   // GeNN::CodeGenerator
