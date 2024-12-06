@@ -49,11 +49,6 @@ const EnvironmentLibrary::Library doubleRandomFunctions = {
     {"gennrand_binomial", {Type::ResolvedType::createFunction(Type::Uint32, {Type::Uint32, Type::Double}), "binomialDistDouble(&$(_rng), $(0), $(1))"}},
 };
 
-const EnvironmentLibrary::Library backendFunctions = {
-    {"clz", {Type::ResolvedType::createFunction(Type::Int32, {Type::Uint32}), "__clz($(0))"}},
-    {"atomic_or", {Type::ResolvedType::createFunction(Type::Void, {Type::Uint32.createPointer(), Type::Uint32}), "atomicOr($(0), $(1))"}},
-};
-
 //--------------------------------------------------------------------------
 // CUDADeviceType
 //--------------------------------------------------------------------------
@@ -239,17 +234,6 @@ private:
     //------------------------------------------------------------------------
     std::byte *m_DevicePointer;
 };
-
-const EnvironmentLibrary::Library &getRNGFunctions(const Type::ResolvedType &precision)
-{
-    if(precision == Type::Float) {
-        return floatRandomFunctions;
-    }
-    else {
-        assert(precision == Type::Double);
-        return doubleRandomFunctions;
-    }
-}
 }   // Anonymous namespace
 
 
@@ -305,7 +289,7 @@ void State::ncclInitCommunicator(int rank, int numRanks)
 //--------------------------------------------------------------------------
 Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, 
                  int device, bool zeroCopy)
-:   BackendSIMT(kernelBlockSizes, preferences), m_ChosenDeviceID(device)
+:   BackendCUDAHIP(kernelBlockSizes, preferences), m_ChosenDeviceID(device)
 {
     // Set device
     CHECK_CUDA_ERRORS(cudaSetDevice(device));
@@ -336,9 +320,41 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     }
 }
 //--------------------------------------------------------------------------
+bool Backend::areSharedMemAtomicsSlow() const
+{
+    // If device is older than Maxwell, we shouldn't use shared memory as atomics are emulated
+    // and actually slower than global memory (see https://devblogs.nvidia.com/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/)
+    return (getChosenCUDADevice().major < 5);
+}
+//--------------------------------------------------------------------------
 unsigned int Backend::getNumLanes() const
 {
     return 32;
+}
+//--------------------------------------------------------------------------
+std::string Backend::getAtomic(const Type::ResolvedType &type, AtomicOperation op, AtomicMemSpace) const
+{
+    // If operation is an atomic add
+    if(op == AtomicOperation::ADD) {
+        if(((getChosenCUDADevice().major < 2) && (type == Type::Float))
+           || (((getChosenCUDADevice().major < 6) || (getRuntimeVersion() < 8000)) && (type == Type::Double)))
+        {
+            return "atomicAddSW";
+        }
+
+        return "atomicAdd";
+    }
+    // Otherwise, it's an atomic or
+    else {
+        assert(op == AtomicOperation::OR);
+        assert(type == Type::Uint32 || type == Type::Int32);
+        return "atomicOr";
+    }
+}
+//--------------------------------------------------------------------------
+Type::ResolvedType Backend::getPopulationRNGType() const
+{
+    return CURandState;
 }
 //--------------------------------------------------------------------------
 std::unique_ptr<GeNN::Runtime::StateBase> Backend::createState(const Runtime::Runtime &runtime) const
@@ -459,6 +475,23 @@ void Backend::genMSBuildImportTarget(std::ostream &os) const
     os << "\t</ImportGroup>" << std::endl;
 }
 //--------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    // Update hash was name of backend
+    Utils::updateHash("CUDA", hash);
+    
+    // Update hash with chosen device ID and kernel block sizes
+    Utils::updateHash(m_ChosenDeviceID, hash);
+    Utils::updateHash(getKernelBlockSize(), hash);
+
+    // Update hash with preferences
+    getPreferences<Preferences>().updateHash(hash);
+
+    return hash.get_digest();
+}
+//--------------------------------------------------------------------------
 std::string Backend::getNVCCFlags() const
 {
     // **NOTE** now we don't include runner.cc when building standalone modules we get loads of warnings about
@@ -490,5 +523,124 @@ std::string Backend::getNVCCFlags() const
     }
 
     return nvccFlags;
+}
+//--------------------------------------------------------------------------
+const EnvironmentLibrary::Library &Backend::getRNGFunctions(const Type::ResolvedType &precision) const
+{
+    if(precision == Type::Float) {
+        return floatRandomFunctions;
+    }
+    else {
+        assert(precision == Type::Double);
+        return doubleRandomFunctions;
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genDefinitionsPreambleInternal(CodeStream &os, const ModelSpecMerged &) const
+{
+    os << "// CUDA includes" << std::endl;
+    os << "#include <curand_kernel.h>" << std::endl;
+    if(getRuntimeVersion() >= 9000) {
+        os <<"#include <cuda_fp16.h>" << std::endl;
+    }
+
+    // If NCCL is enabled
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        // Include NCCL header
+        os << "#include <nccl.h>" << std::endl;
+        os << std::endl;
+
+        os << std::endl;
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "// Helper macro for error-checking NCCL calls" << std::endl;
+        os << "#define CHECK_NCCL_ERRORS(call) {\\" << std::endl;
+        os << "    ncclResult_t error = call;\\" << std::endl;
+        os << "    if (error != ncclSuccess) {\\" << std::endl;
+        os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": nccl error \" + std::to_string(error) + \": \" + ncclGetErrorString(error));\\" << std::endl;
+        os << "    }\\" << std::endl;
+        os << "}" << std::endl;
+
+        // Define NCCL ID and communicator
+        os << "extern ncclUniqueId ncclID;" << std::endl;
+        os << "extern ncclComm_t ncclCommunicator;" << std::endl;
+
+        // Export ncclGetUniqueId function
+        os << "extern \"C\" {" << std::endl;
+        os << "EXPORT_VAR const size_t ncclUniqueIDSize;" << std::endl;
+        os << "EXPORT_FUNC void ncclGenerateUniqueID();" << std::endl;
+        os << "EXPORT_FUNC void ncclInitCommunicator(int rank, int numRanks);" << std::endl;
+        os << "EXPORT_FUNC unsigned char *ncclGetUniqueID();" << std::endl;
+        os << "}" << std::endl;
+    }
+
+    os << std::endl;
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// Helper macro for error-checking CUDA calls" << std::endl;
+    os << "#define CHECK_CUDA_ERRORS(call) {\\" << std::endl;
+    os << "    cudaError_t error = call;\\" << std::endl;
+    os << "    if (error != cudaSuccess) {\\" << std::endl;
+    os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": cuda error \" + std::to_string(error) + \": \" + cudaGetErrorString(error));\\" << std::endl;
+    os << "    }\\" << std::endl;
+    os << "}" << std::endl;
+    os << std::endl;
+
+
+    // If device is older than SM 6 or we're using a version of CUDA older than 8
+    if ((getChosenCUDADevice().major < 6) || (getRuntimeVersion() < 8000)){
+        os << "// software version of atomic add for double precision" << std::endl;
+        os << "__device__ inline double atomicAddSW(double* address, double val)";
+        {
+            CodeStream::Scope b(os);
+            os << "unsigned long long int* address_as_ull = (unsigned long long int*)address;" << std::endl;
+            os << "unsigned long long int old = *address_as_ull, assumed;" << std::endl;
+            os << "do";
+            {
+                CodeStream::Scope b(os);
+                os << "assumed = old;" << std::endl;
+                os << "old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)));" << std::endl;
+            }
+            os << "while (assumed != old);" << std::endl;
+            os << "return __longlong_as_double(old);" << std::endl;
+        }
+        os << std::endl;
+    }
+
+    // If we're using a CUDA device with SM < 2
+    if (getChosenCUDADevice().major < 2) {
+        os << "// software version of atomic add for single precision float" << std::endl;
+        os << "__device__ inline float atomicAddSW(float* address, float val)" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << "int* address_as_ull = (int*)address;" << std::endl;
+            os << "int old = *address_as_ull, assumed;" << std::endl;
+            os << "do";
+            {
+                CodeStream::Scope b(os);
+                os << "assumed = old;" << std::endl;
+                os << "old = atomicCAS(address_as_ull, assumed, __float_as_int(val + __int_as_float(assumed)));" << std::endl;
+            }
+            os << "while (assumed != old);" << std::endl;
+            os << "return __int_as_float(old);" << std::endl;
+        }
+        os << std::endl;
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY) const
+{
+    // Calculate grid size
+    const size_t gridSize = ceilDivide(numThreadsX, getKernelBlockSize(kernel));
+    assert(gridSize < (size_t)getChosenCUDADevice().maxGridSize[0]);
+    assert(numBlockThreadsY < (size_t)getChosenCUDADevice().maxThreadsDim[0]);
+
+    os << "const dim3 threads(" << getKernelBlockSize(kernel) << ", " << numBlockThreadsY << ");" << std::endl;
+    if(numBlockThreadsY > 1) {
+        assert(batchSize < (size_t)getChosenCUDADevice().maxThreadsDim[2]);
+        os << "const dim3 grid(" << gridSize << ", 1, " << batchSize << ");" << std::endl;
+    }
+    else {
+        assert(batchSize < (size_t)getChosenCUDADevice().maxThreadsDim[1]);
+        os << "const dim3 grid(" << gridSize << ", " << batchSize << ");" << std::endl;
+    }
 }
 }   // namespace GeNN::CodeGenerator::CUDA
