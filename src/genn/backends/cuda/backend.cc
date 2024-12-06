@@ -289,7 +289,7 @@ void State::ncclInitCommunicator(int rank, int numRanks)
 //--------------------------------------------------------------------------
 Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, 
                  int device, bool zeroCopy)
-:   BackendCUDAHIP(kernelBlockSizes, preferences), m_ChosenDeviceID(device)
+:   BackendCUDAHIP(kernelBlockSizes, preferences, "cuda", "nccl"), m_ChosenDeviceID(device)
 {
     // Set device
     CHECK_CUDA_ERRORS(cudaSetDevice(device));
@@ -553,7 +553,7 @@ void Backend::genDefinitionsPreambleInternal(CodeStream &os, const ModelSpecMerg
         os << std::endl;
         os << "// ------------------------------------------------------------------------" << std::endl;
         os << "// Helper macro for error-checking NCCL calls" << std::endl;
-        os << "#define CHECK_NCCL_ERRORS(call) {\\" << std::endl;
+        os << "#define CHECK_CCL_ERRORS(call) {\\" << std::endl;
         os << "    ncclResult_t error = call;\\" << std::endl;
         os << "    if (error != ncclSuccess) {\\" << std::endl;
         os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": nccl error \" + std::to_string(error) + \": \" + ncclGetErrorString(error));\\" << std::endl;
@@ -576,7 +576,7 @@ void Backend::genDefinitionsPreambleInternal(CodeStream &os, const ModelSpecMerg
     os << std::endl;
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Helper macro for error-checking CUDA calls" << std::endl;
-    os << "#define CHECK_CUDA_ERRORS(call) {\\" << std::endl;
+    os << "#define CHECK_RUNTIME_ERRORS(call) {\\" << std::endl;
     os << "    cudaError_t error = call;\\" << std::endl;
     os << "    if (error != cudaSuccess) {\\" << std::endl;
     os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": cuda error \" + std::to_string(error) + \": \" + cudaGetErrorString(error));\\" << std::endl;

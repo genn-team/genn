@@ -39,7 +39,7 @@ public:
     {
         // Record start event
         if(m_TimingEnabled) {
-            m_CodeStream << "CHECK_CUDA_ERRORS(cudaEventRecord(" << m_Name << "Start));" << std::endl;
+            m_CodeStream << "CHECK_RUNTIME_ERRORS(cudaEventRecord(" << m_Name << "Start));" << std::endl;
         }
     }
 
@@ -47,14 +47,14 @@ public:
     {
         // Record stop event
         if(m_TimingEnabled) {
-            m_CodeStream << "CHECK_CUDA_ERRORS(cudaEventRecord(" << m_Name << "Stop));" << std::endl;
+            m_CodeStream << "CHECK_RUNTIME_ERRORS(cudaEventRecord(" << m_Name << "Stop));" << std::endl;
 
             // If we should synchronise on stop, insert call
             if(m_SynchroniseOnStop) {
-                m_CodeStream << "CHECK_CUDA_ERRORS(cudaEventSynchronize(" << m_Name << "Stop));" << std::endl;
+                m_CodeStream << "CHECK_RUNTIME_ERRORS(cudaEventSynchronize(" << m_Name << "Stop));" << std::endl;
 
                 m_CodeStream << "float tmp;" << std::endl;
-                m_CodeStream << "CHECK_CUDA_ERRORS(cudaEventElapsedTime(&tmp, " << m_Name << "Start, " << m_Name << "Stop));" << std::endl;
+                m_CodeStream << "CHECK_RUNTIME_ERRORS(cudaEventElapsedTime(&tmp, " << m_Name << "Start, " << m_Name << "Stop));" << std::endl;
                 m_CodeStream << m_Name << "Time += tmp / 1000.0;" << std::endl;
             }
         }
@@ -343,13 +343,13 @@ void BackendCUDAHIP::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerge
             CodeStream::Scope b(neuronUpdateEnv.getStream());
             genKernelDimensions(neuronUpdateEnv.getStream(), KernelNeuronPrevSpikeTimeUpdate, idNeuronPrevSpikeTimeUpdate, model.getBatchSize());
             neuronUpdateEnv.getStream() << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << "<<<grid, threads>>>(t);" << std::endl;
-            neuronUpdateEnv.getStream() << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            neuronUpdateEnv.getStream() << "CHECK_RUNTIME_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
         if(idNeuronSpikeQueueUpdate > 0) {
             CodeStream::Scope b(neuronUpdateEnv.getStream());
             genKernelDimensions(neuronUpdateEnv.getStream(), KernelNeuronSpikeQueueUpdate, idNeuronSpikeQueueUpdate, 1);
             neuronUpdateEnv.getStream() << KernelNames[KernelNeuronSpikeQueueUpdate] << "<<<grid, threads>>>();" << std::endl;
-            neuronUpdateEnv.getStream() << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            neuronUpdateEnv.getStream() << "CHECK_RUNTIME_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
         if(idStart > 0) {
             CodeStream::Scope b(neuronUpdateEnv.getStream());
@@ -362,7 +362,7 @@ void BackendCUDAHIP::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerge
                 neuronUpdateEnv.getStream() << ", recordingTimestep";
             }
             neuronUpdateEnv.getStream() << ");" << std::endl;
-            neuronUpdateEnv.getStream() << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            neuronUpdateEnv.getStream() << "CHECK_RUNTIME_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
     }
 
@@ -501,7 +501,7 @@ void BackendCUDAHIP::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerg
             CodeStream::Scope b(synapseUpdateEnv.getStream());
             genKernelDimensions(synapseUpdateEnv.getStream(), KernelSynapseDendriticDelayUpdate, idSynapseDendricDelayUpdate, 1);
             synapseUpdateEnv.getStream() << KernelNames[KernelSynapseDendriticDelayUpdate] << "<<<grid, threads>>>();" << std::endl;
-            synapseUpdateEnv.getStream() << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            synapseUpdateEnv.getStream() << "CHECK_RUNTIME_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
 
         // Launch synapse dynamics kernel if required
@@ -511,7 +511,7 @@ void BackendCUDAHIP::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerg
 
             genKernelDimensions(synapseUpdateEnv.getStream(), KernelSynapseDynamicsUpdate, idSynapseDynamicsStart, model.getBatchSize());
             synapseUpdateEnv.getStream() << KernelNames[KernelSynapseDynamicsUpdate] << "<<<grid, threads>>>(t);" << std::endl;
-            synapseUpdateEnv.getStream() << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            synapseUpdateEnv.getStream() << "CHECK_RUNTIME_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
 
         // Launch presynaptic update kernel
@@ -521,7 +521,7 @@ void BackendCUDAHIP::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerg
 
             genKernelDimensions(synapseUpdateEnv.getStream(), KernelPresynapticUpdate, idPresynapticStart, model.getBatchSize());
             synapseUpdateEnv.getStream() << KernelNames[KernelPresynapticUpdate] << "<<<grid, threads>>>(t);" << std::endl;
-            synapseUpdateEnv.getStream() << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            synapseUpdateEnv.getStream() << "CHECK_RUNTIME_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
 
         // Launch postsynaptic update kernel
@@ -531,7 +531,7 @@ void BackendCUDAHIP::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerg
 
             genKernelDimensions(synapseUpdateEnv.getStream(), KernelPostsynapticUpdate, idPostsynapticStart, model.getBatchSize());
             synapseUpdateEnv.getStream() << KernelNames[KernelPostsynapticUpdate] << "<<<grid, threads>>>(t);" << std::endl;
-            synapseUpdateEnv.getStream() << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            synapseUpdateEnv.getStream() << "CHECK_RUNTIME_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
     }
 
@@ -721,7 +721,7 @@ void BackendCUDAHIP::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerge
                 genKernelDimensions(funcEnv.getStream(), KernelCustomUpdate, idCustomUpdateStart, 1);
                 Timer t(funcEnv.getStream(), "customUpdate" + g, model.isTimingEnabled());
                 funcEnv.printLine(KernelNames[KernelCustomUpdate] + g + "<<<grid, threads>>>($(t));");
-                funcEnv.printLine("CHECK_CUDA_ERRORS(cudaPeekAtLastError());");
+                funcEnv.printLine("CHECK_RUNTIME_ERRORS(cudaPeekAtLastError());");
             }
 
             // Launch custom transpose update kernel if required
@@ -731,7 +731,7 @@ void BackendCUDAHIP::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerge
                 genKernelDimensions(funcEnv.getStream(), KernelCustomTransposeUpdate, idCustomTransposeUpdateStart, 1, 8);
                 Timer t(funcEnv.getStream(), "customUpdate" + g + "Transpose", model.isTimingEnabled());
                 funcEnv.printLine(KernelNames[KernelCustomTransposeUpdate]  + g + "<<<grid, threads>>>($(t));");
-                funcEnv.printLine("CHECK_CUDA_ERRORS(cudaPeekAtLastError());");
+                funcEnv.printLine("CHECK_RUNTIME_ERRORS(cudaPeekAtLastError());");
             }
 
             // Launch custom connectivity remap update kernel if required
@@ -740,7 +740,7 @@ void BackendCUDAHIP::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerge
                 genKernelDimensions(funcEnv.getStream(), KernelCustomUpdate, idCustomConnectivityRemapUpdateStart, 1);
                 Timer t(funcEnv.getStream(), "customUpdate" + g + "Remap", model.isTimingEnabled());
                 funcEnv.printLine(KernelNames[KernelCustomConnectivityRemapUpdate] + g + "<<<grid, threads>>>();");
-                funcEnv.printLine("CHECK_CUDA_ERRORS(cudaPeekAtLastError());");
+                funcEnv.printLine("CHECK_RUNTIME_ERRORS(cudaPeekAtLastError());");
             }
 
             // If NCCL reductions are enabled
@@ -767,7 +767,7 @@ void BackendCUDAHIP::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerge
             // If timing is enabled
             if(model.isTimingEnabled()) {
                 // Synchronise last event
-                funcEnv.getStream() << "CHECK_CUDA_ERRORS(cudaEventSynchronize(customUpdate" << g;
+                funcEnv.getStream() << "CHECK_RUNTIME_ERRORS(cudaEventSynchronize(customUpdate" << g;
                 if (idCustomConnectivityRemapUpdateStart > 0) {
                     funcEnv.getStream() << "Remap";
                 }
@@ -779,19 +779,19 @@ void BackendCUDAHIP::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerge
                 if(idCustomUpdateStart > 0) {
                     CodeGenerator::CodeStream::Scope b(funcEnv.getStream());
                     funcEnv.getStream() << "float tmp;" << std::endl;
-                    funcEnv.getStream() << "CHECK_CUDA_ERRORS(cudaEventElapsedTime(&tmp, customUpdate" << g << "Start, customUpdate" << g << "Stop));" << std::endl;
+                    funcEnv.getStream() << "CHECK_RUNTIME_ERRORS(cudaEventElapsedTime(&tmp, customUpdate" << g << "Start, customUpdate" << g << "Stop));" << std::endl;
                     funcEnv.getStream() << "customUpdate" << g << "Time += tmp / 1000.0;" << std::endl;
                 }
                 if(idCustomTransposeUpdateStart > 0) {
                     CodeGenerator::CodeStream::Scope b(funcEnv.getStream());
                     funcEnv.getStream() << "float tmp;" << std::endl;
-                    funcEnv.getStream() << "CHECK_CUDA_ERRORS(cudaEventElapsedTime(&tmp, customUpdate" << g << "TransposeStart, customUpdate" << g << "TransposeStop));" << std::endl;
+                    funcEnv.getStream() << "CHECK_RUNTIME_ERRORS(cudaEventElapsedTime(&tmp, customUpdate" << g << "TransposeStart, customUpdate" << g << "TransposeStop));" << std::endl;
                     funcEnv.getStream() << "customUpdate" << g << "TransposeTime += tmp / 1000.0;" << std::endl;
                 }
                 if (idCustomConnectivityRemapUpdateStart > 0) {
                     CodeGenerator::CodeStream::Scope b(funcEnv.getStream());
                     funcEnv.getStream() << "float tmp;" << std::endl;
-                    funcEnv.getStream() << "CHECK_CUDA_ERRORS(cudaEventElapsedTime(&tmp, customUpdate" << g << "RemapStart, customUpdate" << g << "RemapStop));" << std::endl;
+                    funcEnv.getStream() << "CHECK_RUNTIME_ERRORS(cudaEventElapsedTime(&tmp, customUpdate" << g << "RemapStart, customUpdate" << g << "RemapStop));" << std::endl;
                     funcEnv.getStream() << "customUpdate" << g << "RemapTime += tmp / 1000.0;" << std::endl;
                 }
             }
@@ -921,7 +921,7 @@ void BackendCUDAHIP::genInit(CodeStream &os, ModelSpecMerged &modelMerged, Backe
             // If global RNG is required, launch kernel to initalize it
             if (globalDeviceRNGRequired) {
                 initEnv.getStream() << "initializeRNGKernel<<<1, 1>>>(deviceRNGSeed);" << std::endl;
-                initEnv.getStream() << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+                initEnv.getStream() << "CHECK_RUNTIME_ERRORS(cudaPeekAtLastError());" << std::endl;
             }
         }
 
@@ -933,7 +933,7 @@ void BackendCUDAHIP::genInit(CodeStream &os, ModelSpecMerged &modelMerged, Backe
 
                 genKernelDimensions(initEnv.getStream(), KernelInitialize, idInitStart, 1);
                 initEnv.getStream() << KernelNames[KernelInitialize] << "<<<grid, threads>>>(deviceRNGSeed);" << std::endl;
-                initEnv.getStream() << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+                initEnv.getStream() << "CHECK_RUNTIME_ERRORS(cudaPeekAtLastError());" << std::endl;
             }
         }
     }
@@ -950,7 +950,7 @@ void BackendCUDAHIP::genInit(CodeStream &os, ModelSpecMerged &modelMerged, Backe
 
                 genKernelDimensions(initEnv.getStream(), KernelInitializeSparse, idSparseInitStart, 1);
                 initEnv.getStream() << KernelNames[KernelInitializeSparse] << "<<<grid, threads>>>();" << std::endl;
-                initEnv.getStream() << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+                initEnv.getStream() << "CHECK_RUNTIME_ERRORS(cudaPeekAtLastError());" << std::endl;
             }
         }
     }
@@ -1296,7 +1296,7 @@ void BackendCUDAHIP::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&) c
         os << "void ncclGenerateUniqueID()";
         {
             CodeStream::Scope b(os);
-            os << "CHECK_NCCL_ERRORS(ncclGetUniqueId(&ncclID));" << std::endl;
+            os << "CHECK_CCL_ERRORS(ncclGetUniqueId(&ncclID));" << std::endl;
         }
         os << std::endl;
         os << "unsigned char *ncclGetUniqueID()";
@@ -1308,7 +1308,7 @@ void BackendCUDAHIP::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&) c
         os << "void ncclInitCommunicator(int rank, int numRanks)";
         {
             CodeStream::Scope b(os);
-            os << "CHECK_NCCL_ERRORS(ncclCommInitRank(&ncclCommunicator, numRanks, ncclID, rank));" << std::endl;
+            os << "CHECK_CCL_ERRORS(ncclCommInitRank(&ncclCommunicator, numRanks, ncclID, rank));" << std::endl;
         }
         os << std::endl;
     }
@@ -1322,7 +1322,7 @@ void BackendCUDAHIP::genFreeMemPreamble(CodeStream &os, const ModelSpecMerged&) 
 {
     // Free NCCL communicator
     if(getPreferences<PreferencesCUDAHIP>().enableNCCLReductions) {
-        os << "CHECK_NCCL_ERRORS(ncclCommDestroy(ncclCommunicator));" << std::endl;
+        os << "CHECK_CCL_ERRORS(ncclCommDestroy(ncclCommunicator));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
@@ -1330,12 +1330,12 @@ void BackendCUDAHIP::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpec
 {
     // Synchronise if zero-copy are in use
     if(modelMerged.getModel().zeroCopyInUse()) {
-        os << "CHECK_CUDA_ERRORS(cudaDeviceSynchronize());" << std::endl;
+        os << "CHECK_RUNTIME_ERRORS(cudaDeviceSynchronize());" << std::endl;
     }
 
     // If timing is enabled, synchronise last event
     if(modelMerged.getModel().isTimingEnabled()) {
-        os << "CHECK_CUDA_ERRORS(cudaEventSynchronize(neuronUpdateStop));" << std::endl;
+        os << "CHECK_RUNTIME_ERRORS(cudaEventSynchronize(neuronUpdateStop));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
@@ -1350,16 +1350,16 @@ void BackendCUDAHIP::genLazyVariableDynamicAllocation(CodeStream &os,
    
     if(loc & VarLocationAttribute::HOST) {
         const char *flags = (loc & VarLocationAttribute::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
-        os << "CHECK_CUDA_ERRORS(cudaHostAlloc(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << "), " << flags << "));" << std::endl;
+        os << "CHECK_RUNTIME_ERRORS(cudaHostAlloc(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << "), " << flags << "));" << std::endl;
     }
 
     // If variable is present on device at all
     if(loc & VarLocationAttribute::DEVICE) {
         if(loc & VarLocationAttribute::ZERO_COPY) {
-            os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void**)" << devicePointerToPointer << ", (void*)" << hostPointer << ", 0));" << std::endl;
+            os << "CHECK_RUNTIME_ERRORS(cudaHostGetDevicePointer((void**)" << devicePointerToPointer << ", (void*)" << hostPointer << ", 0));" << std::endl;
         }
         else {
-            os << "CHECK_CUDA_ERRORS(cudaMalloc(" << devicePointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << ")));" << std::endl;
+            os << "CHECK_RUNTIME_ERRORS(cudaMalloc(" << devicePointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << ")));" << std::endl;
         }
     }
 }
@@ -1370,11 +1370,11 @@ void BackendCUDAHIP::genLazyVariableDynamicPush(CodeStream &os,
 {
     if(!(loc & VarLocationAttribute::ZERO_COPY)) {
         if (type.isPointer()) {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(*$(_d_" << name << "), *$(_" << name << "), ";
+            os << "CHECK_RUNTIME_ERRORS(cudaMemcpy(*$(_d_" << name << "), *$(_" << name << "), ";
             os << countVarName << " * sizeof(" << type.getPointer().valueType->getName() << "), cudaMemcpyHostToDevice));" << std::endl;
         }
         else {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy($(_d_" << name << "), $(_" << name << "), ";
+            os << "CHECK_RUNTIME_ERRORS(cudaMemcpy($(_d_" << name << "), $(_" << name << "), ";
             os << countVarName << " * sizeof(" << type.getName() << "), cudaMemcpyHostToDevice));" << std::endl;
         }
     }
@@ -1386,11 +1386,11 @@ void BackendCUDAHIP::genLazyVariableDynamicPull(CodeStream &os,
 {
     if(!(loc & VarLocationAttribute::ZERO_COPY)) {
         if (type.isPointer()) {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(*$(_" << name << "), *$(_d_" << name << "), ";
+            os << "CHECK_RUNTIME_ERRORS(cudaMemcpy(*$(_" << name << "), *$(_d_" << name << "), ";
             os << countVarName << " * sizeof(" << type.getPointer().valueType->getName() << "), cudaMemcpyDeviceToHost));" << std::endl;
         }
         else {
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy($(_" << name << "), $(_d_" << name << "), ";
+            os << "CHECK_RUNTIME_ERRORS(cudaMemcpy($(_" << name << "), $(_d_" << name << "), ";
             os << countVarName << " * sizeof(" << type.getName() << "), cudaMemcpyDeviceToHost));" << std::endl;
         }
         
@@ -1402,7 +1402,7 @@ void BackendCUDAHIP::genMergedDynamicVariablePush(CodeStream &os, const std::str
                                                   const std::string &egpName) const
 {
     const std::string structName = "Merged" + suffix + "Group" + std::to_string(mergedGroupIdx);
-    os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbolAsync(d_merged" << suffix << "Group" << mergedGroupIdx;
+    os << "CHECK_RUNTIME_ERRORS(cudaMemcpyToSymbolAsync(d_merged" << suffix << "Group" << mergedGroupIdx;
     os << ", &" << egpName << ", sizeof(" << egpName << ")";
     os << ", (sizeof(" << structName << ") * (" << groupIdx << ")) + offsetof(" << structName << ", " << fieldName << ")));" << std::endl;
 }
@@ -1435,17 +1435,17 @@ void BackendCUDAHIP::genTimer(CodeStream &definitions, CodeStream &runner, CodeS
     runner << "cudaEvent_t " << name << "Stop;" << std::endl;
 
     // Create start and stop events in allocations
-    allocations << "CHECK_CUDA_ERRORS(cudaEventCreate(&" << name << "Start));" << std::endl;
-    allocations << "CHECK_CUDA_ERRORS(cudaEventCreate(&" << name << "Stop));" << std::endl;
+    allocations << "CHECK_RUNTIME_ERRORS(cudaEventCreate(&" << name << "Start));" << std::endl;
+    allocations << "CHECK_RUNTIME_ERRORS(cudaEventCreate(&" << name << "Stop));" << std::endl;
 
     // Destroy start and stop events in allocations
-    free << "CHECK_CUDA_ERRORS(cudaEventDestroy(" << name << "Start));" << std::endl;
-    free << "CHECK_CUDA_ERRORS(cudaEventDestroy(" << name << "Stop));" << std::endl;
+    free << "CHECK_RUNTIME_ERRORS(cudaEventDestroy(" << name << "Start));" << std::endl;
+    free << "CHECK_RUNTIME_ERRORS(cudaEventDestroy(" << name << "Stop));" << std::endl;
 
     if(updateInStepTime) {
         CodeGenerator::CodeStream::Scope b(stepTimeFinalise);
         stepTimeFinalise << "float tmp;" << std::endl;
-        stepTimeFinalise << "CHECK_CUDA_ERRORS(cudaEventElapsedTime(&tmp, " << name << "Start, " << name << "Stop));" << std::endl;
+        stepTimeFinalise << "CHECK_RUNTIME_ERRORS(cudaEventElapsedTime(&tmp, " << name << "Start, " << name << "Stop));" << std::endl;
         stepTimeFinalise << name << "Time += tmp / 1000.0;" << std::endl;
     }
 }
@@ -1454,7 +1454,7 @@ void BackendCUDAHIP::genReturnFreeDeviceMemoryBytes(CodeStream &os) const
 {
     os << "size_t free;" << std::endl;
     os << "size_t total;" << std::endl;
-    os << "CHECK_CUDA_ERRORS(cudaMemGetInfo(&free, &total));" << std::endl;
+    os << "CHECK_RUNTIME_ERRORS(cudaMemGetInfo(&free, &total));" << std::endl;
     os << "return free;" << std::endl;
 }
 //--------------------------------------------------------------------------

@@ -51,7 +51,10 @@ struct PreferencesCUDAHIP : public PreferencesBase
 class BACKEND_EXPORT BackendCUDAHIP : public BackendSIMT
 {
 public:
-    using BackendSIMT::BackendSIMT;
+    BackendCUDAHIP(const KernelBlockSize &kernelBlockSizes, const PreferencesBase &preferences,
+                   const std::string &runtimePrefix, const std::string &cclPrefix)
+    :   BackendSIMT(kernelBlockSizes, preferences), m_RuntimePrefix(runtimePrefix), m_CCLPrefix(cclPrefix)
+    {}
 
     //--------------------------------------------------------------------------
     // Declared virtuals
@@ -181,6 +184,13 @@ protected:
     virtual void genDefinitionsPreambleInternal(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
     virtual void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY = 1) const = 0;
+
+    //--------------------------------------------------------------------------
+    // Protected methods
+    //--------------------------------------------------------------------------
+    const std::string &getRuntimePrefix() const{ return m_RuntimePrefix; }
+    const std::string &getCCLPrefix() const{ return m_CCLPrefix; }
+
 private:
     //--------------------------------------------------------------------------
     // Private methods
@@ -274,5 +284,10 @@ private:
             } 
         }
     }
+    //--------------------------------------------------------------------------
+    // Members
+    //--------------------------------------------------------------------------
+    std::string m_RuntimePrefix;
+    std::string m_CCLPrefix;
 };
 }   // GeNN::CodeGenerator
