@@ -289,7 +289,8 @@ void State::ncclInitCommunicator(int rank, int numRanks)
 //--------------------------------------------------------------------------
 Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, 
                  int device, bool zeroCopy)
-:   BackendCUDAHIP(kernelBlockSizes, preferences, "cuda", "nccl"), m_ChosenDeviceID(device)
+:   BackendCUDAHIP(kernelBlockSizes, preferences, "cuda", "curand", "nccl"), 
+    m_ChosenDeviceID(device)
 {
     // Set device
     CHECK_CUDA_ERRORS(cudaSetDevice(device));
