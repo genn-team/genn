@@ -227,8 +227,9 @@ private:
                 os << "};" << std::endl;
 
                 // Push to device
-                os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbolAsync(d_merged" << T::name << "Group" << g.getIndex() << ", &group, ";
-                os << "sizeof(Merged" << T::name << "Group" << g.getIndex() << "), idx * sizeof(Merged" << T::name << "Group" << g.getIndex() << ")));" << std::endl;
+                os << "CHECK_RUNTIME_ERRORS(" << getRuntimePrefix() << "MemcpyToSymbolAsync(d_merged" << T::name << "Group" << g.getIndex() << ", &group, ";
+                os << "sizeof(Merged" << T::name << "Group" << g.getIndex() << "), idx * sizeof(Merged" << T::name << "Group" << g.getIndex() << "), ";
+                os << getRuntimePrefix() << "MemcpyHostToDevice, 0));" << std::endl;
             }
         }
     }
@@ -246,7 +247,7 @@ private:
             env.getStream() << "const auto *group = &merged" << G::name << "Group" << cg.getIndex() << "[g]; " << std::endl;
             EnvironmentGroupMergedField<G> groupEnv(env, cg);
             buildSizeEnvironment(groupEnv);
-        
+
             // Loop through variables
             const auto *cm = cg.getArchetype().getModel();
             for(const auto &v : cm->getVars()) {

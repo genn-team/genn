@@ -493,9 +493,9 @@ boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
 std::string Backend::getHIPCCFlags() const
 {
     const std::string architecture = "sm_" + std::to_string(getChosenHIPDevice().major) + std::to_string(getChosenHIPDevice().minor);
-    std::string hipccFlags = "-x cu -arch " + architecture;
+    std::string hipccFlags = "-x cu -arch " + architecture + " -I\"$(HIP_PATH)/include\"";
 #ifndef _WIN32
-    hipccFlags += " -std=c++11 --compiler-options \"-fPIC -Wno-return-type-c-linkage\"";
+    hipccFlags += " -std=c++11  --compiler-options \"-fPIC\"";
 #endif
     /*if(m_RuntimeVersion >= 9020) {
         hipccFlags += " -Xcudafe \"--diag_suppress=extern_entity_treated_as_static\"";
@@ -531,19 +531,20 @@ const EnvironmentLibrary::Library &Backend::getRNGFunctions(const Type::Resolved
 //--------------------------------------------------------------------------
 void Backend::genDefinitionsPreambleInternal(CodeStream &os, const ModelSpecMerged &) const
 {
-    os << "// CUDA includes" << std::endl;
-    os << "#include <curand_kernel.h>" << std::endl;
+    os << "// HIP includes" << std::endl;
+    os <<"#include <hip/hip_runtime.h>" << std::endl;
     os <<"#include <hip/hip_fp16.h>" << std::endl;
+    os << "#include <hiprand/hiprand_kernel.h>" << std::endl;
 
     // If NCCL is enabled
     if(getPreferences<Preferences>().enableNCCLReductions) {
-        // Include NCCL header
+        // Include RCCL header
         os << "#include <rccl.h>" << std::endl;
         os << std::endl;
 
         os << std::endl;
         os << "// ------------------------------------------------------------------------" << std::endl;
-        os << "// Helper macro for error-checking NCCL calls" << std::endl;
+        os << "// Helper macro for error-checking RCCL calls" << std::endl;
         os << "#define CHECK_CCL_ERRORS(call) {\\" << std::endl;
         os << "    rcclResult_t error = call;\\" << std::endl;
         os << "    if (error != rcclSuccess) {\\" << std::endl;

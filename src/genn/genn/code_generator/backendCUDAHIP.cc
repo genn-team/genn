@@ -525,7 +525,7 @@ void BackendCUDAHIP::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerg
 
             genKernelDimensions(synapseUpdateEnv.getStream(), KernelPresynapticUpdate, idPresynapticStart, model.getBatchSize());
             synapseUpdateEnv.getStream() << KernelNames[KernelPresynapticUpdate] << "<<<grid, threads>>>(t);" << std::endl;
-            synapseUpdateEnv.getStream() << "CHECK_RUNTIME_ERRORS(cudaPeekAtLastError());" << std::endl;
+            synapseUpdateEnv.getStream() << "CHECK_RUNTIME_ERRORS(" << getRuntimePrefix() << "PeekAtLastError());" << std::endl;
         }
 
         // Launch postsynaptic update kernel
