@@ -70,12 +70,12 @@ struct Preferences : public PreferencesCUDAHIP
         additional constant cache, increase this */
     size_t constantCacheOverhead = 72 * 5;
 
-    //! NVCC compiler options for all GPU code
-    //std::string userNvccFlags = "";
+    //! HIPCC compiler options for all GPU code
+    std::string userHipccFlags = "";
 
     void updateHash(boost::uuids::detail::sha1 &hash) const
     {
-        // Superclass 
+        // Superclass
         PreferencesCUDAHIP::updateHash(hash);
 
         // **NOTE** showPtxInfo, generateLineInfo and userNvccFlags only affect makefiles/msbuild 
@@ -101,10 +101,10 @@ public:
     //------------------------------------------------------------------------
     //! To be called on one rank to generate ID before creating communicator
     void ncclGenerateUniqueID();
-    
+
     //! Get pointer to unique ID
     unsigned char *ncclGetUniqueID();
-    
+
     //! Get size of unique ID in bytes
     size_t ncclGetUniqueIDSize() const;
 
@@ -192,10 +192,10 @@ public:
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
-    const hipDeviceProp &getChosenHIPDevice() const{ return m_ChosenDevice; }
+    const hipDeviceProp_t &getChosenHIPDevice() const{ return m_ChosenDevice; }
     int getChosenDeviceID() const{ return m_ChosenDeviceID; }
     int getRuntimeVersion() const{ return m_RuntimeVersion; }
-    std::string getNVCCFlags() const;
+    std::string getHIPCCFlags() const;
 
 protected:
     //--------------------------------------------------------------------------
@@ -212,14 +212,14 @@ protected:
 
     //! Generate HIP/CUDA specific bits of definitions preamble
     virtual void genDefinitionsPreambleInternal(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
-    
+
     virtual void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY = 1) const final;
 
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
     const int m_ChosenDeviceID;
-    hipDeviceProp m_ChosenDevice;
+    hipDeviceProp_t m_ChosenDevice;
     int m_RuntimeVersion;
 };
 }   // GeNN::CUDA::CodeGenerator

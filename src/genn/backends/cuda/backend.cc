@@ -482,7 +482,7 @@ boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
 
     // Update hash was name of backend
     Utils::updateHash("CUDA", hash);
-    
+
     // Update hash with chosen device ID and kernel block sizes
     Utils::updateHash(m_ChosenDeviceID, hash);
     Utils::updateHash(getKernelBlockSize(), hash);

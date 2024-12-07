@@ -57,6 +57,6 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &ou
         plog::get<Logging::CHANNEL_BACKEND>()->setMaxSeverity(backendLevel);
     }
 
-    return Backend(preferences.manualBlockSizes, preferences, deviceID, model.zeroCopyInUse());
+    return Backend(preferences.manualBlockSizes, preferences, preferences.manualDeviceID, model.zeroCopyInUse());
 }
 }   // namespace GeNN::CodeGenerator::HIP::Optimiser
