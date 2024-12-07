@@ -4,8 +4,8 @@
 #include <algorithm>
 #include <iterator>
 
-// HIP includes
-#include <hiprand_kernel.h>
+// hipRAND includes
+#include <hiprand/hiprand_kernel.h>
 
 // GeNN includes
 #include "gennUtils.h"
@@ -89,10 +89,10 @@ public:
 
         // Malloc host pointer
         if(getLocation() & VarLocationAttribute::HOST) {
-            const unsigned int flags = (getLocation() & VarLocationAttribute::ZERO_COPY) ? hipHostAllocMapped : hipHostAllocPortable;
+            const unsigned int flags = (getLocation() & VarLocationAttribute::ZERO_COPY) ? hipHostMallocMapped : hipHostMallocPortable;
 
             std::byte *hostPointer = nullptr;
-            CHECK_HIP_ERRORS(hipHostAlloc(&hostPointer, getSizeBytes(), flags));
+            CHECK_HIP_ERRORS(hipHostMalloc(&hostPointer, getSizeBytes(), flags));
             setHostPointer(hostPointer);
         }
 
@@ -100,10 +100,10 @@ public:
         if(getLocation() & VarLocationAttribute::DEVICE) {
             // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
             if(getLocation() & VarLocationAttribute::ZERO_COPY) {
-                CHECK_CUDA_ERRORS(hipHostGetDevicePointer(&m_DevicePointer, getHostPointer(), 0));
+                CHECK_HIP_ERRORS(hipHostGetDevicePointer(reinterpret_cast<void**>(&m_DevicePointer), getHostPointer(), 0));
             }
             else {
-                CHECK_CUDA_ERRORS(hipMalloc(&m_DevicePointer, getSizeBytes()));
+                CHECK_HIP_ERRORS(hipMalloc(&m_DevicePointer, getSizeBytes()));
             }
         }
     }
@@ -113,7 +113,7 @@ public:
     {
         // **NOTE** because we pinned the variable we need to free it with cudaFreeHost rather than use free
         if(getLocation() & VarLocationAttribute::HOST) {
-            CHECK_HIP_ERRORS(hipFreeHost(getHostPointer()));
+            CHECK_HIP_ERRORS(hipHostFree(getHostPointer()));
             setHostPointer(nullptr);
         }
 
@@ -168,8 +168,8 @@ public:
             // Convert offset and count to bytes and copy
             const size_t offsetBytes = offset * getType().getValue().size;
             const size_t countBytes = count * getType().getValue().size;
-            CHECK_CUDA_ERRORS(hipMemcpy(getDevicePointer() + offsetBytes, getHostPointer() + offsetBytes, 
-                                        countBytes, hipMemcpyHostToDevice));
+            CHECK_HIP_ERRORS(hipMemcpy(getDevicePointer() + offsetBytes, getHostPointer() + offsetBytes, 
+                                       countBytes, hipMemcpyHostToDevice));
         }
     }
 
@@ -191,8 +191,8 @@ public:
             // Convert offset and count to bytes and copy
             const size_t offsetBytes = offset * getType().getValue().size;
             const size_t countBytes = count * getType().getValue().size;
-            CHECK_CUDA_ERRORS(hipMemcpy(getHostPointer() + offsetBytes, getDevicePointer() + offsetBytes, 
-                                        countBytes, hipMemcpyDeviceToHost));
+            CHECK_HIP_ERRORS(hipMemcpy(getHostPointer() + offsetBytes, getDevicePointer() + offsetBytes, 
+                                       countBytes, hipMemcpyDeviceToHost));
         }
 
     }
@@ -200,7 +200,7 @@ public:
     //! Memset the host pointer
     virtual void memsetDeviceObject(int value) final
     {
-        CHECK_CUDA_ERRORS(hipMemset(m_DevicePointer, value, getSizeBytes()));
+        CHECK_HIP_ERRORS(hipMemset(m_DevicePointer, value, getSizeBytes()));
     }
 
     //! Serialise backend-specific device object to bytes
@@ -317,7 +317,7 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
         }
 
         // Set map host device flag
-        CHECK_CUDA_ERRORS(cudaSetDeviceFlags(hipDeviceMapHost));
+        CHECK_HIP_ERRORS(hipSetDeviceFlags(hipDeviceMapHost));
     }
 }
 //--------------------------------------------------------------------------
@@ -328,7 +328,7 @@ bool Backend::areSharedMemAtomicsSlow() const
 //--------------------------------------------------------------------------
 unsigned int Backend::getNumLanes() const
 {
-    return 32;
+    return getChosenHIPDevice().warpSize;
 }
 //--------------------------------------------------------------------------
 std::string Backend::getAtomic(const Type::ResolvedType &type, AtomicOperation op, AtomicMemSpace) const
@@ -368,9 +368,9 @@ std::unique_ptr<Runtime::ArrayBase> Backend::createPopulationRNG(size_t count) c
 //--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream &os) const
 {
-    const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
+    const std::string architecture = "sm_" + std::to_string(getChosenHIPDevice().major) + std::to_string(getChosenHIPDevice().minor);
     std::string linkFlags = "--shared -arch " + architecture;
-    
+
     // If NCCL reductions are enabled, link NCCL
     if(getPreferences<Preferences>().enableNCCLReductions) {
         linkFlags += " -lnccl";
@@ -403,24 +403,24 @@ void Backend::genMSBuildConfigProperties(std::ostream &os) const
 {
     assert(false);
     // Add property to extract CUDA path
-    os << "\t\t<!-- **HACK** determine the installed CUDA version by regexing CUDA path -->" << std::endl;
-    os << "\t\t<CudaVersion>$([System.Text.RegularExpressions.Regex]::Match($(CUDA_PATH), \"\\\\v([0-9.]+)$\").Groups[1].Value)</CudaVersion>" << std::endl;
+    /*os << "\t\t<!-- **HACK** determine the installed CUDA version by regexing CUDA path -->" << std::endl;
+    os << "\t\t<CudaVersion>$([System.Text.RegularExpressions.Regex]::Match($(CUDA_PATH), \"\\\\v([0-9.]+)$\").Groups[1].Value)</CudaVersion>" << std::endl;*/
 }
 //--------------------------------------------------------------------------
 void Backend::genMSBuildImportProps(std::ostream &os) const
 {
     assert(false);
     // Import CUDA props file
-    os << "\t<ImportGroup Label=\"ExtensionSettings\">" << std::endl;
+    /*os << "\t<ImportGroup Label=\"ExtensionSettings\">" << std::endl;
     os << "\t\t<Import Project=\"$(CUDA_PATH)\\extras\\visual_studio_integration\\MSBuildExtensions\\CUDA $(CudaVersion).props\" />" << std::endl;
-    os << "\t</ImportGroup>" << std::endl;
+    os << "\t</ImportGroup>" << std::endl;*/
 }
 //--------------------------------------------------------------------------
 void Backend::genMSBuildItemDefinitions(std::ostream &os) const
 {
     assert(false);
     // Add item definition for host compilation
-    os << "\t\t<ClCompile>" << std::endl;
+    /*os << "\t\t<ClCompile>" << std::endl;
     os << "\t\t\t<WarningLevel>Level3</WarningLevel>" << std::endl;
     os << "\t\t\t<Optimization Condition=\"'$(Configuration)'=='Release'\">MaxSpeed</Optimization>" << std::endl;
     os << "\t\t\t<Optimization Condition=\"'$(Configuration)'=='Debug'\">Disabled</Optimization>" << std::endl;
@@ -452,25 +452,25 @@ void Backend::genMSBuildItemDefinitions(std::ostream &os) const
     os << "\t\t\t<CodeGeneration>compute_" << virtualArchitecture <<",sm_" << architecture << "</CodeGeneration>" << std::endl;
     os << "\t\t\t<FastMath>" << (getPreferences().optimizeCode ? "true" : "false") << "</FastMath>" << std::endl;
     os << "\t\t\t<GenerateLineInfo>" << (getPreferences<Preferences>().generateLineInfo ? "true" : "false") << "</GenerateLineInfo>" << std::endl;
-    os << "\t\t</CudaCompile>" << std::endl;
+    os << "\t\t</CudaCompile>" << std::endl;*/
 }
 //--------------------------------------------------------------------------
 void Backend::genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const
 {
     assert(false);
-    os << "\t\t<CudaCompile Include=\"" << moduleName << ".cc\" >" << std::endl;
+    /*os << "\t\t<CudaCompile Include=\"" << moduleName << ".cc\" >" << std::endl;
     // **YUCK** for some reasons you can't call .Contains on %(BaseCommandLineTemplate) directly
     // Solution suggested by https://stackoverflow.com/questions/9512577/using-item-functions-on-metadata-values
     os << "\t\t\t<AdditionalOptions Condition=\" !$([System.String]::new('%(BaseCommandLineTemplate)').Contains('-x cu')) \">-x cu %(AdditionalOptions)</AdditionalOptions>" << std::endl;
-    os << "\t\t</CudaCompile>" << std::endl;
+    os << "\t\t</CudaCompile>" << std::endl;*/
 }
 //--------------------------------------------------------------------------
 void Backend::genMSBuildImportTarget(std::ostream &os) const
 {
     assert(false);
-    os << "\t<ImportGroup Label=\"ExtensionTargets\">" << std::endl;
+    /*os << "\t<ImportGroup Label=\"ExtensionTargets\">" << std::endl;
     os << "\t\t<Import Project=\"$(CUDA_PATH)\\extras\\visual_studio_integration\\MSBuildExtensions\\CUDA $(CudaVersion).targets\" />" << std::endl;
-    os << "\t</ImportGroup>" << std::endl;
+    os << "\t</ImportGroup>" << std::endl;*/
 }
 //--------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
@@ -479,7 +479,7 @@ boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
 
     // Update hash was name of backend
     Utils::updateHash("HIP", hash);
-    
+
     // Update hash with chosen device ID and kernel block sizes
     Utils::updateHash(m_ChosenDeviceID, hash);
     Utils::updateHash(getKernelBlockSize(), hash);
@@ -490,37 +490,32 @@ boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
     return hash.get_digest();
 }
 //--------------------------------------------------------------------------
-std::string Backend::getNVCCFlags() const
+std::string Backend::getHIPCCFlags() const
 {
-    // **NOTE** now we don't include runner.cc when building standalone modules we get loads of warnings about
-    // How you hide device compiler warnings is totally non-documented but https://stackoverflow.com/a/17095910/1476754
-    // holds the answer! For future reference --display_error_number option can be used to get warning ids to use in --diag-supress
-    // HOWEVER, on CUDA 7.5 and 8.0 this causes a fatal error and, as no warnings are shown when --diag-suppress is removed,
-    // presumably this is because this warning simply wasn't implemented until CUDA 9
-    const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
-    std::string nvccFlags = "-x cu -arch " + architecture;
+    const std::string architecture = "sm_" + std::to_string(getChosenHIPDevice().major) + std::to_string(getChosenHIPDevice().minor);
+    std::string hipccFlags = "-x cu -arch " + architecture;
 #ifndef _WIN32
-    nvccFlags += " -std=c++11 --compiler-options \"-fPIC -Wno-return-type-c-linkage\"";
+    hipccFlags += " -std=c++11 --compiler-options \"-fPIC -Wno-return-type-c-linkage\"";
 #endif
-    if(m_RuntimeVersion >= 9020) {
-        nvccFlags += " -Xcudafe \"--diag_suppress=extern_entity_treated_as_static\"";
-    }
+    /*if(m_RuntimeVersion >= 9020) {
+        hipccFlags += " -Xcudafe \"--diag_suppress=extern_entity_treated_as_static\"";
+    }*/
 
-    nvccFlags += " " + getPreferences<Preferences>().userNvccFlags;
+    hipccFlags += " " + getPreferences<Preferences>().userHipccFlags;
     if(getPreferences().optimizeCode) {
-        nvccFlags += " -O3 -use_fast_math";
+        hipccFlags += " -O3 -DHIP_FAST_MATH";
     }
     if(getPreferences().debugCode) {
-        nvccFlags += " -O0 -g -G";
+        hipccFlags += " -O0 -g -G";
     }
-    if(getPreferences<Preferences>().showPtxInfo) {
+    /*if(getPreferences<Preferences>().showPtxInfo) {
         nvccFlags += " -Xptxas \"-v\"";
     }
     if(getPreferences<Preferences>().generateLineInfo) {
         nvccFlags += " --generate-line-info";
-    }
+    }*/
 
-    return nvccFlags;
+    return hipccFlags;
 }
 //--------------------------------------------------------------------------
 const EnvironmentLibrary::Library &Backend::getRNGFunctions(const Type::ResolvedType &precision) const
@@ -538,8 +533,8 @@ void Backend::genDefinitionsPreambleInternal(CodeStream &os, const ModelSpecMerg
 {
     os << "// CUDA includes" << std::endl;
     os << "#include <curand_kernel.h>" << std::endl;
-    os <<"#include <hip_fp16.h>" << std::endl;
-    
+    os <<"#include <hip/hip_fp16.h>" << std::endl;
+
     // If NCCL is enabled
     if(getPreferences<Preferences>().enableNCCLReductions) {
         // Include NCCL header

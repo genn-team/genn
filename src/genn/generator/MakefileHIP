@@ -1,0 +1,25 @@
+# Configure for HIP backend
+BACKEND_NAME		:=hip
+BACKEND_NAMESPACE 	:=HIP
+
+# Check HIP is present
+ifndef HIP_PATH
+    $(error Environment variable HIP_PATH must be defined)
+endif
+
+# Include common makefile
+include MakefileCommon
+
+# Select platform
+ifeq ($(HIP_PLATFORM), nvidia)
+        CXXFLAGS+=-D__HIP_PLATFORM_NVIDIA__
+        CXXFLAGS+=-I$(CUDA_PATH)/include
+	LDFLAGS+=-L"$(CUDA_PATH)/lib64" -lcuda -lcudart
+else
+        CXXFLAGS+=-D__HIP_PLATFORM_AMD__
+endif
+
+# Add include and link flags for HIP
+CXXFLAGS+= -I"$(HIP_PATH)/include"
+LDFLAGS	+=-L"$(HIP_PATH)/lib" -lhiprand -pthread
+

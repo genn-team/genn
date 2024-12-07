@@ -6,6 +6,7 @@ ifndef HIP_PATH
     $(error Environment variable HIP_PATH must be defined)
 endif
 
+
 # Add backend and CUDA include directories to compiler flags
 CXXFLAGS		+=-I$(GENN_DIR)/include/genn/backends/hip -I"$(HIP_PATH)/include" -pthread
 
@@ -22,6 +23,14 @@ SOURCES			:= $(wildcard *.cc)
 OBJECTS			:=$(SOURCES:%.cc=$(OBJECT_DIRECTORY)/%.o)
 DEPS			:=$(OBJECTS:.o=.d)
 
+# Select platform
+ifeq ($(HIP_PLATFORM), nvidia)
+	CXXFLAGS+=-D__HIP_PLATFORM_NVIDIA__
+        CXXFLAGS+=-I$(CUDA_PATH)/include
+else
+	CXXFLAGS+=-D__HIP_PLATFORM_AMD__
+endif
+
 .PHONY: all
 
 all: $(BACKEND)
@@ -30,7 +39,6 @@ ifdef DYNAMIC
 $(BACKEND): $(OBJECTS)
 	mkdir -p $(@D)
 	$(CXX) -shared $(CXXFLAGS) -o $@ $(OBJECTS)
-endif
 else
 $(BACKEND): $(OBJECTS)
 	mkdir -p $(@D)
