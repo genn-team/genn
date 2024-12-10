@@ -220,4 +220,28 @@ int clz(unsigned int value)
     return __builtin_clz(value);
 #endif
 }
+//--------------------------------------------------------------------------
+int ctz(unsigned int value)
+{
+#ifdef _WIN32
+    unsigned long trailingZero = 0;
+    if(_BitScanForward(&trailingZero, value)) {
+        return trailingZero;
+    }
+    else {
+        return 32;
+    }
+#else
+    return __builtin_ctz(value);
+#endif
+}
+//--------------------------------------------------------------------------
+int popCount(unsigned int value)
+{
+#ifdef _WIN32
+    return __popcnt(value);
+#else
+    return __builtin_popcount(value);
+#endif
+}
 }   // namespace GeNN::utils

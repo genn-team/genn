@@ -8,7 +8,7 @@
 #include <cstdint>
 
 // Third party includes
-#include "common/enum.h"
+#include "enum.h"
 
 inline constexpr uint32_t mask(uint32_t n)
 {

@@ -10,16 +10,20 @@
 // PLOG includes
 #include <plog/Log.h>
 
-// RISC-V utils include
-#include "common/isa.h"
-#include "common/utils.h"
+// GeNN includes
+#include "gennUtils.h"
+
+// FeNN backend include
+#include "isa.h"
 
 #define ALLOCATE_SCALAR(NAME) const auto NAME = scalarRegisterAllocator.getRegister(#NAME" = X");
 #define ALLOCATE_VECTOR(NAME) const auto NAME = vectorRegisterAllocator.getRegister(#NAME" = V");
 
 //----------------------------------------------------------------------------
-// RegisterAllocator
+// GeNN::CodeGenerator::FeNN::RegisterAllocator
 //----------------------------------------------------------------------------
+namespace GeNN::CodeGenerator::FeNN
+{
 //! Automatic register allocator which uses std::shared_ptr to track register lifetime
 template<typename T>
 class RegisterAllocator
@@ -70,9 +74,9 @@ public:
             throw std::runtime_error("Out of registers");
         }
         else {
-            const int n = clz(m_FreeRegisters);
+            const int n = Utils::clz(m_FreeRegisters);
             m_FreeRegisters &= ~(0x80000000 >> n);
-            m_MaxUsedRegisters = std::max(m_MaxUsedRegisters, 32 - popCount(m_FreeRegisters));
+            m_MaxUsedRegisters = std::max(m_MaxUsedRegisters, 32 - Utils::popCount(m_FreeRegisters));
             return std::make_shared<Handle>(static_cast<T>(n), *this, context);
         }
     }
@@ -111,3 +115,4 @@ public:
     ScalarRegisterAllocator() : RegisterAllocator<Reg>(0x7FFFFFFFu)
     {}
 };
+}

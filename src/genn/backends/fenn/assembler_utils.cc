@@ -1,11 +1,13 @@
-#include "assembler/assembler_utils.h"
+#include "assembler_utils.h"
+
+using namespace GeNN::CodeGenerator::FeNN::Assembler;
 
 //----------------------------------------------------------------------------
-// AssemblerUtils
+// GeNN::CodeGenerator::FeNN::AssemblerUtils
 //----------------------------------------------------------------------------
-namespace AssemblerUtils
+namespace GeNN::CodeGenerator::FeNN::AssemblerUtils
 {
-void generateScalarVectorMemcpy(CodeGenerator &c, VectorRegisterAllocator &vectorRegisterAllocator,
+void generateScalarVectorMemcpy(Assembler::CodeGenerator &c, VectorRegisterAllocator &vectorRegisterAllocator,
                                 ScalarRegisterAllocator &scalarRegisterAllocator,
                                 std::variant<uint32_t, ScalarRegisterAllocator::RegisterPtr> scalarPtr, 
                                 std::variant<uint32_t, ScalarRegisterAllocator::RegisterPtr> vectorPtr, 
@@ -94,7 +96,7 @@ void generateScalarVectorMemcpy(CodeGenerator &c, VectorRegisterAllocator &vecto
     }
 }
 //----------------------------------------------------------------------------
-void generateVectorScalarMemcpy(CodeGenerator &c, VectorRegisterAllocator &vectorRegisterAllocator,
+void generateVectorScalarMemcpy(Assembler::CodeGenerator &c, VectorRegisterAllocator &vectorRegisterAllocator,
                                 ScalarRegisterAllocator &scalarRegisterAllocator,
                                 uint32_t vectorPtr, uint32_t scalarPtr, uint32_t numVectors)
 {
@@ -145,7 +147,7 @@ void generateVectorScalarMemcpy(CodeGenerator &c, VectorRegisterAllocator &vecto
     }
 }
 //----------------------------------------------------------------------------
-void generatePerformanceCountWrite(CodeGenerator &c, ScalarRegisterAllocator &scalarRegisterAllocator,
+void generatePerformanceCountWrite(Assembler::CodeGenerator &c, ScalarRegisterAllocator &scalarRegisterAllocator,
                                    CSR lowCSR, CSR highCSR, uint32_t scalarPtr)
 {
     ALLOCATE_SCALAR(SAddress);
@@ -158,10 +160,10 @@ void generatePerformanceCountWrite(CodeGenerator &c, ScalarRegisterAllocator &sc
     c.sw(*SValue, *SAddress, 4);
 }
 //----------------------------------------------------------------------------
-void unrollLoopBody(CodeGenerator &c, uint32_t numIterations, uint32_t maxUnroll, 
+void unrollLoopBody(Assembler::CodeGenerator &c, uint32_t numIterations, uint32_t maxUnroll, 
                     Reg testBufferReg, Reg testBufferEndReg, 
-                    std::function<void(CodeGenerator&, uint32_t)> genBodyFn, 
-                    std::function<void(CodeGenerator&, uint32_t)> genTailFn)
+                    std::function<void(Assembler::CodeGenerator&, uint32_t)> genBodyFn, 
+                    std::function<void(Assembler::CodeGenerator&, uint32_t)> genTailFn)
 {
     // **TODO** tail loop after unrolling
     assert((numIterations % maxUnroll) == 0);
@@ -187,10 +189,10 @@ void unrollLoopBody(CodeGenerator &c, uint32_t numIterations, uint32_t maxUnroll
     }
 }
 //----------------------------------------------------------------------------
-void unrollVectorLoopBody(CodeGenerator &c, uint32_t numIterations, uint32_t maxUnroll, 
+void unrollVectorLoopBody(Assembler::CodeGenerator &c, uint32_t numIterations, uint32_t maxUnroll, 
                           Reg testBufferReg, Reg testBufferEndReg, 
-                          std::function<void(CodeGenerator&, uint32_t)> genBodyFn, 
-                          std::function<void(CodeGenerator&, uint32_t)> genTailFn)
+                          std::function<void(Assembler::CodeGenerator&, uint32_t)> genBodyFn, 
+                          std::function<void(Assembler::CodeGenerator&, uint32_t)> genTailFn)
 {
     // Only loop bodies for now
     assert((numIterations % 32) == 0);
@@ -201,9 +203,9 @@ void unrollVectorLoopBody(CodeGenerator &c, uint32_t numIterations, uint32_t max
 }
 //----------------------------------------------------------------------------
 std::vector<uint32_t> generateStandardKernel(bool simulate, uint32_t readyFlagPtr, 
-                                             std::function<void(CodeGenerator&, VectorRegisterAllocator&, ScalarRegisterAllocator&)> genBodyFn)
+                                             std::function<void(Assembler::CodeGenerator&, VectorRegisterAllocator&, ScalarRegisterAllocator&)> genBodyFn)
 {
-    CodeGenerator c;
+    Assembler::CodeGenerator c;
     VectorRegisterAllocator vectorRegisterAllocator;
     ScalarRegisterAllocator scalarRegisterAllocator;
     
@@ -255,7 +257,7 @@ std::vector<uint32_t> generateInitCode(bool simulate, uint32_t startVectorPtr, u
 {
     return generateStandardKernel(
         simulate, readyFlagPtr,
-        [=](CodeGenerator &c, VectorRegisterAllocator &vectorRegisterAllocator, ScalarRegisterAllocator &scalarRegisterAllocator)
+        [=](Assembler::CodeGenerator &c, VectorRegisterAllocator &vectorRegisterAllocator, ScalarRegisterAllocator &scalarRegisterAllocator)
         {
             // Register allocation
             ALLOCATE_SCALAR(SNumVectorsPtr);

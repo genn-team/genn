@@ -1,14 +1,4 @@
 #pragma once
-/*!
-    @file xbyak_riscv.hpp
-    @brief Xbyak_riscv ; JIT assembler for RISC-V
-    @author herumi
-    @url https://github.com/herumi/xbyak_riscv
-    @note modified new BSD license
-    http://opensource.org/licenses/BSD-3-Clause
-*/
-
-// Copyright (C), 2023, KNS Group LLC (YADRO)
 
 // Standard C++ includes
 #include <iostream>
@@ -23,47 +13,38 @@
 #include <cassert>
 #include <cstdint>
 
-// RISC-V common includes
-#include "common/isa.h"
+// Third party includes
+#include <enum.h>
 
+// FeNN backend includes
+#include "isa.h"
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::FeNN::Assembler
+//----------------------------------------------------------------------------
+namespace GeNN::CodeGenerator::FeNN::Assembler
+{
 // Forward declarations
 class CodeGenerator;
 
-enum {
-    ERR_NONE,
-    ERR_OFFSET_IS_TOO_BIG,
-    ERR_CODE_IS_TOO_BIG,
-    ERR_IMM_IS_TOO_BIG,
-    ERR_INVALID_IMM_OF_JAL,
-    ERR_INVALID_IMM_OF_BTYPE,
-    ERR_LABEL_IS_NOT_FOUND,
-    ERR_LABEL_IS_REDEFINED,
-    ERR_LABEL_IS_TOO_FAR,
-    ERR_LABEL_IS_NOT_SET_BY_L,
-    ERR_LABEL_IS_ALREADY_SET_BY_L,
-    ERR_CANT_PROTECT,
-    ERR_CANT_ALLOC,
-    ERR_BAD_PARAMETER,
-    ERR_MUNMAP,
-    ERR_INTERNAL,
-    ERR_MAX,
-};
+BETTER_ENUM(ErrorType, uint32_t, NONE, OFFSET_IS_TOO_BIG, CODE_IS_TOO_BIG, IMM_IS_TOO_BIG, INVALID_IMM_OF_JAL, INVALID_IMM_OF_BTYPE, LABEL_IS_NOT_FOUND, LABEL_IS_REDEFINED,
+            LABEL_IS_TOO_FAR, LABEL_IS_NOT_SET_BY_L, LABEL_IS_ALREADY_SET_BY_L, CANT_PROTECT, CANT_ALLOC, BAD_PARAMETER, MUNMAP, INTERNAL)
 
 //----------------------------------------------------------------------------
-// Error
+// GeNN::CodeGenerator::FeNN::Assembler::Error
 //----------------------------------------------------------------------------
 class Error : public std::exception {
 public:
-    explicit Error(int err);
-    operator int() const { return err_; }
+    explicit Error(ErrorType err);
+    operator ErrorType() const { return err_; }
     const char *what() const noexcept;
 
 private:
-    int err_;
+    ErrorType err_;
 };
 
 //----------------------------------------------------------------------------
-// Label
+// GeNN::CodeGenerator::FeNN::Assembler::Label
 //----------------------------------------------------------------------------
 class Label 
 {
@@ -94,6 +75,9 @@ private:
     mutable int id;
 };
 
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::FeNN::Assembler::CodeGenerator
+//----------------------------------------------------------------------------
 class CodeGenerator
 {
 public:
@@ -103,7 +87,7 @@ public:
         reset();
     }
 
-     ~CodeGenerator()
+    ~CodeGenerator()
     {
         resetLabelPtrList();
     }
@@ -346,7 +330,7 @@ private:
     void assign(Label& dst, const Label& src)
     {
         ClabelDefList::const_iterator i = clabelDefList_.find(src.id);
-        if (i == clabelDefList_.end()) throw Error(ERR_LABEL_IS_NOT_SET_BY_L);
+        if (i == clabelDefList_.end()) throw Error(ErrorType::LABEL_IS_NOT_SET_BY_L);
         define_inner(clabelDefList_, clabelUndefList_, dst.id, i->second.addr);
         dst.cg = this;
         labelPtrList_.insert(&dst);
@@ -374,7 +358,7 @@ private:
         // add label
         ClabelDefList::value_type item(labelId, addr);
         std::pair<ClabelDefList::iterator, bool> ret = defList.insert(item);
-        if (!ret.second) throw Error(ERR_LABEL_IS_REDEFINED);
+        if (!ret.second) throw Error(ErrorType::LABEL_IS_REDEFINED);
         // search undefined label
         for (;;) {
             ClabelUndefList::iterator itr = undefList.find(labelId);
@@ -447,7 +431,7 @@ private:
     void Itype(Bit<7> opcode, Bit<3> funct3, Bit<5> rd, Bit<5> rs1, int imm)
     {
         if (!inSBit(imm, 12)) {
-            throw Error(ERR_IMM_IS_TOO_BIG);
+            throw Error(ErrorType::IMM_IS_TOO_BIG);
         }
         uint32_t v = (imm<<20) | (funct3<<12) | opcode | enc2(rd, rs1);
         append4B(v);
@@ -455,7 +439,7 @@ private:
     void Stype(Bit<7> opcode, Bit<3> funct3, Bit<5> rs1, Bit<5> rs2, int imm)
     {
         if (!inSBit(imm, 12)) {
-            throw Error(ERR_IMM_IS_TOO_BIG);
+            throw Error(ErrorType::IMM_IS_TOO_BIG);
         }
         uint32_t v = ((imm>>5)<<25) | (funct3<<12) | opcode | enc3(imm & mask(5), rs1, rs2);
         append4B(v);
@@ -463,7 +447,7 @@ private:
     void Utype(Bit<7> opcode, Bit<5> rd, uint32_t imm)
     {
         if (imm >= (1u << 20)) {
-            throw Error(ERR_IMM_IS_TOO_BIG);
+            throw Error(ErrorType::IMM_IS_TOO_BIG);
         }
         uint32_t v = (imm<<12) | opcode | (rd<<7);
         append4B(v);
@@ -474,7 +458,7 @@ private:
             range = 5;
         }
         if (shamt >= (1u << range)) {
-            throw Error(ERR_IMM_IS_TOO_BIG);
+            throw Error(ErrorType::IMM_IS_TOO_BIG);
         }
         uint32_t v = (pre<<25) | (funct3<<12) | opcode | enc3(rd, rs1, shamt);
         append4B(v);
@@ -502,4 +486,4 @@ private:
     ClabelUndefList clabelUndefList_;
     LabelPtrList labelPtrList_;
 };
-
+}

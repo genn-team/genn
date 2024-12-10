@@ -68,6 +68,12 @@ GENN_EXPORT std::string handleLegacyEGPType(const std::string &type);
 //! Count leading zeros
 GENN_EXPORT int clz(unsigned int value);
 
+//! Count trailing zeros
+GENN_EXPORT int ctz(unsigned int value);
+
+//! Count bits
+GENN_EXPORT int popCount(unsigned int value);
+
 //! Checks that initialisers provided for all of the the item names in the vector?
 template<typename T, typename V>
 void validateInitialisers(const std::vector<T> &vec, const std::map<std::string, V> &values, 
