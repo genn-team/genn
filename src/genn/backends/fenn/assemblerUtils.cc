@@ -1,4 +1,4 @@
-#include "assembler_utils.h"
+#include "assemblerUtils.h"
 
 using namespace GeNN::CodeGenerator::FeNN::Assembler;
 

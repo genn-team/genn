@@ -10,7 +10,7 @@
 // FeNN backend includes
 #include "assembler.h"
 #include "isa.h"
-#include "register_allocator.h"
+#include "registerAllocator.h"
 
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::FeNN::AssemblerUtils

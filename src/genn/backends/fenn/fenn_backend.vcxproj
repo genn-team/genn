@@ -20,13 +20,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="assembler.cc" />
-    <ClCompile Include="assembler_utils.cc" />
+    <ClCompile Include="assemblerUtils.cc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\include\genn\backends\fenn\assembler.h" />
-    <ClInclude Include="..\..\..\..\include\genn\backends\fenn\assembler_utils.h" />
+    <ClInclude Include="..\..\..\..\include\genn\backends\fenn\assemblerUtils.h" />
     <ClInclude Include="..\..\..\..\include\genn\backends\fenn\isa.h" />
-    <ClInclude Include="..\..\..\..\include\genn\backends\fenn\register_allocator.h" />
+    <ClInclude Include="..\..\..\..\include\genn\backends\fenn\registerAllocator.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{446AC2EC-3648-47EE-A3D7-C290425CB8E2}</ProjectGuid>
