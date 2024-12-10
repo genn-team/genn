@@ -21,6 +21,7 @@
 **/*.ipdb
 **/*.iobj
 **/*.testdurations
+**/*.pyd
 
 /dist
 /lib
@@ -29,3 +30,4 @@
 /pygenn.egg-info/
 .vscode/
 /pygenn/share/
+/.eggs/
