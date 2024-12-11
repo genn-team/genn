@@ -220,8 +220,9 @@ private:
 
     virtual void visit(const Expression::Literal &literal) final
     {
-        const char *lexemeBegin = literal.getValue().lexeme.c_str();
-        const char *lexemeEnd = lexemeBegin + literal.getValue().lexeme.size();
+        const auto lexeme = literal.getValue().lexeme;
+        const char *lexemeBegin = lexeme.c_str();
+        const char *lexemeEnd = lexemeBegin + lexeme.size();
         
         // If literal is uint
         int64_t integerResult;
