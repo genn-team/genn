@@ -11,8 +11,21 @@
 // Standard C includes
 #include <cassert>
 
+// **YUCK** disable the myriad of warning produced by HIP NVIDIA backend
+#if defined(__HIP_PLATFORM_NVIDIA__) && defined(__GNUC__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+    #pragma GCC diagnostic ignored "-Wsign-compare"
+    #pragma GCC diagnostic ignored "-Wreturn-local-addr" 
+#endif
+
 // HIP includes
 #include <hip/hip_runtime.h>
+
+#if defined(__HIP_PLATFORM_NVIDIA__) && defined(__GNUC__)
+    #pragma GCC diagnostic pop
+#endif
 
 /*#if __has_include(<hip/nccl.h>)
     #include <nccl.h>
