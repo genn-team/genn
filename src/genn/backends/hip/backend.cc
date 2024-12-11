@@ -391,12 +391,22 @@ void Backend::genMakefileCompileRule(std::ostream &os) const
 {
     // Add one rule to generate dependency files from cc files
     os << "%.d: %.cc" << std::endl;
+#ifdef __HIP_PLATFORM_NVIDIA__
+    // **YUCK** hipcc fails to parse --compiler
+    os << "\t@NVCC_APPEND_FLAGS=\"--compiler-options -fPIC\" $(HIPCC) -M $(HIPCCFLAGS) $< 1> $@" << std::endl;
+#else
     os << "\t@$(HIPCC) -M $(HIPCCFLAGS) $< 1> $@" << std::endl;
+#endif
     os << std::endl;
 
     // Add another to build object files from cc files
     os << "%.o: %.cc %.d" << std::endl;
+#ifdef __HIP_PLATFORM_NVIDIA__
+    // **YUCK** hipcc fails to parse --compiler
+    os << "\t@NVCC_APPEND_FLAGS=\"--compiler-options -fPIC\" $(HIPCC) -dc $(HIPCCFLAGS) $<" << std::endl;
+#else
     os << "\t@$(HIPCC) -dc $(HIPCCFLAGS) $<" << std::endl;
+#endif
 }
 //--------------------------------------------------------------------------
 void Backend::genMSBuildConfigProperties(std::ostream &os) const
@@ -492,30 +502,38 @@ boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
 //--------------------------------------------------------------------------
 std::string Backend::getHIPCCFlags() const
 {
+#ifdef __HIP_PLATFORM_NVIDIA__
+    // **NOTE** now we don't include runner.cc when building standalone modules we get loads of warnings about
+    // How you hide device compiler warnings is totally non-documented but https://stackoverflow.com/a/17095910/1476754
+    // holds the answer! For future reference --display_error_number option can be used to get warning ids to use in --diag-supress
+    // HOWEVER, on CUDA 7.5 and 8.0 this causes a fatal error and, as no warnings are shown when --diag-suppress is removed,
+    // presumably this is because this warning simply wasn't implemented until CUDA 9
     const std::string architecture = "sm_" + std::to_string(getChosenHIPDevice().major) + std::to_string(getChosenHIPDevice().minor);
-    std::string hipccFlags = "-x cu -arch " + architecture + " -I\"$(HIP_PATH)/include\"";
+    std::string nvccFlags = "-x cu -arch " + architecture + " -I\"$(HIP_PATH)/include\"";
 #ifndef _WIN32
-    hipccFlags += " -std=c++11  --compiler-options \"-fPIC\"";
+    nvccFlags += " -std=c++11";
 #endif
-    /*if(m_RuntimeVersion >= 9020) {
-        hipccFlags += " -Xcudafe \"--diag_suppress=extern_entity_treated_as_static\"";
-    }*/
-
-    hipccFlags += " " + getPreferences<Preferences>().userHipccFlags;
+    nvccFlags += " -Xcudafe \"--diag_suppress=extern_entity_treated_as_static\"";
+    
+    //nvccFlags += " " + getPreferences<Preferences>().userNvccFlags;
     if(getPreferences().optimizeCode) {
-        hipccFlags += " -O3 -DHIP_FAST_MATH";
+        nvccFlags += " -O3 -use_fast_math";
     }
     if(getPreferences().debugCode) {
-        hipccFlags += " -O0 -g -G";
+        nvccFlags += " -O0 -g -G";
     }
-    /*if(getPreferences<Preferences>().showPtxInfo) {
-        nvccFlags += " -Xptxas \"-v\"";
-    }
-    if(getPreferences<Preferences>().generateLineInfo) {
-        nvccFlags += " --generate-line-info";
-    }*/
+    //if(getPreferences<Preferences>().showPtxInfo) {
+    //    nvccFlags += " -Xptxas \"-v\"";
+    //}
+    //if(getPreferences<Preferences>().generateLineInfo) {
+    //    nvccFlags += " --generate-line-info";
+    //}
 
-    return hipccFlags;
+    return nvccFlags;
+#else
+    assert(false);
+    return "";
+#endif
 }
 //--------------------------------------------------------------------------
 const EnvironmentLibrary::Library &Backend::getRNGFunctions(const Type::ResolvedType &precision) const
