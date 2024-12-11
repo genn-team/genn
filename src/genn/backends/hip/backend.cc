@@ -550,10 +550,20 @@ const EnvironmentLibrary::Library &Backend::getRNGFunctions(const Type::Resolved
 void Backend::genDefinitionsPreambleInternal(CodeStream &os, const ModelSpecMerged &) const
 {
     os << "// HIP includes" << std::endl;
+    // **YUCK** disable the myriad of warning produced by HIP NVIDIA backend
+#if defined(__HIP_PLATFORM_NVIDIA__) && defined(__GNUC__)
+    os << "#pragma GCC diagnostic push" << std::endl;
+    os << "#pragma GCC diagnostic ignored \"-Wdeprecated-declarations\"" << std::endl;
+    os << "#pragma GCC diagnostic ignored \"-Wmissing-field-initializers\"" << std::endl;
+    os << "#pragma GCC diagnostic ignored \"-Wsign-compare\"" << std::endl;
+    os << "#pragma GCC diagnostic ignored \"-Wreturn-local-addr\"" << std::endl;
+#endif
     os <<"#include <hip/hip_runtime.h>" << std::endl;
     os <<"#include <hip/hip_fp16.h>" << std::endl;
     os << "#include <hiprand/hiprand_kernel.h>" << std::endl;
-
+#if defined(__HIP_PLATFORM_NVIDIA__) && defined(__GNUC__)
+    os << "#pragma GCC diagnostic pop" << std::endl;
+#endif
     // If NCCL is enabled
     if(getPreferences<Preferences>().enableNCCLReductions) {
         // Include RCCL header
