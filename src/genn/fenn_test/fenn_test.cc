@@ -137,37 +137,35 @@ private:
     virtual void visit(const Expression::Assignment &assignement) final
     {
         assignement.getAssignee()->accept(*this);
-        const auto assigneeReg = m_ExpressionRegister.value();
-        assert(std::holds_alternative<VectorRegisterAllocator::RegisterPtr>(assigneeReg));
+        const auto vecAssigneeReg = std::get<VectorRegisterAllocator::RegisterPtr>(m_ExpressionRegister.value());
 
         assignement.getValue()->accept(*this);
-        const auto valueReg = m_ExpressionRegister.value();
-        assert(std::holds_alternative<VectorRegisterAllocator::RegisterPtr>(valueReg));
+        const auto vecValueReg = std::get<VectorRegisterAllocator::RegisterPtr>(m_ExpressionRegister.value());
 
-        // If a mask is set, use vsel to conditionally assign
+        // If a mask is set
         // **TODO** only necessary when assigning to variables outside of masked scope
+        const auto opType = assignement.getOperator().type;
         if(m_MaskRegister) {
-             m_Environment.get().getCodeGenerator().vsel(*std::get<VectorRegisterAllocator::RegisterPtr>(assigneeReg), *m_MaskRegister.value(), 
-                                                         *std::get<VectorRegisterAllocator::RegisterPtr>(valueReg));
-        }
-        // Otherwise, copy assigneeReg into result
-        // **TODO** add flag alongside expression register to specify whether it can be trashed
-        else {
-            m_Environment.get().getCodeGenerator().vadd(*std::get<VectorRegisterAllocator::RegisterPtr>(assigneeReg), *std::get<VectorRegisterAllocator::RegisterPtr>(valueReg),
-                                                        *std::get<VectorRegisterAllocator::RegisterPtr>(m_Environment.get().getRegister("_zero")));
-        }
+            // Generate assignement into temporary register
+            const auto tempReg = m_VectorRegisterAllocator.getRegister();
+            generateAssign(opType, *tempReg, *vecAssigneeReg, *vecValueReg);
 
+            // Conditionally assign back to assignee register
+            m_Environment.get().getCodeGenerator().vsel(*vecAssigneeReg, *m_MaskRegister.value(), *tempReg);
+        }
+        // Otherwise, generate assignement directly into assignee register
+        else {
+            generateAssign(opType, *vecAssigneeReg, *vecAssigneeReg, *vecValueReg);
+        }
     }
 
     virtual void visit(const Expression::Binary &binary) final
     {
         binary.getLeft()->accept(*this);
-        const auto leftReg = m_ExpressionRegister.value();
-        assert(std::holds_alternative<VectorRegisterAllocator::RegisterPtr>(leftReg));
+        const auto vecLeftReg = std::get<VectorRegisterAllocator::RegisterPtr>(m_ExpressionRegister.value());
 
         binary.getRight()->accept(*this);
-        const auto rightReg = m_ExpressionRegister.value();
-        assert(std::holds_alternative<VectorRegisterAllocator::RegisterPtr>(rightReg));
+        const auto vecRightReg = std::get<VectorRegisterAllocator::RegisterPtr>(m_ExpressionRegister.value());
 
         // If operation is arithmetic
         const auto opType = binary.getOperator().type;
@@ -175,18 +173,15 @@ private:
             const auto resultReg = m_VectorRegisterAllocator.getRegister();
             if(opType == Token::Type::MINUS) {
                 // **TODO** saturation?
-                m_Environment.get().getCodeGenerator().vsub(*resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg), 
-                                                            *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg));
+                m_Environment.get().getCodeGenerator().vsub(*resultReg, *vecLeftReg, *vecRightReg);
             }
             else if(opType == Token::Type::PLUS) {
                 // **TODO** saturation?
-                m_Environment.get().getCodeGenerator().vadd(*resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg), 
-                                                            *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg));
+                m_Environment.get().getCodeGenerator().vadd(*resultReg, *vecLeftReg, *vecRightReg);
             }
             else if(opType == Token::Type::STAR) {
-                // **TODO** fixed point format
-                m_Environment.get().getCodeGenerator().vmul(8, *resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg), 
-                                                            *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg));
+                // **TODO** fixed point format and rounding
+                m_Environment.get().getCodeGenerator().vmul(8, *resultReg, *vecLeftReg, *vecRightReg);
             }
             
             // Set result register
@@ -199,28 +194,22 @@ private:
             const auto resultReg = m_ScalarRegisterAllocator.getRegister();
 
             if(opType == Token::Type::GREATER) {
-                m_Environment.get().getCodeGenerator().vtlt(*resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg),
-                                                            *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg));
+                m_Environment.get().getCodeGenerator().vtlt(*resultReg, *vecRightReg, *vecLeftReg);
             }
             else if(opType == Token::Type::GREATER_EQUAL) {
-                m_Environment.get().getCodeGenerator().vtge(*resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg),
-                                                            *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg));
+                m_Environment.get().getCodeGenerator().vtge(*resultReg, *vecLeftReg, *vecRightReg);
             }
             else if(opType == Token::Type::LESS) {
-                m_Environment.get().getCodeGenerator().vtlt(*resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg),
-                                                            *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg));
+                m_Environment.get().getCodeGenerator().vtlt(*resultReg, *vecLeftReg, *vecRightReg);
             }
             else if(opType == Token::Type::LESS_EQUAL) {
-                m_Environment.get().getCodeGenerator().vtge(*resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg),
-                                                            *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg));
+                m_Environment.get().getCodeGenerator().vtge(*resultReg, *vecRightReg, *vecLeftReg);
             }
             else if(opType == Token::Type::NOT_EQUAL) {
-                m_Environment.get().getCodeGenerator().vtne(*resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg),
-                                                            *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg));
+                m_Environment.get().getCodeGenerator().vtne(*resultReg, *vecLeftReg, *vecRightReg);
             }
             else if(opType == Token::Type::EQUAL_EQUAL) {
-                m_Environment.get().getCodeGenerator().vteq(*resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg),
-                                                            *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg));
+                m_Environment.get().getCodeGenerator().vteq(*resultReg, *vecLeftReg, *vecRightReg);
             }
             // Set result register
             m_ExpressionRegister = resultReg;
@@ -306,22 +295,18 @@ private:
     virtual void visit(const Expression::Logical &logical) final
     {
         logical.getLeft()->accept(*this);
-        const auto leftReg = m_ExpressionRegister.value();
-        assert(std::holds_alternative<ScalarRegisterAllocator::RegisterPtr>(leftReg));
+        const auto scalarLeftReg = std::get<ScalarRegisterAllocator::RegisterPtr>(m_ExpressionRegister.value());
 
         logical.getRight()->accept(*this);
-        const auto rightReg = m_ExpressionRegister.value();
-        assert(std::holds_alternative<ScalarRegisterAllocator::RegisterPtr>(rightReg));
+        const auto scalarRightReg = std::get<ScalarRegisterAllocator::RegisterPtr>(m_ExpressionRegister.value());
 
         // **TODO** short-circuiting
         const auto resultReg = m_ScalarRegisterAllocator.getRegister();
         if(logical.getOperator().type == Token::Type::AMPERSAND_AMPERSAND) {
-            m_Environment.get().getCodeGenerator().and_(*resultReg, *std::get<ScalarRegisterAllocator::RegisterPtr>(leftReg),
-                                                        *std::get<ScalarRegisterAllocator::RegisterPtr>(rightReg));
+            m_Environment.get().getCodeGenerator().and_(*resultReg, *scalarLeftReg, *scalarRightReg);
         }
         else if(logical.getOperator().type == Token::Type::PIPE_PIPE){
-            m_Environment.get().getCodeGenerator().or_(*resultReg, *std::get<ScalarRegisterAllocator::RegisterPtr>(leftReg),
-                                                       *std::get<ScalarRegisterAllocator::RegisterPtr>(rightReg));
+            m_Environment.get().getCodeGenerator().or_(*resultReg, *scalarLeftReg, *scalarRightReg);
         }
         else {
             assert(false);
@@ -444,20 +429,18 @@ private:
     virtual void visit(const Statement::If &ifStatement) final
     {
         ifStatement.getCondition()->accept(*this);
-        const auto conditionReg = m_ExpressionRegister.value();
-        assert(std::holds_alternative<ScalarRegisterAllocator::RegisterPtr>(conditionReg));
+        const auto scalarConditionReg = std::get<ScalarRegisterAllocator::RegisterPtr>(m_ExpressionRegister.value());
 
         // If we already have a mask register, AND it with result of condition into new register
         auto oldMaskRegister = m_MaskRegister;
         if(oldMaskRegister) {
             auto combinedMaskRegister = m_ScalarRegisterAllocator.getRegister();
-            m_Environment.get().getCodeGenerator().and_(*combinedMaskRegister, *oldMaskRegister.value(),
-                                                        *std::get<ScalarRegisterAllocator::RegisterPtr>(conditionReg));
+            m_Environment.get().getCodeGenerator().and_(*combinedMaskRegister, *oldMaskRegister.value(), *scalarConditionReg);
             m_MaskRegister = combinedMaskRegister;
         }
         // Otherwise, just
         else {
-            m_MaskRegister = std::get<ScalarRegisterAllocator::RegisterPtr>(conditionReg);
+            m_MaskRegister = scalarConditionReg;
         }
 
         ifStatement.getThenBranch()->accept(*this);
@@ -466,7 +449,7 @@ private:
         if(ifStatement.getElseBranch()) {
             // Negate mask
             auto elseMaskRegister = m_ScalarRegisterAllocator.getRegister();
-            m_Environment.get().getCodeGenerator().not_(*elseMaskRegister, *std::get<ScalarRegisterAllocator::RegisterPtr>(conditionReg));
+            m_Environment.get().getCodeGenerator().not_(*elseMaskRegister, *scalarConditionReg);
 
             // If we have an old mask, and it with this
             if(oldMaskRegister) {
@@ -525,6 +508,33 @@ private:
     }
 
 private:
+    //---------------------------------------------------------------------------
+    // Private methods
+    //---------------------------------------------------------------------------
+    void generateAssign(Token::Type opType, VReg destinationReg, VReg assigneeReg, VReg valueReg)
+    {
+        // **TODO** add flag alongside expression register to specify whether it can be trashed
+        if(opType == Token::Type::EQUAL) {
+            m_Environment.get().getCodeGenerator().vadd(destinationReg, valueReg,
+                                                        *std::get<VectorRegisterAllocator::RegisterPtr>(m_Environment.get().getRegister("_zero")));
+        }
+        else if(opType == Token::Type::STAR_EQUAL) {
+            // **TODO** fixed point and rounding
+            m_Environment.get().getCodeGenerator().vmul(8, destinationReg, assigneeReg, valueReg);
+        }
+        else if(opType == Token::Type::PLUS_EQUAL) {
+            // **TODO** saturation
+            m_Environment.get().getCodeGenerator().vadd(destinationReg, assigneeReg, valueReg);
+        }
+        else if(opType == Token::Type::MINUS_EQUAL) {
+            // **TODO** saturation
+            m_Environment.get().getCodeGenerator().vsub(destinationReg, assigneeReg, valueReg);
+        }
+        else {
+            assert(false);
+        }
+    }
+    
     //---------------------------------------------------------------------------
     // Members
     //---------------------------------------------------------------------------
