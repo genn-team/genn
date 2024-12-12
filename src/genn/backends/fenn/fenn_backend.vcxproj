@@ -21,10 +21,12 @@
   <ItemGroup>
     <ClCompile Include="assembler.cc" />
     <ClCompile Include="assemblerUtils.cc" />
+    <ClCompile Include="disassembler.cc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\include\genn\backends\fenn\assembler.h" />
     <ClInclude Include="..\..\..\..\include\genn\backends\fenn\assemblerUtils.h" />
+    <ClInclude Include="..\..\..\..\include\genn\backends\fenn\disassembler.h" />
     <ClInclude Include="..\..\..\..\include\genn\backends\fenn\isa.h" />
     <ClInclude Include="..\..\..\..\include\genn\backends\fenn\registerAllocator.h" />
   </ItemGroup>

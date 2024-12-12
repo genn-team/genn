@@ -10,6 +10,11 @@
 // Third party includes
 #include "enum.h"
 
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::FeNN
+//----------------------------------------------------------------------------
+namespace GeNN::CodeGenerator::FeNN
+{
 inline constexpr uint32_t mask(uint32_t n)
 {
     assert (n <= 32);
@@ -312,3 +317,4 @@ public:
 private:
     uint32_t v;
 };
+}
