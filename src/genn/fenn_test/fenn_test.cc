@@ -17,6 +17,7 @@
 
 // FeNN backend includes
 #include "assembler.h"
+#include "disassembler.h"
 #include "registerAllocator.h"
 
 using namespace GeNN;
@@ -139,10 +140,18 @@ private:
 
         const auto varReg = m_VectorRegisterAllocator.getRegister();
 
+        // If a mask is set, use vsel to conditionally assign
+        // **TODO** only necessary when assigning to variables outside of masked scope
+        if(m_MaskRegister) {
+             m_Environment.get().getCodeGenerator().vsel(*varReg, *m_MaskRegister.value(), 
+                                                         *std::get<VectorRegisterAllocator::RegisterPtr>(assigneeReg));
+        }
         // Copy assigneeReg into result
         // **TODO** add flag alongside expression register to specify whether it can be trashed
-        m_Environment.get().getCodeGenerator().vadd(*varReg, *std::get<VectorRegisterAllocator::RegisterPtr>(assigneeReg),
-                                                    *std::get<VectorRegisterAllocator::RegisterPtr>(m_Environment.get().getRegister("_zero")));
+        else {
+            m_Environment.get().getCodeGenerator().vadd(*varReg, *std::get<VectorRegisterAllocator::RegisterPtr>(assigneeReg),
+                                                        *std::get<VectorRegisterAllocator::RegisterPtr>(m_Environment.get().getRegister("_zero")));
+        }
         
         m_ExpressionRegister = varReg;
     }
@@ -436,16 +445,16 @@ private:
         assert(std::holds_alternative<ScalarRegisterAllocator::RegisterPtr>(conditionReg));
 
         // If we already have a mask register, AND it with result of condition into new register
-        std::optional<RegisterPtr> oldMaskRegister = m_MaskRegister;
+        auto oldMaskRegister = m_MaskRegister;
         if(oldMaskRegister) {
             auto combinedMaskRegister = m_ScalarRegisterAllocator.getRegister();
-            m_Environment.get().getCodeGenerator().and_(*combinedMaskRegister, *std::get<ScalarRegisterAllocator::RegisterPtr>(*oldMaskRegister),
+            m_Environment.get().getCodeGenerator().and_(*combinedMaskRegister, *oldMaskRegister.value(),
                                                         *std::get<ScalarRegisterAllocator::RegisterPtr>(conditionReg));
             m_MaskRegister = combinedMaskRegister;
         }
         // Otherwise, just
         else {
-            m_MaskRegister = conditionReg;
+            m_MaskRegister = std::get<ScalarRegisterAllocator::RegisterPtr>(conditionReg);
         }
 
         ifStatement.getThenBranch()->accept(*this);
@@ -458,7 +467,7 @@ private:
 
             // If we have an old mask, and it with this
             if(oldMaskRegister) {
-                m_Environment.get().getCodeGenerator().and_(*elseMaskRegister, *std::get<ScalarRegisterAllocator::RegisterPtr>(*oldMaskRegister),
+                m_Environment.get().getCodeGenerator().and_(*elseMaskRegister, *oldMaskRegister.value(),
                                                             *elseMaskRegister);
             }
 
@@ -517,7 +526,7 @@ private:
     std::reference_wrapper<EnvironmentBase> m_Environment;
     const Type::TypeContext &m_Context;
     std::optional<RegisterPtr> m_ExpressionRegister;
-    std::optional<RegisterPtr> m_MaskRegister;
+    std::optional<ScalarRegisterAllocator::RegisterPtr> m_MaskRegister;
     const TypeChecker::ResolvedTypeMap &m_ResolvedTypes;
     ScalarRegisterAllocator &m_ScalarRegisterAllocator;
     VectorRegisterAllocator &m_VectorRegisterAllocator;
@@ -706,5 +715,10 @@ int main()
 
         Visitor visitor(simCodeStatements, assemblerEnv, typeContext, 
                         resolvedTypeMap, scalarRegisterAllocator, vectorRegisterAllocator);
+    }
+
+    for(uint32_t i: codeGenerator.getCode()) {
+        disassemble(std::cout, i);
+        std::cout << std::endl;
     }
 }
