@@ -3,9 +3,11 @@
 
 // Third-party includes
 #include <fast_float/fast_float.h>
+#include <plog/Appenders/ConsoleAppender.h>
 
 // GeNN includes
 #include "gennUtils.h"
+#include "logging.h"
 #include "neuronModels.h"
 #include "type.h"
 
@@ -138,22 +140,23 @@ private:
         const auto assigneeReg = m_ExpressionRegister.value();
         assert(std::holds_alternative<VectorRegisterAllocator::RegisterPtr>(assigneeReg));
 
-        const auto varReg = m_VectorRegisterAllocator.getRegister();
+        assignement.getValue()->accept(*this);
+        const auto valueReg = m_ExpressionRegister.value();
+        assert(std::holds_alternative<VectorRegisterAllocator::RegisterPtr>(valueReg));
 
         // If a mask is set, use vsel to conditionally assign
         // **TODO** only necessary when assigning to variables outside of masked scope
         if(m_MaskRegister) {
-             m_Environment.get().getCodeGenerator().vsel(*varReg, *m_MaskRegister.value(), 
-                                                         *std::get<VectorRegisterAllocator::RegisterPtr>(assigneeReg));
+             m_Environment.get().getCodeGenerator().vsel(*std::get<VectorRegisterAllocator::RegisterPtr>(assigneeReg), *m_MaskRegister.value(), 
+                                                         *std::get<VectorRegisterAllocator::RegisterPtr>(valueReg));
         }
-        // Copy assigneeReg into result
+        // Otherwise, copy assigneeReg into result
         // **TODO** add flag alongside expression register to specify whether it can be trashed
         else {
-            m_Environment.get().getCodeGenerator().vadd(*varReg, *std::get<VectorRegisterAllocator::RegisterPtr>(assigneeReg),
+            m_Environment.get().getCodeGenerator().vadd(*std::get<VectorRegisterAllocator::RegisterPtr>(assigneeReg), *std::get<VectorRegisterAllocator::RegisterPtr>(valueReg),
                                                         *std::get<VectorRegisterAllocator::RegisterPtr>(m_Environment.get().getRegister("_zero")));
         }
-        
-        m_ExpressionRegister = varReg;
+
     }
 
     virtual void visit(const Expression::Binary &binary) final
@@ -504,6 +507,7 @@ private:
                 std::get<1>(var)->accept(*this);
 
                 // Copy result into result
+                // **NOTE** mask never matters here as these variables are inherantly local
                 // **TODO** add flag alongside expression register to specify whether it can be trashed
                 m_Environment.get().getCodeGenerator().vadd(*varReg, *std::get<VectorRegisterAllocator::RegisterPtr>(*m_ExpressionRegister),
                                                             *std::get<VectorRegisterAllocator::RegisterPtr>(m_Environment.get().getRegister("_zero")));
@@ -513,6 +517,7 @@ private:
 
     virtual void visit(const Statement::While &whileStatement) final
     {
+        assert(false);
         /*m_Environment.get().getStream() << "while(";
         whileStatement.getCondition()->accept(*this);
         m_Environment.get().getStream() << ")" << std::endl;
@@ -651,6 +656,14 @@ private:
 
 int main()
 {
+    plog::ConsoleAppender<plog::TxtFormatter> consoleAppender;
+    Logging::init(plog::Severity::info, plog::Severity::info, plog::Severity::debug, plog::Severity::info,
+                  &consoleAppender, &consoleAppender, &consoleAppender, &consoleAppender);
+
+    // Initialise backend logging
+    plog::init<Logging::CHANNEL_BACKEND>(plog::Severity::debug, &consoleAppender);
+    
+
     const Type::TypeContext typeContext = {{"scalar", Type::Int16}}; 
     const auto *model = NeuronModels::LIF::getInstance();
 
@@ -680,27 +693,27 @@ int main()
     EnvironmentExternal env(codeGenerator);
 
     // Allocate registers for Isyn and dt
-    env.add(Type::Int16, "Isyn", vectorRegisterAllocator.getRegister("Isyn"));
-    env.add(Type::Int16, "dt", vectorRegisterAllocator.getRegister("dt"));
+    env.add(Type::Int16, "Isyn", vectorRegisterAllocator.getRegister("Isyn V"));
+    env.add(Type::Int16, "dt", vectorRegisterAllocator.getRegister("dt V"));
 
-    env.add(Type::Int16, "_zero", vectorRegisterAllocator.getRegister("_zero"));
+    env.add(Type::Int16, "_zero", vectorRegisterAllocator.getRegister("_zero V"));
 
     // Allocate registers for neuron variables
     const auto neuronVars = model->getVars();
     for(const auto &v : neuronVars) {
-        env.add(Type::Int16, v.name, vectorRegisterAllocator.getRegister(v.name.c_str()));
+        env.add(Type::Int16, v.name, vectorRegisterAllocator.getRegister((v.name + " V").c_str()));
     }
 
     // Allocate registers for neuron parameters
     const auto neuronParams = model->getParams();
     for(const auto &p : neuronParams) {
-        env.add(Type::Int16, p.name, vectorRegisterAllocator.getRegister(p.name.c_str()));
+        env.add(Type::Int16, p.name, vectorRegisterAllocator.getRegister((p.name + " V").c_str()));
     }
 
     // Allocate registers for neuron derived
     const auto neuronDerivedParams = model->getDerivedParams();
     for(const auto &d : neuronDerivedParams) {
-        env.add(Type::Int16, d.name, vectorRegisterAllocator.getRegister(d.name.c_str()));
+        env.add(Type::Int16, d.name, vectorRegisterAllocator.getRegister((d.name + " V").c_str()));
     }
 
     // Resolve types within one scope
