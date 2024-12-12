@@ -157,28 +157,65 @@ private:
         const auto rightReg = m_ExpressionRegister.value();
         assert(std::holds_alternative<VectorRegisterAllocator::RegisterPtr>(rightReg));
 
-        const auto resultReg = m_VectorRegisterAllocator.getRegister();
-        if(binary.getOperator().type == Token::Type::MINUS) {
-            // **TODO** saturation?
-            m_Environment.get().getCodeGenerator().vsub(*resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg), 
-                                                        *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg));
+        // If operation is arithmetic
+        const auto opType = binary.getOperator().type;
+        if(opType == Token::Type::MINUS || opType == Token::Type::PLUS || opType == Token::Type::STAR) {
+            const auto resultReg = m_VectorRegisterAllocator.getRegister();
+            if(opType == Token::Type::MINUS) {
+                // **TODO** saturation?
+                m_Environment.get().getCodeGenerator().vsub(*resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg), 
+                                                            *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg));
+            }
+            else if(opType == Token::Type::PLUS) {
+                // **TODO** saturation?
+                m_Environment.get().getCodeGenerator().vadd(*resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg), 
+                                                            *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg));
+            }
+            else if(opType == Token::Type::STAR) {
+                // **TODO** fixed point format
+                m_Environment.get().getCodeGenerator().vmul(8, *resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg), 
+                                                            *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg));
+            }
+            
+            // Set result register
+            m_ExpressionRegister = resultReg;
         }
-        else if(binary.getOperator().type == Token::Type::PLUS) {
-            // **TODO** saturation?
-            m_Environment.get().getCodeGenerator().vadd(*resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg), 
-                                                        *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg));
-        }
-        else if(binary.getOperator().type == Token::Type::STAR) {
-            // **TODO** fixed point format
-            m_Environment.get().getCodeGenerator().vmul(8, *resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg), 
-                                                        *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg));
+        // Otherwise, if it is relational
+        else if(opType == Token::Type::GREATER || opType == Token::Type::GREATER_EQUAL || opType == Token::Type::LESS
+                || opType == Token::Type::LESS_EQUAL || opType == Token::Type::NOT_EQUAL || opType == Token::Type::EQUAL_EQUAL) 
+        {
+            const auto resultReg = m_ScalarRegisterAllocator.getRegister();
+
+            if(opType == Token::Type::GREATER) {
+                m_Environment.get().getCodeGenerator().vtlt(*resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg),
+                                                            *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg));
+            }
+            else if(opType == Token::Type::GREATER_EQUAL) {
+                m_Environment.get().getCodeGenerator().vtge(*resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg),
+                                                            *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg));
+            }
+            else if(opType == Token::Type::LESS) {
+                m_Environment.get().getCodeGenerator().vtlt(*resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg),
+                                                            *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg));
+            }
+            else if(opType == Token::Type::LESS_EQUAL) {
+                m_Environment.get().getCodeGenerator().vtge(*resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg),
+                                                            *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg));
+            }
+            else if(opType == Token::Type::NOT_EQUAL) {
+                m_Environment.get().getCodeGenerator().vtne(*resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg),
+                                                            *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg));
+            }
+            else if(opType == Token::Type::EQUAL_EQUAL) {
+                m_Environment.get().getCodeGenerator().vteq(*resultReg, *std::get<VectorRegisterAllocator::RegisterPtr>(leftReg),
+                                                            *std::get<VectorRegisterAllocator::RegisterPtr>(rightReg));
+            }
+            // Set result register
+            m_ExpressionRegister = resultReg;
         }
         else {
             assert(false);
         }
-
-        // Set result register
-        m_ExpressionRegister = resultReg;
     }
 
     virtual void visit(const Expression::Call &call) final
