@@ -49,7 +49,7 @@ public:
     //---------------------------------------------------------------------------
     RegisterPtr getExpressionRegister() const
     {
-        return m_ExpressionRegister.value();
+        return m_ExpressionRegister.value().first;
     }
 
 private:
@@ -70,12 +70,20 @@ private:
         // **TODO** only necessary when assigning to variables outside of masked scope
         const auto opType = assignement.getOperator().type;
         if(m_MaskRegister) {
-            // Generate assignement into temporary register
-            const auto tempReg = m_VectorRegisterAllocator.getRegister();
-            generateAssign(opType, *tempReg, *vecAssigneeReg, *vecValueReg);
+            // If we're doing plain assignement, conditionally assign from value register directly
+            if(opType == Token::Type::EQUAL) {
+                m_Environment.get().getCodeGenerator().vsel(*vecAssigneeReg, *m_MaskRegister.value(), *vecValueReg);
+            }
+            // Otherwise
+            else {
+                // Generate assignement into temporary register
+                // **TODO** if value reg is reusable, no real need for extra register
+                const auto tempReg = m_VectorRegisterAllocator.getRegister();
+                generateAssign(opType, *tempReg, *vecAssigneeReg, *vecValueReg);
 
-            // Conditionally assign back to assignee register
-            m_Environment.get().getCodeGenerator().vsel(*vecAssigneeReg, *m_MaskRegister.value(), *tempReg);
+                // Conditionally assign back to assignee register
+                m_Environment.get().getCodeGenerator().vsel(*vecAssigneeReg, *m_MaskRegister.value(), *tempReg);
+            }
         }
         // Otherwise, generate assignement directly into assignee register
         else {
@@ -106,7 +114,8 @@ private:
             }
             
             // Set result register
-            m_ExpressionRegister = resultReg;
+            // **NOTE** result is a temporary register so always re-usable
+            setExpressionRegister(resultReg, true);
         }
         // Otherwise, if it is relational
         else if(opType == Token::Type::GREATER || opType == Token::Type::GREATER_EQUAL || opType == Token::Type::LESS
@@ -132,8 +141,10 @@ private:
             else if(opType == Token::Type::EQUAL_EQUAL) {
                 m_Environment.get().getCodeGenerator().vteq(*resultReg, *vecLeftReg, *vecRightReg);
             }
+            
             // Set result register
-            m_ExpressionRegister = resultReg;
+            // **NOTE** result is a temporary register so always re-usable
+            setExpressionRegister(resultReg, true);
         }
         else {
             assert(false);
@@ -147,7 +158,7 @@ private:
 
     virtual void visit(const Expression::Cast &cast) final
     {
-        // **NOTE** leave expression register alone
+        // **NOTE** allow expression register to pass through
         cast.getExpression()->accept(*this);
     }
 
@@ -156,14 +167,17 @@ private:
         const auto conditionReg = getExpressionScalarRegister(conditional.getCondition());
         const auto trueReg = getExpressionVectorRegister(conditional.getTrue());
         const auto falseReg = getExpressionVectorRegister(conditional.getFalse());
+        assert(isExpressionRegisterReusable());
 
         m_Environment.get().getCodeGenerator().vsel(*falseReg, *conditionReg, *trueReg);
-        m_ExpressionRegister = falseReg;
+
+        // Set result register
+        setExpressionRegister(falseReg, true);
     }
 
     virtual void visit(const Expression::Grouping &grouping) final
     {
-        // **NOTE** leave expression register alone
+        // **NOTE** allow expression register to pass through
         grouping.getExpression()->accept(*this);
     }
 
@@ -200,7 +214,10 @@ private:
 
         const auto resultReg = m_VectorRegisterAllocator.getRegister();
         m_Environment.get().getCodeGenerator().vlui(*resultReg, (uint32_t)integerResult);
-        m_ExpressionRegister = resultReg;
+        
+        // Set result register
+        // **NOTE** result is a temporary register so always re-usable
+        setExpressionRegister(resultReg, true);
     }
 
     virtual void visit(const Expression::Logical &logical) final
@@ -220,7 +237,9 @@ private:
             assert(false);
         }
 
-        m_ExpressionRegister = resultReg;
+        // Set result register
+        // **NOTE** result is a temporary register so always re-usable
+        setExpressionRegister(resultReg, true);
     }
 
     virtual void visit(const Expression::PostfixIncDec &postfixIncDec) final
@@ -239,7 +258,9 @@ private:
 
     virtual void visit(const Expression::Identifier &variable) final
     {
-        m_ExpressionRegister = m_Environment.get().getRegister(variable.getName().lexeme);
+        // Set result register
+        // **NOTE** we don't want to re-use registers used for variables
+        setExpressionRegister(m_Environment.get().getRegister(variable.getName().lexeme), false);
     }
 
     virtual void visit(const Expression::Unary &unary) final
@@ -389,19 +410,32 @@ private:
         for(size_t i = 0; i < numDeclarators; i++) {
             const auto &var = varDeclaration.getInitDeclaratorList()[i];
 
-            // Allocate register and define variable to it
-            const auto varReg = m_VectorRegisterAllocator.getRegister(std::get<0>(var).lexeme.c_str());
-            m_Environment.get().define(std::get<0>(var).lexeme, varReg);
-            
+            // If variable is assigned to something
             if(std::get<1>(var)) {
-                std::get<1>(var)->accept(*this);
+                // Evaluate value
+                const auto valueVectorReg = getExpressionVectorRegister(std::get<1>(var).get());
 
-                // Copy result into result
-                // **NOTE** mask never matters here as these variables are inherantly local
-                // **TODO** add flag alongside expression register to specify whether it can be trashed
-                m_Environment.get().getCodeGenerator().vadd(*varReg, *std::get<VectorRegisterAllocator::RegisterPtr>(*m_ExpressionRegister),
-                                                            *std::get<VectorRegisterAllocator::RegisterPtr>(m_Environment.get().getRegister("_zero")));
-            } 
+                // If value register can be re-used, poach it for variable
+                if(isExpressionRegisterReusable()) {
+                    m_Environment.get().define(std::get<0>(var).lexeme, valueVectorReg);
+                }
+                else {
+                    // Allocate register and define variable to it
+                    const auto varReg = m_VectorRegisterAllocator.getRegister(std::get<0>(var).lexeme.c_str());
+                    m_Environment.get().define(std::get<0>(var).lexeme, varReg);
+                    
+                    // Copy value into result
+                    // **NOTE** mask never matters here as these variables are inherantly local
+                    // **TODO** add flag alongside expression register to specify whether it can be trashed
+                    m_Environment.get().getCodeGenerator().vadd(*varReg, *valueVectorReg,
+                                                                *std::get<VectorRegisterAllocator::RegisterPtr>(m_Environment.get().getRegister("_zero")));
+                }
+            }
+            // Otherwise, allocate register and define variable to it
+            else {
+                const auto varReg = m_VectorRegisterAllocator.getRegister(std::get<0>(var).lexeme.c_str());
+                m_Environment.get().define(std::get<0>(var).lexeme, varReg);
+            }
         }
     }
 
@@ -417,6 +451,21 @@ private:
     //---------------------------------------------------------------------------
     // Private methods
     //---------------------------------------------------------------------------
+    bool isExpressionRegisterReusable() const
+    {
+        return m_ExpressionRegister.value().second;
+    }
+
+    void setExpressionRegister()
+    {
+        m_ExpressionRegister = std::nullopt;
+    }
+
+    void setExpressionRegister(RegisterPtr reg, bool reusable)
+    {
+        m_ExpressionRegister = std::make_pair(reg, reusable);
+    }
+
     VectorRegisterAllocator::RegisterPtr getExpressionVectorRegister(const Expression::Base *expression)
     {
         expression->accept(*this);
@@ -433,7 +482,6 @@ private:
 
     void generateAssign(Token::Type opType, VReg destinationReg, VReg assigneeReg, VReg valueReg)
     {
-        // **TODO** add flag alongside expression register to specify whether it can be trashed
         if(opType == Token::Type::EQUAL) {
             m_Environment.get().getCodeGenerator().vadd(destinationReg, valueReg,
                                                         *std::get<VectorRegisterAllocator::RegisterPtr>(m_Environment.get().getRegister("_zero")));
@@ -460,7 +508,8 @@ private:
     //---------------------------------------------------------------------------
     std::reference_wrapper<EnvironmentBase> m_Environment;
     const Type::TypeContext &m_Context;
-    std::optional<RegisterPtr> m_ExpressionRegister;
+    std::optional<std::pair<RegisterPtr, bool>> m_ExpressionRegister;
+
     std::optional<ScalarRegisterAllocator::RegisterPtr> m_MaskRegister;
     const TypeChecker::ResolvedTypeMap &m_ResolvedTypes;
     ScalarRegisterAllocator &m_ScalarRegisterAllocator;
