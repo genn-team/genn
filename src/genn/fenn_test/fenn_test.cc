@@ -26,6 +26,56 @@ using namespace GeNN;
 using namespace GeNN::Transpiler;
 using namespace GeNN::CodeGenerator::FeNN;
 
+namespace
+{
+
+Compiler::RegisterPtr compileExpression(const std::vector<Token> &tokens, const Type::TypeContext &typeContext, 
+                                        TypeChecker::EnvironmentInternal &typeCheckEnv, Compiler::EnvironmentInternal &compilerEnv,
+                                        ErrorHandler &errorHandler, ScalarRegisterAllocator &scalarRegisterAllocator, 
+                                        VectorRegisterAllocator &vectorRegisterAllocator)
+{
+    // Parse tokens as expression
+    auto expression = Parser::parseExpression(tokens, typeContext, errorHandler);
+    if(errorHandler.hasError()) {
+        throw std::runtime_error("Parse error " + errorHandler.getContext());
+    }
+
+    // Resolve types
+    auto resolvedTypes = TypeChecker::typeCheck(expression.get(), typeCheckEnv, typeContext, errorHandler);
+    if(errorHandler.hasError()) {
+        throw std::runtime_error("Type check error " + errorHandler.getContext());
+    }
+
+    // Compile
+    return Compiler::compile(expression, compilerEnv, typeContext, resolvedTypes,
+                             scalarRegisterAllocator, vectorRegisterAllocator);
+}
+
+void compileStatements(const std::vector<Token> &tokens, const Type::TypeContext &typeContext,
+                       TypeChecker::EnvironmentInternal &typeCheckEnv, Compiler::EnvironmentInternal &compilerEnv,
+                       ErrorHandler &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
+                       std::optional<ScalarRegisterAllocator::RegisterPtr> maskRegister, 
+                       ScalarRegisterAllocator &scalarRegisterAllocator, VectorRegisterAllocator &vectorRegisterAllocator)
+{
+    using namespace Transpiler;
+
+    // Parse tokens as block item list (function body)
+    auto updateStatements = Parser::parseBlockItemList(tokens, typeContext, errorHandler);
+    if(errorHandler.hasError()) {
+        throw std::runtime_error("Parse error " + errorHandler.getContext());
+    }
+
+    // Resolve types
+    auto resolvedTypes = TypeChecker::typeCheck(updateStatements, typeCheckEnv, typeContext, 
+                                                errorHandler, forEachSynapseTypeCheckHandler);
+    if(errorHandler.hasError()) {
+        throw std::runtime_error("Type check error " + errorHandler.getContext());
+    }
+
+    // Compile
+    Compiler::compile(updateStatements, compilerEnv, typeContext, resolvedTypes,
+                      maskRegister, scalarRegisterAllocator, vectorRegisterAllocator);
+}
 
 class EnvironmentExternal : public Compiler::EnvironmentBase, public Transpiler::TypeChecker::EnvironmentBase
 {
@@ -142,7 +192,7 @@ private:
     std::tuple<Transpiler::TypeChecker::EnvironmentBase*, Compiler::EnvironmentBase*, Assembler::CodeGenerator*> m_Context;
     std::unordered_map<std::string, std::tuple<Type::ResolvedType, Compiler::RegisterPtr>> m_Environment;
 };
-
+}
 
 int main()
 {
@@ -161,21 +211,6 @@ int main()
     const auto simCodeTokens = Utils::scanCode(model->getSimCode(), "sim code");
     const auto resetCodeTokens = Utils::scanCode(model->getResetCode(), "reset code");
     const auto thresholdCodeTokens = Utils::scanCode(model->getThresholdConditionCode(), "threshold condition code");
-
-    // Parse model code strings
-    ErrorHandler errorHandler("Errors");
-    const auto simCodeStatements = Parser::parseBlockItemList(simCodeTokens, typeContext, errorHandler);
-    if(errorHandler.hasError()) {
-        throw std::runtime_error("Parse error " + errorHandler.getContext());
-    }
-    const auto resetCodeStatements = Parser::parseBlockItemList(resetCodeTokens, typeContext, errorHandler);
-    if(errorHandler.hasError()) {
-        throw std::runtime_error("Parse error " + errorHandler.getContext());
-    }
-    const auto thresholdCodeExpression = Parser::parseExpression(thresholdCodeTokens, typeContext, errorHandler);
-    if(errorHandler.hasError()) {
-        throw std::runtime_error("Parse error " + errorHandler.getContext());
-    }
 
     ScalarRegisterAllocator scalarRegisterAllocator;
     VectorRegisterAllocator vectorRegisterAllocator;
@@ -208,16 +243,24 @@ int main()
 
     // Resolve types within one scope
     TypeChecker::EnvironmentInternal typeCheckEnv(env);
-    Compiler::EnvironmentInternal assemblerEnv(env);
-    {
-        const auto resolvedTypeMap = TypeChecker::typeCheck(simCodeStatements, typeCheckEnv, typeContext, errorHandler);
-        if(errorHandler.hasError()) {
-            throw std::runtime_error("Type check error " + errorHandler.getContext());
-        }
+    Compiler::EnvironmentInternal compilerEnv(env);
+    ErrorHandler errorHandler("Errors");
+    
+    // Compile sim code
+    compileStatements(simCodeTokens, typeContext, typeCheckEnv, compilerEnv,
+                      errorHandler, nullptr, std::nullopt, scalarRegisterAllocator,
+                      vectorRegisterAllocator);
 
-        Compiler::compile(simCodeStatements, assemblerEnv, typeContext, 
-                          resolvedTypeMap, scalarRegisterAllocator, vectorRegisterAllocator);
-    }
+    // Compile spike expression
+    const auto spikeReg = std::get<ScalarRegisterAllocator::RegisterPtr>(
+        compileExpression(thresholdCodeTokens, typeContext, typeCheckEnv,
+                          compilerEnv, errorHandler, scalarRegisterAllocator,
+                          vectorRegisterAllocator));
+    
+    // Compile reset code
+    compileStatements(resetCodeTokens, typeContext, typeCheckEnv, compilerEnv,
+                      errorHandler, nullptr, spikeReg, scalarRegisterAllocator,
+                      vectorRegisterAllocator);
 
     for(uint32_t i: codeGenerator.getCode()) {
         disassemble(std::cout, i);

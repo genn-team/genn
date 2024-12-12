@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <optional>
 #include <unordered_map>
 #include <variant>
 
@@ -88,8 +89,9 @@ private:
 //---------------------------------------------------------------------------
 GENN_EXPORT void compile(const GeNN::Transpiler::Statement::StatementList &statements, EnvironmentInternal &environment, 
                          const Type::TypeContext &context, const GeNN::Transpiler::TypeChecker::ResolvedTypeMap &resolvedTypes,
+                         std::optional<ScalarRegisterAllocator::RegisterPtr> maskRegister, 
                          ScalarRegisterAllocator &scalarRegisterAllocator, VectorRegisterAllocator &vectorRegisterAllocator);
-GENN_EXPORT void compile(const GeNN::Transpiler::Expression::ExpressionPtr &expression, EnvironmentInternal &environment, 
-                         const Type::TypeContext &context, const GeNN::Transpiler::TypeChecker::ResolvedTypeMap &resolvedTypes,
-                         ScalarRegisterAllocator &scalarRegisterAllocator, VectorRegisterAllocator &vectorRegisterAllocator);
+GENN_EXPORT RegisterPtr compile(const GeNN::Transpiler::Expression::ExpressionPtr &expression, EnvironmentInternal &environment, 
+                                const Type::TypeContext &context, const GeNN::Transpiler::TypeChecker::ResolvedTypeMap &resolvedTypes,
+                                ScalarRegisterAllocator &scalarRegisterAllocator, VectorRegisterAllocator &vectorRegisterAllocator);
 }

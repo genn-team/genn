@@ -25,8 +25,9 @@ class Visitor : public Expression::Visitor, public Statement::Visitor
 public:
     Visitor(const Statement::StatementList &statements, EnvironmentInternal &environment,
             const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes,
+            std::optional<ScalarRegisterAllocator::RegisterPtr> maskRegister,
             ScalarRegisterAllocator &scalarRegisterAllocator, VectorRegisterAllocator &vectorRegisterAllocator)
-    :   m_Environment(environment), m_Context(context), m_ResolvedTypes(resolvedTypes), 
+    :   m_Environment(environment), m_Context(context), m_MaskRegister(maskRegister), m_ResolvedTypes(resolvedTypes),
         m_ScalarRegisterAllocator(scalarRegisterAllocator), m_VectorRegisterAllocator(vectorRegisterAllocator)
     {
          for(auto &s : statements) {
@@ -41,6 +42,14 @@ public:
         m_ScalarRegisterAllocator(scalarRegisterAllocator), m_VectorRegisterAllocator(vectorRegisterAllocator)
     {
         expression.get()->accept(*this);
+    }
+
+    //---------------------------------------------------------------------------
+    // Public API
+    //---------------------------------------------------------------------------
+    RegisterPtr getExpressionRegister() const
+    {
+        return m_ExpressionRegister.value();
     }
 
 private:
@@ -405,7 +414,6 @@ private:
         whileStatement.getBody()->accept(*this);*/
     }
 
-private:
     //---------------------------------------------------------------------------
     // Private methods
     //---------------------------------------------------------------------------
@@ -413,14 +421,14 @@ private:
     {
         expression->accept(*this);
 
-        return std::get<VectorRegisterAllocator::RegisterPtr>(m_ExpressionRegister.value());
+        return std::get<VectorRegisterAllocator::RegisterPtr>(getExpressionRegister());
     }
 
     ScalarRegisterAllocator::RegisterPtr getExpressionScalarRegister(const Expression::Base *expression)
     {
         expression->accept(*this);
 
-        return std::get<ScalarRegisterAllocator::RegisterPtr>(m_ExpressionRegister.value());
+        return std::get<ScalarRegisterAllocator::RegisterPtr>(getExpressionRegister());
     }
 
     void generateAssign(Token::Type opType, VReg destinationReg, VReg assigneeReg, VReg valueReg)
@@ -490,17 +498,19 @@ Assembler::CodeGenerator &EnvironmentInternal::getCodeGenerator()
 //----------------------------------------------------------------------------
 void compile(const Statement::StatementList &statements, EnvironmentInternal &environment, 
              const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes,
+             std::optional<ScalarRegisterAllocator::RegisterPtr> maskRegister, 
              ScalarRegisterAllocator &scalarRegisterAllocator, VectorRegisterAllocator &vectorRegisterAllocator)
 {
-    Visitor visitor(statements, environment, context, resolvedTypes,
+    Visitor visitor(statements, environment, context, resolvedTypes, maskRegister,
                     scalarRegisterAllocator, vectorRegisterAllocator);
 }
 //---------------------------------------------------------------------------
-void compile(const Expression::ExpressionPtr &expression, EnvironmentInternal &environment,
-             const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes,
-             ScalarRegisterAllocator &scalarRegisterAllocator, VectorRegisterAllocator &vectorRegisterAllocator)
+RegisterPtr compile(const Expression::ExpressionPtr &expression, EnvironmentInternal &environment,
+                    const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes,
+                    ScalarRegisterAllocator &scalarRegisterAllocator, VectorRegisterAllocator &vectorRegisterAllocator)
 {
     Visitor visitor(expression, environment, context, resolvedTypes,
                     scalarRegisterAllocator, vectorRegisterAllocator);
+    return visitor.getExpressionRegister();
 }
 }
