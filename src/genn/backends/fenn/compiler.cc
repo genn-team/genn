@@ -54,11 +54,8 @@ private:
 
     virtual void visit(const Expression::Assignment &assignement) final
     {
-        assignement.getAssignee()->accept(*this);
-        const auto vecAssigneeReg = std::get<VectorRegisterAllocator::RegisterPtr>(m_ExpressionRegister.value());
-
-        assignement.getValue()->accept(*this);
-        const auto vecValueReg = std::get<VectorRegisterAllocator::RegisterPtr>(m_ExpressionRegister.value());
+        const auto vecAssigneeReg = getExpressionVectorRegister(assignement.getAssignee());
+        const auto vecValueReg = getExpressionVectorRegister(assignement.getValue());
 
         // If a mask is set
         // **TODO** only necessary when assigning to variables outside of masked scope
@@ -79,11 +76,8 @@ private:
 
     virtual void visit(const Expression::Binary &binary) final
     {
-        binary.getLeft()->accept(*this);
-        const auto vecLeftReg = std::get<VectorRegisterAllocator::RegisterPtr>(m_ExpressionRegister.value());
-
-        binary.getRight()->accept(*this);
-        const auto vecRightReg = std::get<VectorRegisterAllocator::RegisterPtr>(m_ExpressionRegister.value());
+        const auto vecLeftReg = getExpressionVectorRegister(binary.getLeft());
+        const auto vecRightReg = getExpressionVectorRegister(binary.getRight());
 
         // If operation is arithmetic
         const auto opType = binary.getOperator().type;
@@ -150,21 +144,11 @@ private:
 
     virtual void visit(const Expression::Conditional &conditional) final
     {
-        conditional.getCondition()->accept(*this);
-        const auto conditionReg = m_ExpressionRegister.value();
-        assert(std::holds_alternative<ScalarRegisterAllocator::RegisterPtr>(conditionReg));
+        const auto conditionReg = getExpressionScalarRegister(conditional.getCondition());
+        const auto trueReg = getExpressionVectorRegister(conditional.getTrue());
+        const auto falseReg = getExpressionVectorRegister(conditional.getFalse());
 
-        conditional.getTrue()->accept(*this);
-        const auto trueReg = m_ExpressionRegister.value();
-        assert(std::holds_alternative<VectorRegisterAllocator::RegisterPtr>(trueReg));
-
-        conditional.getFalse()->accept(*this);
-        const auto falseReg = m_ExpressionRegister.value();
-        assert(std::holds_alternative<VectorRegisterAllocator::RegisterPtr>(falseReg));
-
-        m_Environment.get().getCodeGenerator().vsel(*std::get<VectorRegisterAllocator::RegisterPtr>(falseReg),
-                                                    *std::get<ScalarRegisterAllocator::RegisterPtr>(conditionReg),
-                                                    *std::get<VectorRegisterAllocator::RegisterPtr>(trueReg));
+        m_Environment.get().getCodeGenerator().vsel(*falseReg, *conditionReg, *trueReg);
         m_ExpressionRegister = falseReg;
     }
 
@@ -212,11 +196,8 @@ private:
 
     virtual void visit(const Expression::Logical &logical) final
     {
-        logical.getLeft()->accept(*this);
-        const auto scalarLeftReg = std::get<ScalarRegisterAllocator::RegisterPtr>(m_ExpressionRegister.value());
-
-        logical.getRight()->accept(*this);
-        const auto scalarRightReg = std::get<ScalarRegisterAllocator::RegisterPtr>(m_ExpressionRegister.value());
+        const auto scalarLeftReg = getExpressionScalarRegister(logical.getLeft());
+        const auto scalarRightReg = getExpressionScalarRegister(logical.getRight());
 
         // **TODO** short-circuiting
         const auto resultReg = m_ScalarRegisterAllocator.getRegister();
@@ -346,8 +327,7 @@ private:
 
     virtual void visit(const Statement::If &ifStatement) final
     {
-        ifStatement.getCondition()->accept(*this);
-        const auto scalarConditionReg = std::get<ScalarRegisterAllocator::RegisterPtr>(m_ExpressionRegister.value());
+        const auto scalarConditionReg = getExpressionScalarRegister(ifStatement.getCondition());
 
         // If we already have a mask register, AND it with result of condition into new register
         auto oldMaskRegister = m_MaskRegister;
@@ -429,6 +409,20 @@ private:
     //---------------------------------------------------------------------------
     // Private methods
     //---------------------------------------------------------------------------
+    VectorRegisterAllocator::RegisterPtr getExpressionVectorRegister(const Expression::Base *expression)
+    {
+        expression->accept(*this);
+
+        return std::get<VectorRegisterAllocator::RegisterPtr>(m_ExpressionRegister.value());
+    }
+
+    ScalarRegisterAllocator::RegisterPtr getExpressionScalarRegister(const Expression::Base *expression)
+    {
+        expression->accept(*this);
+
+        return std::get<ScalarRegisterAllocator::RegisterPtr>(m_ExpressionRegister.value());
+    }
+
     void generateAssign(Token::Type opType, VReg destinationReg, VReg assigneeReg, VReg valueReg)
     {
         // **TODO** add flag alongside expression register to specify whether it can be trashed
