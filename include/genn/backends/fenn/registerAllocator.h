@@ -7,11 +7,9 @@
 // Standard C includes
 #include <cstdint>
 
-// PLOG includes
-#include <plog/Log.h>
-
 // GeNN includes
 #include "gennUtils.h"
+#include "logging.h"
 
 // FeNN backend include
 #include "isa.h"
@@ -39,7 +37,7 @@ public:
         :   m_Reg(reg), m_Parent(parent)
         {
             if(context) {
-                PLOGD << "Allocating " << context << static_cast<uint32_t>(reg);
+                LOGD_BACKEND << "Allocating " << context << static_cast<uint32_t>(reg);
             }
         }
 
