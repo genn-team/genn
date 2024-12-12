@@ -1,27 +1,30 @@
 # Ignore compiled Python
-/**/*.pyc
+*.pyc
 
 # Ignore GNU Make files
-**/*.o
-**/*.d
-**/*.gcda
-**/*.gcno
+*.o
+*.d
+*.gcda
+*.gcno
 
 # Ignore MSBuild/Visual Studio files
-**/*.exe
-**/*.pdb
-**/*.ilk
-**/*.suo
-**/*.sdf
-**/*.vcxproj.user
-**/*.vcxproj.filters
-**/*.opensdf
+*.lib
+*.exp
+*.dll
+*.exe
+*.pdb
+*.ilk
+*.suo
+*.sdf
+*.ipdb
+*.iobj
+*.testdurations
+*.pyd
+*.vcxproj.user
+*.vcxproj.filters
+*.opensdf
 **/x64
 **/.vs
-**/*.ipdb
-**/*.iobj
-**/*.testdurations
-**/*.pyd
 
 /dist
 /lib
