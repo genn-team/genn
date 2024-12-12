@@ -7,7 +7,10 @@ namespace
 {
 // split x to hi20bits and low12bits
 // return false if x in 12-bit signed integer
-inline bool split32bit(int *pH, int* pL, int x) {
+inline bool split32bit(int *pH, int* pL, int x) 
+{
+    using namespace GeNN::CodeGenerator::FeNN;
+
     if (inSBit(x, 12)) {
         return false;
     }
