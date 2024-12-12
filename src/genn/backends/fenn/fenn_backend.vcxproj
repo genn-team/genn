@@ -22,6 +22,7 @@
     <ClCompile Include="assembler.cc" />
     <ClCompile Include="assemblerUtils.cc" />
     <ClCompile Include="disassembler.cc" />
+    <ClCompile Include="isa.cc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\include\genn\backends\fenn\assembler.h" />
