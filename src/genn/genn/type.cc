@@ -256,6 +256,11 @@ ResolvedType getCommonType(const ResolvedType &a, const ResolvedType &b)
     if(unqualifiedA == Float || unqualifiedB == Float) {
         return Float;
     }
+    // Otherwise, if either type is fixed-point, result should be highest ranking type
+    else if(unqualifiedA.getNumeric().fixedPoint || unqualifiedB.getNumeric().fixedPoint) {
+        // **TODO** saturation out-ranks
+        return (unqualifiedA.getNumeric().rank > unqualifiedB.getNumeric().rank) ? unqualifiedA : unqualifiedB;
+    }
     // Otherwise, must be an integer type
     else {
         // Promote both numeric types

@@ -255,21 +255,26 @@ private:
                             return std::nullopt;
                         }
 
-                        // If operator requires integer operands
-                        if (opType == Token::Type::PERCENT || opType == Token::Type::SHIFT_LEFT
-                            || opType == Token::Type::SHIFT_RIGHT || opType == Token::Type::CARET
+                        // If operator requires integer or fixed-point operands
+                        if(opType == Token::Type::SHIFT_LEFT || opType == Token::Type::SHIFT_RIGHT) {
+                            // If LHS is integer, result is promoted type
+                            if(leftValue.numeric->isIntegral && rightValue.numeric->isIntegral) {
+                                return Type::getPromotedType(leftType).removeConst();
+                            }
+                            // Otherwise, if LHS is fixed point, use left type
+                            else if(leftValue.numeric->fixedPoint && rightValue.numeric->isIntegral) {
+                                return leftType.removeConst();
+                            }
+                            else {
+                                return std::nullopt; 
+                            }
+                        }
+                        // If operator requires integer operands and both operands are integers, result is common type
+                        else if (opType == Token::Type::PERCENT || opType == Token::Type::CARET
                             || opType == Token::Type::AMPERSAND || opType == Token::Type::PIPE)
                         {
-                            // Check that operands are integers
                             if (leftValue.numeric->isIntegral && rightValue.numeric->isIntegral) {
-                                // If operator is a shift, promote left type
-                                if (opType == Token::Type::SHIFT_LEFT || opType == Token::Type::SHIFT_RIGHT) {
-                                    return Type::getPromotedType(leftType);
-                                }
-                                // Otherwise, take common type
-                                else {
-                                    return Type::getCommonType(leftType, rightType);
-                                }
+                                return Type::getCommonType(leftType, rightType);
                             }
                             else {
                                 return std::nullopt;
@@ -304,6 +309,7 @@ private:
                         }
                         // If operator is valid and numeric type is integer
                         // P + n or P - n
+                        // **THINK** should we remove const here?
                         else if ((opType == Token::Type::PLUS || opType == Token::Type::MINUS) && rightValue.numeric->isIntegral) {
                             return leftType;
                         }
@@ -320,6 +326,7 @@ private:
                             return std::nullopt;
                         }
                         // n + P
+                        // **THINK** should we remove const here?
                         else if (opType == Token::Type::PLUS && leftValue.numeric->isIntegral) {
                             return rightType;
                         }
