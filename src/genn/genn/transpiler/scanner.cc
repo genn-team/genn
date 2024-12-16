@@ -152,6 +152,14 @@ void emplaceToken(std::vector<Token> &tokens, Token::Type type, const ScanState 
     tokens.emplace_back(type, scanState.getLexeme(), scanState.getLine());
 }
 //---------------------------------------------------------------------------
+void emplaceNumber(std::vector<Token> &tokens, std::optional<GeNN::Type::ResolvedType> numberType, const ScanState &scanState)
+{
+    if(numberType) {
+        assert(numberType->isNumeric());
+    }
+    tokens.emplace_back(Token::Type::NUMBER, scanState.getLexeme(), scanState.getLine(), numberType);
+}
+//---------------------------------------------------------------------------
 void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
 {
     // If this is a hexadecimal literal
@@ -173,11 +181,11 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
 
         // If there's a U suffix, emplace 
         if (std::toupper(scanState.peek()) == 'U') {
-            emplaceToken(tokens, Token::Type::UINT32_NUMBER, scanState);
+            emplaceNumber(tokens, Type::Uint32, scanState);
             scanState.advance();
         }
         else {
-            emplaceToken(tokens, Token::Type::INT32_NUMBER, scanState);
+            emplaceNumber(tokens, Type::Int32, scanState);
         }
         
     }
@@ -220,29 +228,57 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
         if(isFloat) {
             // If number has an f suffix, emplace FLOAT_NUMBER token
             if (std::tolower(scanState.peek()) == 'f') {
-                emplaceToken(tokens, Token::Type::FLOAT_NUMBER, scanState);
+                emplaceNumber(tokens, Type::Float, scanState);
                 scanState.advance();
             }
             // Otherwise, if it has a d suffix, emplace DOUBLE_NUMBER token
             // **NOTE** 'd' is a GeNN extension not standard C
             else if (std::tolower(scanState.peek()) == 'd') {
-                emplaceToken(tokens, Token::Type::DOUBLE_NUMBER, scanState);
+                emplaceNumber(tokens, Type::Double, scanState);
                 scanState.advance();
+            }
+            // Otherwise, if suffix begins with s, it is a signed fixed-point literal
+            // **NOTE** 's' is a GeNN extension not standard C
+            else if (std::tolower(scanState.peek()) == 's') {
+                // Get string view 
+                // **NOTE** we do this here so we can scan 
+                const std::string_view tokenLexeme = scanState.getLexeme();
+                scanState.resetLexeme();
+
+                // Read digits
+                while(std::isdigit(scanState.peek())) {
+                    scanState.advance();
+                }
+
+                const int numInteger = std::stoi(std::string{scanState.getLexeme()});
+                scanState.resetLexeme();
+
+                if(!scanState.match('_')) {
+                    scanState.error("Incorrectly formed fixed point literal suffix.");
+                }
+
+                // Read digits
+                while(std::isdigit(scanState.peek())) {
+                    scanState.advance();
+                }
+
+                const int numFractional = std::stoi(std::string{scanState.getLexeme()});
+
             }
             // Otherwise, emplace scalar literal whose type will be decoded later
             else {
-                emplaceToken(tokens, Token::Type::SCALAR_NUMBER, scanState);
+                emplaceNumber(tokens, std::nullopt, scanState);
             }
         }
         // Otherwise, emplace integer token 
         else {
             // If there's a U suffix, emplace 
             if (std::toupper(scanState.peek()) == 'U') {
-                emplaceToken(tokens, Token::Type::UINT32_NUMBER, scanState);
+                emplaceNumber(tokens, Type::Uint32, scanState);
                 scanState.advance();
             }
             else {
-                emplaceToken(tokens, Token::Type::INT32_NUMBER, scanState);
+                emplaceNumber(tokens, Type::Int32, scanState);
             }
         }
     }

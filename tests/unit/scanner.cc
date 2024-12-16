@@ -61,12 +61,22 @@ TEST(Scanner, DecimalInt)
     ASSERT_FALSE(errorHandler.hasError());
 
     ASSERT_EQ(tokens.size(), 7);
-    ASSERT_EQ(tokens[0].type, Token::Type::INT32_NUMBER);
-    ASSERT_EQ(tokens[1].type, Token::Type::UINT32_NUMBER);
+    ASSERT_EQ(tokens[0].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[0].numberType, Type::Int32);
+
+    ASSERT_EQ(tokens[1].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[1].numberType, Type::Uint32);
+    
     ASSERT_EQ(tokens[2].type, Token::Type::MINUS);
-    ASSERT_EQ(tokens[3].type, Token::Type::INT32_NUMBER);
+    
+    ASSERT_EQ(tokens[3].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[3].numberType, Type::Int32);
+    
     ASSERT_EQ(tokens[4].type, Token::Type::MINUS);
-    ASSERT_EQ(tokens[5].type, Token::Type::INT32_NUMBER);
+    
+    ASSERT_EQ(tokens[5].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[5].numberType, Type::Int32);
+    
     ASSERT_EQ(tokens[6].type, Token::Type::END_OF_FILE);
 
     ASSERT_EQ(tokens[0].lexeme, "1234");
@@ -82,12 +92,22 @@ TEST(Scanner, HexInt)
     ASSERT_FALSE(errorHandler.hasError());
 
     ASSERT_EQ(tokens.size(), 7);
-    ASSERT_EQ(tokens[0].type, Token::Type::INT32_NUMBER);
-    ASSERT_EQ(tokens[1].type, Token::Type::UINT32_NUMBER);
+    ASSERT_EQ(tokens[0].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[0].numberType, Type::Int32);
+
+    ASSERT_EQ(tokens[1].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[1].numberType, Type::Uint32);
+    
     ASSERT_EQ(tokens[2].type, Token::Type::MINUS);
-    ASSERT_EQ(tokens[3].type, Token::Type::INT32_NUMBER);
+    
+    ASSERT_EQ(tokens[3].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[3].numberType, Type::Int32);
+    
     ASSERT_EQ(tokens[4].type, Token::Type::MINUS);
-    ASSERT_EQ(tokens[5].type, Token::Type::INT32_NUMBER);
+    
+    ASSERT_EQ(tokens[5].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[5].numberType, Type::Int32);
+    
     ASSERT_EQ(tokens[6].type, Token::Type::END_OF_FILE);
 
     ASSERT_EQ(tokens[0].lexeme, "0x1234");
@@ -103,20 +123,45 @@ TEST(Scanner, DecimalFloat)
     ASSERT_FALSE(errorHandler.hasError());
 
     ASSERT_EQ(tokens.size(), 15);
-    ASSERT_EQ(tokens[0].type, Token::Type::SCALAR_NUMBER);
-    ASSERT_EQ(tokens[1].type, Token::Type::SCALAR_NUMBER);
-    ASSERT_EQ(tokens[2].type, Token::Type::SCALAR_NUMBER);
-    ASSERT_EQ(tokens[3].type, Token::Type::FLOAT_NUMBER);
-    ASSERT_EQ(tokens[4].type, Token::Type::FLOAT_NUMBER);
-    ASSERT_EQ(tokens[5].type, Token::Type::FLOAT_NUMBER);
+    ASSERT_EQ(tokens[0].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[0].numberType, std::nullopt);
+
+    ASSERT_EQ(tokens[1].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[1].numberType, std::nullopt);
+    
+    ASSERT_EQ(tokens[2].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[2].numberType, std::nullopt);
+    
+    ASSERT_EQ(tokens[3].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[3].numberType, Type::Float);
+    
+    ASSERT_EQ(tokens[4].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[4].numberType, Type::Float);
+    
+    ASSERT_EQ(tokens[5].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[5].numberType, Type::Float);
+    
     ASSERT_EQ(tokens[6].type, Token::Type::MINUS);
-    ASSERT_EQ(tokens[7].type, Token::Type::DOUBLE_NUMBER);
+    
+    ASSERT_EQ(tokens[7].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[7].numberType, Type::Double);
+    
     ASSERT_EQ(tokens[8].type, Token::Type::MINUS);
-    ASSERT_EQ(tokens[9].type, Token::Type::FLOAT_NUMBER);
-    ASSERT_EQ(tokens[10].type, Token::Type::SCALAR_NUMBER);
-    ASSERT_EQ(tokens[11].type, Token::Type::FLOAT_NUMBER);
+    
+    ASSERT_EQ(tokens[9].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[9].numberType, Type::Float);
+    
+    ASSERT_EQ(tokens[10].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[10].numberType, std::nullopt);
+    
+    ASSERT_EQ(tokens[11].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[11].numberType, Type::Float);
+    
     ASSERT_EQ(tokens[12].type, Token::Type::MINUS);
-    ASSERT_EQ(tokens[13].type, Token::Type::DOUBLE_NUMBER);
+    
+    ASSERT_EQ(tokens[13].type, Token::Type::NUMBER);
+    ASSERT_EQ(tokens[13].numberType, Type::Double);
+    
     ASSERT_EQ(tokens[14].type, Token::Type::END_OF_FILE);
 
     ASSERT_EQ(tokens[0].lexeme, "1.0");

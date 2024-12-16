@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -9,6 +10,9 @@
     #undef TRUE
     #undef FALSE
 #endif
+
+// GeNN includes
+#include "type.h"
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Token
@@ -37,7 +41,7 @@ struct Token
         SHIFT_LEFT_EQUAL, SHIFT_RIGHT_EQUAL,
 
         // Literals   
-        IDENTIFIER, UINT32_NUMBER, INT32_NUMBER, FLOAT_NUMBER, DOUBLE_NUMBER, SCALAR_NUMBER, BOOLEAN, STRING,
+        IDENTIFIER, NUMBER, BOOLEAN, STRING,
 
         // Types
         TYPE_SPECIFIER,
@@ -49,13 +53,15 @@ struct Token
         END_OF_FILE,
     };
 
-    Token(Type type, std::string_view lexeme, size_t line)
-        : type(type), lexeme(lexeme), line(line)
+    Token(Type type, std::string_view lexeme, size_t line,
+          std::optional<GeNN::Type::ResolvedType> numberType = std::nullopt)
+    :   type(type), lexeme(lexeme), line(line), numberType(numberType)
     {
     }
 
     Type type;
     std::string lexeme;
     size_t line;
+    std::optional<GeNN::Type::ResolvedType> numberType;
 };
 }   // namespace GeNN::Transpiler
