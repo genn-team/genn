@@ -444,7 +444,7 @@ inline static const ResolvedType S8_7 = ResolvedType::createFixedPointNumeric<in
 inline static const ResolvedType S9_6 = ResolvedType::createFixedPointNumeric<int16_t>("s9_6_t", 59, 6, &ffi_type_sint16, "");
 inline static const ResolvedType S10_5 = ResolvedType::createFixedPointNumeric<int16_t>("s10_5_t", 60, 5, &ffi_type_sint16, "");
 inline static const ResolvedType S11_4 = ResolvedType::createFixedPointNumeric<int16_t>("s11_4_t", 61, 4, &ffi_type_sint16, "");
-inline static const ResolvedType S12_4 = ResolvedType::createFixedPointNumeric<int16_t>("s12_3_t", 62, 3, &ffi_type_sint16, "");
+inline static const ResolvedType S12_3 = ResolvedType::createFixedPointNumeric<int16_t>("s12_3_t", 62, 3, &ffi_type_sint16, "");
 inline static const ResolvedType S13_2 = ResolvedType::createFixedPointNumeric<int16_t>("s13_2_t", 63, 2, &ffi_type_sint16, "");
 inline static const ResolvedType S14_1 = ResolvedType::createFixedPointNumeric<int16_t>("s14_1_t", 64, 1, &ffi_type_sint16, "");
 
