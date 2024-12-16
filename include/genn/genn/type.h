@@ -2,6 +2,7 @@
 
 // Standard C includes
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 
