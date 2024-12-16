@@ -292,8 +292,59 @@ TEST(TypeChecker, Binary)
         EXPECT_EQ(type, Type::Int32);
     }
 
-    // **TODO** different pointer types
+    // Integer + integer
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::Int32, "a");
+        typeEnvironment.define(Type::Int32, "b");
+        const auto type = typeCheckExpression("a + b", typeEnvironment);
+        EXPECT_EQ(type, Type::Int32);
+    }
 
+    // Small integer + small integer
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::Int8, "a");
+        typeEnvironment.define(Type::Int16, "b");
+        const auto type = typeCheckExpression("a + b", typeEnvironment);
+        EXPECT_EQ(type, Type::Int32);
+    }
+
+    // Integer + floating point
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::Float, "a");
+        typeEnvironment.define(Type::Int32, "b");
+        const auto type = typeCheckExpression("a + b", typeEnvironment);
+        EXPECT_EQ(type, Type::Float);
+    }
+
+    // Integer + fixed point
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::S8_7, "a");
+        typeEnvironment.define(Type::Int32, "b");
+        const auto type = typeCheckExpression("a + b", typeEnvironment);
+        EXPECT_EQ(type, Type::S8_7);
+    }
+
+    // Floating point + fixed point
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::S8_7, "a");
+        typeEnvironment.define(Type::Float, "b");
+        const auto type = typeCheckExpression("a + b", typeEnvironment);
+        EXPECT_EQ(type, Type::Float);
+    }
+
+    // Fixed point + fixed point
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::S8_7, "a");
+        typeEnvironment.define(Type::S0_15, "b");
+        const auto type = typeCheckExpression("a + b", typeEnvironment);
+        EXPECT_EQ(type, Type::S8_7);
+    }
 
     // Pointer + integer
     {
@@ -355,6 +406,49 @@ TEST(TypeChecker, Binary)
         typeEnvironment.define(Type::Int32, "int1");
         typeEnvironment.define(Type::Int32.addWriteOnly(), "int2");
         typeCheckExpression("int1 + int2", typeEnvironment);},
+        TypeChecker::TypeCheckError);
+
+    // Integer << integer
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::Int32, "a");
+        typeEnvironment.define(Type::Int32, "b");
+        const auto type = typeCheckExpression("a << b", typeEnvironment);
+        EXPECT_EQ(type, Type::Int32);
+    }
+
+    // Fixed point << integer
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::S8_7, "a");
+        typeEnvironment.define(Type::Int32, "b");
+        const auto type = typeCheckExpression("a << b", typeEnvironment);
+        EXPECT_EQ(type, Type::S8_7);
+    }
+
+    // Float << integer
+    EXPECT_THROW({
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::Float, "a");
+        typeEnvironment.define(Type::Int32, "b");
+        typeCheckExpression("a << b", typeEnvironment);},
+        TypeChecker::TypeCheckError);
+
+    // Modulus float
+    EXPECT_THROW({
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::Float, "a");
+        typeEnvironment.define(Type::Float, "b");
+        typeCheckExpression("a % b", typeEnvironment);},
+        TypeChecker::TypeCheckError);
+    
+    
+    // Bitwise fixed
+    EXPECT_THROW({
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::S0_15, "a");
+        typeEnvironment.define(Type::S0_15, "b");
+        typeCheckExpression("a ^ b", typeEnvironment);},
         TypeChecker::TypeCheckError);
 
     /*integer only (opType == Token::Type::PERCENT || opType == Token::Type::SHIFT_LEFT
@@ -568,6 +662,20 @@ TEST(TypeChecker, Literal)
         TestEnvironment typeEnvironment;
         const auto type = typeCheckExpression("1.0f", typeEnvironment);
         EXPECT_EQ(type, Type::Float);
+    }
+
+    // Fixed point "accum"
+    {
+        TestEnvironment typeEnvironment;
+        const auto type = typeCheckExpression("1.0hk", typeEnvironment);
+        EXPECT_EQ(type, Type::S8_7);
+    }
+
+    // Fixed point "fract"
+    {
+        TestEnvironment typeEnvironment;
+        const auto type = typeCheckExpression("1.0hr", typeEnvironment);
+        EXPECT_EQ(type, Type::S0_15);
     }
 
     // Scalar with single-precision
