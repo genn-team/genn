@@ -205,17 +205,15 @@ private:
         // Write out lexeme
         m_Environment.get().getStream() << literal.getValue().lexeme;
         
-        // If literal is a float, add f suffix
-        if (literal.getValue().type == Token::Type::FLOAT_NUMBER){
-            m_Environment.get().getStream() << "f";
-        }
-        // Otherwise, if it's an unsigned integer, add u suffix
-        else if (literal.getValue().type == Token::Type::UINT32_NUMBER) {
-            m_Environment.get().getStream() << "u";
-        }
-        // Otherwise, if literal is a scalar, return literal suffix of scalar type fro context
-        else if (literal.getValue().type == Token::Type::SCALAR_NUMBER) {
-            m_Environment.get().getStream() << m_Context.at("scalar").getNumeric().literalSuffix;
+        // If literal is a number
+        if (literal.getValue().type == Token::Type::NUMBER) {
+            auto numberType = literal.getValue().numberType;
+            if(numberType) {
+                m_Environment.get().getStream() << numberType.value().getNumeric().literalSuffix;
+            }
+            else {
+                m_Environment.get().getStream() << m_Context.at("scalar").getNumeric().literalSuffix;
+            }
         }
     }
 

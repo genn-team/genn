@@ -465,20 +465,14 @@ private:
     virtual void visit(const Expression::Literal &literal) final
     {
         // Convert literal token type to type
-        if (literal.getValue().type == Token::Type::DOUBLE_NUMBER) {
-            setExpressionType(&literal, Type::Double);
-        }
-        else if (literal.getValue().type == Token::Type::FLOAT_NUMBER) {
-            setExpressionType(&literal, Type::Float);
-        }
-        else if (literal.getValue().type == Token::Type::SCALAR_NUMBER) {
-            setExpressionType(&literal, m_Context.at("scalar"));
-        }
-        else if (literal.getValue().type == Token::Type::INT32_NUMBER) {
-            setExpressionType(&literal, Type::Int32);
-        }
-        else if (literal.getValue().type == Token::Type::UINT32_NUMBER) {
-            setExpressionType(&literal, Type::Uint32);
+        if(literal.getValue().type == Token::Type::NUMBER) {
+            auto numberType = literal.getValue().numberType;
+            if(numberType) {
+                setExpressionType(&literal, numberType.value());
+            }
+            else {
+                setExpressionType(&literal, m_Context.at("scalar"));
+            }
         }
         else if(literal.getValue().type == Token::Type::BOOLEAN) {
             setExpressionType(&literal, Type::Bool);
