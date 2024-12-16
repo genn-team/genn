@@ -237,33 +237,50 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
                 emplaceNumber(tokens, Type::Double, scanState);
                 scanState.advance();
             }
-            // Otherwise, if suffix begins with s, it is a signed fixed-point literal
-            // **NOTE** 's' is a GeNN extension not standard C
-            else if (std::tolower(scanState.peek()) == 's') {
-                // Get string view 
-                // **NOTE** we do this here so we can scan 
-                const std::string_view tokenLexeme = scanState.getLexeme();
-                scanState.resetLexeme();
-
-                // Read digits
-                while(std::isdigit(scanState.peek())) {
+            // Otherwise, if suffix begins with h, it is a signed 16-bit fixed-point literal
+            // **NOTE** this is defined by ISO/IEC DTR 18037
+            else if (std::tolower(scanState.peek()) == 'h') {
+                // If next digit is a k, this is a "short accum" i.e. s8.7 fixed point type
+                // **NOTE** this is defined by ISO/IEC DTR 18037
+                if(std::tolower(scanState.peekNext()) == 'k') {
+                    emplaceNumber(tokens, Type::S8_7, scanState);
+                    scanState.advance();
                     scanState.advance();
                 }
-
-                const int numInteger = std::stoi(std::string{scanState.getLexeme()});
-                scanState.resetLexeme();
-
-                if(!scanState.match('_')) {
-                    scanState.error("Incorrectly formed fixed point literal suffix.");
-                }
-
-                // Read digits
-                while(std::isdigit(scanState.peek())) {
+                // If next digit is a r, this is a "short fract" i.e. s0.15 fixed point type
+                // **NOTE** this is defined by ISO/IEC DTR 18037
+                else if(std::tolower(scanState.peekNext()) == 'r') {
+                    emplaceNumber(tokens, Type::S0_15, scanState);
+                    scanState.advance();
                     scanState.advance();
                 }
+                // Otherwise, parse number of fractional bits
+                // **NOTE** this is a GeNN extension not standard C
+                else {
+                    // Get string view of number preceding suffix
+                    const std::string_view numberLexeme = scanState.getLexeme();
+                    scanState.advance();
+                    scanState.resetLexeme();
 
-                const int numFractional = std::stoi(std::string{scanState.getLexeme()});
+                    // Read fixed point position
+                    while(std::isdigit(scanState.peek())) {
+                        scanState.advance();
+                    }
 
+                    // If fraction and integer bits add up to 15
+                    const int numFractional = std::stoi(std::string{scanState.getLexeme()});
+                    const int numInteger = 15 - numFractional;
+                    if(numFractional >= 1 && numFractional <= 15) {
+                        // Create 16-bit fixed-point type
+                        tokens.emplace_back(
+                            Token::Type::NUMBER, numberLexeme, scanState.getLine(), 
+                            Type::ResolvedType::createFixedPointNumeric<int16_t>("s" + std::to_string(numInteger) + "_" + std::to_string(numFractional) + "_t", 
+                                                                                 Type::S0_15.getNumeric().rank + numInteger, numFractional, &ffi_type_sint16));
+                    }
+                    else {
+                        scanState.error("Invalid fixed point literal suffix.");
+                    }
+                }
             }
             // Otherwise, emplace scalar literal whose type will be decoded later
             else {
