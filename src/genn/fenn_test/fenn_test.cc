@@ -225,7 +225,7 @@ public:
 
     SET_DERIVED_PARAMS({
         {"TauRefracTimesteps", [](const ParamValues &pars, double dt){ return std::round(pars.at("TauRefrac").cast<double>() / dt); }, "int16_t"},
-        {"ExpTC", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("TauM").cast<double>()); }, Type::S0_15},
+        {"ExpTC", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("TauM").cast<double>()); }, "short fract"},
         {"Rmembrane", [](const ParamValues &pars, double){ return  pars.at("TauM").cast<double>() / pars.at("C").cast<double>(); }}});
 
     SET_VARS({{"V", "scalar"}, {"RefracTime", "int16_t"}});
