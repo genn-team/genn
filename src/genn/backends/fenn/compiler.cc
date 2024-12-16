@@ -127,61 +127,24 @@ private:
 
     virtual void visit(const Expression::Binary &binary) final
     {
-        const auto vecLeftReg = getExpressionVectorRegister(binary.getLeft());
-        const auto vecRightReg = getExpressionVectorRegister(binary.getRight());
+        const auto opType = binary.getOperator().type;
         const auto &leftType = m_ResolvedTypes.at(binary.getLeft());
         const auto &rightType = m_ResolvedTypes.at(binary.getRight());
 
-        // If operation is arithmetic
-        const auto opType = binary.getOperator().type;
-        if(opType == Token::Type::MINUS || opType == Token::Type::PLUS || opType == Token::Type::STAR) {
-            const auto resultReg = m_VectorRegisterAllocator.getRegister();
-            if(opType == Token::Type::MINUS) {
-                // **TODO** saturation?
-                checkConversion(leftType, rightType);
-                m_Environment.get().getCodeGenerator().vsub(*resultReg, *vecLeftReg, *vecRightReg);
-            }
-            else if(opType == Token::Type::PLUS) {
-                // **TODO** saturation?
-                checkConversion(leftType, rightType);
-                m_Environment.get().getCodeGenerator().vadd(*resultReg, *vecLeftReg, *vecRightReg);
-            }
-            else if(opType == Token::Type::STAR) {
-                const auto &resultType = m_ResolvedTypes.at(&binary);
+        // If operation is bitwise
+        if(opType == Token::Type::AMPERSAND || opType == Token::Type::CARET || opType == Token::Type::PIPE) {
+            const auto scalarLeftReg = getExpressionScalarRegister(binary.getLeft());
+            const auto scalarRightReg = getExpressionScalarRegister(binary.getRight());
 
-                // **TODO** rounding
-                const int shift = getConversionShift(resultType, leftType, rightType);
-                m_Environment.get().getCodeGenerator().vmul(shift, *resultReg, *vecLeftReg, *vecRightReg);
-            }
-            
-            // Set result register
-            // **NOTE** result is a temporary register so always re-usable
-            setExpressionRegister(resultReg, true);
-        }
-        // Otherwise, if it is relational
-        else if(opType == Token::Type::GREATER || opType == Token::Type::GREATER_EQUAL || opType == Token::Type::LESS
-                || opType == Token::Type::LESS_EQUAL || opType == Token::Type::NOT_EQUAL || opType == Token::Type::EQUAL_EQUAL) 
-        {
             const auto resultReg = m_ScalarRegisterAllocator.getRegister();
-            checkConversion(leftType, rightType);
-
-            if(opType == Token::Type::GREATER) {
-                m_Environment.get().getCodeGenerator().vtlt(*resultReg, *vecRightReg, *vecLeftReg);
+            if(opType == Token::Type::AMPERSAND) {
+                m_Environment.get().getCodeGenerator().and_(*resultReg, *scalarLeftReg, *scalarRightReg);
             }
-            else if(opType == Token::Type::GREATER_EQUAL) {
-                m_Environment.get().getCodeGenerator().vtge(*resultReg, *vecLeftReg, *vecRightReg);
+            else if(opType == Token::Type::CARET) {
+                m_Environment.get().getCodeGenerator().xor_(*resultReg, *scalarLeftReg, *scalarRightReg);
             }
-            else if(opType == Token::Type::LESS) {
-                m_Environment.get().getCodeGenerator().vtlt(*resultReg, *vecLeftReg, *vecRightReg);
-            }
-            else if(opType == Token::Type::LESS_EQUAL) {
-                m_Environment.get().getCodeGenerator().vtge(*resultReg, *vecRightReg, *vecLeftReg);
-            }
-            else if(opType == Token::Type::NOT_EQUAL) {
-                m_Environment.get().getCodeGenerator().vtne(*resultReg, *vecLeftReg, *vecRightReg);
-            }
-            else if(opType == Token::Type::EQUAL_EQUAL) {
-                m_Environment.get().getCodeGenerator().vteq(*resultReg, *vecLeftReg, *vecRightReg);
+            else if(opType == Token::Type::PIPE) {
+                m_Environment.get().getCodeGenerator().or_(*resultReg, *scalarLeftReg, *scalarRightReg);
             }
             
             // Set result register
@@ -189,7 +152,67 @@ private:
             setExpressionRegister(resultReg, true);
         }
         else {
-            assert(false);
+            const auto vecLeftReg = getExpressionVectorRegister(binary.getLeft());
+            const auto vecRightReg = getExpressionVectorRegister(binary.getRight());
+
+            // If operation is arithmetic
+            if(opType == Token::Type::MINUS || opType == Token::Type::PLUS || opType == Token::Type::STAR) {
+                const auto resultReg = m_VectorRegisterAllocator.getRegister();
+                if(opType == Token::Type::MINUS) {
+                    // **TODO** saturation?
+                    checkConversion(leftType, rightType);
+                    m_Environment.get().getCodeGenerator().vsub(*resultReg, *vecLeftReg, *vecRightReg);
+                }
+                else if(opType == Token::Type::PLUS) {
+                    // **TODO** saturation?
+                    checkConversion(leftType, rightType);
+                    m_Environment.get().getCodeGenerator().vadd(*resultReg, *vecLeftReg, *vecRightReg);
+                }
+                else if(opType == Token::Type::STAR) {
+                    const auto &resultType = m_ResolvedTypes.at(&binary);
+
+                    // **TODO** rounding
+                    const int shift = getConversionShift(resultType, leftType, rightType);
+                    m_Environment.get().getCodeGenerator().vmul(shift, *resultReg, *vecLeftReg, *vecRightReg);
+                }
+            
+                // Set result register
+                // **NOTE** result is a temporary register so always re-usable
+                setExpressionRegister(resultReg, true);
+            }
+            // Otherwise, if it is relational
+            else if(opType == Token::Type::GREATER || opType == Token::Type::GREATER_EQUAL || opType == Token::Type::LESS
+                    || opType == Token::Type::LESS_EQUAL || opType == Token::Type::NOT_EQUAL || opType == Token::Type::EQUAL_EQUAL) 
+            {
+                const auto resultReg = m_ScalarRegisterAllocator.getRegister();
+                checkConversion(leftType, rightType);
+
+                if(opType == Token::Type::GREATER) {
+                    m_Environment.get().getCodeGenerator().vtlt(*resultReg, *vecRightReg, *vecLeftReg);
+                }
+                else if(opType == Token::Type::GREATER_EQUAL) {
+                    m_Environment.get().getCodeGenerator().vtge(*resultReg, *vecLeftReg, *vecRightReg);
+                }
+                else if(opType == Token::Type::LESS) {
+                    m_Environment.get().getCodeGenerator().vtlt(*resultReg, *vecLeftReg, *vecRightReg);
+                }
+                else if(opType == Token::Type::LESS_EQUAL) {
+                    m_Environment.get().getCodeGenerator().vtge(*resultReg, *vecRightReg, *vecLeftReg);
+                }
+                else if(opType == Token::Type::NOT_EQUAL) {
+                    m_Environment.get().getCodeGenerator().vtne(*resultReg, *vecLeftReg, *vecRightReg);
+                }
+                else if(opType == Token::Type::EQUAL_EQUAL) {
+                    m_Environment.get().getCodeGenerator().vteq(*resultReg, *vecLeftReg, *vecRightReg);
+                }
+            
+                // Set result register
+                // **NOTE** result is a temporary register so always re-usable
+                setExpressionRegister(resultReg, true);
+            }
+            else {
+                assert(false);
+            }
         }
     }
 
@@ -200,6 +223,7 @@ private:
 
     virtual void visit(const Expression::Cast &cast) final
     {
+        // **TODO** casting to/from fixed point performs shift
         // **NOTE** allow expression register to pass through
         cast.getExpression()->accept(*this);
     }
