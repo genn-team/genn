@@ -360,11 +360,20 @@ private:
         setExpressionRegister(vecTargetReg, false);
     }
 
-    virtual void visit(const Expression::Identifier &variable) final
+    virtual void visit(const Expression::Identifier &identifier) final
     {
-        // Set result register
-        // **NOTE** we don't want to re-use registers used for variables
-        setExpressionRegister(m_Environment.get().getRegister(variable.getName().lexeme), false);
+        // Get type of identifier
+        const auto &type = m_ResolvedTypes.at(&identifier);
+
+        // If identifier is function i.e. name is a function template
+        if (type.isFunction()) {
+            assert(false);
+        }
+        else {
+            // Set result register
+            // **NOTE** we don't want to re-use registers used for variables
+            setExpressionRegister(m_Environment.get().getRegister(identifier.getName().lexeme), false);
+        }
     }
 
     virtual void visit(const Expression::Unary &unary) final
@@ -406,12 +415,38 @@ private:
 
     virtual void visit(const Statement::Do &doStatement) final
     {
-        assert(false);
-        /*m_Environment.get().getStream() << "do";
-        doStatement.getBody()->accept(*this);
-        m_Environment.get().getStream() << "while(";
-        doStatement.getCondition()->accept(*this);
-        m_Environment.get().getStream() << ");" << std::endl;*/
+        // Backup mask register
+        auto oldMaskRegister = m_MaskRegister;
+
+        // Allocate mask register
+        m_MaskRegister = m_ScalarRegisterAllocator.getRegister();
+
+        // If we already have a mask register, copy it into new register
+        if(oldMaskRegister) {
+            m_Environment.get().getCodeGenerator().mv(*m_MaskRegister.value(), *oldMaskRegister.value());
+        }
+        // Otherwise, load mask register with FFFF
+        else {
+            m_Environment.get().getCodeGenerator().li(*m_MaskRegister.value(), 0xFFFFFFFF);
+        }
+
+        // Start loop
+        Assembler::Label doLoop;
+        m_Environment.get().getCodeGenerator().L(doLoop);
+        {
+            // Generate body
+            doStatement.getBody()->accept(*this);
+
+            // And mask register with result of evaluating condition
+            m_Environment.get().getCodeGenerator().and_(*m_MaskRegister.value(), *m_MaskRegister.value(), 
+                                                        *getExpressionScalarRegister(doStatement.getCondition()));
+
+            // If mask isn't entirely zeroed yet, goto loop
+            m_Environment.get().getCodeGenerator().bne(*m_MaskRegister.value(), Reg::X0, doLoop);
+        }
+
+        // Restore old mask register
+        m_MaskRegister = oldMaskRegister;
     }
 
     virtual void visit(const Statement::Expression &expression) final
@@ -543,11 +578,44 @@ private:
 
     virtual void visit(const Statement::While &whileStatement) final
     {
-        assert(false);
-        /*m_Environment.get().getStream() << "while(";
-        whileStatement.getCondition()->accept(*this);
-        m_Environment.get().getStream() << ")" << std::endl;
-        whileStatement.getBody()->accept(*this);*/
+        // Backup mask register
+        auto oldMaskRegister = m_MaskRegister;
+
+        // Allocate mask register
+        m_MaskRegister = m_ScalarRegisterAllocator.getRegister();
+
+        // If we already have a mask register, copy it into new register
+        if(oldMaskRegister) {
+            m_Environment.get().getCodeGenerator().mv(*m_MaskRegister.value(), *oldMaskRegister.value());
+        }
+        // Otherwise, load mask register with FFFF
+        else {
+            m_Environment.get().getCodeGenerator().li(*m_MaskRegister.value(), 0xFFFFFFFF);
+        }
+
+        // Start loop
+        Assembler::Label whileLoopStart;
+        Assembler::Label whileLoopEnd;
+        m_Environment.get().getCodeGenerator().L(whileLoopStart);
+        {
+            // And mask register with result of evaluating condition
+            m_Environment.get().getCodeGenerator().and_(*m_MaskRegister.value(), *m_MaskRegister.value(), 
+                                                        *getExpressionScalarRegister(whileStatement.getCondition()));
+
+            // If mask is zeroed, leave loop
+            m_Environment.get().getCodeGenerator().beq(*m_MaskRegister.value(), Reg::X0, whileLoopEnd);
+
+            // Generate body
+            whileStatement.getBody()->accept(*this);
+
+            // Go back to start of loop
+            m_Environment.get().getCodeGenerator().j_(whileLoopStart);
+        }
+
+        m_Environment.get().getCodeGenerator().L(whileLoopEnd);
+
+        // Restore old mask register
+        m_MaskRegister = oldMaskRegister;
     }
 
     //---------------------------------------------------------------------------
