@@ -75,6 +75,27 @@ const std::map<std::multiset<std::string>, Type::ResolvedType> numericTypeSpecif
     {{"uint64_t"}, Type::Uint64},
     {{"size_t"}, Type::Uint64},
 
+    {{"signed", "short", "fract"}, Type::S0_15},
+    {{"short", "fract"}, Type::S0_15},
+    {{"signed", "short", "accum"}, Type::S8_7},
+    {{"short", "accum"}, Type::S8_7},
+
+    {{"s0_15_t"}, Type::S0_15},
+    {{"s1_14_t"}, Type::S1_14},
+    {{"s2_13_t"}, Type::S2_13},
+    {{"s3_12_t"}, Type::S3_12},
+    {{"s4_11_t"}, Type::S4_11},
+    {{"s5_10_t"}, Type::S5_10},
+    {{"s6_9_t"}, Type::S6_9},
+    {{"s7_8_t"}, Type::S6_9},
+    {{"s8_7_t"}, Type::S8_7},
+    {{"s9_6_t"}, Type::S9_6},
+    {{"s10_5_t"}, Type::S10_5},
+    {{"s11_4_t"}, Type::S11_4},
+    {{"s12_3_t"}, Type::S12_3},
+    {{"s13_2_t"}, Type::S13_2},
+    {{"s14_1_t"}, Type::S14_1},
+
     {{"float"}, Type::Float},
     {{"double"}, Type::Double}};
 
