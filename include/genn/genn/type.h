@@ -117,6 +117,8 @@ struct GENN_EXPORT ResolvedType
         bool isSigned;
         bool isIntegral;
 
+        std::optional<int> fixedPoint;
+
         std::string literalSuffix;
 
         //------------------------------------------------------------------------
@@ -124,20 +126,20 @@ struct GENN_EXPORT ResolvedType
         //------------------------------------------------------------------------
         bool operator == (const Numeric &other) const
         {
-            return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral) 
-                    == std::tie(other.rank, other.min, other.max, other.lowest, other.maxDigits10, other.isSigned, other.isIntegral));
+            return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral, fixedPoint) 
+                    == std::tie(other.rank, other.min, other.max, other.lowest, other.maxDigits10, other.isSigned, other.isIntegral, other.fixedPoint));
         }
 
         bool operator != (const Numeric &other) const
         {
-            return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral) 
-                    != std::tie(other.rank, other.min, other.max, other.lowest, other.maxDigits10, other.isSigned, other.isIntegral));
+            return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral, fixedPoint) 
+                    != std::tie(other.rank, other.min, other.max, other.lowest, other.maxDigits10, other.isSigned, other.isIntegral, other.fixedPoint));
         }
 
         bool operator < (const Numeric &other) const
         {
-            return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral) 
-                    < std::tie(other.rank, other.min, other.max, other.lowest, other.maxDigits10, other.isSigned, other.isIntegral));
+            return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral, fixedPoint)
+                    < std::tie(other.rank, other.min, other.max, other.lowest, other.maxDigits10, other.isSigned, other.isIntegral, other.fixedPoint));
         }
     };
 
@@ -335,7 +337,20 @@ struct GENN_EXPORT ResolvedType
         return ResolvedType{Value{name, sizeof(T), ffiType, device, false, 
                                   Numeric{rank, std::numeric_limits<T>::min(), std::numeric_limits<T>::max(),
                                           std::numeric_limits<T>::lowest(), std::numeric_limits<T>::max_digits10,
-                                          std::is_signed<T>::value, std::is_integral<T>::value, literalSuffix}},
+                                          std::is_signed<T>::value, std::is_integral<T>::value, std::nullopt, literalSuffix}},
+                            isConst};
+    }
+
+    template<typename T>
+    static ResolvedType createFixedPointNumeric(const std::string &name, int rank, int fixedPoint, ffi_type *ffiType, 
+                                                const std::string &literalSuffix = "", bool isConst = false, bool device = false)
+    {
+        const double scale = 1.0 / std::pow(2.0, fixedPoint);
+        return ResolvedType{Value{name, sizeof(T), ffiType, device, false, 
+                                  Numeric{rank, std::numeric_limits<T>::min() * scale, std::numeric_limits<T>::max() * scale,
+                                          std::numeric_limits<T>::lowest() * scale, 
+                                          (int)std::ceil(std::numeric_limits<T>::digits * std::log10(2) + 1),
+                                          std::is_signed<T>::value, false, fixedPoint, literalSuffix}},
                             isConst};
     }
 
@@ -411,8 +426,24 @@ inline static const ResolvedType Uint16 = CREATE_NUMERIC(uint16_t, 20, &ffi_type
 inline static const ResolvedType Uint32 = CREATE_NUMERIC(uint32_t, 30, &ffi_type_uint32, "u");
 inline static const ResolvedType Uint64 = CREATE_NUMERIC(uint64_t, 40, &ffi_type_uint64, "u");
 
-inline static const ResolvedType Float = CREATE_NUMERIC(float, 50, &ffi_type_float, "f");
-inline static const ResolvedType Double = CREATE_NUMERIC(double, 60, &ffi_type_double, "");
+inline static const ResolvedType S0_15 = ResolvedType::createFixedPointNumeric<int16_t>("s0_15_t", 50, 15, &ffi_type_sint16, "");
+inline static const ResolvedType S1_14 = ResolvedType::createFixedPointNumeric<int16_t>("s1_14_t", 51, 14, &ffi_type_sint16, "");
+inline static const ResolvedType S2_13 = ResolvedType::createFixedPointNumeric<int16_t>("s2_13_t", 52, 13, &ffi_type_sint16, "");
+inline static const ResolvedType S3_12 = ResolvedType::createFixedPointNumeric<int16_t>("s3_12_t", 53, 12, &ffi_type_sint16, "");
+inline static const ResolvedType S4_11 = ResolvedType::createFixedPointNumeric<int16_t>("s4_11_t", 54, 11, &ffi_type_sint16, "");
+inline static const ResolvedType S5_10 = ResolvedType::createFixedPointNumeric<int16_t>("s5_10_t", 55, 10, &ffi_type_sint16, "");
+inline static const ResolvedType S6_9 = ResolvedType::createFixedPointNumeric<int16_t>("s6_9_t", 56, 9, &ffi_type_sint16, "");
+inline static const ResolvedType S7_8 = ResolvedType::createFixedPointNumeric<int16_t>("s7_8_t", 57, 8, &ffi_type_sint16, "");
+inline static const ResolvedType S8_7 = ResolvedType::createFixedPointNumeric<int16_t>("s8_7_t", 58, 7, &ffi_type_sint16, "");
+inline static const ResolvedType S9_6 = ResolvedType::createFixedPointNumeric<int16_t>("s9_6_t", 59, 6, &ffi_type_sint16, "");
+inline static const ResolvedType S10_5 = ResolvedType::createFixedPointNumeric<int16_t>("s10_5_t", 60, 5, &ffi_type_sint16, "");
+inline static const ResolvedType S11_4 = ResolvedType::createFixedPointNumeric<int16_t>("s11_4_t", 61, 4, &ffi_type_sint16, "");
+inline static const ResolvedType S12_4 = ResolvedType::createFixedPointNumeric<int16_t>("s12_3_t", 62, 3, &ffi_type_sint16, "");
+inline static const ResolvedType S13_2 = ResolvedType::createFixedPointNumeric<int16_t>("s13_2_t", 63, 2, &ffi_type_sint16, "");
+inline static const ResolvedType S14_1 = ResolvedType::createFixedPointNumeric<int16_t>("s14_1_t", 64, 1, &ffi_type_sint16, "");
+
+inline static const ResolvedType Float = CREATE_NUMERIC(float, 80, &ffi_type_float, "f");
+inline static const ResolvedType Double = CREATE_NUMERIC(double, 90, &ffi_type_double, "");
 
 // Void
 inline static const ResolvedType Void = ResolvedType();
