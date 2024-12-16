@@ -192,6 +192,47 @@ private:
     std::tuple<Transpiler::TypeChecker::EnvironmentBase*, Compiler::EnvironmentBase*, Assembler::CodeGenerator*> m_Context;
     std::unordered_map<std::string, std::tuple<Type::ResolvedType, Compiler::RegisterPtr>> m_Environment;
 };
+
+class LIFTest : public NeuronModels::Base
+{
+public:
+    DECLARE_SNIPPET(LIFTest);
+
+    SET_SIM_CODE(
+        "if (RefracTime <= 0) {\n"
+        "  scalar alpha = ((Isyn + Ioffset) * Rmembrane) + Vrest;\n"
+        "  V = alpha - (ExpTC * (alpha - V));\n"
+        "}\n"
+        "else {\n"
+        "  RefracTime--;\n"
+        "}\n"
+    );
+
+    SET_THRESHOLD_CONDITION_CODE("RefracTime <= 0 && V >= Vthresh");
+
+    SET_RESET_CODE(
+        "V = Vreset;\n"
+        "RefracTime = TauRefracTimesteps;\n");
+
+    SET_PARAMS({
+        "C",          // Membrane capacitance
+        "TauM",       // Membrane time constant [ms]
+        "Vrest",      // Resting membrane potential [mV]
+        "Vreset",     // Reset voltage [mV]
+        "Vthresh",    // Spiking threshold [mV]
+        "Ioffset",    // Offset current
+        "TauRefrac"});
+
+    SET_DERIVED_PARAMS({
+        {"TauRefracTimesteps", [](const ParamValues &pars, double dt){ return std::round(pars.at("TauRefrac").cast<double>() / dt); }, "int16_t"},
+        {"ExpTC", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("TauM").cast<double>()); }, Type::S0_15},
+        {"Rmembrane", [](const ParamValues &pars, double){ return  pars.at("TauM").cast<double>() / pars.at("C").cast<double>(); }}});
+
+    SET_VARS({{"V", "scalar"}, {"RefracTime", "int16_t"}});
+
+    SET_NEEDS_AUTO_REFRACTORY(false);
+};
+IMPLEMENT_SNIPPET(LIFTest);
 }
 
 int main()
@@ -204,8 +245,8 @@ int main()
     plog::init<Logging::CHANNEL_BACKEND>(plog::Severity::debug, &consoleAppender);
     
 
-    const Type::TypeContext typeContext = {{"scalar", Type::Int16}}; 
-    const auto *model = NeuronModels::LIF::getInstance();
+    const Type::TypeContext typeContext = {{"scalar", Type::S8_7}}; 
+    const auto *model = LIFTest::getInstance();
 
     // Scan model code strings
     const auto simCodeTokens = Utils::scanCode(model->getSimCode(), "sim code");
@@ -218,27 +259,25 @@ int main()
     EnvironmentExternal env(codeGenerator);
 
     // Allocate registers for Isyn and dt
-    env.add(Type::Int16, "Isyn", vectorRegisterAllocator.getRegister("Isyn V"));
-    env.add(Type::Int16, "dt", vectorRegisterAllocator.getRegister("dt V"));
-
-    env.add(Type::Int16, "_zero", vectorRegisterAllocator.getRegister("_zero V"));
+    env.add(Type::S8_7, "Isyn", vectorRegisterAllocator.getRegister("Isyn V"));
+    env.add(Type::S8_7, "_zero", vectorRegisterAllocator.getRegister("_zero V"));
 
     // Allocate registers for neuron variables
     const auto neuronVars = model->getVars();
     for(const auto &v : neuronVars) {
-        env.add(Type::Int16, v.name, vectorRegisterAllocator.getRegister((v.name + " V").c_str()));
+        env.add(v.type.resolve(typeContext), v.name, vectorRegisterAllocator.getRegister((v.name + " V").c_str()));
     }
 
     // Allocate registers for neuron parameters
     const auto neuronParams = model->getParams();
     for(const auto &p : neuronParams) {
-        env.add(Type::Int16, p.name, vectorRegisterAllocator.getRegister((p.name + " V").c_str()));
+        env.add(p.type.resolve(typeContext), p.name, vectorRegisterAllocator.getRegister((p.name + " V").c_str()));
     }
 
     // Allocate registers for neuron derived
     const auto neuronDerivedParams = model->getDerivedParams();
     for(const auto &d : neuronDerivedParams) {
-        env.add(Type::Int16, d.name, vectorRegisterAllocator.getRegister((d.name + " V").c_str()));
+        env.add(d.type.resolve(typeContext), d.name, vectorRegisterAllocator.getRegister((d.name + " V").c_str()));
     }
 
     // Resolve types within one scope

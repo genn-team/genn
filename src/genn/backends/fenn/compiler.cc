@@ -17,6 +17,36 @@ using namespace GeNN::Transpiler;
 //---------------------------------------------------------------------------
 namespace
 {
+void checkConversion(const Type::ResolvedType &leftType, const Type::ResolvedType &rightType)
+{
+    const auto &leftNumeric = leftType.getNumeric();
+    const auto &rightNumeric = rightType.getNumeric();
+
+    // If either type isn't an integer and fixed point format differs
+    if((!leftNumeric.isIntegral || !rightNumeric.isIntegral)
+        && (!leftNumeric.fixedPoint || leftNumeric.fixedPoint != rightNumeric.fixedPoint))
+    {
+        throw std::runtime_error("FeNN only currently supports assignement, addition and subtraction "
+                                 "of numbers in same fixed point/integer format");
+    }
+}
+
+int getConversionShift(const Type::ResolvedType &resultType, const Type::ResolvedType &leftType, const Type::ResolvedType &rightType)
+{
+    const int resultFixedPoint = resultType.getNumeric().fixedPoint.value_or(0);
+    const int leftFixedPoint = leftType.getNumeric().fixedPoint.value_or(0);
+    const int rightFixedPoint = rightType.getNumeric().fixedPoint.value_or(0);
+
+    if(resultFixedPoint == leftFixedPoint) {
+        return rightFixedPoint;
+    }
+    else if (resultFixedPoint == rightFixedPoint) {
+        return leftFixedPoint;
+    }
+    else {
+        throw std::runtime_error("Invalid fixed point types for conversion shift");
+    }
+}
 //---------------------------------------------------------------------------
 // Visitor
 //---------------------------------------------------------------------------
@@ -65,6 +95,8 @@ private:
     {
         const auto vecAssigneeReg = getExpressionVectorRegister(assignement.getAssignee());
         const auto vecValueReg = getExpressionVectorRegister(assignement.getValue());
+        const auto &assigneeType = m_ResolvedTypes.at(assignement.getAssignee());
+        const auto &valueType = m_ResolvedTypes.at(assignement.getValue());
 
         // If a mask is set
         // **TODO** only necessary when assigning to variables outside of masked scope
@@ -79,7 +111,8 @@ private:
                 // Generate assignement into temporary register
                 // **TODO** if value reg is reusable, no real need for extra register
                 const auto tempReg = m_VectorRegisterAllocator.getRegister();
-                generateAssign(opType, *tempReg, *vecAssigneeReg, *vecValueReg);
+                generateAssign(opType, *tempReg, *vecAssigneeReg, *vecValueReg,
+                               assigneeType, valueType);
 
                 // Conditionally assign back to assignee register
                 m_Environment.get().getCodeGenerator().vsel(*vecAssigneeReg, *m_MaskRegister.value(), *tempReg);
@@ -87,7 +120,8 @@ private:
         }
         // Otherwise, generate assignement directly into assignee register
         else {
-            generateAssign(opType, *vecAssigneeReg, *vecAssigneeReg, *vecValueReg);
+            generateAssign(opType, *vecAssigneeReg, *vecAssigneeReg, *vecValueReg,
+                           assigneeType, valueType);
         }
     }
 
@@ -95,6 +129,8 @@ private:
     {
         const auto vecLeftReg = getExpressionVectorRegister(binary.getLeft());
         const auto vecRightReg = getExpressionVectorRegister(binary.getRight());
+        const auto &leftType = m_ResolvedTypes.at(binary.getLeft());
+        const auto &rightType = m_ResolvedTypes.at(binary.getRight());
 
         // If operation is arithmetic
         const auto opType = binary.getOperator().type;
@@ -102,15 +138,20 @@ private:
             const auto resultReg = m_VectorRegisterAllocator.getRegister();
             if(opType == Token::Type::MINUS) {
                 // **TODO** saturation?
+                checkConversion(leftType, rightType);
                 m_Environment.get().getCodeGenerator().vsub(*resultReg, *vecLeftReg, *vecRightReg);
             }
             else if(opType == Token::Type::PLUS) {
                 // **TODO** saturation?
+                checkConversion(leftType, rightType);
                 m_Environment.get().getCodeGenerator().vadd(*resultReg, *vecLeftReg, *vecRightReg);
             }
             else if(opType == Token::Type::STAR) {
-                // **TODO** fixed point format and rounding
-                m_Environment.get().getCodeGenerator().vmul(8, *resultReg, *vecLeftReg, *vecRightReg);
+                const auto &resultType = m_ResolvedTypes.at(&binary);
+
+                // **TODO** rounding
+                const int shift = getConversionShift(resultType, leftType, rightType);
+                m_Environment.get().getCodeGenerator().vmul(shift, *resultReg, *vecLeftReg, *vecRightReg);
             }
             
             // Set result register
@@ -122,6 +163,7 @@ private:
                 || opType == Token::Type::LESS_EQUAL || opType == Token::Type::NOT_EQUAL || opType == Token::Type::EQUAL_EQUAL) 
         {
             const auto resultReg = m_ScalarRegisterAllocator.getRegister();
+            checkConversion(leftType, rightType);
 
             if(opType == Token::Type::GREATER) {
                 m_Environment.get().getCodeGenerator().vtlt(*resultReg, *vecRightReg, *vecLeftReg);
@@ -187,26 +229,38 @@ private:
         const char *lexemeBegin = lexeme.c_str();
         const char *lexemeEnd = lexemeBegin + lexeme.size();
         
-        // If literal is uint
+        // If literal is a number
         int64_t integerResult;
-        if (literal.getValue().type == Token::Type::UINT32_NUMBER) {
-            unsigned int result;
-            auto answer = fast_float::from_chars(lexemeBegin, lexemeEnd, result);
-            assert(answer.ec == std::errc());
-            integerResult = result;
-        }
-        else if(literal.getValue().type == Token::Type::INT32_NUMBER) {
-            int result;
-            auto answer = fast_float::from_chars(lexemeBegin, lexemeEnd, result);
-            assert(answer.ec == std::errc());
-            integerResult = result;
+        if(literal.getValue().type == Token::Type::NUMBER) {
+            // If it is an integer
+            const auto &numericType = m_ResolvedTypes.at(&literal).getNumeric();
+            if(numericType.isIntegral) {
+                if(numericType.isSigned) {
+                    int result;
+                    auto answer = fast_float::from_chars(lexemeBegin, lexemeEnd, result);
+                    assert(answer.ec == std::errc());
+                    integerResult = result;
+                }
+                else {
+                    unsigned int result;
+                    auto answer = fast_float::from_chars(lexemeBegin, lexemeEnd, result);
+                    assert(answer.ec == std::errc());
+                    integerResult = result;
+                }
+            }
+            // Otherwise, if it is fixed point
+            else if(numericType.fixedPoint) {
+                float result;
+                auto answer = fast_float::from_chars(lexemeBegin, lexemeEnd, result);
+                assert(answer.ec == std::errc());
+                integerResult = std::round(result * (1u << numericType.fixedPoint.value()));
+            }
+            else {
+                throw std::runtime_error("FeNN does not support floating point types");
+            }
         }
         else {
-            // **TODO** fixed point
-            float result;
-            auto answer = fast_float::from_chars(lexemeBegin, lexemeEnd, result);
-            assert(answer.ec == std::errc());
-            integerResult = std::round(result * (1u << 8));
+            throw std::runtime_error("Unsupported literal type");
         }
 
         assert(integerResult >= std::numeric_limits<int16_t>::min());
@@ -244,16 +298,66 @@ private:
 
     virtual void visit(const Expression::PostfixIncDec &postfixIncDec) final
     {
-        assert(false);
-        //postfixIncDec.getTarget()->accept(*this);
-        //m_Environment.get().getStream() <<  postfixIncDec.getOperator().lexeme;
+        const auto vecTargetReg = getExpressionVectorRegister(postfixIncDec.getTarget());
+        const auto &targetType = m_ResolvedTypes.at(postfixIncDec.getTarget());
+
+        // Make a copy of initial value
+        const auto copyReg = m_VectorRegisterAllocator.getRegister();
+        generateVMOV(*copyReg, *vecTargetReg);
+        
+        // If target is integer, load integer 1
+        const auto oneReg = m_VectorRegisterAllocator.getRegister();
+        if(targetType.isNumeric() && targetType.getNumeric().isIntegral) {
+            m_Environment.get().getCodeGenerator().vlui(*oneReg, 1);
+        }
+        // Otherwise, if target is fixed point, load fixed-point 1
+        else if(targetType.isNumeric() && targetType.getNumeric().fixedPoint) {
+            m_Environment.get().getCodeGenerator().vlui(*oneReg, 1u << targetType.getNumeric().fixedPoint.value());
+        }
+        else {
+            throw std::runtime_error("Unsupported PostfixIncDec target");
+        }
+
+        // Add one to target register
+        if(postfixIncDec.getOperator().type == Token::Type::PLUS_PLUS) {
+            m_Environment.get().getCodeGenerator().vadd(*vecTargetReg, *vecTargetReg, *oneReg);
+        }
+        else {
+            m_Environment.get().getCodeGenerator().vsub(*vecTargetReg, *vecTargetReg, *oneReg);
+        }
+
+        // Return copy of initial value
+        // **NOTE** result is a temporary register so always re-usable
+        setExpressionRegister(copyReg, true);
     }
 
     virtual void visit(const Expression::PrefixIncDec &prefixIncDec) final
     {
-        assert(false);
-        //m_Environment.get().getStream() << prefixIncDec.getOperator().lexeme;
-        //prefixIncDec.getTarget()->accept(*this);
+        const auto vecTargetReg = getExpressionVectorRegister(prefixIncDec.getTarget());
+        const auto &targetType = m_ResolvedTypes.at(prefixIncDec.getTarget());
+
+        // If target is integer, load integer 1
+        const auto oneReg = m_VectorRegisterAllocator.getRegister();
+        if(targetType.isNumeric() && targetType.getNumeric().isIntegral) {
+            m_Environment.get().getCodeGenerator().vlui(*oneReg, 1);
+        }
+        // Otherwise, if target is fixed point, load fixed-point 1
+        else if(targetType.isNumeric() && targetType.getNumeric().fixedPoint) {
+            m_Environment.get().getCodeGenerator().vlui(*oneReg, 1u << targetType.getNumeric().fixedPoint.value());
+        }
+        else {
+            throw std::runtime_error("Unsupported PrefixIncDec target");
+        }
+
+        // Add one to target register and set as non-reusable result
+        // **NOTE** because this directly modifies a variable, we don't want its register being reused
+        if(prefixIncDec.getOperator().type == Token::Type::PLUS_PLUS) {
+            m_Environment.get().getCodeGenerator().vadd(*vecTargetReg, *vecTargetReg, *oneReg);
+        }
+        else {
+            m_Environment.get().getCodeGenerator().vsub(*vecTargetReg, *vecTargetReg, *oneReg);
+        }
+        setExpressionRegister(vecTargetReg, false);
     }
 
     virtual void visit(const Expression::Identifier &variable) final
@@ -426,9 +530,7 @@ private:
                     
                     // Copy value into result
                     // **NOTE** mask never matters here as these variables are inherantly local
-                    // **TODO** add flag alongside expression register to specify whether it can be trashed
-                    m_Environment.get().getCodeGenerator().vadd(*varReg, *valueVectorReg,
-                                                                *std::get<VectorRegisterAllocator::RegisterPtr>(m_Environment.get().getRegister("_zero")));
+                    generateVMOV(*varReg, *valueVectorReg);
                 }
             }
             // Otherwise, allocate register and define variable to it
@@ -480,28 +582,39 @@ private:
         return std::get<ScalarRegisterAllocator::RegisterPtr>(getExpressionRegister());
     }
 
-    void generateAssign(Token::Type opType, VReg destinationReg, VReg assigneeReg, VReg valueReg)
+    void generateVMOV(VReg destinationReg, VReg sourceReg) const
+    {
+        m_Environment.get().getCodeGenerator().vadd(destinationReg, sourceReg,
+                                                    *std::get<VectorRegisterAllocator::RegisterPtr>(m_Environment.get().getRegister("_zero")));
+    }
+
+    void generateAssign(Token::Type opType, VReg destinationReg, VReg assigneeReg, VReg valueReg,
+                        const Type::ResolvedType &assigneeType, const Type::ResolvedType &valueType)
     {
         if(opType == Token::Type::EQUAL) {
-            m_Environment.get().getCodeGenerator().vadd(destinationReg, valueReg,
-                                                        *std::get<VectorRegisterAllocator::RegisterPtr>(m_Environment.get().getRegister("_zero")));
+            checkConversion(assigneeType, valueType);
+            generateVMOV(destinationReg, valueReg);
         }
         else if(opType == Token::Type::STAR_EQUAL) {
-            // **TODO** fixed point and rounding
-            m_Environment.get().getCodeGenerator().vmul(8, destinationReg, assigneeReg, valueReg);
+            // **TODO** rounding
+            const int shift = getConversionShift(assigneeType, assigneeType, valueType);
+            m_Environment.get().getCodeGenerator().vmul(shift, destinationReg, assigneeReg, valueReg);
         }
         else if(opType == Token::Type::PLUS_EQUAL) {
             // **TODO** saturation
+            checkConversion(assigneeType, valueType);
             m_Environment.get().getCodeGenerator().vadd(destinationReg, assigneeReg, valueReg);
         }
         else if(opType == Token::Type::MINUS_EQUAL) {
             // **TODO** saturation
+            checkConversion(assigneeType, valueType);
             m_Environment.get().getCodeGenerator().vsub(destinationReg, assigneeReg, valueReg);
         }
         else {
             assert(false);
         }
     }
+
     
     //---------------------------------------------------------------------------
     // Members
