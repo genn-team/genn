@@ -118,11 +118,6 @@ public:
     virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
 
-    //! Generate code to allocate variable with a size known at runtime
-    virtual void genLazyVariableDynamicAllocation(CodeStream &os, 
-                                                  const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                                  const std::string &countVarName) const final;
-
     //! Generate code for pushing a variable with a size known at runtime to the 'device'
     virtual void genLazyVariableDynamicPush(CodeStream &os, 
                                             const Type::ResolvedType &type, const std::string &name,

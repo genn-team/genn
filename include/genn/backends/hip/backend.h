@@ -186,6 +186,11 @@ public:
     /*! \param count        number of RNGs required*/
     virtual std::unique_ptr<Runtime::ArrayBase> createPopulationRNG(size_t count) const final;
 
+    //! Generate code to allocate variable with a size known at runtime
+    virtual void genLazyVariableDynamicAllocation(CodeStream &os, 
+                                                  const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
+                                                  const std::string &countVarName) const final;
+
     virtual void genMakefilePreamble(std::ostream &os) const final;
     virtual void genMakefileLinkRule(std::ostream &os) const final;
     virtual void genMakefileCompileRule(std::ostream &os) const final;

@@ -1343,31 +1343,6 @@ void BackendCUDAHIP::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpec
     }
 }
 //--------------------------------------------------------------------------
-void BackendCUDAHIP::genLazyVariableDynamicAllocation(CodeStream &os, 
-                                                      const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
-                                                      const std::string &countVarName) const
-{
-    const auto &underlyingType = type.isPointer() ? *type.getPointer().valueType : type;
-    const std::string hostPointer = type.isPointer() ? ("*$(_" + name + ")") : ("$(_" + name + ")");
-    const std::string hostPointerToPointer = type.isPointer() ? ("$(_" + name + ")") : ("&$(_" + name + ")");
-    const std::string devicePointerToPointer = type.isPointer() ? ("$(_d_" + name + ")") : ("&$(_d_" + name + ")");
-   
-    if(loc & VarLocationAttribute::HOST) {
-        const char *flags = (loc & VarLocationAttribute::ZERO_COPY) ? "HostAllocMapped" : "HostAllocPortable";
-        os << "CHECK_RUNTIME_ERRORS(" << getRuntimePrefix() << "HostAlloc(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << "), " << getRuntimePrefix() << flags << "));" << std::endl;
-    }
-
-    // If variable is present on device at all
-    if(loc & VarLocationAttribute::DEVICE) {
-        if(loc & VarLocationAttribute::ZERO_COPY) {
-            os << "CHECK_RUNTIME_ERRORS(" << getRuntimePrefix() << "HostGetDevicePointer((void**)" << devicePointerToPointer << ", (void*)" << hostPointer << ", 0));" << std::endl;
-        }
-        else {
-            os << "CHECK_RUNTIME_ERRORS(" << getRuntimePrefix() << "Malloc(" << devicePointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << ")));" << std::endl;
-        }
-    }
-}
-//--------------------------------------------------------------------------
 void BackendCUDAHIP::genLazyVariableDynamicPush(CodeStream &os, 
                                                 const Type::ResolvedType &type, const std::string &name,
                                                 VarLocation loc, const std::string &countVarName) const
@@ -1408,7 +1383,8 @@ void BackendCUDAHIP::genMergedDynamicVariablePush(CodeStream &os, const std::str
     const std::string structName = "Merged" + suffix + "Group" + std::to_string(mergedGroupIdx);
     os << "CHECK_RUNTIME_ERRORS(" << getRuntimePrefix() << "MemcpyToSymbolAsync(d_merged" << suffix << "Group" << mergedGroupIdx;
     os << ", &" << egpName << ", sizeof(" << egpName << ")";
-    os << ", (sizeof(" << structName << ") * (" << groupIdx << ")) + offsetof(" << structName << ", " << fieldName << ")));" << std::endl;
+    os << ", (sizeof(" << structName << ") * (" << groupIdx << ")) + offsetof(" << structName << ", " << fieldName << "), ";
+    os << getRuntimePrefix() << "MemcpyHostToDevice, 0));" << std::endl;
 }
 //--------------------------------------------------------------------------
 std::string BackendCUDAHIP::getMergedGroupFieldHostTypeName(const Type::ResolvedType &type) const

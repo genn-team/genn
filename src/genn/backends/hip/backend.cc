@@ -366,6 +366,30 @@ std::unique_ptr<Runtime::ArrayBase> Backend::createPopulationRNG(size_t count) c
     return createArray(HIPRandState, count, VarLocation::DEVICE, false);
 }
 //--------------------------------------------------------------------------
+void Backend::genLazyVariableDynamicAllocation(CodeStream &os, const Type::ResolvedType &type, const std::string &name,
+                                               VarLocation loc, const std::string &countVarName) const
+{
+    const auto &underlyingType = type.isPointer() ? *type.getPointer().valueType : type;
+    const std::string hostPointer = type.isPointer() ? ("*$(_" + name + ")") : ("$(_" + name + ")");
+    const std::string hostPointerToPointer = type.isPointer() ? ("$(_" + name + ")") : ("&$(_" + name + ")");
+    const std::string devicePointerToPointer = type.isPointer() ? ("$(_d_" + name + ")") : ("&$(_d_" + name + ")");
+   
+    if(loc & VarLocationAttribute::HOST) {
+        const char *flags = (loc & VarLocationAttribute::ZERO_COPY) ? "HostMallocMapped" : "HostMallocPortable";
+        os << "CHECK_RUNTIME_ERRORS(hipHostMalloc(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << "), hip" << flags << "));" << std::endl;
+    }
+
+    // If variable is present on device at all
+    if(loc & VarLocationAttribute::DEVICE) {
+        if(loc & VarLocationAttribute::ZERO_COPY) {
+            os << "CHECK_RUNTIME_ERRORS(hipHostGetDevicePointer((void**)" << devicePointerToPointer << ", (void*)" << hostPointer << ", 0));" << std::endl;
+        }
+        else {
+            os << "CHECK_RUNTIME_ERRORS(hipMalloc(" << devicePointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << ")));" << std::endl;
+        }
+    }
+}
+//--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream &os) const
 {
     const std::string architecture = "sm_" + std::to_string(getChosenHIPDevice().major) + std::to_string(getChosenHIPDevice().minor);
@@ -409,26 +433,26 @@ void Backend::genMakefileCompileRule(std::ostream &os) const
 #endif
 }
 //--------------------------------------------------------------------------
-void Backend::genMSBuildConfigProperties(std::ostream &os) const
+void Backend::genMSBuildConfigProperties(std::ostream&) const
 {
-    assert(false);
+    throw std::runtime_error("The HIP backend does not currently support the MSBuild build system");
     // Add property to extract CUDA path
     /*os << "\t\t<!-- **HACK** determine the installed CUDA version by regexing CUDA path -->" << std::endl;
     os << "\t\t<CudaVersion>$([System.Text.RegularExpressions.Regex]::Match($(CUDA_PATH), \"\\\\v([0-9.]+)$\").Groups[1].Value)</CudaVersion>" << std::endl;*/
 }
 //--------------------------------------------------------------------------
-void Backend::genMSBuildImportProps(std::ostream &os) const
+void Backend::genMSBuildImportProps(std::ostream&) const
 {
-    assert(false);
+    throw std::runtime_error("The HIP backend does not currently support the MSBuild build system");
     // Import CUDA props file
     /*os << "\t<ImportGroup Label=\"ExtensionSettings\">" << std::endl;
     os << "\t\t<Import Project=\"$(CUDA_PATH)\\extras\\visual_studio_integration\\MSBuildExtensions\\CUDA $(CudaVersion).props\" />" << std::endl;
     os << "\t</ImportGroup>" << std::endl;*/
 }
 //--------------------------------------------------------------------------
-void Backend::genMSBuildItemDefinitions(std::ostream &os) const
+void Backend::genMSBuildItemDefinitions(std::ostream&) const
 {
-    assert(false);
+    throw std::runtime_error("The HIP backend does not currently support the MSBuild build system");
     // Add item definition for host compilation
     /*os << "\t\t<ClCompile>" << std::endl;
     os << "\t\t\t<WarningLevel>Level3</WarningLevel>" << std::endl;
@@ -465,9 +489,9 @@ void Backend::genMSBuildItemDefinitions(std::ostream &os) const
     os << "\t\t</CudaCompile>" << std::endl;*/
 }
 //--------------------------------------------------------------------------
-void Backend::genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const
+void Backend::genMSBuildCompileModule(const std::string&, std::ostream&) const
 {
-    assert(false);
+    throw std::runtime_error("The HIP backend does not currently support the MSBuild build system");
     /*os << "\t\t<CudaCompile Include=\"" << moduleName << ".cc\" >" << std::endl;
     // **YUCK** for some reasons you can't call .Contains on %(BaseCommandLineTemplate) directly
     // Solution suggested by https://stackoverflow.com/questions/9512577/using-item-functions-on-metadata-values
@@ -475,9 +499,9 @@ void Backend::genMSBuildCompileModule(const std::string &moduleName, std::ostrea
     os << "\t\t</CudaCompile>" << std::endl;*/
 }
 //--------------------------------------------------------------------------
-void Backend::genMSBuildImportTarget(std::ostream &os) const
+void Backend::genMSBuildImportTarget(std::ostream&) const
 {
-    assert(false);
+    throw std::runtime_error("The HIP backend does not currently support the MSBuild build system");
     /*os << "\t<ImportGroup Label=\"ExtensionTargets\">" << std::endl;
     os << "\t\t<Import Project=\"$(CUDA_PATH)\\extras\\visual_studio_integration\\MSBuildExtensions\\CUDA $(CudaVersion).targets\" />" << std::endl;
     os << "\t</ImportGroup>" << std::endl;*/
