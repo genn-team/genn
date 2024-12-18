@@ -63,31 +63,11 @@ $Parameter ``runtime``:
 
   runtime object)doc";
 
-static const char *__doc_CodeGenerator_CUDA_Backend_genAllocateMemPreamble = R"doc()doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genAssert = R"doc(On backends which support it, generate a runtime assert)doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genCustomUpdate = R"doc()doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genDefinitionsPreamble = R"doc()doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genFreeMemPreamble = R"doc()doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genGlobalDeviceRNG =
-R"doc(Generate a single RNG instance
-On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG)doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genGlobalRNGSkipAhead = R"doc(Generate code to skip ahead local copy of global RNG)doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genInit = R"doc()doc";
+static const char *__doc_CodeGenerator_CUDA_Backend_genDefinitionsPreambleInternal = R"doc(Generate HIP/CUDA specific bits of definitions preamble)doc";
 
 static const char *__doc_CodeGenerator_CUDA_Backend_genKernelDimensions = R"doc()doc";
 
 static const char *__doc_CodeGenerator_CUDA_Backend_genLazyVariableDynamicAllocation = R"doc(Generate code to allocate variable with a size known at runtime)doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genLazyVariableDynamicPull = R"doc(Generate code for pulling a variable with a size known at runtime from the 'device')doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genLazyVariableDynamicPush = R"doc(Generate code for pushing a variable with a size known at runtime to the 'device')doc";
 
 static const char *__doc_CodeGenerator_CUDA_Backend_genMSBuildCompileModule = R"doc()doc";
 
@@ -105,41 +85,7 @@ static const char *__doc_CodeGenerator_CUDA_Backend_genMakefileLinkRule = R"doc(
 
 static const char *__doc_CodeGenerator_CUDA_Backend_genMakefilePreamble = R"doc()doc";
 
-static const char *__doc_CodeGenerator_CUDA_Backend_genMergedDynamicVariablePush = R"doc(Generate code for pushing a new pointer to a dynamic variable into the merged group structure on 'device')doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genMergedStructArrayPush = R"doc()doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genNCCLReduction = R"doc()doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genNeuronUpdate = R"doc()doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genPopulationRNGInit = R"doc(For SIMT backends which initialize RNGs on device, initialize population RNG with specified seed and sequence)doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genPopulationRNGPostamble =
-R"doc(If required, generate a postamble for population RNG
-For example, in OpenCL, this is used to write local RNG state back to global memory)doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genPopulationRNGPreamble = R"doc(Generate a preamble to add substitution name for population RNG)doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genReturnFreeDeviceMemoryBytes = R"doc(Generate code to return amount of free 'device' memory in bytes)doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genRunnerPreamble = R"doc()doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genSharedMemBarrier = R"doc(Generate a shared memory barrier)doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genStepTimeFinalisePreamble = R"doc()doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genSynapseUpdate = R"doc()doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genTimer = R"doc()doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_genWarpReduction = R"doc(Generate a warp reduction across getNumLanes lanes into lane 0)doc";
-
 static const char *__doc_CodeGenerator_CUDA_Backend_getAtomic = R"doc(Get name of atomic operation)doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_getBlockID = R"doc(Get the ID of the current thread block)doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_getCLZ = R"doc(Get the name of the count-leading-zeros function)doc";
 
 static const char *__doc_CodeGenerator_CUDA_Backend_getChosenCUDADevice = R"doc()doc";
 
@@ -151,17 +97,6 @@ static const char *__doc_CodeGenerator_CUDA_Backend_getDeviceMemoryBytes = R"doc
 
 static const char *__doc_CodeGenerator_CUDA_Backend_getHashDigest = R"doc(Get hash digest of this backends identification and the preferences it has been configured with)doc";
 
-static const char *__doc_CodeGenerator_CUDA_Backend_getMergedGroupFieldHostTypeName = R"doc(When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host)doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_getMergedGroupMemorySpaces =
-R"doc(Some backends will have additional small, fast, memory spaces for read-only data which might
-Be well-suited to storing merged group structs. This method returns the prefix required to
-Place arrays in these and their size in preferential order)doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_getNCCLReductionType = R"doc()doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_getNCCLType = R"doc()doc";
-
 static const char *__doc_CodeGenerator_CUDA_Backend_getNVCCFlags = R"doc()doc";
 
 static const char *__doc_CodeGenerator_CUDA_Backend_getNumLanes =
@@ -170,19 +105,9 @@ This is typically used for warp-shuffle algorithms)doc";
 
 static const char *__doc_CodeGenerator_CUDA_Backend_getPopulationRNGType = R"doc(Get type of population RNG)doc";
 
+static const char *__doc_CodeGenerator_CUDA_Backend_getRNGFunctions = R"doc(Get library of RNG functions to use)doc";
+
 static const char *__doc_CodeGenerator_CUDA_Backend_getRuntimeVersion = R"doc()doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_getSharedPrefix = R"doc(Get the prefix to use for shared memory variables)doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_getThreadID = R"doc(Get the ID of the current thread within the threadblock)doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_isArrayDeviceObjectRequired = R"doc(As well as host pointers, are device objects required?)doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_isArrayHostObjectRequired = R"doc(As well as host pointers, are additional host objects required e.g. for buffers in OpenCL?)doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_isHostReductionRequired = R"doc(Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels)doc";
-
-static const char *__doc_CodeGenerator_CUDA_Backend_isPopulationRNGInitialisedOnDevice = R"doc(Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?)doc";
 
 static const char *__doc_CodeGenerator_CUDA_Backend_m_ChosenDevice = R"doc()doc";
 
@@ -219,8 +144,6 @@ Takes 72 bytes of constant memory for a lookup table used by cuRAND. If your app
 additional constant cache, increase this)doc";
 
 static const char *__doc_CodeGenerator_CUDA_Preferences_deviceSelectMethod = R"doc(How to select GPU device)doc";
-
-static const char *__doc_CodeGenerator_CUDA_Preferences_enableNCCLReductions = R"doc(Generate corresponding NCCL batch reductions)doc";
 
 static const char *__doc_CodeGenerator_CUDA_Preferences_generateLineInfo = R"doc(Should line info be included in resultant executable for debugging/profiling purposes?)doc";
 

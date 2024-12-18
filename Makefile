@@ -7,6 +7,10 @@ ifdef CUDA_PATH
 	BACKENDS	+=cuda_backend
 endif
 
+ifdef HIP_PATH
+	BACKENDS	+=hip_backend
+endif
+
 ifdef OPENCL_PATH
 	BACKENDS	+=opencl_backend
 endif
@@ -29,6 +33,9 @@ single_threaded_cpu_backend: genn
 
 cuda_backend: genn
 	$(MAKE) -C src/genn/backends/cuda
+
+hip_backend: genn
+	$(MAKE) -C src/genn/backends/hip
 
 opencl_backend: genn
 	$(MAKE) -C src/genn/backends/opencl

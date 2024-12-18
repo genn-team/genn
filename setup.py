@@ -33,11 +33,11 @@ cuda_path = os.environ.get("CUDA_PATH")
 # Is CUDA installed?
 cuda_installed = cuda_path is not None and os.path.exists(cuda_path)
 
-# Get OpenCL path from environment variable
-opencl_path = os.environ.get("OPENCL_PATH")
+# Get HIP path from environment variable
+hip_path = os.environ.get("HIP_PATH")
 
-# Is OpenCL installed
-opencl_installed = False #opencl_path is not None and os.path.exists(opencl_path)
+# Is HIP installed
+hip_installed = hip_path is not None and os.path.exists(hip_path)
 
 # Are we on Linux?
 # **NOTE** Pybind11Extension provides WIN and MAC
@@ -159,24 +159,43 @@ if cuda_installed:
                       "library_dirs": cuda_library_dirs,
                       "extra_link_args": ["-Wl,-rpath," + cuda_library_dirs[0]] if MACOS else []}))
 
-# If OpenCL was found, add backend configuration
-if opencl_installed:
-    # Get OpenCL library directory
-    if MACOS:
-        raise NotImplementedError("Mac not currently supported")
-    elif WIN:
-        opencl_library_dir = os.path.join(opencl_path, "lib", "x64")
+# If HIP was found, add backend configuration
+if hip_installed:
+    # If we're using NVIDIA
+    hip_include_dirs = [os.path.join(hip_path, "include")]
+    hip_library_dirs = [os.path.join(hip_path, "lib")]
+    hip_libraries = ["hiprand"]
+    hip_extra_compile_args = []
+    if os.environ.get("HIP_PLATFORM") == "nvidia":
+        assert cuda_installed
+        # Add CUDA include directories
+        hip_include_dirs.append(os.path.join(cuda_path, "include"))
+            
+        # Add CUDA library directories
+        if WIN:
+            hip_library_dirs.append(os.path.join(cuda_path, "lib", "x64"))
+        else:
+            hip_library_dirs.append(os.path.join(cuda_path, "lib64"))
+        
+        # If we're running on WSL, add additional library path so libcuda can be found
+        if WSL:
+            hip_library_dirs.append("/usr/lib/wsl/lib")
+        
+        # Add CUDA libraries
+        hip_libraries.extend(["cuda", "cudart"])
+        
+        # Set platform compile arguments
+        hip_extra_compile_args.append("-D__HIP_PLATFORM_NVIDIA__")
     else:
-        opencl_library_dir = os.path.join(opencl_path, "lib64")
-
+        assert False
+    
     # Add backend
     # **NOTE** on Mac OS X, a)runtime_library_dirs doesn't work b)setting rpath is required to find CUDA
-    backends.append(("opencl", "opencl",
-                     {"libraries": ["OpenCL"],
-                      "include_dirs": [os.path.join(opencl_path, "include")],
-                      "library_dirs": [opencl_library_dir],
-                      "extra_link_args": ["-Wl,-rpath," + opencl_library_dir] if MACOS else [],
-                      "extra_compile_args": ["-DCL_HPP_TARGET_OPENCL_VERSION=120", "-DCL_HPP_MINIMUM_OPENCL_VERSION=120"]}))
+    backends.append(("hip", "hip",
+                     {"libraries": hip_libraries,
+                      "include_dirs": hip_include_dirs,
+                      "library_dirs": hip_library_dirs,
+                      "extra_compile_args": hip_extra_compile_args}))
 
 ext_modules = [
     Pybind11Extension("_runtime",
