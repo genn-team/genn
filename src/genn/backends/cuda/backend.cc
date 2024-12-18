@@ -374,6 +374,30 @@ std::unique_ptr<Runtime::ArrayBase> Backend::createPopulationRNG(size_t count) c
     return createArray(CURandState, count, VarLocation::DEVICE, false);
 }
 //--------------------------------------------------------------------------
+void Backend::genLazyVariableDynamicAllocation(CodeStream &os, const Type::ResolvedType &type, const std::string &name,
+                                               VarLocation loc, const std::string &countVarName) const
+{
+    const auto &underlyingType = type.isPointer() ? *type.getPointer().valueType : type;
+    const std::string hostPointer = type.isPointer() ? ("*$(_" + name + ")") : ("$(_" + name + ")");
+    const std::string hostPointerToPointer = type.isPointer() ? ("$(_" + name + ")") : ("&$(_" + name + ")");
+    const std::string devicePointerToPointer = type.isPointer() ? ("$(_d_" + name + ")") : ("&$(_d_" + name + ")");
+   
+    if(loc & VarLocationAttribute::HOST) {
+        const char *flags = (loc & VarLocationAttribute::ZERO_COPY) ? "HostAllocMapped" : "HostAllocPortable";
+        os << "CHECK_RUNTIME_ERRORS(cudaHostAlloc(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << "), cuda" << flags << "));" << std::endl;
+    }
+
+    // If variable is present on device at all
+    if(loc & VarLocationAttribute::DEVICE) {
+        if(loc & VarLocationAttribute::ZERO_COPY) {
+            os << "CHECK_RUNTIME_ERRORS(cudaHostGetDevicePointer((void**)" << devicePointerToPointer << ", (void*)" << hostPointer << ", 0));" << std::endl;
+        }
+        else {
+            os << "CHECK_RUNTIME_ERRORS(cudaMalloc(" << devicePointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << ")));" << std::endl;
+        }
+    }
+}
+//--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream &os) const
 {
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
