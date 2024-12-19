@@ -5,7 +5,6 @@ genn_help () {
     echo "genn-buildmodel.sh script usage:"
     echo "genn-buildmodel.sh [cdho] model"
     echo "-c            generate simulation code for the CPU"
-    echo "-l            generate simulation code for OpenCL"
     echo "-p            generate simulation code for HIP"
     echo "-d            enables the debugging mode"
     echo "-m            generate MPI simulation code"
@@ -36,7 +35,6 @@ while [[ -n "${!OPTIND}" ]]; do
     while getopts "clpdvfs:o:i:h" option; do
     case $option in
         c) GENERATOR_MAKEFILE="MakefileSingleThreadedCPU";;
-        l) GENERATOR_MAKEFILE="MakefileOpenCL";;
         p) GENERATOR_MAKEFILE="MakefileHIP";;
         d) DEBUG=1;;
         v) COVERAGE=1;;

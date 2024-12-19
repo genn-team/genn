@@ -8,7 +8,6 @@ rem :: display genn-buildmodel.bat help
 echo genn-buildmodel.bat script usage:
 echo genn-buildmodel.bat [cdho] model
 echo -c             only generate simulation code for the CPU
-echo -l             generate simulation code for OpenCL
 echo -d             enables the debugging mode
 echo -h             shows this help message
 echo -s             build GeNN without SDL checks
@@ -80,15 +79,9 @@ if defined -d (
         set "MACROS=%MACROS% /p:Configuration=Debug"
         set GENERATOR=.\generator_Debug.exe
     ) else (
-        if defined -l (
-            set "BACKEND_PROJECT=opencl_backend"
-            set "MACROS=%MACROS% /p:Configuration=Debug_OpenCL"
-            set GENERATOR=.\generator_Debug_OpenCL.exe
-        ) else (
-            set "BACKEND_PROJECT=cuda_backend"
-            set "MACROS=%MACROS% /p:Configuration=Debug_CUDA"
-            set GENERATOR=.\generator_Debug_CUDA.exe
-        )
+        set "BACKEND_PROJECT=cuda_backend"
+        set "MACROS=%MACROS% /p:Configuration=Debug_CUDA"
+        set GENERATOR=.\generator_Debug_CUDA.exe
     )
 ) else (
     set "BACKEND_MACROS= /p:Configuration=Release"
@@ -98,15 +91,9 @@ if defined -d (
         set "MACROS=%MACROS% /p:Configuration=Release"
         set GENERATOR=.\generator_Release.exe
     ) else ( 
-        if defined -l (
-            set "BACKEND_PROJECT=opencl_backend"
-            set "MACROS=%MACROS% /p:Configuration=Release_OpenCL"
-            set GENERATOR=.\generator_Release_OpenCL.exe
-        ) else (
-            set "BACKEND_PROJECT=cuda_backend"
-            set "MACROS=%MACROS% /p:Configuration=Release_CUDA"
-            set GENERATOR=.\generator_Release_CUDA.exe
-        )
+        set "BACKEND_PROJECT=cuda_backend"
+        set "MACROS=%MACROS% /p:Configuration=Release_CUDA"
+        set GENERATOR=.\generator_Release_CUDA.exe
     )
 )
 

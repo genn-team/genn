@@ -11,10 +11,6 @@ ifdef HIP_PATH
 	BACKENDS	+=hip_backend
 endif
 
-ifdef OPENCL_PATH
-	BACKENDS	+=opencl_backend
-endif
-
 # Build list of libraries
 BACKEND_LIBS		:=$(BACKENDS:%=$(LIBRARY_DIRECTORY)/libgenn_%$(GENN_PREFIX).$(LIBRARY_EXTENSION))
 
@@ -36,9 +32,6 @@ cuda_backend: genn
 
 hip_backend: genn
 	$(MAKE) -C src/genn/backends/hip
-
-opencl_backend: genn
-	$(MAKE) -C src/genn/backends/opencl
 
 clean:
 	@# Delete all objects, dependencies and coverage files if object directory exists
