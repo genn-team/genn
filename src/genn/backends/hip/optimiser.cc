@@ -44,7 +44,7 @@ using namespace HIP;
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator::HIP::Optimiser
 {
-Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath, 
+Backend createBackend(const ModelSpecInternal &model, const filesystem::path&, 
                       plog::Severity backendLevel, plog::IAppender *backendAppender, 
                       const Preferences &preferences)
 {
