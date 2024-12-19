@@ -342,6 +342,109 @@ static const char *__doc_CodeGenerator_BackendBase_m_Preferences = R"doc(Prefere
 
 static const char *__doc_CodeGenerator_BackendBase_setPointerBytes = R"doc()doc";
 
+static const char *__doc_CodeGenerator_BackendCUDAHIP = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_BackendCUDAHIP = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genAllocateMemPreamble = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genAssert = R"doc(On backends which support it, generate a runtime assert)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genCustomUpdate = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genDefinitionsPreamble = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genDefinitionsPreambleInternal = R"doc(Generate HIP/CUDA specific bits of definitions preamble)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genFreeMemPreamble = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genGlobalDeviceRNG =
+R"doc(Generate a single RNG instance
+On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genGlobalRNGSkipAhead = R"doc(Generate code to skip ahead local copy of global RNG)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genInit = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genKernelDimensions = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genLazyVariableDynamicPull = R"doc(Generate code for pulling a variable with a size known at runtime from the 'device')doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genLazyVariableDynamicPush = R"doc(Generate code for pushing a variable with a size known at runtime to the 'device')doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genMergedDynamicVariablePush = R"doc(Generate code for pushing a new pointer to a dynamic variable into the merged group structure on 'device')doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genMergedStructArrayPush = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genNCCLReduction = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genNeuronUpdate = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genPopulationRNGInit = R"doc(For SIMT backends which initialize RNGs on device, initialize population RNG with specified seed and sequence)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genPopulationRNGPostamble =
+R"doc(If required, generate a postamble for population RNG
+For example, in OpenCL, this is used to write local RNG state back to global memory)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genPopulationRNGPreamble = R"doc(Generate a preamble to add substitution name for population RNG)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genReturnFreeDeviceMemoryBytes = R"doc(Generate code to return amount of free 'device' memory in bytes)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genRunnerPreamble = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genSharedMemBarrier = R"doc(Generate a shared memory barrier)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genStepTimeFinalisePreamble = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genSynapseUpdate = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genTimer = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_genWarpReduction = R"doc(Generate a warp reduction across getNumLanes lanes into lane 0)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_getBlockID = R"doc(Get the ID of the current thread block)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_getCCLPrefix = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_getCLZ = R"doc(Get the name of the count-leading-zeros function)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_getChosenDeviceSafeConstMemBytes = R"doc(Get the safe amount of constant cache we can use)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_getMergedGroupFieldHostTypeName = R"doc(When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_getMergedGroupMemorySpaces =
+R"doc(Some backends will have additional small, fast, memory spaces for read-only data which might
+Be well-suited to storing merged group structs. This method returns the prefix required to
+Place arrays in these and their size in preferential order)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_getNCCLReductionType = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_getNCCLType = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_getRNGFunctions = R"doc(Get library of RNG functions to use)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_getRandPrefix = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_getRuntimePrefix = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_getSharedPrefix = R"doc(Get the prefix to use for shared memory variables)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_getThreadID = R"doc(Get the ID of the current thread within the threadblock)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_isArrayDeviceObjectRequired = R"doc(As well as host pointers, are device objects required?)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_isArrayHostObjectRequired = R"doc(As well as host pointers, are additional host objects required e.g. for buffers in OpenCL?)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_isHostReductionRequired = R"doc(Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_isPopulationRNGInitialisedOnDevice = R"doc(Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_m_CCLPrefix = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_m_RandPrefix = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_m_RuntimePrefix = R"doc()doc";
+
 static const char *__doc_CodeGenerator_CustomConnectivityRemapUpdateGroupMerged = R"doc()doc";
 
 static const char *__doc_CodeGenerator_CustomConnectivityUpdateGroupMerged = R"doc()doc";
@@ -407,6 +510,12 @@ static const char *__doc_CodeGenerator_PreferencesBase_updateHash = R"doc()doc";
 static const char *__doc_CodeGenerator_PreferencesBase_userCxxFlagsGNU = R"doc(C++ compiler options to be used for building all host side code (used for unix based platforms))doc";
 
 static const char *__doc_CodeGenerator_PreferencesBase_userNvccFlagsGNU = R"doc(NVCC compiler options they may want to use for all GPU code (used for unix based platforms))doc";
+
+static const char *__doc_CodeGenerator_PreferencesCUDAHIP = R"doc()doc";
+
+static const char *__doc_CodeGenerator_PreferencesCUDAHIP_enableNCCLReductions = R"doc(Generate corresponding NCCL batch reductions)doc";
+
+static const char *__doc_CodeGenerator_PreferencesCUDAHIP_updateHash = R"doc()doc";
 
 static const char *__doc_CodeGenerator_PresynapticUpdateGroupMerged = R"doc()doc";
 
@@ -4815,6 +4924,13 @@ static const char *__doc_createWUVarRef = R"doc(Creates a reference to a weight 
 static const char *__doc_createWUVarRef_2 = R"doc(Creates a reference to a custom weight update variable.)doc";
 
 static const char *__doc_createWUVarRef_3 = R"doc(Creates a reference to a custom connectivity update update variable.)doc";
+
+static const char *__doc_filesystem_path =
+R"doc(Simple class for manipulating paths on Linux/Windows/Mac OS
+
+This class is just a temporary workaround to avoid the heavy boost
+dependency until boost::filesystem is integrated into the standard template
+library at some point in the future.)doc";
 
 static const char *__doc_getSynapseMatrixConnectivity = R"doc()doc";
 

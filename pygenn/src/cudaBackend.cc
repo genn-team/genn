@@ -60,12 +60,11 @@ PYBIND11_MODULE(cuda_backend, m)
     //------------------------------------------------------------------------
     // cuda_backend.Preferences
     //------------------------------------------------------------------------
-    pybind11::class_<Preferences, CodeGenerator::PreferencesBase>(m, "Preferences", DOC_CUDA(Preferences))
+    pybind11::class_<Preferences, CodeGenerator::PreferencesCUDAHIP>(m, "Preferences", DOC_CUDA(Preferences))
         .def(pybind11::init<>())
         
         WRAP_ATTR("show_ptx_info", Preferences, showPtxInfo)
         WRAP_ATTR("generate_line_info", Preferences, generateLineInfo)
-        WRAP_ATTR("enable_nccl_reductions", Preferences, enableNCCLReductions)
         WRAP_ATTR("device_select_method", Preferences, deviceSelectMethod)
         WRAP_ATTR("manual_device_id", Preferences, manualDeviceID)
         WRAP_ATTR("block_size_select_method", Preferences, blockSizeSelectMethod)

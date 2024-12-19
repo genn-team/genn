@@ -48,7 +48,7 @@ PYBIND11_MODULE(hip_backend, m)
     //------------------------------------------------------------------------
     // hip_backend.Preferences
     //------------------------------------------------------------------------
-    pybind11::class_<Preferences, CodeGenerator::PreferencesBase>(m, "Preferences", DOC_CUDA(Preferences))
+    pybind11::class_<Preferences, CodeGenerator::PreferencesCUDAHIP>(m, "Preferences", DOC_HIP(Preferences))
         .def(pybind11::init<>())
         
         //WRAP_ATTR("show_ptx_info", Preferences, showPtxInfo)
