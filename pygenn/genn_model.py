@@ -101,7 +101,7 @@ if system() == "Windows":
 
 # Loop through backends in preferential order
 backend_modules = OrderedDict()
-for b in ["cuda", "single_threaded_cpu", "opencl"]:
+for b in ["cuda", "hip", "single_threaded_cpu", "opencl"]:
     # Try and import
     try:
         m = import_module("." + b + "_backend", "pygenn")

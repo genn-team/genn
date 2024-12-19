@@ -26,6 +26,7 @@
 
 // GeNN code generator includes
 #include "code_generator/backendBase.h"
+#include "code_generator/backendCUDAHIP.h"
 #include "code_generator/generateMakefile.h"
 #include "code_generator/generateModules.h"
 #include "code_generator/generateMSBuild.h"
@@ -995,7 +996,14 @@ PYBIND11_MODULE(_genn, m)
         WRAP_NS_ATTR("code_generator_log_level", CodeGenerator, PreferencesBase, codeGeneratorLogLevel)
         WRAP_NS_ATTR("transpiler_log_level", CodeGenerator, PreferencesBase, transpilerLogLevel)
         WRAP_NS_ATTR("runtime_log_level", CodeGenerator, PreferencesBase, runtimeLogLevel);
+    
+    //------------------------------------------------------------------------
+    // genn.PreferencesCUDAHIP
+    //------------------------------------------------------------------------
+    pybind11::class_<CodeGenerator::PreferencesCUDAHIP, CodeGenerator::PreferencesBase>(m, "PreferencesCUDAHIP")
+        WRAP_NS_ATTR("enable_nccl_reductions", CodeGenerator, PreferencesCUDAHIP, enableNCCLReductions);
 
+    
     //------------------------------------------------------------------------
     // genn.BackendBase
     //------------------------------------------------------------------------
