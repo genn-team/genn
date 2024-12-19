@@ -55,10 +55,11 @@ class Visitor : public Expression::Visitor, public Statement::Visitor
 public:
     Visitor(const Statement::StatementList &statements, EnvironmentInternal &environment,
             const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes,
+            const std::unordered_map<int16_t, VectorRegisterAllocator::RegisterPtr> &literalPool,
             std::optional<ScalarRegisterAllocator::RegisterPtr> maskRegister,
             ScalarRegisterAllocator &scalarRegisterAllocator, VectorRegisterAllocator &vectorRegisterAllocator)
     :   m_Environment(environment), m_Context(context), m_MaskRegister(maskRegister), m_ResolvedTypes(resolvedTypes),
-        m_ScalarRegisterAllocator(scalarRegisterAllocator), m_VectorRegisterAllocator(vectorRegisterAllocator)
+        m_LiteralPool(literalPool), m_ScalarRegisterAllocator(scalarRegisterAllocator), m_VectorRegisterAllocator(vectorRegisterAllocator)
     {
          for(auto &s : statements) {
             s.get()->accept(*this);
@@ -67,8 +68,9 @@ public:
 
     Visitor(const Expression::ExpressionPtr &expression, EnvironmentInternal &environment,
             const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes,
+            const std::unordered_map<int16_t, VectorRegisterAllocator::RegisterPtr> &literalPool,
             ScalarRegisterAllocator &scalarRegisterAllocator, VectorRegisterAllocator &vectorRegisterAllocator)
-    :   m_Environment(environment), m_Context(context), m_ResolvedTypes(resolvedTypes),
+    :   m_Environment(environment), m_Context(context), m_ResolvedTypes(resolvedTypes), m_LiteralPool(literalPool),
         m_ScalarRegisterAllocator(scalarRegisterAllocator), m_VectorRegisterAllocator(vectorRegisterAllocator)
     {
         expression.get()->accept(*this);
@@ -290,12 +292,9 @@ private:
         assert(integerResult >= std::numeric_limits<int16_t>::min());
         assert(integerResult <= std::numeric_limits<int16_t>::max());
 
-        const auto resultReg = m_VectorRegisterAllocator.getRegister();
-        m_Environment.get().getCodeGenerator().vlui(*resultReg, (uint32_t)integerResult);
-        
         // Set result register
-        // **NOTE** result is a temporary register so always re-usable
-        setExpressionRegister(resultReg, true);
+        // **NOTE** result is a register assigned to pool so shouldn't be re-used
+        setExpressionRegister(m_LiteralPool.at(integerResult), false);
     }
 
     virtual void visit(const Expression::Logical &logical) final
@@ -717,6 +716,7 @@ private:
 
     std::optional<ScalarRegisterAllocator::RegisterPtr> m_MaskRegister;
     const TypeChecker::ResolvedTypeMap &m_ResolvedTypes;
+    const std::unordered_map<int16_t, VectorRegisterAllocator::RegisterPtr> &m_LiteralPool;
     ScalarRegisterAllocator &m_ScalarRegisterAllocator;
     VectorRegisterAllocator &m_VectorRegisterAllocator;
 };
@@ -752,18 +752,20 @@ Assembler::CodeGenerator &EnvironmentInternal::getCodeGenerator()
 //----------------------------------------------------------------------------
 void compile(const Statement::StatementList &statements, EnvironmentInternal &environment, 
              const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes,
+             const std::unordered_map<int16_t, VectorRegisterAllocator::RegisterPtr> &literalPool,
              std::optional<ScalarRegisterAllocator::RegisterPtr> maskRegister, 
              ScalarRegisterAllocator &scalarRegisterAllocator, VectorRegisterAllocator &vectorRegisterAllocator)
 {
-    Visitor visitor(statements, environment, context, resolvedTypes, maskRegister,
+    Visitor visitor(statements, environment, context, resolvedTypes, literalPool, maskRegister,
                     scalarRegisterAllocator, vectorRegisterAllocator);
 }
 //---------------------------------------------------------------------------
 RegisterPtr compile(const Expression::ExpressionPtr &expression, EnvironmentInternal &environment,
                     const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes,
+                    const std::unordered_map<int16_t, VectorRegisterAllocator::RegisterPtr> &literalPool,
                     ScalarRegisterAllocator &scalarRegisterAllocator, VectorRegisterAllocator &vectorRegisterAllocator)
 {
-    Visitor visitor(expression, environment, context, resolvedTypes,
+    Visitor visitor(expression, environment, context, resolvedTypes, literalPool,
                     scalarRegisterAllocator, vectorRegisterAllocator);
     return visitor.getExpressionRegister();
 }

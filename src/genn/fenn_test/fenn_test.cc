@@ -2,6 +2,7 @@
 #include <variant>
 
 // Third-party includes
+#include <fast_float/fast_float.h>
 #include <plog/Appenders/ConsoleAppender.h>
 
 // GeNN includes
@@ -29,7 +30,63 @@ using namespace GeNN::CodeGenerator::FeNN;
 namespace
 {
 
+void updateLiteralPool(const std::vector<Token> &tokens, const Type::TypeContext &typeContext, 
+                       VectorRegisterAllocator &vectorRegisterAllocator, 
+                       std::unordered_map<int16_t, VectorRegisterAllocator::RegisterPtr> &literalPool)
+{
+    // Loop through tokens
+    const auto &scalarType = typeContext.at("scalar");
+    for(const auto &t : tokens) {
+        // If token is a number
+        if(t.type == Token::Type::NUMBER) {
+            // Get start and end of lexeme
+            const auto lexeme = t.lexeme;
+            const char *lexemeBegin = lexeme.c_str();
+            const char *lexemeEnd = lexemeBegin + lexeme.size();
+            
+            // Get it's type (scalar if not specified)
+            int64_t integerResult;
+            const auto &numericType = t.numberType.value_or(scalarType).getNumeric();
+            if(numericType.isIntegral) {
+                if(numericType.isSigned) {
+                    int result;
+                    auto answer = fast_float::from_chars(lexemeBegin, lexemeEnd, result);
+                    assert(answer.ec == std::errc());
+                    integerResult = result;
+                }
+                else {
+                    unsigned int result;
+                    auto answer = fast_float::from_chars(lexemeBegin, lexemeEnd, result);
+                    assert(answer.ec == std::errc());
+                    integerResult = result;
+                }
+            }
+            // Otherwise, if it is fixed point
+            else if(numericType.fixedPoint) {
+                float result;
+                auto answer = fast_float::from_chars(lexemeBegin, lexemeEnd, result);
+                assert(answer.ec == std::errc());
+                integerResult = std::round(result * (1u << numericType.fixedPoint.value()));
+            }
+            else {
+                throw std::runtime_error("FeNN does not support floating point types");
+            }
+
+            // Check integer is in range and insert in pool
+            assert(integerResult >= std::numeric_limits<int16_t>::min());
+            assert(integerResult <= std::numeric_limits<int16_t>::max());
+
+            // If this literal isn't already in the pool, add it
+            const auto l = literalPool.find(integerResult);
+            if(l == literalPool.cend()) {
+                literalPool.emplace(integerResult, vectorRegisterAllocator.getRegister((std::to_string(integerResult) + " V").c_str()));
+            }
+        }
+    }
+}
+
 Compiler::RegisterPtr compileExpression(const std::vector<Token> &tokens, const Type::TypeContext &typeContext, 
+                                        const std::unordered_map<int16_t, VectorRegisterAllocator::RegisterPtr> &literalPool,
                                         TypeChecker::EnvironmentInternal &typeCheckEnv, Compiler::EnvironmentInternal &compilerEnv,
                                         ErrorHandler &errorHandler, ScalarRegisterAllocator &scalarRegisterAllocator, 
                                         VectorRegisterAllocator &vectorRegisterAllocator)
@@ -48,10 +105,11 @@ Compiler::RegisterPtr compileExpression(const std::vector<Token> &tokens, const 
 
     // Compile
     return Compiler::compile(expression, compilerEnv, typeContext, resolvedTypes,
-                             scalarRegisterAllocator, vectorRegisterAllocator);
+                             literalPool, scalarRegisterAllocator, vectorRegisterAllocator);
 }
 
 void compileStatements(const std::vector<Token> &tokens, const Type::TypeContext &typeContext,
+                       const std::unordered_map<int16_t, VectorRegisterAllocator::RegisterPtr> &literalPool,
                        TypeChecker::EnvironmentInternal &typeCheckEnv, Compiler::EnvironmentInternal &compilerEnv,
                        ErrorHandler &errorHandler, Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
                        std::optional<ScalarRegisterAllocator::RegisterPtr> maskRegister, 
@@ -74,7 +132,7 @@ void compileStatements(const std::vector<Token> &tokens, const Type::TypeContext
 
     // Compile
     Compiler::compile(updateStatements, compilerEnv, typeContext, resolvedTypes,
-                      maskRegister, scalarRegisterAllocator, vectorRegisterAllocator);
+                      literalPool, maskRegister, scalarRegisterAllocator, vectorRegisterAllocator);
 }
 
 class EnvironmentExternal : public Compiler::EnvironmentBase, public Transpiler::TypeChecker::EnvironmentBase
@@ -258,9 +316,15 @@ int main()
     Assembler::CodeGenerator codeGenerator;
     EnvironmentExternal env(codeGenerator);
 
-    // Allocate registers for Isyn and dt
+     // Build literal pool
+    std::unordered_map<int16_t, VectorRegisterAllocator::RegisterPtr> literalPool;
+    updateLiteralPool(simCodeTokens, typeContext, vectorRegisterAllocator, literalPool);
+    updateLiteralPool(resetCodeTokens, typeContext, vectorRegisterAllocator, literalPool);
+    updateLiteralPool(thresholdCodeTokens, typeContext, vectorRegisterAllocator, literalPool);
+
+    // Allocate registers for Isyn and zero
     env.add(Type::S8_7, "Isyn", vectorRegisterAllocator.getRegister("Isyn V"));
-    env.add(Type::S8_7, "_zero", vectorRegisterAllocator.getRegister("_zero V"));
+    env.add(Type::S8_7, "_zero", literalPool.at(0));
 
     // Allocate registers for neuron variables
     const auto neuronVars = model->getVars();
@@ -286,18 +350,18 @@ int main()
     ErrorHandler errorHandler("Errors");
     
     // Compile sim code
-    compileStatements(simCodeTokens, typeContext, typeCheckEnv, compilerEnv,
+    compileStatements(simCodeTokens, typeContext, literalPool, typeCheckEnv, compilerEnv,
                       errorHandler, nullptr, std::nullopt, scalarRegisterAllocator,
                       vectorRegisterAllocator);
 
     // Compile spike expression
     const auto spikeReg = std::get<ScalarRegisterAllocator::RegisterPtr>(
-        compileExpression(thresholdCodeTokens, typeContext, typeCheckEnv,
+        compileExpression(thresholdCodeTokens, typeContext, literalPool, typeCheckEnv,
                           compilerEnv, errorHandler, scalarRegisterAllocator,
                           vectorRegisterAllocator));
     
     // Compile reset code
-    compileStatements(resetCodeTokens, typeContext, typeCheckEnv, compilerEnv,
+    compileStatements(resetCodeTokens, typeContext, literalPool, typeCheckEnv, compilerEnv,
                       errorHandler, nullptr, spikeReg, scalarRegisterAllocator,
                       vectorRegisterAllocator);
 

@@ -89,9 +89,11 @@ private:
 //---------------------------------------------------------------------------
 GENN_EXPORT void compile(const GeNN::Transpiler::Statement::StatementList &statements, EnvironmentInternal &environment, 
                          const Type::TypeContext &context, const GeNN::Transpiler::TypeChecker::ResolvedTypeMap &resolvedTypes,
+                         const std::unordered_map<int16_t, VectorRegisterAllocator::RegisterPtr> &literalPool,
                          std::optional<ScalarRegisterAllocator::RegisterPtr> maskRegister, 
                          ScalarRegisterAllocator &scalarRegisterAllocator, VectorRegisterAllocator &vectorRegisterAllocator);
 GENN_EXPORT RegisterPtr compile(const GeNN::Transpiler::Expression::ExpressionPtr &expression, EnvironmentInternal &environment, 
                                 const Type::TypeContext &context, const GeNN::Transpiler::TypeChecker::ResolvedTypeMap &resolvedTypes,
+                                const std::unordered_map<int16_t, VectorRegisterAllocator::RegisterPtr> &literalPool,
                                 ScalarRegisterAllocator &scalarRegisterAllocator, VectorRegisterAllocator &vectorRegisterAllocator);
 }
