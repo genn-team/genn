@@ -299,7 +299,7 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     CHECK_HIP_ERRORS(hipGetDeviceProperties(&m_ChosenDevice, device));
 
     // Get HIP runtime version
-    hipRuntimeGetVersion(&m_RuntimeVersion);
+    CHECK_HIP_ERRORS(hipRuntimeGetVersion(&m_RuntimeVersion));
 
 #ifdef _WIN32
     // If we're on Windows and NCCL is enabled, give error
