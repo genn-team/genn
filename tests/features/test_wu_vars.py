@@ -27,7 +27,6 @@ pattern_spike_neuron_model = create_neuron_model(
     t >= (scalar)id && fmod(t - (scalar)id, 10.0) < 1e-4
     """)
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 @pytest.mark.parametrize("fuse", [True, False])
 @pytest.mark.parametrize("delay", [0, 20])
@@ -291,7 +290,6 @@ def test_wu_var(make_model, backend, precision, fuse, delay):
             if not np.allclose(delayed_time, w_value):
                 assert False, f"{s.name} var has wrong value ({w_value} rather than {delayed_time})"
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 @pytest.mark.parametrize("fuse", [True, False])
 @pytest.mark.parametrize("delay", [0, 20])

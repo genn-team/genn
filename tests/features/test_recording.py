@@ -52,8 +52,7 @@ def compare_events(rec_events, event_times, event_ids):
         assert np.allclose(batch_rec_event_times, event_times[b])
         assert np.array_equal(batch_rec_event_ids, event_ids[b])
 
-@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
-                                                 ("cuda", 1), ("cuda", 5)])
+
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_event_recording(make_model, backend, precision, batch_size):
     model = make_model(precision, "test_event_recording", backend=backend)

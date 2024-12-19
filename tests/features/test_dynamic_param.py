@@ -14,7 +14,6 @@ from pygenn import (create_current_source_model,
                     init_sparse_connectivity,
                     init_weight_update, init_var)
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_dynamic_param(make_model, backend, precision):
     neuron_model = create_neuron_model(

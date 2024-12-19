@@ -62,7 +62,6 @@ horizontal_kernel = np.asarray([[1.0,     2.0,    1.0],
                                 [0.0,     0.0,    0.0],
                                 [-1.0,    -2.0,   -1.0]])
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_forward(make_model, backend, precision):
     model = make_model(precision, "test_forward", backend=backend)
@@ -260,8 +259,6 @@ def test_forward(make_model, backend, precision):
             if output_value != (model.timestep - 1):
                 assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
 
-@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
-                                                 ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_forward_den_delay(make_model, backend, precision, batch_size):
     model = make_model(precision, "test_forward_den_delay", backend=backend)
@@ -332,10 +329,9 @@ def test_forward_den_delay(make_model, backend, precision, batch_size):
                 assert False, f"{pop.name} decoding incorrect ({pop.vars['x'].view} rather than {correct})"
 
 
-@pytest.mark.parametrize("backend", ["cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_forward_procedural(make_model, backend, precision):
-    model = make_model(precision, "test_forward_procedural", backend=backend)
+def test_forward_procedural(make_model, backend_simt, precision):
+    model = make_model(precision, "test_forward_procedural", backend=backend_simt)
     model.dt = 1.0
 
     # Create spike source array to generate one-hot pattern to decode
@@ -388,7 +384,6 @@ def test_forward_procedural(make_model, backend, precision):
             if output_value != (model.timestep - 1):
                 assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_forward_kernel(make_model, backend, precision):
     model = make_model(precision, "test_forward_kernel", backend=backend)
@@ -489,10 +484,9 @@ def test_forward_kernel(make_model, backend, precision):
     assert np.allclose(post_sparse_vert_pop.vars["x"].view, 
                        correct_vertical)
 
-@pytest.mark.parametrize("backend", ["cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-def test_forward_kernel_procedural(make_model, backend, precision):
-    model = make_model(precision, "test_forward_kernel_procedural", backend=backend)
+def test_forward_kernel_procedural(make_model, backend_simt, precision):
+    model = make_model(precision, "test_forward_kernel_procedural", backend=backend_simt)
     model.dt = 1.0
 
     # Create spike source array to present test pattern
@@ -550,7 +544,6 @@ def test_forward_kernel_procedural(make_model, backend, precision):
     assert np.allclose(post_vert_pop.vars["x"].view, 
                        np.load("vertical_output.npy"))
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_reverse(make_model, backend, precision):
     decoder_value_model = create_var_init_snippet(
@@ -691,7 +684,6 @@ def test_reverse(make_model, backend, precision):
         assert np.sum(pre_bitmask_n_pop.vars["x"].view) == (model.timestep - 1)
         assert np.sum(pre_event_n_pop.vars["x"].view) == (model.timestep - 1)
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_reverse_post(make_model, backend, precision):
     pre_reverse_model = create_neuron_model(

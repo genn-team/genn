@@ -18,8 +18,6 @@ from pygenn import (create_current_source_model,
 empty_neuron_model = create_neuron_model("empty")
 
 @pytest.mark.flaky
-@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
-                                                 ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_sim(make_model, backend, precision, batch_size):
     neuron_model = create_neuron_model(
@@ -131,7 +129,6 @@ def test_sim(make_model, backend, precision, batch_size):
             assert False, f"'{pop.name}' '{var_name}' initialisation fails KS test (p={p})"
 
 @pytest.mark.flaky
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_init(make_model, backend, precision):
     # How to initialise various sorts of variable

@@ -27,8 +27,6 @@ from pygenn import (create_current_source_model,
 # Neuron model which does nothing
 empty_neuron_model = create_neuron_model("empty")
 
-@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
-                                                 ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_update(make_model, backend, precision, batch_size):
     neuron_model = create_neuron_model(
@@ -218,8 +216,6 @@ def test_custom_update(make_model, backend, precision, batch_size):
             elif not np.allclose(values, correct):
                 assert False, f"{pop.name} var {var.name} has wrong value ({values} rather than {correct})"
 
-@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
-                                                 ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_update_delay(make_model, backend, precision, batch_size):
     neuron_model = create_neuron_model(
@@ -344,8 +340,6 @@ def test_custom_update_delay(make_model, backend, precision, batch_size):
                     assert False, f"{pop.name} var {var.name} has wrong value ({var.current_view} rather than {correct})"
 
 
-@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
-                                                 ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_update_internal(make_model, backend, precision, batch_size):
     st_init = -np.finfo(np.float32 if precision is types.Float
@@ -510,8 +504,6 @@ def test_custom_update_internal(make_model, backend, precision, batch_size):
         assert np.allclose(s_pop_den_delay.out_post.view, 0.0)
 
 
-@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
-                                                 ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_update_transpose(make_model, backend, precision, batch_size):
     static_pulse_duplicate_model = create_weight_update_model(
@@ -566,8 +558,6 @@ def test_custom_update_transpose(make_model, backend, precision, batch_size):
     transpose_g = np.reshape(transpose_s_pop.vars["g"].view, (batch_size, 100, 100))
     assert np.allclose(forward_g, np.transpose(transpose_g, axes=(0, 2, 1)))
 
-@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
-                                                 ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_update_neuron_reduce(make_model, backend, precision, batch_size):
     reduction_neuron_model = create_neuron_model(
@@ -646,8 +636,6 @@ def test_custom_update_neuron_reduce(make_model, backend, precision, batch_size)
         assert np.allclose(softmax(x, axis=1), n_pop.vars["Y"].view)
 
 
-@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
-                                                 ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_update_batch_reduction(make_model, backend, precision, batch_size):
     # **TODO** once VarAccess is refactored, we should really be able to reduce neuron shared across batch dimension

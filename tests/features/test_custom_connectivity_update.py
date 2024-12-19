@@ -77,8 +77,6 @@ def _check_connectivity(sg, get_row_length_fn, get_connectivity_fn, var_checks=[
 
 
 
-@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
-                                                 ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_connectivity_update(make_model, backend, precision, batch_size):
     neuron_model = create_neuron_model(
@@ -277,7 +275,7 @@ def test_custom_connectivity_update(make_model, backend, precision, batch_size):
                         [(s_pop_1, "g", False), 
                          (s_pop_1, "d", True)])
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
+
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_connectivity_update_delay(make_model, backend, precision):
     pre_neuron_model = create_neuron_model(
@@ -418,7 +416,6 @@ def test_custom_connectivity_update_delay(make_model, backend, precision):
                         lambda i: _clear_bit(dense_bitarray, 60),
                         [(s_pop_2, "g", False)])
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_connectivity_update_remap(make_model, backend, precision):
     """

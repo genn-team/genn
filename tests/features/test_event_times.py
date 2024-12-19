@@ -48,7 +48,6 @@ def _gen_st_neuron_event(t, float_min):
     delayed_time[delayed_time < 0.0] = float_min
     return delayed_time
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_spike_times(make_model, backend, precision):
     # Neuron model which fires at t = id ms and every 10 ms after that
@@ -151,7 +150,6 @@ def test_spike_times(make_model, backend, precision):
 
 
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_spike_event_times(make_model, backend, precision):
     # Empty neuron model

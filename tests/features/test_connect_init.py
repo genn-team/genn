@@ -10,7 +10,6 @@ from pygenn import (create_neuron_model, init_postsynaptic,
 empty_neuron_model = create_neuron_model("empty")
 
 @pytest.mark.flaky
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_connect_init(make_model, backend, precision):
     model = make_model(precision, "test_connect_init", backend=backend)
