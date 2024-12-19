@@ -95,8 +95,7 @@ for(b = 0; b < builderNodes.size(); b++) {
 
             // Customise this nodes environment so GeNN and googletest environment variables are set and genn binaries are in path
             // **NOTE** these are NOT set directly using env.PATH as this makes the change across ALL nodes which means you get a randomly mangled path depending on node startup order
-            withEnv(["GTEST_DIR=" + pwd() + "/googletest-release-1.11.0/googletest",
-                     "PATH+GENN=" + pwd() + "/genn/bin", "OPENCL_PATH="]) {
+            withEnv(["GTEST_DIR=" + pwd() + "/googletest-release-1.11.0/googletest", "PATH+GENN=" + pwd() + "/genn/bin"]) {
                 stage(installationStageName) {
                     echo "Checking out GeNN";
 

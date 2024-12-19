@@ -48,7 +48,6 @@ decoder_dense_model = create_var_init_snippet(
     value = (((id_pre + 1) & jValue) != 0) ? 1.0 : 0.0;
     """)
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_forward(make_model, backend, precision):
     continous_weight_update_model = create_weight_update_model(
@@ -236,7 +235,6 @@ def test_forward(make_model, backend, precision):
             if output_value != (model.timestep - 1):
                 assert False, f"{pop.name} decoding incorrect ({output_value} rather than {model.timestep - 1})"
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_forward_den_delay(make_model, backend, precision):
     continous_den_delay_wum = create_weight_update_model(
@@ -316,7 +314,6 @@ def test_forward_den_delay(make_model, backend, precision):
                 assert False, f"{pop.name} decoding incorrect ({pop.vars['x'].view[0]} rather than {correct})"
 
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_reverse(make_model, backend, precision):
     pre_reverse_neuron_model = create_neuron_model(
@@ -402,7 +399,6 @@ def test_reverse(make_model, backend, precision):
         assert np.sum(pre_n_pop.vars["y"].view) == (model.timestep - 1)
         assert np.sum(pre_pre_n_pop.vars["y"].view) == (model.timestep - 1)
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_reverse_den_delay(make_model, backend, precision):
     continous_reverse_delay_model = create_weight_update_model(
