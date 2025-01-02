@@ -1,6 +1,7 @@
 #pragma once
 
 // GeNN includes
+#include "adapters.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroup.h"
 
@@ -93,26 +94,29 @@ public:
 //----------------------------------------------------------------------------
 // SynapsePSMVarAdapter
 //----------------------------------------------------------------------------
-class SynapsePSMVarAdapter
+class SynapsePSMVarAdapter : public VarAdapter
 {
 public:
     SynapsePSMVarAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
     {}
 
     //----------------------------------------------------------------------------
+    // VarAdapter virtuals
+    //----------------------------------------------------------------------------
+    virtual VarLocation getLoc(const std::string &varName) const override final { return m_SG.getPSVarLocation(varName); }
+
+    virtual std::vector<Models::Base::Var> getDefs() const override final { return m_SG.getPSInitialiser().getSnippet()->getVars(); }
+
+    virtual const std::map<std::string, InitVarSnippet::Init> &getInitialisers() const override final { return m_SG.getPSInitialiser().getVarInitialisers(); }
+
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const override final { return std::nullopt; }
+    
+    virtual VarAccessDim getVarDims(const Models::Base::Var &var) const override final { return getVarAccessDim(var.access); }
+
+    //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string &varName) const{ return m_SG.getPSVarLocation(varName); }
-
-    auto getDefs() const{ return m_SG.getPSInitialiser().getSnippet()->getVars(); }
-
-    const auto &getInitialisers() const{ return m_SG.getPSInitialiser().getVarInitialisers(); }
-
     const SynapseGroup &getTarget() const{ return m_SG.getFusedPSTarget(); }
-
-    std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const{ return std::nullopt; }
-
-    VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 
 private:
     //----------------------------------------------------------------------------
@@ -124,18 +128,18 @@ private:
 //----------------------------------------------------------------------------
 // SynapsePSMEGPAdapter
 //----------------------------------------------------------------------------
-class SynapsePSMEGPAdapter
+class SynapsePSMEGPAdapter : public EGPAdapter
 {
 public:
     SynapsePSMEGPAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
     {}
 
     //----------------------------------------------------------------------------
-    // Public methods
+    // EGPAdapter virtuals
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string &varName) const{ return m_SG.getPSExtraGlobalParamLocation(varName); }
+    virtual VarLocation getLoc(const std::string &varName) const override final { return m_SG.getPSExtraGlobalParamLocation(varName); }
     
-    auto getDefs() const{ return m_SG.getPSInitialiser().getSnippet()->getExtraGlobalParams(); }
+    virtual Snippet::Base::EGPVec getDefs() const override final { return m_SG.getPSInitialiser().getSnippet()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -147,7 +151,7 @@ private:
 //----------------------------------------------------------------------------
 // SynapsePSMNeuronVarRefAdapter
 //----------------------------------------------------------------------------
-class SynapsePSMNeuronVarRefAdapter
+class SynapsePSMNeuronVarRefAdapter : public VarRefAdapter
 {
 public:
     SynapsePSMNeuronVarRefAdapter(const SynapseGroupInternal &cs) : m_SG(cs)
@@ -156,11 +160,11 @@ public:
     using RefType = Models::VarReference;
 
     //----------------------------------------------------------------------------
-    // Public methods
+    // VarRefAdapter virtuals
     //----------------------------------------------------------------------------
-    auto getDefs() const{ return m_SG.getPSInitialiser().getSnippet()->getNeuronVarRefs(); }
+    virtual Models::Base::VarRefVec getDefs() const override final { return m_SG.getPSInitialiser().getSnippet()->getNeuronVarRefs(); }
 
-    const auto &getInitialisers() const{ return m_SG.getPSInitialiser().getNeuronVarReferences(); }
+    virtual const std::map<std::string, Models::VarReference> &getInitialisers() const override final { return m_SG.getPSInitialiser().getNeuronVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -172,24 +176,27 @@ private:
 //----------------------------------------------------------------------------
 // SynapseWUVarAdapter
 //----------------------------------------------------------------------------
-class SynapseWUVarAdapter
+class SynapseWUVarAdapter : public VarAdapter
 {
 public:
     SynapseWUVarAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
     {}
 
     //----------------------------------------------------------------------------
-    // Public methods
+    // VarAdapter virtuals
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUVarLocation(varName); }
+    virtual VarLocation getLoc(const std::string &varName) const override final { return m_SG.getWUVarLocation(varName); }
     
-    auto getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getVars(); }
+    virtual std::vector<Models::Base::Var> getDefs() const override final { return m_SG.getWUInitialiser().getSnippet()->getVars(); }
 
-    const auto &getInitialisers() const{ return m_SG.getWUInitialiser().getVarInitialisers(); }
+    virtual const std::map<std::string, InitVarSnippet::Init> &getInitialisers() const override final { return m_SG.getWUInitialiser().getVarInitialisers(); }
+    
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const{ return std::nullopt; }
 
+    virtual VarAccessDim getVarDims(const Models::Base::Var &var) const override final { return getVarAccessDim(var.access); }
+
+    // Public API
     const SynapseGroup &getTarget() const{ return m_SG; }
-
-    VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 
 private:
     //----------------------------------------------------------------------------
@@ -201,24 +208,22 @@ private:
 //----------------------------------------------------------------------------
 // SynapseWUPreVarAdapter
 //----------------------------------------------------------------------------
-class SynapseWUPreVarAdapter
+class SynapseWUPreVarAdapter : public VarAdapter
 {
 public:
     SynapseWUPreVarAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
     {}
 
     //----------------------------------------------------------------------------
-    // Public methods
+    // VarAdapter virtuals
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUPreVarLocation(varName); }
+    virtual VarLocation getLoc(const std::string &varName) const override final { return m_SG.getWUPreVarLocation(varName); }
 
-    auto getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getPreVars(); }
+    virtual std::vector<Models::Base::Var> getDefs() const override final { return m_SG.getWUInitialiser().getSnippet()->getPreVars(); }
 
-    const auto &getInitialisers() const{ return m_SG.getWUInitialiser().getPreVarInitialisers(); }
+    virtual const std::map<std::string, InitVarSnippet::Init> &getInitialisers() const override final { return m_SG.getWUInitialiser().getPreVarInitialisers(); }
 
-    const SynapseGroup &getTarget() const{ return m_SG.getFusedWUPreTarget(); }
-
-    std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const override final
     {
         if(m_SG.getAxonalDelaySteps() != 0) {
             return m_SG.getSrcNeuronGroup()->getNumDelaySlots();
@@ -227,8 +232,13 @@ public:
             return std::nullopt;
         }
     }
+    
+    virtual VarAccessDim getVarDims(const Models::Base::Var &var) const override final { return getVarAccessDim(var.access); }
 
-    VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    const SynapseGroup &getTarget() const{ return m_SG.getFusedWUPreTarget(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -240,24 +250,22 @@ private:
 //----------------------------------------------------------------------------
 // SynapseWUPostVarAdapter
 //----------------------------------------------------------------------------
-class SynapseWUPostVarAdapter
+class SynapseWUPostVarAdapter : public VarAdapter
 {
 public:
     SynapseWUPostVarAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
     {}
 
     //----------------------------------------------------------------------------
-    // Public methods
+    // VarAdapter virtuals
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUPostVarLocation(varName); }
+    virtual VarLocation getLoc(const std::string &varName) const override final { return m_SG.getWUPostVarLocation(varName); }
 
-    auto getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getPostVars(); }
+    virtual std::vector<Models::Base::Var> getDefs() const override final { return m_SG.getWUInitialiser().getSnippet()->getPostVars(); }
 
-    const auto &getInitialisers() const{ return m_SG.getWUInitialiser().getPostVarInitialisers(); }
+    virtual const std::map<std::string, InitVarSnippet::Init> &getInitialisers() const override final { return m_SG.getWUInitialiser().getPostVarInitialisers(); }
 
-    const SynapseGroup &getTarget() const{ return m_SG.getFusedWUPostTarget(); }
-
-    std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final
     {
         if(m_SG.getBackPropDelaySteps() != 0 || m_SG.isWUPostVarHeterogeneouslyDelayed(varName)) {
             return m_SG.getTrgNeuronGroup()->getNumDelaySlots();
@@ -266,8 +274,13 @@ public:
             return std::nullopt;
         }
     }
+    
+    virtual VarAccessDim getVarDims(const Models::Base::Var &var) const override final { return getVarAccessDim(var.access); }
 
-    VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    const SynapseGroup &getTarget() const{ return m_SG.getFusedWUPostTarget(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -279,18 +292,18 @@ private:
 //----------------------------------------------------------------------------
 // SynapseWUEGPAdapter
 //----------------------------------------------------------------------------
-class SynapseWUEGPAdapter
+class SynapseWUEGPAdapter : public EGPAdapter
 {
 public:
     SynapseWUEGPAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
     {}
 
     //----------------------------------------------------------------------------
-    // Public methods
+    // EGPAdapter virtuals
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string &varName) const{ return m_SG.getWUExtraGlobalParamLocation(varName); }
+    virtual VarLocation getLoc(const std::string &varName) const override final { return m_SG.getWUExtraGlobalParamLocation(varName); }
     
-    auto getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getExtraGlobalParams(); }
+    virtual Snippet::Base::EGPVec getDefs() const override final { return m_SG.getWUInitialiser().getSnippet()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -302,7 +315,7 @@ private:
 //----------------------------------------------------------------------------
 // SynapseWUPreNeuronVarRefAdapter
 //----------------------------------------------------------------------------
-class SynapseWUPreNeuronVarRefAdapter
+class SynapseWUPreNeuronVarRefAdapter : public VarRefAdapter
 {
 public:
     SynapseWUPreNeuronVarRefAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
@@ -311,11 +324,13 @@ public:
     using RefType = Models::VarReference;
 
     //----------------------------------------------------------------------------
-    // Public methods
+    // VarRefAdapter virtuals
     //----------------------------------------------------------------------------
-    auto getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getPreNeuronVarRefs(); }
+    virtual Models::Base::VarRefVec getDefs() const override final { return m_SG.getWUInitialiser().getSnippet()->getPreNeuronVarRefs(); }
 
-    const auto &getInitialisers() const{ return m_SG.getWUInitialiser().getPreNeuronVarReferences(); }
+    virtual const std::map<std::string, Models::VarReference> &getInitialisers() const override final { return m_SG.getWUInitialiser().getPreNeuronVarReferences(); }
+    
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final{ throw std::runtime_error("Not implemented"); }
 
 private:
     //----------------------------------------------------------------------------
@@ -327,7 +342,7 @@ private:
 //----------------------------------------------------------------------------
 // SynapseWUPostNeuronVarRefAdapter
 //----------------------------------------------------------------------------
-class SynapseWUPostNeuronVarRefAdapter
+class SynapseWUPostNeuronVarRefAdapter : public VarRefAdapter
 {
 public:
     SynapseWUPostNeuronVarRefAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
@@ -336,11 +351,13 @@ public:
     using RefType = Models::VarReference;
 
     //----------------------------------------------------------------------------
-    // Public methods
+    // VarRefAdapter virtuals
     //----------------------------------------------------------------------------
-    auto getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getPostNeuronVarRefs(); }
+    virtual Models::Base::VarRefVec getDefs() const override final { return m_SG.getWUInitialiser().getSnippet()->getPostNeuronVarRefs(); }
 
-    const auto &getInitialisers() const{ return m_SG.getWUInitialiser().getPostNeuronVarReferences(); }
+    virtual const std::map<std::string, Models::VarReference> &getInitialisers() const override final { return m_SG.getWUInitialiser().getPostNeuronVarReferences(); }
+
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final{ throw std::runtime_error("Not implemented"); }
 
 private:
     //----------------------------------------------------------------------------

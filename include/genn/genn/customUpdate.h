@@ -6,6 +6,7 @@
 #include <vector>
 
 // GeNN includes
+#include "adapters.h"
 #include "gennExport.h"
 #include "gennUtils.h"
 #include "customUpdateModels.h"
@@ -216,29 +217,30 @@ private:
 //----------------------------------------------------------------------------
 // CustomUpdateVarAdapter
 //----------------------------------------------------------------------------
-class CustomUpdateVarAdapter
+class CustomUpdateVarAdapter : public CUVarAdapter
 {
 public:
     CustomUpdateVarAdapter(const CustomUpdateBase &cu) : m_CU(cu)
     {}
 
     //----------------------------------------------------------------------------
-    // Public methods
+    // VarAdapter virtuals
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
+    virtual VarLocation getLoc(const std::string &varName) const override final { return m_CU.getVarLocation(varName); }
 
-    auto getDefs() const{ return m_CU.getModel()->getVars(); }
+    virtual std::vector<Models::Base::CustomUpdateVar> getDefs() const override final { return m_CU.getModel()->getVars(); }
 
-    const auto &getInitialisers() const{ return m_CU.getVarInitialisers(); }
+    virtual const std::map<std::string, InitVarSnippet::Init> &getInitialisers() const override final { return m_CU.getVarInitialisers(); }
 
-    std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const{ return std::nullopt; }
-
-    const CustomUpdateBase &getTarget() const{ return m_CU; }
-
-    VarAccessDim getVarDims(const Models::Base::CustomUpdateVar &var) const
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const override final { return std::nullopt; }
+    
+    virtual VarAccessDim getVarDims(const Models::Base::CustomUpdateVar &var) const override final
     { 
         return getVarAccessDim(var.access, m_CU.getDims());
     }
+
+    // Public API
+    const CustomUpdateBase &getTarget() const{ return m_CU; }
 
 private:
     //----------------------------------------------------------------------------
@@ -250,18 +252,18 @@ private:
 //----------------------------------------------------------------------------
 // CustomUpdateEGPAdapter
 //----------------------------------------------------------------------------
-class CustomUpdateEGPAdapter
+class CustomUpdateEGPAdapter : public EGPAdapter
 {
 public:
     CustomUpdateEGPAdapter(const CustomUpdateBase &cu) : m_CU(cu)
     {}
 
     //----------------------------------------------------------------------------
-    // Public methods
+    // EGPAdapter virtuals
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string &varName) const{ return m_CU.getExtraGlobalParamLocation(varName); }
+    virtual VarLocation getLoc(const std::string &varName) const override final { return m_CU.getExtraGlobalParamLocation(varName); }
 
-    Snippet::Base::EGPVec getDefs() const{ return m_CU.getModel()->getExtraGlobalParams(); }
+    virtual Snippet::Base::EGPVec getDefs() const override final { return m_CU.getModel()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------

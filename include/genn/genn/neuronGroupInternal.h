@@ -1,6 +1,7 @@
 #pragma once
 
 // GeNN includes
+#include "adapters.h"
 #include "neuronGroup.h"
 
 //------------------------------------------------------------------------
@@ -65,22 +66,22 @@ public:
 //----------------------------------------------------------------------------
 // NeuronVarAdapter
 //----------------------------------------------------------------------------
-class NeuronVarAdapter
+class NeuronVarAdapter : public VarAdapter
 {
 public:
     NeuronVarAdapter(const NeuronGroupInternal &ng) : m_NG(ng)
     {}
 
     //----------------------------------------------------------------------------
-    // Public methods
+    // VarAdapter virtuals
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string &varName) const{ return m_NG.getVarLocation(varName); }
+    virtual VarLocation getLoc(const std::string &varName) const override final { return m_NG.getVarLocation(varName); }
     
-    auto getDefs() const{ return m_NG.getModel()->getVars(); }
+    virtual std::vector<Models::Base::Var> getDefs() const override final { return m_NG.getModel()->getVars(); }
 
-    const auto &getInitialisers() const{ return m_NG.getVarInitialisers(); }
+    virtual const std::map<std::string, InitVarSnippet::Init> &getInitialisers() const override final { return m_NG.getVarInitialisers(); }
 
-    std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final
     { 
         if(m_NG.isDelayRequired() && m_NG.isVarQueueRequired(varName)) {
             return m_NG.getNumDelaySlots();
@@ -90,9 +91,12 @@ public:
         }
     }
 
-    const NeuronGroup &getTarget() const{ return m_NG; }
+    virtual VarAccessDim getVarDims(const Models::Base::Var &var) const override final { return getVarAccessDim(var.access); }
 
-    VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    const NeuronGroup &getTarget() const{ return m_NG; }
     
 private:
     //----------------------------------------------------------------------------
@@ -104,18 +108,18 @@ private:
 //----------------------------------------------------------------------------
 // NeuronEGPAdapter
 //----------------------------------------------------------------------------
-class NeuronEGPAdapter
+class NeuronEGPAdapter : public EGPAdapter
 {
 public:
     NeuronEGPAdapter(const NeuronGroupInternal &ng) : m_NG(ng)
     {}
 
     //----------------------------------------------------------------------------
-    // Public methods
+    // EGPAdapter virtuals
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string &varName) const{ return m_NG.getExtraGlobalParamLocation(varName); }
+    virtual VarLocation getLoc(const std::string &varName) const override final { return m_NG.getExtraGlobalParamLocation(varName); }
 
-    auto getDefs() const{ return m_NG.getModel()->getExtraGlobalParams(); }
+    virtual Snippet::Base::EGPVec getDefs() const override final { return m_NG.getModel()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------

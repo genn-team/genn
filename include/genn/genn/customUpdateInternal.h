@@ -1,6 +1,7 @@
 #pragma once
 
 // GeNN includes
+#include "adapters.h"
 #include "customUpdate.h"
 #include "synapseGroupInternal.h"
 
@@ -43,7 +44,7 @@ public:
 //----------------------------------------------------------------------------
 // CustomUpdateVarRefAdapter
 //----------------------------------------------------------------------------
-class CustomUpdateVarRefAdapter
+class CustomUpdateVarRefAdapter : public VarRefAdapter
 {
 public:
     CustomUpdateVarRefAdapter(const CustomUpdateInternal &cu) : m_CU(cu)
@@ -52,13 +53,13 @@ public:
     using RefType = Models::VarReference;
 
     //----------------------------------------------------------------------------
-    // Public methods
+    // VarRefAdapter virtuals
     //----------------------------------------------------------------------------
-    auto getDefs() const{ return m_CU.getModel()->getVarRefs(); }
+    Models::Base::VarRefVec getDefs() const override final { return m_CU.getModel()->getVarRefs(); }
 
-    const auto &getInitialisers() const{ return m_CU.getVarReferences(); }
+    const std::map<std::string, Models::VarReference> &getInitialisers() const override final { return m_CU.getVarReferences(); }
 
-    std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final
     {
         const auto &varRef = m_CU.getVarReferences().at(varName);
         const auto *delayNeuronGroup = varRef.getDelayNeuronGroup();
@@ -82,7 +83,7 @@ private:
 };
 
 //------------------------------------------------------------------------
-// CustomUpdateInternal
+// CustomUpdateWUInternal
 //------------------------------------------------------------------------
 class CustomUpdateWUInternal : public CustomUpdateWU
 {
@@ -120,7 +121,7 @@ public:
 //----------------------------------------------------------------------------
 // CustomUpdateWUVarRefAdapter
 //----------------------------------------------------------------------------
-class CustomUpdateWUVarRefAdapter
+class CustomUpdateWUVarRefAdapter : public WUVarRefAdapter
 {
 public:
     CustomUpdateWUVarRefAdapter(const CustomUpdateWUInternal &cu) : m_CU(cu)
@@ -129,13 +130,11 @@ public:
     using RefType = Models::WUVarReference;
 
     //----------------------------------------------------------------------------
-    // Public methods
+    // WUVarRefAdapter virtuals
     //----------------------------------------------------------------------------
-    auto getDefs() const{ return m_CU.getModel()->getVarRefs(); }
+    Models::Base::VarRefVec getDefs() const override final { return m_CU.getModel()->getVarRefs(); }
 
-    const auto &getInitialisers() const{ return m_CU.getVarReferences(); }
-
-    std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const { return std::nullopt; }
+    const std::map<std::string, Models::WUVarReference> &getInitialisers() const override final { return m_CU.getVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------

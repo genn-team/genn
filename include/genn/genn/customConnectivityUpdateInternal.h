@@ -1,6 +1,7 @@
 #pragma once
 
 // GeNN includes
+#include "adapters.h"
 #include "customConnectivityUpdate.h"
 #include "synapseGroupInternal.h"
 
@@ -45,25 +46,30 @@ public:
 //----------------------------------------------------------------------------
 // CustomConnectivityUpdateVarAdapter
 //----------------------------------------------------------------------------
-class CustomConnectivityUpdateVarAdapter
+class CustomConnectivityUpdateVarAdapter : public VarAdapter
 {
 public:
     CustomConnectivityUpdateVarAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
     {}
 
     //----------------------------------------------------------------------------
+    // VarAdapter virtuals
+    //----------------------------------------------------------------------------
+    virtual VarLocation getLoc(const std::string &varName) const override final { return m_CU.getVarLocation(varName); }
+
+    virtual std::vector<Models::Base::Var> getDefs() const override final { return m_CU.getModel()->getVars(); }
+
+    virtual const std::map<std::string, InitVarSnippet::Init> &getInitialisers() const override final { return m_CU.getVarInitialisers(); }
+    
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final { return std::nullopt; }
+
+    virtual VarAccessDim getVarDims(const Models::Base::Var &var) const override final { return getVarAccessDim(var.access); }
+
+    //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string &varName) const{ return m_CU.getVarLocation(varName); }
-
-    auto getDefs() const{ return m_CU.getModel()->getVars(); }
-
-    const auto &getInitialisers() const{ return m_CU.getVarInitialisers(); }
-
     const auto &getTarget() const{ return m_CU; }
 
-    VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
-     
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -74,26 +80,29 @@ private:
 //----------------------------------------------------------------------------
 // CustomConnectivityUpdatePreVarAdapter
 //----------------------------------------------------------------------------
-class CustomConnectivityUpdatePreVarAdapter
+class CustomConnectivityUpdatePreVarAdapter : public VarAdapter
 {
 public:
     CustomConnectivityUpdatePreVarAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
     {}
 
     //----------------------------------------------------------------------------
+    // VarAdapter virtuals
+    //----------------------------------------------------------------------------
+    virtual VarLocation getLoc(const std::string &varName) const override final { return m_CU.getPreVarLocation(varName); }
+
+    virtual std::vector<Models::Base::Var> getDefs() const override final { return m_CU.getModel()->getPreVars(); }
+
+    virtual const std::map<std::string, InitVarSnippet::Init> &getInitialisers() const override final { return m_CU.getPreVarInitialisers(); }
+
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const override final { return std::nullopt; }
+
+    virtual VarAccessDim getVarDims(const Models::Base::Var &var) const override final { return getVarAccessDim(var.access); }
+
+    //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string &varName) const{ return m_CU.getPreVarLocation(varName); }
-
-    auto getDefs() const{ return m_CU.getModel()->getPreVars(); }
-
-    const auto &getInitialisers() const{ return m_CU.getPreVarInitialisers(); }
-
-    std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const{ return std::nullopt; }
-
     const auto &getTarget() const{ return m_CU; }
-
-    VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 
 private:
     //----------------------------------------------------------------------------
@@ -105,27 +114,30 @@ private:
 //----------------------------------------------------------------------------
 // CustomConnectivityUpdatePostVarAdapter
 //----------------------------------------------------------------------------
-class CustomConnectivityUpdatePostVarAdapter
+class CustomConnectivityUpdatePostVarAdapter : public VarAdapter
 {
 public:
     CustomConnectivityUpdatePostVarAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
     {}
 
     //----------------------------------------------------------------------------
+    // VarAdapter virtuals
+    //----------------------------------------------------------------------------
+    virtual VarLocation getLoc(const std::string &varName) const override final { return m_CU.getPostVarLocation(varName); }
+
+    virtual std::vector<Models::Base::Var> getDefs() const override final { return m_CU.getModel()->getPostVars(); }
+
+    virtual const std::map<std::string, InitVarSnippet::Init> &getInitialisers() const override final { return m_CU.getPostVarInitialisers(); }
+
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const override final { return std::nullopt; }
+    
+    virtual VarAccessDim getVarDims(const Models::Base::Var &var) const override final { return getVarAccessDim(var.access); }
+
+    //----------------------------------------------------------------------------
     // Public methods
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string &varName) const{ return m_CU.getPostVarLocation(varName); }
-
-    auto getDefs() const{ return m_CU.getModel()->getPostVars(); }
-
-    const auto &getInitialisers() const{ return m_CU.getPostVarInitialisers(); }
-
-    std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const{ return std::nullopt; }
-
     const auto &getTarget() const{ return m_CU; }
 
-    VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
-    
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -133,22 +145,21 @@ private:
     const CustomConnectivityUpdateInternal &m_CU;
 };
 
-
 //----------------------------------------------------------------------------
 // CustomConnectivityUpdateEGPAdapter
 //----------------------------------------------------------------------------
-class CustomConnectivityUpdateEGPAdapter
+class CustomConnectivityUpdateEGPAdapter : public EGPAdapter
 {
 public:
     CustomConnectivityUpdateEGPAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
     {}
 
     //----------------------------------------------------------------------------
-    // Public methods
+    // EGPAdapter virtuals
     //----------------------------------------------------------------------------
-    VarLocation getLoc(const std::string &varName) const{ return m_CU.getExtraGlobalParamLocation(varName); }
+    virtual VarLocation getLoc(const std::string &varName) const override final { return m_CU.getExtraGlobalParamLocation(varName); }
 
-    Snippet::Base::EGPVec getDefs() const{ return m_CU.getModel()->getExtraGlobalParams(); }
+    virtual Snippet::Base::EGPVec getDefs() const override final { return m_CU.getModel()->getExtraGlobalParams(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -160,7 +171,7 @@ private:
 //----------------------------------------------------------------------------
 // CustomConnectivityUpdateVarRefAdapter
 //----------------------------------------------------------------------------
-class CustomConnectivityUpdateVarRefAdapter
+class CustomConnectivityUpdateVarRefAdapter : public WUVarRefAdapter
 {
 public:
     CustomConnectivityUpdateVarRefAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
@@ -169,11 +180,11 @@ public:
     using RefType = Models::WUVarReference;
 
     //----------------------------------------------------------------------------
-    // Public methods
+    // WUVarRefAdapter virtuals
     //----------------------------------------------------------------------------
-    auto getDefs() const{ return m_CU.getModel()->getVarRefs(); }
+    virtual Models::Base::VarRefVec getDefs() const override final { return m_CU.getModel()->getVarRefs(); }
 
-    const auto &getInitialisers() const{ return m_CU.getVarReferences(); }
+    virtual const std::map<std::string, Models::WUVarReference> &getInitialisers() const override final { return m_CU.getVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -185,7 +196,7 @@ private:
 //----------------------------------------------------------------------------
 // CustomConnectivityUpdatePreVarRefAdapter
 //----------------------------------------------------------------------------
-class CustomConnectivityUpdatePreVarRefAdapter
+class CustomConnectivityUpdatePreVarRefAdapter : public VarRefAdapter
 {
 public:
     CustomConnectivityUpdatePreVarRefAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
@@ -194,11 +205,13 @@ public:
     using RefType = Models::VarReference;
 
     //----------------------------------------------------------------------------
-    // Public methods
+    // VarRefAdapter virtuals
     //----------------------------------------------------------------------------
-    auto getDefs() const{ return m_CU.getModel()->getPreVarRefs(); }
+    virtual Models::Base::VarRefVec getDefs() const override final { return m_CU.getModel()->getPreVarRefs(); }
 
-    const auto &getInitialisers() const{ return m_CU.getPreVarReferences(); }
+    virtual const std::map<std::string, Models::VarReference> &getInitialisers() const override final { return m_CU.getPreVarReferences(); }
+
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final{ throw std::runtime_error("Not implemented"); }
 
 private:
     //----------------------------------------------------------------------------
@@ -210,7 +223,7 @@ private:
 //----------------------------------------------------------------------------
 // CustomConnectivityUpdatePostVarRefAdapter
 //----------------------------------------------------------------------------
-class CustomConnectivityUpdatePostVarRefAdapter
+class CustomConnectivityUpdatePostVarRefAdapter : public VarRefAdapter
 {
 public:
     CustomConnectivityUpdatePostVarRefAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
@@ -219,11 +232,13 @@ public:
     using RefType = Models::VarReference;
 
     //----------------------------------------------------------------------------
-    // Public methods
+    // VarRefAdapter virtuals
     //----------------------------------------------------------------------------
-    auto getDefs() const{ return m_CU.getModel()->getPostVarRefs(); }
+    virtual Models::Base::VarRefVec getDefs() const override final { return m_CU.getModel()->getPostVarRefs(); }
 
-    const auto &getInitialisers() const{ return m_CU.getPostVarReferences(); }
+    virtual const std::map<std::string, Models::VarReference> &getInitialisers() const override final { return m_CU.getPostVarReferences(); }
+
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final{ throw std::runtime_error("Not implemented"); }
 
 private:
     //----------------------------------------------------------------------------
