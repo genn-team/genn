@@ -10,7 +10,7 @@
 #include "varAccess.h"
 
 // GeNN code generator includes
-#include "code_generator/backendBase.h"
+#include "code_generator/backendCLike.h"
 #include "code_generator/codeStream.h"
 #include "code_generator/environment.h"
 #include "code_generator/presynapticUpdateStrategySIMT.h"
@@ -49,11 +49,11 @@ using KernelBlockSize = std::array<size_t, KernelMax>;
 //--------------------------------------------------------------------------
 //! Base class for Single Instruction Multiple Thread style backends
 /*! CUDA terminology is used throughout i.e. thread blocks and shared memory */
-class GENN_EXPORT BackendSIMT : public BackendBase
+class GENN_EXPORT BackendSIMT : public BackendCLike
 {
 public:
     BackendSIMT(const KernelBlockSize &kernelBlockSizes, const PreferencesBase &preferences)
-    :   BackendBase(preferences), m_KernelBlockSizes(kernelBlockSizes)
+    :   BackendCLike(preferences), m_KernelBlockSizes(kernelBlockSizes)
     {}
 
     //------------------------------------------------------------------------

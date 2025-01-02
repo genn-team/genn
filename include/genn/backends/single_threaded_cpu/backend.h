@@ -10,7 +10,7 @@
 #include "varAccess.h"
 
 // GeNN code generator includes
-#include "code_generator/backendBase.h"
+#include "code_generator/backendCLike.h"
 #include "code_generator/environment.h"
 
 // Forward declarations
@@ -42,11 +42,11 @@ class State : public Runtime::StateBase
 //--------------------------------------------------------------------------
 // CodeGenerator::SingleThreadedCPU::Backend
 //--------------------------------------------------------------------------
-class BACKEND_EXPORT Backend : public BackendBase
+class BACKEND_EXPORT Backend : public BackendCLike
 {
 public:
     Backend(const Preferences &preferences)
-    :   BackendBase(preferences)
+    :   BackendCLike(preferences)
     {
     }
 

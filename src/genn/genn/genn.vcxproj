@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="code_generator\backendBase.cc" />
+    <ClCompile Include="code_generator\backendCLike.cc" />
     <ClCompile Include="code_generator\backendSIMT.cc" />
     <ClCompile Include="code_generator\codeGenUtils.cc" />
     <ClCompile Include="code_generator\codeStream.cc" />
@@ -72,6 +73,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\backendExport.h" />
     <ClInclude Include="..\..\..\include\genn\genn\binomial.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\backendBase.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\backendCLike.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\backendSIMT.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\codeGenUtils.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\codeStream.h" />
