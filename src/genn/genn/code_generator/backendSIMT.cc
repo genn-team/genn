@@ -567,8 +567,8 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
 
                         // Create an environment which caches neuron variable fields in local variables if they are accessed
                         // **NOTE** we do this right at the top so that local copies can be used by child groups
-                        EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> wuVarEnv(
-                            ng, ng, ng.getTypeContext(), wuEnv, "", "l", true,
+                        EnvironmentLocalVarCache<NeuronUpdateGroupMerged> wuVarEnv(
+                            NeuronVarAdapter::create, ng, ng, ng.getTypeContext(), wuEnv, "", "l", true,
                             [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
                             {
                                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;

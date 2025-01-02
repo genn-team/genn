@@ -35,15 +35,15 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(EnvironmentExternalBase &e
     csEnv.addExtraGlobalParams(cm->getExtraGlobalParams(), "", fieldSuffix);
 
     // Add neuron variable references
-    csEnv.addLocalVarRefs<CurrentSourceNeuronVarRefAdapter>(true);
+    csEnv.addLocalVarRefs(CurrentSourceNeuronVarRefAdapter::create, true);
 
     // Define inject current function
     csEnv.add(Type::ResolvedType::createFunction(Type::Void, {getScalarType()}),
               "injectCurrent", "$(_" + getArchetype().getTargetVar() + ") += $(0)");
 
     // Create an environment which caches variables in local variables if they are accessed
-    EnvironmentLocalVarCache<CurrentSourceVarAdapter, CurrentSource, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, getTypeContext(), csEnv, fieldSuffix, "l", false,
+    EnvironmentLocalVarCache<CurrentSource, NeuronUpdateGroupMerged> varEnv(
+        CurrentSourceVarAdapter::create, *this, ng, getTypeContext(), csEnv, fieldSuffix, "l", false,
         [batchSize, &ng](const std::string&, VarAccess d, bool)
         {
             return ng.getVarIndex(batchSize, getVarAccessDim(d), "$(id)");
@@ -107,7 +107,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     psmEnv.addExtraGlobalParams(psm->getExtraGlobalParams(), "", fieldSuffix);
     
     // Add neuron variable references
-    psmEnv.addLocalVarRefs<SynapsePSMNeuronVarRefAdapter>(true);
+    psmEnv.addLocalVarRefs(SynapsePSMNeuronVarRefAdapter::create, true);
 
     // **TODO** naming convention
     psmEnv.add(getScalarType(), "inSyn", "linSyn");
@@ -117,8 +117,8 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
               "injectCurrent", "$(_" + getArchetype().getPostTargetVar() + ") += $(0)");
 
     // Create an environment which caches variables in local variables if they are accessed
-    EnvironmentLocalVarCache<SynapsePSMVarAdapter, InSynPSM, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, getTypeContext(), psmEnv, fieldSuffix, "l", false,
+    EnvironmentLocalVarCache<InSynPSM, NeuronUpdateGroupMerged> varEnv(
+        SynapsePSMVarAdapter::create, *this, ng, getTypeContext(), psmEnv, fieldSuffix, "l", false,
         [batchSize, &ng](const std::string&, VarAccess d, bool)
         {
             return ng.getVarIndex(batchSize, getVarAccessDim(d), "$(id)");
@@ -244,11 +244,11 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
     // same and they must refernece the same variables so we just need to pick the right one on the archetype and it'll be fine
     if(getArchetype().getSrcNeuronGroup() == &ng.getArchetype()) {
         // Add local neuron variable references
-        synEnv.addLocalVarRefs<SynapseWUPreNeuronVarRefAdapter>(true);
+        synEnv.addLocalVarRefs(SynapseWUPreNeuronVarRefAdapter::create, true);
 
         // Create an environment which caches variables in local variables if they are accessed
-        EnvironmentLocalVarCache<SynapseWUPreVarAdapter, SynSpikeEvent, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
+        EnvironmentLocalVarCache<SynSpikeEvent, NeuronUpdateGroupMerged> varEnv(
+            SynapseWUPreVarAdapter::create, *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
             [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -265,11 +265,11 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
     }
     else {
         // Add local neuron variable references
-        synEnv.addLocalVarRefs<SynapseWUPostNeuronVarRefAdapter>(true);
+        synEnv.addLocalVarRefs(SynapseWUPostNeuronVarRefAdapter::create, true);
 
         // Create an environment which caches variables in local variables if they are accessed
-        EnvironmentLocalVarCache<SynapseWUPostVarAdapter, SynSpikeEvent, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
+        EnvironmentLocalVarCache<SynSpikeEvent, NeuronUpdateGroupMerged> varEnv(
+            SynapseWUPostVarAdapter::create, *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
             [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -347,7 +347,7 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase
         synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), "", fieldSuffix);
 
         // If we're generating dynamics code, add local neuron variable references
-        synEnv.addLocalVarRefs<SynapseWUPostNeuronVarRefAdapter>(true);
+        synEnv.addLocalVarRefs(SynapseWUPostNeuronVarRefAdapter::create, true);
 
         // Substitute spike time
         // **NOTE** previous spike time is meaningless in neuron kernel
@@ -357,8 +357,8 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase
                    {synEnv.addInitialiser("const " + getTimeType().getName() + " lsTPost = $(_st)[" + spikeTimeReadIndex + "];")});
 
         // Create an environment which caches variables in local variables if they are accessed
-        EnvironmentLocalVarCache<SynapseWUPostVarAdapter, InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
+        EnvironmentLocalVarCache<InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(
+            SynapseWUPostVarAdapter::create, *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
             [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -381,7 +381,8 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(EnvironmentEx
     if(Utils::areTokensEmpty(getArchetype().getWUInitialiser().getPostDynamicsCodeTokens())) {
          // Create environment and add fields for variable 
         EnvironmentGroupMergedField<InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(env, *this, ng);
-        varEnv.addVarPointers<SynapseWUPostVarAdapter>("InSynWUMPost" + std::to_string(getIndex()), false);
+        varEnv.addVarPointers(SynapseWUPostVarAdapter::create,
+                              "InSynWUMPost" + std::to_string(getIndex()), false);
         
         // Loop through variables
         for(const auto &v : getArchetype().getWUInitialiser().getSnippet()->getPostVars()) {
@@ -427,7 +428,7 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase
         synEnv.addExtraGlobalParams(wum->getExtraGlobalParams(), "", fieldSuffix);
 
         // If we're generating dynamics code, add local neuron variable references
-        synEnv.addLocalVarRefs<SynapseWUPreNeuronVarRefAdapter>(true);
+        synEnv.addLocalVarRefs(SynapseWUPreNeuronVarRefAdapter::create, true);
 
         // Substitute spike time
         // **NOTE** previous spike time is meaningless in neuron kernel
@@ -437,8 +438,8 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase
                    {synEnv.addInitialiser("const " + getTimeType().getName() + " lsTPre = $(_st)[" + spikeTimeReadIndex + "];")});
 
         // Create an environment which caches variables in local variables if they are accessed
-        EnvironmentLocalVarCache<SynapseWUPreVarAdapter, OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
+        EnvironmentLocalVarCache<OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(
+            SynapseWUPreVarAdapter::create, *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
             [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -461,7 +462,7 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::genCopyDelayedVars(EnvironmentEx
     if(getArchetype().getAxonalDelaySteps() != 0 && Utils::areTokensEmpty(getArchetype().getWUInitialiser().getPreDynamicsCodeTokens())) {
         // Create environment and add fields for variable 
         EnvironmentGroupMergedField<OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(env, *this, ng);
-        varEnv.addVarPointers<SynapseWUPreVarAdapter>("OutSynWUMPre" + std::to_string(getIndex()), false);
+        varEnv.addVarPointers(SynapseWUPreVarAdapter::create, "OutSynWUMPre" + std::to_string(getIndex()), false);
 
         // Loop through variables and copy between read and write delay slots
         for(const auto &v : getArchetype().getWUInitialiser().getSnippet()->getPreVars()) {
@@ -567,8 +568,8 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
 
     // Create an environment which caches neuron variable fields in local variables if they are accessed
     // **NOTE** we do this right at the top so that local copies can be used by child groups
-    EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronChildVarEnv(
-        *this, *this, getTypeContext(), neuronChildEnv, "", "l", true,
+    EnvironmentLocalVarCache<NeuronUpdateGroupMerged> neuronChildVarEnv(
+        NeuronVarAdapter::create, *this, *this, getTypeContext(), neuronChildEnv, "", "l", true,
         [batchSize, this](const std::string&, VarAccess d, bool delayed)
         {
             return getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
@@ -608,7 +609,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     }
 
     // Expose neuron variables
-    neuronEnv.addVarExposeAliases<NeuronVarAdapter>();
+    neuronEnv.addVarExposeAliases(NeuronVarAdapter::create);
 
     // Substitute parameter and derived parameter names
     neuronEnv.addParams(nm->getParams(), "", &NeuronGroupInternal::getParams,

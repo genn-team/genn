@@ -416,7 +416,9 @@ class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<Enviro
     using IsVarInitHeterogeneousFn = bool (G::*)(const std::string&, const std::string&) const;
     using GetParamValuesFn = const std::map<std::string, Type::NumericValue> &(GroupInternal::*)(void) const;
     using CreateVarAdapterFn = std::function<std::unique_ptr<VarAdapter>(const GroupInternal&)>;
+    using CreateCUVarAdapterFn = std::function<std::unique_ptr<CUVarAdapter>(const GroupInternal&)>;
     using CreateVarRefAdapterFn = std::function<std::unique_ptr<VarRefAdapter>(const GroupInternal&)>;
+    using CreateWUVarRefAdapterFn = std::function<std::unique_ptr<WUVarRefAdapter>(const GroupInternal&)>;
 
     //template<typename A>
     //using AdapterDef = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
@@ -650,7 +652,43 @@ public:
         }
     }
 
+    // **YUCK** copy-paste
+    void addVarInitParams(CreateCUVarAdapterFn a, const std::string &varName, const std::string &fieldSuffix = "")
+    {
+        // Loop through parameters
+        const auto &initialiser = a(this->getGroup().getArchetype())->getInitialisers().at(varName);
+        const auto *snippet = initialiser.getSnippet();
+        for(const auto &p : snippet->getParams()) {
+            // If parameter is heterogeneous, add field
+            const auto resolvedType = p.type.resolve(this->getGroup().getTypeContext());
+            assert(!resolvedType.isPointer());
+            addField(resolvedType.addConst(), p.name, resolvedType, p.name + varName + fieldSuffix,
+                        [a, p, varName](const auto &g, size_t)
+                        {
+                            return a(g)->getInitialisers().at(varName).getParams().at(p.name);
+                        });
+        }
+    }
+
     void addVarInitDerivedParams(CreateVarAdapterFn a, const std::string &varName, const std::string &fieldSuffix = "")
+    {
+        // Loop through derived parameters
+        const auto &initialiser = a(this->getGroup().getArchetype())->getInitialisers().at(varName);
+        const auto *snippet = initialiser.getSnippet();
+        for(const auto &d : snippet->getDerivedParams()) {
+            // If derived parameter is heterogeneous, add scalar field
+            const auto resolvedType = d.type.resolve(this->getGroup().getTypeContext());
+            assert(!resolvedType.isPointer());
+            addField(resolvedType.addConst(), d.name, resolvedType, d.name + varName + fieldSuffix,
+                     [a, d, varName](const auto &g, size_t)
+                     {
+                         return a(g)->getInitialisers().at(varName).getDerivedParams().at(d.name);
+                     });
+        }
+    }
+
+    // **YUCK** copy-paste
+    void addVarInitDerivedParams(CreateCUVarAdapterFn a, const std::string &varName, const std::string &fieldSuffix = "")
     {
         // Loop through derived parameters
         const auto &initialiser = a(this->getGroup().getArchetype())->getInitialisers().at(varName);
@@ -752,6 +790,22 @@ public:
         }
     }
 
+    // **YUCK** copy-paste
+    void addVarRefPointers(CreateWUVarRefAdapterFn a, bool hidden = false)
+    {
+        // Loop through variable references and add private pointer field 
+        const auto archetypeAdaptor = a(this->getGroup().getArchetype());
+        for(const auto &v : archetypeAdaptor->getDefs()) {
+            const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
+            const auto name = hidden ? ("_" + v.name) : v.name;
+            addField(resolvedType.createPointer(), name, v.name,
+                     [a, v](auto &runtime, const auto &g, size_t) 
+                     { 
+                         return a(g)->getInitialisers().at(v.name).getTargetArray(runtime);
+                     });
+        }
+    }
+
     void addVarExposeAliases(CreateVarAdapterFn a, bool readOnly = false)
     {
         // Loop through variables and add unhiding aliases
@@ -768,7 +822,7 @@ public:
     {
         // Loop through variable references
         const auto archetypeAdaptor = a(this->getGroup().getArchetype());
-        for(const auto &v : archetypeAdaptor.getDefs()) {
+        for(const auto &v : archetypeAdaptor->getDefs()) {
             // If variable access is read-only, qualify type with const
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
             const auto qualifiedType = (readOnly || (v.access & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;        
@@ -816,7 +870,7 @@ public:
                                                                       std::make_pair(false, v)); });
     }
 
-    EnvironmentLocalVarCacheBase(CreateAdapterFn &createAdapter, G &group, F &fieldGroup, const Type::TypeContext &context, 
+    EnvironmentLocalVarCacheBase(CreateAdapterFn createAdapter, G &group, F &fieldGroup, const Type::TypeContext &context, 
                                  EnvironmentExternalBase &enclosing, const std::string &fieldSuffix, const std::string &localPrefix,
                                  bool hidden, GetIndexFn getIndex, bool alwaysCopyIfDelayed = true)
     :   EnvironmentLocalVarCacheBase(createAdapter, group, fieldGroup, context, enclosing, fieldSuffix, localPrefix, 
@@ -832,7 +886,7 @@ public:
         // Copy definitions of variables which have been referenced into new vector or all if always copy set
         std::vector<V> referencedDefs;
         for(const auto &v : m_VariablesReferenced) {
-            if((archetypeAdapter->getNumVarDelaySlots(v.second.second).has_value() && m_AlwaysCopyIfDelayed) || v.second.first) {
+            if((archetypeAdapter->getNumVarDelaySlots(v.second.second.name).has_value() && m_AlwaysCopyIfDelayed) || v.second.first) {
                 referencedDefs.push_back(v.second.second);
             }
         }
@@ -984,11 +1038,11 @@ public:
                                                                       std::make_pair(false, v)); });
     }
 
-    EnvironmentLocalVarRefCacheBase(CreateAdapterFn &createAdapter, G &group, F &fieldGroup, const Type::TypeContext &context, 
+    EnvironmentLocalVarRefCacheBase(CreateAdapterFn createAdapter, G &group, F &fieldGroup, const Type::TypeContext &context, 
                                     EnvironmentExternalBase &enclosing, const std::string &fieldSuffix, const std::string &localPrefix,
                                     bool hidden, GetIndexFn getIndex)
     :   EnvironmentLocalVarRefCacheBase(createAdapter, group, fieldGroup, context, enclosing,
-                                        fieldSuffix, localPrefix, hidden, getIndex)
+                                        fieldSuffix, localPrefix, hidden, getIndex, getIndex)
     {}
 
     EnvironmentLocalVarRefCacheBase(const EnvironmentLocalVarRefCacheBase&) = delete;
@@ -1027,7 +1081,7 @@ public:
             // compilers SHOULD emit a warning if user code doesn't set it to something
             if(!(v.access & VarAccessModeAttribute::REDUCE) && !(v.access & VarAccessModeAttribute::BROADCAST)) {
                 getContextStream() << " = group->" << v.name << m_FieldSuffix << "[";
-                getContextStream() << printSubs(m_GetReadIndex(var.name, archetypeAdapter->getInitialisers().at(v.name), ""), *this) << "]";
+                getContextStream() << printSubs(m_GetReadIndex(v.name, archetypeAdapter->getInitialisers().at(v.name), ""), *this) << "]";
             }
             getContextStream() << ";" << std::endl;
         }
@@ -1044,13 +1098,13 @@ public:
                 getContextStream() << "for(int d = 0; d < " << numVarDelaySlots.value() << "; d++)";
                 {
                     CodeStream::Scope b(getContextStream());
-                    getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(m_GetWriteIndex(var.name, init, "d"), *this) << "]";
+                    getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(m_GetWriteIndex(v.name, init, "d"), *this) << "]";
                     getContextStream() << " = _" << m_LocalPrefix << v.name << ";" << std::endl;
                 }
             }
             // Otherwise, if variable is read-write or broadcast
             else if((getVarAccessMode(v.access) == VarAccessMode::READ_WRITE) || (v.access & VarAccessModeAttribute::BROADCAST)) {
-                getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(m_GetWriteIndex(var.name, init, ""), *this) << "]";
+                getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(m_GetWriteIndex(v.name, init, ""), *this) << "]";
                 getContextStream() << " = _" << m_LocalPrefix << v.name << ";" << std::endl;
             }
         }

@@ -114,7 +114,7 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
     updateEnv.addExtraGlobalParamRefs(cm->getExtraGlobalParamRefs());
     
     // Add presynaptic variables
-    updateEnv.addVars<CustomConnectivityUpdatePreVarAdapter>("$(id_pre)");
+    updateEnv.addVars(CustomConnectivityUpdatePreVarAdapter::create, "$(id_pre)");
 
     // Loop through presynaptic variable references
     for(const auto &v : getArchetype().getModel()->getPreVarRefs()) {
@@ -141,10 +141,10 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
 
     // Add fields and private $(_XXX) substitutions for postsyanptic and synaptic variables and variables references as, 
     // while these can only be accessed by user code inside loop, they can be used directly by add/remove synapse functions
-    updateEnv.addVarPointers<CustomConnectivityUpdateVarAdapter>("", true);
-    updateEnv.addVarPointers<CustomConnectivityUpdatePostVarAdapter>("", true);
-    updateEnv.addVarRefPointers<CustomConnectivityUpdateVarRefAdapter>(true);
-    updateEnv.addVarRefPointers<CustomConnectivityUpdatePostVarRefAdapter>(true);
+    updateEnv.addVarPointers(CustomConnectivityUpdateVarAdapter::create, "", true);
+    updateEnv.addVarPointers(CustomConnectivityUpdatePostVarAdapter::create, "", true);
+    updateEnv.addVarRefPointers(CustomConnectivityUpdateVarRefAdapter::create, true);
+    updateEnv.addVarRefPointers(CustomConnectivityUpdatePostVarRefAdapter::create, true);
 
     // Add private fields for dependent variables
     for(size_t i = 0; i < getSortedArchetypeDependentVars().size(); i++) {
@@ -326,8 +326,8 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                                               {bodyEnv.addInitialiser("const " + indexTypeName + " idx = (" + indexTypeName + ")$(_row_start_idx) + j;")});
 
                                   // Add postsynaptic and synaptic variables
-                                  bodyEnv.addVars<CustomConnectivityUpdateVarAdapter>("$(id_syn)");
-                                  bodyEnv.addVars<CustomConnectivityUpdatePostVarAdapter>("$(id_post)");
+                                  bodyEnv.addVars(CustomConnectivityUpdateVarAdapter::create, "$(id_syn)");
+                                  bodyEnv.addVars(CustomConnectivityUpdatePostVarAdapter::create, "$(id_post)");
 
                                   // Add postsynaptic and synapse variable references, only exposing those that aren't batched
                                   addPrivateVarRefAccess<CustomConnectivityUpdateVarRefAdapter>(bodyEnv, batchSize, "$(id_syn)");

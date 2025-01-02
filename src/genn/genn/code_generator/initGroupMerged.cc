@@ -122,23 +122,23 @@ void genInitEventTime(const BackendBase &backend, EnvironmentExternalBase &env, 
         });
 }
 //------------------------------------------------------------------------
-template<typename A, typename F, typename G>
-void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &env,
+template<typename F, typename G, typename A>
+void genInitNeuronVarCode(A createAdapter, const BackendBase &backend, EnvironmentExternalBase &env,
                           G &group, F &fieldGroup, const std::string &fieldSuffix, 
                           const std::string &count, unsigned int batchSize)
 {
-    A adaptor(group.getArchetype());
-    for (const auto &var : adaptor.getDefs()) {
+    const auto adapter = createAdapter(group.getArchetype());
+    for (const auto &var : adapter->getDefs()) {
         // If there is any initialisation code
         const auto resolvedType = var.type.resolve(group.getTypeContext());
-        const auto &varInit = adaptor.getInitialisers().at(var.name);
+        const auto &varInit = adapter->getInitialisers().at(var.name);
         if (!Utils::areTokensEmpty(varInit.getCodeTokens())) {
             CodeStream::Scope b(env.getStream());
 
             // Substitute in parameters and derived parameters for initialising variables
             EnvironmentGroupMergedField<G, F> varEnv(env, group, fieldGroup);
-            varEnv.template addVarInitParams<A>(var.name, fieldSuffix);
-            varEnv.template addVarInitDerivedParams<A>(var.name, fieldSuffix);
+            varEnv.addVarInitParams(createAdapter, var.name, fieldSuffix);
+            varEnv.addVarInitDerivedParams(createAdapter, var.name, fieldSuffix);
             varEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), var.name, fieldSuffix);
 
             // Add field for variable itself
@@ -149,11 +149,11 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
                             });
 
             // If variable has NEURON axis
-            const VarAccessDim varDims = adaptor.getVarDims(var);
+            const VarAccessDim varDims = adapter->getVarDims(var);
             if (varDims & VarAccessDim::ELEMENT) {
                 backend.genVariableInit(
                     varEnv, count, "id",
-                    [&adaptor, &fieldGroup, &group, &var, &resolvedType, &varInit, batchSize, count, varDims]
+                    [&adapter, &fieldGroup, &group, &var, &resolvedType, &varInit, batchSize, count, varDims]
                     (EnvironmentExternalBase &env)
                     {
                         // Generate initial value into temporary variable
@@ -167,14 +167,14 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
 
                         // Fill value across all delay slots and batches
                         genVariableFill(varInitEnv, "_value", "$(value)", "id", "$(" + count + ")",
-                                        varDims, batchSize, adaptor.getNumVarDelaySlots(var.name));
+                                        varDims, batchSize, adapter->getNumVarDelaySlots(var.name));
                     });
             }
             // Otherwise
             else {
                 backend.genPopVariableInit(
                     varEnv,
-                    [&adaptor, &fieldGroup, &group, &resolvedType, &var, &varInit, batchSize, varDims]
+                    [&adapter, &fieldGroup, &group, &resolvedType, &var, &varInit, batchSize, varDims]
                     (EnvironmentExternalBase &env)
                     {
                         // Generate initial value into temporary variable
@@ -188,7 +188,7 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
                         
                         // Fill value across all delay slots and batches
                         genScalarFill(varInitEnv, "_value", "$(value)", varDims,
-                                      batchSize, adaptor.getNumVarDelaySlots(var.name));
+                                      batchSize, adapter->getNumVarDelaySlots(var.name));
                     });
             }
         }
@@ -196,32 +196,32 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
     }
 }
 //------------------------------------------------------------------------
-template<typename A, typename G>
-void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &env,
+template<typename G, typename A>
+void genInitNeuronVarCode(A createAdapter, const BackendBase &backend, EnvironmentExternalBase &env,
                           G &group, const std::string &fieldSuffix, 
                           const std::string &count, unsigned int batchSize)
 {
-    genInitNeuronVarCode<A, G, G>(backend, env, group, group, fieldSuffix, count, batchSize);
+    genInitNeuronVarCode<G, G, A>(createAdapter, backend, env, group, group, fieldSuffix, count, batchSize);
 }
 //------------------------------------------------------------------------
 // Initialise one row of weight update model variables
-template<typename A, typename G, typename V>
-void genInitWUVarCode(EnvironmentExternalBase &env, G &group,
+template<typename G, typename V, typename A>
+void genInitWUVarCode(A createAdapter, EnvironmentExternalBase &env, G &group,
                       const std::string &stride, unsigned int batchSize, bool kernel,
                       V genSynapseVariableRowInitFn)
 {
-    A adaptor(group.getArchetype());
-    for (const auto &var : adaptor.getDefs()) {
+    const auto adapter = createAdapter(group.getArchetype());
+    for (const auto &var : adapter->getDefs()) {
         // If this variable has any initialisation code and doesn't require a kernel (in this case it will be initialised elsewhere)
         const auto resolvedType = var.type.resolve(group.getTypeContext());
-        const auto &varInit = adaptor.getInitialisers().at(var.name);
+        const auto &varInit = adapter->getInitialisers().at(var.name);
         if(!Utils::areTokensEmpty(varInit.getCodeTokens()) && (varInit.isKernelRequired() == kernel)) {
             CodeStream::Scope b(env.getStream());
 
             // Substitute in parameters and derived parameters for initialising variables
             EnvironmentGroupMergedField<G> varEnv(env, group);
-            varEnv.template addVarInitParams<A>(var.name);
-            varEnv.template addVarInitDerivedParams<A>(var.name);
+            varEnv.addVarInitParams(createAdapter, var.name);
+            varEnv.addVarInitDerivedParams(createAdapter, var.name);
             varEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), var.name);
 
             // Add field for variable itself
@@ -233,7 +233,7 @@ void genInitWUVarCode(EnvironmentExternalBase &env, G &group,
 
             // Generate target-specific code to initialise variable
             genSynapseVariableRowInitFn(varEnv,
-                [&adaptor, &group, &resolvedType, &stride, &var, &varInit, batchSize]
+                [&adapter, &group, &resolvedType, &stride, &var, &varInit, batchSize]
                 (EnvironmentExternalBase &env)
                 {
                     // Generate initial value into temporary variable
@@ -247,7 +247,7 @@ void genInitWUVarCode(EnvironmentExternalBase &env, G &group,
 
                     // Fill value across all batches
                     genVariableFill(varInitEnv, "_value", "$(value)", "id_syn", stride,
-                                    adaptor.getVarDims(var), batchSize);
+                                    adapter->getVarDims(var), batchSize);
                 });
         }
     }
@@ -260,9 +260,9 @@ void genInitWUVarCode(EnvironmentExternalBase &env, G &group,
 void NeuronInitGroupMerged::CurrentSource::generate(const BackendBase &backend, EnvironmentExternalBase &env, 
                                                     NeuronInitGroupMerged &ng, unsigned int batchSize)
 {
-    genInitNeuronVarCode<CurrentSourceVarAdapter, NeuronInitGroupMerged>(
-        backend, env, *this, ng, "CS" + std::to_string(getIndex()), 
-        "num_neurons", batchSize);
+    genInitNeuronVarCode<NeuronInitGroupMerged>(
+        CurrentSourceVarAdapter::create, backend, env, *this, ng, 
+        "CS" + std::to_string(getIndex()), "num_neurons", batchSize);
 }
 
 //----------------------------------------------------------------------------
@@ -355,8 +355,9 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
             });
     }
 
-    genInitNeuronVarCode<SynapsePSMVarAdapter, NeuronInitGroupMerged>(
-        backend, groupEnv, *this, ng, fieldSuffix, "num_neurons", batchSize);
+    genInitNeuronVarCode<NeuronInitGroupMerged>(
+        SynapsePSMVarAdapter::create, backend, groupEnv, *this, ng, 
+        fieldSuffix, "num_neurons", batchSize);
 }
 
 //----------------------------------------------------------------------------
@@ -385,9 +386,9 @@ void NeuronInitGroupMerged::OutSynPreOutput::generate(const BackendBase &backend
 void NeuronInitGroupMerged::InSynWUMPostVars::generate(const BackendBase &backend, EnvironmentExternalBase &env, 
                                                        NeuronInitGroupMerged &ng, unsigned int batchSize)
 {
-    genInitNeuronVarCode<SynapseWUPostVarAdapter, NeuronInitGroupMerged>(
-        backend, env, *this, ng, "InSynWUMPost" + std::to_string(getIndex()), 
-        "num_neurons", batchSize);
+    genInitNeuronVarCode<NeuronInitGroupMerged>(
+        SynapseWUPostVarAdapter::create, backend, env, *this, ng, 
+        "InSynWUMPost" + std::to_string(getIndex()), "num_neurons", batchSize);
 }
 
 //----------------------------------------------------------------------------
@@ -396,9 +397,9 @@ void NeuronInitGroupMerged::InSynWUMPostVars::generate(const BackendBase &backen
 void NeuronInitGroupMerged::OutSynWUMPreVars::generate(const BackendBase &backend, EnvironmentExternalBase &env, 
                                                        NeuronInitGroupMerged &ng, unsigned int batchSize)
 {
-    genInitNeuronVarCode<SynapseWUPreVarAdapter, NeuronInitGroupMerged>(
-        backend, env, *this, ng, "OutSynWUMPre" + std::to_string(getIndex()), 
-        "num_neurons", batchSize);
+    genInitNeuronVarCode<NeuronInitGroupMerged>(
+        SynapseWUPreVarAdapter::create, backend, env, *this, ng, 
+        "OutSynWUMPre" + std::to_string(getIndex()), "num_neurons", batchSize);
 }
 
 //----------------------------------------------------------------------------
@@ -509,8 +510,8 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, Environment
     }
 
     // Initialise neuron variables
-    genInitNeuronVarCode<NeuronVarAdapter>(backend, groupEnv, *this, "", 
-                                           "num_neurons", batchSize);
+    genInitNeuronVarCode(NeuronVarAdapter::create, backend, groupEnv, *this, 
+                         "", "num_neurons", batchSize);
 
     // Generate initialisation code for child groups
     for (auto &cs : m_MergedCurrentSourceGroups) {
@@ -575,16 +576,16 @@ void SynapseInitGroupMerged::generateInit(const BackendBase &backend, Environmen
 
     // Generate initialisation code
     const std::string stride = kernel ? "$(_kernel_size)" : "$(num_pre) * $(_row_stride)";
-    genInitWUVarCode<SynapseWUVarAdapter>(groupEnv, *this, stride, batchSize, false,
-                                          [&backend, kernel, this](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
-                                          {
-                                              if (kernel) {
-                                                  backend.genKernelSynapseVariableInit(varInitEnv, *this, handler);
-                                              }
-                                              else {
-                                                  backend.genDenseSynapseVariableRowInit(varInitEnv, handler);
-                                              }
-                                          });
+    genInitWUVarCode(SynapseWUVarAdapter::create, groupEnv, *this, stride, batchSize, false,
+                     [&backend, kernel, this](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
+                     {
+                         if (kernel) {
+                             backend.genKernelSynapseVariableInit(varInitEnv, *this, handler);
+                         }
+                         else {
+                             backend.genDenseSynapseVariableRowInit(varInitEnv, handler);
+                         }
+                     });
 
     // If we're using non-kernel weights, close loop
     if (!kernel) {
@@ -619,12 +620,11 @@ boost::uuids::detail::sha1::digest_type SynapseSparseInitGroupMerged::getHashDig
 void SynapseSparseInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
     // Create environment for group
-    genInitWUVarCode<SynapseWUVarAdapter>(
-        env, *this, "$(num_pre) * $(_row_stride)", batchSize, false,
-        [&backend](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
-        {
-            backend.genSparseSynapseVariableRowInit(varInitEnv, handler); 
-        });
+    genInitWUVarCode(SynapseWUVarAdapter::create, env, *this, "$(num_pre) * $(_row_stride)", batchSize, false,
+                     [&backend](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
+                     {
+                         backend.genSparseSynapseVariableRowInit(varInitEnv, handler); 
+                     });
 }
 
 // ----------------------------------------------------------------------------
@@ -680,12 +680,11 @@ void SynapseConnectivityInitGroupMerged::generateKernelInit(EnvironmentExternalB
                  {groupEnv.addInitialiser("const unsigned int kernelInd = " + getKernelIndex(*this) + ";")});
 
     // Initialise single (hence empty lambda function) synapse variable
-    genInitWUVarCode<SynapseWUVarAdapter>(
-        groupEnv, *this, "$(num_pre) * $(_row_stride)", batchSize, true,
-        [](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
-        {
-            handler(varInitEnv);
-        });
+    genInitWUVarCode(SynapseWUVarAdapter::create, groupEnv, *this, "$(num_pre) * $(_row_stride)", batchSize, true,
+                     [](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
+                     {
+                         handler(varInitEnv);
+                     });
 }
 //----------------------------------------------------------------------------
 void SynapseConnectivityInitGroupMerged::genInitConnectivity(EnvironmentExternalBase &env, bool rowNotColumns)
@@ -845,8 +844,8 @@ void CustomUpdateInitGroupMerged::generateInit(const BackendBase &backend, Envir
     groupEnv.add(Type::Uint32.addConst(), "num_batch", std::to_string(updateBatchSize));
 
     // Initialise custom update variables
-    genInitNeuronVarCode<CustomUpdateVarAdapter>(backend, groupEnv, *this, "", 
-                                                 "num_neurons", updateBatchSize);
+    genInitNeuronVarCode(CustomUpdateVarAdapter::create, backend, groupEnv, *this, 
+                         "", "num_neurons", updateBatchSize);
 }
 
 // ----------------------------------------------------------------------------
@@ -907,18 +906,16 @@ void CustomWUUpdateInitGroupMerged::generateInit(const BackendBase &backend, Env
 
     // Loop through rows
     const std::string stride = kernel ? "$(_kernel_size)" : "$(num_pre) * $(_row_stride)";
-    genInitWUVarCode<CustomUpdateVarAdapter>(
-        groupEnv, *this, stride, updateBatchSize, false,
-        [&backend, kernel, this](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
-        {
-            if (kernel) {
-                backend.genKernelCustomUpdateVariableInit(varInitEnv, *this, handler);
-            }
-            else {
-                backend.genDenseSynapseVariableRowInit(varInitEnv, handler);
-            }
-    
-        });
+    genInitWUVarCode(CustomUpdateVarAdapter::createWU, groupEnv, *this, stride, updateBatchSize, false,
+                     [&backend, kernel, this](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
+                     {
+                         if (kernel) {
+                             backend.genKernelCustomUpdateVariableInit(varInitEnv, *this, handler);
+                         }
+                         else {
+                             backend.genDenseSynapseVariableRowInit(varInitEnv, handler);
+                         }
+                     });
 
     if(!kernel) {
         groupEnv.getStream() << CodeStream::CB(3);
@@ -967,12 +964,11 @@ void CustomWUUpdateSparseInitGroupMerged::generateInit(const BackendBase &backen
     const unsigned int updateBatchSize = (getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1;
     groupEnv.add(Type::Uint32.addConst(), "num_batch", std::to_string(updateBatchSize));
 
-    genInitWUVarCode<CustomUpdateVarAdapter>(
-        groupEnv, *this, "$(num_pre) * $(_row_stride)", updateBatchSize, false,
-        [&backend](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
-        {
-            return backend.genSparseSynapseVariableRowInit(varInitEnv, handler); 
-        });
+    genInitWUVarCode(CustomUpdateVarAdapter::createWU, groupEnv, *this, "$(num_pre) * $(_row_stride)", updateBatchSize, false,
+                     [&backend](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
+                     {
+                         return backend.genSparseSynapseVariableRowInit(varInitEnv, handler); 
+                     });
 }
 
 // ----------------------------------------------------------------------------
@@ -1001,7 +997,8 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdatePreInitGroupMerg
 //----------------------------------------------------------------------------
 void CustomConnectivityUpdatePreInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int)
 {
-    genInitNeuronVarCode<CustomConnectivityUpdatePreVarAdapter>(backend, env, *this, "", "num_neurons", 1);
+    genInitNeuronVarCode(CustomConnectivityUpdatePreVarAdapter::create, backend, env, *this,
+                         "", "num_neurons", 1);
 }
 
 // ----------------------------------------------------------------------------
@@ -1031,7 +1028,8 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdatePostInitGroupMer
 void CustomConnectivityUpdatePostInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int)
 {
     // Initialise presynaptic custom connectivity update variables
-    genInitNeuronVarCode<CustomConnectivityUpdatePostVarAdapter>(backend, env, *this, "", "num_neurons", 1);
+    genInitNeuronVarCode(CustomConnectivityUpdatePostVarAdapter::create, backend, env, *this,
+                         "", "num_neurons", 1);
 }
 
 // ----------------------------------------------------------------------------
@@ -1071,10 +1069,9 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateSparseInitGroupM
 void CustomConnectivityUpdateSparseInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int)
 {
     // Initialise custom connectivity update variables
-    genInitWUVarCode<CustomConnectivityUpdateVarAdapter>(
-        env, *this, "$(num_pre) * $(_row_stride)", 1, false,
-        [&backend](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
-        {
-            return backend.genSparseSynapseVariableRowInit(varInitEnv, handler);
-        });
+    genInitWUVarCode(CustomConnectivityUpdateVarAdapter::create, env, *this, "$(num_pre) * $(_row_stride)", 1, false,
+                     [&backend](EnvironmentExternalBase &varInitEnv, BackendBase::HandlerEnv handler)
+                     {
+                         return backend.genSparseSynapseVariableRowInit(varInitEnv, handler);
+                     });
 }

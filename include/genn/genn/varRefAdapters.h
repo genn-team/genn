@@ -25,6 +25,8 @@ public:
     // Declared virtuals 
     //------------------------------------------------------------------------
     virtual Models::Base::VarRefVec getDefs() const = 0;
+
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varRefName) const = 0;
 };
 
 //----------------------------------------------------------------------------
@@ -39,8 +41,6 @@ public:
     // Declared virtuals
     //------------------------------------------------------------------------
     virtual const std::map<std::string, Models::VarReference> &getInitialisers() const = 0;
-
-    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varRefName) const = 0;
 };
 
 //----------------------------------------------------------------------------
@@ -314,6 +314,8 @@ public:
 
     virtual const std::map<std::string, Models::WUVarReference> &getInitialisers() const override final { return m_CU.getVarReferences(); }
 
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final { return std::nullopt; }
+
     //----------------------------------------------------------------------------
     // Static API
     //----------------------------------------------------------------------------
@@ -343,6 +345,8 @@ public:
     Models::Base::VarRefVec getDefs() const override final { return m_CU.getModel()->getVarRefs(); }
 
     const std::map<std::string, Models::WUVarReference> &getInitialisers() const override final { return m_CU.getVarReferences(); }
+
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final { return std::nullopt; }
 
     //----------------------------------------------------------------------------
     // Static API

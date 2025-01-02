@@ -64,7 +64,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(EnvironmentExternalBase &env,
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalCUVarCache<CustomUpdateGroupMerged> varEnv(
-        CustomUpdateVarAdapter::create, */*this, *this, getTypeContext(), cuEnv, "", "l", false,
+        CustomUpdateVarAdapter::create, *this, *this, getTypeContext(), cuEnv, "", "l", false,
         [this, batchSize](const std::string&, CustomUpdateVarAccess d, bool)
         {
             return getVarIndex(batchSize, getVarAccessDim(d, getArchetype().getDims()), "$(id)");
@@ -215,7 +215,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(EnvironmentExternalBase
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalCUVarCache<CustomUpdateWUGroupMergedBase> varEnv(
-        CustomUpdateVarAdapter::create, *this, *this, getTypeContext(), cuEnv, "", "l", false,
+        CustomUpdateVarAdapter::createWU, *this, *this, getTypeContext(), cuEnv, "", "l", false,
         [this, batchSize](const std::string&, CustomUpdateVarAccess d, bool)
         {
             return getVarIndex(batchSize, getVarAccessDim(d, getArchetype().getDims()), "$(id_syn)");

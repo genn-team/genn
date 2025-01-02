@@ -5,6 +5,7 @@
 #include "currentSourceInternal.h"
 #include "customUpdateInternal.h"
 #include "synapseGroupInternal.h"
+#include "varAdapters.h"
 
 // GeNN code generator includes
 #include "code_generator/groupMerged.h"
