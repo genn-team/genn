@@ -1,5 +1,6 @@
 # Ignore compiled Python
 /**/*.pyc
+**/*.pyd
 
 # Ignore GNU Make files
 **/*.o
@@ -10,6 +11,8 @@
 # Ignore MSBuild/Visual Studio files
 **/*.exe
 **/*.pdb
+**/*.lib
+**/*.dll
 **/*.ilk
 **/*.suo
 **/*.sdf
@@ -29,3 +32,6 @@
 /pygenn.egg-info/
 .vscode/
 /pygenn/share/
+/.eggs/
+/.pytest_cache/
+/__pycache__/
