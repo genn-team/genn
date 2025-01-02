@@ -85,6 +85,11 @@ public:
     //! Get array associated with variable
     virtual const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime, const std::string &varName) const override final;
 
+    //----------------------------------------------------------------------------
+    // Static API
+    //----------------------------------------------------------------------------
+    static std::unique_ptr<VarAdapter> create(const CurrentSourceInternal &sg){ return std::make_unique<CurrentSourceVarAdapter>(sg); }
+
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -116,6 +121,11 @@ public:
 
     //! Get array associated with variable
     virtual const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime, const std::string &varName) const override final;
+
+    //----------------------------------------------------------------------------
+    // Static API
+    //----------------------------------------------------------------------------
+    static std::unique_ptr<VarAdapter> create(const CustomConnectivityUpdateInternal &cu){ return std::make_unique<CustomConnectivityUpdateVarAdapter>(cu); }
 
 private:
     //----------------------------------------------------------------------------
@@ -149,6 +159,11 @@ public:
     //! Get array associated with variable
     virtual const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime, const std::string &varName) const override final;
 
+    //----------------------------------------------------------------------------
+    // Static API
+    //----------------------------------------------------------------------------
+    static std::unique_ptr<VarAdapter> create(const CustomConnectivityUpdateInternal &cu){ return std::make_unique<CustomConnectivityUpdatePreVarAdapter>(cu); }
+
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -179,6 +194,11 @@ public:
     virtual VarAccessDim getVarDims(const Models::Base::Var &var) const override final { return getVarAccessDim(var.access); }
 
     virtual const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime, const std::string &varName) const override final;
+
+    //----------------------------------------------------------------------------
+    // Static API
+    //----------------------------------------------------------------------------
+    static std::unique_ptr<VarAdapter> create(const CustomConnectivityUpdateInternal &cu){ return std::make_unique<CustomConnectivityUpdatePostVarAdapter>(cu); }
 
 private:
     //----------------------------------------------------------------------------
@@ -218,6 +238,11 @@ public:
     virtual VarAccessDim getVarDims(const Models::Base::Var &var) const override final { return getVarAccessDim(var.access); }
 
     virtual const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime, const std::string &varName) const override final;
+
+    //----------------------------------------------------------------------------
+    // Static API
+    //----------------------------------------------------------------------------
+    static std::unique_ptr<VarAdapter> create(const NeuronGroupInternal &ng){ return std::make_unique<NeuronVarAdapter>(ng); }
 
 private:
     //----------------------------------------------------------------------------
@@ -427,6 +452,12 @@ public:
     }
 
     virtual const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime, const std::string &varName) const override final;
+
+    //----------------------------------------------------------------------------
+    // Static API
+    //----------------------------------------------------------------------------
+    static std::unique_ptr<CUVarAdapter> create(const CustomUpdateInternal &cu){ return std::make_unique<CustomUpdateVarAdapter>(cu); }
+    static std::unique_ptr<CUVarAdapter> createWU(const CustomUpdateWUInternal &cu){ return std::make_unique<CustomUpdateVarAdapter>(cu); }
 
 private:
     //----------------------------------------------------------------------------

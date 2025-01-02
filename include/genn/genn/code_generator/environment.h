@@ -791,157 +791,48 @@ private:
     std::unordered_map<std::string, std::tuple<Type::ResolvedType, bool, std::string, std::optional<typename G::Field>>> m_Environment;
 };
 
-
-//------------------------------------------------------------------------
-// GeNN::CodeGenerator::VarCachePolicy
-//------------------------------------------------------------------------
-//! Policy for use with EnvironmentLocalCacheBase for caching state variables
-template<typename A, typename G>
-class VarCachePolicy
-{
-public:
-    using GroupInternal = typename G::GroupInternal;
-    using AdapterDef = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
-    using AdapterAccess = typename AdapterDef::AccessType;
-    using GetIndexFn = std::function<std::string(const std::string&, AdapterAccess, bool)>;
-
-    VarCachePolicy(GetIndexFn getReadIndex, GetIndexFn getWriteIndex,
-                   bool alwaysCopyIfDelayed = true)
-    :   m_GetReadIndex(getReadIndex), m_GetWriteIndex(getWriteIndex), 
-        m_AlwaysCopyIfDelayed(alwaysCopyIfDelayed)
-    {}
-
-    VarCachePolicy(GetIndexFn getIndex, bool alwaysCopyIfDelayed = true)
-    :   m_GetReadIndex(getIndex), m_GetWriteIndex(getIndex),
-        m_AlwaysCopyIfDelayed(alwaysCopyIfDelayed)
-    {}
-
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    bool shouldAlwaysCopy(G &group, const AdapterDef &var) const
-    {
-        return A(group.getArchetype()).getNumVarDelaySlots(var.name).has_value() && m_AlwaysCopyIfDelayed;
-    }
-
-    std::string getReadIndex(G &group, const AdapterDef &var, const std::string &delaySlot) const
-    {
-        assert(delaySlot.empty());
-        return m_GetReadIndex(var.name, var.access, A(group.getArchetype()).getNumVarDelaySlots(var.name).has_value());
-    }
-
-    std::string getWriteIndex(G &group, const AdapterDef &var, const std::string &delaySlot) const
-    {
-        assert(delaySlot.empty());
-        return m_GetWriteIndex(var.name, var.access, A(group.getArchetype()).getNumVarDelaySlots(var.name).has_value());
-    }
-
-    const Runtime::ArrayBase *getArray(const Runtime::Runtime &runtime, const GroupInternal &g, const AdapterDef &var) const
-    {
-        return runtime.getArray(A(g).getTarget(), var.name);
-    }
-
-private:
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    GetIndexFn m_GetReadIndex;
-    GetIndexFn m_GetWriteIndex;
-    bool m_AlwaysCopyIfDelayed;
-};
-
-//------------------------------------------------------------------------
-// GeNN::CodeGenerator::VarRefCachePolicy
-//------------------------------------------------------------------------
-//! Policy for use with EnvironmentLocalCacheBase for caching variable references
-template<typename A, typename G>
-class VarRefCachePolicy
-{
-protected:
-    using GroupInternal = typename G::GroupInternal;
-    using AdapterDef = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
-    using GetIndexFn = std::function<std::string(const std::string&, const typename A::RefType&, const std::string&)>;
-
-    VarRefCachePolicy(GetIndexFn getReadIndex, GetIndexFn getWriteIndex)
-    :   m_GetReadIndex(getReadIndex), m_GetWriteIndex(getWriteIndex)
-    {}
-
-    VarRefCachePolicy(GetIndexFn getIndex)
-    :   m_GetReadIndex(getIndex), m_GetWriteIndex(getIndex)
-    {}
-    
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    bool shouldAlwaysCopy(G&, const AdapterDef&) const
-    {
-        // **NOTE** something else is managing the actual variables
-        // and is therefore responsible for copying between delay slots etc
-        return false;
-    }
-    
-    std::string getReadIndex(G &g, const AdapterDef &var, const std::string &delaySlot) const
-    {
-        assert(delaySlot.empty());
-        return m_GetReadIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name),
-                              delaySlot);
-    }
-
-    std::string getWriteIndex(G &g, const AdapterDef &var, const std::string &delaySlot) const
-    {
-        return m_GetWriteIndex(var.name, A(g.getArchetype()).getInitialisers().at(var.name),
-                               delaySlot);
-    }
-
-    const Runtime::ArrayBase *getArray(const Runtime::Runtime &runtime, const GroupInternal &g, const AdapterDef &var) const
-    {
-        return A(g).getInitialisers().at(var.name).getTargetArray(runtime);
-    }
-
-private:
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    GetIndexFn m_GetReadIndex;
-    GetIndexFn m_GetWriteIndex;
-};
-
 //----------------------------------------------------------------------------
-// GeNN::CodeGenerator::EnvironmentLocalVarCache
+// EnvironmentLocalVarCacheBase
 //----------------------------------------------------------------------------
-//! Pretty printing environment which caches used variables in local variables
-template<typename P, typename A, typename G, typename F = G>
-class EnvironmentLocalCacheBase : public EnvironmentExternalBase, public P
+template<typename B, typename A, typename V, typename G, typename F = G>
+class EnvironmentLocalVarCacheBase : public EnvironmentExternalBase
 {
-public:
-    using AdapterDef = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
+    using GroupInternal = typename G::GroupInternal;
+    using GetIndexFn = std::function<std::string(const std::string&, A, bool)>;
+    using CreateAdapterFn = std::function<std::unique_ptr<B>(const GroupInternal&)>;
 
-    template<typename... PolicyArgs>
-    EnvironmentLocalCacheBase(G &group, F &fieldGroup, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
-                              const std::string &fieldSuffix, const std::string &localPrefix,
-                              bool hidden, PolicyArgs&&... policyArgs)
-    :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...), m_Group(group), 
-        m_FieldGroup(fieldGroup),  m_Context(context), m_Contents(m_ContentsStream), 
-        m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix)
+public:
+    EnvironmentLocalVarCacheBase(CreateAdapterFn createAdapter, G &group, F &fieldGroup, const Type::TypeContext &context, 
+                                 EnvironmentExternalBase &enclosing, const std::string &fieldSuffix, const std::string &localPrefix,
+                                 bool hidden, GetIndexFn getReadIndex, GetIndexFn getWriteIndex, bool alwaysCopyIfDelayed = true)
+    :   EnvironmentExternalBase(enclosing), m_CreateAdapter(createAdapter), m_Group(group), 
+        m_FieldGroup(fieldGroup),  m_Context(context), m_Contents(m_ContentsStream), m_FieldSuffix(fieldSuffix), 
+        m_LocalPrefix(localPrefix), m_GetReadIndex(getReadIndex), m_GetWriteIndex(getWriteIndex), m_AlwaysCopyIfDelayed(alwaysCopyIfDelayed)
     {
         // Copy variables into variables referenced, alongside boolean
-        const auto defs = A(m_Group.get().getArchetype()).getDefs();
+        const auto defs = m_CreateAdapter(m_Group.get().getArchetype())->getDefs();
         std::transform(defs.cbegin(), defs.cend(), std::inserter(m_VariablesReferenced, m_VariablesReferenced.end()),
                        [hidden](const auto &v){ return std::make_pair(hidden ? "_" + v.name : v.name, 
                                                                       std::make_pair(false, v)); });
     }
 
-    EnvironmentLocalCacheBase(const EnvironmentLocalCacheBase&) = delete;
+    EnvironmentLocalVarCacheBase(CreateAdapterFn &createAdapter, G &group, F &fieldGroup, const Type::TypeContext &context, 
+                                 EnvironmentExternalBase &enclosing, const std::string &fieldSuffix, const std::string &localPrefix,
+                                 bool hidden, GetIndexFn getIndex, bool alwaysCopyIfDelayed = true)
+    :   EnvironmentLocalVarCacheBase(createAdapter, group, fieldGroup, context, enclosing, fieldSuffix, localPrefix, 
+                                     hidden, getIndex, getIndex, alwaysCopyIfDelayed)
+    {}
 
-    ~EnvironmentLocalCacheBase()
+    EnvironmentLocalVarCacheBase(const EnvironmentLocalVarCacheBase&) = delete;
+
+    ~EnvironmentLocalVarCacheBase()
     {
-        A archetypeAdapter(m_Group.get().getArchetype());
+        const auto archetypeAdapter = m_CreateAdapter(m_Group.get().getArchetype());
 
         // Copy definitions of variables which have been referenced into new vector or all if always copy set
-        std::vector<AdapterDef> referencedDefs;
+        std::vector<V> referencedDefs;
         for(const auto &v : m_VariablesReferenced) {
-            const bool alwaysCopy = this->shouldAlwaysCopy(m_Group.get(), v.second.second); 
-            if(alwaysCopy || v.second.first) {
+            if((archetypeAdapter->getNumVarDelaySlots(v.second.second).has_value() && m_AlwaysCopyIfDelayed) || v.second.first) {
                 referencedDefs.push_back(v.second.second);
             }
         }
@@ -955,7 +846,7 @@ public:
             m_FieldGroup.get().addField(resolvedType.createPointer(), v.name + m_FieldSuffix,
                                         [v, &group, this](auto &runtime, const typename F::GroupInternal &, size_t i)
                                         {
-                                            return this->getArray(runtime, group.getGroups().at(i), v);
+                                            return m_CreateAdapter(group.getGroups().at(i))->getTargetArray(runtime, v.name);
                                         });
 
             if(getVarAccessMode(v.access) == VarAccessMode::READ_ONLY) {
@@ -963,11 +854,13 @@ public:
             }
             getContextStream() << resolvedType.getName() << " _" << m_LocalPrefix << v.name;
 
-            // If this isn't a reduction or broadcast, read value from memory
+            // If this isn't a reduction, read value from memory
             // **NOTE** by not initialising these variables for reductions, 
             // compilers SHOULD emit a warning if user code doesn't set it to something
-            if(!(v.access & VarAccessModeAttribute::REDUCE) && !(v.access & VarAccessModeAttribute::BROADCAST)) {
-                getContextStream() << " = group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getReadIndex(m_Group.get(), v, ""), *this) << "]";
+            assert(!(v.access & VarAccessModeAttribute::BROADCAST));
+            if(!(v.access & VarAccessModeAttribute::REDUCE)) {
+                const bool varDelay = archetypeAdapter->getNumVarDelaySlots(v.name).has_value();
+                getContextStream() << " = group->" << v.name << m_FieldSuffix << "[" << printSubs(m_GetReadIndex(v.name, v.access, varDelay), *this) << "]";
             }
             getContextStream() << ";" << std::endl;
         }
@@ -977,21 +870,10 @@ public:
 
         // Loop through referenced definitions again
         for(const auto &v : referencedDefs) {
-            // If writes to this variable should be broadcast
-            const auto numVarDelaySlots = archetypeAdapter.getNumVarDelaySlots(v.name);
-            if(numVarDelaySlots && (v.access & VarAccessModeAttribute::BROADCAST)) {
-                getContextStream() << "for(int d = 0; d < " << numVarDelaySlots.value() << "; d++)";
-                {
-                    CodeStream::Scope b(getContextStream());
-                    getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getWriteIndex(m_Group.get(), v, "d"), *this) << "]";
-                    getContextStream() << " = _" << m_LocalPrefix << v.name << ";" << std::endl;
-                }
-            }
-            // Otherwise, if we should always copy variable, variable is read-write or variable is broadcast
-            else if(this->shouldAlwaysCopy(m_Group.get(), v) || (getVarAccessMode(v.access) == VarAccessMode::READ_WRITE)
-                    || (v.access & VarAccessModeAttribute::BROADCAST)) 
-            {
-                getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getWriteIndex(m_Group.get(), v, ""), *this) << "]";
+            // If we should always copy variable or variable is read-write
+            const bool varDelay = archetypeAdapter->getNumVarDelaySlots(v.name).has_value();
+            if((varDelay && m_AlwaysCopyIfDelayed) || (getVarAccessMode(v.access) == VarAccessMode::READ_WRITE)) {
+                getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(m_GetWriteIndex(v.name, v.access, varDelay), *this) << "]";
                 getContextStream() << " = _" << m_LocalPrefix << v.name << ";" << std::endl;
             }
         }
@@ -1057,6 +939,7 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
+    CreateAdapterFn m_CreateAdapter;
     std::reference_wrapper<G> m_Group;
     std::reference_wrapper<F> m_FieldGroup;
     std::reference_wrapper<const Type::TypeContext> m_Context;
@@ -1064,12 +947,192 @@ private:
     CodeStream m_Contents;
     std::string m_FieldSuffix;
     std::string m_LocalPrefix;
-    std::unordered_map<std::string, std::pair<bool, AdapterDef>> m_VariablesReferenced;
+    GetIndexFn m_GetReadIndex;
+    GetIndexFn m_GetWriteIndex;
+    bool m_AlwaysCopyIfDelayed;
+    std::unordered_map<std::string, std::pair<bool, V>> m_VariablesReferenced;
 };
 
-template<typename A, typename G, typename F = G>
-using EnvironmentLocalVarCache = EnvironmentLocalCacheBase<VarCachePolicy<A, G>, A, G, F>;
+template<typename G, typename F = G>
+using EnvironmentLocalVarCache = EnvironmentLocalVarCacheBase<VarAdapter, VarAccess, Models::Base::Var, G, F>;
 
-template<typename A, typename G, typename F = G>
-using EnvironmentLocalVarRefCache = EnvironmentLocalCacheBase<VarRefCachePolicy<A, G>, A, G, F>;
+template<typename G, typename F = G>
+using EnvironmentLocalCUVarCache = EnvironmentLocalVarCacheBase<CUVarAdapter, CustomUpdateVarAccess, Models::Base::CustomUpdateVar, G, F>;
+
+//----------------------------------------------------------------------------
+// EnvironmentLocalVarRefCacheBase
+//----------------------------------------------------------------------------
+template<typename B, typename V, typename G, typename F = G>
+class EnvironmentLocalVarRefCacheBase : public EnvironmentExternalBase
+{
+    using GroupInternal = typename G::GroupInternal;
+    using GetIndexFn = std::function<std::string(const std::string&, const V&, const std::string&)>;
+    using CreateAdapterFn = std::function<std::unique_ptr<B>(const GroupInternal&)>;
+
+public:
+    EnvironmentLocalVarRefCacheBase(CreateAdapterFn createAdapter, G &group, F &fieldGroup, const Type::TypeContext &context, 
+                                    EnvironmentExternalBase &enclosing, const std::string &fieldSuffix, const std::string &localPrefix,
+                                    bool hidden, GetIndexFn getReadIndex, GetIndexFn getWriteIndex)
+    :   EnvironmentExternalBase(enclosing), m_CreateAdapter(createAdapter), m_Group(group), 
+        m_FieldGroup(fieldGroup),  m_Context(context), m_Contents(m_ContentsStream), m_FieldSuffix(fieldSuffix), 
+        m_LocalPrefix(localPrefix), m_GetReadIndex(getReadIndex), m_GetWriteIndex(getWriteIndex)
+    {
+        // Copy variables into variables referenced, alongside boolean
+        const auto defs = m_CreateAdapter(m_Group.get().getArchetype())->getDefs();
+        std::transform(defs.cbegin(), defs.cend(), std::inserter(m_VariablesReferenced, m_VariablesReferenced.end()),
+                       [hidden](const auto &v){ return std::make_pair(hidden ? "_" + v.name : v.name, 
+                                                                      std::make_pair(false, v)); });
+    }
+
+    EnvironmentLocalVarRefCacheBase(CreateAdapterFn &createAdapter, G &group, F &fieldGroup, const Type::TypeContext &context, 
+                                    EnvironmentExternalBase &enclosing, const std::string &fieldSuffix, const std::string &localPrefix,
+                                    bool hidden, GetIndexFn getIndex)
+    :   EnvironmentLocalVarRefCacheBase(createAdapter, group, fieldGroup, context, enclosing,
+                                        fieldSuffix, localPrefix, hidden, getIndex)
+    {}
+
+    EnvironmentLocalVarRefCacheBase(const EnvironmentLocalVarRefCacheBase&) = delete;
+
+    ~EnvironmentLocalVarRefCacheBase()
+    {
+        const auto archetypeAdapter = m_CreateAdapter(m_Group.get().getArchetype());
+
+        // Copy definitions of variables which have been referenced into new vector
+        std::vector<Models::Base::VarRef> referencedDefs;
+        for(const auto &v : m_VariablesReferenced) {
+            if(v.second.first) {
+                referencedDefs.push_back(v.second.second);
+            }
+        }
+
+        // Loop through referenced definitions
+        for(const auto &v : referencedDefs) {
+            const auto resolvedType = v.type.resolve(m_Context.get());
+
+            // Add field to underlying field group
+            const auto &group = m_Group.get();
+            m_FieldGroup.get().addField(resolvedType.createPointer(), v.name + m_FieldSuffix,
+                                        [v, &group, this](auto &runtime, const typename F::GroupInternal &, size_t i)
+                                        {
+                                            return m_CreateAdapter(group.getGroups().at(i))->getInitialisers().at(v.name).getTargetArray(runtime);
+                                        });
+
+            if(getVarAccessMode(v.access) == VarAccessMode::READ_ONLY) {
+                getContextStream() << "const ";
+            }
+            getContextStream() << resolvedType.getName() << " _" << m_LocalPrefix << v.name;
+
+            // If this isn't a reduction or broadcast, read value from memory
+            // **NOTE** by not initialising these variables for reductions, 
+            // compilers SHOULD emit a warning if user code doesn't set it to something
+            if(!(v.access & VarAccessModeAttribute::REDUCE) && !(v.access & VarAccessModeAttribute::BROADCAST)) {
+                getContextStream() << " = group->" << v.name << m_FieldSuffix << "[";
+                getContextStream() << printSubs(m_GetReadIndex(var.name, archetypeAdapter->getInitialisers().at(v.name), ""), *this) << "]";
+            }
+            getContextStream() << ";" << std::endl;
+        }
+
+        // Write contents to context stream
+        getContextStream() << m_ContentsStream.str();
+
+        // Loop through referenced definitions again
+        for(const auto &v : referencedDefs) {
+            // If writes to this variable should be broadcast
+            const auto numVarDelaySlots = archetypeAdapter->getNumVarDelaySlots(v.name);
+            const auto &init = archetypeAdapter->getInitialisers().at(v.name);
+            if(numVarDelaySlots && (v.access & VarAccessModeAttribute::BROADCAST)) {
+                getContextStream() << "for(int d = 0; d < " << numVarDelaySlots.value() << "; d++)";
+                {
+                    CodeStream::Scope b(getContextStream());
+                    getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(m_GetWriteIndex(var.name, init, "d"), *this) << "]";
+                    getContextStream() << " = _" << m_LocalPrefix << v.name << ";" << std::endl;
+                }
+            }
+            // Otherwise, if variable is read-write or broadcast
+            else if((getVarAccessMode(v.access) == VarAccessMode::READ_WRITE) || (v.access & VarAccessModeAttribute::BROADCAST)) {
+                getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(m_GetWriteIndex(var.name, init, ""), *this) << "]";
+                getContextStream() << " = _" << m_LocalPrefix << v.name << ";" << std::endl;
+            }
+        }
+    }
+
+    //------------------------------------------------------------------------
+    // TypeChecker::EnvironmentBase virtuals
+    //------------------------------------------------------------------------
+    virtual std::vector<Type::ResolvedType> getTypes(const Transpiler::Token &name, Transpiler::ErrorHandlerBase &errorHandler) final
+    {
+        // If name isn't found in environment
+        auto var = m_VariablesReferenced.find(name.lexeme);
+        if (var == m_VariablesReferenced.end()) {
+            return getContextTypes(name, errorHandler);
+        }
+        // Otherwise
+        else {
+            // Set flag to indicate that variable has been referenced
+            var->second.first = true;
+
+            // Resolve type, add qualifier if required and return
+            const auto resolvedType = var->second.second.type.resolve(m_Context.get());
+            const auto access = var->second.second.access;
+            if(access & VarAccessModeAttribute::READ_ONLY) {
+                return {resolvedType.addConst()};
+            }
+            else if((access & VarAccessModeAttribute::REDUCE) || (access & VarAccessModeAttribute::BROADCAST)) {
+                return {resolvedType.addWriteOnly()};
+            }
+            else {
+                return {resolvedType};
+            }
+        }
+    }
+
+    //------------------------------------------------------------------------
+    // PrettyPrinter::EnvironmentBase virtuals
+    //------------------------------------------------------------------------
+    virtual std::string getName(const std::string &name, std::optional<Type::ResolvedType> type = std::nullopt) final
+    {
+        // If variable with this name isn't found, try and get name from context
+        auto var = m_VariablesReferenced.find(name);
+        if(var == m_VariablesReferenced.end()) {
+            return getContextName(name, type);
+        }
+        // Otherwise
+        else {
+            // Set flag to indicate that variable has been referenced
+            var->second.first = true;
+
+            // Add underscore and local prefix to variable name
+            // **NOTE** we use variable name here not, 'name' which could have an underscore
+            return "_" + m_LocalPrefix + var->second.second.name;
+        }
+    }
+
+    virtual CodeStream &getStream() final
+    {
+        return m_Contents;
+    }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    CreateAdapterFn m_CreateAdapter;
+    std::reference_wrapper<G> m_Group;
+    std::reference_wrapper<F> m_FieldGroup;
+    std::reference_wrapper<const Type::TypeContext> m_Context;
+    std::ostringstream m_ContentsStream;
+    CodeStream m_Contents;
+    std::string m_FieldSuffix;
+    std::string m_LocalPrefix;
+    GetIndexFn m_GetReadIndex;
+    GetIndexFn m_GetWriteIndex;
+    std::unordered_map<std::string, std::pair<bool, Models::Base::VarRef>> m_VariablesReferenced;
+};
+
+template<typename G, typename F = G>
+using EnvironmentLocalVarRefCache = EnvironmentLocalVarRefCacheBase<VarRefAdapter, Models::VarReference, G, F>;
+
+template<typename G, typename F = G>
+using EnvironmentLocalWUVarRefCache = EnvironmentLocalVarRefCacheBase<WUVarRefAdapter, Models::WUVarReference, G, F>;
+
 }   // namespace GeNN::CodeGenerator

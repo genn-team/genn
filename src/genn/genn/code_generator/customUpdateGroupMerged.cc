@@ -63,16 +63,16 @@ void CustomUpdateGroupMerged::generateCustomUpdate(EnvironmentExternalBase &env,
               std::to_string((getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1));
 
     // Create an environment which caches variables in local variables if they are accessed
-    EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateGroupMerged> varEnv(
-        *this, *this, getTypeContext(), cuEnv, "", "l", false,
+    EnvironmentLocalCUVarCache<CustomUpdateGroupMerged> varEnv(
+        CustomUpdateVarAdapter::create, */*this, *this, getTypeContext(), cuEnv, "", "l", false,
         [this, batchSize](const std::string&, CustomUpdateVarAccess d, bool)
         {
             return getVarIndex(batchSize, getVarAccessDim(d, getArchetype().getDims()), "$(id)");
         });
     
     // Create an environment which caches variable references in local variables if they are accessed
-    EnvironmentLocalVarRefCache<CustomUpdateVarRefAdapter, CustomUpdateGroupMerged> varRefEnv(
-        *this, *this, getTypeContext(), varEnv, "", "l", false,
+    EnvironmentLocalVarRefCache<CustomUpdateGroupMerged> varRefEnv(
+        CustomUpdateVarRefAdapter::create, *this, *this, getTypeContext(), varEnv, "", "l", false, 
         [this, batchSize](const std::string&, const Models::VarReference &v, const std::string &delaySlot)
         {
             return getVarRefIndex(v.getDelayNeuronGroup(), v.getDenDelaySynapseGroup(),
@@ -214,16 +214,16 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(EnvironmentExternalBase
               std::to_string((getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1));
 
     // Create an environment which caches variables in local variables if they are accessed
-    EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateWUGroupMergedBase> varEnv(
-        *this, *this, getTypeContext(), cuEnv, "", "l", false,
+    EnvironmentLocalCUVarCache<CustomUpdateWUGroupMergedBase> varEnv(
+        CustomUpdateVarAdapter::create, *this, *this, getTypeContext(), cuEnv, "", "l", false,
         [this, batchSize](const std::string&, CustomUpdateVarAccess d, bool)
         {
             return getVarIndex(batchSize, getVarAccessDim(d, getArchetype().getDims()), "$(id_syn)");
         });
     
     // Create an environment which caches variable references in local variables if they are accessed
-    EnvironmentLocalVarRefCache<CustomUpdateWUVarRefAdapter, CustomUpdateWUGroupMergedBase> varRefEnv(
-        *this, *this, getTypeContext(), varEnv, "", "l", false,
+    EnvironmentLocalWUVarRefCache<CustomUpdateWUGroupMergedBase> varRefEnv(
+        CustomUpdateWUVarRefAdapter::create, *this, *this, getTypeContext(), varEnv, "", "l", false,
         [this, batchSize](const std::string&, const Models::WUVarReference &v, const std::string &delaySlot)
         {
             assert(delaySlot.empty());
@@ -246,7 +246,6 @@ std::string CustomUpdateWUGroupMergedBase::getVarIndex(unsigned int batchSize, V
 std::string CustomUpdateWUGroupMergedBase::getVarRefIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const
 {
     // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
-    
     return (((varDims & VarAccessDim::BATCH) && batchSize > 1) ? "$(_batch_offset) + " : "") + index;
 }
 

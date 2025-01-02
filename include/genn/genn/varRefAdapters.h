@@ -61,6 +61,13 @@ public:
 
     virtual const std::map<std::string, Models::VarReference> &getInitialisers() const final override { return m_CS.getNeuronVarReferences(); }
 
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final{ throw std::runtime_error("Not implemented"); }
+
+    //----------------------------------------------------------------------------
+    // Static API
+    //----------------------------------------------------------------------------
+    static std::unique_ptr<VarRefAdapter> create(const CurrentSourceInternal &cs){ return std::make_unique<CurrentSourceNeuronVarRefAdapter>(cs); }
+
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -88,6 +95,11 @@ public:
 
     virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final{ throw std::runtime_error("Not implemented"); }
 
+    //----------------------------------------------------------------------------
+    // Static API
+    //----------------------------------------------------------------------------
+    static std::unique_ptr<VarRefAdapter> create(const CustomConnectivityUpdateInternal &cu){ return std::make_unique<CustomConnectivityUpdatePreVarRefAdapter>(cu); }
+
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -114,6 +126,11 @@ public:
     virtual const std::map<std::string, Models::VarReference> &getInitialisers() const override final { return m_CU.getPostVarReferences(); }
 
     virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final{ throw std::runtime_error("Not implemented"); }
+
+    //----------------------------------------------------------------------------
+    // Static API
+    //----------------------------------------------------------------------------
+    static std::unique_ptr<VarRefAdapter> create(const CustomConnectivityUpdateInternal &cu){ return std::make_unique<CustomConnectivityUpdatePostVarRefAdapter>(cu); }
 
 private:
     //----------------------------------------------------------------------------
@@ -156,6 +173,11 @@ public:
         }
     }
 
+    //----------------------------------------------------------------------------
+    // Static API
+    //----------------------------------------------------------------------------
+    static std::unique_ptr<VarRefAdapter> create(const CustomUpdateInternal &cu){ return std::make_unique<CustomUpdateVarRefAdapter>(cu); }
+
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -163,69 +185,6 @@ private:
     const CustomUpdateInternal &m_CU;
 };
 
-//----------------------------------------------------------------------------
-// GeNN::WUVarRefAdapter
-//----------------------------------------------------------------------------
-class WUVarRefAdapter : public VarRefAdapterBase
-{
-public:
-    virtual ~WUVarRefAdapter() = default;
-
-    //------------------------------------------------------------------------
-    // Declared virtuals
-    //------------------------------------------------------------------------
-    virtual const std::map<std::string, Models::WUVarReference> &getInitialisers() const = 0;
-};
-
-//----------------------------------------------------------------------------
-// CustomConnectivityUpdateVarRefAdapter
-//----------------------------------------------------------------------------
-class CustomConnectivityUpdateVarRefAdapter : public WUVarRefAdapter
-{
-public:
-    CustomConnectivityUpdateVarRefAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
-    {}
-
-    using RefType = Models::WUVarReference;
-
-    //----------------------------------------------------------------------------
-    // WUVarRefAdapter virtuals
-    //----------------------------------------------------------------------------
-    virtual Models::Base::VarRefVec getDefs() const override final { return m_CU.getModel()->getVarRefs(); }
-
-    virtual const std::map<std::string, Models::WUVarReference> &getInitialisers() const override final { return m_CU.getVarReferences(); }
-
-private:
-    //----------------------------------------------------------------------------
-    // Members
-    //----------------------------------------------------------------------------
-    const CustomConnectivityUpdateInternal &m_CU;
-};
-
-//----------------------------------------------------------------------------
-// CustomUpdateWUVarRefAdapter
-//----------------------------------------------------------------------------
-class CustomUpdateWUVarRefAdapter : public WUVarRefAdapter
-{
-public:
-    CustomUpdateWUVarRefAdapter(const CustomUpdateWUInternal &cu) : m_CU(cu)
-    {}
-
-    using RefType = Models::WUVarReference;
-
-    //----------------------------------------------------------------------------
-    // WUVarRefAdapter virtuals
-    //----------------------------------------------------------------------------
-    Models::Base::VarRefVec getDefs() const override final { return m_CU.getModel()->getVarRefs(); }
-
-    const std::map<std::string, Models::WUVarReference> &getInitialisers() const override final { return m_CU.getVarReferences(); }
-
-private:
-    //----------------------------------------------------------------------------
-    // Members
-    //----------------------------------------------------------------------------
-    const CustomUpdateWUInternal &m_CU;
-};
 
 //----------------------------------------------------------------------------
 // SynapsePSMNeuronVarRefAdapter
@@ -321,5 +280,79 @@ private:
     // Members
     //----------------------------------------------------------------------------
     const SynapseGroupInternal &m_SG;
+};
+
+//----------------------------------------------------------------------------
+// GeNN::WUVarRefAdapter
+//----------------------------------------------------------------------------
+class WUVarRefAdapter : public VarRefAdapterBase
+{
+public:
+    virtual ~WUVarRefAdapter() = default;
+
+    //------------------------------------------------------------------------
+    // Declared virtuals
+    //------------------------------------------------------------------------
+    virtual const std::map<std::string, Models::WUVarReference> &getInitialisers() const = 0;
+};
+
+//----------------------------------------------------------------------------
+// CustomConnectivityUpdateVarRefAdapter
+//----------------------------------------------------------------------------
+class CustomConnectivityUpdateVarRefAdapter : public WUVarRefAdapter
+{
+public:
+    CustomConnectivityUpdateVarRefAdapter(const CustomConnectivityUpdateInternal &cu) : m_CU(cu)
+    {}
+
+    using RefType = Models::WUVarReference;
+
+    //----------------------------------------------------------------------------
+    // WUVarRefAdapter virtuals
+    //----------------------------------------------------------------------------
+    virtual Models::Base::VarRefVec getDefs() const override final { return m_CU.getModel()->getVarRefs(); }
+
+    virtual const std::map<std::string, Models::WUVarReference> &getInitialisers() const override final { return m_CU.getVarReferences(); }
+
+    //----------------------------------------------------------------------------
+    // Static API
+    //----------------------------------------------------------------------------
+    static std::unique_ptr<WUVarRefAdapter> create(const CustomConnectivityUpdateInternal &cu){ return std::make_unique<CustomConnectivityUpdateVarRefAdapter>(cu); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CustomConnectivityUpdateInternal &m_CU;
+};
+
+//----------------------------------------------------------------------------
+// CustomUpdateWUVarRefAdapter
+//----------------------------------------------------------------------------
+class CustomUpdateWUVarRefAdapter : public WUVarRefAdapter
+{
+public:
+    CustomUpdateWUVarRefAdapter(const CustomUpdateWUInternal &cu) : m_CU(cu)
+    {}
+
+    using RefType = Models::WUVarReference;
+
+    //----------------------------------------------------------------------------
+    // WUVarRefAdapter virtuals
+    //----------------------------------------------------------------------------
+    Models::Base::VarRefVec getDefs() const override final { return m_CU.getModel()->getVarRefs(); }
+
+    const std::map<std::string, Models::WUVarReference> &getInitialisers() const override final { return m_CU.getVarReferences(); }
+
+    //----------------------------------------------------------------------------
+    // Static API
+    //----------------------------------------------------------------------------
+    static std::unique_ptr<WUVarRefAdapter> create(const CustomUpdateWUInternal &cu){ return std::make_unique<CustomUpdateWUVarRefAdapter>(cu); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const CustomUpdateWUInternal &m_CU;
 };
 }
