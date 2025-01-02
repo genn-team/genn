@@ -1,7 +1,6 @@
 #pragma once
 
 // GeNN includes
-#include "adapters.h"
 #include "customUpdate.h"
 #include "synapseGroupInternal.h"
 
@@ -41,47 +40,6 @@ public:
     using CustomUpdate::isNeuronReduction;
 };
 
-//----------------------------------------------------------------------------
-// CustomUpdateVarRefAdapter
-//----------------------------------------------------------------------------
-class CustomUpdateVarRefAdapter : public VarRefAdapter
-{
-public:
-    CustomUpdateVarRefAdapter(const CustomUpdateInternal &cu) : m_CU(cu)
-    {}
-
-    using RefType = Models::VarReference;
-
-    //----------------------------------------------------------------------------
-    // VarRefAdapter virtuals
-    //----------------------------------------------------------------------------
-    Models::Base::VarRefVec getDefs() const override final { return m_CU.getModel()->getVarRefs(); }
-
-    const std::map<std::string, Models::VarReference> &getInitialisers() const override final { return m_CU.getVarReferences(); }
-
-    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final
-    {
-        const auto &varRef = m_CU.getVarReferences().at(varName);
-        const auto *delayNeuronGroup = varRef.getDelayNeuronGroup();
-        const auto *denDelaySynapseGroup = varRef.getDenDelaySynapseGroup();
-        if(delayNeuronGroup) {
-            return delayNeuronGroup->getNumDelaySlots();
-        }
-        else if(denDelaySynapseGroup) {
-            return denDelaySynapseGroup->getMaxDendriticDelayTimesteps();
-        }
-        else {
-            return std::nullopt;
-        }
-    }
-
-private:
-    //----------------------------------------------------------------------------
-    // Members
-    //----------------------------------------------------------------------------
-    const CustomUpdateInternal &m_CU;
-};
-
 //------------------------------------------------------------------------
 // CustomUpdateWUInternal
 //------------------------------------------------------------------------
@@ -116,30 +74,5 @@ public:
     using CustomUpdateWU::getReferencedCustomUpdates;
     using CustomUpdateWU::isBatchReduction;
     using CustomUpdateWU::isTransposeOperation;
-};
-
-//----------------------------------------------------------------------------
-// CustomUpdateWUVarRefAdapter
-//----------------------------------------------------------------------------
-class CustomUpdateWUVarRefAdapter : public WUVarRefAdapter
-{
-public:
-    CustomUpdateWUVarRefAdapter(const CustomUpdateWUInternal &cu) : m_CU(cu)
-    {}
-
-    using RefType = Models::WUVarReference;
-
-    //----------------------------------------------------------------------------
-    // WUVarRefAdapter virtuals
-    //----------------------------------------------------------------------------
-    Models::Base::VarRefVec getDefs() const override final { return m_CU.getModel()->getVarRefs(); }
-
-    const std::map<std::string, Models::WUVarReference> &getInitialisers() const override final { return m_CU.getVarReferences(); }
-
-private:
-    //----------------------------------------------------------------------------
-    // Members
-    //----------------------------------------------------------------------------
-    const CustomUpdateWUInternal &m_CU;
 };
 }   // namespace GeNN

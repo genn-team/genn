@@ -47,6 +47,7 @@
     <ClCompile Include="code_generator\lazyString.cc" />
     <ClCompile Include="runtime\runtime.cc" />
     <ClCompile Include="code_generator\backendCLike.cc" />
+    <ClCompile Include="varAdapters.cc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\include\genn\genn\backendExport.h" />
@@ -111,6 +112,9 @@
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\lazyString.h" />
     <ClInclude Include="..\..\..\include\genn\genn\runtime\runtime.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\backendCLike.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\varAdapters.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\varRefAdapters.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\egpAdapters.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\header.src" />

@@ -28,7 +28,8 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     synEnv.addExtraGlobalParams(wu->getExtraGlobalParams());
 
     // Add referenced presynaptic neuron variables
-    synEnv.template addVarRefs<SynapseWUPreNeuronVarRefAdapter>(
+    synEnv.addVarRefs(
+        SynapseWUPreNeuronVarRefAdapter::create,
         [&sg, batchSize](VarAccessMode, const Models::VarReference &v)
         {
             return sg.getPreVarIndex(v.getDelayNeuronGroup() != nullptr, batchSize, 
@@ -63,7 +64,8 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     }
 
     // Substitute names of preynaptic weight update variables
-    synEnv.template addVars<SynapseWUPreVarAdapter>(
+    synEnv.addVars(
+        SynapseWUPreVarAdapter::create,
         [&sg, batchSize](VarAccess a, const std::string&) 
         { 
             return sg.getPreVarIndex(sg.getArchetype().getAxonalDelaySteps() != 0, batchSize, getVarAccessDim(a), "$(id_pre)");
@@ -139,7 +141,8 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     
     // If weights are individual, substitute variables for values stored in global memory
     if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-        synEnv.template addVars<SynapseWUVarAdapter>(
+        synEnv.addVars(
+            SynapseWUVarAdapter::create,
             [&sg, batchSize](VarAccess a, const std::string&) 
             { 
                 return sg.getSynVarIndex(batchSize, getVarAccessDim(a), "$(id_syn)");
@@ -160,8 +163,8 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
                     // Substitute in parameters and derived parameters for initialising variables
                     // **THINK** synEnv has quite a lot of unwanted stuff at t
                     EnvironmentGroupMergedField<G> varInitEnv(synEnv, sg);
-                    varInitEnv.template addVarInitParams<SynapseWUVarAdapter>(var.name);
-                    varInitEnv.template addVarInitDerivedParams<SynapseWUVarAdapter>(var.name);
+                    varInitEnv.addVarInitParams(SynapseWUVarAdapter::create, var.name);
+                    varInitEnv.addVarInitDerivedParams(SynapseWUVarAdapter::create, var.name);
                     varInitEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), var.name);
 
                     // Add read-write environment entry for variable
@@ -182,7 +185,7 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
         assert(!sg.getArchetype().getKernelSize().empty());
 
         // Add hidden fields with pointers to weight update model variables
-        synEnv.template addVarPointers<SynapseWUVarAdapter>("", true);
+        synEnv.addVarPointers(SynapseWUVarAdapter::create, "", true);
 
         // Loop through weight update model variables
         for(const auto &v : sg.getArchetype().getWUInitialiser().getSnippet()->getVars()) {

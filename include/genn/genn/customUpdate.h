@@ -6,7 +6,6 @@
 #include <vector>
 
 // GeNN includes
-#include "adapters.h"
 #include "gennExport.h"
 #include "gennUtils.h"
 #include "customUpdateModels.h"
@@ -212,64 +211,6 @@ private:
 
     //! Dimensions of this custom update
     VarAccessDim m_Dims;
-};
-
-//----------------------------------------------------------------------------
-// CustomUpdateVarAdapter
-//----------------------------------------------------------------------------
-class CustomUpdateVarAdapter : public CUVarAdapter
-{
-public:
-    CustomUpdateVarAdapter(const CustomUpdateBase &cu) : m_CU(cu)
-    {}
-
-    //----------------------------------------------------------------------------
-    // VarAdapter virtuals
-    //----------------------------------------------------------------------------
-    virtual VarLocation getLoc(const std::string &varName) const override final { return m_CU.getVarLocation(varName); }
-
-    virtual std::vector<Models::Base::CustomUpdateVar> getDefs() const override final { return m_CU.getModel()->getVars(); }
-
-    virtual const std::map<std::string, InitVarSnippet::Init> &getInitialisers() const override final { return m_CU.getVarInitialisers(); }
-
-    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const override final { return std::nullopt; }
-    
-    virtual VarAccessDim getVarDims(const Models::Base::CustomUpdateVar &var) const override final
-    { 
-        return getVarAccessDim(var.access, m_CU.getDims());
-    }
-
-    // Public API
-    const CustomUpdateBase &getTarget() const{ return m_CU; }
-
-private:
-    //----------------------------------------------------------------------------
-    // Members
-    //----------------------------------------------------------------------------
-    const CustomUpdateBase &m_CU;
-};
-
-//----------------------------------------------------------------------------
-// CustomUpdateEGPAdapter
-//----------------------------------------------------------------------------
-class CustomUpdateEGPAdapter : public EGPAdapter
-{
-public:
-    CustomUpdateEGPAdapter(const CustomUpdateBase &cu) : m_CU(cu)
-    {}
-
-    //----------------------------------------------------------------------------
-    // EGPAdapter virtuals
-    //----------------------------------------------------------------------------
-    virtual VarLocation getLoc(const std::string &varName) const override final { return m_CU.getExtraGlobalParamLocation(varName); }
-
-    virtual Snippet::Base::EGPVec getDefs() const override final { return m_CU.getModel()->getExtraGlobalParams(); }
-
-private:
-    //----------------------------------------------------------------------------
-    // Members
-    //----------------------------------------------------------------------------
-    const CustomUpdateBase &m_CU;
 };
 
 //------------------------------------------------------------------------

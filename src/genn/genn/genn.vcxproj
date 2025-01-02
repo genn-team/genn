@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="varAdapters.cc" />
     <ClCompile Include="code_generator\backendBase.cc" />
     <ClCompile Include="code_generator\backendCLike.cc" />
     <ClCompile Include="code_generator\backendSIMT.cc" />
@@ -70,6 +71,8 @@
     <None Include="src\header.src" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\include\genn\genn\egpAdapters.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\varAdapters.h" />
     <ClInclude Include="..\..\..\include\genn\genn\backendExport.h" />
     <ClInclude Include="..\..\..\include\genn\genn\binomial.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\backendBase.h" />
@@ -131,6 +134,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\type.h" />
     <ClInclude Include="..\..\..\include\genn\genn\varAccess.h" />
     <ClInclude Include="..\..\..\include\genn\genn\varLocation.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\varRefAdapters.h" />
     <ClInclude Include="..\..\..\include\genn\genn\weightUpdateModels.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

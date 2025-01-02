@@ -7,9 +7,12 @@
 #include <variant>
 
 // GeNN includes
+#include "egpAdapters.h"
 #include "gennExport.h"
 #include "gennUtils.h"
 #include "varAccess.h"
+#include "varAdapters.h"
+#include "varRefAdapters.h"
 #include "type.h"
 
 // GeNN code generator includes
@@ -412,15 +415,17 @@ class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<Enviro
     using IsDynamicFn = bool (GroupInternal::*)(const std::string&) const;
     using IsVarInitHeterogeneousFn = bool (G::*)(const std::string&, const std::string&) const;
     using GetParamValuesFn = const std::map<std::string, Type::NumericValue> &(GroupInternal::*)(void) const;
+    using CreateVarAdapterFn = std::function<std::unique_ptr<VarAdapter>(const GroupInternal&)>;
+    using CreateVarRefAdapterFn = std::function<std::unique_ptr<VarRefAdapter>(const GroupInternal&)>;
 
-    template<typename A>
-    using AdapterDef = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
+    //template<typename A>
+    //using AdapterDef = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
 
-    template<typename A>
-    using GetVarIndexFn = std::function<std::string(typename AdapterDef<A>::AccessType, const std::string&)>;
-
-    template<typename A>
-    using GetVarRefIndexFn = std::function<std::string(VarAccessMode, const typename A::RefType&)>;
+    
+    using GetVarIndexFn = std::function<std::string(VarAccess, const std::string&)>;
+    using GetCUVarIndexFn = std::function<std::string(CustomUpdateVarAccess, const std::string&)>;
+    using GetVarRefIndexFn = std::function<std::string(VarAccessMode, const Models::VarReference&)>;
+    using GetWUVarRefIndexFn = std::function<std::string(VarAccessMode, const Models::VarReference&)>;
 
     template<typename I>
     using GetInitialiserFn = const I &(GroupExternal::*)(void) const;
@@ -628,107 +633,100 @@ public:
         }
     }
 
-    template<typename A>
-    void addVarInitParams(const std::string &varName, const std::string &fieldSuffix = "")
+    void addVarInitParams(CreateVarAdapterFn a, const std::string &varName, const std::string &fieldSuffix = "")
     {
         // Loop through parameters
-        const auto &initialiser = A(this->getGroup().getArchetype()).getInitialisers().at(varName);
+        const auto &initialiser = a(this->getGroup().getArchetype())->getInitialisers().at(varName);
         const auto *snippet = initialiser.getSnippet();
         for(const auto &p : snippet->getParams()) {
             // If parameter is heterogeneous, add field
             const auto resolvedType = p.type.resolve(this->getGroup().getTypeContext());
             assert(!resolvedType.isPointer());
             addField(resolvedType.addConst(), p.name, resolvedType, p.name + varName + fieldSuffix,
-                        [p, varName](const auto &g, size_t)
+                        [a, p, varName](const auto &g, size_t)
                         {
-                            return A(g).getInitialisers().at(varName).getParams().at(p.name);
+                            return a(g)->getInitialisers().at(varName).getParams().at(p.name);
                         });
         }
     }
 
-    template<typename A>
-    void addVarInitDerivedParams(const std::string &varName, const std::string &fieldSuffix = "")
+    void addVarInitDerivedParams(CreateVarAdapterFn a, const std::string &varName, const std::string &fieldSuffix = "")
     {
         // Loop through derived parameters
-        const auto &initialiser = A(this->getGroup().getArchetype()).getInitialisers().at(varName);
+        const auto &initialiser = a(this->getGroup().getArchetype())->getInitialisers().at(varName);
         const auto *snippet = initialiser.getSnippet();
         for(const auto &d : snippet->getDerivedParams()) {
             // If derived parameter is heterogeneous, add scalar field
             const auto resolvedType = d.type.resolve(this->getGroup().getTypeContext());
             assert(!resolvedType.isPointer());
             addField(resolvedType.addConst(), d.name, resolvedType, d.name + varName + fieldSuffix,
-                        [d, varName](const auto &g, size_t)
-                        {
-                            return A(g).getInitialisers().at(varName).getDerivedParams().at(d.name);
-                        });
+                     [d, varName](const auto &g, size_t)
+                     {
+                         return a(g)->getInitialisers().at(varName).getDerivedParams().at(d.name);
+                     });
         }
     }
 
-    template<typename A>
-    void addVars(GetVarIndexFn<A> getIndexFn, const std::string &fieldSuffix = "",
+    void addVars(CreateVarAdapterFn a, GetVarIndexFn getIndexFn, const std::string &fieldSuffix = "",
                  bool readOnly = false, bool hidden = false)
     {
         // Loop through variables
         // Loop through variables
         // **TODO** get default access from adaptor
-        const A archetypeAdaptor(this->getGroup().getArchetype());
-        for(const auto &v : archetypeAdaptor.getDefs()) {
+        const auto archetypeAdaptor = a(this->getGroup().getArchetype());
+        for(const auto &v : archetypeAdaptor->getDefs()) {
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
             const auto qualifiedType = (readOnly || (getVarAccessMode(v.access) & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
             const auto name = hidden ? ("_" + v.name) : v.name;
             addField(qualifiedType, name,
                      resolvedType.createPointer(), v.name + fieldSuffix, 
-                     [v](auto &runtime, const auto &g, size_t) 
+                     [a, v](auto &runtime, const auto &g, size_t) 
                      { 
-                         return runtime.getArray(A(g).getTarget(), v.name);
+                         return a(g)->getTargetArray(v.name, runtime);
                      },
                      getIndexFn(v.access, v.name));
         }
     }
 
-    template<typename A>
-    void addVars(const std::string &indexSuffix, const std::string &fieldSuffix = "",
+    void addVars(CreateVarAdapterFn a, const std::string &indexSuffix, const std::string &fieldSuffix = "",
                  bool readOnly = false, bool hidden = false)
     {
-        addVars<A>([&indexSuffix](typename AdapterDef<A>::AccessType, const std::string &) { return indexSuffix; }, 
-                   fieldSuffix, readOnly, hidden);
+        addVars(a, [&indexSuffix](VarAccess, const std::string &) { return indexSuffix; }, 
+                fieldSuffix, readOnly, hidden);
     }
 
-    template<typename A>
-    void addVarRefs(GetVarRefIndexFn<A> getIndexFn,  const std::string &fieldSuffix = "",
+    void addVarRefs(CreateVarRefAdapterFn a, GetVarRefIndexFn getIndexFn,  const std::string &fieldSuffix = "",
                     bool readOnly = false, bool hidden = false)
     {
         // Loop through variable references
-        const A archetypeAdaptor(this->getGroup().getArchetype());
-        for(const auto &v : archetypeAdaptor.getDefs()) {
+        const auto archetypeAdaptor = a(this->getGroup().getArchetype());
+        for(const auto &v : archetypeAdaptor->getDefs()) {
             // If variable access is read-only, qualify type with const
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
             const auto qualifiedType = (readOnly || (v.access & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
             const auto name = hidden ? ("_" + v.name) : v.name;
             addField(qualifiedType, name,
                      resolvedType.createPointer(), v.name + fieldSuffix,
-                     [v](auto &runtime, const auto &g, size_t) 
+                     [a, v](auto &runtime, const auto &g, size_t) 
                      { 
-                         return A(g).getInitialisers().at(v.name).getTargetArray(runtime); 
+                         return a(g)->getInitialisers().at(v.name).getTargetArray(runtime); 
                      },
-                     getIndexFn(v.access, archetypeAdaptor.getInitialisers().at(v.name)));
+                     getIndexFn(v.access, archetypeAdaptor->getInitialisers().at(v.name)));
         }
     }
 
-    template<typename A>
-    void addVarRefs(const std::string &indexSuffix, const std::string &fieldSuffix = "",
+    void addVarRefs(CreateVarRefAdapterFn a, const std::string &indexSuffix, const std::string &fieldSuffix = "",
                     bool readOnly = false, bool hidden = false)
     {
-        addVarRefs<A>([&indexSuffix](VarAccess, auto&) { return indexSuffix; }, 
-                      fieldSuffix, readOnly, hidden);
+        addVarRefs(a, [&indexSuffix](VarAccess, auto&) { return indexSuffix; }, 
+                   fieldSuffix, readOnly, hidden);
     }
 
-    template<typename A>
-    void addVarPointers(const std::string &fieldSuffix = "", bool hidden = false)
+    void addVarPointers(CreateVarAdapterFn a, const std::string &fieldSuffix = "", bool hidden = false)
     {
         // Loop through variables and add private pointer field 
-        const A archetypeAdaptor(this->getGroup().getArchetype());
-        for(const auto &v : archetypeAdaptor.getDefs()) {
+        const auto archetypeAdaptor = a(this->getGroup().getArchetype());
+        for(const auto &v : archetypeAdaptor->getDefs()) {
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
             const auto name = hidden ? ("_" + v.name) : v.name;
             addField(resolvedType.createPointer(), name, v.name + fieldSuffix,
@@ -739,28 +737,26 @@ public:
         }
     }
 
-    template<typename A>
-    void addVarRefPointers(bool hidden = false)
+    void addVarRefPointers(CreateVarRefAdapterFn a, bool hidden = false)
     {
         // Loop through variable references and add private pointer field 
-        const A archetypeAdaptor(this->getGroup().getArchetype());
-        for(const auto &v : archetypeAdaptor.getDefs()) {
+        const auto archetypeAdaptor = a(this->getGroup().getArchetype());
+        for(const auto &v : archetypeAdaptor->getDefs()) {
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
             const auto name = hidden ? ("_" + v.name) : v.name;
             addField(resolvedType.createPointer(), name, v.name,
-                     [v](auto &runtime, const auto &g, size_t) 
+                     [a, v](auto &runtime, const auto &g, size_t) 
                      { 
-                         return A(g).getInitialisers().at(v.name).getTargetArray(runtime);
+                         return a(g)->getInitialisers().at(v.name).getTargetArray(runtime);
                      });
         }
     }
 
-    template<typename A>
-    void addVarExposeAliases(bool readOnly = false)
+    void addVarExposeAliases(CreateVarAdapterFn a, bool readOnly = false)
     {
         // Loop through variables and add unhiding aliases
-        const A archetypeAdaptor(this->getGroup().getArchetype());
-        for(const auto &v : archetypeAdaptor.getDefs()) {
+        const auto archetypeAdaptor = a(this->getGroup().getArchetype());
+        for(const auto &v : archetypeAdaptor->getDefs()) {
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
             const auto qualifiedType = (readOnly || (getVarAccessMode(v.access) & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
             add(qualifiedType, v.name, "$(_" + v.name + ")");
@@ -768,11 +764,10 @@ public:
     }
 
 
-    template<typename A>
-    void addLocalVarRefs(bool readOnly = false)
+    void addLocalVarRefs(CreateVarRefAdapterFn a, bool readOnly = false)
     {
         // Loop through variable references
-        const A archetypeAdaptor(this->getGroup().getArchetype());
+        const auto archetypeAdaptor = a(this->getGroup().getArchetype());
         for(const auto &v : archetypeAdaptor.getDefs()) {
             // If variable access is read-only, qualify type with const
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
@@ -781,7 +776,7 @@ public:
             // Get ARCHETYPE variable reference
             // **NOTE** this means all local variable references
             // in merged group must point to same variable
-            const auto varRef = archetypeAdaptor.getInitialisers().at(v.name);
+            const auto varRef = archetypeAdaptor->getInitialisers().at(v.name);
 
             // Add alias from variable reference name to hidden variable name
             add(qualifiedType, v.name, "$(_" + varRef.getVarName() + ")");
