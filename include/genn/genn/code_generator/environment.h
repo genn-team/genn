@@ -897,10 +897,11 @@ public:
 
             // Add field to underlying field group
             const auto &group = m_Group.get();
+            auto createAdapter = m_CreateAdapter;
             m_FieldGroup.get().addField(resolvedType.createPointer(), v.name + m_FieldSuffix,
-                                        [v, &group, this](auto &runtime, const typename F::GroupInternal &, size_t i)
+                                        [createAdapter, v, &group](auto &runtime, const typename F::GroupInternal &, size_t i)
                                         {
-                                            return m_CreateAdapter(group.getGroups().at(i))->getTargetArray(runtime, v.name);
+                                            return createAdapter(group.getGroups().at(i))->getTargetArray(runtime, v.name);
                                         });
 
             if(getVarAccessMode(v.access) == VarAccessMode::READ_ONLY) {
@@ -1065,10 +1066,11 @@ public:
 
             // Add field to underlying field group
             const auto &group = m_Group.get();
+            auto createAdapter = m_CreateAdapter;
             m_FieldGroup.get().addField(resolvedType.createPointer(), v.name + m_FieldSuffix,
-                                        [v, &group, this](auto &runtime, const typename F::GroupInternal &, size_t i)
+                                        [createAdapter, v, &group](auto &runtime, const typename F::GroupInternal &, size_t i)
                                         {
-                                            return m_CreateAdapter(group.getGroups().at(i))->getInitialisers().at(v.name).getTargetArray(runtime);
+                                            return createAdapter(group.getGroups().at(i))->getInitialisers().at(v.name).getTargetArray(runtime);
                                         });
 
             if(getVarAccessMode(v.access) == VarAccessMode::READ_ONLY) {
