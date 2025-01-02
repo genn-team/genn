@@ -660,7 +660,7 @@ public:
             const auto resolvedType = d.type.resolve(this->getGroup().getTypeContext());
             assert(!resolvedType.isPointer());
             addField(resolvedType.addConst(), d.name, resolvedType, d.name + varName + fieldSuffix,
-                     [d, varName](const auto &g, size_t)
+                     [a, d, varName](const auto &g, size_t)
                      {
                          return a(g)->getInitialisers().at(varName).getDerivedParams().at(d.name);
                      });
@@ -682,7 +682,7 @@ public:
                      resolvedType.createPointer(), v.name + fieldSuffix, 
                      [a, v](auto &runtime, const auto &g, size_t) 
                      { 
-                         return a(g)->getTargetArray(v.name, runtime);
+                         return a(g)->getTargetArray(runtime, v.name);
                      },
                      getIndexFn(v.access, v.name));
         }

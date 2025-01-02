@@ -40,6 +40,9 @@ public:
     virtual const std::map<std::string, InitVarSnippet::Init> &getInitialisers() const = 0;
 
     virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const = 0;
+
+    //! Get array associated with variable
+    virtual const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime, const std::string &varName) const = 0;
 };
 
 //----------------------------------------------------------------------------
@@ -55,9 +58,6 @@ public:
     //------------------------------------------------------------------------
     virtual std::vector<Models::Base::Var> getDefs() const = 0;
     virtual VarAccessDim getVarDims(const Models::Base::Var &var) const = 0;
-
-    //! Get array associated with variable
-    virtual const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime, const std::string &varName) const = 0;
 };
 
 //----------------------------------------------------------------------------
@@ -114,10 +114,8 @@ public:
 
     virtual VarAccessDim getVarDims(const Models::Base::Var &var) const override final { return getVarAccessDim(var.access); }
 
-    //----------------------------------------------------------------------------
-    // Public methods
-    //----------------------------------------------------------------------------
-    const auto &getTarget() const{ return m_CU; }
+    //! Get array associated with variable
+    virtual const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime, const std::string &varName) const override final;
 
 private:
     //----------------------------------------------------------------------------
@@ -148,10 +146,8 @@ public:
 
     virtual VarAccessDim getVarDims(const Models::Base::Var &var) const override final { return getVarAccessDim(var.access); }
 
-    //----------------------------------------------------------------------------
-    // Public methods
-    //----------------------------------------------------------------------------
-    const auto &getTarget() const{ return m_CU; }
+    //! Get array associated with variable
+    virtual const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime, const std::string &varName) const override final;
 
 private:
     //----------------------------------------------------------------------------
@@ -182,10 +178,7 @@ public:
     
     virtual VarAccessDim getVarDims(const Models::Base::Var &var) const override final { return getVarAccessDim(var.access); }
 
-    //----------------------------------------------------------------------------
-    // Public methods
-    //----------------------------------------------------------------------------
-    const auto &getTarget() const{ return m_CU; }
+    virtual const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime, const std::string &varName) const override final;
 
 private:
     //----------------------------------------------------------------------------
@@ -224,11 +217,8 @@ public:
 
     virtual VarAccessDim getVarDims(const Models::Base::Var &var) const override final { return getVarAccessDim(var.access); }
 
-    //----------------------------------------------------------------------------
-    // Public methods
-    //----------------------------------------------------------------------------
-    const NeuronGroup &getTarget() const{ return m_NG; }
-    
+    virtual const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime, const std::string &varName) const override final;
+
 private:
     //----------------------------------------------------------------------------
     // Members
@@ -258,10 +248,7 @@ public:
     
     virtual VarAccessDim getVarDims(const Models::Base::Var &var) const override final { return getVarAccessDim(var.access); }
 
-    //----------------------------------------------------------------------------
-    // Public methods
-    //----------------------------------------------------------------------------
-    const SynapseGroup &getTarget() const{ return m_SG.getFusedPSTarget(); }
+    virtual const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime, const std::string &varName) const override final;
 
     //----------------------------------------------------------------------------
     // Static API
@@ -297,8 +284,7 @@ public:
 
     virtual VarAccessDim getVarDims(const Models::Base::Var &var) const override final { return getVarAccessDim(var.access); }
 
-    // Public API
-    const SynapseGroup &getTarget() const{ return m_SG; }
+    virtual const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime, const std::string &varName) const override final;
 
     //----------------------------------------------------------------------------
     // Static API
@@ -342,10 +328,7 @@ public:
     
     virtual VarAccessDim getVarDims(const Models::Base::Var &var) const override final { return getVarAccessDim(var.access); }
 
-    //----------------------------------------------------------------------------
-    // Public methods
-    //----------------------------------------------------------------------------
-    const SynapseGroup &getTarget() const{ return m_SG.getFusedWUPreTarget(); }
+    virtual const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime, const std::string &varName) const override final;
 
     //----------------------------------------------------------------------------
     // Static API
@@ -388,11 +371,8 @@ public:
     }
     
     virtual VarAccessDim getVarDims(const Models::Base::Var &var) const override final { return getVarAccessDim(var.access); }
-
-    //----------------------------------------------------------------------------
-    // Public methods
-    //----------------------------------------------------------------------------
-    const SynapseGroup &getTarget() const{ return m_SG.getFusedWUPostTarget(); }
+    
+    virtual const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime, const std::string &varName) const override final;
 
     //----------------------------------------------------------------------------
     // Static API
@@ -421,7 +401,6 @@ public:
     virtual VarAccessDim getVarDims(const Models::Base::CustomUpdateVar &var) const = 0;
 };
 
-
 //----------------------------------------------------------------------------
 // CustomUpdateVarAdapter
 //----------------------------------------------------------------------------
@@ -447,8 +426,7 @@ public:
         return getVarAccessDim(var.access, m_CU.getDims());
     }
 
-    // Public API
-    const CustomUpdateBase &getTarget() const{ return m_CU; }
+    virtual const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime, const std::string &varName) const override final;
 
 private:
     //----------------------------------------------------------------------------
