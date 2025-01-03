@@ -373,7 +373,7 @@ void Backend::genLazyVariableDynamicAllocation(CodeStream &os, const Type::Resol
     const std::string hostPointer = type.isPointer() ? ("*$(_" + name + ")") : ("$(_" + name + ")");
     const std::string hostPointerToPointer = type.isPointer() ? ("$(_" + name + ")") : ("&$(_" + name + ")");
     const std::string devicePointerToPointer = type.isPointer() ? ("$(_d_" + name + ")") : ("&$(_d_" + name + ")");
-   
+
     if(loc & VarLocationAttribute::HOST) {
         const char *flags = (loc & VarLocationAttribute::ZERO_COPY) ? "HostMallocMapped" : "HostMallocPortable";
         os << "CHECK_RUNTIME_ERRORS(hipHostMalloc(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << "), hip" << flags << "));" << std::endl;
@@ -415,22 +415,12 @@ void Backend::genMakefileCompileRule(std::ostream &os) const
 {
     // Add one rule to generate dependency files from cc files
     os << "%.d: %.cc" << std::endl;
-#ifdef __HIP_PLATFORM_NVIDIA__
-    // **YUCK** hipcc fails to parse --compiler
-    os << "\t@NVCC_APPEND_FLAGS=\"--compiler-options -fPIC\" $(HIPCC) -M $(HIPCCFLAGS) $< 1> $@" << std::endl;
-#else
     os << "\t@$(HIPCC) -M $(HIPCCFLAGS) $< 1> $@" << std::endl;
-#endif
     os << std::endl;
 
     // Add another to build object files from cc files
     os << "%.o: %.cc %.d" << std::endl;
-#ifdef __HIP_PLATFORM_NVIDIA__
-    // **YUCK** hipcc fails to parse --compiler
-    os << "\t@NVCC_APPEND_FLAGS=\"--compiler-options -fPIC\" $(HIPCC) -dc $(HIPCCFLAGS) $<" << std::endl;
-#else
     os << "\t@$(HIPCC) -dc $(HIPCCFLAGS) $<" << std::endl;
-#endif
 }
 //--------------------------------------------------------------------------
 void Backend::genMSBuildConfigProperties(std::ostream&) const
@@ -533,7 +523,7 @@ std::string Backend::getHIPCCFlags() const
     // HOWEVER, on CUDA 7.5 and 8.0 this causes a fatal error and, as no warnings are shown when --diag-suppress is removed,
     // presumably this is because this warning simply wasn't implemented until CUDA 9
     const std::string architecture = "sm_" + std::to_string(getChosenHIPDevice().major) + std::to_string(getChosenHIPDevice().minor);
-    std::string nvccFlags = "-x cu -arch " + architecture + " -I\"$(HIP_PATH)/include\"";
+    std::string nvccFlags = "-fPIC -arch " + architecture + " -I\"$(HIP_PATH)/include\"";
 #ifndef _WIN32
     nvccFlags += " -std=c++11";
 #endif
