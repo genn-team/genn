@@ -61,7 +61,7 @@ public:
 
     virtual const std::map<std::string, Models::VarReference> &getInitialisers() const final override { return m_CS.getNeuronVarReferences(); }
 
-    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final{ throw std::runtime_error("Not implemented"); }
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const override final{ throw std::runtime_error("Not implemented"); }
 
     //----------------------------------------------------------------------------
     // Static API
@@ -93,7 +93,7 @@ public:
 
     virtual const std::map<std::string, Models::VarReference> &getInitialisers() const override final { return m_CU.getPreVarReferences(); }
 
-    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final{ throw std::runtime_error("Not implemented"); }
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const override final{ throw std::runtime_error("Not implemented"); }
 
     //----------------------------------------------------------------------------
     // Static API
@@ -125,7 +125,7 @@ public:
 
     virtual const std::map<std::string, Models::VarReference> &getInitialisers() const override final { return m_CU.getPostVarReferences(); }
 
-    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final{ throw std::runtime_error("Not implemented"); }
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const override final{ throw std::runtime_error("Not implemented"); }
 
     //----------------------------------------------------------------------------
     // Static API
@@ -204,7 +204,7 @@ public:
 
     virtual const std::map<std::string, Models::VarReference> &getInitialisers() const override final { return m_SG.getPSInitialiser().getNeuronVarReferences(); }
     
-    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final{ throw std::runtime_error("Not implemented"); }
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const override final{ throw std::runtime_error("Not implemented"); }
 
     //----------------------------------------------------------------------------
     // Static API
@@ -236,7 +236,7 @@ public:
 
     virtual const std::map<std::string, Models::VarReference> &getInitialisers() const override final { return m_SG.getWUInitialiser().getPreNeuronVarReferences(); }
     
-    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final{ throw std::runtime_error("Not implemented"); }
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const override final{ throw std::runtime_error("Not implemented"); }
 
     //----------------------------------------------------------------------------
     // Static API
@@ -268,7 +268,7 @@ public:
 
     virtual const std::map<std::string, Models::VarReference> &getInitialisers() const override final { return m_SG.getWUInitialiser().getPostNeuronVarReferences(); }
 
-    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final{ throw std::runtime_error("Not implemented"); }
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const override final{ throw std::runtime_error("Not implemented"); }
 
     //----------------------------------------------------------------------------
     // Static API
@@ -314,7 +314,7 @@ public:
 
     virtual const std::map<std::string, Models::WUVarReference> &getInitialisers() const override final { return m_CU.getVarReferences(); }
 
-    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final { return std::nullopt; }
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const override final { return std::nullopt; }
 
     //----------------------------------------------------------------------------
     // Static API
@@ -346,7 +346,7 @@ public:
 
     const std::map<std::string, Models::WUVarReference> &getInitialisers() const override final { return m_CU.getVarReferences(); }
 
-    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const override final { return std::nullopt; }
+    virtual std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const override final { return std::nullopt; }
 
     //----------------------------------------------------------------------------
     // Static API
