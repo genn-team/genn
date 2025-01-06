@@ -582,7 +582,7 @@ std::string Backend::getNVCCFlags() const
     // HOWEVER, on CUDA 7.5 and 8.0 this causes a fatal error and, as no warnings are shown when --diag-suppress is removed,
     // presumably this is because this warning simply wasn't implemented until CUDA 9
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
-    std::string nvccFlags = "-x cu -arch " + architecture;
+    std::string nvccFlags = "-D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF2_OPERATORS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_OPERATORS__ -D__CUDA_NO_BFLOAT162_OPERATORS__ -x cu -arch " + architecture;
 #ifndef _WIN32
     nvccFlags += " -std=c++11 --compiler-options \"-fPIC -Wno-return-type-c-linkage\"";
 #endif
