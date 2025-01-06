@@ -283,7 +283,7 @@ public:
 
     void generateSparseRowInit(EnvironmentExternalBase &env);
     void generateSparseColumnInit(EnvironmentExternalBase &env);
-    void generateKernelInit(EnvironmentExternalBase &env, unsigned int batchSize);
+    void generateKernelInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
 
     //----------------------------------------------------------------------------
     // Static constants

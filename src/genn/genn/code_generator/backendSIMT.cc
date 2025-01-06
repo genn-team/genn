@@ -1639,7 +1639,7 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
                             }
 
                             // Call handler to initialize variables
-                            sg.generateKernelInit(kernelInitEnv, 1);
+                            sg.generateKernelInit(*this, kernelInitEnv, 1);
                         }
                     }
                     // Otherwise, if it's bitmask
