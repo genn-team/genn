@@ -1237,7 +1237,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
                                     }
 
                                     // Call handler to initialize variables
-                                    s.generateKernelInit(kernelInitEnv, 1);
+                                    s.generateKernelInit(*this, kernelInitEnv, 1);
                                 }
 
                                 // Add synapse to data structure
