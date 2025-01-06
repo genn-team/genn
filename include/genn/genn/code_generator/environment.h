@@ -404,9 +404,11 @@ class EnvironmentGroupMergedField : public EnvironmentExternalDynamicBase<Enviro
 {
     using GroupInternal = typename G::GroupInternal;
     using GroupExternal = typename GroupInternal::GroupExternal;
-    
-    using GetFieldNumericValueFunc = std::function<Type::NumericValue(const GroupInternal &, size_t)>;
-    using IsHeterogeneousFn = bool (G::*)(const std::string&) const;
+    using NonNumericFieldValue =  std::variant<const Runtime::ArrayBase*,
+                                               std::pair<Type::NumericValue, 
+                                                         Runtime::MergedDynamicFieldDestinations&>>;
+    using GetFieldNonNumericValueFunc = std::function<NonNumericFieldValue(Runtime::Runtime&, const GroupInternal&, size_t)>;
+    using GetFieldNumericValueFunc = std::function<Type::NumericValue(const GroupInternal&, size_t)>;
     using IsDynamicFn = bool (GroupInternal::*)(const std::string&) const;
     using IsVarInitHeterogeneousFn = bool (G::*)(const std::string&, const std::string&) const;
     using GetParamValuesFn = const std::map<std::string, Type::NumericValue> &(GroupInternal::*)(void) const;
@@ -438,25 +440,68 @@ public:
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
     void addField(const GeNN::Type::ResolvedType &type, const std::string &name,
-                  const GeNN::Type::ResolvedType &fieldType, const std::string &fieldName, typename G::GetFieldValueFunc getFieldValue,
-                  const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD, 
+                  const GeNN::Type::ResolvedType &fieldType, const std::string &fieldName, 
+                  GetFieldNumericValueFunc getFieldValue)
+    {
+        // Get value of field for archetype group
+        const auto archetypeValue = getFieldValue(this->getGroup().getArchetype(), 0);
+
+        // Determine if this is heterogeneous across groups
+        bool heterogeneous = false;
+        for(size_t i = 0; i < this->getGroup().getGroups().size(); i++) {
+            if(getFieldValue(this->getGroup().getGroups()[i], i) != archetypeValue) {
+                heterogeneous = true;
+                break;
+            }
+        }
+
+        // If type isn't const or values are heterogeneous, add field
+        if(!type.isConst || heterogeneous) {
+            typename G::Field field{fieldName, fieldType, GroupMergedFieldType::STANDARD,
+                                    [getFieldValue](Runtime::Runtime&, const auto &g, size_t i){ return getFieldValue(g, i); }};
+            this->addInternal(type, name, std::make_tuple(false, LazyString{"", *this}, std::make_optional(field)));
+        }
+        // Otherwise, just add value
+        else {
+            this->add(type, name, Type::writeNumeric(archetypeValue, type));
+        }
+    }
+
+    //! Map a type (for type-checking) and a group merged field to back it to an identifier
+    void addField(const GeNN::Type::ResolvedType &type, const std::string &name,
+                  const GeNN::Type::ResolvedType &fieldType, const std::string &fieldName, 
+                  GetFieldNonNumericValueFunc getFieldValue, const std::string &indexSuffix = "", 
+                  GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD, 
                   const std::vector<size_t> &initialisers = {})
     {
-        typename G::Field field{fieldName, fieldType, mergedFieldType, getFieldValue};
+        typename G::Field field{fieldName, fieldType, mergedFieldType,
+                                [getFieldValue](Runtime::Runtime &r, const GroupInternal &g, size_t i)
+                                {
+                                    return std::visit(
+                                        [](const auto &res)->typename G::FieldValue { return res; },
+                                        getFieldValue(r, g, i));
+                                }};
         this->addInternal(type, name, std::make_tuple(false, LazyString{indexSuffix, *this}, std::make_optional(field)),
                           initialisers);
     }
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
     void addField(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &fieldName, 
-                  typename G::GetFieldValueFunc getFieldValue, const std::string &indexSuffix = "", GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD,
-                  const std::vector<size_t> &initialisers = {})
+                  GetFieldNumericValueFunc getFieldValue)
+    {
+         addField(type, name, type, fieldName, getFieldValue);
+    }
+
+    //! Map a type (for type-checking) and a group merged field to back it to an identifier
+    void addField(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &fieldName, 
+                  GetFieldNonNumericValueFunc getFieldValue, const std::string &indexSuffix = "", 
+                  GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD, const std::vector<size_t> &initialisers = {})
     {
          addField(type, name, type, fieldName, getFieldValue, indexSuffix, mergedFieldType, initialisers);
     }
 
     void addParams(const Snippet::Base::ParamVec &params, const std::string &fieldSuffix, 
-                   GetParamValuesFn getParamValues, IsHeterogeneousFn isHeterogeneous, IsDynamicFn isDynamic)
+                   GetParamValuesFn getParamValues, IsDynamicFn isDynamic)
     {
         // Loop through params
         for(const auto &p : params) {
@@ -472,44 +517,29 @@ public:
                          },
                          "", GroupMergedFieldType::DYNAMIC);
             }
-            // Otherwise, if parameter is heterogeneous across merged group
-            else if(std::invoke(isHeterogeneous, this->getGroup(), p.name)) {
+            // Otherwise, add field
+            else {
                 addField(resolvedType.addConst(), p.name, resolvedType, p.name + fieldSuffix,
-                         [p, getParamValues](auto&, const auto &g, size_t)
+                         [p, getParamValues](const auto &g, size_t)
                          {
                              return std::invoke(getParamValues, g).at(p.name);
                          });
-            }
-            // Otherwise, just add a const-qualified scalar to the type environment
-            else {
-                add(resolvedType.addConst(), p.name, 
-                    Type::writeNumeric(std::invoke(getParamValues, this->getGroup().getArchetype()).at(p.name),
-                                       resolvedType));
             }
         }
     }
 
     void addDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, const std::string &fieldSuffix,
-                          GetParamValuesFn getDerivedParamValues, IsHeterogeneousFn isHeterogeneous)
+                          GetParamValuesFn getDerivedParamValues)
     {
-        // Loop through derived params
+        // Loop through derived params and add scalar fields
         for(const auto &d : derivedParams) {
-            // If derived parameter is heterogeneous, add scalar field
             const auto resolvedType = d.type.resolve(this->getGroup().getTypeContext());
             assert(!resolvedType.isPointer());
-            if (std::invoke(isHeterogeneous, this->getGroup(), d.name)) {
-                addField(resolvedType.addConst(), d.name, resolvedType, d.name + fieldSuffix,
-                         [d, getDerivedParamValues](auto&, const auto &g, size_t)
-                         {
-                             return std::invoke(getDerivedParamValues, g).at(d.name);
-                         });
-            }
-            // Otherwise, just add a const-qualified scalar to the type environment with archetype value
-            else {
-                add(resolvedType.addConst(), d.name, 
-                    Type::writeNumeric(std::invoke(getDerivedParamValues, this->getGroup().getArchetype()).at(d.name),
-                                       resolvedType));
-            }
+            addField(resolvedType.addConst(), d.name, resolvedType, d.name + fieldSuffix,
+                     [d, getDerivedParamValues](const auto &g, size_t)
+                     {
+                         return std::invoke(getDerivedParamValues, g).at(d.name);
+                     });
         }
     }
 
@@ -549,7 +579,7 @@ public:
 
     template<typename I>
     void addInitialiserParams(const std::string &fieldSuffix, GetInitialiserFn<I> getInitialiser, 
-                              IsHeterogeneousFn isHeterogeneous, std::optional<IsDynamicFn> isDynamic = std::nullopt)
+                              std::optional<IsDynamicFn> isDynamic = std::nullopt)
     {
         // Loop through params
         const auto &initialiser = std::invoke(getInitialiser, this->getGroup().getArchetype());
@@ -568,26 +598,20 @@ public:
                          },
                          "", GroupMergedFieldType::DYNAMIC);
             }
-            // Otherwise, if parameter is heterogeneous across merged group
-            else if(std::invoke(isHeterogeneous, this->getGroup(), p.name)) {
+            // Otherwise, add standard field
+            else {
                 addField(resolvedType.addConst(), p.name,
                          resolvedType, p.name + fieldSuffix,
-                         [p, getInitialiser](auto&, const auto &g, size_t)
+                         [p, getInitialiser](const auto &g, size_t)
                          {
                              return std::invoke(getInitialiser, g).getParams().at(p.name);
                          });
-            }
-            // Otherwise, just add a const-qualified scalar to the type environment
-            else {
-                add(resolvedType.addConst(), p.name, 
-                    Type::writeNumeric(initialiser.getParams().at(p.name), resolvedType));
             }
         }
     }
 
     template<typename I>
-    void addInitialiserDerivedParams(const std::string &fieldSuffix,  GetInitialiserFn<I> getInitialiser, 
-                                     IsHeterogeneousFn isHeterogeneous)
+    void addInitialiserDerivedParams(const std::string &fieldSuffix,  GetInitialiserFn<I> getInitialiser)
     {
         // Loop through params
         const auto &initialiser = std::invoke(getInitialiser, this->getGroup().getArchetype());
@@ -596,24 +620,16 @@ public:
             // If parameter is heterogeneous, add scalar field
             const auto resolvedType = d.type.resolve(this->getGroup().getTypeContext());
             assert(!resolvedType.isPointer());
-            if (std::invoke(isHeterogeneous, this->getGroup(), d.name)) {
-                addField(resolvedType.addConst(), d.name, resolvedType, d.name + fieldSuffix,
-                         [d, getInitialiser](auto&, const auto &g, size_t)
-                         {
-                             return std::invoke(getInitialiser, g).getDerivedParams().at(d.name);
-                         });
-            }
-            // Otherwise, just add a const-qualified scalar to the type environment
-            else {
-                add(resolvedType.addConst(), d.name, 
-                    Type::writeNumeric(initialiser.getDerivedParams().at(d.name), resolvedType));
-            }
+            addField(resolvedType.addConst(), d.name, resolvedType, d.name + fieldSuffix,
+                        [d, getInitialiser](const auto &g, size_t)
+                        {
+                            return std::invoke(getInitialiser, g).getDerivedParams().at(d.name);
+                        });
         }
     }
 
     template<typename A>
-    void addVarInitParams(IsVarInitHeterogeneousFn isHeterogeneous, 
-                          const std::string &varName, const std::string &fieldSuffix = "")
+    void addVarInitParams(const std::string &varName, const std::string &fieldSuffix = "")
     {
         // Loop through parameters
         const auto &initialiser = A(this->getGroup().getArchetype()).getInitialisers().at(varName);
@@ -622,24 +638,16 @@ public:
             // If parameter is heterogeneous, add field
             const auto resolvedType = p.type.resolve(this->getGroup().getTypeContext());
             assert(!resolvedType.isPointer());
-            if(std::invoke(isHeterogeneous, this->getGroup(), varName, p.name)) {
-                addField(resolvedType.addConst(), p.name, resolvedType, p.name + varName + fieldSuffix,
-                         [p, varName](auto&, const auto &g, size_t)
-                         {
-                             return A(g).getInitialisers().at(varName).getParams().at(p.name);
-                         });
-            }
-            // Otherwise, just add a const-qualified scalar to the type environment with archetype value
-            else {
-                add(resolvedType.addConst(), p.name, 
-                    Type::writeNumeric(initialiser.getParams().at(p.name), resolvedType));
-            }
+            addField(resolvedType.addConst(), p.name, resolvedType, p.name + varName + fieldSuffix,
+                        [p, varName](const auto &g, size_t)
+                        {
+                            return A(g).getInitialisers().at(varName).getParams().at(p.name);
+                        });
         }
     }
 
     template<typename A>
-    void addVarInitDerivedParams(IsVarInitHeterogeneousFn isHeterogeneous, 
-                                 const std::string &varName, const std::string &fieldSuffix = "")
+    void addVarInitDerivedParams(const std::string &varName, const std::string &fieldSuffix = "")
     {
         // Loop through derived parameters
         const auto &initialiser = A(this->getGroup().getArchetype()).getInitialisers().at(varName);
@@ -648,18 +656,11 @@ public:
             // If derived parameter is heterogeneous, add scalar field
             const auto resolvedType = d.type.resolve(this->getGroup().getTypeContext());
             assert(!resolvedType.isPointer());
-            if(std::invoke(isHeterogeneous, this->getGroup(), varName, d.name)) {
-                addField(resolvedType.addConst(), d.name, resolvedType, d.name + varName + fieldSuffix,
-                         [d, varName](auto&, const auto &g, size_t)
-                         {
-                             return A(g).getInitialisers().at(varName).getDerivedParams().at(d.name);
-                         });
-            }
-            // Otherwise, just add a const-qualified valuie to the type environment with archetype value
-            else {
-                add(resolvedType.addConst(), d.name, 
-                    Type::writeNumeric(initialiser.getDerivedParams().at(d.name), resolvedType));
-            }
+            addField(resolvedType.addConst(), d.name, resolvedType, d.name + varName + fieldSuffix,
+                        [d, varName](const auto &g, size_t)
+                        {
+                            return A(g).getInitialisers().at(varName).getDerivedParams().at(d.name);
+                        });
         }
     }
 

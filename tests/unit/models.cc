@@ -66,11 +66,11 @@ public:
     SET_PRE_NEURON_VAR_REFS({{"V", "scalar", VarAccessMode::READ_ONLY}});
 
     SET_PRE_SPIKE_CODE(
-        "scalar dt = t - sT_pre;\n"
+        "scalar dt = t - st_pre;\n"
         "preTrace = (preTrace * exp(-dt / tauPlus)) + 1.0;\n");
 
     SET_POST_SPIKE_CODE(
-        "scalar dt = t - sT_post;\n"
+        "scalar dt = t - st_post;\n"
         "postTrace = (postTrace * exp(-dt / tauMinus)) + 1.0;\n");
 
     SET_SYNAPSE_DYNAMICS_CODE(
@@ -89,11 +89,11 @@ public:
     SET_PRE_NEURON_VAR_REFS({{"V", "scalar", VarAccessMode::READ_ONLY}});
 
     SET_PRE_SPIKE_CODE(
-        "scalar dt = t - sT_pre;\n"
+        "scalar dt = t - st_pre;\n"
         "preTrace = (preTrace * exp(-dt / tauPlus)) + 1.0;\n");
 
     SET_POST_SPIKE_CODE(
-        "scalar dt = t - sT_post;\n"
+        "scalar dt = t - st_post;\n"
         "postTrace = (postTrace * exp(-dt / tauMinus)) + 1.0;\n");
 
     SET_SYNAPSE_DYNAMICS_CODE(

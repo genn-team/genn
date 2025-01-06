@@ -23,9 +23,8 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     EnvironmentGroupMergedField<G> synEnv(env, sg);
 
     // Substitute parameter and derived parameter names
-    synEnv.addInitialiserParams("", &SynapseGroupInternal::getWUInitialiser, 
-                                &G::isWUParamHeterogeneous, &SynapseGroupInternal::isWUParamDynamic);
-    synEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getWUInitialiser, &G::isWUDerivedParamHeterogeneous);
+    synEnv.addInitialiserParams("", &SynapseGroupInternal::getWUInitialiser, &SynapseGroupInternal::isWUParamDynamic);
+    synEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getWUInitialiser);
     synEnv.addExtraGlobalParams(wu->getExtraGlobalParams());
 
     // Add referenced presynaptic neuron variables
@@ -161,8 +160,8 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
                     // Substitute in parameters and derived parameters for initialising variables
                     // **THINK** synEnv has quite a lot of unwanted stuff at t
                     EnvironmentGroupMergedField<G> varInitEnv(synEnv, sg);
-                    varInitEnv.template addVarInitParams<SynapseWUVarAdapter>(&G::isVarInitParamHeterogeneous, var.name);
-                    varInitEnv.template addVarInitDerivedParams<SynapseWUVarAdapter>(&G::isVarInitDerivedParamHeterogeneous, var.name);
+                    varInitEnv.template addVarInitParams<SynapseWUVarAdapter>(var.name);
+                    varInitEnv.template addVarInitDerivedParams<SynapseWUVarAdapter>(var.name);
                     varInitEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), var.name);
 
                     // Add read-write environment entry for variable
@@ -210,46 +209,6 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
 
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::SynapseGroupMergedBase
-//----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isWUParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getWUInitialiser().getParams(); });
-}
-//----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isWUDerivedParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getWUInitialiser().getDerivedParams(); });
-}
-//----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [varName](const SynapseGroupInternal &sg){ return sg.getWUInitialiser().getVarInitialisers().at(varName).getParams(); });
-}
-//----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [varName](const SynapseGroupInternal &sg) { return sg.getWUInitialiser().getVarInitialisers().at(varName).getDerivedParams(); });
-}
-//----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isSparseConnectivityInitParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getParams(); });
-}
-//----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isSparseConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getDerivedParams(); });
-}
-//----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isToeplitzConnectivityInitParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getToeplitzConnectivityInitialiser().getParams(); });
-}
-//----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isToeplitzConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getToeplitzConnectivityInitialiser().getDerivedParams(); });
-}
 //----------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getPreSlot(bool delay, unsigned int batchSize) const
 {
@@ -444,10 +403,8 @@ void PresynapticUpdateGroupMerged::generateProceduralConnectivity(EnvironmentExt
 
     // Substitute in parameters and derived parameters for initialising connectivity
     const auto &connectInit = getArchetype().getSparseConnectivityInitialiser();
-    groupEnv.addInitialiserParams("", &SynapseGroupInternal::getSparseConnectivityInitialiser,
-                                  &PresynapticUpdateGroupMerged::isSparseConnectivityInitParamHeterogeneous);
-    groupEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getSparseConnectivityInitialiser,
-                                         &PresynapticUpdateGroupMerged::isSparseConnectivityInitDerivedParamHeterogeneous);
+    groupEnv.addInitialiserParams("", &SynapseGroupInternal::getSparseConnectivityInitialiser);
+    groupEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getSparseConnectivityInitialiser);
     groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "SparseConnect", "");
 
     Transpiler::ErrorHandler errorHandler("Synapse group procedural connectivity '" + getArchetype().getName() + "' row build code");
@@ -462,10 +419,8 @@ void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(EnvironmentExter
 
     // Substitute in parameters and derived parameters for initialising connectivity
     const auto &connectInit = getArchetype().getToeplitzConnectivityInitialiser();
-    groupEnv.addInitialiserParams("", &SynapseGroupInternal::getToeplitzConnectivityInitialiser,
-                                  &PresynapticUpdateGroupMerged::isToeplitzConnectivityInitParamHeterogeneous);
-    groupEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getToeplitzConnectivityInitialiser,
-                                         &PresynapticUpdateGroupMerged::isToeplitzConnectivityInitDerivedParamHeterogeneous);
+    groupEnv.addInitialiserParams("", &SynapseGroupInternal::getToeplitzConnectivityInitialiser);
+    groupEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getToeplitzConnectivityInitialiser);
     groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "ToeplitzConnect", "");
 
     // Pretty print code back to environment

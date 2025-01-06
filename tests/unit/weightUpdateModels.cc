@@ -71,13 +71,13 @@ public:
     
     SET_PRE_SPIKE_SYN_CODE(
         "addToPost(g);\n"
-        "const scalar dt = t - sT_post; \n"
+        "const scalar dt = t - st_post; \n"
         "if (dt > 0) {\n"
         "    const scalar newWeight = g - (Aminus * postTrace);\n"
         "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
         "}\n");
     SET_POST_SPIKE_SYN_CODE(
-        "const scalar dt = t - sT_pre;\n"
+        "const scalar dt = t - st_pre;\n"
         "if (dt > 0) {\n"
         "    const scalar newWeight = g + (Aplus * preTrace);\n"
         "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"

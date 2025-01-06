@@ -137,8 +137,8 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
 
             // Substitute in parameters and derived parameters for initialising variables
             EnvironmentGroupMergedField<G, F> varEnv(env, group, fieldGroup);
-            varEnv.template addVarInitParams<A>(&G::isVarInitParamHeterogeneous, var.name, fieldSuffix);
-            varEnv.template addVarInitDerivedParams<A>(&G::isVarInitDerivedParamHeterogeneous, var.name, fieldSuffix);
+            varEnv.template addVarInitParams<A>(var.name, fieldSuffix);
+            varEnv.template addVarInitDerivedParams<A>(var.name, fieldSuffix);
             varEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), var.name, fieldSuffix);
 
             // Add field for variable itself
@@ -220,8 +220,8 @@ void genInitWUVarCode(EnvironmentExternalBase &env, G &group,
 
             // Substitute in parameters and derived parameters for initialising variables
             EnvironmentGroupMergedField<G> varEnv(env, group);
-            varEnv.template addVarInitParams<A>(&G::isVarInitParamHeterogeneous, var.name);
-            varEnv.template addVarInitDerivedParams<A>(&G::isVarInitDerivedParamHeterogeneous, var.name);
+            varEnv.template addVarInitParams<A>(var.name);
+            varEnv.template addVarInitDerivedParams<A>(var.name);
             varEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), var.name);
 
             // Add field for variable itself
@@ -688,34 +688,6 @@ void SynapseConnectivityInitGroupMerged::generateKernelInit(EnvironmentExternalB
         });
 }
 //----------------------------------------------------------------------------
-bool SynapseConnectivityInitGroupMerged::isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, 
-                                     [&varName](const auto &g)
-                                     { 
-                                         return SynapseWUVarAdapter(g).getInitialisers().at(varName).getParams(); 
-                                     });
-}
-//----------------------------------------------------------------------------
-bool SynapseConnectivityInitGroupMerged::isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, 
-                                    [&varName](const auto &g) 
-                                    { 
-                                        return SynapseWUVarAdapter(g).getInitialisers().at(varName).getDerivedParams();
-                                    });
-}
-//----------------------------------------------------------------------------
-bool SynapseConnectivityInitGroupMerged::isSparseConnectivityInitParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getParams(); });
-}
-//----------------------------------------------------------------------------
-bool SynapseConnectivityInitGroupMerged::isSparseConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getDerivedParams(); });
-}
-//----------------------------------------------------------------------------
 void SynapseConnectivityInitGroupMerged::genInitConnectivity(EnvironmentExternalBase &env, bool rowNotColumns)
 {
     // Create environment for group
@@ -723,10 +695,8 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(EnvironmentExternal
 
     // Substitute in parameters and derived parameters for initialising connectivity
     const auto &connectInit = getArchetype().getSparseConnectivityInitialiser();
-    groupEnv.addInitialiserParams("", &SynapseGroupInternal::getSparseConnectivityInitialiser,
-                                  &SynapseConnectivityInitGroupMerged::isSparseConnectivityInitParamHeterogeneous);
-    groupEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getSparseConnectivityInitialiser,
-                                         &SynapseConnectivityInitGroupMerged::isSparseConnectivityInitDerivedParamHeterogeneous);
+    groupEnv.addInitialiserParams("", &SynapseGroupInternal::getSparseConnectivityInitialiser);
+    groupEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getSparseConnectivityInitialiser);
     groupEnv.addExtraGlobalParams(connectInit.getSnippet()->getExtraGlobalParams(), "SparseConnect", "");
 
     const std::string context = rowNotColumns ? "row" : "column";
@@ -773,16 +743,14 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
         // Create substitutions
         groupEnv.addField(Type::Uint32.addConst(), "num_pre",
                           Type::Uint32, "numSrcNeurons", 
-                          [](const auto &, const SynapseGroupInternal &sg, size_t) { return sg.getSrcNeuronGroup()->getNumNeurons(); });
+                          [](const SynapseGroupInternal &sg, size_t) { return sg.getSrcNeuronGroup()->getNumNeurons(); });
         groupEnv.addField(Type::Uint32.addConst(), "num_post",
                           Type::Uint32, "numTrgNeurons", 
-                          [](const auto &, const SynapseGroupInternal &sg, size_t) { return sg.getTrgNeuronGroup()->getNumNeurons(); });
+                          [](const SynapseGroupInternal &sg, size_t) { return sg.getTrgNeuronGroup()->getNumNeurons(); });
         groupEnv.add(Type::Uint32.addConst(), "num_threads", std::to_string(numThreads));
 
-        groupEnv.addInitialiserParams("", &SynapseGroupInternal::getSparseConnectivityInitialiser,
-                                      &SynapseConnectivityHostInitGroupMerged::isConnectivityInitParamHeterogeneous);
-        groupEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getSparseConnectivityInitialiser,
-                                             &SynapseConnectivityHostInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous);
+        groupEnv.addInitialiserParams("", &SynapseGroupInternal::getSparseConnectivityInitialiser);
+        groupEnv.addInitialiserDerivedParams("", &SynapseGroupInternal::getSparseConnectivityInitialiser);
 
         // Loop through EGPs
         for(const auto &egp : connectInit.getSnippet()->getExtraGlobalParams()) {
@@ -844,16 +812,6 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
         Transpiler::ErrorHandler errorHandler("Synapse group '" + getArchetype().getName() + "' sparse connectivity host init code");
         prettyPrintStatements(connectInit.getHostInitCodeTokens(), getTypeContext(), groupEnv, errorHandler);
     }
-}
-//----------------------------------------------------------------------------
-bool SynapseConnectivityHostInitGroupMerged::isConnectivityInitParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg){ return sg.getSparseConnectivityInitialiser().getParams(); });
-}
-//----------------------------------------------------------------------------
-bool SynapseConnectivityHostInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const
-{
-    return isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getDerivedParams(); });
 }
 
 // ----------------------------------------------------------------------------

@@ -5,10 +5,14 @@
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
+#include "code_generator/generateModules.h"
 #include "code_generator/modelSpecMerged.h"
 
 // (Single-threaded CPU) backend includes
 #include "backend.h"
+
+// Test includes
+#include "helpers.h"
 
 using namespace GeNN;
 
@@ -65,7 +69,7 @@ public:
     SET_PARAMS({"w", "p"});
     SET_POST_VARS({{"s", "scalar"}});
 
-    SET_PRE_SPIKE_SYN_CODE("w= s;\n");
+    SET_PRE_SPIKE_SYN_CODE("addToPost(w * s);\n");
     SET_POST_SPIKE_CODE("s = t * p;\n");
 };
 IMPLEMENT_SNIPPET(WeightUpdateModelPost);
@@ -78,7 +82,7 @@ public:
     SET_PARAMS({"w", "p"});
     SET_PRE_VARS({{"s", "scalar"}});
 
-    SET_PRE_SPIKE_SYN_CODE("w= s;\n");
+    SET_PRE_SPIKE_SYN_CODE("addToPost(w * s);\n");
     SET_PRE_SPIKE_CODE("s = t * p;\n");
 };
 IMPLEMENT_SNIPPET(WeightUpdateModelPre);
@@ -206,13 +210,13 @@ public:
     
     SET_PRE_SPIKE_SYN_CODE(
         "addToPost(g);\n"
-        "const scalar dt = t - sT_post; \n"
+        "const scalar dt = t - st_post; \n"
         "if (dt > 0) {\n"
         "    const scalar newWeight = g - (Aminus * postTrace);\n"
         "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
         "}\n");
     SET_POST_SPIKE_SYN_CODE(
-        "const scalar dt = t - sT_pre;\n"
+        "const scalar dt = t - st_pre;\n"
         "if (dt > 0) {\n"
         "    const scalar newWeight = g + (Aplus * preTrace);\n"
         "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
@@ -238,13 +242,13 @@ public:
     
     SET_PRE_SPIKE_SYN_CODE(
         "addToPost(g);\n"
-        "const scalar dt = t - sT_post; \n"
+        "const scalar dt = t - st_post; \n"
         "if (dt > 0) {\n"
         "    const scalar newWeight = g - (Aminus * postTrace[4]);\n"
         "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
         "}\n");
     SET_POST_SPIKE_SYN_CODE(
-        "const scalar dt = t - sT_pre;\n"
+        "const scalar dt = t - st_pre;\n"
         "if (dt > 0) {\n"
         "    const scalar newWeight = g + (Aplus * preTrace);\n"
         "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
@@ -801,15 +805,18 @@ TEST(NeuronGroup, CompareNeuronModels)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
+    // Generate code but don't actually write any files
+    CodeGenerator::generateAll(modelSpecMerged, backend, ".", ".", false, true);
+
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronInitGroups().size() == 2);
 
     // Check that only 'd' parameter is heterogeneous in neuron update group
-    ASSERT_FALSE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous("a"));
-    ASSERT_FALSE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous("b"));
-    ASSERT_FALSE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous("c"));
-    ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous("d"));
+    ASSERT_FALSE(hasField(modelSpecMerged.getMergedNeuronUpdateGroups().at(0), "a"));
+    ASSERT_FALSE(hasField(modelSpecMerged.getMergedNeuronUpdateGroups().at(0), "b"));
+    ASSERT_FALSE(hasField(modelSpecMerged.getMergedNeuronUpdateGroups().at(0), "c"));
+    ASSERT_TRUE(hasField(modelSpecMerged.getMergedNeuronUpdateGroups().at(0), "d"));
 
     // Find which merged neuron init group is the one with the single population i.e. the one with constant initialisers
     const size_t constantInitIndex = (modelSpecMerged.getMergedNeuronInitGroups().at(0).getGroups().size() == 1) ? 0 : 1;
@@ -817,12 +824,12 @@ TEST(NeuronGroup, CompareNeuronModels)
     const auto &uniformInitMergedGroup = modelSpecMerged.getMergedNeuronInitGroups().at(1 - constantInitIndex);
 
     // Check that only 'V' init 'min' parameter is heterogeneous
-    ASSERT_FALSE(constantInitMergedGroup.isVarInitParamHeterogeneous("V", "constant"));
-    ASSERT_FALSE(constantInitMergedGroup.isVarInitParamHeterogeneous("U", "constant"));
-    ASSERT_TRUE(uniformInitMergedGroup.isVarInitParamHeterogeneous("V", "min"));
-    ASSERT_FALSE(uniformInitMergedGroup.isVarInitParamHeterogeneous("V", "max"));
-    ASSERT_FALSE(uniformInitMergedGroup.isVarInitParamHeterogeneous("U", "constant"));
-    ASSERT_FALSE(uniformInitMergedGroup.isVarInitParamHeterogeneous("U", "constant"));
+    ASSERT_FALSE(hasField(constantInitMergedGroup, "constantV"));
+    ASSERT_FALSE(hasField(constantInitMergedGroup, "constantU"));
+    ASSERT_TRUE(hasField(uniformInitMergedGroup, "minV"));
+    ASSERT_FALSE(hasField(uniformInitMergedGroup, "maxV"));
+    ASSERT_FALSE(hasField(uniformInitMergedGroup, "constantU"));
+    ASSERT_FALSE(hasField(uniformInitMergedGroup, "constantU"));
 }
 
 TEST(NeuronGroup, CompareHeterogeneousParamVarState)
@@ -851,18 +858,21 @@ TEST(NeuronGroup, CompareHeterogeneousParamVarState)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
+    // Generate code but don't actually write any files
+    CodeGenerator::generateAll(modelSpecMerged, backend, ".", ".", false, true);
+
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronInitGroups().size() == 1);
 
     // Check that only 'Ioffset' parameter is heterogeneous in neuron update group
-    ASSERT_FALSE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous("C"));
-    ASSERT_FALSE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous("TauM"));
-    ASSERT_FALSE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous("Vrest"));
-    ASSERT_FALSE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous("Vreset"));
-    ASSERT_FALSE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous("Vthresh"));
-    ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous("Ioffset"));
-    ASSERT_FALSE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous("TauRefrac"));
+    ASSERT_FALSE(hasField(modelSpecMerged.getMergedNeuronUpdateGroups().at(0), "C"));
+    ASSERT_FALSE(hasField(modelSpecMerged.getMergedNeuronUpdateGroups().at(0), "TauM"));
+    ASSERT_FALSE(hasField(modelSpecMerged.getMergedNeuronUpdateGroups().at(0), "Vrest"));
+    ASSERT_FALSE(hasField(modelSpecMerged.getMergedNeuronUpdateGroups().at(0), "Vreset"));
+    ASSERT_FALSE(hasField(modelSpecMerged.getMergedNeuronUpdateGroups().at(0), "Vthresh"));
+    ASSERT_TRUE(hasField(modelSpecMerged.getMergedNeuronUpdateGroups().at(0), "Ioffset"));
+    ASSERT_FALSE(hasField(modelSpecMerged.getMergedNeuronUpdateGroups().at(0), "TauRefrac"));
 }
 
 
@@ -950,6 +960,9 @@ TEST(NeuronGroup, CompareCurrentSources)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
+    // Generate code but don't actually write any files
+    CodeGenerator::generateAll(modelSpecMerged, backend, ".", ".", false, true);
+
     // Check neurons are merged into two groups
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
 
@@ -963,15 +976,16 @@ TEST(NeuronGroup, CompareCurrentSources)
     const size_t poissonIndex = (dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(0).getArchetype().getModel() == CurrentSourceModels::PoissonExp::getInstance()) ? 0 : 1;
     
     // Check that only the ExpDecay and Init derived parameters of the poisson exp current sources are heterogeneous
-    ASSERT_FALSE(dcDCMergedGroup.getMergedCurrentSourceGroups().at(0).isParamHeterogeneous("amp"));
-    ASSERT_FALSE(dcDCMergedGroup.getMergedCurrentSourceGroups().at(1).isParamHeterogeneous("amp"));
-    ASSERT_FALSE(dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(poissonIndex).isParamHeterogeneous("weight"));
-    ASSERT_TRUE(dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(poissonIndex).isParamHeterogeneous("tauSyn"));
-    ASSERT_FALSE(dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(poissonIndex).isParamHeterogeneous("rate"));
-    ASSERT_FALSE(dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(1 - poissonIndex).isParamHeterogeneous("amp"));
-    ASSERT_TRUE(dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(poissonIndex).isDerivedParamHeterogeneous("ExpDecay"));
-    ASSERT_TRUE(dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(poissonIndex).isDerivedParamHeterogeneous("Init"));
-    ASSERT_FALSE(dcPoissonMergedGroup.getMergedCurrentSourceGroups().at(poissonIndex).isDerivedParamHeterogeneous("ExpMinusLambda"));
+    // **NOTE** there will be no tauSynCS field as it is not accessed aside from via derived parameter
+    ASSERT_FALSE(hasField(dcDCMergedGroup, "ampCS0"));
+    ASSERT_FALSE(hasField(dcDCMergedGroup, "ampCS1"));
+    ASSERT_FALSE(hasField(dcPoissonMergedGroup, "weightCS" + std::to_string(poissonIndex)));
+    ASSERT_FALSE(hasField(dcPoissonMergedGroup, "tauSynCS" + std::to_string(poissonIndex)));
+    ASSERT_FALSE(hasField(dcPoissonMergedGroup, "rateCS" + std::to_string(poissonIndex)));
+    ASSERT_FALSE(hasField(dcPoissonMergedGroup, "ampCS" + std::to_string(1 - poissonIndex)));
+    ASSERT_TRUE(hasField(dcPoissonMergedGroup, "ExpDecayCS" + std::to_string(poissonIndex)));
+    ASSERT_TRUE(hasField(dcPoissonMergedGroup, "InitCS" + std::to_string(poissonIndex)));
+    ASSERT_FALSE(hasField(dcPoissonMergedGroup, "ExpMinusLambdaCS" + std::to_string(poissonIndex)));
 }
 
 TEST(NeuronGroup, ComparePostsynapticModels)
@@ -1076,6 +1090,9 @@ TEST(NeuronGroup, ComparePostsynapticModels)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
+    // Generate code but don't actually write any files
+    CodeGenerator::generateAll(modelSpecMerged, backend, ".", ".", false, true);
+
     // Check neurons are merged into three groups
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 3);
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronInitGroups().size() == 3);
@@ -1093,10 +1110,11 @@ TEST(NeuronGroup, ComparePostsynapticModels)
     const size_t alphaInitIndex = (deltaAlphaMergedInitGroup->getMergedInSynPSMGroups().at(0).getArchetype().getPSInitialiser().getSnippet() == AlphaCurr::getInstance()) ? 0 : 1;
 
     // Check that parameter and both derived parameters are heterogeneous
-    ASSERT_TRUE(deltaAlphaMergedUpdateGroup->getMergedInSynPSMGroups().at(alphaUpdateIndex).isParamHeterogeneous("tau"));
-    ASSERT_TRUE(deltaAlphaMergedUpdateGroup->getMergedInSynPSMGroups().at(alphaUpdateIndex).isDerivedParamHeterogeneous("expDecay"));
-    ASSERT_TRUE(deltaAlphaMergedUpdateGroup->getMergedInSynPSMGroups().at(alphaUpdateIndex).isDerivedParamHeterogeneous("init"));
-    ASSERT_TRUE(deltaAlphaMergedInitGroup->getMergedInSynPSMGroups().at(alphaInitIndex).isVarInitParamHeterogeneous("x", "constant"));
+    // **NOTE** there will be no tauInSyn field as it is not accessed aside from via derived parameters
+    ASSERT_FALSE(hasField(*deltaAlphaMergedUpdateGroup, "tauInSyn" + std::to_string(alphaUpdateIndex)));
+    ASSERT_TRUE(hasField(*deltaAlphaMergedUpdateGroup, "expDecayInSyn" + std::to_string(alphaUpdateIndex)));
+    ASSERT_TRUE(hasField(*deltaAlphaMergedUpdateGroup, "initInSyn" + std::to_string(alphaUpdateIndex)));
+    ASSERT_TRUE(hasField(*deltaAlphaMergedInitGroup, "constantxInSyn" + std::to_string(alphaInitIndex)));
 }
 
 
@@ -1280,6 +1298,9 @@ TEST(NeuronGroup, CompareWUPreUpdate)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
+    // Generate code but don't actually write any files
+    CodeGenerator::generateAll(modelSpecMerged, backend, ".", ".", false, true);
+
     // Check neuron init and update is merged into three groups (NG0 with no outsyns, NG1, NG2, NG3 and NG5 with 1 outsyn and NG4with 2 outsyns)
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 3);
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronInitGroups().size() == 3);
@@ -1291,8 +1312,8 @@ TEST(NeuronGroup, CompareWUPreUpdate)
                                                     [](const CodeGenerator::NeuronInitGroupMerged &ng) { return (ng.getGroups().size() == 4); });
 
     // Check that parameter is heterogeneous
-    ASSERT_TRUE(wumPreMergedUpdateGroup->getMergedOutSynWUMPreCodeGroups().at(0).isParamHeterogeneous("p"));
-    ASSERT_TRUE(wumPreMergedInitGroup->getMergedOutSynWUMPreVarGroups().at(0).isVarInitParamHeterogeneous("s", "constant"));
+    ASSERT_TRUE(hasField(*wumPreMergedUpdateGroup, "pOutSynWUMPre0"));
+    ASSERT_TRUE(hasField(*wumPreMergedInitGroup, "constantsOutSynWUMPre0"));
 }
 
 TEST(NeuronGroup, CompareWUPostUpdate)
@@ -1387,6 +1408,9 @@ TEST(NeuronGroup, CompareWUPostUpdate)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
+    // Generate code but don't actually write any files
+    CodeGenerator::generateAll(modelSpecMerged, backend, ".", ".", false, true);
+
     // Check neurons are merged into three groups
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 3);
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronInitGroups().size() == 3);
@@ -1398,6 +1422,6 @@ TEST(NeuronGroup, CompareWUPostUpdate)
                                                      [](const CodeGenerator::NeuronInitGroupMerged &ng) { return (ng.getGroups().size() == 4); });
 
     // Check that parameter is heterogeneous
-    ASSERT_TRUE(wumPostMergedUpdateGroup->getMergedInSynWUMPostCodeGroups().at(0).isParamHeterogeneous("p"));
-    ASSERT_TRUE(wumPostMergedInitGroup->getMergedInSynWUMPostVarGroups().at(0).isVarInitParamHeterogeneous("s", "constant"));
+    ASSERT_TRUE(hasField(*wumPostMergedUpdateGroup, "pInSynWUMPost0"));
+    ASSERT_TRUE(hasField(*wumPostMergedInitGroup, "constantsInSynWUMPost0"));
 }

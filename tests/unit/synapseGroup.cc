@@ -5,10 +5,14 @@
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
+#include "code_generator/generateModules.h"
 #include "code_generator/modelSpecMerged.h"
 
 // (Single-threaded CPU) backend includes
 #include "backend.h"
+
+// Test includes
+#include "helpers.h"
 
 using namespace GeNN;
 
@@ -22,7 +26,7 @@ class STDPAdditive : public WeightUpdateModels::Base
 public:
     DECLARE_SNIPPET(STDPAdditive);
     SET_PARAMS({"tauPlus", "tauMinus", "Aplus", "Aminus",
-                     "Wmin", "Wmax"});
+                "Wmin", "Wmax"});
     SET_DERIVED_PARAMS({
         {"tauPlusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauPlus").cast<double>()); }},
         {"tauMinusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauMinus").cast<double>()); }}});
@@ -32,13 +36,13 @@ public:
     
     SET_PRE_SPIKE_SYN_CODE(
         "addToPost(g);\n"
-        "const scalar dt = t - sT_post; \n"
+        "const scalar dt = t - st_post; \n"
         "if (dt > 0) {\n"
         "    const scalar newWeight = g - (Aminus * postTrace);\n"
         "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
         "}\n");
     SET_POST_SPIKE_SYN_CODE(
-        "const scalar dt = t - sT_pre;\n"
+        "const scalar dt = t - st_pre;\n"
         "if (dt > 0) {\n"
         "    const scalar newWeight = g + (Aplus * preTrace);\n"
         "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
@@ -65,13 +69,13 @@ public:
     
     SET_PRE_SPIKE_SYN_CODE(
         "addToPost(g);\n"
-        "const scalar dt = t - sT_post; \n"
+        "const scalar dt = t - st_post; \n"
         "if (dt > 0) {\n"
         "    const scalar newWeight = g - (Aminus * postTrace);\n"
         "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
         "}\n");
     SET_POST_SPIKE_SYN_CODE(
-        "const scalar dt = t - sT_pre;\n"
+        "const scalar dt = t - st_pre;\n"
         "if (dt > 0) {\n"
         "    const scalar newWeight = g + (Aplus * preTrace);\n"
         "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
@@ -94,13 +98,13 @@ public:
     
     SET_PRE_SPIKE_SYN_CODE(
         "addToPost(g);\n"
-        "const scalar dt = t - sT_post; \n"
+        "const scalar dt = t - st_post; \n"
         "if (dt > 0) {\n"
         "    const scalar newWeight = g - (Aminus * postTrace);\n"
         "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
         "}\n");
     SET_POST_SPIKE_SYN_CODE(
-        "const scalar dt = t - sT_pre;\n"
+        "const scalar dt = t - st_pre;\n"
         "if (dt > 0) {\n"
         "    const scalar newWeight = g + (Aplus * preTrace);\n"
         "    g = fmax(Wmin, fmin(Wmax, newWeight));\n"
@@ -405,6 +409,9 @@ TEST(SynapseGroup, CompareWUDifferentParams)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
+    // Generate code but don't actually write any files
+    CodeGenerator::generateAll(modelSpecMerged, backend, ".", ".", false, true);
+
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
     ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 1);
@@ -413,7 +420,7 @@ TEST(SynapseGroup, CompareWUDifferentParams)
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().empty());
 
     // Check that global g var is heterogeneous
-    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isWUParamHeterogeneous("g"));
+    ASSERT_TRUE(hasField(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0), "g"));
 }
 
 TEST(SynapseGroup, CompareWUDifferentProceduralConnectivity)
@@ -513,6 +520,9 @@ TEST(SynapseGroup, CompareWUDifferentToeplitzConnectivity)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
+    // Generate code but don't actually write any files
+    CodeGenerator::generateAll(modelSpecMerged, backend, ".", ".", false, true);
+
     // Check all groups are merged
     ASSERT_EQ(modelSpecMerged.getMergedNeuronUpdateGroups().size(), 3);
     ASSERT_EQ(modelSpecMerged.getMergedPresynapticUpdateGroups().size(), 1);
@@ -521,16 +531,16 @@ TEST(SynapseGroup, CompareWUDifferentToeplitzConnectivity)
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().empty());
 
     // Check that connectivity parameter is heterogeneous
-    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_kh"));
-    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_kw"));
-    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_ih"));
-    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_iw"));
-    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_ic"));
-    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_oh"));
-    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_ow"));
-    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous("conv_oc"));
-    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitDerivedParamHeterogeneous("conv_bh"));
-    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitDerivedParamHeterogeneous("conv_bw"));
+    ASSERT_FALSE(hasField(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0), "conv_kh"));
+    ASSERT_FALSE(hasField(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0), "conv_kw"));
+    ASSERT_FALSE(hasField(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0), "conv_ih"));
+    ASSERT_FALSE(hasField(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0), "conv_iw"));
+    ASSERT_FALSE(hasField(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0), "conv_ic"));
+    ASSERT_TRUE(hasField(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0), "conv_oh"));
+    ASSERT_TRUE(hasField(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0), "conv_ow"));
+    ASSERT_FALSE(hasField(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0), "conv_oc"));
+    ASSERT_TRUE(hasField(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0), "conv_bh"));
+    ASSERT_TRUE(hasField(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0), "conv_bw"));
 }
 
 TEST(SynapseGroup, CompareWUDifferentProceduralVars)
@@ -667,6 +677,9 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
+    // Generate code but don't actually write any files
+    CodeGenerator::generateAll(modelSpecMerged, backend, ".", ".", false, true);
+
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
     ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 1);
@@ -675,9 +688,9 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().size() == 1);
 
     // Check that only synaptic weight initialistion parameters are heterogeneous
-    ASSERT_FALSE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isSparseConnectivityInitParamHeterogeneous("prob"));
-    ASSERT_FALSE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isSparseConnectivityInitDerivedParamHeterogeneous("probLogRecip"));
-    ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().at(0).isVarInitParamHeterogeneous("g", "constant"));
+    ASSERT_FALSE(hasField(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0), "prob"));
+    ASSERT_FALSE(hasField(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0), "probLogRecip"));
+    ASSERT_TRUE(hasField(modelSpecMerged.getMergedSynapseSparseInitGroups().at(0), "constantg"));
 }
 
 TEST(SynapseGroup, InitCompareWUDifferentPreVars)
@@ -816,6 +829,9 @@ TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)
     // Merge model
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
+    // Generate code but don't actually write any files
+    CodeGenerator::generateAll(modelSpecMerged, backend, ".", ".", false, true);
+
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
     ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 1);
@@ -825,7 +841,7 @@ TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().size() == 1);
 
     // Check that fixed number post connectivity row length parameters are heterogeneous
-    ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isSparseConnectivityInitParamHeterogeneous("num"));
+    ASSERT_TRUE(hasField(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0), "num"));
 }
 
 
