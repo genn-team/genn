@@ -25,7 +25,7 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
-    void generateCustomUpdate(EnvironmentExternalBase &env, unsigned int batchSize,
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize,
                               BackendBase::GroupHandlerEnv<CustomUpdateGroupMerged> genPostamble);
 
     std::string getVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
@@ -52,7 +52,7 @@ public:
     //----------------------------------------------------------------------------
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateCustomUpdate(EnvironmentExternalBase &env, unsigned int batchSize,
+    void generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize,
                               BackendBase::GroupHandlerEnv<CustomUpdateWUGroupMergedBase> genPostamble);
 
     std::string getVarIndex(unsigned int batchSize, VarAccessDim varDims, const std::string &index) const;
