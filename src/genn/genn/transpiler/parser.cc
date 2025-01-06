@@ -76,7 +76,10 @@ const std::map<std::multiset<std::string>, Type::ResolvedType> numericTypeSpecif
     {{"size_t"}, Type::Uint64},
 
     {{"float"}, Type::Float},
-    {{"double"}, Type::Double}};
+    {{"double"}, Type::Double},
+    
+    {{"half"}, Type::Half},
+    {{"bfloat16"}, Type::Bfloat16}};
 
 //---------------------------------------------------------------------------
 // ParserState
