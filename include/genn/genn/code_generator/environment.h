@@ -720,9 +720,10 @@ public:
         for(const auto &v : archetypeAdaptor.getDefs()) {
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
             const auto qualifiedType = (readOnly || (getVarAccessMode(v.access) & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
+            const auto resolvedStorageType = v.storageType.resolve(this->getGroup().getTypeContext());
             const auto name = hidden ? ("_" + v.name) : v.name;
             addField(qualifiedType, name,
-                     resolvedType.createPointer(), v.name + fieldSuffix, 
+                     resolvedStorageType.createPointer(), v.name + fieldSuffix, 
                      [v](auto &runtime, const auto &g, size_t) 
                      { 
                          return runtime.getArray(A(g).getTarget(), v.name);
@@ -775,8 +776,10 @@ public:
         const A archetypeAdaptor(this->getGroup().getArchetype());
         for(const auto &v : archetypeAdaptor.getDefs()) {
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
+            const auto resolvedStorageType = v.storageType.resolve(this->getGroup().getTypeContext());
             const auto name = hidden ? ("_" + v.name) : v.name;
-            addField(resolvedType.createPointer(), name, v.name + fieldSuffix,
+            addField(resolvedType.createPointer(), name, 
+                     resolvedStorageType.createPointer(), v.name + fieldSuffix,
                      [v](auto &runtime, const auto &g, size_t) 
                      { 
                          return runtime.getArray(g, v.name);

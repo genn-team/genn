@@ -491,7 +491,7 @@ private:
         for(const auto &var : adaptor.getDefs()) {
             const auto &varInit = adaptor.getInitialisers().at(var.name);
             const bool uninitialized = Utils::areTokensEmpty(varInit.getCodeTokens());
-            const auto resolvedType = var.type.resolve(getModel().getTypeContext());
+            const auto resolvedType = var.storageType.resolve(getModel().getTypeContext());
             const auto varDims = adaptor.getVarDims(var);
 
             const size_t numVarCopies = ((varDims & VarAccessDim::BATCH) && batched) ? batchSize : 1;

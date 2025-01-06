@@ -257,8 +257,8 @@ private:
                 // If variable is reduction target
                 if(v.access & VarAccessModeAttribute::REDUCE) {
                     // Add pointer field
-                    const auto resolvedType = v.type.resolve(cg.getTypeContext());
-                    groupEnv.addField(resolvedType.createPointer(), "_" + v.name, v.name,
+                    const auto resolvedStorageType = v.storageType.resolve(cg.getTypeContext());
+                    groupEnv.addField(resolvedStorageType.createPointer(), "_" + v.name, v.name,
                                       [v](const auto &runtime, const auto &g, size_t) 
                                       {
                                           return runtime.getArray(g, v.name);
@@ -266,11 +266,12 @@ private:
 
                     // Add NCCL reduction
                     groupEnv.print("CHECK_NCCL_ERRORS(ncclAllReduce($(_" + v.name + "), $(_" + v.name + "), $(_size)");
-                    groupEnv.printLine(", " + getNCCLType(resolvedType) + ", " + getNCCLReductionType(getVarAccessMode(v.access)) + ", ncclCommunicator, 0));");
+                    groupEnv.printLine(", " + getNCCLType(resolvedStorageType) + ", " + getNCCLReductionType(getVarAccessMode(v.access)) + ", ncclCommunicator, 0));");
                 }
             }
 
             // Loop through variable references
+            // **TODO** storage type
             for(const auto &v : cm->getVarRefs()) {
                 // If variable reference ios reduction target
                 if(v.access & VarAccessModeAttribute::REDUCE) {
