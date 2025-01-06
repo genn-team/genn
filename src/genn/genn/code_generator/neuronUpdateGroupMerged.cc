@@ -17,7 +17,9 @@ using namespace GeNN::Transpiler;
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::CurrentSource
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::CurrentSource::generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+void NeuronUpdateGroupMerged::CurrentSource::generate(const BackendBase &backend,
+                                                      EnvironmentExternalBase &env, 
+                                                      NeuronUpdateGroupMerged &ng,
                                                       unsigned int batchSize)
 {
     const std::string fieldSuffix =  "CS" + std::to_string(getIndex());
@@ -43,7 +45,7 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(EnvironmentExternalBase &e
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CurrentSourceVarAdapter, CurrentSource, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, getTypeContext(), csEnv, fieldSuffix, "l", false,
+        *this, ng, backend, getTypeContext(), csEnv, fieldSuffix, "l", false,
         [batchSize, &ng](const std::string&, VarAccess d, bool)
         {
             return ng.getVarIndex(batchSize, getVarAccessDim(d), "$(id)");
@@ -118,7 +120,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(EnvironmentExternalBase &env, N
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<SynapsePSMVarAdapter, InSynPSM, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, getTypeContext(), psmEnv, fieldSuffix, "l", false,
+        *this, ng, backend, getTypeContext(), psmEnv, fieldSuffix, "l", false,
         [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
         {
             return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -212,7 +214,9 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generate(EnvironmentExternalBase &e
     genUpdate(groupEnv, *this);
 }
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(const BackendBase &backend, 
+                                                                    EnvironmentExternalBase &env, 
+                                                                    NeuronUpdateGroupMerged &ng,
                                                                     unsigned int batchSize, BackendBase::GroupHandlerEnv<SynSpikeEvent> genEmitSpikeLikeEvent)
 {
     const std::string fieldSuffix =  "SynSpikeEvent" + std::to_string(getIndex());
@@ -252,7 +256,7 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
 
         // Create an environment which caches variables in local variables if they are accessed
         EnvironmentLocalVarCache<SynapseWUPreVarAdapter, SynSpikeEvent, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
+            *this, ng, backend, getTypeContext(), synEnv, fieldSuffix, "l", false,
             [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -273,7 +277,7 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(EnvironmentE
 
         // Create an environment which caches variables in local variables if they are accessed
         EnvironmentLocalVarCache<SynapseWUPostVarAdapter, SynSpikeEvent, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
+            *this, ng, backend, getTypeContext(), synEnv, fieldSuffix, "l", false,
             [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -330,8 +334,9 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventConditionInternal(Envi
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::InSynWUMPostCode
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
-                                                         unsigned int batchSize, bool dynamicsNotSpike)
+void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                                                         NeuronUpdateGroupMerged &ng, unsigned int batchSize,
+                                                         bool dynamicsNotSpike)
 {
     const std::string fieldSuffix =  "InSynWUMPost" + std::to_string(getIndex());
     const auto *wum = getArchetype().getWUInitialiser().getSnippet();
@@ -362,7 +367,7 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(EnvironmentExternalBase
 
         // Create an environment which caches variables in local variables if they are accessed
         EnvironmentLocalVarCache<SynapseWUPostVarAdapter, InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
+            *this, ng, backend, getTypeContext(), synEnv, fieldSuffix, "l", false,
             [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -410,8 +415,9 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::updateHash(boost::uuids::detail:
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::OutSynWUMPreCode
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
-                                                         unsigned int batchSize, bool dynamicsNotSpike)
+void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &backend, EnvironmentExternalBase &env,
+                                                         NeuronUpdateGroupMerged &ng, unsigned int batchSize,
+                                                         bool dynamicsNotSpike)
 {
     const std::string fieldSuffix =  "OutSynWUMPre" + std::to_string(getIndex());
     const auto *wum = getArchetype().getWUInitialiser().getSnippet();
@@ -442,7 +448,7 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(EnvironmentExternalBase
 
         // Create an environment which caches variables in local variables if they are accessed
         EnvironmentLocalVarCache<SynapseWUPreVarAdapter, OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, getTypeContext(), synEnv, fieldSuffix, "l", false,
+            *this, ng, backend, getTypeContext(), synEnv, fieldSuffix, "l", false,
             [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -572,7 +578,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(EnvironmentExternalBase &env,
     // Create an environment which caches neuron variable fields in local variables if they are accessed
     // **NOTE** we do this right at the top so that local copies can be used by child groups
     EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronChildVarEnv(
-        *this, *this, getTypeContext(), neuronChildEnv, "", "l", true,
+        *this, *this, backend, getTypeContext(), neuronChildEnv, "", "l", true,
         [batchSize, this](const std::string&, VarAccess d, bool delayed)
         {
             return getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
@@ -597,7 +603,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(EnvironmentExternalBase &env,
     // Loop through all of neuron group's current sources
     for (auto &cs : m_MergedCurrentSourceGroups) {
         CodeStream::Scope b(neuronChildVarEnv.getStream());
-        cs.generate(neuronChildVarEnv, *this, batchSize);
+        cs.generate(backend, neuronChildVarEnv, *this, batchSize);
     }
 
     EnvironmentGroupMergedField<NeuronUpdateGroupMerged> neuronEnv(neuronChildVarEnv, *this); 
@@ -666,19 +672,19 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(EnvironmentExternalBase &env,
             neuronChildVarEnv, neuronEnv.getStream(), *this);
         for (auto &sg : m_MergedOutSynWUMPreCodeGroups) {
             CodeStream::Scope b(neuronWUChildEnv.getStream());
-            sg.generate(neuronWUChildEnv, *this, batchSize, true);
+            sg.generate(backend, neuronWUChildEnv, *this, batchSize, true);
         }
 
         // Generate var update for incoming synaptic populations with postsynaptic code
         for (auto &sg : m_MergedInSynWUMPostCodeGroups) {
             CodeStream::Scope b(neuronWUChildEnv.getStream());
-            sg.generate(neuronWUChildEnv, *this, batchSize, true);
+            sg.generate(backend, neuronWUChildEnv, *this, batchSize, true);
         }
 
          // Generate spike event conditions and generation
         for(auto &sg : m_MergedSpikeEventGroups) {
             CodeStream::Scope b(neuronWUChildEnv.getStream());
-            sg.generateEventCondition(neuronWUChildEnv, *this, 
+            sg.generateEventCondition(backend, neuronWUChildEnv, *this, 
                                       batchSize, genEmitSpikeLikeEvent);
         }
     }
@@ -788,18 +794,18 @@ void NeuronUpdateGroupMerged::generateSpikeEvents(EnvironmentExternalBase &env, 
     }
 }
 //--------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::generateWUVarUpdate(EnvironmentExternalBase &env, unsigned int batchSize)
+void NeuronUpdateGroupMerged::generateWUVarUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
     // Generate var update for outgoing synaptic populations with presynaptic update code
     for (auto &sg : m_MergedOutSynWUMPreCodeGroups) {
         CodeStream::Scope b(env.getStream());
-        sg.generate(env, *this, batchSize, false);
+        sg.generate(backend, env, *this, batchSize, false);
     }
 
     // Generate var update for incoming synaptic populations with postsynaptic code
     for (auto &sg : m_MergedInSynWUMPostCodeGroups) {
         CodeStream::Scope b(env.getStream());
-        sg.generate(env, *this, batchSize, false);
+        sg.generate(backend, env, *this, batchSize, false);
     }
 }
 //--------------------------------------------------------------------------

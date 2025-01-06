@@ -13,6 +13,7 @@
 #include "type.h"
 
 // GeNN code generator includes
+#include "code_generator/backendBase.h"
 #include "code_generator/codeStream.h"
 #include "code_generator/groupMerged.h"
 #include "code_generator/lazyString.h"
@@ -970,11 +971,11 @@ public:
     using AdapterDef = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
 
     template<typename... PolicyArgs>
-    EnvironmentLocalCacheBase(G &group, F &fieldGroup, const Type::TypeContext &context, EnvironmentExternalBase &enclosing, 
-                              const std::string &fieldSuffix, const std::string &localPrefix,
-                              bool hidden, PolicyArgs&&... policyArgs)
+    EnvironmentLocalCacheBase(G &group, F &fieldGroup, const BackendBase &backend, const Type::TypeContext &context, 
+                              EnvironmentExternalBase &enclosing, const std::string &fieldSuffix, 
+                              const std::string &localPrefix, bool hidden, PolicyArgs&&... policyArgs)
     :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...), m_Group(group), 
-        m_FieldGroup(fieldGroup),  m_Context(context), m_Contents(m_ContentsStream), 
+        m_FieldGroup(fieldGroup),  m_Backend(backend), m_Context(context), m_Contents(m_ContentsStream), 
         m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix)
     {
         // Copy variables into variables referenced, alongside boolean
@@ -1112,6 +1113,7 @@ private:
     //------------------------------------------------------------------------
     std::reference_wrapper<G> m_Group;
     std::reference_wrapper<F> m_FieldGroup;
+    std::reference_wrapper<const BackendBase> m_Backend;
     std::reference_wrapper<const Type::TypeContext> m_Context;
     std::ostringstream m_ContentsStream;
     CodeStream m_Contents;

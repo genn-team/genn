@@ -44,7 +44,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomUpdateGroupMerged::generateCustomUpdate(EnvironmentExternalBase &env, unsigned int batchSize,
+void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize,
                                                    BackendBase::GroupHandlerEnv<CustomUpdateGroupMerged> genPostamble)
 {
     // Add parameters, derived parameters and EGPs to environment
@@ -64,7 +64,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(EnvironmentExternalBase &env,
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateGroupMerged> varEnv(
-        *this, *this, getTypeContext(), cuEnv, "", "l", false,
+        *this, *this, backend, getTypeContext(), cuEnv, "", "l", false,
         [this, batchSize](const std::string&, CustomUpdateVarAccess d, bool)
         {
             return getVarIndex(batchSize, getVarAccessDim(d, getArchetype().getDims()), "$(id)");
@@ -72,7 +72,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(EnvironmentExternalBase &env,
     
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarRefCache<CustomUpdateVarRefAdapter, CustomUpdateGroupMerged> varRefEnv(
-        *this, *this, getTypeContext(), varEnv, "", "l", false,
+        *this, *this, backend, getTypeContext(), varEnv, "", "l", false,
         [this, batchSize](const std::string&, const Models::VarReference &v, const std::string &delaySlot)
         {
             return getVarRefIndex(v.getDelayNeuronGroup(), v.getDenDelaySynapseGroup(),
@@ -195,7 +195,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWUGroupMergedBase::getHashDi
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomUpdateWUGroupMergedBase::generateCustomUpdate(EnvironmentExternalBase &env, unsigned int batchSize,
+void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize,
                                                          BackendBase::GroupHandlerEnv<CustomUpdateWUGroupMergedBase> genPostamble)
 {
     // Add parameters, derived parameters and EGPs to environment
@@ -215,7 +215,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(EnvironmentExternalBase
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CustomUpdateVarAdapter, CustomUpdateWUGroupMergedBase> varEnv(
-        *this, *this, getTypeContext(), cuEnv, "", "l", false,
+        *this, *this, backend, getTypeContext(), cuEnv, "", "l", false,
         [this, batchSize](const std::string&, CustomUpdateVarAccess d, bool)
         {
             return getVarIndex(batchSize, getVarAccessDim(d, getArchetype().getDims()), "$(id_syn)");
@@ -223,7 +223,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(EnvironmentExternalBase
     
     // Create an environment which caches variable references in local variables if they are accessed
     EnvironmentLocalVarRefCache<CustomUpdateWUVarRefAdapter, CustomUpdateWUGroupMergedBase> varRefEnv(
-        *this, *this, getTypeContext(), varEnv, "", "l", false,
+        *this, *this, backend, getTypeContext(), varEnv, "", "l", false,
         [this, batchSize](const std::string&, const Models::WUVarReference &v, const std::string &delaySlot)
         {
             assert(delaySlot.empty());

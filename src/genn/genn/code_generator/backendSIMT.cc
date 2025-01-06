@@ -566,7 +566,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                         // Create an environment which caches neuron variable fields in local variables if they are accessed
                         // **NOTE** we do this right at the top so that local copies can be used by child groups
                         EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> wuVarEnv(
-                            ng, ng, ng.getTypeContext(), wuEnv, "", "l", true,
+                            ng, ng, *this, ng.getTypeContext(), wuEnv, "", "l", true,
                             [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
                             {
                                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
@@ -575,7 +575,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                             {
                                 return ng.getWriteVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
                             }, false);
-                        ng.generateWUVarUpdate(wuEnv, batchSize);
+                        ng.generateWUVarUpdate(*this, wuEnv, batchSize);
                     }
 
                     const std::string spikeQueueOffset = ng.getWriteVarIndex(ng.getArchetype().isSpikeDelayRequired(), batchSize,
@@ -907,7 +907,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
 
                         // **THINK** it would be great to 'lift' reads of SHARED variables out of this loop
                         cg.generateCustomUpdate(
-                            batchEnv, batchSize,
+                            *this, batchEnv, batchSize,
                             [&reductionTargets, this](auto &env, const auto&)
                             {
                                 // Loop through reduction targets and generate reduction
@@ -956,7 +956,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
 
                         // **THINK** it would be great to 'lift' reads of NEURON_SHARED variables out of this loop
                         cg.generateCustomUpdate(
-                            batchEnv, batchSize,
+                            *this, batchEnv, batchSize,
                             [&reductionTargets, this](auto &env, const auto&)
                             {
                                 // Loop through reduction targets and generate reduction
@@ -1007,7 +1007,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                 batchEnv.print("if($(id) < $(num_neurons))");
                 {
                     CodeStream::Scope b(batchEnv.getStream());
-                    cg.generateCustomUpdate(batchEnv, batchSize, [](auto&, auto&){});
+                    cg.generateCustomUpdate(*this, batchEnv, batchSize, [](auto&, auto&){});
                 }
             }
             // Otherwise
@@ -1023,7 +1023,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                     EnvironmentGroupMergedField<CustomUpdateGroupMerged> batchEnv(groupEnv, cg);
                     buildStandardEnvironment(batchEnv, batchSize);
 
-                    cg.generateCustomUpdate(batchEnv, batchSize, [](auto&, auto&){});
+                    cg.generateCustomUpdate(*this, batchEnv, batchSize, [](auto&, auto&){});
                 }
             }
         });
@@ -1122,7 +1122,7 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
                     buildStandardEnvironment(batchEnv, batchSize);
 
                     cg.generateCustomUpdate(
-                        batchEnv, batchSize,
+                        *this, batchEnv, batchSize,
                         [&reductionTargets, this](auto &env, auto &cg)
                         {
                             // If this is a reduction
@@ -1229,7 +1229,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, Mod
                             synEnv.add(Type::Uint32.addConst(), "id_syn", "idx",
                                        {synEnv.addInitialiser("const unsigned int idx = ((y + j) * $(num_post)) + x;")});
                             cg.generateCustomUpdate(
-                                synEnv, batchSize,
+                                *this, synEnv, batchSize,
                                 [&transposeVarName, this](auto &env, const auto&)
                                 {        
                                     // Write forward weight to shared memory

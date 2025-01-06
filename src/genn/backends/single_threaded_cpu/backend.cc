@@ -690,7 +690,7 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
                                 }
                                 {
                                     CodeStream::Scope b(memberEnv.getStream());
-                                    c.generateCustomUpdate(memberEnv, 1,
+                                    c.generateCustomUpdate(*this, memberEnv, 1,
                                                            [&reductionTargets, this](auto &env, auto&)
                                                            {        
                                                                // Loop through reduction targets and generate reduction
@@ -720,7 +720,7 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
                                     CodeStream::Scope b(memberEnv.getStream());
 
                                     // Generate custom update
-                                    c.generateCustomUpdate(memberEnv, 1,
+                                    c.generateCustomUpdate(*this, memberEnv, 1,
                                                            [this](auto &env, auto &c)
                                                            {        
                                                                // Write back reductions
