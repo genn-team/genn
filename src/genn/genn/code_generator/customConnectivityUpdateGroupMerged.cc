@@ -36,11 +36,11 @@ CustomConnectivityUpdateGroupMerged::CustomConnectivityUpdateGroupMerged(size_t 
         dependentVarsList.sort([](const auto &a, const auto &b)
                                {  
                                    boost::uuids::detail::sha1 hashA;  
-                                   Type::updateHash(a.getVarType(), hashA);
+                                   Type::updateHash(a.getVarStorageType(), hashA);
                                    Utils::updateHash(a.getVarDims(), hashA);
 
                                    boost::uuids::detail::sha1 hashB;
-                                   Type::updateHash(b.getVarType(), hashB);
+                                   Type::updateHash(b.getVarStorageType(), hashB);
                                    Utils::updateHash(b.getVarDims(), hashB);
 
                                    return (hashA.get_digest() < hashB.get_digest());
@@ -148,8 +148,8 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
 
     // Add private fields for dependent variables
     for(size_t i = 0; i < getSortedArchetypeDependentVars().size(); i++) {
-        auto resolvedType = getSortedArchetypeDependentVars().at(i).getVarType().resolve(getTypeContext());
-        updateEnv.addField(resolvedType.createPointer(), "_dependent_var_" + std::to_string(i), "dependentVar" + std::to_string(i),
+        auto resolvedStorageType = getSortedArchetypeDependentVars().at(i).getVarStorageType().resolve(getTypeContext());
+        updateEnv.addField(resolvedStorageType.createPointer(), "_dependent_var_" + std::to_string(i), "dependentVar" + std::to_string(i),
                            [i, this](const auto &runtime, const auto&, size_t g) 
                            { 
                                return m_SortedDependentVars[g][i].getTargetArray(runtime);
