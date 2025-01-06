@@ -787,6 +787,7 @@ void updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(v.name, hash);
     Type::updateHash(v.type, hash);
+    Type::updateHash(v.storageType, hash);
     Utils::updateHash(v.access, hash);
 }
 //----------------------------------------------------------------------------
@@ -794,6 +795,7 @@ void updateHash(const Base::CustomUpdateVar &v, boost::uuids::detail::sha1 &hash
 {
     Utils::updateHash(v.name, hash);
     Type::updateHash(v.type, hash);
+    Type::updateHash(v.storageType, hash);
     Utils::updateHash(v.access, hash);
 }
 //----------------------------------------------------------------------------
@@ -801,6 +803,7 @@ void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(v.name, hash);
     Type::updateHash(v.type, hash);
+    Type::updateHash(v.storageType, hash);
     Utils::updateHash(v.access, hash);
 }
 //----------------------------------------------------------------------------

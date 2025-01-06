@@ -312,7 +312,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getHashDigest(
                    [](const Models::WUVarReference &v)
                    {
                        boost::uuids::detail::sha1 hash;  
-                       Type::updateHash(v.getVarType(), hash);
+                       Type::updateHash(v.getVarStorageType(), hash);
                        Utils::updateHash(v.getVarDims(), hash);
                        return hash.get_digest();
                    });
