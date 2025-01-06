@@ -567,6 +567,9 @@ void Backend::genDefinitionsPreambleInternal(CodeStream &os, const ModelSpecMerg
     if(getRuntimeVersion() >= 9000) {
         os <<"#include <cuda_fp16.h>" << std::endl;
     }
+    if(getRuntimeVersion() >= 11000) {
+        os << "#include <cuda_bf16.h>" << std::endl;
+    }
 
     // If NCCL is enabled
     if(getPreferences<Preferences>().enableNCCLReductions) {
