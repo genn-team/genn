@@ -1608,9 +1608,12 @@ std::string BackendCUDAHIP::getNCCLType(const Type::ResolvedType &type) const
     else if(type == Type::Uint32){
         return getCCLPrefix() + "Uint32";
     }
-    /*else if(type == "half") {
-        return "ncclFloat16";
-    }*/
+    else if(type == Type::Half) {
+        return getCCLPrefix() + "Float16";
+    }
+    else if(type == Type::Bfloat16) {
+        return getCCLPrefix() + "Bfloat16";
+    }
     else if(type == Type::Float){
         return getCCLPrefix() + "Float32";
     }

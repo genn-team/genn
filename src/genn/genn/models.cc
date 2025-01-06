@@ -36,6 +36,16 @@ Type::UnresolvedType VarReference::getVarType() const
         m_Detail);
 }
 //----------------------------------------------------------------------------
+Type::UnresolvedType VarReference::getVarStorageType() const
+{
+    return std::visit(
+        Utils::Overload{
+            [](const InternalSGRef&) { return Type::UnresolvedType("scalar"); },
+            [](const InternalNGRef&) { return Type::UnresolvedType("timepoint"); },
+            [](const auto &ref){ return ref.var.storageType; }},
+        m_Detail);
+}
+//----------------------------------------------------------------------------
 VarAccessDim VarReference::getVarDims() const
 {
     return std::visit(
@@ -374,6 +384,13 @@ Type::UnresolvedType WUVarReference::getVarType() const
 {
     return std::visit(
         [](const auto &ref){ return ref.var.type; },
+        m_Detail);
+}
+//----------------------------------------------------------------------------
+Type::UnresolvedType WUVarReference::getVarStorageType() const
+{
+    return std::visit(
+        [](const auto &ref){ return ref.var.storageType; },
         m_Detail);
 }
 //----------------------------------------------------------------------------

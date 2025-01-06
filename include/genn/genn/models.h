@@ -128,18 +128,28 @@ public:
 
     struct GENN_EXPORT VarRef
     {
-        VarRef(const std::string &n, const Type::ResolvedType &t, VarAccessMode a = VarAccessMode::READ_WRITE) : name(n), type(t), access(a)
+        VarRef(const std::string &n, const Type::ResolvedType &t, VarAccessMode a = VarAccessMode::READ_WRITE)
+        :   name(n), type(t), storageType(t), access(a)
         {}
-        VarRef(const std::string &n, const std::string &t, VarAccessMode a = VarAccessMode::READ_WRITE) : name(n), type(t), access(a)
+        VarRef(const std::string &n, const Type::ResolvedType &t, const Type::ResolvedType &s, VarAccessMode a = VarAccessMode::READ_WRITE)
+        :   name(n), type(t), storageType(s), access(a)
+        {}
+        VarRef(const std::string &n, const std::string &t, VarAccessMode a = VarAccessMode::READ_WRITE)
+        :   name(n), type(t), storageType(t), access(a)
+        {}
+        VarRef(const std::string &n, const std::string &t, const std::string &s, VarAccessMode a = VarAccessMode::READ_WRITE)
+        :   name(n), type(t), storageType(s), access(a)
         {}
         
         bool operator == (const VarRef &other) const
         {
-            return (std::tie(name, type, access) == std::tie(other.name, other.type, other.access));
+            return (std::tie(name, type, storageType, access) 
+                    == std::tie(other.name, other.type, other.storageType, other.access));
         }
 
         std::string name;
         Type::UnresolvedType type;
+        Type::UnresolvedType storageType;
         VarAccessMode access;
     };
 
@@ -195,6 +205,9 @@ public:
     //------------------------------------------------------------------------
     // Get type of variable
     Type::UnresolvedType getVarType() const;
+
+    // Get storage type of variable
+    Type::UnresolvedType getVarStorageType() const;
 
     // Get dimensions of variable
     VarAccessDim getVarDims() const;
@@ -327,6 +340,9 @@ public:
     //------------------------------------------------------------------------
     // Get type of variable
     Type::UnresolvedType getVarType() const;
+
+    // Get storage type of variable
+    Type::UnresolvedType getVarStorageType() const;
 
     // Get dimensions of variable
     VarAccessDim getVarDims() const;
@@ -541,10 +557,13 @@ void checkVarReferenceTypes(const std::map<std::string, V> &varRefs, const Base:
     for(const auto &modelVarRef : modelVarRefs) {
         const auto varRef = varRefs.at(modelVarRef.name);
 
-        // Check types of variable references against those specified in model
+        // Check types and storage types of variable references against those specified in model
         // **THINK** this is rather conservative but I think not allowing "scalar" and whatever happens to be scalar type is ok
         if(varRef.getVarType() != modelVarRef.type) {
             throw std::runtime_error("Incompatible type for variable reference '" + modelVarRef.name + "'");
+        }
+        if(varRef.getVarStorageType() != modelVarRef.storageType) {
+            throw std::runtime_error("Incompatible storage type for variable reference '" + modelVarRef.name + "'");
         }
     }
 }
