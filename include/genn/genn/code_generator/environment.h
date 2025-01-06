@@ -1003,10 +1003,11 @@ public:
         // Loop through referenced definitions
         for(const auto &v : referencedDefs) {
             const auto resolvedType = v.type.resolve(m_Context.get());
+            const auto resolvedStorageType = v.storageType.resolve(m_Context.get());
 
             // Add field to underlying field group
             const auto &group = m_Group.get();
-            m_FieldGroup.get().addField(resolvedType.createPointer(), v.name + m_FieldSuffix,
+            m_FieldGroup.get().addField(resolvedStorageType.createPointer(), v.name + m_FieldSuffix,
                                         [v, &group, this](auto &runtime, const typename F::GroupInternal &, size_t i)
                                         {
                                             return this->getArray(runtime, group.getGroups().at(i), v);
@@ -1021,7 +1022,17 @@ public:
             // **NOTE** by not initialising these variables for reductions, 
             // compilers SHOULD emit a warning if user code doesn't set it to something
             if(!(v.access & VarAccessModeAttribute::REDUCE) && !(v.access & VarAccessModeAttribute::BROADCAST)) {
-                getContextStream() << " = group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getReadIndex(m_Group.get(), v, ""), *this) << "]";
+                getContextStream() << " = ";
+
+                // If variable type matches storage type, copy directly otherwise instantiate backend-specific conversion
+                const std::string value = "group->" + v.name + m_FieldSuffix + "[" + printSubs(this->getReadIndex(m_Group.get(), v, ""), *this) + "]";
+                if(resolvedType == resolvedStorageType) {
+                    getContextStream() << value;
+                }
+                else {
+                    getContextStream() << m_Backend.get().getStorageToTypeConversion(resolvedType,
+                                                                                     resolvedStorageType, value);
+                }
             }
             getContextStream() << ";" << std::endl;
         }
@@ -1031,6 +1042,9 @@ public:
 
         // Loop through referenced definitions again
         for(const auto &v : referencedDefs) {
+            const auto resolvedType = v.type.resolve(m_Context.get());
+            const auto resolvedStorageType = v.storageType.resolve(m_Context.get());
+
             // If writes to this variable should be broadcast
             const auto numVarDelaySlots = archetypeAdapter.getNumVarDelaySlots(v.name);
             if(numVarDelaySlots && (v.access & VarAccessModeAttribute::BROADCAST)) {
@@ -1038,7 +1052,18 @@ public:
                 {
                     CodeStream::Scope b(getContextStream());
                     getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getWriteIndex(m_Group.get(), v, "d"), *this) << "]";
-                    getContextStream() << " = _" << m_LocalPrefix << v.name << ";" << std::endl;
+                    getContextStream() << " = ";
+
+                    // If variable type matches storage type, copy directly otherwise instantiate backend-specific conversion
+                    const std::string value = "_" + m_LocalPrefix + v.name;
+                    if(resolvedType == resolvedStorageType) {
+                        getContextStream() << value;
+                    }
+                    else {
+                        getContextStream() << m_Backend.get().getTypeToStorageConversion(resolvedType,
+                                                                                         resolvedStorageType, value);
+                    }
+                    getContextStream() << ";" << std::endl;
                 }
             }
             // Otherwise, if we should always copy variable, variable is read-write or variable is broadcast
@@ -1046,7 +1071,18 @@ public:
                     || (v.access & VarAccessModeAttribute::BROADCAST)) 
             {
                 getContextStream() << "group->" << v.name << m_FieldSuffix << "[" << printSubs(this->getWriteIndex(m_Group.get(), v, ""), *this) << "]";
-                getContextStream() << " = _" << m_LocalPrefix << v.name << ";" << std::endl;
+                getContextStream() << " = ";
+                
+                // If variable type matches storage type, copy directly otherwise instantiate backend-specific conversion
+                const std::string value = "_" + m_LocalPrefix + v.name;
+                if(resolvedType == resolvedStorageType) {
+                    getContextStream() << value;
+                }
+                else {
+                    getContextStream() << m_Backend.get().getTypeToStorageConversion(resolvedType,
+                                                                                     resolvedStorageType, value);
+                }
+                getContextStream() << ";" << std::endl;
             }
         }
     }
