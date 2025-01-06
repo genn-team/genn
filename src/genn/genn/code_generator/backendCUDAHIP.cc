@@ -1464,6 +1464,42 @@ std::string BackendCUDAHIP::getRestrictKeyword() const
     return " __restrict__";
 }
 //--------------------------------------------------------------------------
+std::string BackendCUDAHIP::getStorageToTypeConversion(const Type::ResolvedType &type, const Type::ResolvedType &storageType, const std::string &value) const
+{
+    if(type == Type::Float) {
+        if(storageType == Type::Half) {
+            return "__half2float(" + value + ")";
+        }
+        else if(storageType == Type::Bfloat16) {
+            return "__bfloat162float(" + value + ")";
+        }
+        else {
+            throw std::runtime_error("Invalid storage type '" + storageType.getName() + "'");
+        }
+    }
+    else {
+        throw std::runtime_error("Invalid type '" + type.getName() + "'");
+    }
+}
+//--------------------------------------------------------------------------
+std::string BackendCUDAHIP::getTypeToStorageConversion(const Type::ResolvedType &type, const Type::ResolvedType &storageType, const std::string &value) const
+{
+    if(type == Type::Float) {
+        if(storageType == Type::Half) {
+            return "__float2half(" + value + ")";
+        }
+        else if(storageType == Type::Bfloat16) {
+            return "__float2bfloat16(" + value + ")";
+        }
+        else {
+            throw std::runtime_error("Invalid storage type '" + storageType.getName() + "'");
+        }
+    }
+    else {
+        throw std::runtime_error("Invalid type '" + type.getName() + "'");
+    }
+}
+//--------------------------------------------------------------------------
 void BackendCUDAHIP::genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner,
                                         CodeStream &, CodeStream &) const
 {

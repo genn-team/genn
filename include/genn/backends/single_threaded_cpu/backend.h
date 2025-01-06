@@ -123,6 +123,12 @@ public:
     //! "restricted" i.e. not aliased. What keyword should be used to indicate this?
     virtual std::string getRestrictKeyword() const final;
 
+    //! Get function to convert value from storageType to type
+    virtual std::string getStorageToTypeConversion(const Type::ResolvedType &type, const Type::ResolvedType &storageType, const std::string &value) const final;
+
+    //! Get function to convert value from type to storageType
+    virtual std::string getTypeToStorageConversion(const Type::ResolvedType &type, const Type::ResolvedType &storageType, const std::string &value) const final;
+
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free) const final;
     virtual void genTimer(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise, 
                           const std::string &name, bool updateInStepTime) const final;

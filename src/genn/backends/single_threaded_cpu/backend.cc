@@ -1591,6 +1591,16 @@ std::string Backend::getRestrictKeyword() const
     return getHostRestrictKeyword();
 }
 //--------------------------------------------------------------------------
+std::string Backend::getStorageToTypeConversion(const Type::ResolvedType&, const Type::ResolvedType&, const std::string&) const
+{
+    assert(false);
+}
+//--------------------------------------------------------------------------
+std::string Backend::getTypeToStorageConversion(const Type::ResolvedType&, const Type::ResolvedType&, const std::string&) const
+{
+    assert(false);
+}
+//--------------------------------------------------------------------------
 void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&) const
 {
     assert(false);
