@@ -63,21 +63,30 @@ public:
     struct VarBase
     {
         VarBase(const std::string &n, const Type::ResolvedType &t, A a)
-        :   name(n), type(t), access(a)
+        :   name(n), type(t), storageType(t), access(a)
+        {}
+        VarBase(const std::string &n, const Type::ResolvedType &t, 
+                const Type::ResolvedType &s, A a)
+        :   name(n), type(t), storageType(s), access(a)
         {}
         VarBase(const std::string &n, const std::string &t, A a)
-        :   name(n), type(t), access(a)
+        :   name(n), type(t), storageType(t), access(a)
+        {}
+        VarBase(const std::string &n, const std::string &t, const std::string &s, A a)
+        :   name(n), type(t), storageType(s), access(a)
         {}
 
         using AccessType = A;
         
         bool operator == (const VarBase &other) const
         {
-            return (std::tie(name, type, access) == std::tie(other.name, other.type, other.access));
+            return (std::tie(name, type, access, storageType) 
+                    == std::tie(other.name, other.type, other.access, other.storageType));
         }
 
         std::string name;
         Type::UnresolvedType type;
+        Type::UnresolvedType storageType;
         A access;
     };
 
@@ -88,8 +97,14 @@ public:
         Var(const std::string &n, const Type::ResolvedType &t) 
         :   VarBase(n, t, VarAccess::READ_WRITE)
         {}
+        Var(const std::string &n, const Type::ResolvedType &t, const Type::ResolvedType &s) 
+        :   VarBase(n, t, s, VarAccess::READ_WRITE)
+        {}
         Var(const std::string &n, const std::string &t) 
         :   VarBase(n, t, VarAccess::READ_WRITE)
+        {}
+        Var(const std::string &n, const std::string &t, const std::string &s) 
+        :   VarBase(n, t, s, VarAccess::READ_WRITE)
         {}
     };
 
@@ -100,8 +115,14 @@ public:
         CustomUpdateVar(const std::string &n, const Type::ResolvedType &t) 
         :   VarBase(n, t, CustomUpdateVarAccess::READ_WRITE)
         {}
+        CustomUpdateVar(const std::string &n, const Type::ResolvedType &t, const Type::ResolvedType &s) 
+        :   VarBase(n, t, s, CustomUpdateVarAccess::READ_WRITE)
+        {}
         CustomUpdateVar(const std::string &n, const std::string &t) 
         :   VarBase(n, t, CustomUpdateVarAccess::READ_WRITE)
+        {}
+        CustomUpdateVar(const std::string &n, const std::string &t, const std::string &s) 
+        :   VarBase(n, t, s, CustomUpdateVarAccess::READ_WRITE)
         {}
     };
 
