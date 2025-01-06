@@ -148,6 +148,9 @@ public:
     //! Generate code to return amount of free 'device' memory in bytes
     virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const final;
 
+    // Is this combination of type and storage type permitted for variables on this backend?
+    virtual bool isVarTypePermitted(const Type::ResolvedType &type, const Type::ResolvedType &storageType) const final;
+
     //! As well as host pointers, are device objects required?
     virtual bool isArrayDeviceObjectRequired() const final{ return true; }
 

@@ -294,6 +294,9 @@ public:
     //! Different backends may have different or no pointer prefix (e.g. __global for OpenCL)
     virtual std::string getPointerPrefix() const { return ""; }
 
+    // Is this combination of type and storage type permitted for variables on this backend?
+    virtual bool isVarTypePermitted(const Type::ResolvedType &type, const Type::ResolvedType &storageType) const = 0;
+
     //! As well as host pointers, are device objects required?
     virtual bool isArrayDeviceObjectRequired() const = 0;
 
