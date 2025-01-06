@@ -1516,6 +1516,14 @@ void BackendCUDAHIP::genAssert(CodeStream &os, const std::string &condition) con
     os << "assert(" << condition << ");" << std::endl;
 }
 //--------------------------------------------------------------------------
+bool BackendCUDAHIP::isVarTypePermitted(const Type::ResolvedType &type, const Type::ResolvedType &storageType) const
+{
+    // CUDA/HIP backend only supports numeric variable types with identical storage type
+    // or floating point variables with half or bloat16 storage type
+    return (type.isNumeric() && 
+            (type == storageType || (type == Type::Float && (storageType == Type::Half 
+}
+//--------------------------------------------------------------------------
 BackendCUDAHIP::MemorySpaces BackendCUDAHIP::getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const
 {
     // Get size of update group start ids (constant cache is precious so don't use for init groups

@@ -310,6 +310,9 @@ public:
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const = 0;
     virtual void genMSBuildImportTarget(std::ostream &os) const = 0;
 
+    // Is this combination of type and storage type permitted for variables on this backend?
+    virtual bool isVarTypePermitted(const Type::ResolvedType &type, const Type::ResolvedType &storageType) const = 0;
+
     //! As well as host pointers, are device objects required?
     virtual bool isArrayDeviceObjectRequired() const = 0;
 

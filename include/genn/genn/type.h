@@ -150,6 +150,7 @@ struct GENN_EXPORT ResolvedType
         size_t size;
         ffi_type *ffiType;
         bool device;
+        bool storage;
         bool isWriteOnly;
         std::optional<Numeric> numeric;
         
@@ -158,17 +159,20 @@ struct GENN_EXPORT ResolvedType
         //------------------------------------------------------------------------
         bool operator == (const Value &other) const
         {
-            return (std::tie(size, numeric, device, isWriteOnly) == std::tie(other.size, other.numeric, other.device, other.isWriteOnly));
+            return (std::tie(size, numeric, device, storage, isWriteOnly) 
+                    == std::tie(other.size, other.numeric, other.device, other.storage, other.isWriteOnly));
         }
 
         bool operator != (const Value &other) const
         {
-            return (std::tie(size, numeric, device, isWriteOnly) != std::tie(other.size, other.numeric, other.device, other.isWriteOnly));
+            return (std::tie(size, numeric, device, storage, isWriteOnly) 
+                    != std::tie(other.size, other.numeric, other.device, other.storage, other.isWriteOnly));
         }
 
         bool operator < (const Value &other) const
         {
-            return (std::tie(size, numeric, device, isWriteOnly) < std::tie(other.size, other.numeric, other.device, other.isWriteOnly));
+            return (std::tie(size, numeric, device, storage, isWriteOnly) 
+                    < std::tie(other.size, other.numeric, other.device, other.storage, other.isWriteOnly));
         }
     };
 
@@ -330,9 +334,10 @@ struct GENN_EXPORT ResolvedType
     //------------------------------------------------------------------------
     template<typename T>
     static ResolvedType createNumeric(const std::string &name, int rank, ffi_type *ffiType, 
-                                      const std::string &literalSuffix = "", bool isConst = false, bool device = false)
+                                      const std::string &literalSuffix = "", 
+                                      bool isConst = false, bool device = false, bool storage = false)
     {
-        return ResolvedType{Value{name, sizeof(T), ffiType, device, false, 
+        return ResolvedType{Value{name, sizeof(T), ffiType, device, storage, false, 
                                   Numeric{rank, std::numeric_limits<T>::min(), std::numeric_limits<T>::max(),
                                           std::numeric_limits<T>::lowest(), std::numeric_limits<T>::max_digits10,
                                           std::is_signed<T>::value, std::is_integral<T>::value, literalSuffix}},
@@ -340,10 +345,11 @@ struct GENN_EXPORT ResolvedType
     }
 
     template<typename T>
-    static ResolvedType createValue(const std::string &name, bool isConst = false, 
-                                    ffi_type *ffiType = nullptr, bool device = false)
+    static ResolvedType createValue(const std::string &name, bool isConst = false, ffi_type *ffiType = nullptr, 
+                                    bool device = false, bool storage = false)
     {
-        return ResolvedType{Value{name, sizeof(T), ffiType, device, false, std::nullopt}, isConst};
+        return ResolvedType{Value{name, sizeof(T), ffiType, device, storage, 
+                                  false, std::nullopt}, isConst};
     }
 
     static ResolvedType createValue(const std::string &name, size_t size, bool isConst = false, 
@@ -422,6 +428,12 @@ inline static const ResolvedType Double = CREATE_NUMERIC(double, 60, &ffi_type_d
 
 // Void
 inline static const ResolvedType Void = ResolvedType();
+
+//----------------------------------------------------------------------------
+// Declare storage types
+//----------------------------------------------------------------------------
+inline static const ResolvedType Half = ResolvedType::createValue<uint16_t>("half", false, &ffi_type_uint16, false, true);
+inline static const ResolvedType Bfloat16 = ResolvedType::createValue<uint16_t>("bfloat16", false, &ffi_type_uint16, false, true);
 
 //----------------------------------------------------------------------------
 // Standard function types

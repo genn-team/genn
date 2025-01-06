@@ -1703,6 +1703,12 @@ void Backend::genMSBuildImportTarget(std::ostream&) const
 {
 }
 //--------------------------------------------------------------------------
+bool Backend::isVarTypePermitted(const Type::ResolvedType &type, const Type::ResolvedType &storageType) const
+{
+    // Single-threaded CPU backend only supports numeric variable types with identical storage type
+    return (type.isNumeric() && type == storageType);
+}
+//--------------------------------------------------------------------------
 bool Backend::isGlobalHostRNGRequired(const ModelSpecInternal &model) const
 {
     // If any neuron groups require simulation RNGs or require RNG for initialisation, return true
