@@ -43,6 +43,8 @@ const std::unordered_map<std::string_view, Token::Type> keywords{
     {"long", Token::Type::TYPE_SPECIFIER},
     {"float", Token::Type::TYPE_SPECIFIER},
     {"double", Token::Type::TYPE_SPECIFIER},
+    {"half", Token::Type::TYPE_SPECIFIER},
+    {"bfloat16", Token::Type::TYPE_SPECIFIER},
     {"signed", Token::Type::TYPE_SPECIFIER},
     {"unsigned", Token::Type::TYPE_SPECIFIER},
     {"uint8_t", Token::Type::TYPE_SPECIFIER},
