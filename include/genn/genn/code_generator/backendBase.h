@@ -250,6 +250,12 @@ public:
     virtual std::string getAtomicOperation(const std::string &lhsPointer, const std::string &rhsValue,
                                            const Type::ResolvedType &type, AtomicOperation op = AtomicOperation::ADD) const = 0;
 
+    //! Get function to convert value from storageType to type
+    virtual std::string getStorageToTypeConversion(const Type::ResolvedType &type, const Type::ResolvedType &storageType, const std::string &value) const = 0;
+
+    //! Get function to convert value from type to storageType
+    virtual std::string getTypeToStorageConversion(const Type::ResolvedType &type, const Type::ResolvedType &storageType, const std::string &value) const = 0;
+    
     //! Generate a single RNG instance
     /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free) const = 0;

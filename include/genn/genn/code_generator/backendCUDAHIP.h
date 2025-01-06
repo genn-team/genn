@@ -138,6 +138,12 @@ public:
     //! When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host
     virtual std::string getMergedGroupFieldHostTypeName(const Type::ResolvedType &type) const final;
 
+    //! Get function to convert value from storageType to type
+    virtual std::string getStorageToTypeConversion(const Type::ResolvedType &type, const Type::ResolvedType &storageType, const std::string &value) const final;
+
+    //! Get function to convert value from type to storageType
+    virtual std::string getTypeToStorageConversion(const Type::ResolvedType &type, const Type::ResolvedType &storageType, const std::string &value) const final;
+    
     //! Generate a single RNG instance
     /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free) const final;
