@@ -576,14 +576,14 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                         CodeStream::Scope b(neuronVarEnv.getStream());
                         EnvironmentGroupMergedField<NeuronUpdateGroupMerged> vecEnv(neuronVarEnv, ng);
 
-                        // **TODO** expose versions without _i
-                        addVectorLaneAliases<NeuronVarAdapter>(vecEnv, i);
-
                         vecEnv.printLine("// Unroll " + std::to_string(i));
 
                         // Override ID with unrolled vector ID
                         vecEnv.add(Type::Uint32.addConst(), "id", "vid",
                                    {vecEnv.addInitialiser("const uint32_t vid = ($(_id) * " + vectorWidthStr + ") + " + std::to_string(i) + ";")});
+
+                        // Expose $(_XXX_i) variables as $(_XXX) to generic code
+                        addVectorLaneAliases<NeuronVarAdapter>(vecEnv, i);
 
                         // Generate neuron update
                         ng.generateNeuronUpdate(

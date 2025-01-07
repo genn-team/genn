@@ -595,7 +595,7 @@ public:
             if(!(v.access & VarAccessModeAttribute::REDUCE) && !(v.access & VarAccessModeAttribute::BROADCAST)) {
                 getContextStream() << "const " << vectorTypeName << " _" << m_LocalPrefix << v.name << " = ";
                 getContextStream() << "reinterpret_cast<" << vectorTypeName << "*>(group->" << v.name << m_FieldSuffix << ")";
-                getContextStream() << "[" << printSubs(this->getReadIndex(m_Group.get(), v, ""), *this) << "]" << std::endl;
+                getContextStream() << "[" << printSubs(this->getReadIndex(m_Group.get(), v, ""), *this) << "];" << std::endl;
             }
             
             // Loop through vector length
@@ -713,7 +713,7 @@ public:
 
                 // Add underscore and local prefix to variable name
                 // **NOTE** we use variable name here not, 'name' which could have an underscore
-                return "_" + m_LocalPrefix + var->second.second.name + std::to_string(nameSuffixLane.value().second);
+                return "_" + m_LocalPrefix + var->second.second.name + "_" + std::to_string(nameSuffixLane.value().second);
             }
         }
     }
