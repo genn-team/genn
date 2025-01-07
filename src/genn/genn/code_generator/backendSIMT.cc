@@ -31,10 +31,13 @@ template<typename A, typename G>
 void updateVecVarCount(const G &group, const GeNN::CodeGenerator::BackendSIMT &backend, 
                        size_t &numVariables, size_t &numVectorisableVariables)
 {
-    const auto groupDefs = A(group).getDefs();
+    const auto groupDefs = A(group.getArchetype()).getDefs();
     numVariables += groupDefs.size();
     numVectorisableVariables += std::count_if(groupDefs.cbegin(), groupDefs.cend(),
-                                              [&backend](const auto &v){ return backend.shouldVectoriseVar(v); })
+                                              [&backend, &group](const auto &v)
+                                              { 
+                                                return backend.shouldVectoriseVar(v, group.getTypeContext()); 
+                                              });
 }
 }   // Anonymous namespace
 
@@ -462,19 +465,19 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             // Calculate number of variables in this merged group that can be vectorised
             size_t numVariables = 0;
             size_t numVectorisableVariables = 0;
-            updateVecVarCount<NeuronVarAdapter>(n.getArchetype(), *this, numVariables, numVectorisableVariables);
+            updateVecVarCount<NeuronVarAdapter>(n, *this, numVariables, numVectorisableVariables);
             
             for(const auto &g : n.getMergedCurrentSourceGroups()) {
-                updateVecVarCount<CurrentSourceVarAdapter>(g.getArchetype(), *this, numVariables, numVectorisableVariables);
+                updateVecVarCount<CurrentSourceVarAdapter>(g, *this, numVariables, numVectorisableVariables);
             } 
             for(const auto &g : n.getMergedInSynPSMGroups()) {
-                updateVecVarCount<SynapsePSMVarAdapter>(g.getArchetype(), *this, numVariables, numVectorisableVariables);
+                updateVecVarCount<SynapsePSMVarAdapter>(g, *this, numVariables, numVectorisableVariables);
             }
             for(const auto &g : n.getMergedInSynWUMPostCodeGroups()) {
-                updateVecVarCount<SynapseWUPostVarAdapter>(g.getArchetype(), *this, numVariables, numVectorisableVariables);
+                updateVecVarCount<SynapseWUPostVarAdapter>(g, *this, numVariables, numVectorisableVariables);
             }
             for(const auto &g : n.getMergedOutSynWUMPreCodeGroups()) {
-                updateVecVarCount<SynapseWUPreVarAdapter>(g.getArchetype(), *this, numVariables, numVectorisableVariables);
+                updateVecVarCount<SynapseWUPreVarAdapter>(g, *this, numVariables, numVectorisableVariables);
             }
 
             // Mark this merged group to be vectorised if more than half variables are vectorised
@@ -526,6 +529,79 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             buildStandardEnvironment(groupEnv, batchSize);
             
             if(vectoriseNeuronUpdateGroup[ng.getIndex()]) {
+                const size_t vectorWidth = 2;
+                const std::string vectorWidthStr = std::to_string(vectorWidth);
+
+                // **YUCK** add an environment with a hidden copy of ID so we 
+                // can overwrite ID deeper in here without losing access to original
+                EnvironmentExternal idEnv(groupEnv);
+                idEnv.add(Type::Uint32.addConst(), "_id", "$(id)");
+                
+                // If we're in the vectorisable region
+                idEnv.printLine("// Vectorised");
+                idEnv.printLine("const uint32_t numVectors = $(num_neurons) / " + vectorWidthStr + ";");
+                idEnv.print("if($(id) < numVectors)");
+                {
+                    CodeStream::Scope b(idEnv.getStream());
+                    // **TODO** Create vectorising environment
+
+                    // Unroll vector
+                    for(size_t i = 0; i < vectorWidth; i++) {
+                        CodeStream::Scope b(idEnv.getStream());
+                        EnvironmentGroupMergedField<NeuronUpdateGroupMerged> vecEnv(idEnv, ng);
+                        vecEnv.printLine("// Unroll " + std::to_string(i));
+
+                        // Override ID with unrolled vector ID
+                        vecEnv.add(Type::Uint32.addConst(), "id", "vid",
+                                   {vecEnv.addInitialiser("const uint32_t vid = ($(_id) * " + vectorWidthStr + ") + " + std::to_string(i) + ";")});
+
+                        // Generate neuron update
+                        ng.generateNeuronUpdate(
+                            *this, vecEnv, batchSize,
+                            // Emit true spikes
+                            [&ng, this](EnvironmentExternalBase &env)
+                            {
+                                genEmitEvent(env, ng, 0, true);
+                            },
+                            // Emit spike-like events
+                            [&ng, this](EnvironmentExternalBase &env, const NeuronUpdateGroupMerged::SynSpikeEvent &sg)
+                            {
+                                genEmitEvent(env, ng, sg.getIndex(), false);
+                            });
+                    }
+
+                }
+                // Else
+                idEnv.printLine("// Tail");
+                idEnv.print("else if($(id) < (($(num_neurons) + " + std::to_string(vectorWidth - 1) + ") / " + vectorWidthStr + "))");
+                {
+                    CodeStream::Scope b(idEnv.getStream());
+                    
+                    EnvironmentGroupMergedField<NeuronUpdateGroupMerged> tailEnv(idEnv, ng);
+
+                    // Override ID with tail
+                    tailEnv.add(Type::Uint32.addConst(), "id", "tid",
+                                {tailEnv.addInitialiser("const uint32_t tid = (numVectors * " + std::to_string(vectorWidth - 1) + ") + $(_id);")});
+                    
+                    // Add population RNG field
+                    tailEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
+                                     [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rng"); },
+                                     ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)"));
+                    
+                    // Generate neuron update
+                    ng.generateNeuronUpdate(
+                        *this, tailEnv, batchSize,
+                        // Emit true spikes
+                        [&ng, this](EnvironmentExternalBase &env)
+                        {
+                            genEmitEvent(env, ng, 0, true);
+                        },
+                        // Emit spike-like events
+                        [&ng, this](EnvironmentExternalBase &env, const NeuronUpdateGroupMerged::SynSpikeEvent &sg)
+                        {
+                            genEmitEvent(env, ng, sg.getIndex(), false);
+                        });
+                }
             }
             else {
                 // Call handler to generate generic neuron code
