@@ -1095,9 +1095,18 @@ public:
     //------------------------------------------------------------------------
     virtual std::vector<Type::ResolvedType> getTypes(const Transpiler::Token &name, Transpiler::ErrorHandlerBase &errorHandler) final
     {
+        //**HACK**
+        bool hasContext = false;
+        try {
+            getContextTypes(name, errorHandler);
+            hasContext = true;
+        }
+        catch(const Transpiler::TypeChecker::TypeCheckError&) {
+        }
+
         // If name isn't found in environment
         auto var = m_VariablesReferenced.find(name.lexeme);
-        if (var == m_VariablesReferenced.end()) {
+        if (hasContext || var == m_VariablesReferenced.end()) {
             return getContextTypes(name, errorHandler);
         }
         // Otherwise
@@ -1125,9 +1134,18 @@ public:
     //------------------------------------------------------------------------
     virtual std::string getName(const std::string &name, std::optional<Type::ResolvedType> type = std::nullopt) final
     {
+        //**HACK**
+        bool hasContext = false;
+        try {
+            getContextName(name, type);
+            hasContext = true;
+        }
+        catch(const std::runtime_error&) {
+        }
+
         // If variable with this name isn't found, try and get name from context
         auto var = m_VariablesReferenced.find(name);
-        if(var == m_VariablesReferenced.end()) {
+        if(hasContext || var == m_VariablesReferenced.end()) {
             return getContextName(name, type);
         }
         // Otherwise
