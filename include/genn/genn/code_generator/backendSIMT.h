@@ -5,6 +5,9 @@
 #include <numeric>
 #include <unordered_set>
 
+// Third-party includes
+#include <fast_float/fast_float.h>
+
 // GeNN includes
 #include "gennExport.h"
 #include "varAccess.h"
@@ -123,6 +126,16 @@ public:
     
     //! Can this backend vectorise this variable?
     virtual bool shouldVectoriseVar(const Models::Base::VarRef &var, const Type::TypeContext &context) const = 0;
+
+    //! Get name of short vector type used to store vectors of this sort
+    virtual std::string getVectorTypeName(const Type::ResolvedType &storageType, size_t vectorWidth) const = 0;
+
+    //! Get function to extract value from vector 
+    virtual std::string getExtractVector(const Type::ResolvedType &type, const Type::ResolvedType &storageType, 
+                                         size_t vectorWidth, size_t lane, const std::string &value) const = 0;
+
+    virtual std::string getRecombineVector(const Type::ResolvedType &type, const Type::ResolvedType &storageType, 
+                                           size_t vectorWidth, const std::string &valuePrefix) const = 0;
 
     //------------------------------------------------------------------------
     // BackendBase virtuals
@@ -516,5 +529,241 @@ private:
     //--------------------------------------------------------------------------
     static std::vector<PresynapticUpdateStrategySIMT::Base *> s_PresynapticUpdateStrategies;
 };
+
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::EnvironmentLocalVectorCacheBase
+//----------------------------------------------------------------------------
+//! Pretty printing environment which caches used variables in local variables
+template<typename P, typename A, typename G, typename F = G>
+class EnvironmentLocalVectorCacheBase : public EnvironmentExternalBase, public P
+{
+public:
+    using AdapterDef = typename std::invoke_result_t<decltype(&A::getDefs), A>::value_type;
+
+    template<typename... PolicyArgs>
+    EnvironmentLocalVectorCacheBase(G &group, F &fieldGroup, const BackendSIMT &backend, const Type::TypeContext &context, 
+                                    EnvironmentExternalBase &enclosing, const std::string &fieldSuffix, 
+                                    const std::string &localPrefix, PolicyArgs&&... policyArgs)
+    :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...), m_Group(group), 
+        m_FieldGroup(fieldGroup),  m_Backend(backend), m_Context(context), m_Contents(m_ContentsStream), 
+        m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix)
+    {
+        // Copy variables which should be vectorised into variables referenced, alongside boolean
+        const auto defs = A(m_Group.get().getArchetype()).getDefs();
+        for(const auto &d : defs) {
+            if(m_Backend.get().shouldVectoriseVar(d, m_Context.get())) {
+                m_VariablesReferenced.try_emplace("_" + d.name, std::make_pair(false, d));
+            }
+        }
+    }
+
+    EnvironmentLocalVectorCacheBase(const EnvironmentLocalVectorCacheBase&) = delete;
+
+    ~EnvironmentLocalVectorCacheBase()
+    {
+        A archetypeAdapter(m_Group.get().getArchetype());
+
+        // Copy definitions of variables which have been referenced into new vector or all if always copy set
+        std::vector<AdapterDef> referencedDefs;
+        for(const auto &v : m_VariablesReferenced) {
+            const bool alwaysCopy = this->shouldAlwaysCopy(m_Group.get(), v.second.second); 
+            if(alwaysCopy || v.second.first) {
+                referencedDefs.push_back(v.second.second);
+            }
+        }
+
+        // **TODO** parameter
+        const size_t vectorWidth = 2;
+
+
+        // Loop through referenced definitions
+        for(const auto &v : referencedDefs) {
+            const auto resolvedType = v.type.resolve(m_Context.get());
+            const auto resolvedStorageType = v.storageType.resolve(m_Context.get());
+
+            // Add field to underlying field group
+            const auto &group = m_Group.get();
+            m_FieldGroup.get().addField(resolvedStorageType.createPointer(), v.name + m_FieldSuffix,
+                                        [v, &group, this](auto &runtime, const typename F::GroupInternal &, size_t i)
+                                        {
+                                            return this->getArray(runtime, group.getGroups().at(i), v);
+                                        });
+
+            // Read vector of data into special storage type
+            const auto vectorTypeName = m_Backend.get().getVectorTypeName(resolvedStorageType, vectorWidth);
+            if(!(v.access & VarAccessModeAttribute::REDUCE) && !(v.access & VarAccessModeAttribute::BROADCAST)) {
+                getContextStream() << "const " << vectorTypeName << " _" << m_LocalPrefix << v.name << " = ";
+                getContextStream() << "reinterpret_cast<" << vectorTypeName << "*>(group->" << v.name << m_FieldSuffix << ")";
+                getContextStream() << "[" << printSubs(this->getReadIndex(m_Group.get(), v, ""), *this) << "]" << std::endl;
+            }
+            
+            // Loop through vector length
+            for(size_t i = 0; i < vectorWidth; i++) {
+                // Declare variables for each lane
+                if(getVarAccessMode(v.access) == VarAccessMode::READ_ONLY) {
+                    getContextStream() << "const ";
+                }
+                getContextStream() << resolvedType.getName() << " _" << m_LocalPrefix << v.name << "_" << i;
+
+                // If this isn't a reduction or broadcast, initialise variables with extracted values
+                // **NOTE** by not initialising these variables for reductions, 
+                // compilers SHOULD emit a warning if user code doesn't set it to something
+                if(!(v.access & VarAccessModeAttribute::REDUCE) && !(v.access & VarAccessModeAttribute::BROADCAST)) {
+                    getContextStream() << " = " << m_Backend.get().getExtractVector(resolvedType, resolvedStorageType,
+                                                                                    vectorWidth, i, "_" + m_LocalPrefix + v.name);
+
+                    
+                }
+                getContextStream() << ";" << std::endl;
+            }
+            
+        }
+
+        // Write contents to context stream
+        getContextStream() << m_ContentsStream.str();
+
+        // Loop through referenced definitions again
+        for(const auto &v : referencedDefs) {
+            const auto resolvedType = v.type.resolve(m_Context.get());
+            const auto resolvedStorageType = v.storageType.resolve(m_Context.get());
+
+            // If writes to this variable should be broadcast
+            const auto vectorTypeName = m_Backend.get().getVectorTypeName(resolvedStorageType, vectorWidth);
+            const auto numVarDelaySlots = archetypeAdapter.getNumVarDelaySlots(v.name);
+            if(numVarDelaySlots && (v.access & VarAccessModeAttribute::BROADCAST)) {
+                getContextStream() << "for(int d = 0; d < " << numVarDelaySlots.value() << "; d++)";
+                {
+                    CodeStream::Scope b(getContextStream());
+                    getContextStream() << "reinterpret_cast<" << vectorTypeName << "*>(group->" << v.name << m_FieldSuffix << ")[" << printSubs(this->getWriteIndex(m_Group.get(), v, "d"), *this) << "]";
+                    getContextStream() << " = " << m_Backend.get().getRecombineVector(resolvedType, resolvedStorageType,
+                                                                                      vectorWidth, "_" + m_LocalPrefix + v.name) << ";" << std::endl;
+                }
+            }
+            // Otherwise, if we should always copy variable, variable is read-write or variable is broadcast
+            else if(this->shouldAlwaysCopy(m_Group.get(), v) || (getVarAccessMode(v.access) == VarAccessMode::READ_WRITE)
+                    || (v.access & VarAccessModeAttribute::BROADCAST)) 
+            {
+                getContextStream() << "reinterpret_cast<" << vectorTypeName << "*>(group->" << v.name << m_FieldSuffix << ")[" << printSubs(this->getWriteIndex(m_Group.get(), v, ""), *this) << "]";
+                getContextStream() << " = " << m_Backend.get().getRecombineVector(resolvedType, resolvedStorageType,
+                                                                                  vectorWidth, "_" + m_LocalPrefix + v.name) << ";" << std::endl;
+            }
+        }
+    }
+
+    //------------------------------------------------------------------------
+    // TypeChecker::EnvironmentBase virtuals
+    //------------------------------------------------------------------------
+    virtual std::vector<Type::ResolvedType> getTypes(const Transpiler::Token &name, Transpiler::ErrorHandlerBase &errorHandler) final
+    {
+        // If name isn't in a valid format to be a vector variable, continue searching 'upwards'
+        auto nameSuffixLane = getNameSuffixLane(name.lexeme);
+        if(!nameSuffixLane) {
+            return getContextTypes(name, errorHandler);
+        }
+        // Otherwise
+        else {
+            // If suffix of name isn't found in environment, continue searching 'upwards'
+            auto var = m_VariablesReferenced.find(nameSuffixLane.value().first);
+            if (var == m_VariablesReferenced.end()) {
+                return getContextTypes(name, errorHandler);
+            }
+            // Otherwise
+            else {
+                // Set flag to indicate that variable has been referenced
+                var->second.first = true;
+
+                // Resolve type, add qualifier if required and return
+                const auto resolvedType = var->second.second.type.resolve(m_Context.get());
+                const auto access = var->second.second.access;
+                if(access & VarAccessModeAttribute::READ_ONLY) {
+                    return {resolvedType.addConst()};
+                }
+                else if((access & VarAccessModeAttribute::REDUCE) || (access & VarAccessModeAttribute::BROADCAST)) {
+                    return {resolvedType.addWriteOnly()};
+                }
+                else {
+                    return {resolvedType};
+                }
+            }
+        }
+    }
+
+    //------------------------------------------------------------------------
+    // PrettyPrinter::EnvironmentBase virtuals
+    //------------------------------------------------------------------------
+    virtual std::string getName(const std::string &name, std::optional<Type::ResolvedType> type = std::nullopt) final
+    {
+        // If name isn't in a valid format to be a vector variable, continue searching 'upwards'
+        auto nameSuffixLane = getNameSuffixLane(name);
+        if(!nameSuffixLane) {
+            return getContextName(name, type);
+        }
+        // Otherwise
+        else {
+            // If suffix of name isn't found in environment, continue searching 'upwards'
+            auto var = m_VariablesReferenced.find(nameSuffixLane.value().first);
+            if(var == m_VariablesReferenced.end()) {
+                return getContextName(name, type);
+            }
+            // Otherwise
+            else {
+                // Set flag to indicate that variable has been referenced
+                var->second.first = true;
+
+                // Add underscore and local prefix to variable name
+                // **NOTE** we use variable name here not, 'name' which could have an underscore
+                return "_" + m_LocalPrefix + var->second.second.name + std::to_string(nameSuffixLane.value().second);
+            }
+        }
+    }
+
+    virtual CodeStream &getStream() final
+    {
+        return m_Contents;
+    }
+
+private:
+    std::optional<std::pair<std::string, size_t>> getNameSuffixLane(const std::string &name) const
+    {
+        // If variable doesn't contain an _, it can't be a vector so return
+        const auto lastUnderscore = name.find_last_of("_");
+        if(lastUnderscore == std::string::npos) {
+            return std::nullopt;
+        }
+        // Otherwise
+        else {
+            // Extract suffix
+            const auto suffix = name.substr(lastUnderscore + 1);
+            const char *suffixBegin = suffix.c_str();
+            const char *suffixEnd = suffixBegin + suffix.size();
+            size_t lane;
+            if(fast_float::from_chars(suffixBegin, suffixEnd, lane).ec == std::errc()) {
+                return std::make_pair(name.substr(0, lastUnderscore), lane);
+            }
+            else {
+                return std::nullopt;
+            }
+        }
+    }
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::reference_wrapper<G> m_Group;
+    std::reference_wrapper<F> m_FieldGroup;
+    std::reference_wrapper<const BackendSIMT> m_Backend;
+    std::reference_wrapper<const Type::TypeContext> m_Context;
+    std::ostringstream m_ContentsStream;
+    CodeStream m_Contents;
+    std::string m_FieldSuffix;
+    std::string m_LocalPrefix;
+    std::unordered_map<std::string, std::pair<bool, AdapterDef>> m_VariablesReferenced;
+};
+
+template<typename A, typename G, typename F = G>
+using EnvironmentLocalVectorVarCache = EnvironmentLocalVectorCacheBase<VarCachePolicy<A, G>, A, G, F>;
+
+template<typename A, typename G, typename F = G>
+using EnvironmentLocalVectorVarRefCache = EnvironmentLocalVectorCacheBase<VarRefCachePolicy<A, G>, A, G, F>;
 
 }   // namespace GeNN::CodeGenerator

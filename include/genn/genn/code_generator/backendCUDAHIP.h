@@ -104,6 +104,16 @@ public:
     //! Can this backend vectorise this variable?
     virtual bool shouldVectoriseVar(const Models::Base::VarRef &, const Type::TypeContext &context) const final;
 
+    //! Get name of short vector type used to store vectors of this sort
+    virtual std::string getVectorTypeName(const Type::ResolvedType &storageType, size_t vectorWidth) const final;
+
+    //! Get function to extract value from vector 
+    virtual std::string getExtractVector(const Type::ResolvedType &type, const Type::ResolvedType &storageType, 
+                                         size_t vectorWidth, size_t lane, const std::string &value) const final;
+
+    virtual std::string getRecombineVector(const Type::ResolvedType &type, const Type::ResolvedType &storageType, 
+                                           size_t vectorWidth, const std::string &valuePrefix) const final;
+
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
     //--------------------------------------------------------------------------
