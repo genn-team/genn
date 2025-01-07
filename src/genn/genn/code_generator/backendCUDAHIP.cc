@@ -329,9 +329,76 @@ bool BackendCUDAHIP::shouldVectoriseVar(const Models::Base::VarRef &var, const T
     return ::shouldVectoriseVar(var.type, var.storageType, context);
 }
 //--------------------------------------------------------------------------
+std::string BackendCUDAHIP::getVectorTypeName(const Type::ResolvedType &storageType, size_t vectorWidth) const
+{
+    if (storageType == Type::Half) {
+        if(vectorWidth != 2) {
+            throw std::runtime_error("Unsupported 'half' vector width " + std::to_string(vectorWidth));
+        }
+        return "half2";
+    }
+    else if(storageType == Type::Bfloat16) {
+        if(vectorWidth != 2) {
+            throw std::runtime_error("Unsupported 'bfloat16' vector width " + std::to_string(vectorWidth));
+        }
+
+        return "nv_bfloat162";
+    }
+    else {
+        throw std::runtime_error("Unsupported storage type '" + storageType.getName() + "'");
+    }
+}
+//--------------------------------------------------------------------------
+std::string BackendCUDAHIP::getExtractVector(const Type::ResolvedType &type, const Type::ResolvedType &storageType, 
+                                             size_t vectorWidth, size_t lane, const std::string &value) const
+{
+    if (type == Type::Float && (storageType == Type::Half || storageType == Type::Bfloat16)) {
+        if(vectorWidth != 2) {
+            throw std::runtime_error("Unsupported vector width " + std::to_string(vectorWidth));
+        }
+
+        if(lane == 0) {
+            return "__low2float(" + value + ")";
+        }
+        else if(lane == 1) {
+            return "__high2float(" + value + ")";
+        }
+        else {
+            throw std::runtime_error("Invalid lane for 16-bit vector '" + std::to_string(lane) + "'");
+        }
+        
+    }
+    else {
+        throw std::runtime_error("Unsupported storage type '" + storageType.getName() + "'");
+    }
+}
+//--------------------------------------------------------------------------
+std::string BackendCUDAHIP::getRecombineVector(const Type::ResolvedType &type, const Type::ResolvedType &storageType, 
+                                               size_t vectorWidth, const std::string &valuePrefix) const
+{
+    if (type == Type::Float) {
+        if(vectorWidth != 2) {
+            throw std::runtime_error("Unsupported vector width " + std::to_string(vectorWidth));
+        }
+
+        if(storageType == Type::Half) {
+            return "__floats2half2_rn(" + valuePrefix + "_0, " + valuePrefix + "_1);";
+        } 
+        else if(storageType == Type::Bfloat16) {
+            return "__floats2bfloat162_rn(" + valuePrefix + "_0, " + valuePrefix + "_1);";
+        }
+        else {
+            throw std::runtime_error("Unsupported storage type '" + storageType.getName() + "'");
+        }
+        
+    }
+    else {
+        throw std::runtime_error("Unsupported type '" + type.getName() + "'");
+    }
+}
+//--------------------------------------------------------------------------
 void BackendCUDAHIP::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelMerged, 
                                      BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
-
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 

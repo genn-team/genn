@@ -6,6 +6,9 @@
 // GeNN code generator includes
 #include "code_generator/modelSpecMerged.h"
 
+using namespace GeNN;
+using namespace GeNN::CodeGenerator;
+
 //-----------------------------------------------------------------------
 // Anonymous namespace
 //-----------------------------------------------------------------------
@@ -38,6 +41,18 @@ void updateVecVarCount(const G &group, const GeNN::CodeGenerator::BackendSIMT &b
                                               { 
                                                 return backend.shouldVectoriseVar(v, group.getTypeContext()); 
                                               });
+}
+//--------------------------------------------------------------------------
+template<typename A, typename G, typename F>
+void addVectorLaneAliases(EnvironmentGroupMergedField<G, F> &env, size_t lane)
+{
+    // Loop through variables and add unhiding aliases
+    const A archetypeAdaptor(env.getGroup().getArchetype());
+    for(const auto &v : archetypeAdaptor.getDefs()) {
+        const auto resolvedType = v.type.resolve(env.getGroup().getTypeContext());
+        const auto qualifiedType = (getVarAccessMode(v.access) & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
+        env.add(qualifiedType, "_" + v.name, "$(_" + v.name + "_" + std::to_string(lane) + ")");
+    }
 }
 }   // Anonymous namespace
 
@@ -543,12 +558,27 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                 idEnv.print("if($(id) < numVectors)");
                 {
                     CodeStream::Scope b(idEnv.getStream());
-                    // **TODO** Create vectorising environment
+                    
+                    // Create environments to make vectorised loads of neuron variables
+                    EnvironmentLocalVectorVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronVarEnv(
+                        ng, ng, *this, ng.getTypeContext(), idEnv, "", "l",
+                        [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
+                        {
+                            return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
+                        },
+                        [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
+                        {
+                            return ng.getWriteVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
+                        });
 
                     // Unroll vector
                     for(size_t i = 0; i < vectorWidth; i++) {
-                        CodeStream::Scope b(idEnv.getStream());
-                        EnvironmentGroupMergedField<NeuronUpdateGroupMerged> vecEnv(idEnv, ng);
+                        CodeStream::Scope b(neuronVarEnv.getStream());
+                        EnvironmentGroupMergedField<NeuronUpdateGroupMerged> vecEnv(neuronVarEnv, ng);
+
+                        // **TODO** expose versions without _i
+                        addVectorLaneAliases<NeuronVarAdapter>(vecEnv, i);
+
                         vecEnv.printLine("// Unroll " + std::to_string(i));
 
                         // Override ID with unrolled vector ID
