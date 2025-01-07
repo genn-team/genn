@@ -214,6 +214,17 @@ void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<G> &env, const st
             {env.addInitialiser(init.str())},
             {env.addFinaliser(finalise.str())});
 }
+//-----------------------------------------------------------------------
+bool shouldVectoriseVar(const Type::UnresolvedType &type, const Type::UnresolvedType &storageType, 
+                        const Type::TypeContext &context)
+{
+    // Resolve types
+    const auto resolvedType = type.resolve(context);
+    const auto resolvedStorageType = storageType.resolve(context);
+
+    // We can vectorise v
+    return (resolvedType == Type::Float && (storageType == Type::Half || storageType == Type::Bfloat16));
+}
 }   // Anonymous namespace
 
 
@@ -299,6 +310,21 @@ void BackendCUDAHIP::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<N
 void BackendCUDAHIP::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const
 {
     ::buildPopulationRNGEnvironment(env, getRandPrefix(), getPopulationRNGInternalType());
+}
+//--------------------------------------------------------------------------
+bool BackendCUDAHIP::shouldVectoriseVar(const Models::Base::Var &var, const Type::TypeContext &context) const
+{
+    return ::shouldVectoriseVar(var.type, var.storageType, context);
+}
+//--------------------------------------------------------------------------
+bool BackendCUDAHIP::shouldVectoriseVar(const Models::Base::CustomUpdateVar &var, const Type::TypeContext &context) const
+{
+    return ::shouldVectoriseVar(var.type, var.storageType, context);
+}
+//--------------------------------------------------------------------------
+bool BackendCUDAHIP::shouldVectoriseVar(const Models::Base::VarRef &var, const Type::TypeContext &context) const
+{
+    return ::shouldVectoriseVar(var.type, var.storageType, context);
 }
 //--------------------------------------------------------------------------
 void BackendCUDAHIP::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
@@ -438,6 +464,8 @@ void BackendCUDAHIP::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerge
                                             getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
                                             getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()));
     size_t totalConstMem = (getChosenDeviceSafeConstMemBytes() > synapseGroupStartIDSize) ? (getChosenDeviceSafeConstMemBytes() - synapseGroupStartIDSize) : 0;
+
+    // **TODO** vectorisation decision required here too!
     genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedNeuronUpdateGroups(),
                                   [this](const NeuronGroupInternal &ng){ return padKernelSize(ng.getNumNeurons(), KernelNeuronUpdate); });
     genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups(),
