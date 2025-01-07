@@ -723,8 +723,9 @@ public:
             const auto qualifiedType = (readOnly || (getVarAccessMode(v.access) & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
             const auto resolvedStorageType = v.storageType.resolve(this->getGroup().getTypeContext());
             const auto name = hidden ? ("_" + v.name) : v.name;
+            assert(resolvedType == resolvedStorageType);
             addField(qualifiedType, name,
-                     resolvedStorageType.createPointer(), v.name + fieldSuffix, 
+                     resolvedType.createPointer(), v.name + fieldSuffix, 
                      [v](auto &runtime, const auto &g, size_t) 
                      { 
                          return runtime.getArray(A(g).getTarget(), v.name);
@@ -750,8 +751,10 @@ public:
         for(const auto &v : archetypeAdaptor.getDefs()) {
             // If variable access is read-only, qualify type with const
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
+            const auto resolvedStorageType = v.storageType.resolve(this->getGroup().getTypeContext());
             const auto qualifiedType = (readOnly || (v.access & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
             const auto name = hidden ? ("_" + v.name) : v.name;
+            assert(resolvedType == resolvedStorageType);
             addField(qualifiedType, name,
                      resolvedType.createPointer(), v.name + fieldSuffix,
                      [v](auto &runtime, const auto &g, size_t) 
