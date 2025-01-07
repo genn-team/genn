@@ -26,6 +26,16 @@ size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
             });
         });
 }
+//-----------------------------------------------------------------------
+template<typename A, typename G>
+void updateVecVarCount(const G &group, const GeNN::CodeGenerator::BackendSIMT &backend, 
+                       size_t &numVariables, size_t &numVectorisableVariables)
+{
+    const auto groupDefs = A(group).getDefs();
+    numVariables += groupDefs.size();
+    numVectorisableVariables += std::count_if(groupDefs.cbegin(), groupDefs.cend(),
+                                              [&backend](const auto &v){ return backend.shouldVectoriseVar(v); })
+}
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -435,6 +445,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
     }
 
     // If there are any neuron update groups
+    std::vector<bool> vectoriseNeuronUpdateGroup(modelMerged.getMergedNeuronUpdateGroups().size(), false);
     if(!modelMerged.getMergedNeuronUpdateGroups().empty()) {
         // Loop through merged neuron update groups
         size_t maxSpikeEventCond = 0;
@@ -447,6 +458,27 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             if(n.getArchetype().isSpikeEventRecordingEnabled()) {
                 maxSpikeEventRecording = std::max(maxSpikeEventRecording, n.getMergedSpikeEventGroups().size());
             }
+
+            // Calculate number of variables in this merged group that can be vectorised
+            size_t numVariables = 0;
+            size_t numVectorisableVariables = 0;
+            updateVecVarCount<NeuronVarAdapter>(n.getArchetype(), *this, numVariables, numVectorisableVariables);
+            
+            for(const auto &g : n.getMergedCurrentSourceGroups()) {
+                updateVecVarCount<CurrentSourceVarAdapter>(g.getArchetype(), *this, numVariables, numVectorisableVariables);
+            } 
+            for(const auto &g : n.getMergedInSynPSMGroups()) {
+                updateVecVarCount<SynapsePSMVarAdapter>(g.getArchetype(), *this, numVariables, numVectorisableVariables);
+            }
+            for(const auto &g : n.getMergedInSynWUMPostCodeGroups()) {
+                updateVecVarCount<SynapseWUPostVarAdapter>(g.getArchetype(), *this, numVariables, numVectorisableVariables);
+            }
+            for(const auto &g : n.getMergedOutSynWUMPreCodeGroups()) {
+                updateVecVarCount<SynapseWUPreVarAdapter>(g.getArchetype(), *this, numVariables, numVectorisableVariables);
+            }
+
+            // Mark this merged group to be vectorised if more than half variables are vectorised
+            vectoriseNeuronUpdateGroup[n.getIndex()] = (numVectorisableVariables > (numVariables / 2));
         }
 
         // If there are any
@@ -482,43 +514,49 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
     genSharedMemBarrier(neuronEnv.getStream());
 
     // Parallelise over neuron groups
+    // **TODO** size depending on vectorization decision
     idStart = 0;
     genParallelGroup<NeuronUpdateGroupMerged>(
         neuronEnv, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedNeuronUpdateGroups,
         [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelNeuronUpdate); },
-        [batchSize, this](EnvironmentExternalBase &popEnv, NeuronUpdateGroupMerged &ng)
+        [batchSize, &vectoriseNeuronUpdateGroup, this](EnvironmentExternalBase &popEnv, NeuronUpdateGroupMerged &ng)
         {
             CodeStream::Scope b(popEnv.getStream());
             EnvironmentGroupMergedField<NeuronUpdateGroupMerged> groupEnv(popEnv, ng);
             buildStandardEnvironment(groupEnv, batchSize);
+            
+            if(vectoriseNeuronUpdateGroup[ng.getIndex()]) {
+            }
+            else {
+                // Call handler to generate generic neuron code
+                groupEnv.print("if($(id) < $(num_neurons))");
+                {
+                    CodeStream::Scope b(groupEnv.getStream());
 
-            // Call handler to generate generic neuron code
-            groupEnv.print("if($(id) < $(num_neurons))");
-            {
-                CodeStream::Scope b(groupEnv.getStream());
-                EnvironmentGroupMergedField<NeuronUpdateGroupMerged> validEnv(groupEnv, ng);
+                    EnvironmentGroupMergedField<NeuronUpdateGroupMerged> validEnv(groupEnv, ng);
 
-                // Add population RNG field
-                validEnv.addField(getPopulationRNGType().createPointer(), "_rng_internal", "rng",
-                                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rng"); },
-                                  ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)"));
+                    // Add population RNG field
+                    validEnv.addField(getPopulationRNGType().createPointer(), "_rng_internal", "rng",
+                                      [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rng"); },
+                                      ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)"));
 
-                // Add population RNG to environment
-                buildPopulationRNGEnvironment(validEnv);
+                    // Add population RNG to environment
+                    buildPopulationRNGEnvironment(validEnv);
 
-                // Generate neuron update
-                ng.generateNeuronUpdate(
-                    validEnv, batchSize,
-                    // Emit true spikes
-                    [&ng, this](EnvironmentExternalBase &env)
-                    {
-                        genEmitEvent(env, ng, 0, true);
-                    },
-                    // Emit spike-like events
-                    [&ng, this](EnvironmentExternalBase &env, const NeuronUpdateGroupMerged::SynSpikeEvent &sg)
-                    {
-                        genEmitEvent(env, ng, sg.getIndex(), false);
-                    });
+                    // Generate neuron update
+                    ng.generateNeuronUpdate(
+                        *this, validEnv, batchSize,
+                        // Emit true spikes
+                        [&ng, this](EnvironmentExternalBase &env)
+                        {
+                            genEmitEvent(env, ng, 0, true);
+                        },
+                        // Emit spike-like events
+                        [&ng, this](EnvironmentExternalBase &env, const NeuronUpdateGroupMerged::SynSpikeEvent &sg)
+                        {
+                            genEmitEvent(env, ng, sg.getIndex(), false);
+                        });
+                }
             }
 
             genSharedMemBarrier(groupEnv.getStream());
@@ -550,6 +588,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             }
 
             // If neuron update group produces spikes or spikes times are required
+            // **TODO** vectorise
             if(!ng.getMergedSpikeGroups().empty() || ng.getArchetype().isSpikeTimeRequired()) {
                 // Use first $(_sh_spk_count) spikes to update spike data structures and 
                 // make pre and postsynaptic spike-triggered weight updates
@@ -595,6 +634,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                 }
             }
 
+            // **TODO** vectorise
             ng.generateSpikeEvents(
                 groupEnv,
                 [batchSize, &ng, this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent &sg)
@@ -615,6 +655,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                 });
 
             // If we're recording spikes or spike-like events, use enough threads to copy this block's recording words
+            // **THINK** I think this is safe wrt vectorization
             if(ng.getArchetype().isSpikeRecordingEnabled() || ng.getArchetype().isSpikeEventRecordingEnabled()) {
                 groupEnv.getStream() << "if(" << getThreadID() << " < " << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << ")";
                 {

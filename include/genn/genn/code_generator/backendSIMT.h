@@ -115,6 +115,15 @@ public:
     //! Get type of population RNG
     virtual Type::ResolvedType getPopulationRNGType() const = 0;
 
+    //! Can this backend vectorise this variable?
+    virtual bool shouldVectoriseVar(const Models::Base::Var &var, const Type::TypeContext &context) const = 0;
+    
+    //! Can this backend vectorise this variable?
+    virtual bool shouldVectoriseVar(const Models::Base::CustomUpdateVar &var, const Type::TypeContext &context) const = 0;
+    
+    //! Can this backend vectorise this variable?
+    virtual bool shouldVectoriseVar(const Models::Base::VarRef &var, const Type::TypeContext &context) const = 0;
+
     //------------------------------------------------------------------------
     // BackendBase virtuals
     //------------------------------------------------------------------------
@@ -160,7 +169,6 @@ public:
     size_t getPaddedNumCustomUpdateThreads(const CustomUpdateInternal &cg, unsigned int batchSize) const;
     size_t getPaddedNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const;
     size_t getPaddedNumCustomUpdateTransposeWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const;
-    
 
     //--------------------------------------------------------------------------
     // Static API

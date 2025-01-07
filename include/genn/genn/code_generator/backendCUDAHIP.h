@@ -95,6 +95,15 @@ public:
     //! Add $(_rng) to environment based on $(_rng_internal) field with any initialisers and destructors required
     virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const override;
 
+    //! Can this backend vectorise this variable?
+    virtual bool shouldVectoriseVar(const Models::Base::Var &var, const Type::TypeContext &context) const final;
+    
+    //! Can this backend vectorise this variable?
+    virtual bool shouldVectoriseVar(const Models::Base::CustomUpdateVar &var, const Type::TypeContext &context) const final;
+    
+    //! Can this backend vectorise this variable?
+    virtual bool shouldVectoriseVar(const Models::Base::VarRef &, const Type::TypeContext &context) const final;
+
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
     //--------------------------------------------------------------------------
