@@ -382,10 +382,10 @@ std::string BackendCUDAHIP::getRecombineVector(const Type::ResolvedType &type, c
         }
 
         if(storageType == Type::Half) {
-            return "__floats2half2_rn(" + valuePrefix + "_0, " + valuePrefix + "_1);";
+            return "__floats2half2_rn(" + valuePrefix + "_0, " + valuePrefix + "_1)";
         } 
         else if(storageType == Type::Bfloat16) {
-            return "__floats2bfloat162_rn(" + valuePrefix + "_0, " + valuePrefix + "_1);";
+            return "__floats2bfloat162_rn(" + valuePrefix + "_0, " + valuePrefix + "_1)";
         }
         else {
             throw std::runtime_error("Unsupported storage type '" + storageType.getName() + "'");
