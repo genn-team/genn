@@ -224,7 +224,7 @@ bool shouldVectoriseVar(const Type::UnresolvedType &type, const Type::Unresolved
     const auto resolvedStorageType = storageType.resolve(context);
 
     // We can vectorise v
-    return (resolvedType == Type::Float && (storageType == Type::Half || storageType == Type::Bfloat16));
+    return (resolvedType == Type::Float && (resolvedStorageType == Type::Half || resolvedStorageType == Type::Bfloat16));
 }
 }   // Anonymous namespace
 
