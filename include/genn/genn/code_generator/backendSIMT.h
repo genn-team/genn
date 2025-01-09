@@ -118,6 +118,11 @@ public:
     //! Get type of population RNG
     virtual Type::ResolvedType getPopulationRNGType() const = 0;
 
+    //! Some backends can produce vectorised neuron update which use 'short vector'  
+    //! types like half2 to save memory bandwidth and possibly reduce compute. 
+    //! Gets the vector width to use for this neuron update group.
+    virtual size_t getNeuronUpdateVectorWidth(const NeuronGroupInternal &ng, const Type::TypeContext &context) const = 0;
+    
     //! Can this backend vectorise this variable?
     virtual bool shouldVectoriseVar(const Models::Base::Var &var, const Type::TypeContext &context) const = 0;
     
@@ -182,6 +187,8 @@ public:
     size_t getNumInitialisationRNGStreams(const ModelSpecMerged & modelMerged) const;
 
     size_t getKernelBlockSize(Kernel kernel) const { return m_KernelBlockSizes.at(kernel); }
+
+    size_t getPaddedNeuronUpdateThreads(const NeuronGroupInternal &ng, const Type::TypeContext &context) const;
 
     size_t getPaddedNumCustomUpdateThreads(const CustomUpdateInternal &cg, unsigned int batchSize) const;
     size_t getPaddedNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const;
