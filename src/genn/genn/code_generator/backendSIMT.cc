@@ -531,11 +531,18 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             if(vectorWidth > 1) {
                 const std::string vectorWidthStr = std::to_string(vectorWidth);
 
+                // Add population RNG field
+                // **NOTE** This is fine to share between unrolls because they are processed in parallel.
+                // **NOTE** Halving the number of RNG state loads can actually be the biggest memory bandwidth saving!
+                groupEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
+                                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rng"); },
+                                  ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)"));    
+
                 // **YUCK** add an environment with a hidden copy of ID so we 
                 // can overwrite ID deeper in here without losing access to original
                 EnvironmentExternal idEnv(groupEnv);
                 idEnv.add(Type::Uint32.addConst(), "_id", "$(id)");
-                
+
                 // If we're in the vectorisable region
                 idEnv.printLine("// Vectorised");
                 idEnv.printLine("const uint32_t numVectors = ($(num_neurons) + " + std::to_string(vectorWidth - 1) + ") / " + vectorWidthStr + ";");
@@ -571,11 +578,6 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                             vecEnv.print("if($(id) < $(num_neurons))");
                             vecEnv.getStream() << CodeStream::OB(12);
                         }
-
-                        // Add population RNG field
-                        vecEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
-                                        [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rng"); },
-                                        ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)"));
 
                         // Expose $(_XXX_i) variables as $(_XXX) to generic code
                         addVectorLaneAliases<NeuronVarAdapter>(vecEnv, i);
