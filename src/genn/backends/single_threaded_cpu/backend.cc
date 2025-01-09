@@ -1403,6 +1403,11 @@ size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
     }
 }
 //--------------------------------------------------------------------------
+size_t Backend::getNeuronStride(const NeuronGroupInternal &ng) const
+{
+    return ng.getNumNeurons();
+}
+//--------------------------------------------------------------------------
 void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();

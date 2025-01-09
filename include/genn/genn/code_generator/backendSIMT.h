@@ -143,6 +143,10 @@ public:
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const final;
 
+    //! Gets the stride used to access neuron variables (including pre and
+    //! postsynaptic synapse variables), taking into account padding etc
+    virtual size_t getNeuronStride(const NeuronGroupInternal &ng) const final;
+
     virtual void genPopVariableInit(EnvironmentExternalBase &env, HandlerEnv handler) const final;
     virtual void genVariableInit(EnvironmentExternalBase &env, const std::string &count, const std::string &indexVarName, HandlerEnv handler) const final;
     virtual void genSparseSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const final
