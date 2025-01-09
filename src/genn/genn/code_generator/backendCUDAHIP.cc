@@ -226,6 +226,17 @@ bool shouldVectoriseVar(const Type::UnresolvedType &type, const Type::Unresolved
     // We can vectorise v
     return (resolvedType == Type::Float && (resolvedStorageType == Type::Half || resolvedStorageType == Type::Bfloat16));
 }
+//-----------------------------------------------------------------------
+template<typename A, typename G>
+bool areAllVarsVectorisable(const G &group, const Type::TypeContext &context, const BackendSIMT &backend)
+{
+    const auto groupDefs = A(group).getDefs();
+    return std::all_of(groupDefs.cbegin(), groupDefs.cend(),
+                       [&backend, &context](const auto &v)
+                       { 
+                           return backend.shouldVectoriseVar(v, context); 
+                       });
+}
 }   // Anonymous namespace
 
 
@@ -312,6 +323,11 @@ void BackendCUDAHIP::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<N
 void BackendCUDAHIP::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const
 {
     ::buildPopulationRNGEnvironment(env, getRandPrefix(), getPopulationRNGInternalType());
+}
+//--------------------------------------------------------------------------
+size_t BackendCUDAHIP::getNeuronUpdateVectorWidth(const NeuronGroupInternal &ng, const Type::TypeContext &context) const
+{
+    return areAllVarsVectorisable<NeuronVarAdapter>(ng, context, *this) ? 2 : 1;
 }
 //--------------------------------------------------------------------------
 bool BackendCUDAHIP::shouldVectoriseVar(const Models::Base::Var &var, const Type::TypeContext &context) const
@@ -535,9 +551,8 @@ void BackendCUDAHIP::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpe
                                             getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()));
     size_t totalConstMem = (getChosenDeviceSafeConstMemBytes() > synapseGroupStartIDSize) ? (getChosenDeviceSafeConstMemBytes() - synapseGroupStartIDSize) : 0;
 
-    // **TODO** vectorisation decision required here too!
     genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedNeuronUpdateGroups(),
-                                  [this](const NeuronGroupInternal &ng){ return padKernelSize(ng.getNumNeurons(), KernelNeuronUpdate); });
+                                  [&model, this](const NeuronGroupInternal &ng){ return getPaddedNeuronUpdateThreads(ng, model.getTypeContext()); });
     genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups(),
                                   [this](const NeuronGroupInternal &ng){ return padKernelSize(ng.getNumNeurons(), KernelNeuronPrevSpikeTimeUpdate); });
     os << std::endl;

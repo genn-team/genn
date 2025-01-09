@@ -95,6 +95,11 @@ public:
     //! Add $(_rng) to environment based on $(_rng_internal) field with any initialisers and destructors required
     virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const override;
 
+    //! Some backends can produce vectorised neuron update which use 'short vector'  
+    //! types like half2 to save memory bandwidth and possibly reduce compute. 
+    //! Gets the vector width to use for this neuron update group.
+    virtual size_t getNeuronUpdateVectorWidth(const NeuronGroupInternal &ng, const Type::TypeContext &context) const final;
+
     //! Can this backend vectorise this variable?
     virtual bool shouldVectoriseVar(const Models::Base::Var &var, const Type::TypeContext &context) const final;
     
