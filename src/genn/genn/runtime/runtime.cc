@@ -156,7 +156,8 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
     const size_t batchSize = getModel().getBatchSize();
     for(const auto &n : getModel().getNeuronGroups()) {
         LOGD_RUNTIME << "Allocating memory for neuron group '" << n.first << "'";
-        const size_t nonDelayedNeuronVarSize = batchSize * n.second.getNumNeurons();
+        const size_t neuronStride = m_Backend.get().getNeuronStride(n.second);
+        const size_t nonDelayedNeuronVarSize = batchSize * neuronStride;
         const size_t delayedNeuronVarSize = nonDelayedNeuronVarSize * n.second.getNumDelaySlots();
 
         // If spike or spike-like event recording is enabled
@@ -180,7 +181,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 
         // If neuron group needs per-neuron RNGs
         if(n.second.isSimRNGRequired()) {
-            auto rng = m_Backend.get().createPopulationRNG(batchSize * n.second.getNumNeurons());
+            auto rng = m_Backend.get().createPopulationRNG(nonDelayedNeuronVarSize);
             if(rng) {
                 const auto r = m_NeuronGroupArrays[&n.second].try_emplace("rng", std::move(rng));
                 if(!r.second) {
@@ -209,7 +210,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                                                             &NeuronGroup::isParamDynamic);
 
         // Create arrays for neuron state variables
-        createNeuronVarArrays<NeuronVarAdapter>(&n.second, n.second.getNumNeurons(), batchSize, true);
+        createNeuronVarArrays<NeuronVarAdapter>(&n.second, neuronStride, batchSize, true);
         
         // Create arrays for neuron extra global parameters
         createEGPArrays<NeuronEGPAdapter>(&n.second);
@@ -217,7 +218,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         // Create arrays for current source variables and extra global parameters
         for (const auto *cs : n.second.getCurrentSources()) {
             LOGD_RUNTIME << "\tChild current source '" << cs->getName() << "'";
-            createNeuronVarArrays<CurrentSourceVarAdapter>(cs, n.second.getNumNeurons(), batchSize, true);
+            createNeuronVarArrays<CurrentSourceVarAdapter>(cs, neuronStride, batchSize, true);
             createEGPArrays<CurrentSourceEGPAdapter>(cs);
             createDynamicParamDestinations<CurrentSourceInternal>(*cs, cs->getModel()->getParams(),
                                                                   &CurrentSourceInternal::isParamDynamic, 2);
@@ -227,40 +228,38 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         for(const auto *sg : n.second.getFusedPSMInSyn()) {
             LOGD_RUNTIME << "\tFused PSM incoming synapse group '" << sg->getName() << "'";
             createArray(sg, "outPost", getModel().getPrecision(), 
-                        sg->getTrgNeuronGroup()->getNumNeurons() * batchSize,
+                        nonDelayedNeuronVarSize,
                         sg->getOutputLocation(), false, 2);
             
             if (sg->isDendriticOutputDelayRequired()) {
                 createArray(sg, "denDelay", getModel().getPrecision(), 
-                            (size_t)sg->getMaxDendriticDelayTimesteps() * (size_t)sg->getTrgNeuronGroup()->getNumNeurons() * batchSize,
+                            (size_t)sg->getMaxDendriticDelayTimesteps() * nonDelayedNeuronVarSize,
                             sg->getDendriticDelayLocation(), false, 2);
                 createArray(sg, "denDelayPtr", Type::Uint32, 1, VarLocation::DEVICE, false, 2);
             }
 
             // Create arrays for postsynaptic model state variables
-            createNeuronVarArrays<SynapsePSMVarAdapter>(sg, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize, true);
+            createNeuronVarArrays<SynapsePSMVarAdapter>(sg, neuronStride, batchSize, true);
         }
 
         // Create arrays for fused pre-output variables
         for(const auto *sg : n.second.getFusedPreOutputOutSyn()) {
             LOGD_RUNTIME << "\tFused pre-output outgoing synapse group '" << sg->getName() << "'";
             createArray(sg, "outPre", getModel().getPrecision(), 
-                        sg->getSrcNeuronGroup()->getNumNeurons() * batchSize,
+                        nonDelayedNeuronVarSize,
                         sg->getOutputLocation(), false, 2);
         }
         
         // Create arrays for variables from fused incoming synaptic populations
         for(const auto *sg: n.second.getFusedWUPreOutSyn()) {
             LOGD_RUNTIME << "\tFused WU pre incoming synapse group '" << sg->getName() << "'";
-            createNeuronVarArrays<SynapseWUPreVarAdapter>(sg, sg->getSrcNeuronGroup()->getNumNeurons(), 
-                                                          batchSize, true, 2);
+            createNeuronVarArrays<SynapseWUPreVarAdapter>(sg, neuronStride, batchSize, true, 2);
         }
         
         // Create arrays for variables from fused outgoing synaptic populations
         for(const auto *sg: n.second.getFusedWUPostInSyn()) {
             LOGD_RUNTIME << "\tFused WU post outgoing synapse group '" << sg->getName() << "'";
-            createNeuronVarArrays<SynapseWUPostVarAdapter>(sg, sg->getTrgNeuronGroup()->getNumNeurons(), 
-                                                           batchSize, true, 2);
+            createNeuronVarArrays<SynapseWUPostVarAdapter>(sg, neuronStride, batchSize, true, 2);
         }
 
         // Create arrays for spikes
