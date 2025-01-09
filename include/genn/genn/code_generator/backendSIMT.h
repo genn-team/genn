@@ -500,7 +500,7 @@ private:
         }
     }
 
-    void genRecordingSharedMemInit(CodeStream &os, const std::string &suffix, size_t numArrays) const;
+    void genRecordingSharedMemInit(CodeStream &os, const std::string &suffix, size_t numArrays, size_t maxVectorWidth) const;
 
     void genSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const;
 
@@ -510,7 +510,7 @@ private:
     void genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng,
                                 unsigned int batchSize, bool trueSpike) const;
     void genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
-                      size_t index, bool trueSpike) const;
+                      size_t index, size_t vectorLane, bool trueSpike) const;
     void genCopyEventToGlobal(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                               unsigned int batchSize, size_t index, bool trueSpike) const;
 
