@@ -180,6 +180,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
         }
 
         // If neuron group needs per-neuron RNGs
+        // **NOTE** if SIMT backend vectorises, this is excessive
         if(n.second.isSimRNGRequired()) {
             auto rng = m_Backend.get().createPopulationRNG(nonDelayedNeuronVarSize);
             if(rng) {
