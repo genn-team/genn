@@ -67,6 +67,8 @@ public:
 
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const final;
 
+    virtual size_t getNeuronStride(const NeuronGroupInternal &ng) const final;
+
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;

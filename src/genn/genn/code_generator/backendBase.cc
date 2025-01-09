@@ -102,13 +102,16 @@ void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentG
 }
 //--------------------------------------------------------------------------
 template<typename G>
-void buildStandardNeuronEnvironment(EnvironmentGroupMergedField<G> &env, unsigned int batchSize)
+void buildStandardNeuronEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env, unsigned int batchSize)
 {
     using namespace Type;
 
     env.addField(Uint32.addConst(), "num_neurons",
                  Uint32, "numNeurons",
                  [](const auto &ng, size_t) { return ng.getNumNeurons(); });
+     env.addField(Uint32.addConst(), "_stride",
+                 Uint32, "stride",
+                 [&backend](const auto &ng, size_t) { return backend.getNeuronStride(ng); });
     env.addField(Uint32.createPointer(), "_spk_que_ptr", "spkQuePtr",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkQuePtr"); });
     env.addField(Uint32.createPointer(), "_record_spk", "recordSpk",
@@ -122,7 +125,7 @@ void buildStandardNeuronEnvironment(EnvironmentGroupMergedField<G> &env, unsigne
     env.add(Uint32.addConst(), "num_batch", std::to_string(batchSize));
     if(batchSize > 1) {
         env.add(Uint32.addConst(), "_batch_offset", "batchOffset",
-                {env.addInitialiser("const unsigned int batchOffset = $(num_neurons) * $(batch);")});
+                {env.addInitialiser("const unsigned int batchOffset = $(_stride) * $(batch);")});
     }
             
     // If axonal delays are required
@@ -133,13 +136,13 @@ void buildStandardNeuronEnvironment(EnvironmentGroupMergedField<G> &env, unsigne
         env.add(Uint32.addConst(), "_read_delay_slot", "readDelaySlot",
                 {env.addInitialiser("const unsigned int readDelaySlot = (*$(_spk_que_ptr) + " + std::to_string(numDelaySlots - 1) + ") % " + numDelaySlotsStr+ ";")});
         env.add(Uint32.addConst(), "_read_delay_offset", "readDelayOffset",
-                {env.addInitialiser("const unsigned int readDelayOffset = $(_read_delay_slot) * $(num_neurons);")});
+                {env.addInitialiser("const unsigned int readDelayOffset = $(_read_delay_slot) * $(_stride);")});
 
         // And we should WRITE to delay slot pointed to be spkQuePtr
         env.add(Uint32.addConst(), "_write_delay_slot", "writeDelaySlot",
                 {env.addInitialiser("const unsigned int writeDelaySlot = *$(_spk_que_ptr);")});
         env.add(Uint32.addConst(), "_write_delay_offset", "writeDelayOffset",
-                {env.addInitialiser("const unsigned int writeDelayOffset = $(_write_delay_slot) * $(num_neurons);")});
+                {env.addInitialiser("const unsigned int writeDelayOffset = $(_write_delay_slot) * $(_stride);")});
 
         // If batching is also enabled
         if(batchSize > 1) {
@@ -586,17 +589,17 @@ void BackendBase::buildSizeEnvironment(EnvironmentGroupMergedField<CustomWUUpdat
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env, unsigned int batchSize) const
 {
-    buildStandardNeuronEnvironment(env, batchSize);
+    buildStandardNeuronEnvironment(*this, env, batchSize);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<NeuronPrevSpikeTimeUpdateGroupMerged> &env, unsigned int batchSize) const
 {
-    buildStandardNeuronEnvironment(env, batchSize);
+    buildStandardNeuronEnvironment(*this, env, batchSize);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<NeuronSpikeQueueUpdateGroupMerged> &env, unsigned int batchSize) const
 {
-    buildStandardNeuronEnvironment(env, batchSize);
+    buildStandardNeuronEnvironment(*this, env, batchSize);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> &env, unsigned int batchSize) const
@@ -646,7 +649,7 @@ void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<CustomCon
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<NeuronInitGroupMerged> &env, unsigned int batchSize) const
 {
-    buildStandardNeuronEnvironment(env, batchSize);
+    buildStandardNeuronEnvironment(*this, env, batchSize);
 }
 //-----------------------------------------------------------------------
 void BackendBase::buildStandardEnvironment(EnvironmentGroupMergedField<SynapseInitGroupMerged> &env, unsigned int batchSize) const

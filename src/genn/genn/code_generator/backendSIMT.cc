@@ -87,6 +87,12 @@ size_t BackendSIMT::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) c
     return getPresynapticUpdateStrategy(sg)->getSynapticMatrixRowStride(sg);
 }
 //--------------------------------------------------------------------------
+size_t BackendSIMT::getNeuronStride(const NeuronGroupInternal &ng) const
+{
+    // **TODO** get vectorisation width and ceildivide by this
+    return ng.getNumNeurons();
+}
+//--------------------------------------------------------------------------
 void BackendSIMT::genPopVariableInit(EnvironmentExternalBase &env, HandlerEnv handler) const
 {
     // If this is first thread in group
@@ -560,6 +566,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                     CodeStream::Scope b(idEnv.getStream());
                     
                     // Create environments to make vectorised loads of neuron variables
+                    // **TODO** index calculation incorrect with delays due to stride
                     EnvironmentLocalVectorVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronVarEnv(
                         ng, ng, *this, ng.getTypeContext(), idEnv, "", "l",
                         [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
