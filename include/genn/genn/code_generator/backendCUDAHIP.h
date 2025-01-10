@@ -90,7 +90,10 @@ public:
     virtual Type::ResolvedType getPopulationRNGType() const final;
 
     //! Generate a preamble to add substitution name for population RNG
-    virtual void addPopulationRNG(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env) const final;
+    virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env) const final;
+
+    //! Add $(_rng) to environment based on $(_rng_internal) field with any initialisers and destructors required
+    virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const final;
 
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
