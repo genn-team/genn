@@ -353,11 +353,6 @@ std::string Backend::getAtomic(const Type::ResolvedType &type, AtomicOperation o
     }
 }
 //--------------------------------------------------------------------------
-Type::ResolvedType Backend::getPopulationRNGType() const
-{
-    return CURandState;
-}
-//--------------------------------------------------------------------------
 std::unique_ptr<GeNN::Runtime::StateBase> Backend::createState(const Runtime::Runtime &runtime) const
 {
     return std::make_unique<State>(runtime);
@@ -367,11 +362,6 @@ std::unique_ptr<Runtime::ArrayBase> Backend::createArray(const Type::ResolvedTyp
                                                          VarLocation location, bool uninitialized) const
 {
     return std::make_unique<Array>(type, count, location, uninitialized);
-}
-//--------------------------------------------------------------------------
-std::unique_ptr<Runtime::ArrayBase> Backend::createPopulationRNG(size_t count) const
-{
-    return createArray(CURandState, count, VarLocation::DEVICE, false);
 }
 //--------------------------------------------------------------------------
 void Backend::genLazyVariableDynamicAllocation(CodeStream &os, const Type::ResolvedType &type, const std::string &name,
@@ -548,6 +538,11 @@ std::string Backend::getNVCCFlags() const
     }
 
     return nvccFlags;
+}
+//--------------------------------------------------------------------------
+Type::ResolvedType Backend::getPopulationRNGInternalType() const
+{
+    return CURandState;
 }
 //--------------------------------------------------------------------------
 const EnvironmentLibrary::Library &Backend::getRNGFunctions(const Type::ResolvedType &precision) const

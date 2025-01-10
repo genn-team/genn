@@ -165,9 +165,6 @@ public:
                                   AtomicOperation op = AtomicOperation::ADD, 
                                   AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const final;
 
-    //! Get type of population RNG
-    virtual Type::ResolvedType getPopulationRNGType() const final;
-
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
     //--------------------------------------------------------------------------
@@ -181,10 +178,6 @@ public:
         \param location     location of array e.g. device-only*/
     virtual std::unique_ptr<Runtime::ArrayBase> createArray(const Type::ResolvedType &type, size_t count, 
                                                             VarLocation location, bool uninitialized) const final;
-
-    //! Create array of backend-specific population RNGs (if they are initialised on host this will occur here)
-    /*! \param count        number of RNGs required*/
-    virtual std::unique_ptr<Runtime::ArrayBase> createPopulationRNG(size_t count) const final;
 
     //! Generate code to allocate variable with a size known at runtime
     virtual void genLazyVariableDynamicAllocation(CodeStream &os, 
@@ -225,6 +218,9 @@ protected:
         return m_ChosenDevice.totalConstMem - getPreferences<Preferences>().constantCacheOverhead;
     }
 
+    //! Get internal type population RNG gets loaded into
+    virtual Type::ResolvedType getPopulationRNGInternalType() const final;
+    
     //! Get library of RNG functions to use
     virtual const EnvironmentLibrary::Library &getRNGFunctions(const Type::ResolvedType &precision) const final;
 

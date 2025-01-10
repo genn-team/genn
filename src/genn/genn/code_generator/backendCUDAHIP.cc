@@ -28,6 +28,8 @@ const EnvironmentLibrary::Library backendFunctions = {
     {"atomic_or", {Type::ResolvedType::createFunction(Type::Void, {Type::Uint32.createPointer(), Type::Uint32}), "atomicOr($(0), $(1))"}},
 };
 
+const Type::ResolvedType XORWowStateInternal = Type::ResolvedType::createValue("XORWowStateInternal", 24, false, nullptr, true);
+
 //--------------------------------------------------------------------------
 // Timer
 //--------------------------------------------------------------------------
@@ -234,16 +236,15 @@ void BackendCUDAHIP::genSharedMemBarrier(CodeStream &os) const
 //--------------------------------------------------------------------------
 void BackendCUDAHIP::genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const
 {
-    os << getRandPrefix() << "_init(" << seed << ", " << sequence << ", 0, &" << globalRNG << ");" << std::endl;
-}
-//--------------------------------------------------------------------------
-std::string BackendCUDAHIP::genPopulationRNGPreamble(CodeStream &, const std::string &globalRNG) const
-{
-    return "&" + globalRNG;
-}
-//--------------------------------------------------------------------------
-void BackendCUDAHIP::genPopulationRNGPostamble(CodeStream&, const std::string&) const
-{
+    // Initialise full curandState/hiprandState object
+    os << getRandPrefix() << "State rngState;" << std::endl;
+    os << getRandPrefix() << "_init(" << seed << ", " << sequence << ", 0, &rngState);" << std::endl;
+
+    // Copy useful components into internal object
+    os << globalRNG << ".d = rngState.d;" << std::endl;
+    for(int i = 0; i < 5; i++) {
+        os << globalRNG << ".v[" << i << "] = rngState.v[" << i << "];" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 std::string BackendCUDAHIP::genGlobalRNGSkipAhead(CodeStream &os, const std::string &sequence) const
@@ -252,6 +253,41 @@ std::string BackendCUDAHIP::genGlobalRNGSkipAhead(CodeStream &os, const std::str
     os << getRandPrefix() <<  "StatePhilox4_32_10_t localRNG = d_rng;" << std::endl;
     os << "skipahead_sequence((unsigned long long)" << sequence << ", &localRNG);" << std::endl;
     return "localRNG";
+}
+//--------------------------------------------------------------------------
+Type::ResolvedType BackendCUDAHIP::getPopulationRNGType() const
+{
+    return XORWowStateInternal;
+}
+//--------------------------------------------------------------------------
+void BackendCUDAHIP::addPopulationRNG(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env) const
+{
+    // Generate initialiser code to create CURandState from internal RNG state
+    std::stringstream init;
+    init << getRandPrefix() << "State rngState;" << std::endl;
+
+    // Copy useful components into full object
+    init << "rngState.d = $(_rng_internal).d;" << std::endl;
+    for(int i = 0; i < 5; i++) {
+        init << "rngState.v[" << i << "] = $(_rng_internal).v[" << i << "];" << std::endl;
+    }
+
+    // Zero box-muller flag
+    init << "rngState.boxmuller_flag = 0;" << std::endl;
+
+    // Generate destructor code to copy CURandState back into internal RNG state
+    std::stringstream destroy;
+
+    // Copy useful components into internal object
+    destroy << "$(_rng_internal).d = rngState.d;" << std::endl;
+    for(int i = 0; i < 5; i++) {
+        destroy << "$(_rng_internal).v[" << i << "] = rngState.v[" << i << "];" << std::endl;
+    }
+
+    // Add alias with initialiser and destructor statements
+    env.add(getPopulationRNGInternalType(), "_rng", "rngState",
+            {env.addInitialiser(init.str())},
+            {env.addDestructor(destroy.str())});
 }
 //--------------------------------------------------------------------------
 void BackendCUDAHIP::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
@@ -1033,6 +1069,15 @@ void BackendCUDAHIP::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerge
     // b) Just calls abort_, not killing kernels with correct exit code
     // c) undefs the assert in <cassert> which actually works
     os << "#include <cassert>" << std::endl;
+    os << std::endl;
+
+    os << "struct XORWowStateInternal" << std::endl;
+    {
+        CodeStream::Scope b(os);
+        os << "unsigned int d;" << std::endl;
+        os << "unsigned int v[5];" << std::endl;
+    }
+    os << ";" << std::endl;
 
     os << std::endl;
     os << "template<typename RNG>" << std::endl;
@@ -1347,6 +1392,11 @@ void BackendCUDAHIP::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpec
     if(modelMerged.getModel().isTimingEnabled()) {
         os << "CHECK_RUNTIME_ERRORS(" << getRuntimePrefix() << "EventSynchronize(neuronUpdateStop));" << std::endl;
     }
+}
+//--------------------------------------------------------------------------
+std::unique_ptr<Runtime::ArrayBase> BackendCUDAHIP::createPopulationRNG(size_t count) const
+{
+    return createArray(XORWowStateInternal, count, VarLocation::DEVICE, false);
 }
 //--------------------------------------------------------------------------
 void BackendCUDAHIP::genLazyVariableDynamicPush(CodeStream &os, 
