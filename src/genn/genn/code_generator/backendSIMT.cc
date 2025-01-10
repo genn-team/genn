@@ -498,11 +498,14 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                 CodeStream::Scope b(groupEnv.getStream());
 
                 // Add population RNG field
-                groupEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
+                groupEnv.addField(getPopulationRNGType().createPointer(), "_rng_internal", "rng",
                                   [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rng"); },
                                   ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)"));
-                // **TODO** for OCL do genPopulationRNGPreamble(os, popSubs, "group->rng[" + ng.getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "$(id)") + "]") in initialiser
 
+                // Add population RNG preamble to initialise _rng from _rng_internal
+                addPopulationRNG(groupEnv);
+
+                // Generate neuron update
                 ng.generateNeuronUpdate(
                     *this, groupEnv, batchSize,
                     // Emit true spikes
@@ -515,12 +518,6 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                     {
                         genEmitEvent(env, ng, sg.getIndex(), false);
                     });
-
-                // Copy local stream back to local
-                // **TODO** postamble for OCL
-                //if(ng.getArchetype().isSimRNGRequired()) {
-                //    genPopulationRNGPostamble(neuronEnv.getStream(), rng);
-                //}
             }
 
             genSharedMemBarrier(groupEnv.getStream());
