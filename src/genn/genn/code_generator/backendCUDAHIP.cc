@@ -183,6 +183,38 @@ size_t getGroupStartIDSize(const std::vector<T> &mergedGroups)
                                return acc + (sizeof(unsigned int) * ng.getGroups().size());
                            });
 }
+//-----------------------------------------------------------------------
+template<typename G>
+void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<G> &env, const std::string &randPrefix,
+                                   const Type::ResolvedType &popRNGInternalType)
+{
+    // Generate initialiser code to create CURandState from internal RNG state
+    std::stringstream init;
+    init << randPrefix << "State rngState;" << std::endl;
+
+    // Copy useful components into full object
+    init << "rngState.d = $(_rng_internal).d;" << std::endl;
+    for(int i = 0; i < 5; i++) {
+        init << "rngState.v[" << i << "] = $(_rng_internal).v[" << i << "];" << std::endl;
+    }
+
+    // Zero box-muller flag
+    init << "rngState.boxmuller_flag = 0;" << std::endl;
+
+    // Generate destructor code to copy CURandState back into internal RNG state
+    std::stringstream destroy;
+
+    // Copy useful components into internal object
+    destroy << "$(_rng_internal).d = rngState.d;" << std::endl;
+    for(int i = 0; i < 5; i++) {
+        destroy << "$(_rng_internal).v[" << i << "] = rngState.v[" << i << "];" << std::endl;
+    }
+
+    // Add alias with initialiser and destructor statements
+    env.add(popRNGInternalType, "_rng", "rngState",
+            {env.addInitialiser(init.str())},
+            {env.addDestructor(destroy.str())});
+}
 }   // Anonymous namespace
 
 
@@ -260,34 +292,14 @@ Type::ResolvedType BackendCUDAHIP::getPopulationRNGType() const
     return XORWowStateInternal;
 }
 //--------------------------------------------------------------------------
-void BackendCUDAHIP::addPopulationRNG(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env) const
+void BackendCUDAHIP::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env) const
 {
-    // Generate initialiser code to create CURandState from internal RNG state
-    std::stringstream init;
-    init << getRandPrefix() << "State rngState;" << std::endl;
-
-    // Copy useful components into full object
-    init << "rngState.d = $(_rng_internal).d;" << std::endl;
-    for(int i = 0; i < 5; i++) {
-        init << "rngState.v[" << i << "] = $(_rng_internal).v[" << i << "];" << std::endl;
-    }
-
-    // Zero box-muller flag
-    init << "rngState.boxmuller_flag = 0;" << std::endl;
-
-    // Generate destructor code to copy CURandState back into internal RNG state
-    std::stringstream destroy;
-
-    // Copy useful components into internal object
-    destroy << "$(_rng_internal).d = rngState.d;" << std::endl;
-    for(int i = 0; i < 5; i++) {
-        destroy << "$(_rng_internal).v[" << i << "] = rngState.v[" << i << "];" << std::endl;
-    }
-
-    // Add alias with initialiser and destructor statements
-    env.add(getPopulationRNGInternalType(), "_rng", "rngState",
-            {env.addInitialiser(init.str())},
-            {env.addDestructor(destroy.str())});
+    ::buildPopulationRNGEnvironment(env, getRandPrefix(), getPopulationRNGInternalType());
+}
+//--------------------------------------------------------------------------
+void BackendCUDAHIP::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const
+{
+    ::buildPopulationRNGEnvironment(env, getRandPrefix(), getPopulationRNGInternalType());
 }
 //--------------------------------------------------------------------------
 void BackendCUDAHIP::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 

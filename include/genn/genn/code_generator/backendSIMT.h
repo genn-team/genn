@@ -104,8 +104,11 @@ public:
     virtual void genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const = 0;
 
     //! Add $(_rng) to environment based on $(_rng_internal) field with any initialisers and destructors required
-    virtual void addPopulationRNG(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env) const = 0;
+    virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env) const = 0;
     
+    //! Add $(_rng) to environment based on $(_rng_internal) field with any initialisers and destructors required
+    virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const = 0;
+
     //! Generate code to skip ahead local copy of global RNG
     virtual std::string genGlobalRNGSkipAhead(CodeStream &os, const std::string &sequence) const = 0;
 

@@ -502,8 +502,8 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                                   [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rng"); },
                                   ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)"));
 
-                // Add population RNG preamble to initialise _rng from _rng_internal
-                addPopulationRNG(groupEnv);
+                // Add population RNG to environment
+                buildPopulationRNGEnvironment(groupEnv);
 
                 // Generate neuron update
                 ng.generateNeuronUpdate(
@@ -1289,18 +1289,14 @@ void BackendSIMT::genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env
                 groupEnv.add(Type::Uint32.addConst(), "id_pre", "$(id)");
                 
                 // Add population RNG field
-                groupEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
+                groupEnv.addField(getPopulationRNGType().createPointer(), "_rng_internal", "rng",
                                   [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rowRNG"); },
                                   "$(id)");
-                // **TODO** for OCL do genPopulationRNGPreamble(os, popSubs, "$(id)") in initialiser
-
+                
+                // Add population RNG to environment
+                buildPopulationRNGEnvironment(groupEnv);
 
                 cg.generateUpdate(*this, groupEnv, modelMerged.getModel().getBatchSize());
-                
-                // Copy local stream back to local
-                /*if(Utils::isRNGRequired(cg.getArchetype().getRowUpdateCodeTokens())) {
-                    genPopulationRNGPostamble(groupEnv.getStream(), rng);
-                }*/
             }
         });
 }
