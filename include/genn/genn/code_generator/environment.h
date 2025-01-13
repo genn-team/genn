@@ -259,9 +259,9 @@ public:
     ~EnvironmentExternalDynamicBase()
     {
         std::vector<std::string> initialiserCode(m_Initialisers.size());
-        std::vector<std::string> destructorCode(m_Destructors.size());
+        std::vector<std::string> finaliserCode(m_Finalisers.size());
 
-        // Because initialisers and destructors may refer to others, 
+        // Because initialisers and finalisers may refer to others, 
         // keep evaluating them until no new ones are found
         bool anyReferences;
         do {
@@ -280,16 +280,16 @@ public:
                 }
             }
 
-            // Loop through destructors
-            for(size_t i = 0; i < m_Destructors.size(); i++) {
-                // If destructor has been referenced
-                auto &destructor = m_Destructors[i];
-                if (destructor.first) {
+            // Loop through finalisers
+            for(size_t i = 0; i < m_Finalisers.size(); i++) {
+                // If finaliser has been referenced
+                auto &finaliser = m_Finalisers[i];
+                if (finaliser.first) {
                     // Evaluate lazy string into vector
-                    destructorCode[i] = destructor.second.str();
+                    finaliserCode[i] = finaliser.second.str();
 
                     // Clear referenced flag and set flag to ensure another iteration occurs
-                    destructor.first = false;
+                    finaliser.first = false;
                     anyReferences = true;
                 }
             }
@@ -306,9 +306,9 @@ public:
         // Write contents to context stream
         getContextStream() << m_ContentsStream.str();
 
-        // Write out generated destructor code
+        // Write out generated finaliser code
         // **NOTE** in order
-        for(const auto &i : destructorCode) {
+        for(const auto &i : finaliserCode) {
             if(!i.empty()) {
                 getContextStream() << i << std::endl;
             }
@@ -332,9 +332,9 @@ public:
                 m_Initialisers.at(i).first = true;
             }
 
-            // If this identifier relies on any destructor statements, mark these destructors as required
+            // If this identifier relies on any finaliser statements, mark these finalisers as required
             for(size_t i : std::get<2>(env->second)) {
-                m_Destructors.at(i).first = true;
+                m_Finalisers.at(i).first = true;
             }
 
             // Perform any type-specific logic to mark this identifier as required
@@ -363,9 +363,9 @@ public:
                 m_Initialisers.at(i).first = true;
             }
 
-            // If this identifier relies on any destructor statements, mark these destructors as required
+            // If this identifier relies on any finaliser statements, mark these finalisers as required
             for(size_t i : std::get<2>(env->second)) {
-                m_Destructors.at(i).first = true;
+                m_Finalisers.at(i).first = true;
             }
 
             // Perform any type-specific logic to mark this identifier as required
@@ -382,10 +382,10 @@ public:
         return (m_Initialisers.size() - 1);
     }
 
-    size_t addDestructor(const std::string &format)
+    size_t addFinaliser(const std::string &format)
     {
-        m_Destructors.emplace_back(false, LazyString{format, *this});
-        return (m_Destructors.size() - 1);
+        m_Finalisers.emplace_back(false, LazyString{format, *this});
+        return (m_Finalisers.size() - 1);
     }
 
 protected:
@@ -394,9 +394,9 @@ protected:
     //------------------------------------------------------------------------
     //! Map an identifier to a type (for type-checking), lists of initialisers and a payload 
     void addInternal(const GeNN::Type::ResolvedType &type, const std::string &name, const typename P::Payload &payload,
-                     const std::vector<size_t> &initialisers = {}, const std::vector<size_t> &destructors = {})
+                     const std::vector<size_t> &initialisers = {}, const std::vector<size_t> &finalisers = {})
     {
-        if(!m_Environment.try_emplace(name, type, initialisers, destructors, payload).second) {
+        if(!m_Environment.try_emplace(name, type, initialisers, finalisers, payload).second) {
             throw std::runtime_error("Redeclaration of '" + std::string{name} + "'");
         }
     }
@@ -410,7 +410,7 @@ private:
 
     std::unordered_map<std::string, std::tuple<Type::ResolvedType, std::vector<size_t>, std::vector<size_t>, typename P::Payload>> m_Environment;
     std::vector<std::pair<bool, LazyString>> m_Initialisers;
-    std::vector<std::pair<bool, LazyString>> m_Destructors;
+    std::vector<std::pair<bool, LazyString>> m_Finalisers;
 };
 
 //----------------------------------------------------------------------------
@@ -428,10 +428,10 @@ public:
     //------------------------------------------------------------------------
     //! Map a type (for type-checking) and a value (for pretty-printing) to an identifier
     void add(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &value,
-             const std::vector<size_t> &initialisers = {}, const std::vector<size_t> &destructors = {})
+             const std::vector<size_t> &initialisers = {}, const std::vector<size_t> &finalisers = {})
     {
         addInternal(type, name, LazyString{value, *this}, 
-                    initialisers, destructors);
+                    initialisers, finalisers);
     }
 };
 
@@ -473,10 +473,10 @@ public:
     //------------------------------------------------------------------------
     //! Map a type and a value to an identifier
     void add(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &value,
-             const std::vector<size_t> &initialisers = {}, const std::vector<size_t> &destructors = {})
+             const std::vector<size_t> &initialisers = {}, const std::vector<size_t> &finalisers = {})
     {
         this->addInternal(type, name, std::make_tuple(false, LazyString{value, *this}, std::nullopt), 
-                          initialisers, destructors);
+                          initialisers, finalisers);
     }
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
@@ -513,7 +513,7 @@ public:
                   const GeNN::Type::ResolvedType &fieldType, const std::string &fieldName, 
                   GetFieldNonNumericValueFunc getFieldValue, const std::string &indexSuffix = "", 
                   GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD, 
-                  const std::vector<size_t> &initialisers = {}, const std::vector<size_t> &destructors = {})
+                  const std::vector<size_t> &initialisers = {}, const std::vector<size_t> &finalisers = {})
     {
         typename G::Field field{fieldName, fieldType, mergedFieldType,
                                 [getFieldValue](Runtime::Runtime &r, const GroupInternal &g, size_t i)
@@ -523,7 +523,7 @@ public:
                                         getFieldValue(r, g, i));
                                 }};
         this->addInternal(type, name, std::make_tuple(false, LazyString{indexSuffix, *this}, std::make_optional(field)),
-                          initialisers, destructors);
+                          initialisers, finalisers);
     }
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
@@ -537,10 +537,10 @@ public:
     void addField(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &fieldName, 
                   GetFieldNonNumericValueFunc getFieldValue, const std::string &indexSuffix = "", 
                   GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD, 
-                  const std::vector<size_t> &initialisers = {}, const std::vector<size_t> &destructors = {})
+                  const std::vector<size_t> &initialisers = {}, const std::vector<size_t> &finalisers = {})
     {
          addField(type, name, type, fieldName, getFieldValue, indexSuffix, mergedFieldType,
-                  initialisers, destructors);
+                  initialisers, finalisers);
     }
 
     void addParams(const Snippet::Base::ParamVec &params, const std::string &fieldSuffix, 
