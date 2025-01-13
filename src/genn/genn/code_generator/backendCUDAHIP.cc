@@ -201,19 +201,19 @@ void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<G> &env, const st
     // Zero box-muller flag
     init << "rngState.boxmuller_flag = 0;" << std::endl;
 
-    // Generate destructor code to copy CURandState back into internal RNG state
-    std::stringstream destroy;
+    // Generate finaliser code to copy CURandState back into internal RNG state
+    std::stringstream finalise;
 
     // Copy useful components into internal object
-    destroy << "$(_rng_internal).d = rngState.d;" << std::endl;
+    finalise << "$(_rng_internal).d = rngState.d;" << std::endl;
     for(int i = 0; i < 5; i++) {
-        destroy << "$(_rng_internal).v[" << i << "] = rngState.v[" << i << "];" << std::endl;
+        finalise << "$(_rng_internal).v[" << i << "] = rngState.v[" << i << "];" << std::endl;
     }
 
     // Add alias with initialiser and destructor statements
     env.add(popRNGInternalType, "_rng", "rngState",
             {env.addInitialiser(init.str())},
-            {env.addDestructor(destroy.str())});
+            {env.addFinaliser(finalise.str())});
 }
 }   // Anonymous namespace
 
