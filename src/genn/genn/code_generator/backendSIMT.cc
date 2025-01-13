@@ -496,18 +496,19 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             groupEnv.print("if($(id) < $(num_neurons))");
             {
                 CodeStream::Scope b(groupEnv.getStream());
+                EnvironmentGroupMergedField<NeuronUpdateGroupMerged> validEnv(groupEnv, ng);
 
                 // Add population RNG field
-                groupEnv.addField(getPopulationRNGType().createPointer(), "_rng_internal", "rng",
+                validEnv.addField(getPopulationRNGType().createPointer(), "_rng_internal", "rng",
                                   [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rng"); },
                                   ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)"));
 
                 // Add population RNG to environment
-                buildPopulationRNGEnvironment(groupEnv);
+                buildPopulationRNGEnvironment(validEnv);
 
                 // Generate neuron update
                 ng.generateNeuronUpdate(
-                    *this, groupEnv, batchSize,
+                    *this, validEnv, batchSize,
                     // Emit true spikes
                     [&ng, this](EnvironmentExternalBase &env)
                     {
@@ -1284,19 +1285,20 @@ void BackendSIMT::genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env
             groupEnv.print("if($(id) < $(num_pre))");
             {
                 CodeStream::Scope b(groupEnv.getStream());
+                EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> validEnv(groupEnv, cg);
 
                 // Configure substitutions
-                groupEnv.add(Type::Uint32.addConst(), "id_pre", "$(id)");
+                validEnv.add(Type::Uint32.addConst(), "id_pre", "$(id)");
                 
                 // Add population RNG field
-                groupEnv.addField(getPopulationRNGType().createPointer(), "_rng_internal", "rng",
+                validEnv.addField(getPopulationRNGType().createPointer(), "_rng_internal", "rng",
                                   [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rowRNG"); },
                                   "$(id)");
                 
                 // Add population RNG to environment
-                buildPopulationRNGEnvironment(groupEnv);
+                buildPopulationRNGEnvironment(validEnv);
 
-                cg.generateUpdate(*this, groupEnv, modelMerged.getModel().getBatchSize());
+                cg.generateUpdate(*this, validEnv, modelMerged.getModel().getBatchSize());
             }
         });
 }
