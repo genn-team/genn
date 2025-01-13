@@ -47,7 +47,7 @@ void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentG
     env.addField(Type::Uint32.addConst(), "num_post",
                  Type::Uint32, "numTrgNeurons", 
                  [](const auto  &cg, size_t) { return cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); });
-    env.addField(Type::Uint32, "_row_stride", "rowStride", 
+    env.addField(Type::Uint32.addConst(), "_row_stride", "rowStride", 
                  [&backend](const auto &cg, size_t) -> uint64_t
                  {
                      return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup());
@@ -173,12 +173,12 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
     env.addField(Uint32.addConst(), "num_post",
                  Uint32, "numTrgNeurons", 
                  [](const SynapseGroupInternal &sg, size_t) { return sg.getTrgNeuronGroup()->getNumNeurons(); });
-    env.addField(Uint32, "_row_stride", "rowStride", 
+    env.addField(Uint32.addConst(), "_row_stride", "rowStride", 
                  [&backend](const SynapseGroupInternal &sg, size_t) -> uint64_t
                  {
                      return backend.getSynapticMatrixRowStride(sg);
                  });
-    env.addField(Uint32, "_col_stride", "colStride", 
+    env.addField(Uint32.addConst(), "_col_stride", "colStride", 
                  [](const SynapseGroupInternal &sg, size_t) { return sg.getMaxSourceConnections(); });
 
     // Postsynaptic model fields         
@@ -309,25 +309,25 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
         else {
             preDelaySlotInit << "(*$(_src_spk_que_ptr) + " << (numSrcDelaySlots - numDelaySteps) << ") % " << numSrcDelaySlots <<  ";" << std::endl;
         }
-        env.add(Uint32, "_pre_delay_slot", "preDelaySlot", 
+        env.add(Uint32.addConst(), "_pre_delay_slot", "preDelaySlot", 
                 {env.addInitialiser(preDelaySlotInit.str())});
 
-        env.add(Uint32, "_pre_delay_offset", "preDelayOffset",
+        env.add(Uint32.addConst(), "_pre_delay_offset", "preDelayOffset",
                 {env.addInitialiser("const unsigned int preDelayOffset = $(_pre_delay_slot) * $(num_pre);")});
 
         if(batchSize > 1) {
-            env.add(Uint32, "_pre_batch_delay_slot", "preBatchDelaySlot",
+            env.add(Uint32.addConst(), "_pre_batch_delay_slot", "preBatchDelaySlot",
                     {env.addInitialiser("const unsigned int preBatchDelaySlot = $(_pre_delay_slot) + ($(batch) * " + std::to_string(numSrcDelaySlots) + ");")});
-            env.add(Uint32, "_pre_batch_delay_offset", "preBatchDelayOffset",
+            env.add(Uint32.addConst(), "_pre_batch_delay_offset", "preBatchDelayOffset",
                     {env.addInitialiser("const unsigned int preBatchDelayOffset = $(_pre_delay_offset) + ($(_pre_batch_offset) * " + std::to_string(numSrcDelaySlots) + ");")});
         }
 
-        env.add(Uint32, "_pre_prev_spike_time_delay_offset", "prePrevSpikeTimeDelayOffset",
+        env.add(Uint32.addConst(), "_pre_prev_spike_time_delay_offset", "prePrevSpikeTimeDelayOffset",
                 {env.addInitialiser("const unsigned int prePrevSpikeTimeDelayOffset = ((*$(_src_spk_que_ptr) + " 
                                     + std::to_string(numSrcDelaySlots - numDelaySteps - 1) + ") % " + std::to_string(numSrcDelaySlots) + ") * $(num_pre);")});
 
         if(batchSize > 1) {
-            env.add(Uint32, "_pre_prev_spike_time_batch_delay_offset", "prePrevSpikeTimeBatchDelayOffset",
+            env.add(Uint32.addConst(), "_pre_prev_spike_time_batch_delay_offset", "prePrevSpikeTimeBatchDelayOffset",
                     {env.addInitialiser("const unsigned int prePrevSpikeTimeBatchDelayOffset = $(_pre_prev_spike_time_delay_offset) + ($(_pre_batch_offset) * " + std::to_string(numSrcDelaySlots) + ");")});
         }
     }
@@ -345,25 +345,25 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
         else {
             postDelaySlotInit << "(*$(_trg_spk_que_ptr) + " << (numTrgDelaySlots - numBackPropDelaySteps) << ") % " << numTrgDelaySlots << ";" << std::endl;
         }
-        env.add(Uint32, "_post_delay_slot", "postDelaySlot", 
+        env.add(Uint32.addConst(), "_post_delay_slot", "postDelaySlot", 
                 {env.addInitialiser(postDelaySlotInit.str())});
 
-        env.add(Uint32, "_post_delay_offset", "postDelayOffset",
+        env.add(Uint32.addConst(), "_post_delay_offset", "postDelayOffset",
                 {env.addInitialiser("const unsigned int postDelayOffset = $(_post_delay_slot) * $(num_post);")});
 
         if(batchSize > 1) {
-            env.add(Uint32, "_post_batch_delay_slot", "postBatchDelaySlot",
+            env.add(Uint32.addConst(), "_post_batch_delay_slot", "postBatchDelaySlot",
                     {env.addInitialiser("const unsigned int postBatchDelaySlot = $(_post_delay_slot) + ($(batch) * " + std::to_string(numTrgDelaySlots) + ");")});
-            env.add(Uint32, "_post_batch_delay_offset", "postBatchDelayOffset",
+            env.add(Uint32.addConst(), "_post_batch_delay_offset", "postBatchDelayOffset",
                     {env.addInitialiser("const unsigned int postBatchDelayOffset = $(_post_delay_offset) + ($(_post_batch_offset) * " + std::to_string(numTrgDelaySlots) + ");")});
         }
 
-        env.add(Uint32, "_post_prev_spike_time_delay_offset", "postPrevSpikeTimeDelayOffset",
+        env.add(Uint32.addConst(), "_post_prev_spike_time_delay_offset", "postPrevSpikeTimeDelayOffset",
                 {env.addInitialiser("const unsigned int postPrevSpikeTimeDelayOffset = ((*$(_trg_spk_que_ptr) + " 
                                     + std::to_string(numTrgDelaySlots - numBackPropDelaySteps - 1) + ") % " + std::to_string(numTrgDelaySlots) + ") * $(num_post);")});
 
         if(batchSize > 1) {
-            env.add(Uint32, "_post_prev_spike_time_batch_delay_offset", "postPrevSpikeTimeBatchDelayOffset",
+            env.add(Uint32.addConst(), "_post_prev_spike_time_batch_delay_offset", "postPrevSpikeTimeBatchDelayOffset",
                     {env.addInitialiser("const unsigned int postPrevSpikeTimeBatchDelayOffset = $(_post_prev_spike_time_delay_offset) + ($(_post_batch_offset) * " + std::to_string(numTrgDelaySlots) + ");")});
         }
     }
@@ -371,7 +371,7 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
     // If synapse group has dendritic delay and batching is enabled
     const unsigned int maxDendriticDelayTimesteps = env.getGroup().getArchetype().getMaxDendriticDelayTimesteps();
     if(maxDendriticDelayTimesteps > 1 && batchSize > 1) {
-         env.add(Uint32, "_post_batch_den_delay_offset", "postBatchDenDelayOffset",
+         env.add(Uint32.addConst(), "_post_batch_den_delay_offset", "postBatchDenDelayOffset",
                 {env.addInitialiser("const unsigned int postBatchDenDelayOffset = $(_post_batch_offset) * " + std::to_string(maxDendriticDelayTimesteps) + ";")});
     }
 }
