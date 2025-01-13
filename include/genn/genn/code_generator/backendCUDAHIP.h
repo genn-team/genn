@@ -48,7 +48,7 @@ struct PreferencesCUDAHIP : public PreferencesBase
 //--------------------------------------------------------------------------
 // GeNN::CodeGenerator::BackendCUDAHIP
 //--------------------------------------------------------------------------
-class BACKEND_EXPORT BackendCUDAHIP : public BackendSIMT
+class GENN_EXPORT BackendCUDAHIP : public BackendSIMT
 {
 public:
     BackendCUDAHIP(const KernelBlockSize &kernelBlockSizes, const PreferencesBase &preferences,
