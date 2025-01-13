@@ -47,7 +47,8 @@ void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentG
     env.addField(Type::Uint32.addConst(), "num_post",
                  Type::Uint32, "numTrgNeurons", 
                  [](const auto  &cg, size_t) { return cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); });
-    env.addField(Type::Uint32.addConst(), "_row_stride", "rowStride", 
+    env.addField(Type::Uint32.addConst(), "_row_stride", 
+                 Type::Uint32, "rowStride", 
                  [&backend](const auto &cg, size_t) -> uint64_t
                  {
                      return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup());
@@ -173,12 +174,14 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
     env.addField(Uint32.addConst(), "num_post",
                  Uint32, "numTrgNeurons", 
                  [](const SynapseGroupInternal &sg, size_t) { return sg.getTrgNeuronGroup()->getNumNeurons(); });
-    env.addField(Uint32.addConst(), "_row_stride", "rowStride", 
+    env.addField(Uint32.addConst(), "_row_stride", 
+                 Type::Uint32, "rowStride", 
                  [&backend](const SynapseGroupInternal &sg, size_t) -> uint64_t
                  {
                      return backend.getSynapticMatrixRowStride(sg);
                  });
-    env.addField(Uint32.addConst(), "_col_stride", "colStride", 
+    env.addField(Uint32.addConst(), "_col_stride", 
+                 Type::Uint32, "colStride", 
                  [](const SynapseGroupInternal &sg, size_t) { return sg.getMaxSourceConnections(); });
 
     // Postsynaptic model fields         
