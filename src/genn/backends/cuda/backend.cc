@@ -9,7 +9,6 @@
 
 // GeNN includes
 #include "gennUtils.h"
-#include "logging.h"
 #include "type.h"
 
 // GeNN code generator includes
@@ -396,6 +395,11 @@ void Backend::genLazyVariableDynamicAllocation(CodeStream &os, const Type::Resol
             os << "CHECK_RUNTIME_ERRORS(cudaMalloc(" << devicePointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType.getName() << ")));" << std::endl;
         }
     }
+}
+//--------------------------------------------------------------------------
+void Backend::genAssert(CodeStream &os, const std::string &condition) const
+{
+    os << "assert(" << condition << ");" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream &os) const

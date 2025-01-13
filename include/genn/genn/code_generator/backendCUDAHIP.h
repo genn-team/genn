@@ -146,9 +146,6 @@ public:
     //! Generate code to return amount of free 'device' memory in bytes
     virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const final;
 
-    //! On backends which support it, generate a runtime assert
-    virtual void genAssert(CodeStream &os, const std::string &condition) const final;
-
     //! As well as host pointers, are device objects required?
     virtual bool isArrayDeviceObjectRequired() const final{ return true; }
 

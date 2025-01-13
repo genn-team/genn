@@ -390,6 +390,20 @@ void Backend::genLazyVariableDynamicAllocation(CodeStream &os, const Type::Resol
     }
 }
 //--------------------------------------------------------------------------
+void Backend::genAssert(CodeStream &os, const std::string &condition) const
+{
+#ifdef __HIP_PLATFORM_NVIDIA__
+    LOGW_BACKEND << "Asserts do not currently work correctly on HIP NVIDIA backend";
+    os << "if(!(" << condition << "))";
+    {
+        CodeStream::Scope b(os);
+        os << "printf(\"Assert failure\\n\");" << std::endl;
+    }
+#else
+    os << "assert(" << condition << ");" << std::endl;
+#endif
+}
+//--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream &os) const
 {
     const std::string architecture = "sm_" + std::to_string(getChosenHIPDevice().major) + std::to_string(getChosenHIPDevice().minor);
