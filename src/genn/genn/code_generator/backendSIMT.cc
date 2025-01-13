@@ -534,7 +534,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                 // Add population RNG field
                 // **NOTE** This is fine to share between unrolls because they are processed in parallel.
                 // **NOTE** Halving the number of RNG state loads can actually be the biggest memory bandwidth saving!
-                groupEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
+                groupEnv.addField(getPopulationRNGType().createPointer(), "_rng_internal", "rng",
                                   [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rng"); },
                                   ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)"));    
 
@@ -549,11 +549,15 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                 idEnv.print("if($(id) < numVectors)");
                 {
                     CodeStream::Scope b(idEnv.getStream());
+                    EnvironmentGroupMergedField<NeuronUpdateGroupMerged> validEnv(idEnv, ng);
+                    
+                    // Add population RNG to environment
+                    buildPopulationRNGEnvironment(validEnv);
                     
                     // Create environments to make vectorised loads of neuron variables
                     // **TODO** index calculation incorrect with delays due to stride
                     EnvironmentLocalVectorVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronVarEnv(
-                        ng, ng, *this, ng.getTypeContext(), idEnv, "", "l",
+                        ng, ng, *this, ng.getTypeContext(), validEnv, "", "l",
                         [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
                         {
                             return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;

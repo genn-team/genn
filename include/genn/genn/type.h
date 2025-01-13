@@ -348,14 +348,15 @@ struct GENN_EXPORT ResolvedType
     static ResolvedType createValue(const std::string &name, bool isConst = false, ffi_type *ffiType = nullptr, 
                                     bool device = false, bool storage = false)
     {
-        return ResolvedType{Value{name, sizeof(T), ffiType, device, storage, 
-                                  false, std::nullopt}, isConst};
+        return ResolvedType{Value{name, sizeof(T), ffiType, device, 
+                                  storage, false, std::nullopt}, isConst};
     }
 
     static ResolvedType createValue(const std::string &name, size_t size, bool isConst = false, 
-                                    ffi_type *ffiType = nullptr, bool device = false)
+                                    ffi_type *ffiType = nullptr, bool device = false, bool storage = false)
     {
-        return ResolvedType{Value{name, size, ffiType, device, false, std::nullopt}, isConst};
+        return ResolvedType{Value{name, size, ffiType, device, 
+                                  storage, false, std::nullopt}, isConst};
     }
 
     static ResolvedType createFunction(const ResolvedType &returnType, const std::vector<ResolvedType> &argTypes,
