@@ -447,7 +447,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
     shSpkCountInit << "if (" << getThreadID() << " < " << maxVectorWidth << ")";
     {
         CodeStream::Scope b(shSpkCountInit);
-        shSpkCountInit << "shSpkCount[0][" << ((maxVectorWidth > 1) ? maxVectorWidth : 0) << "] = 0;" << std::endl;
+        shSpkCountInit << "shSpkCount[0][" << ((maxVectorWidth > 1) ? getThreadID() : "0") << "] = 0;" << std::endl;
     }
 
     // Add shared memory substitutions so they're only instantiated as required
@@ -457,7 +457,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
     neuronEnv.add(Type::Void, "_sh_spk", "shSpk",
                   {neuronEnv.addInitialiser(getSharedPrefix() + "unsigned int shSpk[1][" + countStr + "];")});
     neuronEnv.add(Type::Void, "_sh_spk_pos", "shSpkPos",
-                  {neuronEnv.addInitialiser(getSharedPrefix() + "unsigned int shSpkPos[1][" + maxVectorWidthStr + "];")});
+                  {neuronEnv.addInitialiser(getSharedPrefix() + "unsigned int shSpkPos[1];")});
     neuronEnv.add(Type::Void, "_sh_spk_count", "shSpkCount",
                   {neuronEnv.addInitialiser(shSpkCountInitStream.str())});
 
@@ -491,7 +491,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             // Generate arrays to hold spike-events, insertion point and count for each block
             const std::string maxSpikeEventCondStr = std::to_string(maxSpikeEventCond);
             neuronEnv.printLine(getSharedPrefix() + "unsigned int shSpkEvent[" + maxSpikeEventCondStr + "][" + countStr + "];");
-            neuronEnv.printLine(getSharedPrefix() + "unsigned int shSpkEventPos[" + maxSpikeEventCondStr + "][" + maxVectorWidthStr + "];");
+            neuronEnv.printLine(getSharedPrefix() + "unsigned int shSpkEventPos[" + maxSpikeEventCondStr + "];");
             neuronEnv.printLine(getSharedPrefix() + "unsigned int shSpkEventCount[" + maxSpikeEventCondStr + "][" + maxVectorWidthStr + "];");
 
             // Add to environment
@@ -500,10 +500,31 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             neuronEnv.add(Type::Void, "_sh_spk_count_event", "shSpkEventCount");
 
             // Generate code to zero shared memory spike event count
+            // **TODO** stick in helper
             neuronEnv.print("if (" + getThreadID() + " < " + std::to_string(maxSpikeEventCond * maxVectorWidth) + ")");
             {
                 CodeStream::Scope b(neuronEnv.getStream());
-                neuronEnv.printLine("$(_sh_spk_count_event)[" + getThreadID() + "] = 0;");
+                neuronEnv.print("$(_sh_spk_count_event)[");
+                if(maxSpikeEventCond == 1) {
+                    neuronEnv.print("0");
+                }
+                else if(maxVectorWidth == 1) {
+                    neuronEnv.print(getThreadID());
+                }
+                else {
+                    neuronEnv.print(getThreadID() + " % " + maxSpikeEventCondStr);
+                }
+                neuronEnv.print("][");
+                if(maxVectorWidth == 1) {
+                    neuronEnv.print("0");
+                }
+                else if(maxSpikeEventCond == 1) {
+                    neuronEnv.print(getThreadID());
+                }
+                else {
+                    neuronEnv.print(getThreadID() + " / " + maxSpikeEventCondStr);
+                }
+                neuronEnv.printLine("] = 0;");
             }
         }
 
@@ -2050,12 +2071,13 @@ void BackendSIMT::genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMe
                                size_t index, size_t vectorLane, bool trueSpike) const
 {
     const std::string indexStr = std::to_string(index);
+    const std::string vectorLaneStr = std::to_string(vectorLane);
     const std::string suffix = trueSpike ? "" : "_event";
     const std::string camelSuffix = trueSpike ? "" : "Event";
 
     const bool eventRequired = trueSpike ? ng.getArchetype().isTrueSpikeRequired() : ng.getArchetype().isSpikeEventRequired();
     if(eventRequired) {
-        env.printLine("const unsigned int eventIdx = " + getAtomic(Type::Uint32, AtomicOperation::ADD, AtomicMemSpace::SHARED) + "(&$(_sh_spk_count" + suffix + ")[" + indexStr + "], 1);");
+        env.printLine("const unsigned int eventIdx = " + getAtomic(Type::Uint32, AtomicOperation::ADD, AtomicMemSpace::SHARED) + "(&$(_sh_spk_count" + suffix + ")[" + indexStr + "][" + vectorLaneStr + "], 1);");
         env.printLine("$(_sh_spk" + suffix + ")[" + indexStr + "][eventIdx] = $(id);");
     }
 
@@ -2064,7 +2086,7 @@ void BackendSIMT::genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMe
     const bool eventRecordingEnabled = trueSpike ? ng.getArchetype().isSpikeRecordingEnabled() : ng.getArchetype().isSpikeEventRecordingEnabled();
     if(eventRecordingEnabled) {
         if(vectorWidth > 1) {
-            env.printLine("const unsigned int blockIdx = (" + getThreadID() + " * " + std::to_string(vectorWidth) + ") + " + std::to_string(vectorLane) + ";");
+            env.printLine("const unsigned int blockIdx = (" + getThreadID() + " * " + std::to_string(vectorWidth) + ") + " + vectorLaneStr + ";");
             env.printLine(getAtomic(Type::Uint32, AtomicOperation::OR, AtomicMemSpace::SHARED) 
                         + "(&shSpkRecord" + camelSuffix + "[" + indexStr + "][blockIdx / 32], 1 << (blockIdx % 32));");
         }
