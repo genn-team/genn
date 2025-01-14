@@ -500,7 +500,7 @@ private:
         }
     }
 
-    void genRecordingSharedMemInit(CodeStream &os, const std::string &suffix, size_t numArrays, size_t maxVectorWidth) const;
+    void genRecordingSharedMemInit(CodeStream &os, const std::string &suffix, size_t numChannels, size_t maxVectorWidth) const;
 
     void genSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const;
 
