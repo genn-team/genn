@@ -754,11 +754,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                         CodeStream::Scope c(groupEnv.getStream());
                         // If we are recording spikes, copy word to correct location in global memory
                         if(ng.getArchetype().isSpikeRecordingEnabled()) {
-                            groupEnv.print("$(_record_spk)[" + globalIndex + "] = shSpkRecord[0]");
-                            if(m_KernelBlockSizes[KernelNeuronUpdate] != 32 || vectorWidth > 1) {
-                                groupEnv.print("[" + getThreadID() + "]");
-                            }
-                            groupEnv.printLine(";");
+                            groupEnv.print("$(_record_spk)[" + globalIndex + "] = shSpkRecord[0][" + getThreadID() + "];");
                         }
 
                         // If we are recording spike-like events, copy word to correct location in global memory
@@ -1902,30 +1898,31 @@ size_t BackendSIMT::padKernelSize(size_t size, Kernel kernel) const
     return padSize(size, getKernelBlockSize(kernel)); 
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genRecordingSharedMemInit(CodeStream &os, const std::string &suffix, size_t numArrays, size_t maxVectorWidth) const
+void BackendSIMT::genRecordingSharedMemInit(CodeStream &os, const std::string &suffix, size_t numChannels, size_t maxVectorWidth) const
 {
-    os << getSharedPrefix() << "uint32_t shSpkRecord" << suffix << "[" << numArrays << "]";
+    const size_t count = (maxVectorWidth * m_KernelBlockSizes[KernelNeuronUpdate] / 32);
+    os << getSharedPrefix() << "uint32_t shSpkRecord" << suffix << "[" << numChannels << "][" << count << "];" << std::endl;
 
-    if(m_KernelBlockSizes[KernelNeuronUpdate] == 32 && maxVectorWidth == 1) {
-        os << ";" << std::endl;
-        os << "if (" << getThreadID() << " == 0)";
-        {
-            CodeStream::Scope b(os);
-            for(size_t i = 0; i < numArrays; i++) {
-                os << "shSpkRecord" << suffix << "[" << i << "] = 0;" << std::endl;
-            }
+    // **TODO** handle pathological case
+    assert((count * numChannels) < m_KernelBlockSizes[KernelNeuronUpdate]);
+
+    // Parallise zeroing of shared memory
+    os << "if (" << getThreadID() << " < " << count << ")";
+    {
+        CodeStream::Scope b(os);
+        os << "shSpkRecord" << suffix << "[";
+        if(numChannels == 1) {
+            os << "0";
         }
-    }
-    else {
-        const size_t count = (maxVectorWidth * m_KernelBlockSizes[KernelNeuronUpdate] / 32);
-        os << "[" << count << "];" << std::endl;
-        os << "if (" << getThreadID() << " < " << count << ")";
-        {
-            CodeStream::Scope b(os);
-            for(size_t i = 0; i < numArrays; i++) {
-                os << "shSpkRecord" << suffix << "[" << i << "][" << getThreadID() << "] = 0;" << std::endl;
-            }
+        else {
+            os << getThreadID()  << " % " << numChannels;
         }
+        os << "][";
+        os << getThreadID();
+        if(numChannels > 1) {
+            os << " / " << numChannels;
+        }
+        os <<  "] = 0;" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
@@ -2065,20 +2062,14 @@ void BackendSIMT::genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMe
     const size_t vectorWidth = getNeuronUpdateVectorWidth(ng.getArchetype(), ng.getTypeContext());
     const bool eventRecordingEnabled = trueSpike ? ng.getArchetype().isSpikeRecordingEnabled() : ng.getArchetype().isSpikeEventRecordingEnabled();
     if(eventRecordingEnabled) {
-        if(m_KernelBlockSizes[KernelNeuronUpdate] == 32 && vectorWidth == 1) {
+        if(vectorWidth > 1) {
+            env.printLine("const unsigned int blockIdx = (" + getThreadID() + " * " + std::to_string(vectorWidth) + ") + " + std::to_string(vectorLane) + ";");
             env.printLine(getAtomic(Type::Uint32, AtomicOperation::OR, AtomicMemSpace::SHARED) 
-                          + "(&shSpkRecord" + camelSuffix + "[" + indexStr + "], 1 << " + getThreadID() + ");");
+                        + "(&shSpkRecord" + camelSuffix + "[" + indexStr + "][blockIdx / 32], 1 << (blockIdx % 32));");
         }
         else {
-            if(vectorWidth > 1) {
-                env.printLine("const unsigned int blockIdx = (" + getThreadID() + " * " + std::to_string(vectorWidth) + ") + " + std::to_string(vectorLane) + ";");
-                env.printLine(getAtomic(Type::Uint32, AtomicOperation::OR, AtomicMemSpace::SHARED) 
-                          + "(&shSpkRecord" + camelSuffix + "[" + indexStr + "][blockIdx / 32], 1 << (blockIdx % 32));");
-            }
-            else {
-                env.printLine(getAtomic(Type::Uint32, AtomicOperation::OR, AtomicMemSpace::SHARED) 
-                              + "(&shSpkRecord" + camelSuffix + "[" + indexStr + "][" + getThreadID() + " / 32], 1 << (" + getThreadID() + " % 32));");
-            }
+            env.printLine(getAtomic(Type::Uint32, AtomicOperation::OR, AtomicMemSpace::SHARED) 
+                            + "(&shSpkRecord" + camelSuffix + "[" + indexStr + "][" + getThreadID() + " / 32], 1 << (" + getThreadID() + " % 32));");
         }
     }
 }
