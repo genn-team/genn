@@ -443,20 +443,21 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
     // Generate code to zero shared memory spike event count using thread 0
     std::ostringstream shSpkCountInitStream;
     CodeStream shSpkCountInit(shSpkCountInitStream);
-    shSpkCountInit << getSharedPrefix() << "unsigned int shSpkCount[1];" << std::endl;
-    shSpkCountInit << "if (" << getThreadID() << " == 0)";
+    shSpkCountInit << getSharedPrefix() << "unsigned int shSpkCount[1][" << maxVectorWidth << "];" << std::endl;
+    shSpkCountInit << "if (" << getThreadID() << " < " << maxVectorWidth << ")";
     {
         CodeStream::Scope b(shSpkCountInit);
-        shSpkCountInit << "shSpkCount[0] = 0;" << std::endl;
+        shSpkCountInit << "shSpkCount[0][" << ((maxVectorWidth > 1) ? maxVectorWidth : 0) << "] = 0;" << std::endl;
     }
 
     // Add shared memory substitutions so they're only instantiated as required
     EnvironmentExternal neuronEnv(env);
-    const std::string blockSizeStr = std::to_string(getKernelBlockSize(KernelNeuronUpdate));
+    const std::string countStr = std::to_string(maxVectorWidth * getKernelBlockSize(KernelNeuronUpdate));
+    const std::string maxVectorWidthStr = std::to_string(maxVectorWidth);
     neuronEnv.add(Type::Void, "_sh_spk", "shSpk",
-                  {neuronEnv.addInitialiser(getSharedPrefix() + "unsigned int shSpk[1][" + blockSizeStr + "];")});
+                  {neuronEnv.addInitialiser(getSharedPrefix() + "unsigned int shSpk[1][" + countStr + "];")});
     neuronEnv.add(Type::Void, "_sh_spk_pos", "shSpkPos",
-                  {neuronEnv.addInitialiser(getSharedPrefix() + "unsigned int shSpkPos[1];")});
+                  {neuronEnv.addInitialiser(getSharedPrefix() + "unsigned int shSpkPos[1][" + maxVectorWidthStr + "];")});
     neuronEnv.add(Type::Void, "_sh_spk_count", "shSpkCount",
                   {neuronEnv.addInitialiser(shSpkCountInitStream.str())});
 
@@ -485,13 +486,13 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
         // If there are any
         if(maxSpikeEventCond > 0) {
             // Check there are enough threads in a block to zero
-            assert(maxSpikeEventCond < getKernelBlockSize(KernelNeuronUpdate));
+            assert((maxSpikeEventCond * maxVectorWidth) < getKernelBlockSize(KernelNeuronUpdate));
 
             // Generate arrays to hold spike-events, insertion point and count for each block
             const std::string maxSpikeEventCondStr = std::to_string(maxSpikeEventCond);
-            neuronEnv.printLine(getSharedPrefix() + "unsigned int shSpkEvent[" + maxSpikeEventCondStr + "][" + blockSizeStr + "];");
-            neuronEnv.printLine(getSharedPrefix() + "unsigned int shSpkEventPos[" + maxSpikeEventCondStr + "];");
-            neuronEnv.printLine(getSharedPrefix() + "unsigned int shSpkEventCount[" + maxSpikeEventCondStr + "];");
+            neuronEnv.printLine(getSharedPrefix() + "unsigned int shSpkEvent[" + maxSpikeEventCondStr + "][" + countStr + "];");
+            neuronEnv.printLine(getSharedPrefix() + "unsigned int shSpkEventPos[" + maxSpikeEventCondStr + "][" + maxVectorWidthStr + "];");
+            neuronEnv.printLine(getSharedPrefix() + "unsigned int shSpkEventCount[" + maxSpikeEventCondStr + "][" + maxVectorWidthStr + "];");
 
             // Add to environment
             neuronEnv.add(Type::Void, "_sh_spk_event", "shSpkEvent");
@@ -499,7 +500,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             neuronEnv.add(Type::Void, "_sh_spk_count_event", "shSpkEventCount");
 
             // Generate code to zero shared memory spike event count
-            neuronEnv.print("if (" + getThreadID() + " < " + maxSpikeEventCondStr + ")");
+            neuronEnv.print("if (" + getThreadID() + " < " + std::to_string(maxSpikeEventCond * maxVectorWidth) + ")");
             {
                 CodeStream::Scope b(neuronEnv.getStream());
                 neuronEnv.printLine("$(_sh_spk_count_event)[" + getThreadID() + "] = 0;");
