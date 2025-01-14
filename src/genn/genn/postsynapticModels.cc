@@ -49,14 +49,11 @@ void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues
 //----------------------------------------------------------------------------
 Init::Init(const Base *snippet, const std::map<std::string, Type::NumericValue> &params, 
            const std::map<std::string, InitVarSnippet::Init> &varInitialisers, 
-           const std::map<std::string, Models::VarReference> &neuronVarReferences)
+           const std::map<std::string, std::variant<std::string, Models::VarReference>> &neuronVarReferences)
 :   Snippet::Init<Base>(snippet, params), m_VarInitialisers(varInitialisers), m_NeuronVarReferences(neuronVarReferences)
 {
     // Validate
     getSnippet()->validate(getParams(), getVarInitialisers(), getNeuronVarReferences());
-
-    // Check variable reference types
-    Models::checkVarReferenceTypes(getNeuronVarReferences(), getSnippet()->getNeuronVarRefs());
 
     // Scan code tokens
     m_SimCodeTokens = Utils::scanCode(getSnippet()->getSimCode(), "Postsynaptic model sim code");

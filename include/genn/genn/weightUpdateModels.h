@@ -1,5 +1,8 @@
 #pragma once
 
+// Standard C++ includes
+#include <variant>
+
 // GeNN includes
 #include "models.h"
 
@@ -157,8 +160,8 @@ public:
          const std::map<std::string, InitVarSnippet::Init> &varInitialisers, 
          const std::map<std::string, InitVarSnippet::Init> &preVarInitialisers, 
          const std::map<std::string, InitVarSnippet::Init> &postVarInitialisers,
-         const std::map<std::string, Models::VarReference> &preNeuronVarReferences, 
-         const std::map<std::string, Models::VarReference> &postNeuronVarReferences);
+         const std::map<std::string, std::variant<std::string, Models::VarReference>> &preNeuronVarReferences, 
+         const std::map<std::string, std::variant<std::string, Models::VarReference>> &postNeuronVarReferences);
 
     //------------------------------------------------------------------------
     // Public API
@@ -206,8 +209,8 @@ private:
     std::map<std::string, InitVarSnippet::Init> m_VarInitialisers;
     std::map<std::string, InitVarSnippet::Init> m_PreVarInitialisers;
     std::map<std::string, InitVarSnippet::Init> m_PostVarInitialisers;
-    std::map<std::string, Models::VarReference> m_PreNeuronVarReferences;
-    std::map<std::string, Models::VarReference> m_PostNeuronVarReferences;
+    std::map<std::string, std::variant<std::string, Models::VarReference>> m_PreNeuronVarReferences;
+    std::map<std::string, std::variant<std::string, Models::VarReference>> m_PostNeuronVarReferences;
 };
 
 //----------------------------------------------------------------------------

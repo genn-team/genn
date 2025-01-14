@@ -291,9 +291,19 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_FusedPSTarget(nullptr), m_FusedPreSpikeTarget(nullptr), m_FusedPostSpikeTarget(nullptr), m_FusedPreSpikeEventTarget(nullptr), m_FusedPostSpikeEventTarget(nullptr),
         m_FusedWUPreTarget(nullptr), m_FusedWUPostTarget(nullptr), m_FusedPreOutputTarget(nullptr), m_PostTargetVar("Isyn"), m_PreTargetVar("Isyn")
 {
+    // 'Resolve' local variable references
+    Models::resolveVarReferences(getPSInitialiser().getNeuronVarReferences(),
+                                 m_PSNeuronVarReferences, getTrgNeuronGroup(),
+                                 Models::VarReference::createVarRef)
     // Validate names
     Utils::validatePopName(name, "Synapse group");
     
+
+    // Check variable reference types
+    Models::checkVarReferenceTypes(getPreNeuronVarReferences(), getSnippet()->getPreNeuronVarRefs());
+    Models::checkVarReferenceTypes(getPostNeuronVarReferences(), getSnippet()->getPostNeuronVarRefs());
+    Models::checkVarReferenceTypes(getNeuronVarReferences(), getSnippet()->getNeuronVarRefs());
+
     // Check additional local variable reference constraints
     Models::checkLocalVarReferences(getPSInitialiser().getNeuronVarReferences(), getPSInitialiser().getSnippet()->getNeuronVarRefs(),
                                     getTrgNeuronGroup(), "Postsynaptic model variable references can only point to postsynaptic neuron group.");

@@ -144,17 +144,14 @@ void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues
 //----------------------------------------------------------------------------
 Init::Init(const Base *snippet, const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers, 
            const std::map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::map<std::string, InitVarSnippet::Init> &postVarInitialisers,
-           const std::map<std::string, Models::VarReference> &preNeuronVarReferences, const std::map<std::string, Models::VarReference> &postNeuronVarReferences)
+           const std::map<std::string, std::variant<std::string, Models::VarReference>> &preNeuronVarReferences,
+           const std::map<std::string, std::map<std::string, std::variant<std::string, Models::VarReference>>> &postNeuronVarReferences)
 :   Snippet::Init<Base>(snippet, params), m_VarInitialisers(varInitialisers), m_PreVarInitialisers(preVarInitialisers), m_PostVarInitialisers(postVarInitialisers), 
     m_PreNeuronVarReferences(preNeuronVarReferences), m_PostNeuronVarReferences(postNeuronVarReferences)
 {
     // Validate
     getSnippet()->validate(getParams(), getVarInitialisers(), getPreVarInitialisers(), getPostVarInitialisers(),
                            getPreNeuronVarReferences(), getPostNeuronVarReferences());
-
-    // Check variable reference types
-    Models::checkVarReferenceTypes(getPreNeuronVarReferences(), getSnippet()->getPreNeuronVarRefs());
-    Models::checkVarReferenceTypes(getPostNeuronVarReferences(), getSnippet()->getPostNeuronVarRefs());
 
     // Scan code tokens
     m_PreSpikeSynCodeTokens = Utils::scanCode(getSnippet()->getPreSpikeSynCode(), "Weight update model presynaptic spike synaptic code");

@@ -503,6 +503,25 @@ void checkVarReferenceTypes(const std::map<std::string, V> &varRefs, const Base:
     }
 }
 
+template<typename G, typename C>
+void resolveVarReferences(const std::map<std::string, std::variant<std::string, VarReference>> &unresolvedVarRefs,
+                          std::map<std::string, VarReference> &varRefs, G *group, C createVarRef)
+{
+    // Loop through unresolved variable references
+    for(const auto &v : unresolvedVarRefs) {
+        varRefs.try_emplace(v.first,
+                            Utils::Overload{
+                                [](const std::string &name)
+                                {
+                                    return createVarRef(group, name);
+                                },
+                                [](const Models::VarReference &v)
+                                {
+                                    return v;
+                                }},
+                            v.second);
+    }
+}
 GENN_EXPORT void checkEGPReferenceTypes(const std::map<std::string, EGPReference> &egpRefs,
                                         const Base::EGPRefVec &modelEGPRefs);
 

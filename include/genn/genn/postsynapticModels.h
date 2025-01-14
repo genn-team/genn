@@ -58,7 +58,7 @@ class GENN_EXPORT Init : public Snippet::Init<Base>
 public:
     Init(const Base *snippet, const std::map<std::string, Type::NumericValue> &params, 
          const std::map<std::string, InitVarSnippet::Init> &varInitialisers, 
-         const std::map<std::string, Models::VarReference> &neuronVarReferences);
+         const std::map<std::string, std::variant<std::string, Models::VarReference>> &neuronVarReferences);
 
     //------------------------------------------------------------------------
     // Public API
@@ -80,7 +80,7 @@ private:
     std::vector<Transpiler::Token> m_SimCodeTokens;
 
     std::map<std::string, InitVarSnippet::Init> m_VarInitialisers;
-    std::map<std::string, Models::VarReference> m_NeuronVarReferences;
+    std::map<std::string, std::variant<std::string, Models::VarReference>> m_NeuronVarReferences;
 };
 
 //----------------------------------------------------------------------------
