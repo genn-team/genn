@@ -1023,10 +1023,16 @@ void BackendCUDAHIP::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerge
     os << "#include <stdexcept>" << std::endl;
     os << std::endl;
     os << "// Standard C includes" << std::endl;
-    os << "#include <cassert>" << std::endl;
+    //os << "#include <cassert>" << std::endl;
     os << "#include <cstdint>" << std::endl;
 
     genDefinitionsPreambleInternal(os, modelMerged);
+
+    // **HACK** HIP defines a horrible assert macro which is
+    // a) Incorrectly parenthesized https://github.com/ROCm/hipother/pull/1
+    // b) Just calls abort_, not killing kernels with correct exit code
+    // c) undefs the assert in <cassert> which actually works
+    os << "#include <cassert>" << std::endl;
 
     os << std::endl;
     os << "template<typename RNG>" << std::endl;
