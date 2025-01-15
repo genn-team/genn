@@ -6,6 +6,7 @@
 
 // GeNN includes
 #include "gennUtils.h"
+#include "logging.h"
 #include "type.h"
 
 // GeNN code generator includes
@@ -1435,6 +1436,11 @@ void BackendCUDAHIP::genReturnFreeDeviceMemoryBytes(CodeStream &os) const
     os << "size_t total;" << std::endl;
     os << "CHECK_RUNTIME_ERRORS(" << getRuntimePrefix() << "MemGetInfo(&free, &total));" << std::endl;
     os << "return free;" << std::endl;
+}
+//--------------------------------------------------------------------------
+void BackendCUDAHIP::genAssert(CodeStream &os, const std::string &condition) const
+{
+    os << "assert(" << condition << ");" << std::endl;
 }
 //--------------------------------------------------------------------------
 BackendCUDAHIP::MemorySpaces BackendCUDAHIP::getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const

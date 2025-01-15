@@ -200,9 +200,6 @@ public:
                                                   const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
                                                   const std::string &countVarName) const final;
 
-    //! On backends which support it, generate a runtime assert
-    virtual void genAssert(CodeStream &os, const std::string &condition) const final;
-
     virtual void genMakefilePreamble(std::ostream &os) const final;
     virtual void genMakefileLinkRule(std::ostream &os) const final;
     virtual void genMakefileCompileRule(std::ostream &os) const final;
