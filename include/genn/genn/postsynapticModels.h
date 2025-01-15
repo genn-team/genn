@@ -47,7 +47,7 @@ public:
     //! Validate names of parameters etc
     void validate(const std::map<std::string, Type::NumericValue> &paramValues, 
                   const std::map<std::string, InitVarSnippet::Init> &varValues,
-                  const std::map<std::string, Models::VarReference> &varRefTargets) const;
+                  const std::map<std::string, std::variant<std::string, Models::VarReference>> &varRefTargets) const;
 };
 
 //----------------------------------------------------------------------------

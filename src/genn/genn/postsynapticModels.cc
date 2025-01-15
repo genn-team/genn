@@ -28,7 +28,7 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 //----------------------------------------------------------------------------
 void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues, 
                     const std::map<std::string, InitVarSnippet::Init> &varValues,
-                    const std::map<std::string, Models::VarReference> &varRefTargets) const
+                    const std::map<std::string, std::variant<std::string, Models::VarReference>> &varRefTargets) const
 {
     // Superclass
     Snippet::Base::validate(paramValues, "Postsynaptic model");

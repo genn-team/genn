@@ -40,13 +40,13 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     for(const auto &v : sg.getArchetype().getWUInitialiser().getSnippet()->getPostNeuronVarRefs()) {
         // If variable refernce is accessed with delay in synapse code tokens
         const auto resolvedType = v.type.resolve(sg.getTypeContext());
-        const Models::VarReference &archetypeVarRef = sg.getArchetype().getWUInitialiser().getPostNeuronVarReferences().at(v.name);
+        const Models::VarReference &archetypeVarRef = sg.getArchetype().getWUMPostNeuronVarReferences().at(v.name);
         if(Utils::isIdentifierDelayed(v.name, tokens)) {
             synEnv.addField(Type::getArraySubscript(resolvedType.addConst()), v.name,
                             resolvedType.createPointer(), v.name,
                             [v](auto &runtime, const auto &g, size_t) 
                             { 
-                                return g.getWUInitialiser().getPostNeuronVarReferences().at(v.name).getTargetArray(runtime); 
+                                return g.getWUMPostNeuronVarReferences().at(v.name).getTargetArray(runtime); 
                             },
                             sg.getPostVarHetDelayIndex(batchSize, archetypeVarRef.getVarDims(), "$(id_post)"));
         }
@@ -55,7 +55,7 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
                             resolvedType.createPointer(), v.name,
                             [v](auto &runtime, const auto &g, size_t) 
                             { 
-                                return g.getWUInitialiser().getPostNeuronVarReferences().at(v.name).getTargetArray(runtime); 
+                                return g.getWUMPostNeuronVarReferences().at(v.name).getTargetArray(runtime); 
                             },
                             sg.getPostVarIndex(archetypeVarRef.getDelayNeuronGroup() != nullptr, batchSize,
                                                archetypeVarRef.getVarDims(), "$(id_post)"));

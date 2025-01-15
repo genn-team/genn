@@ -145,8 +145,8 @@ public:
                   const std::map<std::string, InitVarSnippet::Init> &varValues,
                   const std::map<std::string, InitVarSnippet::Init> &preVarValues,
                   const std::map<std::string, InitVarSnippet::Init> &postVarValues,
-                  const std::map<std::string, Models::VarReference> &preVarRefTargets,
-                  const std::map<std::string, Models::VarReference> &postVarRefTargets) const;
+                  const std::map<std::string, std::variant<std::string, Models::VarReference>> &preVarRefTargets,
+                  const std::map<std::string, std::variant<std::string, Models::VarReference>> &postVarRefTargets) const;
 };
 
 

@@ -42,6 +42,7 @@ namespace GeNN
 {
 using VarValues = std::map<std::string, InitVarSnippet::Init>;
 using VarReferences = std::map<std::string, Models::VarReference>;
+using LocalVarReferences = std::map<std::string, std::variant<std::string, Models::VarReference>>;
 using WUVarReferences = std::map<std::string, Models::WUVarReference>;
 using EGPReferences = std::map<std::string, Models::EGPReference>;
 
@@ -100,7 +101,7 @@ inline InitToeplitzConnectivitySnippet::Init initToeplitzConnectivity(const Para
     \return                 PostsynapticModels::Init object for passing to ``ModelSpec::addSynapsePopulation``*/
 template<typename S>
 inline PostsynapticModels::Init initPostsynaptic(const ParamValues &params = {}, const VarValues &vars = {}, 
-                                                 const VarReferences &neuronVarRefs = {})
+                                                 const LocalVarReferences &neuronVarRefs = {})
 {
     return PostsynapticModels::Init(S::getInstance(), params, vars, neuronVarRefs);
 }
@@ -117,8 +118,8 @@ inline PostsynapticModels::Init initPostsynaptic(const ParamValues &params = {},
 template<typename S>
 inline WeightUpdateModels::Init initWeightUpdate(const ParamValues &params = {}, const VarValues &vars = {}, 
                                                  const VarValues &preVars = {}, const VarValues &postVars = {}, 
-                                                 const VarReferences &preNeuronVarRefs = {}, 
-                                                 const VarReferences &postNeuronVarRefs = {})
+                                                 const LocalVarReferences &preNeuronVarRefs = {}, 
+                                                 const LocalVarReferences &postNeuronVarRefs = {})
 {
     return WeightUpdateModels::Init(S::getInstance(), params, vars, preVars, postVars, 
                                     preNeuronVarRefs, postNeuronVarRefs);
