@@ -348,4 +348,29 @@ private:
     //----------------------------------------------------------------------------
     const SynapseGroupInternal &m_SG;
 };
+
+//----------------------------------------------------------------------------
+// SynapseWUPSMVarRefAdapter
+//----------------------------------------------------------------------------
+class SynapseWUPSMVarRefAdapter
+{
+public:
+    SynapseWUPSMVarRefAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
+    {}
+
+    using RefType = Models::VarReference;
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    auto getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getPSMVarRefs(); }
+
+    const auto &getInitialisers() const{ return m_SG.getWUMPSMVarReferences(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const SynapseGroupInternal &m_SG;
+};
 }   // namespace GeNN

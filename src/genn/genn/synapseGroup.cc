@@ -959,6 +959,15 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
         Utils::updateHash(v.second.getVarDims(), hash);
     }
 
+    // Loop through postsynapatic model variable references
+    for(const auto &v : getWUMPSMVarReferences()) {
+        // Update hash with whether variable references require delay
+        Utils::updateHash((v.second.getDelayNeuronGroup() == nullptr), hash);
+
+        // Update hash with target variable dimensions as this effects indexing code
+        Utils::updateHash(v.second.getVarDims(), hash);
+    }
+
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------

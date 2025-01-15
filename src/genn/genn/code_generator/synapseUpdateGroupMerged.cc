@@ -62,6 +62,16 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
         }
     }
 
+    // Add referenced postsynaptic model variables
+    // **TODO** delay
+    synEnv.template addVarRefs<SynapseWUPSMVarRefAdapter>(
+        [&sg, batchSize](VarAccessMode, const Models::VarReference &v)
+        {
+            return sg.getPostVarIndex(false, batchSize, 
+                                      v.getVarDims(), "$(id_post)");
+        }, 
+        "", true);
+
     // Substitute names of preynaptic weight update variables
     synEnv.template addVars<SynapseWUPreVarAdapter>(
         [&sg, batchSize](VarAccess a, const std::string&) 
