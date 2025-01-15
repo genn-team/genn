@@ -125,7 +125,7 @@ def test_pre_post_neuron_var(make_model, backend, precision, delay):
         "PreLearnPostSparseSynapses", "SPARSE",
         post_n_pop, pre_n_pop,
         init_weight_update(pre_learn_post_weight_update_model, {}, {"w": float_min},
-                           pre_var_refs={"s": create_var_ref(post_n_pop, "s")}),
+                           pre_var_refs={"s": "s"}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     s_pre_learn_post_sparse_pop.axonal_delay_steps = delay
@@ -143,7 +143,7 @@ def test_pre_post_neuron_var(make_model, backend, precision, delay):
         "PreEventSparseSynapses", "SPARSE",
         pre_n_pop, post_n_pop,
         init_weight_update(pre_event_weight_update_model, {}, {"w": float_min},
-                           pre_var_refs={"s": create_var_ref(pre_n_pop, "s")}),
+                           pre_var_refs={"s": "s"}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     s_pre_event_sparse_pop.axonal_delay_steps = delay
@@ -161,7 +161,7 @@ def test_pre_post_neuron_var(make_model, backend, precision, delay):
         "PostSimSparseSynapses", "SPARSE",
         pre_n_pop, post_n_pop,
         init_weight_update(post_sim_weight_update_model, {}, {"w": float_min},
-                           post_var_refs={"s": create_var_ref(post_n_pop, "s")}),
+                           post_var_refs={"s": "s"}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("OneToOne"))
     s_post_sim_sparse_pop.back_prop_delay_steps = delay
