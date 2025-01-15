@@ -228,13 +228,16 @@ public:
     const auto &getPSInitialiser() const{ return m_PSInitialiser; }
     const auto &getWUInitialiser() const{ return m_WUInitialiser; }
     
-    //! Get 'resolved' variable references to presynaptic neuron varaibles used in weight update model
+    //! Get 'resolved' variable references to presynaptic neuron variables used in weight update model
     const auto &getWUMPreNeuronVarReferences() const{ return m_WUMPreNeuronVarReferences; }
 
-    //! Get 'resolved' variable references to presynaptic neurons varaibles used in weight update model
+    //! Get 'resolved' variable references to presynaptic neurons variables used in weight update model
     const auto &getWUMPostNeuronVarReferences() const{ return m_WUMPostNeuronVarReferences; }
     
-    //! Get 'resolved' variable references to neurons varaibles used in postsynaptic update model
+    //! Get 'resolved' variable references to presynaptic model variables used in weight update model
+    const auto &getWUMPSMVarReferences() const{ return m_WUMPSMVarReferences; }
+    
+    //! Get 'resolved' variable references to neurons variables used in postsynaptic update model
     const auto &getPSNeuronVarReferences() const{ return m_PSNeuronVarReferences; }
 
     const auto &getSparseConnectivityInitialiser() const{ return m_SparseConnectivityInitialiser; }
@@ -604,13 +607,16 @@ private:
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
     std::vector<CustomUpdateWUInternal*> m_CustomUpdateReferences;
 
-    //! 'Resolved' variable references to presynaptic neuron varaibles used in weight update model
+    //! 'Resolved' variable references to presynaptic neuron variables used in weight update model
     std::map<std::string, Models::VarReference> m_WUMPreNeuronVarReferences;
 
-    //! 'Resolved' variable references to presynaptic neurons varaibles used in weight update model
+    //! 'Resolved' variable references to presynaptic neurons variables used in weight update model
     std::map<std::string, Models::VarReference> m_WUMPostNeuronVarReferences;
+
+    //! 'Resolved' variable references to postsynaptic model variables used in weight update model
+    std::map<std::string, Models::VarReference> m_WUMPSMVarReferences;
     
-    //! 'Resolved' variable references to neurons varaibles used in postsynaptic update model
+    //! 'Resolved' variable references to neurons variables used in postsynaptic update model
     std::map<std::string, Models::VarReference> m_PSNeuronVarReferences;
     
 };

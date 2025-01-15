@@ -114,15 +114,17 @@ inline PostsynapticModels::Init initPostsynaptic(const ParamValues &params = {},
     \param postVars             postsynaptic variables for snippet wrapped in VarValues object.
     \param preNeuronVarRefs     presynaptic neuron variable references for snippet wrapped in VarReferences object.
     \param postNeuronVarRefs    postsynaptic neuron variable references for snippet wrapped in VarReferences object.
+    \param psmVarRefs           postsynaptic modelvariable references for snippet wrapped in VarReferences object.
     \return                     PostsynapticModels::Init object for passing to ``ModelSpec::addSynapsePopulation``*/
 template<typename S>
 inline WeightUpdateModels::Init initWeightUpdate(const ParamValues &params = {}, const VarValues &vars = {}, 
                                                  const VarValues &preVars = {}, const VarValues &postVars = {}, 
                                                  const LocalVarReferences &preNeuronVarRefs = {}, 
-                                                 const LocalVarReferences &postNeuronVarRefs = {})
+                                                 const LocalVarReferences &postNeuronVarRefs = {},
+                                                 const LocalVarReferences &psmVarRefs = {})
 {
     return WeightUpdateModels::Init(S::getInstance(), params, vars, preVars, postVars, 
-                                    preNeuronVarRefs, postNeuronVarRefs);
+                                    preNeuronVarRefs, postNeuronVarRefs, psmVarRefs);
 }
 
 //! Creates a reference to a neuron group variable.

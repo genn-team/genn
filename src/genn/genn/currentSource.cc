@@ -74,7 +74,8 @@ CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels:
 
     // Check additional local variable reference constraints
     Models::checkLocalVarReferences(getNeuronVarReferences(), getModel()->getNeuronVarRefs(),
-                                    getTrgNeuronGroup(), "Variable references to in current source can only point to target neuron group.");
+                                    getTrgNeuronGroup(), "Variable references to in current source can only point to target neuron group.",
+                                    &Models::VarReference::isTargetNeuronGroup);
     
     // Scan current source model code string
     m_InjectionCodeTokens = Utils::scanCode(getModel()->getInjectionCode(), 
