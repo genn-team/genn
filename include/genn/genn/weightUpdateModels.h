@@ -27,6 +27,7 @@
 
 #define SET_PRE_NEURON_VAR_REFS(...) virtual VarRefVec getPreNeuronVarRefs() const override{ return __VA_ARGS__; }
 #define SET_POST_NEURON_VAR_REFS(...) virtual VarRefVec getPostNeuronVarRefs() const override{ return __VA_ARGS__; }
+#define SET_PSM_VAR_REFS(...) virtual VarRefVec getPSMVarRefs() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // GeNN::WeightUpdateModels::Base

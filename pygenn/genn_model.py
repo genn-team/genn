@@ -917,7 +917,8 @@ def init_postsynaptic(snippet: Union[PostsynapticModelBase, str],
 def init_weight_update(snippet, params: PopParamVals = {}, vars: PopVarVals = {},
                        pre_vars: PopVarVals = {}, post_vars: PopVarVals = {}, 
                        pre_var_refs: PopLocalVarRefs = {}, 
-                       post_var_refs: PopLocalVarRefs = {}):
+                       post_var_refs: PopLocalVarRefs = {},
+                       psm_var_refs: PopLocalVarRefs = {}):
     """Initialises a weight update model with parameter values, 
     variable initialisers and variable references.
 
@@ -939,6 +940,8 @@ def init_weight_update(snippet, params: PopParamVals = {}, vars: PopVarVals = {}
         post_var_refs:  references to postsynaptic neuron variables,
                         either specified by name or created using :func:`.create_var_ref`
                         (see :ref:`section-variables-references`)
+        psm_var_refs:   references to postsynaptic model variables,
+                        specified by name (see :ref:`section-variables-references`)
 
     For example, the built-in static pulse model with 
     constant weights could be initialised as follows:
@@ -957,7 +960,7 @@ def init_weight_update(snippet, params: PopParamVals = {}, vars: PopVarVals = {}
     
     return (WeightUpdateInit(snippet, _prepare_param_vals(params), var_init, 
                              pre_var_init, post_var_init,
-                             pre_var_refs, post_var_refs),
+                             pre_var_refs, post_var_refs, psm_var_refs),
             vars, pre_vars, post_vars)
 
 @deprecated("The name of this function was ambiguous, use init_sparse_connectivity instead")
@@ -1265,6 +1268,7 @@ def create_weight_update_model(
         post_vars: ModelVarsType = None, post_var_name_types=None,
         pre_neuron_var_refs: ModelVarRefsType = None,
         post_neuron_var_refs: ModelVarRefsType = None,
+        psm_var_refs: ModelVarRefsType = None,
         derived_params: ModelDerivedParamsType = None, sim_code=None,
         pre_spike_syn_code: Optional[str] = None, event_code=None,
         pre_event_syn_code: Optional[str] = None,
@@ -1338,6 +1342,9 @@ def create_weight_update_model(
         post_neuron_var_refs:                   names, types and optional variable access
                                                 of references to be assigned to postsynaptic
                                                 neuron variables
+        psm_var_refs:                           names, types and optional variable access
+                                                of references to be assigned to postsynaptic
+                                                model variables
         derived_params:                         names, types and callables to calculate
                                                 derived parameter values from params
         pre_spike_syn_code:                     string with the presynaptic spike code
@@ -1584,6 +1591,10 @@ def create_weight_update_model(
     if post_neuron_var_refs is not None:
         body["get_post_neuron_var_refs"] =\
             lambda self: [VarRef(*v) for v in post_neuron_var_refs]
+
+    if psm_var_refs is not None:
+        body["get_psm_var_refs"] =\
+            lambda self: [VarRef(*v) for v in psm_var_refs]
     
     return _create_model(class_name, WeightUpdateModelBase, params,
                          param_names, derived_params,
