@@ -292,20 +292,27 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_FusedWUPreTarget(nullptr), m_FusedWUPostTarget(nullptr), m_FusedPreOutputTarget(nullptr), m_PostTargetVar("Isyn"), m_PreTargetVar("Isyn")
 {
     // 'Resolve' local variable references
+    Models::resolveVarReferences(getWUInitialiser().getPreNeuronVarReferences(),
+                                 m_WUMPreNeuronVarReferences, getSrcNeuronGroup(),
+                                 static_cast<Models::VarReference(*)(NeuronGroup*, const std::string&)>(&Models::VarReference::createVarRef));
+    Models::resolveVarReferences(getWUInitialiser().getPostNeuronVarReferences(),
+                                 m_WUMPostNeuronVarReferences, getTrgNeuronGroup(),
+                                 static_cast<Models::VarReference(*)(NeuronGroup*, const std::string&)>(&Models::VarReference::createVarRef));
     Models::resolveVarReferences(getPSInitialiser().getNeuronVarReferences(),
                                  m_PSNeuronVarReferences, getTrgNeuronGroup(),
-                                 Models::VarReference::createVarRef);
+                                 static_cast<Models::VarReference(*)(NeuronGroup*, const std::string&)>(&Models::VarReference::createVarRef));
+
     // Validate names
     Utils::validatePopName(name, "Synapse group");
     
 
     // Check variable reference types
-    Models::checkVarReferenceTypes(getWUMPreNeuronVarReferences(), getSnippet()->getPreNeuronVarRefs());
-    Models::checkVarReferenceTypes(getWUMPostNeuronVarReferences(), getSnippet()->getPostNeuronVarRefs());
-    Models::checkVarReferenceTypes(getPSNeuronVarReferences(), getSnippet()->getNeuronVarRefs());
+    Models::checkVarReferenceTypes(getWUMPreNeuronVarReferences(), getWUInitialiser().getSnippet()->getPreNeuronVarRefs());
+    Models::checkVarReferenceTypes(getWUMPostNeuronVarReferences(), getWUInitialiser().getSnippet()->getPostNeuronVarRefs());
+    Models::checkVarReferenceTypes(getPSNeuronVarReferences(), getPSInitialiser().getSnippet()->getNeuronVarRefs());
 
     // Check additional local variable reference constraints
-    Models::checkLocalVarReferences(getPSNeuronVarReferences, getPSInitialiser().getSnippet()->getNeuronVarRefs(),
+    Models::checkLocalVarReferences(getPSNeuronVarReferences(), getPSInitialiser().getSnippet()->getNeuronVarRefs(),
                                     getTrgNeuronGroup(), "Postsynaptic model variable references can only point to postsynaptic neuron group.");
     Models::checkLocalVarReferences(getWUMPreNeuronVarReferences(), getWUInitialiser().getSnippet()->getPreNeuronVarRefs(),
                                     getSrcNeuronGroup(), "Weight update model presynaptic variable references can only point to presynaptic neuron group.");
