@@ -460,7 +460,7 @@ class GeNNModel(ModelSpec):
 
     def add_current_source(self, cs_name: str, current_source_model: Union[CurrentSourceModelBase, str], 
                            pop: NeuronGroup, params: PopParamVals = {}, vars: PopVarVals = {}, 
-                           var_refs: PopVarRefs = {}) -> CurrentSource:
+                           var_refs: PopLocalVarRefs = {}) -> CurrentSource:
         """Add a current source to the GeNN model
 
         Args:
@@ -473,7 +473,7 @@ class GeNNModel(ModelSpec):
             vars:                   initial variable values or initialisers 
                                     for the current source model (see :ref:`section-variables`)
             var_refs:               variables references to neuron variables in ``pop``,
-                                    typically created using :func:`.create_var_ref`
+                                    either specified by name or created using :func:`.create_var_ref`
                                     (see :ref:`section-variables-references`)
 
         For example, a current source to inject a Gaussian noise current can be added to a model as follows:
@@ -876,7 +876,7 @@ def init_sparse_connectivity(snippet: Union[InitSparseConnectivitySnippetBase, s
 
 def init_postsynaptic(snippet: Union[PostsynapticModelBase, str], 
                       params: PopParamVals = {}, vars: PopVarVals = {}, 
-                      PopLocalVarRefs: PopVarVals = {}):
+                      var_refs: PopLocalVarRefs = {}):
     """Initialises a postsynaptic model with parameter values, 
     variable initialisers and variable references
 
@@ -889,7 +889,7 @@ def init_postsynaptic(snippet: Union[PostsynapticModelBase, str],
         vars:           initial synaptic variable values or initialisers 
                         for the postsynaptic model (see :ref:`section-variables`)
         var_refs:       references to postsynaptic neuron variables,
-                        typically created using :func:`.create_var_ref`
+                        either specified by name or created using :func:`.create_var_ref`
                         (see :ref:`section-variables-references`)
 
     For example, the built-in conductance model with exponential 
@@ -934,10 +934,10 @@ def init_weight_update(snippet, params: PopParamVals = {}, vars: PopVarVals = {}
         post_vars:      initial postsynaptic variable values or initialisers
                         (see :ref:`section-variables`)
         pre_var_refs:   references to presynaptic neuron variables,
-                        typically created using :func:`.create_var_ref`
+                        either specified by name or created using :func:`.create_var_ref`
                         (see :ref:`section-variables-references`)
         post_var_refs:  references to postsynaptic neuron variables,
-                        typically created using :func:`.create_var_ref`
+                        either specified by name or created using :func:`.create_var_ref`
                         (see :ref:`section-variables-references`)
 
     For example, the built-in static pulse model with 

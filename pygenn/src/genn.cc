@@ -452,7 +452,7 @@ PYBIND11_MODULE(_genn, m)
         .def("_add_current_source",  
              static_cast<CurrentSource* (ModelSpec::*)(
                 const std::string&, const CurrentSourceModels::Base*, NeuronGroup*, 
-                const ParamValues&, const VarValues&, const VarReferences&)>(&ModelSpec::addCurrentSource),
+                const ParamValues&, const VarValues&, const LocalVarReferences&)>(&ModelSpec::addCurrentSource),
             pybind11::return_value_policy::reference)
         .def("_add_custom_connectivity_update",  
              static_cast<CustomConnectivityUpdate* (ModelSpec::*)(

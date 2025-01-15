@@ -442,7 +442,8 @@ public:
         \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
         \return pointer to newly created CurrentSource */
     CurrentSource *addCurrentSource(const std::string &currentSourceName, const CurrentSourceModels::Base *model, NeuronGroup *neuronGroup,
-                                    const ParamValues &paramValues = {}, const VarValues &varInitialisers = {}, const VarReferences &neuronVarReferences = {});
+                                    const ParamValues &paramValues = {}, const VarValues &varInitialisers = {},
+                                    const LocalVarReferences &neuronVarReferences = {});
 
     //! Adds a new current source to the model using a singleton current source model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
     /*! \tparam CurrentSourceModel type of neuron model (derived from CurrentSourceModel::Base).
@@ -454,7 +455,7 @@ public:
     template<typename CurrentSourceModel>
     CurrentSource *addCurrentSource(const std::string &currentSourceName, NeuronGroup *neuronGroup,
                                     const ParamValues &paramValues = {}, const VarValues &varInitialisers = {}, 
-                                    const VarReferences &neuronVarReferences = {})
+                                    const LocalVarReferences &neuronVarReferences = {})
     {
         return addCurrentSource(currentSourceName, CurrentSourceModel::getInstance(),
                                 neuronGroup, paramValues, varInitialisers, neuronVarReferences);
