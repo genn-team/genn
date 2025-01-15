@@ -56,6 +56,7 @@ ModelEGPType = Optional[Sequence[Tuple[str, TypeType]]]
 PopParamVals = Dict[str, Union[int, float]]
 PopVarVals = Dict[str, Union[VarInit, int, float, np.ndarray, Sequence]]
 PopVarRefs = Dict[str, VarReference] 
+PopLocalVarRefs = Dict[str, Union[VarReference, str]] 
 PopWUVarRefs = Dict[str, WUVarReference]
 PopEGPRefs = Dict[str, EGPReference]
 
@@ -875,7 +876,7 @@ def init_sparse_connectivity(snippet: Union[InitSparseConnectivitySnippetBase, s
 
 def init_postsynaptic(snippet: Union[PostsynapticModelBase, str], 
                       params: PopParamVals = {}, vars: PopVarVals = {}, 
-                      var_refs: PopVarVals = {}):
+                      PopLocalVarRefs: PopVarVals = {}):
     """Initialises a postsynaptic model with parameter values, 
     variable initialisers and variable references
 
@@ -915,7 +916,8 @@ def init_postsynaptic(snippet: Union[PostsynapticModelBase, str],
 
 def init_weight_update(snippet, params: PopParamVals = {}, vars: PopVarVals = {},
                        pre_vars: PopVarVals = {}, post_vars: PopVarVals = {}, 
-                       pre_var_refs: PopVarRefs = {}, post_var_refs: PopVarRefs = {}):
+                       pre_var_refs: PopLocalVarRefs = {}, 
+                       post_var_refs: PopLocalVarRefs = {}):
     """Initialises a weight update model with parameter values, 
     variable initialisers and variable references.
 

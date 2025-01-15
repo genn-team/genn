@@ -960,14 +960,14 @@ PYBIND11_MODULE(_genn, m)
     // genn.WeightUpdateInit
     //------------------------------------------------------------------------
     pybind11::class_<WeightUpdateModels::Init>(m, "WeightUpdateInit")
-        .def(pybind11::init<const WeightUpdateModels::Base*, const ParamValues&, const VarValues&, const VarValues&, const VarValues&, const VarReferences&, const VarReferences&>())
+        .def(pybind11::init<const WeightUpdateModels::Base*, const ParamValues&, const VarValues&, const VarValues&, const VarValues&, const LocalVarReferences&, const LocalVarReferences&>())
         .def_property_readonly("snippet", &WeightUpdateModels::Init::getSnippet, pybind11::return_value_policy::reference);
     
     //------------------------------------------------------------------------
     // genn.PostsynapticInit
     //------------------------------------------------------------------------
     pybind11::class_<PostsynapticModels::Init>(m, "PostsynapticInit")
-        .def(pybind11::init<const PostsynapticModels::Base*, const ParamValues&, const VarValues&, const VarReferences&>())
+        .def(pybind11::init<const PostsynapticModels::Base*, const ParamValues&, const VarValues&, const LocalVarReferences&>())
         .def_property_readonly("snippet", &PostsynapticModels::Init::getSnippet, pybind11::return_value_policy::reference);
     
     //------------------------------------------------------------------------
