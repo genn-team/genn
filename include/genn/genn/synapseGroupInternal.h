@@ -160,7 +160,7 @@ public:
     //----------------------------------------------------------------------------
     auto getDefs() const{ return m_SG.getPSInitialiser().getSnippet()->getNeuronVarRefs(); }
 
-    const auto &getInitialisers() const{ return m_SG.getPSInitialiser().getNeuronVarReferences(); }
+    const auto &getInitialisers() const{ return m_SG.getPSNeuronVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -315,7 +315,7 @@ public:
     //----------------------------------------------------------------------------
     auto getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getPreNeuronVarRefs(); }
 
-    const auto &getInitialisers() const{ return m_SG.getWUInitialiser().getPreNeuronVarReferences(); }
+    const auto &getInitialisers() const{ return m_SG.getWUMPreNeuronVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -340,7 +340,7 @@ public:
     //----------------------------------------------------------------------------
     auto getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getPostNeuronVarRefs(); }
 
-    const auto &getInitialisers() const{ return m_SG.getWUInitialiser().getPostNeuronVarReferences(); }
+    const auto &getInitialisers() const{ return m_SG.getWUMPostNeuronVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------
