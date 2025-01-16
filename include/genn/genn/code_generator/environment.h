@@ -976,10 +976,10 @@ public:
     template<typename... PolicyArgs>
     EnvironmentLocalCacheBase(G &group, F &fieldGroup, const BackendBase &backend, const Type::TypeContext &context, 
                               EnvironmentExternalBase &enclosing, const std::string &fieldSuffix, 
-                              const std::string &localPrefix, bool hidden, PolicyArgs&&... policyArgs)
+                              const std::string &localPrefix, bool hidden, bool override, PolicyArgs&&... policyArgs)
     :   EnvironmentExternalBase(enclosing), P(std::forward<PolicyArgs>(policyArgs)...), m_Group(group), 
         m_FieldGroup(fieldGroup),  m_Backend(backend), m_Context(context), m_Contents(m_ContentsStream), 
-        m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix)
+        m_FieldSuffix(fieldSuffix), m_LocalPrefix(localPrefix), m_Override(override)
     {
         // Copy variables into variables referenced, alongside boolean
         const auto defs = A(m_Group.get().getArchetype()).getDefs();
@@ -1097,11 +1097,13 @@ public:
     {
         //**HACK**
         bool hasContext = false;
-        try {
-            getContextTypes(name, errorHandler);
-            hasContext = true;
-        }
-        catch(const Transpiler::TypeChecker::TypeCheckError&) {
+        if(!m_Override) {
+            try {
+                getContextTypes(name, errorHandler);
+                hasContext = true;
+            }
+            catch(const Transpiler::TypeChecker::TypeCheckError&) {
+            }
         }
 
         // If name isn't found in environment
@@ -1136,11 +1138,13 @@ public:
     {
         //**HACK**
         bool hasContext = false;
-        try {
-            getContextName(name, type);
-            hasContext = true;
-        }
-        catch(const std::runtime_error&) {
+        if(!m_Override) {
+            try {
+                getContextName(name, type);
+                hasContext = true;
+            }
+            catch(const std::runtime_error&) {
+            }
         }
 
         // If variable with this name isn't found, try and get name from context
@@ -1176,6 +1180,7 @@ private:
     CodeStream m_Contents;
     std::string m_FieldSuffix;
     std::string m_LocalPrefix;
+    bool m_Override;
     std::unordered_map<std::string, std::pair<bool, AdapterDef>> m_VariablesReferenced;
 };
 

@@ -45,7 +45,7 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(const BackendBase &backend
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<CurrentSourceVarAdapter, CurrentSource, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, backend, getTypeContext(), csEnv, fieldSuffix, "l", false,
+        *this, ng, backend, getTypeContext(), csEnv, fieldSuffix, "l", false, true,
         [batchSize, &ng](const std::string&, VarAccess d, bool)
         {
             return ng.getVarIndex(batchSize, getVarAccessDim(d), "$(id)");
@@ -120,7 +120,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(EnvironmentExternalBase &env, N
 
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<SynapsePSMVarAdapter, InSynPSM, NeuronUpdateGroupMerged> varEnv(
-        *this, ng, backend, getTypeContext(), psmEnv, fieldSuffix, "l", false,
+        *this, ng, backend, getTypeContext(), psmEnv, fieldSuffix, "l", false, true,
         [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
         {
             return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -256,7 +256,7 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(const Backen
 
         // Create an environment which caches variables in local variables if they are accessed
         EnvironmentLocalVarCache<SynapseWUPreVarAdapter, SynSpikeEvent, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, backend, getTypeContext(), synEnv, fieldSuffix, "l", false,
+            *this, ng, backend, getTypeContext(), synEnv, fieldSuffix, "l", false, true,
             [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -277,7 +277,7 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(const Backen
 
         // Create an environment which caches variables in local variables if they are accessed
         EnvironmentLocalVarCache<SynapseWUPostVarAdapter, SynSpikeEvent, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, backend, getTypeContext(), synEnv, fieldSuffix, "l", false,
+            *this, ng, backend, getTypeContext(), synEnv, fieldSuffix, "l", false, true,
             [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -367,7 +367,7 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &back
 
         // Create an environment which caches variables in local variables if they are accessed
         EnvironmentLocalVarCache<SynapseWUPostVarAdapter, InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, backend, getTypeContext(), synEnv, fieldSuffix, "l", false,
+            *this, ng, backend, getTypeContext(), synEnv, fieldSuffix, "l", false, true,
             [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -448,7 +448,7 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &back
 
         // Create an environment which caches variables in local variables if they are accessed
         EnvironmentLocalVarCache<SynapseWUPreVarAdapter, OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(
-            *this, ng, backend, getTypeContext(), synEnv, fieldSuffix, "l", false,
+            *this, ng, backend, getTypeContext(), synEnv, fieldSuffix, "l", false, true,
             [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
             {
                 return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
@@ -577,8 +577,9 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(EnvironmentExternalBase &env,
 
     // Create an environment which caches neuron variable fields in local variables if they are accessed
     // **NOTE** we do this right at the top so that local copies can be used by child groups
+    // **NOTE** these do not override existing variables so backends can implement their own caching strategy
     EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronChildVarEnv(
-        *this, *this, backend, getTypeContext(), neuronChildEnv, "", "l", true,
+        *this, *this, backend, getTypeContext(), neuronChildEnv, "", "l", true, false,
         [batchSize, this](const std::string&, VarAccess d, bool delayed)
         {
             return getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
