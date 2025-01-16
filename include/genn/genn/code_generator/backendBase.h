@@ -189,11 +189,11 @@ public:
                          BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const = 0;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
-    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const = 0;
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const Type::TypeContext &context) const = 0;
 
     //! Gets the stride used to access neuron variables (including pre and
     //! postsynaptic synapse variables), taking into account padding etc
-    virtual size_t getNeuronStride(const NeuronGroupInternal &ng) const = 0;
+    virtual size_t getNeuronStride(const NeuronGroupInternal &ng, const Type::TypeContext &context) const = 0;
     
     //! Definitions is the usercode-facing header file for the generated code. This function generates a 'preamble' to this header file.
     /*! This will be included from a standard C++ compiler so shouldn't include any platform-specific types or headers*/

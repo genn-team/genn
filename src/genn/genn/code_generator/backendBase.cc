@@ -41,6 +41,7 @@ template<typename G>
 void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env)
 {
     // Synapse group fields 
+    const auto &context = env.getGroup().getTypeContext();
     env.addField(Type::Uint32.addConst(), "num_pre",
                  Type::Uint32, "numSrcNeurons", 
                  [](auto  &cg, size_t) { return cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); });
@@ -49,9 +50,9 @@ void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentG
                  [](const auto  &cg, size_t) { return cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); });
     env.addField(Type::Uint32.addConst(), "_row_stride", 
                  Type::Uint32, "rowStride", 
-                 [&backend](const auto &cg, size_t) -> uint64_t
+                 [&backend, &context](const auto &cg, size_t) -> uint64_t
                  {
-                     return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup());
+                     return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup(), context);
                  });
 
     // If underlying synapse group has kernel connectivity
@@ -106,12 +107,13 @@ void buildStandardNeuronEnvironment(const BackendBase &backend, EnvironmentGroup
 {
     using namespace Type;
 
+    const auto &context = env.getGroup().getTypeContext();
     env.addField(Uint32.addConst(), "num_neurons",
                  Uint32, "numNeurons",
                  [](const auto &ng, size_t) { return ng.getNumNeurons(); });
-     env.addField(Uint32.addConst(), "_stride",
+    env.addField(Uint32.addConst(), "_stride",
                  Uint32, "stride",
-                 [&backend](const auto &ng, size_t) { return backend.getNeuronStride(ng); });
+                 [&backend, &context](const auto &ng, size_t){ return backend.getNeuronStride(ng, context); });
     env.addField(Uint32.createPointer(), "_spk_que_ptr", "spkQuePtr",
                  [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "spkQuePtr"); });
     env.addField(Uint32.createPointer(), "_record_spk", "recordSpk",
@@ -171,6 +173,7 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
     using namespace Type;
 
     // Synapse group fields 
+    const auto &context = env.getGroup().getTypeContext();
     env.addField(Uint32.addConst(), "num_pre",
                  Uint32, "numSrcNeurons", 
                  [](const SynapseGroupInternal &sg, size_t) { return sg.getSrcNeuronGroup()->getNumNeurons(); });
@@ -179,9 +182,9 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
                  [](const SynapseGroupInternal &sg, size_t) { return sg.getTrgNeuronGroup()->getNumNeurons(); });
     env.addField(Uint32.addConst(), "_row_stride", 
                  Type::Uint32, "rowStride", 
-                 [&backend](const SynapseGroupInternal &sg, size_t) -> uint64_t
+                 [&backend, &context](const SynapseGroupInternal &sg, size_t) -> uint64_t
                  {
-                     return backend.getSynapticMatrixRowStride(sg);
+                     return backend.getSynapticMatrixRowStride(sg, context);
                  });
     env.addField(Uint32.addConst(), "_col_stride", 
                  Type::Uint32, "colStride", 
@@ -452,6 +455,7 @@ template<typename G>
 void buildStandardCustomConnectivityUpdateEnvironment(const BackendBase &backend, EnvironmentGroupMergedField<G> &env)
 {
     // Add fields for number of pre and postsynaptic neurons
+    const auto &context = env.getGroup().getTypeContext();
     env.addField(Type::Uint32.addConst(), "num_pre",
                  Type::Uint32, "numSrcNeurons", 
                  [](const auto &cg, size_t) 
@@ -467,7 +471,10 @@ void buildStandardCustomConnectivityUpdateEnvironment(const BackendBase &backend
                      return sgInternal->getTrgNeuronGroup()->getNumNeurons();
                  });
     env.addField(Type::Uint32, "_row_stride", "rowStride", 
-                 [&backend](const auto &cg, size_t) -> uint64_t { return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup()); });
+                 [&backend, &context](const auto &cg, size_t) -> uint64_t
+                 {
+                    return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup(), context); 
+                 });
     env.addField(Type::Uint32, "_col_stride", "colStride", 
                  [](const auto &cg, size_t) { return cg.getSynapseGroup()->getMaxSourceConnections(); });
     
@@ -509,10 +516,10 @@ Type::ResolvedType getSynapseIndexType(const BackendBase &backend, const GroupMe
 {
     // If any merged groups have more synapses than can be represented using a uint32, use Uint64
     if(std::any_of(m.getGroups().cbegin(), m.getGroups().cend(),
-                   [getSynapseGroupFn, &backend](const auto &g)
+                   [getSynapseGroupFn, &backend, &m](const auto &g)
                    {
                        const auto &sg = getSynapseGroupFn(g.get());
-                       const size_t numSynapses = (size_t)sg.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(sg);
+                       const size_t numSynapses = (size_t)sg.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(sg, m.getTypeContext());
                        return (numSynapses > std::numeric_limits<uint32_t>::max());
                    }))
     {

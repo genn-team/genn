@@ -69,15 +69,14 @@ std::vector<PresynapticUpdateStrategySIMT::Base*> BackendSIMT::s_PresynapticUpda
     new PresynapticUpdateStrategySIMT::PostSpanBitmask,
     new PresynapticUpdateStrategySIMT::PostSpanToeplitz};
 //--------------------------------------------------------------------------
-size_t BackendSIMT::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
+size_t BackendSIMT::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const Type::TypeContext&) const
 {
     return getPresynapticUpdateStrategy(sg)->getSynapticMatrixRowStride(sg);
 }
 //--------------------------------------------------------------------------
-size_t BackendSIMT::getNeuronStride(const NeuronGroupInternal &ng) const
+size_t BackendSIMT::getNeuronStride(const NeuronGroupInternal &ng, const Type::TypeContext &context) const
 {
-    // **TODO** get vectorisation width and ceildivide by this
-    return ng.getNumNeurons();
+    return padSize(ng.getNumNeurons(), getNeuronUpdateVectorWidth(ng, context));
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genPopVariableInit(EnvironmentExternalBase &env, HandlerEnv handler) const

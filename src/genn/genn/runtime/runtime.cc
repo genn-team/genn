@@ -25,14 +25,16 @@ using namespace GeNN::CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
-size_t getNumSynapseVarElements(VarAccessDim varDims, const BackendBase &backend, const SynapseGroupInternal &sg)
+size_t getNumSynapseVarElements(VarAccessDim varDims, const BackendBase &backend, const SynapseGroupInternal &sg,
+                                const Type::TypeContext &context)
 {
     if(varDims & VarAccessDim::ELEMENT) {
         if(sg.getMatrixType() & SynapseMatrixWeight::KERNEL) {
             return sg.getKernelSizeFlattened();
         }
         else {
-            return sg.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(sg);
+            return (sg.getSrcNeuronGroup()->getNumNeurons() 
+                    * backend.getSynapticMatrixRowStride(sg, context));
         }
     }
     else {
@@ -156,7 +158,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
     const size_t batchSize = getModel().getBatchSize();
     for(const auto &n : getModel().getNeuronGroups()) {
         LOGD_RUNTIME << "Allocating memory for neuron group '" << n.first << "'";
-        const size_t neuronStride = m_Backend.get().getNeuronStride(n.second);
+        const size_t neuronStride = m_Backend.get().getNeuronStride(n.second, getModel().getTypeContext());
         const size_t nonDelayedNeuronVarSize = batchSize * neuronStride;
         const size_t delayedNeuronVarSize = nonDelayedNeuronVarSize * n.second.getNumDelaySlots();
 
@@ -323,7 +325,8 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                 &s.second, batchSize, true, 
                 [&s, this](const std::string&, VarAccessDim varDims)
                 {
-                    return getNumSynapseVarElements(varDims, m_Backend.get(), s.second);
+                    return getNumSynapseVarElements(varDims, m_Backend.get(), s.second,
+                                                    getModel().getTypeContext());
                 });
         }
 
@@ -335,7 +338,7 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
 
         // If connectivity is bitmask
         const size_t numPre = s.second.getSrcNeuronGroup()->getNumNeurons();
-        const size_t rowStride = m_Backend.get().getSynapticMatrixRowStride(s.second);
+        const size_t rowStride = m_Backend.get().getSynapticMatrixRowStride(s.second, getModel().getTypeContext());
         const auto &connectInit = s.second.getSparseConnectivityInitialiser();
         const bool uninitialized = (Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens()) 
                                     && Utils::areTokensEmpty(connectInit.getColBuildCodeTokens()));
@@ -442,7 +445,8 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                 [&c, this](const std::string&, VarAccessDim varDims)
                 {
                     return getNumSynapseVarElements(varDims, m_Backend.get(), 
-                                                    *c.second.getSynapseGroup());
+                                                    *c.second.getSynapseGroup(),
+                                                    getModel().getTypeContext());
                 });
         
         // Create arrays for custom update extra global parameters
@@ -471,7 +475,8 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                 &c.second, batchSize, false, 
                 [sg, this](const std::string&, VarAccessDim varDims)
                 {
-                    return getNumSynapseVarElements(varDims, m_Backend.get(), *sg);
+                    return getNumSynapseVarElements(varDims, m_Backend.get(), *sg,
+                                                    getModel().getTypeContext());
                 });
         
         // Create arrays for custom connectivity update extra global parameters
