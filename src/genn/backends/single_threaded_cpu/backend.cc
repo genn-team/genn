@@ -1416,7 +1416,7 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase:
 
 }
 //--------------------------------------------------------------------------
-size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
+size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const Type::TypeContext) const
 {
     if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) || (sg.getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ)) {
         return sg.getMaxConnections();
@@ -1429,7 +1429,7 @@ size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
     }
 }
 //--------------------------------------------------------------------------
-size_t Backend::getNeuronStride(const NeuronGroupInternal &ng) const
+size_t Backend::getNeuronStride(const NeuronGroupInternal &ng, const Type::TypeContext&) const
 {
     return ng.getNumNeurons();
 }

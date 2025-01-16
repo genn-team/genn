@@ -398,9 +398,9 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
         // Expose row stride        
         groupEnv.addField(Type::Uint32.addConst(), "row_stride",
                           Type::Uint32, "rowStride", 
-                          [&backend](const auto &cg, size_t) -> uint64_t 
+                          [&backend, this](const auto &cg, size_t) -> uint64_t 
                           {
-                              return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup()); 
+                              return backend.getSynapticMatrixRowStride(*cg.getSynapseGroup(), getTypeContext()); 
                           });
 
         // If synapse group connectivity is accessible from the host
