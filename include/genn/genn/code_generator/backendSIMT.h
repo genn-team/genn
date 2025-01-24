@@ -116,6 +116,9 @@ public:
     //! Get type of population RNG
     virtual Type::ResolvedType getPopulationRNGType() const = 0;
 
+    //! Generate a fast uint32 divide
+    virtual std::string getFastU32Divide(const std::string &numerator, const std::string &divisorVar) const = 0;
+
     //------------------------------------------------------------------------
     // BackendBase virtuals
     //------------------------------------------------------------------------

@@ -589,6 +589,11 @@ Type::ResolvedType Backend::getPopulationRNGType() const
     return CURandState;
 }
 //--------------------------------------------------------------------------
+std::string Backend::getFastU32Divide(const std::string &numerator, const std::string &divisorVar) const
+{
+    return "libdivide_branchfree_do(" + numerator + ",  $(" + divisorVar + "_magic), $(" + divisorVar + "_more))";
+}
+//--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
                               HostHandler preambleHandler) const
 {
@@ -1406,6 +1411,14 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &) co
     os << "}" << std::endl;
     os << std::endl;
 
+    os << " // CUDA version of libdivide_u32_branchfree_do" << std::endl;;
+    os << "__device__ __forceinline__ uint32_t libdivide_branchfree_do(uint32_t numer, uint32_t magic, uint8_t more)";
+    {
+        CodeStream::Scope b(os);
+        os << "const uint32_t q = __umulhi(magic, numer);" << std::endl;
+        os << "const uint32_t t = ((numer - q) >> 1) + q;" << std::endl;
+        os << "return t >> more;" << std::endl;
+    }
 
     // If device is older than SM 6 or we're using a version of CUDA older than 8
     if ((getChosenCUDADevice().major < 6) || (getRuntimeVersion() < 8000)){
