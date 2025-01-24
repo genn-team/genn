@@ -2575,6 +2575,8 @@ static const char *__doc_Models_VarReference_getVarType = R"doc()doc";
 
 static const char *__doc_Models_VarReference_isTargetNeuronGroup = R"doc(Does this variable reference's target belong to neuron group)doc";
 
+static const char *__doc_Models_VarReference_isTargetSynapseGroupPSM = R"doc(Does this variable reference's target belong to synapse group postsynaptic model)doc";
+
 static const char *__doc_Models_VarReference_m_Detail = R"doc()doc";
 
 static const char *__doc_Models_VarReference_operator_lt = R"doc()doc";
@@ -2644,6 +2646,8 @@ static const char *__doc_Models_checkEGPReferenceTypes = R"doc()doc";
 static const char *__doc_Models_checkLocalVarReferences = R"doc(Helper function to check if local variable references are configured correctly)doc";
 
 static const char *__doc_Models_checkVarReferenceTypes = R"doc(Helper function to check if variable reference types match those specified in model)doc";
+
+static const char *__doc_Models_resolveVarReferences = R"doc(Helper function to 'resolve' local variable references which may be specified with just a string)doc";
 
 static const char *__doc_Models_updateHash = R"doc()doc";
 
@@ -3618,6 +3622,8 @@ NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getPSInitialiser = R"doc()doc";
 
+static const char *__doc_SynapseGroup_getPSNeuronVarReferences = R"doc(Get 'resolved' variable references to neurons variables used in postsynaptic update model)doc";
+
 static const char *__doc_SynapseGroup_getPSVarLocation = R"doc(Get location of postsynaptic model state variable)doc";
 
 static const char *__doc_SynapseGroup_getParallelismHint = R"doc()doc";
@@ -3671,6 +3677,12 @@ R"doc(Generate hash of initialisation component of this synapse group
 NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getWUInitialiser = R"doc()doc";
+
+static const char *__doc_SynapseGroup_getWUMPSMVarReferences = R"doc(Get 'resolved' variable references to presynaptic model variables used in weight update model)doc";
+
+static const char *__doc_SynapseGroup_getWUMPostNeuronVarReferences = R"doc(Get 'resolved' variable references to presynaptic neurons variables used in weight update model)doc";
+
+static const char *__doc_SynapseGroup_getWUMPreNeuronVarReferences = R"doc(Get 'resolved' variable references to presynaptic neuron variables used in weight update model)doc";
 
 static const char *__doc_SynapseGroup_getWUPostVarLocation = R"doc(Get location of weight update model postsynaptic state variable)doc";
 
@@ -3858,6 +3870,8 @@ This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_m_PSInitialiser = R"doc(Initialiser used for creating postsynaptic update model)doc";
 
+static const char *__doc_SynapseGroup_m_PSNeuronVarReferences = R"doc('Resolved' variable references to neurons variables used in postsynaptic update model)doc";
+
 static const char *__doc_SynapseGroup_m_PSVarLocation =
 R"doc(Location of postsynaptic model variables.
 This is ignored for simulations on hardware with a single memory space)doc";
@@ -3891,6 +3905,12 @@ R"doc(Location of weight update model extra global parameters.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_m_WUInitialiser = R"doc(Initialiser used for creating weight update model)doc";
+
+static const char *__doc_SynapseGroup_m_WUMPSMVarReferences = R"doc('Resolved' variable references to postsynaptic model variables used in weight update model)doc";
+
+static const char *__doc_SynapseGroup_m_WUMPostNeuronVarReferences = R"doc('Resolved' variable references to presynaptic neurons variables used in weight update model)doc";
+
+static const char *__doc_SynapseGroup_m_WUMPreNeuronVarReferences = R"doc('Resolved' variable references to presynaptic neuron variables used in weight update model)doc";
 
 static const char *__doc_SynapseGroup_m_WUPostVarLocation =
 R"doc(Location of individual postsynaptic state variables.
@@ -4071,6 +4091,16 @@ static const char *__doc_SynapseWUEGPAdapter_getDefs = R"doc()doc";
 static const char *__doc_SynapseWUEGPAdapter_getLoc = R"doc()doc";
 
 static const char *__doc_SynapseWUEGPAdapter_m_SG = R"doc()doc";
+
+static const char *__doc_SynapseWUPSMVarRefAdapter = R"doc()doc";
+
+static const char *__doc_SynapseWUPSMVarRefAdapter_SynapseWUPSMVarRefAdapter = R"doc()doc";
+
+static const char *__doc_SynapseWUPSMVarRefAdapter_getDefs = R"doc()doc";
+
+static const char *__doc_SynapseWUPSMVarRefAdapter_getInitialisers = R"doc()doc";
+
+static const char *__doc_SynapseWUPSMVarRefAdapter_m_SG = R"doc()doc";
 
 static const char *__doc_SynapseWUPostNeuronVarRefAdapter = R"doc()doc";
 
@@ -4503,6 +4533,8 @@ static const char *__doc_WeightUpdateModels_Base = R"doc(Base class for all weig
 
 static const char *__doc_WeightUpdateModels_Base_getHashDigest = R"doc(Update hash from model)doc";
 
+static const char *__doc_WeightUpdateModels_Base_getPSMVarRefs = R"doc(Gets names and types of variable references to postsynaptic model)doc";
+
 static const char *__doc_WeightUpdateModels_Base_getPostDynamicsCode =
 R"doc(Gets code to be run after postsynaptic neuron update
 This is typically for the code to update postsynaptic variables. Presynaptic
@@ -4582,6 +4614,8 @@ static const char *__doc_WeightUpdateModels_Init_Init = R"doc()doc";
 
 static const char *__doc_WeightUpdateModels_Init_finalise = R"doc()doc";
 
+static const char *__doc_WeightUpdateModels_Init_getPSMVarReferences = R"doc()doc";
+
 static const char *__doc_WeightUpdateModels_Init_getPostDynamicsCodeTokens = R"doc()doc";
 
 static const char *__doc_WeightUpdateModels_Init_getPostEventSynCodeTokens = R"doc()doc";
@@ -4617,6 +4651,8 @@ static const char *__doc_WeightUpdateModels_Init_getVarInitialisers = R"doc()doc
 static const char *__doc_WeightUpdateModels_Init_isRNGRequired = R"doc()doc";
 
 static const char *__doc_WeightUpdateModels_Init_isVarHeterogeneouslyDelayedInSynCode = R"doc()doc";
+
+static const char *__doc_WeightUpdateModels_Init_m_PSMVarReferences = R"doc()doc";
 
 static const char *__doc_WeightUpdateModels_Init_m_PostDynamicsCodeTokens = R"doc()doc";
 
@@ -4949,6 +4985,11 @@ $Parameter ``preNeuronVarRefs``:
 $Parameter ``postNeuronVarRefs``:
 
     postsynaptic neuron variable references for snippet wrapped in VarReferences object.
+
+
+$Parameter ``psmVarRefs``:
+
+           postsynaptic modelvariable references for snippet wrapped in VarReferences object.
 
 
 $Returns:

@@ -160,7 +160,7 @@ public:
     //----------------------------------------------------------------------------
     auto getDefs() const{ return m_SG.getPSInitialiser().getSnippet()->getNeuronVarRefs(); }
 
-    const auto &getInitialisers() const{ return m_SG.getPSInitialiser().getNeuronVarReferences(); }
+    const auto &getInitialisers() const{ return m_SG.getPSNeuronVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -315,7 +315,7 @@ public:
     //----------------------------------------------------------------------------
     auto getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getPreNeuronVarRefs(); }
 
-    const auto &getInitialisers() const{ return m_SG.getWUInitialiser().getPreNeuronVarReferences(); }
+    const auto &getInitialisers() const{ return m_SG.getWUMPreNeuronVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -340,7 +340,32 @@ public:
     //----------------------------------------------------------------------------
     auto getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getPostNeuronVarRefs(); }
 
-    const auto &getInitialisers() const{ return m_SG.getWUInitialiser().getPostNeuronVarReferences(); }
+    const auto &getInitialisers() const{ return m_SG.getWUMPostNeuronVarReferences(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const SynapseGroupInternal &m_SG;
+};
+
+//----------------------------------------------------------------------------
+// SynapseWUPSMVarRefAdapter
+//----------------------------------------------------------------------------
+class SynapseWUPSMVarRefAdapter
+{
+public:
+    SynapseWUPSMVarRefAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
+    {}
+
+    using RefType = Models::VarReference;
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    auto getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getPSMVarRefs(); }
+
+    const auto &getInitialisers() const{ return m_SG.getWUMPSMVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------
