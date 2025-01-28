@@ -225,7 +225,7 @@ void calcGroupSizes(const CUDA::Backend &backend, const ModelSpecMerged &modelMe
 
     // Add synapse groups
     addGroupSizes(modelMerged.getMergedPresynapticUpdateGroups(), KernelPresynapticUpdate, groupSizes,
-                  [&backend, &model](const auto &g){ return model.getBatchSize() * backend.getNumPresynapticUpdateThreads(g); });
+                  [&backend, &model](const auto &g){ return model.getBatchSize() * backend.getNumPresynapticUpdateThreads(g, model.getTypeContext()); });
     addGroupSizes(modelMerged.getMergedPostsynapticUpdateGroups(), KernelPostsynapticUpdate, groupSizes,
                   [&backend, &model](const auto &g){ return model.getBatchSize() * backend.getNumPostsynapticUpdateThreads(g); });
     addGroupSizes(modelMerged.getMergedSynapseDynamicsGroups(), KernelSynapseDynamicsUpdate, groupSizes,

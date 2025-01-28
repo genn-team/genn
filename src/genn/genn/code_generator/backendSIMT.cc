@@ -69,9 +69,9 @@ std::vector<PresynapticUpdateStrategySIMT::Base*> BackendSIMT::s_PresynapticUpda
     new PresynapticUpdateStrategySIMT::PostSpanBitmask,
     new PresynapticUpdateStrategySIMT::PostSpanToeplitz};
 //--------------------------------------------------------------------------
-size_t BackendSIMT::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const Type::TypeContext&) const
+size_t BackendSIMT::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const Type::TypeContext &context) const
 {
-    return getPresynapticUpdateStrategy(sg)->getSynapticMatrixRowStride(sg, *this);
+    return getPresynapticUpdateStrategy(sg, context)->getSynapticMatrixRowStride(sg, *this, context);
 }
 //--------------------------------------------------------------------------
 size_t BackendSIMT::getNeuronStride(const NeuronGroupInternal &ng, const Type::TypeContext &context) const
@@ -275,9 +275,9 @@ size_t BackendSIMT::getPaddedNumCustomUpdateTransposeWUThreads(const CustomUpdat
     return numCopies * paddedNumPre * paddedNumPost / getKernelBlockSize(KernelCustomTransposeUpdate);
 }
 //--------------------------------------------------------------------------
-size_t BackendSIMT::getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg) const
+size_t BackendSIMT::getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg, const Type::TypeContext &context) const
 {
-    return getPresynapticUpdateStrategy(sg)->getNumThreads(sg, *this);
+    return getPresynapticUpdateStrategy(sg, context)->getNumThreads(sg, *this, context);
 }
 //--------------------------------------------------------------------------
 size_t BackendSIMT::getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg) const
@@ -871,8 +871,8 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
     // Determine the maximum shared memory outputs 
     size_t maxSharedMemPerThread = 0;
     for(const auto &s : modelMerged.getMergedPresynapticUpdateGroups()) {
-        maxSharedMemPerThread = std::max(maxSharedMemPerThread,
-                                         getPresynapticUpdateStrategy(s.getArchetype())->getSharedMemoryPerThread(s, *this));
+        const auto *strategy = getPresynapticUpdateStrategy(s.getArchetype(), modelMerged.getModel().getTypeContext());
+        maxSharedMemPerThread = std::max(maxSharedMemPerThread, strategy->getSharedMemoryPerThread(s, *this));
     }
 
     // If any shared memory is required, declare array
@@ -897,13 +897,14 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
     idStart = 0;
     genParallelGroup<PresynapticUpdateGroupMerged>(
         kernelEnv, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedPresynapticUpdateGroups,
-        [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumPresynapticUpdateThreads(sg), KernelPresynapticUpdate); },
+        [&modelMerged, this](const SynapseGroupInternal &sg) { return padKernelSize(getNumPresynapticUpdateThreads(sg, modelMerged.getModel().getTypeContext()), 
+                                                                                    KernelPresynapticUpdate); },
         [&modelMerged, this](EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg)
         {
             EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(env, sg);
 
             // Get presynaptic update strategy to use for this synapse group
-            const auto *presynapticUpdateStrategy = getPresynapticUpdateStrategy(sg.getArchetype());
+            const auto *presynapticUpdateStrategy = getPresynapticUpdateStrategy(sg.getArchetype(), sg.getTypeContext());
             LOGD_BACKEND << "Using '" << typeid(*presynapticUpdateStrategy).name() << "' presynaptic update strategy for merged synapse group '" << sg.getIndex() << "'";
 
             // Generate index calculation code
@@ -2166,12 +2167,13 @@ void BackendSIMT::genRemap(EnvironmentExternalBase &env) const
     env.printLine("$(_remap)[colMajorIndex] = idx;");
 }
 //--------------------------------------------------------------------------
-const PresynapticUpdateStrategySIMT::Base *BackendSIMT::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const
+const PresynapticUpdateStrategySIMT::Base *BackendSIMT::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg,
+                                                                                     const Type::TypeContext &typeContext) const
 {
     // Loop through presynaptic update strategies until we find one that is compatible with this synapse group
     // **NOTE** this is done backwards so that user-registered strategies get first priority
     for(auto s = s_PresynapticUpdateStrategies.rbegin(); s != s_PresynapticUpdateStrategies.rend(); ++s) {
-        if((*s)->isCompatible(sg, *this)) {
+        if((*s)->isCompatible(sg, *this, typeContext)) {
             return *s;
         }
     }
