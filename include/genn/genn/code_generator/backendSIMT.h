@@ -122,6 +122,11 @@ public:
     //! types like half2 to save memory bandwidth and possibly reduce compute. 
     //! Gets the vector width to use for this neuron update group.
     virtual size_t getNeuronUpdateVectorWidth(const NeuronGroupInternal &ng, const Type::TypeContext &context) const = 0;
+
+    //! Some backends can produce vectorised presynaptic update which use 'short vector'  
+    //! types like half2 to save memory bandwidth and possibly reduce compute. 
+    //! Gets the vector width to use for this neuron update group.
+    virtual size_t getPresynapticUpdateVectorWidth(const SynapseGroupInternal &sg, const Type::TypeContext &context) const = 0;
     
     //! Can this backend vectorise this variable?
     virtual bool shouldVectoriseVar(const Models::Base::Var &var, const Type::TypeContext &context) const = 0;

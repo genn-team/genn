@@ -330,6 +330,11 @@ size_t BackendCUDAHIP::getNeuronUpdateVectorWidth(const NeuronGroupInternal &ng,
     return areAllVarsVectorisable<NeuronVarAdapter>(ng, context, *this) ? 2 : 1;
 }
 //--------------------------------------------------------------------------
+size_t BackendCUDAHIP::getPresynapticUpdateVectorWidth(const SynapseGroupInternal &sg, const Type::TypeContext &context) const
+{
+    return areAllVarsVectorisable<SynapseWUVarAdapter>(sg, context, *this) ? 2 : 1;
+}
+//--------------------------------------------------------------------------
 bool BackendCUDAHIP::shouldVectoriseVar(const Models::Base::Var &var, const Type::TypeContext &context) const
 {
     return ::shouldVectoriseVar(var.type, var.storageType, context);
