@@ -275,12 +275,12 @@ size_t BackendSIMT::getPaddedNumCustomUpdateTransposeWUThreads(const CustomUpdat
     return numCopies * paddedNumPre * paddedNumPost / getKernelBlockSize(KernelCustomTransposeUpdate);
 }
 //--------------------------------------------------------------------------
-size_t BackendSIMT::getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg, const PreferencesBase &preferences)
+size_t BackendSIMT::getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const
 {
     return getPresynapticUpdateStrategy(sg, preferences)->getNumThreads(sg);
 }
 //--------------------------------------------------------------------------
-size_t BackendSIMT::getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg)
+size_t BackendSIMT::getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg) const
 {
     if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         return sg.getMaxSourceConnections();
@@ -290,7 +290,7 @@ size_t BackendSIMT::getNumPostsynapticUpdateThreads(const SynapseGroupInternal &
     }
 }
 //--------------------------------------------------------------------------
-size_t BackendSIMT::getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg)
+size_t BackendSIMT::getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg) const
 {
     if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         // **THINK** this isn't really correct but correct value is inaccesible
@@ -301,7 +301,7 @@ size_t BackendSIMT::getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg)
     }
 }
 //--------------------------------------------------------------------------
-size_t BackendSIMT::getNumConnectivityInitThreads(const SynapseGroupInternal &sg)
+size_t BackendSIMT::getNumConnectivityInitThreads(const SynapseGroupInternal &sg) const
 {
     // If there's row building code, return number of source neurons i.e. rows
     if(!Utils::areTokensEmpty(sg.getSparseConnectivityInitialiser().getRowBuildCodeTokens())) {
@@ -317,7 +317,7 @@ size_t BackendSIMT::getNumConnectivityInitThreads(const SynapseGroupInternal &sg
     }
 }
 //--------------------------------------------------------------------------
-size_t BackendSIMT::getNumInitThreads(const SynapseGroupInternal &sg)
+size_t BackendSIMT::getNumInitThreads(const SynapseGroupInternal &sg) const
 {
     if (sg.getMatrixType() & SynapseMatrixWeight::KERNEL) {
         return sg.getKernelSizeFlattened();
@@ -327,7 +327,7 @@ size_t BackendSIMT::getNumInitThreads(const SynapseGroupInternal &sg)
     }
 }
 //--------------------------------------------------------------------------
-size_t BackendSIMT::getNumInitThreads(const CustomUpdateWUInternal &cg)
+size_t BackendSIMT::getNumInitThreads(const CustomUpdateWUInternal &cg) const
 {
     if (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {
         return cg.getSynapseGroup()->getKernelSizeFlattened();

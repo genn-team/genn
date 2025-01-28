@@ -199,15 +199,12 @@ public:
     size_t getPaddedNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const;
     size_t getPaddedNumCustomUpdateTransposeWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const;
 
-    //--------------------------------------------------------------------------
-    // Static API
-    //--------------------------------------------------------------------------
-    static size_t getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg, const PreferencesBase &preferences);
-    static size_t getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg);
-    static size_t getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg);
-    static size_t getNumConnectivityInitThreads(const SynapseGroupInternal &sg);
-    static size_t getNumInitThreads(const SynapseGroupInternal &sg);
-    static size_t getNumInitThreads(const CustomUpdateWUInternal &cg);
+    size_t getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const;
+    size_t getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg) const;
+    size_t getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg) const;
+    size_t getNumConnectivityInitThreads(const SynapseGroupInternal &sg) const;
+    size_t getNumInitThreads(const SynapseGroupInternal &sg) const;
+    size_t getNumInitThreads(const CustomUpdateWUInternal &cg) const;
 
     //! Register a new presynaptic update strategy
     /*! This function should be called with strategies in ascending order of preference */
