@@ -448,6 +448,33 @@ boost::uuids::detail::sha1::digest_type ModelSpec::getHashDigest() const
     return hash.get_digest();
 }
 // ---------------------------------------------------------------------------
+std::set<std::string> ModelSpec::getCustomUpdateGroupNames(bool includeTranspose, bool includeNonTranspose) const
+{
+    std::set<std::string> customUpdateGroups;
+    if(includeNonTranspose) {
+        std::transform(getCustomUpdates().cbegin(), getCustomUpdates().cend(),
+                       std::inserter(customUpdateGroups, customUpdateGroups.begin()),
+                       [](const ModelSpec::CustomUpdateValueType &v) { return v.second.getUpdateGroupName(); });
+        std::transform(getCustomConnectivityUpdates().cbegin(), getCustomConnectivityUpdates().cend(),
+                       std::inserter(customUpdateGroups, customUpdateGroups.begin()),
+                       [](const ModelSpec::CustomConnectivityUpdateValueType &v) { return v.second.getUpdateGroupName(); });
+    }
+
+    // Loop through custom updates
+    for(const auto &c : getCustomWUUpdates()) {
+        if(c.second.isTransposeOperation()) {
+            if(includeTranspose) {
+                customUpdateGroups.insert(c.second.getUpdateGroupName());
+            }
+        }
+        else if(includeNonTranspose) {
+            customUpdateGroups.insert(c.second.getUpdateGroupName());
+        }
+    }
+
+    return customUpdateGroups;
+}
+// ---------------------------------------------------------------------------
 SynapseGroup *ModelSpec::addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, NeuronGroup *src, NeuronGroup *trg,
                                               const WeightUpdateModels::Init &wumInitialiser, const PostsynapticModels::Init &psmInitialiser, 
                                               const InitSparseConnectivitySnippet::Init &connectivityInitialiser, 
