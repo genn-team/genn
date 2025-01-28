@@ -455,6 +455,12 @@ size_t PostSpanVectorised::getSharedMemoryPerThread(const PresynapticUpdateGroup
 void PostSpanVectorised::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
                                    unsigned int batchSize, double dt, bool trueSpike) const
 {
+    // Get vector width
+    const size_t vectorWidth = backend.getPresynapticUpdateVectorWidth(sg.getArchetype(), sg.getTypeContext());
+    assert(vectorWidth > 1);
+    const std::string vectorWidthStr = std::to_string(vectorWidth);
+    const std::string vectorWidthMinus1Str = std::to_string(vectorWidth - 1);
+
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "_event";
     const bool delay = trueSpike ? sg.getArchetype().getSrcNeuronGroup()->isSpikeQueueRequired() : sg.getArchetype().getSrcNeuronGroup()->isSpikeEventQueueRequired();
@@ -492,61 +498,125 @@ void PostSpanVectorised::genUpdate(EnvironmentExternalBase &env, PresynapticUpda
                 spikeEnv.printLine(sg.getScalarType().getName() + " lOutPre = " + Type::writeNumeric(0.0, sg.getScalarType()) + ";");
             }
 
-            spikeEnv.getStream() << "// only work on existing neurons" << std::endl;
-            spikeEnv.print("if ($(id) < $(_row_stride))");
+            spikeEnv.printLine("// Vectorised");
+            spikeEnv.printLine("const uint32_t numVectors = ($(_row_stride) + " + vectorWidthMinus1Str + ") / " + vectorWidthStr + ";");
+
+            spikeEnv.printLine("// only work on existing neurons");
+            spikeEnv.print("if ($(id) < numVectors)");
             {
                 CodeStream::Scope b(spikeEnv.getStream());
-                EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(spikeEnv, sg);
+                EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> idEnv(spikeEnv, sg);
 
                 const auto indexType = backend.getSynapseIndexType(sg);
                 const auto indexTypeName = indexType.getName();
 
-                synEnv.add(indexType.addConst(), "id_syn", "synAddress",
-                           {synEnv.addInitialiser( "const " + indexTypeName + " synAddress = ((" + indexTypeName + ")$(_sh_spk" + eventSuffix + ")[j] * $(_row_stride)) + $(id);")});
+                // Calculate vector index
+                idEnv.add(indexType.addConst(), "_id_syn_vec", "synAddressVec",
+                          {idEnv.addInitialiser( "const " + indexTypeName + " SynAddressVec = ((" + indexTypeName + ")$(_sh_spk" + eventSuffix + ")[j] * numVectors) + $(id);")});
 
-                if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    synEnv.printLine("const unsigned int npost = $(_sh_row_length)[j];");
+                // If connectivity is sparse and indeices are less than 32-bit
+                const auto &sparseIndType = sg.getArchetype().getSparseIndType();
+                const bool vectorSparseInd = (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) 
+                                              && sparseIndType != Type::Uint32);
+                if(vectorSparseInd) {
+                    // Read vector of indices
+                    // **TODO** this should really be a initialiser
+                    const std::string sparseIndVecType = backend.getVectorTypeName(sparseIndType, vectorWidth);
+                    idEnv.print("const " + sparseIndVecType + " ipostVec = ");
+                    idEnv.printLine("reinterpret_cast<" + sparseIndVecType + "*>($(_ind))[$(_id_syn_vec)];");
 
-                    synEnv.print("if ($(id) < npost)");
-                    synEnv.getStream() << CodeStream::OB(140);
-                    synEnv.add(Type::Uint32.addConst(), "id_post", "ipost",
-                               {synEnv.addInitialiser("const unsigned int ipost = $(_ind)[$(id_syn)];")});
+                    // Loop through vector length
+                    for(size_t i = 0; i < vectorWidth; i++) {
+                        // Declare variables for each lane and extract sparse
+                        idEnv.print("const " + sg.getArchetype().getSparseIndType().getName() + " ipost_" + std::to_string(i));
+                        idEnv.printLine(" = " + backend.getExtractVector(sparseIndType, sparseIndType,
+                                                                          vectorWidth, i, "ipostVec") + ";");
+                    }
                 }
-                else { // DENSE
-                    synEnv.add(Type::Uint32.addConst(), "id_post", "$(id)");
-                }
-       
-                // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
-                synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay",
-                           backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
+
+                // Create environments to make vectorised loads of weight update model variables
+                // **TODO** index calculation incorrect with delays due to stride
+                EnvironmentLocalVectorVarCache<SynapseWUVarAdapter, PresynapticUpdateGroupMerged> wuVarEnv(
+                    sg, sg, backend, sg.getTypeContext(), idEnv, "", "l",
+                    [batchSize, &sg](const std::string&, VarAccess a, bool)
+                    {
+                        return sg.getSynVarIndex(batchSize, getVarAccessDim(a), "$(_id_syn_vec)");
+                    });
+
+                // Unroll vector
+                // **TODO** create helper function
+                for(size_t i = 0; i < vectorWidth; i++) {
+                    wuVarEnv.printLine("// Unroll " + std::to_string(i));
+                    CodeStream::Scope b(wuVarEnv.getStream());
+                    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(wuVarEnv, sg);
+
+                    // Override ID with unrolled vector ID
+                    synEnv.add(Type::Uint32.addConst(), "id", "vid",
+                                {synEnv.addInitialiser("const uint32_t vid = ($(_id) * " + vectorWidthStr + ") + " + std::to_string(i) + ";")});
+
+                    // If this isn't first lane, add if statment to check we haven't overrun population
+                    if(i > 0) {
+                        synEnv.print("if($(id) < $(num_neurons))");
+                        synEnv.getStream() << CodeStream::OB(12);
+                    }
+
+                    // Expose $(_XXX_i) variables as $(_XXX) to generic code
+                    addVectorLaneAliases<SynapseWUVarAdapter>(synEnv, i);
                 
-                // If we should accumulate in register, add parameter to register
-                if(shouldAccumulateInRegister(sg)) {
-                    synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "linSyn += ($(0))");
-                }
-                // Otherwise, if we should use shared memory, add to shared memory
-                // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
-                else if(isSmallSharedMemoryPop(sg, backend)) {
-                    synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "$(_sh_out_post)[$(id_post)] += ($(0))");
-                }
-                // Otherwise, use global memory atomic
-                else {
-                    synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost",
-                               backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
-                }
 
-                // Add presynaptic output to local variable
-                synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "lOutPre += ($(0))");
+                    synEnv.add(indexType.addConst(), "id_syn", "synAddress",
+                            {synEnv.addInitialiser( "const " + indexTypeName + " synAddress = ((" + indexTypeName + ")$(_sh_spk" + eventSuffix + ")[j] * $(_row_stride)) + $(id);")});
 
-                if(trueSpike) {
-                    sg.generateSpikeUpdate(backend, synEnv, batchSize, dt);
-                }
-                else {
-                    sg.generateSpikeEventUpdate(backend, synEnv, batchSize, dt);
-                }
+                    if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                        synEnv.printLine("const unsigned int npost = $(_sh_row_length)[j];");
 
-                if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    synEnv.getStream() << CodeStream::CB(140); // end if (id < npost)
+                        synEnv.print("if ($(id) < npost)");
+                        synEnv.getStream() << CodeStream::OB(140);
+
+                        if(vectorSparseInd) {
+                            synEnv.add(Type::Uint32.addConst(), "id_post", "ipost");
+                        }
+                        else {
+                            synEnv.add(Type::Uint32.addConst(), "id_post", "ipost",
+                                       {synEnv.addInitialiser("const unsigned int ipost = $(_ind)[$(id_syn)];")});
+                        }
+                    }
+                    else { // DENSE
+                        synEnv.add(Type::Uint32.addConst(), "id_post", "$(id)");
+                    }
+        
+                    // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
+                    synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay",
+                            backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
+                    
+                    // If we should accumulate in register, add parameter to register
+                    if(shouldAccumulateInRegister(sg)) {
+                        synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "linSyn += ($(0))");
+                    }
+                    // Otherwise, if we should use shared memory, add to shared memory
+                    // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
+                    else if(isSmallSharedMemoryPop(sg, backend)) {
+                        synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "$(_sh_out_post)[$(id_post)] += ($(0))");
+                    }
+                    // Otherwise, use global memory atomic
+                    else {
+                        synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost",
+                                backend.getAtomic(sg.getScalarType()) + "(&$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
+                    }
+
+                    // Add presynaptic output to local variable
+                    synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "lOutPre += ($(0))");
+
+                    if(trueSpike) {
+                        sg.generateSpikeUpdate(backend, synEnv, batchSize, dt);
+                    }
+                    else {
+                        sg.generateSpikeEventUpdate(backend, synEnv, batchSize, dt);
+                    }
+
+                    if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                        synEnv.getStream() << CodeStream::CB(140); // end if (id < npost)
+                    }
                 }
             }
 
