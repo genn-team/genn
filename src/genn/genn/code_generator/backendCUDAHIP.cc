@@ -720,9 +720,9 @@ void BackendCUDAHIP::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerg
     // Generate data structure for accessing merged groups
     size_t totalConstMem = getChosenDeviceSafeConstMemBytes();
     genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedPresynapticUpdateGroups(),
-                                  [this](const SynapseGroupInternal &sg)
+                                  [&model, this](const SynapseGroupInternal &sg)
                                   {
-                                      return padKernelSize(getNumPresynapticUpdateThreads(sg), KernelPresynapticUpdate);
+                                      return padKernelSize(getNumPresynapticUpdateThreads(sg, model.getTypeContext()), KernelPresynapticUpdate);
                                   });
     genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedPostsynapticUpdateGroups(),
                                   [this](const SynapseGroupInternal &sg){ return padKernelSize(getNumPostsynapticUpdateThreads(sg), KernelPostsynapticUpdate); });

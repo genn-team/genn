@@ -199,7 +199,7 @@ public:
     size_t getPaddedNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const;
     size_t getPaddedNumCustomUpdateTransposeWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const;
 
-    size_t getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg) const;
+    size_t getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg, const Type::TypeContext &context) const;
     size_t getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg) const;
     size_t getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg) const;
     size_t getNumConnectivityInitThreads(const SynapseGroupInternal &sg) const;
@@ -520,7 +520,8 @@ private:
     void genRemap(EnvironmentExternalBase &env) const;
 
     // Get appropriate presynaptic update strategy to use for this synapse group
-    const PresynapticUpdateStrategySIMT::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const;
+    const PresynapticUpdateStrategySIMT::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg, 
+                                                                            const Type::TypeContext &typeContext) const;
 
     //--------------------------------------------------------------------------
     // Members

@@ -54,18 +54,18 @@ bool isPresynapticOutputRequired(const PresynapticUpdateGroupMerged &sg, bool tr
 //----------------------------------------------------------------------------
 namespace GeNN::CodeGenerator::PresynapticUpdateStrategySIMT
 {
-size_t PreSpan::getNumThreads(const SynapseGroupInternal &sg, const BackendSIMT&) const
+size_t PreSpan::getNumThreads(const SynapseGroupInternal &sg, const BackendSIMT&, const Type::TypeContext&) const
 {
     // Use specified number of threads for each presynaptic neuron
     return (size_t)sg.getSrcNeuronGroup()->getNumNeurons() * (size_t)sg.getNumThreadsPerSpike();
 }
 //----------------------------------------------------------------------------
-size_t PreSpan::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const BackendSIMT&) const
+size_t PreSpan::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const BackendSIMT&, const Type::TypeContext&) const
 {
     return sg.getMaxConnections();
 }
 //----------------------------------------------------------------------------
-bool PreSpan::isCompatible(const SynapseGroupInternal &sg, const BackendSIMT&) const
+bool PreSpan::isCompatible(const SynapseGroupInternal &sg, const BackendSIMT&, const Type::TypeContext&) const
 {
     // Presynaptic parallelism can be used when synapse groups request it and they have sparse connectivity
     return ((sg.getParallelismHint() == SynapseGroup::ParallelismHint::PRESYNAPTIC)
@@ -163,7 +163,7 @@ void PreSpan::genPostamble(EnvironmentExternalBase &, PresynapticUpdateGroupMerg
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::PresynapticUpdateStrategySIMT::PostSpan
 //----------------------------------------------------------------------------
-size_t PostSpan::getNumThreads(const SynapseGroupInternal &sg, const BackendSIMT&) const
+size_t PostSpan::getNumThreads(const SynapseGroupInternal &sg, const BackendSIMT&, const Type::TypeContext&) const
 {
     // **NOTE** we don't really care about extra padding i.e. stride here
     if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -174,7 +174,7 @@ size_t PostSpan::getNumThreads(const SynapseGroupInternal &sg, const BackendSIMT
     }
 }
 //----------------------------------------------------------------------------
-size_t PostSpan::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const BackendSIMT&) const
+size_t PostSpan::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const BackendSIMT&, const Type::TypeContext&) const
 {
     if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         return sg.getMaxConnections();
@@ -187,7 +187,7 @@ size_t PostSpan::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, cons
     }
 }
 //----------------------------------------------------------------------------
-bool PostSpan::isCompatible(const SynapseGroupInternal &sg, const BackendSIMT&) const
+bool PostSpan::isCompatible(const SynapseGroupInternal &sg, const BackendSIMT&, const Type::TypeContext&) const
 {
     // Postsynatic parallelism can be used when synapse groups request it
     return ((sg.getParallelismHint() == SynapseGroup::ParallelismHint::POSTSYNAPTIC)
@@ -389,36 +389,41 @@ bool PostSpan::shouldAccumulateInRegister(const PresynapticUpdateGroupMerged &sg
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::PresynapticUpdateStrategySIMT::PostSpan
 //----------------------------------------------------------------------------
-size_t PostSpanVectorised::getNumThreads(const SynapseGroupInternal &sg, const BackendSIMT&) const
+size_t PostSpanVectorised::getNumThreads(const SynapseGroupInternal &sg, const BackendSIMT &backend,
+                                         const Type::TypeContext &typeContext) const
 {
-    // **NOTE** we don't really care about extra padding i.e. stride here
-    if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        return sg.getMaxConnections();
-    }
-    else {
-        return sg.getTrgNeuronGroup()->getNumNeurons();
-    }
+    // Get vector width
+    const size_t vectorWidth = backend.getPresynapticUpdateVectorWidth(sg, typeContext);
+    assert(vectorWidth > 1);
+
+    // Pad max connections / num neurons to vector width
+    return padSize((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) 
+                   ? sg.getMaxConnections() : sg.getTrgNeuronGroup()->getNumNeurons(), 
+                   vectorWidth);
 }
 //----------------------------------------------------------------------------
-size_t PostSpanVectorised::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const BackendSIMT&) const
+size_t PostSpanVectorised::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const BackendSIMT &backend,
+                                                      const Type::TypeContext &typeContext) const
 {
-    if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        return sg.getMaxConnections();
-    }
-    else if(sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-        return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
-    }
-    else {
-        return sg.getTrgNeuronGroup()->getNumNeurons();
-    }
+    // Get vector width
+    const size_t vectorWidth = backend.getPresynapticUpdateVectorWidth(sg, typeContext);
+    assert(vectorWidth > 1);
+
+    // Pad max connections / num neurons to vector width
+    return padSize((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) 
+                   ? sg.getMaxConnections() : sg.getTrgNeuronGroup()->getNumNeurons(), 
+                   vectorWidth);
 }
 //----------------------------------------------------------------------------
-bool PostSpanVectorised::isCompatible(const SynapseGroupInternal &sg, const BackendSIMT&) const
+bool PostSpanVectorised::isCompatible(const SynapseGroupInternal &sg, const BackendSIMT &backend,
+                                      const Type::TypeContext &typeContext) const
 {
-    // Postsynatic parallelism can be used when synapse groups request it
-    return ((sg.getParallelismHint() == SynapseGroup::ParallelismHint::POSTSYNAPTIC)
-            && !(sg.getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL)
-            && !(sg.getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ));
+    // Postsynatic vectorised parallelism is used on SPARSE and DENSE 
+    // connectivity if synapse group is vectorisable and hint is towards postsynaptic parallelism
+    return ((backend.getPresynapticUpdateVectorWidth(sg, typeContext) > 1)
+            && (sg.getParallelismHint() == SynapseGroup::ParallelismHint::POSTSYNAPTIC)
+            && ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
+                || (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE)));
 }
 //----------------------------------------------------------------------------
 void PostSpanVectorised::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
@@ -496,16 +501,6 @@ void PostSpanVectorised::genUpdate(EnvironmentExternalBase &env, PresynapticUpda
                 const auto indexType = backend.getSynapseIndexType(sg);
                 const auto indexTypeName = indexType.getName();
 
-                if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    synEnv.printLine("const " + indexTypeName + " gid = ((" + indexTypeName + ")$(_sh_spk" +  eventSuffix + ")[j] * $(_row_stride)) + $(id);");
-                    
-                }
-
-                if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    synEnv.print("if($(_gp)[gid / 32] & (0x80000000 >> (gid & 31)))");
-                    synEnv.getStream() << CodeStream::OB(135);
-                }
-
                 synEnv.add(indexType.addConst(), "id_syn", "synAddress",
                            {synEnv.addInitialiser( "const " + indexTypeName + " synAddress = ((" + indexTypeName + ")$(_sh_spk" + eventSuffix + ")[j] * $(_row_stride)) + $(id);")});
 
@@ -552,10 +547,6 @@ void PostSpanVectorised::genUpdate(EnvironmentExternalBase &env, PresynapticUpda
 
                 if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     synEnv.getStream() << CodeStream::CB(140); // end if (id < npost)
-                }
-
-                if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    synEnv.getStream() << CodeStream::CB(135); // end if (B(dd_gp" << sg.getName() << "[gid / 32], gid
                 }
             }
 
@@ -610,24 +601,24 @@ bool PostSpanVectorised::shouldAccumulateInRegister(const PresynapticUpdateGroup
     // If no dendritic delays are required and data structure is dense, we can accumulate output directly into register
     const auto matrixType = sg.getArchetype().getMatrixType();
     return (!sg.getArchetype().isDendriticOutputDelayRequired()
-            && ((matrixType & SynapseMatrixConnectivity::DENSE) || (matrixType & SynapseMatrixConnectivity::BITMASK)));
+            && (matrixType & SynapseMatrixConnectivity::DENSE));
 }
 
 //--------------------------------------------------------------------------
 // GeNN::CodeGenerator::PresynapticUpdateStrategySIMT::PreSpanProcedural
 //--------------------------------------------------------------------------
-size_t PreSpanProcedural::getNumThreads(const SynapseGroupInternal &sg, const BackendSIMT&) const
+size_t PreSpanProcedural::getNumThreads(const SynapseGroupInternal &sg, const BackendSIMT&, const Type::TypeContext&) const
 {
     // Use specified number of threads for each presynaptic neuron
     return (size_t)sg.getSrcNeuronGroup()->getNumNeurons() * (size_t)sg.getNumThreadsPerSpike();
 }
 //----------------------------------------------------------------------------
-size_t PreSpanProcedural::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const BackendSIMT&) const
+size_t PreSpanProcedural::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const BackendSIMT&, const Type::TypeContext&) const
 {
     return sg.getMaxConnections();
 }
 //----------------------------------------------------------------------------
-bool PreSpanProcedural::isCompatible(const SynapseGroupInternal &sg, const BackendSIMT&) const
+bool PreSpanProcedural::isCompatible(const SynapseGroupInternal &sg, const BackendSIMT&, const Type::TypeContext&) const
 {
     // Presynaptic procedural parallelism can be used when synapse groups have 
     // procedural connectivity and there are either no variables or variables are PROCEDURAL or KERNEL
@@ -793,18 +784,18 @@ void PreSpanProcedural::genPostamble(EnvironmentExternalBase&, PresynapticUpdate
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanBitmask
 //----------------------------------------------------------------------------
-size_t PostSpanBitmask::getNumThreads(const SynapseGroupInternal &sg, const BackendSIMT&) const
+size_t PostSpanBitmask::getNumThreads(const SynapseGroupInternal &sg, const BackendSIMT&, const Type::TypeContext&) const
 {
     return ceilDivide(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
 }
 //----------------------------------------------------------------------------
-size_t PostSpanBitmask::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const BackendSIMT&) const
+size_t PostSpanBitmask::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const BackendSIMT&, const Type::TypeContext&) const
 {
     // Pad each row to a word boundary
     return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
 }
 //----------------------------------------------------------------------------
-bool PostSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const BackendSIMT&) const
+bool PostSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const BackendSIMT&, const Type::TypeContext&) const
 {
     // Postsynaptic bitmask parallelism can be used if bitmask optimisations are enabled and
     // if synapse groups with bitmask connectivity and no dendritic delays request postsynaptic parallelism
@@ -972,17 +963,17 @@ void PostSpanBitmask::genPostamble(EnvironmentExternalBase &env, PresynapticUpda
 //--------------------------------------------------------------------------
 // GeNN::CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanToeplitz
 //--------------------------------------------------------------------------
-size_t PostSpanToeplitz::getNumThreads(const SynapseGroupInternal &sg, const BackendSIMT&) const
+size_t PostSpanToeplitz::getNumThreads(const SynapseGroupInternal &sg, const BackendSIMT&, const Type::TypeContext&) const
 {
     return sg.getMaxConnections();
 }
 //----------------------------------------------------------------------------
-size_t PostSpanToeplitz::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const BackendSIMT&) const
+size_t PostSpanToeplitz::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const BackendSIMT&, const Type::TypeContext&) const
 {
     return sg.getMaxConnections();
 }
 //----------------------------------------------------------------------------
-bool PostSpanToeplitz::isCompatible(const SynapseGroupInternal &sg, const BackendSIMT&) const
+bool PostSpanToeplitz::isCompatible(const SynapseGroupInternal &sg, const BackendSIMT&, const Type::TypeContext&) const
 {
     return (sg.getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ);
 }
