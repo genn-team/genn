@@ -258,14 +258,14 @@ public:
 
     ~EnvironmentExternalDynamicBase()
     {
-        // Loop through initialisers
         std::vector<std::string> initialiserCode(m_Initialisers.size());
+        std::vector<std::string> finaliserCode(m_Finalisers.size());
 
-        // Because initialisers may refer to other initialisers, 
-        // keep evaluating initialisers until no new ones are founf
+        // Because initialisers and finalisers may refer to others, 
+        // keep evaluating them until no new ones are found
         bool anyReferences;
         do {
-            // Loop through initialiser
+            // Loop through initialisers
             anyReferences = false;
             for(size_t i = 0; i < m_Initialisers.size(); i++) {
                 // If initialiser has been referenced
@@ -276,6 +276,20 @@ public:
 
                     // Clear referenced flag and set flag to ensure another iteration occurs
                     initialiser.first = false;
+                    anyReferences = true;
+                }
+            }
+
+            // Loop through finalisers
+            for(size_t i = 0; i < m_Finalisers.size(); i++) {
+                // If finaliser has been referenced
+                auto &finaliser = m_Finalisers[i];
+                if (finaliser.first) {
+                    // Evaluate lazy string into vector
+                    finaliserCode[i] = finaliser.second.str();
+
+                    // Clear referenced flag and set flag to ensure another iteration occurs
+                    finaliser.first = false;
                     anyReferences = true;
                 }
             }
@@ -291,6 +305,14 @@ public:
         
         // Write contents to context stream
         getContextStream() << m_ContentsStream.str();
+
+        // Write out generated finaliser code
+        // **NOTE** in order
+        for(const auto &i : finaliserCode) {
+            if(!i.empty()) {
+                getContextStream() << i << std::endl;
+            }
+        }
     }
 
     //------------------------------------------------------------------------
@@ -310,10 +332,15 @@ public:
                 m_Initialisers.at(i).first = true;
             }
 
-            // Perform any type-specific logic to mark this identifier as required
-            this->setRequired(std::get<2>(env->second));
+            // If this identifier relies on any finaliser statements, mark these finalisers as required
+            for(size_t i : std::get<2>(env->second)) {
+                m_Finalisers.at(i).first = true;
+            }
 
-            return this->getNameInternal(std::get<2>(env->second));
+            // Perform any type-specific logic to mark this identifier as required
+            this->setRequired(std::get<3>(env->second));
+
+            return this->getNameInternal(std::get<3>(env->second));
         }
     }
 
@@ -336,8 +363,13 @@ public:
                 m_Initialisers.at(i).first = true;
             }
 
+            // If this identifier relies on any finaliser statements, mark these finalisers as required
+            for(size_t i : std::get<2>(env->second)) {
+                m_Finalisers.at(i).first = true;
+            }
+
             // Perform any type-specific logic to mark this identifier as required
-            this->setRequired(std::get<2>(env->second));
+            this->setRequired(std::get<3>(env->second));
 
             // Return type of variables
             return {std::get<0>(env->second)};
@@ -350,15 +382,21 @@ public:
         return (m_Initialisers.size() - 1);
     }
 
+    size_t addFinaliser(const std::string &format)
+    {
+        m_Finalisers.emplace_back(false, LazyString{format, *this});
+        return (m_Finalisers.size() - 1);
+    }
+
 protected:
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
     //! Map an identifier to a type (for type-checking), lists of initialisers and a payload 
     void addInternal(const GeNN::Type::ResolvedType &type, const std::string &name, const typename P::Payload &payload,
-                     const std::vector<size_t> &initialisers = {})
+                     const std::vector<size_t> &initialisers = {}, const std::vector<size_t> &finalisers = {})
     {
-        if(!m_Environment.try_emplace(name, type, initialisers, payload).second) {
+        if(!m_Environment.try_emplace(name, type, initialisers, finalisers, payload).second) {
             throw std::runtime_error("Redeclaration of '" + std::string{name} + "'");
         }
     }
@@ -370,8 +408,9 @@ private:
     std::ostringstream m_ContentsStream;
     CodeStream m_Contents;
 
-    std::unordered_map<std::string, std::tuple<Type::ResolvedType, std::vector<size_t>, typename P::Payload>> m_Environment;
+    std::unordered_map<std::string, std::tuple<Type::ResolvedType, std::vector<size_t>, std::vector<size_t>, typename P::Payload>> m_Environment;
     std::vector<std::pair<bool, LazyString>> m_Initialisers;
+    std::vector<std::pair<bool, LazyString>> m_Finalisers;
 };
 
 //----------------------------------------------------------------------------
@@ -389,9 +428,10 @@ public:
     //------------------------------------------------------------------------
     //! Map a type (for type-checking) and a value (for pretty-printing) to an identifier
     void add(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &value,
-             const std::vector<size_t> &initialisers = {})
+             const std::vector<size_t> &initialisers = {}, const std::vector<size_t> &finalisers = {})
     {
-        addInternal(type, name, LazyString{value, *this}, initialisers);
+        addInternal(type, name, LazyString{value, *this}, 
+                    initialisers, finalisers);
     }
 };
 
@@ -433,9 +473,10 @@ public:
     //------------------------------------------------------------------------
     //! Map a type and a value to an identifier
     void add(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &value,
-             const std::vector<size_t> &initialisers = {})
+             const std::vector<size_t> &initialisers = {}, const std::vector<size_t> &finalisers = {})
     {
-        this->addInternal(type, name, std::make_tuple(false, LazyString{value, *this}, std::nullopt), initialisers);
+        this->addInternal(type, name, std::make_tuple(false, LazyString{value, *this}, std::nullopt), 
+                          initialisers, finalisers);
     }
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
@@ -472,7 +513,7 @@ public:
                   const GeNN::Type::ResolvedType &fieldType, const std::string &fieldName, 
                   GetFieldNonNumericValueFunc getFieldValue, const std::string &indexSuffix = "", 
                   GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD, 
-                  const std::vector<size_t> &initialisers = {})
+                  const std::vector<size_t> &initialisers = {}, const std::vector<size_t> &finalisers = {})
     {
         typename G::Field field{fieldName, fieldType, mergedFieldType,
                                 [getFieldValue](Runtime::Runtime &r, const GroupInternal &g, size_t i)
@@ -482,7 +523,7 @@ public:
                                         getFieldValue(r, g, i));
                                 }};
         this->addInternal(type, name, std::make_tuple(false, LazyString{indexSuffix, *this}, std::make_optional(field)),
-                          initialisers);
+                          initialisers, finalisers);
     }
 
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
@@ -495,9 +536,11 @@ public:
     //! Map a type (for type-checking) and a group merged field to back it to an identifier
     void addField(const GeNN::Type::ResolvedType &type, const std::string &name, const std::string &fieldName, 
                   GetFieldNonNumericValueFunc getFieldValue, const std::string &indexSuffix = "", 
-                  GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD, const std::vector<size_t> &initialisers = {})
+                  GroupMergedFieldType mergedFieldType = GroupMergedFieldType::STANDARD, 
+                  const std::vector<size_t> &initialisers = {}, const std::vector<size_t> &finalisers = {})
     {
-         addField(type, name, type, fieldName, getFieldValue, indexSuffix, mergedFieldType, initialisers);
+         addField(type, name, type, fieldName, getFieldValue, indexSuffix, mergedFieldType,
+                  initialisers, finalisers);
     }
 
     void addParams(const Snippet::Base::ParamVec &params, const std::string &fieldSuffix, 
@@ -611,7 +654,7 @@ public:
     }
 
     template<typename I>
-    void addInitialiserDerivedParams(const std::string &fieldSuffix,  GetInitialiserFn<I> getInitialiser)
+    void addInitialiserDerivedParams(const std::string &fieldSuffix, GetInitialiserFn<I> getInitialiser)
     {
         // Loop through params
         const auto &initialiser = std::invoke(getInitialiser, this->getGroup().getArchetype());

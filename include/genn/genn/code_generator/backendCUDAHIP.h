@@ -58,10 +58,6 @@ public:
     {}
 
     //--------------------------------------------------------------------------
-    // Declared virtuals
-    //--------------------------------------------------------------------------
-    
-    //--------------------------------------------------------------------------
     // CodeGenerator::BackendSIMT virtuals
     //--------------------------------------------------------------------------
     //! Get the prefix to use for shared memory variables
@@ -87,15 +83,17 @@ public:
     //! For SIMT backends which initialize RNGs on device, initialize population RNG with specified seed and sequence
     virtual void genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const final;
 
-    //! Generate a preamble to add substitution name for population RNG
-    virtual std::string genPopulationRNGPreamble(CodeStream &os, const std::string &globalRNG) const final;
-
-    //! If required, generate a postamble for population RNG
-    /*! For example, in OpenCL, this is used to write local RNG state back to global memory*/
-    virtual void genPopulationRNGPostamble(CodeStream &os, const std::string &globalRNG) const final;
-
     //! Generate code to skip ahead local copy of global RNG
     virtual std::string genGlobalRNGSkipAhead(CodeStream &os, const std::string &sequence) const final;
+
+    //! Get type of population RNG
+    virtual Type::ResolvedType getPopulationRNGType() const final;
+
+    //! Generate a preamble to add substitution name for population RNG
+    virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env) const final;
+
+    //! Add $(_rng) to environment based on $(_rng_internal) field with any initialisers and destructors required
+    virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const final;
 
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
@@ -117,6 +115,10 @@ public:
     virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+
+    //! Create array of backend-specific population RNGs (if they are initialised on host this will occur here)
+    /*! \param count        number of RNGs required*/
+    virtual std::unique_ptr<GeNN::Runtime::ArrayBase> createPopulationRNG(size_t count) const final;
 
     //! Generate code for pushing a variable with a size known at runtime to the 'device'
     virtual void genLazyVariableDynamicPush(CodeStream &os, 
@@ -172,6 +174,9 @@ protected:
     //--------------------------------------------------------------------------
     //! Get the safe amount of constant cache we can use
     virtual size_t getChosenDeviceSafeConstMemBytes() const = 0;
+
+    //! Get internal type population RNG gets loaded into
+    virtual Type::ResolvedType getPopulationRNGInternalType() const = 0;
 
     //! Get library of RNG functions to use
     virtual const EnvironmentLibrary::Library &getRNGFunctions(const Type::ResolvedType &precision) const = 0;

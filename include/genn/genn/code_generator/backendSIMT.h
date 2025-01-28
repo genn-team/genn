@@ -103,12 +103,11 @@ public:
     //! For SIMT backends which initialize RNGs on device, initialize population RNG with specified seed and sequence
     virtual void genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const = 0;
 
-    //! Generate a preamble to add substitution name for population RNG
-    virtual std::string genPopulationRNGPreamble(CodeStream &os, const std::string &globalRNG) const = 0;
+    //! Add $(_rng) to environment based on $(_rng_internal) field with any initialisers and destructors required
+    virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env) const = 0;
     
-    //! If required, generate a postamble for population RNG
-    /*! For example, in OpenCL, this is used to write local RNG state back to global memory*/
-    virtual void genPopulationRNGPostamble(CodeStream &os, const std::string &globalRNG) const = 0;
+    //! Add $(_rng) to environment based on $(_rng_internal) field with any initialisers and destructors required
+    virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const = 0;
 
     //! Generate code to skip ahead local copy of global RNG
     virtual std::string genGlobalRNGSkipAhead(CodeStream &os, const std::string &sequence) const = 0;

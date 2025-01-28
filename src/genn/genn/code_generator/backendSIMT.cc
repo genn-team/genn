@@ -496,15 +496,19 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             groupEnv.print("if($(id) < $(num_neurons))");
             {
                 CodeStream::Scope b(groupEnv.getStream());
+                EnvironmentGroupMergedField<NeuronUpdateGroupMerged> validEnv(groupEnv, ng);
 
                 // Add population RNG field
-                groupEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
+                validEnv.addField(getPopulationRNGType().createPointer(), "_rng_internal", "rng",
                                   [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rng"); },
                                   ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)"));
-                // **TODO** for OCL do genPopulationRNGPreamble(os, popSubs, "group->rng[" + ng.getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "$(id)") + "]") in initialiser
 
+                // Add population RNG to environment
+                buildPopulationRNGEnvironment(validEnv);
+
+                // Generate neuron update
                 ng.generateNeuronUpdate(
-                    *this, groupEnv, batchSize,
+                    *this, validEnv, batchSize,
                     // Emit true spikes
                     [&ng, this](EnvironmentExternalBase &env)
                     {
@@ -515,12 +519,6 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                     {
                         genEmitEvent(env, ng, sg.getIndex(), false);
                     });
-
-                // Copy local stream back to local
-                // **TODO** postamble for OCL
-                //if(ng.getArchetype().isSimRNGRequired()) {
-                //    genPopulationRNGPostamble(neuronEnv.getStream(), rng);
-                //}
             }
 
             genSharedMemBarrier(groupEnv.getStream());
@@ -1287,23 +1285,20 @@ void BackendSIMT::genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env
             groupEnv.print("if($(id) < $(num_pre))");
             {
                 CodeStream::Scope b(groupEnv.getStream());
+                EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> validEnv(groupEnv, cg);
 
                 // Configure substitutions
-                groupEnv.add(Type::Uint32.addConst(), "id_pre", "$(id)");
+                validEnv.add(Type::Uint32.addConst(), "id_pre", "$(id)");
                 
                 // Add population RNG field
-                groupEnv.addField(getPopulationRNGType().createPointer(), "_rng", "rng",
+                validEnv.addField(getPopulationRNGType().createPointer(), "_rng_internal", "rng",
                                   [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rowRNG"); },
                                   "$(id)");
-                // **TODO** for OCL do genPopulationRNGPreamble(os, popSubs, "$(id)") in initialiser
-
-
-                cg.generateUpdate(*this, groupEnv, modelMerged.getModel().getBatchSize());
                 
-                // Copy local stream back to local
-                /*if(Utils::isRNGRequired(cg.getArchetype().getRowUpdateCodeTokens())) {
-                    genPopulationRNGPostamble(groupEnv.getStream(), rng);
-                }*/
+                // Add population RNG to environment
+                buildPopulationRNGEnvironment(validEnv);
+
+                cg.generateUpdate(*this, validEnv, modelMerged.getModel().getBatchSize());
             }
         });
 }
