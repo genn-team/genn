@@ -275,9 +275,9 @@ size_t BackendSIMT::getPaddedNumCustomUpdateTransposeWUThreads(const CustomUpdat
     return numCopies * paddedNumPre * paddedNumPost / getKernelBlockSize(KernelCustomTransposeUpdate);
 }
 //--------------------------------------------------------------------------
-size_t BackendSIMT::getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const
+size_t BackendSIMT::getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg) const
 {
-    return getPresynapticUpdateStrategy(sg, preferences)->getNumThreads(sg);
+    return getPresynapticUpdateStrategy(sg)->getNumThreads(sg);
 }
 //--------------------------------------------------------------------------
 size_t BackendSIMT::getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg) const
@@ -897,7 +897,7 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
     idStart = 0;
     genParallelGroup<PresynapticUpdateGroupMerged>(
         kernelEnv, modelMerged, memorySpaces, idStart, &ModelSpecMerged::genMergedPresynapticUpdateGroups,
-        [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumPresynapticUpdateThreads(sg, getPreferences()), KernelPresynapticUpdate); },
+        [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumPresynapticUpdateThreads(sg), KernelPresynapticUpdate); },
         [&modelMerged, this](EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg)
         {
             EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(env, sg);
@@ -2166,13 +2166,12 @@ void BackendSIMT::genRemap(EnvironmentExternalBase &env) const
     env.printLine("$(_remap)[colMajorIndex] = idx;");
 }
 //--------------------------------------------------------------------------
-const PresynapticUpdateStrategySIMT::Base *BackendSIMT::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg,
-                                                                                     const PreferencesBase &preferences)
+const PresynapticUpdateStrategySIMT::Base *BackendSIMT::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const
 {
     // Loop through presynaptic update strategies until we find one that is compatible with this synapse group
     // **NOTE** this is done backwards so that user-registered strategies get first priority
     for(auto s = s_PresynapticUpdateStrategies.rbegin(); s != s_PresynapticUpdateStrategies.rend(); ++s) {
-        if((*s)->isCompatible(sg, preferences)) {
+        if((*s)->isCompatible(sg, getPreferences())) {
             return *s;
         }
     }

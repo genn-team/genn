@@ -613,6 +613,9 @@ protected:
     //! Get std::map containing named CustomConnectivity objects in model
     const auto &getCustomConnectivityUpdates() const { return m_CustomConnectivityUpdates; }
 
+    //! Build set of custom update group names
+    std::set<std::string> getCustomUpdateGroupNames(bool includeTranspose = true, bool includeNonTranspose = true) const;
+
 private:
     //--------------------------------------------------------------------------
     // Private methods

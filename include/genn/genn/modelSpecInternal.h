@@ -27,6 +27,7 @@ public:
     using ModelSpec::zeroCopyInUse;
     using ModelSpec::isRecordingInUse;
     using ModelSpec::getHashDigest;
+    using ModelSpec::getCustomUpdateGroupNames;
     using ModelSpec::getTypeContext;
 };
 }   // namespace GeNN

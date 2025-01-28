@@ -724,7 +724,7 @@ void BackendCUDAHIP::genSynapseUpdate(CodeStream &os, FileStreamCreator, ModelSp
     genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedPresynapticUpdateGroups(),
                                   [this](const SynapseGroupInternal &sg)
                                   {
-                                      return padKernelSize(getNumPresynapticUpdateThreads(sg, getPreferences()), KernelPresynapticUpdate);
+                                      return padKernelSize(getNumPresynapticUpdateThreads(sg), KernelPresynapticUpdate);
                                   });
     genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedPostsynapticUpdateGroups(),
                                   [this](const SynapseGroupInternal &sg){ return padKernelSize(getNumPostsynapticUpdateThreads(sg), KernelPostsynapticUpdate); });
@@ -750,16 +750,7 @@ void BackendCUDAHIP::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpe
     EnvironmentLibrary customUpdateEnv(backendEnv, StandardLibrary::getMathsFunctions());
 
     // Build set containing union of all custom update group names
-    std::set<std::string> customUpdateGroups;
-    std::transform(model.getCustomUpdates().cbegin(), model.getCustomUpdates().cend(),
-                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
-                   [](const ModelSpec::CustomUpdateValueType &v) { return v.second.getUpdateGroupName(); });
-    std::transform(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
-                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
-                   [](const ModelSpec::CustomUpdateWUValueType &v) { return v.second.getUpdateGroupName(); });
-    std::transform(model.getCustomConnectivityUpdates().cbegin(), model.getCustomConnectivityUpdates().cend(),
-                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
-                   [](const ModelSpec::CustomConnectivityUpdateValueType &v) { return v.second.getUpdateGroupName(); });
+    const std::set<std::string> customUpdateGroups = model.getCustomUpdateGroupNames();
 
     // Generate data structure for accessing merged groups
     // **THINK** I don't think there was any need for these to be filtered

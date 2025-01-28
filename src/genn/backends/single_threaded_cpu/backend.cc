@@ -608,16 +608,7 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
     const ModelSpecInternal &model = modelMerged.getModel();
 
     // Build set containing names of all custom update groups
-    std::set<std::string> customUpdateGroups;
-    std::transform(model.getCustomUpdates().cbegin(), model.getCustomUpdates().cend(),
-                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
-                   [](const ModelSpec::CustomUpdateValueType &v) { return v.second.getUpdateGroupName(); });
-    std::transform(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
-                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
-                   [](const ModelSpec::CustomUpdateWUValueType &v) { return v.second.getUpdateGroupName(); });
-    std::transform(model.getCustomConnectivityUpdates().cbegin(), model.getCustomConnectivityUpdates().cend(),
-                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
-                   [](const ModelSpec::CustomConnectivityUpdateValueType &v) { return v.second.getUpdateGroupName(); });
+    const std::set<std::string> customUpdateGroups = model.getCustomUpdateGroupNames();
 
     // Generate stream with custom update code
     std::ostringstream customUpdateStream;

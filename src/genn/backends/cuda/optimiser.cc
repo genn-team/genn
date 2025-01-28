@@ -161,117 +161,80 @@ void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &
     }
 }
 //--------------------------------------------------------------------------
-void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInternal &model,
-                    std::vector<size_t> (&groupSizes)[KernelMax], std::set<std::string> &customUpdateKernels,
-                    std::set<std::string> &customTransposeUpdateKernels)
+template<typename G, typename C>
+void addGroupSizes(const std::vector<G> &mergedGroups, Kernel kernel, std::vector<size_t> (&groupSizes)[KernelMax],
+                   C getGroupSizeFn)
 {
-    // Loop through neuron groups
-    for(const auto &n : model.getNeuronGroups()) {
-        // Add number of neurons to vector of neuron kernels
-        groupSizes[KernelNeuronUpdate].push_back(model.getBatchSize() * n.second.getNumNeurons());
-
-        // Add number of neurons to initialisation kernel (all neuron groups at least require spike counts initialising)
-        groupSizes[KernelInitialize].push_back(n.second.getNumNeurons());
-
-        // If neuron group requires previous spike or spike-like-event times to be reset after update 
-        // i.e. in the pre-neuron reset kernel, add number of neurons to kernel
-        if(n.second.isPrevSpikeTimeRequired() || n.second.isPrevSpikeEventTimeRequired()) {
-            groupSizes[KernelNeuronPrevSpikeTimeUpdate].push_back((size_t)model.getBatchSize() * n.second.getNumNeurons());
+    // Loop through merged groups
+    for(const auto &mg : mergedGroups) {
+        // Loop through groups
+        for(const auto &g : mg.getGroups()) {
+            groupSizes[kernel].push_back(getGroupSizeFn(g.get()));
         }
     }
-
-    // Loop through custom updates, add size to vector of custom update groups and update group name to set
-    for(const auto &c : model.getCustomUpdates()) {
-        const size_t numCopies = ((c.second.getDims() & VarAccessDim::BATCH) && !c.second.isBatchReduction()) ? model.getBatchSize() : 1;
-        const size_t size = numCopies * (c.second.isNeuronReduction() ? 32 : c.second.getNumNeurons());
-
-        groupSizes[KernelCustomUpdate].push_back(size);
-        if(c.second.isVarInitRequired()) {
-            groupSizes[KernelInitialize].push_back(c.second.getNumNeurons());
-        }
-        customUpdateKernels.insert(c.second.getUpdateGroupName());
+}
+//--------------------------------------------------------------------------
+template<typename G>
+void addNumGroups(const std::vector<G> &mergedGroups, Kernel kernel, std::vector<size_t> (&groupSizes)[KernelMax])
+{
+    // Loop through merged groups
+    for(const auto &mg : mergedGroups) {
+        groupSizes[kernel].push_back(mg.getGroups().size());
     }
+}
+//--------------------------------------------------------------------------
+void calcGroupSizes(const CUDA::Backend &backend, const ModelSpecMerged &modelMerged,
+                    std::vector<size_t> (&groupSizes)[KernelMax])
+{
+    const auto &model = modelMerged.getModel();
 
-     // Loop through custom updates add size to vector of custom update groups and update group name to set
-    for(const auto &c : model.getCustomWUUpdates()) {
-        const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(c.second.getSynapseGroup());
-        if(c.second.isTransposeOperation()) {
-            const size_t numCopies = (c.second.getDims() & VarAccessDim::BATCH) ? model.getBatchSize() : 1;
-            const size_t size = numCopies * sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getTrgNeuronGroup()->getNumNeurons();
-            groupSizes[KernelCustomTransposeUpdate].push_back(size);
-            customTransposeUpdateKernels.insert(c.second.getUpdateGroupName());
-        }
-        else {
-            customUpdateKernels.insert(c.second.getUpdateGroupName());
+    // Add neurons
+    addGroupSizes(modelMerged.getMergedNeuronUpdateGroups(), KernelNeuronUpdate, groupSizes,
+                  [&backend, &model](const auto &g){ return model.getBatchSize() * backend.getPaddedNeuronUpdateThreads(g, model.getTypeContext()); });
+    addGroupSizes(modelMerged.getMergedNeuronInitGroups(), KernelInitialize, groupSizes,
+                  [](const auto &g){ return g.getNumNeurons(); });
+    addGroupSizes(modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups(), KernelNeuronPrevSpikeTimeUpdate, groupSizes,
+                  [&model](const auto &g){ return model.getBatchSize() * g.getNumNeurons(); });
+    addNumGroups(modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), KernelNeuronSpikeQueueUpdate, groupSizes);
+    
+    // Add custom updates
+    addGroupSizes(modelMerged.getMergedCustomUpdateGroups(), KernelCustomUpdate, groupSizes,
+                  [&backend, &model](const auto &g){ return backend.getPaddedNumCustomUpdateThreads(g, model.getBatchSize()); });
+    addGroupSizes(modelMerged.getMergedCustomUpdateInitGroups(), KernelInitialize, groupSizes,
+                  [](const auto &g){ return g.getNumNeurons(); });
 
-            const size_t numCopies = ((c.second.getDims() & VarAccessDim::BATCH) && !c.second.isBatchReduction()) ? model.getBatchSize() : 1;
-            if(sgInternal->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                groupSizes[KernelCustomUpdate].push_back(numCopies * sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getMaxConnections());
-            }
-            else {
-                groupSizes[KernelCustomUpdate].push_back(numCopies * sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getTrgNeuronGroup()->getNumNeurons());
-            }
-        }
+    // Add custom WU updates
+    addGroupSizes(modelMerged.getMergedCustomUpdateWUGroups(), KernelCustomUpdate, groupSizes,
+                  [&backend, &model](const auto &g){ return backend.getPaddedNumCustomUpdateWUThreads(g, model.getBatchSize()); });
+    addGroupSizes(modelMerged.getMergedCustomUpdateTransposeWUGroups(), KernelCustomTransposeUpdate, groupSizes,
+                  [&backend, &model](const auto &g){ return backend.getPaddedNumCustomUpdateTransposeWUThreads(g, model.getBatchSize()); });
+    addGroupSizes(modelMerged.getMergedCustomWUUpdateInitGroups(), KernelInitialize, groupSizes,
+                  [&backend](const auto &g){ return backend.getNumInitThreads(g); });
+    addGroupSizes(modelMerged.getMergedCustomWUUpdateSparseInitGroups(), KernelInitializeSparse, groupSizes,
+                  [&backend](const auto &g){ return g.getSynapseGroup()->getMaxConnections(); });
+    
+    // Add custom connectivity updates
+    addGroupSizes(modelMerged.getMergedCustomConnectivityUpdateGroups(), KernelCustomUpdate, groupSizes,
+                  [](const auto &g){ return g.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); });
+    addGroupSizes(modelMerged.getMergedCustomConnectivityUpdatePreInitGroups(), KernelInitialize, groupSizes,
+                  [](const auto &g){ return g.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); });
+    addGroupSizes(modelMerged.getMergedCustomConnectivityUpdatePostInitGroups(), KernelInitialize, groupSizes,
+                  [](const auto &g){ return g.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); });
+    addGroupSizes(modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups(), KernelInitializeSparse, groupSizes,
+                  [](const auto &g){ return g.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons() * g.getSynapseGroup()->getMaxConnections(); });
 
-        if(c.second.isVarInitRequired()) {
-            if(sgInternal->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                groupSizes[KernelInitializeSparse].push_back(sgInternal->getMaxConnections());
-            }
-        }
-    }
-
-    for (const auto &c : model.getCustomConnectivityUpdates()) {
-        const auto *sg = c.second.getSynapseGroup();
-        groupSizes[KernelCustomUpdate].push_back(sg->getSrcNeuronGroup()->getNumNeurons());
-        if(c.second.isVarInitRequired()) {
-            groupSizes[KernelInitializeSparse].push_back(sg->getSrcNeuronGroup()->getNumNeurons() * sg->getMaxConnections());
-        }
-        if(c.second.isPreVarInitRequired()) {
-            groupSizes[KernelInitialize].push_back(sg->getSrcNeuronGroup()->getNumNeurons());
-        }
-        if(c.second.isPostVarInitRequired()) {
-            groupSizes[KernelInitialize].push_back(sg->getTrgNeuronGroup()->getNumNeurons());
-        }
-        customUpdateKernels.insert(c.second.getUpdateGroupName());
-    }
-
-    // Loop through synapse groups
-    size_t numPreSynapseResetGroups = 0;
-    for(const auto &s : model.getSynapseGroups()) {
-        if(s.second.isPreSpikeEventRequired() || s.second.isPreSpikeRequired()) {
-            groupSizes[KernelPresynapticUpdate].push_back(model.getBatchSize() * Backend::getNumPresynapticUpdateThreads(s.second, preferences));
-        }
-
-        if(s.second.isPostSpikeRequired() || s.second.isPostSpikeEventRequired()) {
-            groupSizes[KernelPostsynapticUpdate].push_back(model.getBatchSize() * Backend::getNumPostsynapticUpdateThreads(s.second));
-        }
-
-        if(!Utils::areTokensEmpty(s.second.getWUInitialiser().getSynapseDynamicsCodeTokens())) {
-            groupSizes[KernelSynapseDynamicsUpdate].push_back(model.getBatchSize() * Backend::getNumSynapseDynamicsThreads(s.second));
-        }
-
-        // If synapse group has individual weights and needs device initialisation
-        if((s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && s.second.isWUVarInitRequired()) {
-            const size_t numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
-            const size_t numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
-            // **FIXME**
-            if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                groupSizes[KernelInitializeSparse].push_back(numSrcNeurons);
-            }
-            else {
-                groupSizes[KernelInitialize].push_back(numSrcNeurons * numTrgNeurons);
-            }
-        }
-
-        // If this synapse group requires dendritic delay, it requires a pre-synapse reset
-        if(s.second.isDendriticOutputDelayRequired()) {
-            numPreSynapseResetGroups++;
-        }
-    }
-
-    // Add group sizes for reset kernels
-    groupSizes[KernelNeuronSpikeQueueUpdate].push_back(model.getNeuronGroups().size());
-    groupSizes[KernelSynapseDendriticDelayUpdate].push_back(numPreSynapseResetGroups);
+    // Add synapse groups
+    addGroupSizes(modelMerged.getMergedPresynapticUpdateGroups(), KernelPresynapticUpdate, groupSizes,
+                  [&backend, &model](const auto &g){ return model.getBatchSize() * backend.getNumPresynapticUpdateThreads(g); });
+    addGroupSizes(modelMerged.getMergedPostsynapticUpdateGroups(), KernelPostsynapticUpdate, groupSizes,
+                  [&backend, &model](const auto &g){ return model.getBatchSize() * backend.getNumPostsynapticUpdateThreads(g); });
+    addGroupSizes(modelMerged.getMergedSynapseDynamicsGroups(), KernelSynapseDynamicsUpdate, groupSizes,
+                  [&backend, &model](const auto &g){ return model.getBatchSize() * backend.getNumSynapseDynamicsThreads(g); });
+    addGroupSizes(modelMerged.getMergedSynapseInitGroups(), KernelInitialize, groupSizes,
+                  [&backend, &model](const auto &g){ return backend.getNumInitThreads(g); });
+    addGroupSizes(modelMerged.getMergedSynapseSparseInitGroups(), KernelInitializeSparse, groupSizes,
+                  [](const auto &g){ return g.getSrcNeuronGroup()->getNumNeurons(); });
+    addNumGroups(modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), KernelSynapseDendriticDelayUpdate, groupSizes);
 }
 //--------------------------------------------------------------------------
 void analyseModule(const Module &module, unsigned int r, CUcontext context, 
@@ -425,11 +388,9 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     // Select device
     cudaSetDevice(deviceID);
 
-    // Calculate model group sizes
-    std::set<std::string> customUpdateKernels;
-    std::set<std::string> customTransposeUpdateKernels;
-    std::vector<size_t> groupSizes[KernelMax];
-    calcGroupSizes(preferences, model, groupSizes, customUpdateKernels, customTransposeUpdateKernels);
+    // Get names of custom update kernels
+    const std::set<std::string> customUpdateKernels = model.getCustomUpdateGroupNames(false, true);
+    const std::set<std::string> customTransposeUpdateKernels = model.getCustomUpdateGroupNames(true, false);
 
     // Create CUDA drive API device and context for accessing kernel attributes
     CUdevice cuDevice;
@@ -461,9 +422,10 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     KernelOptimisationOutput kernelsToOptimise;
     std::mutex kernelsToOptimiseMutex;
 
-    // Do two repititions with different candidate kernel size
+    // Do two repetitions with different candidate kernel size
     const size_t warpSize = 32;
     const size_t repBlockSizes[2] = {warpSize, warpSize * 2};
+    std::vector<size_t> groupSizes[KernelMax];
     for(unsigned int r = 0; r < 2; r++) {
         LOGD_BACKEND  << "Generating code with block size:" << repBlockSizes[r];
 
@@ -475,6 +437,11 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
 
         // Create merged model
         ModelSpecMerged modelMerged(backend, model);
+
+        // Calculate group sizes for first block size
+        if(r == 0) {
+            calcGroupSizes(backend, modelMerged, groupSizes);
+        }
 
         // Get memory spaces available to this backend
         // **NOTE** Memory spaces are given out on a first-come, first-serve basis so subsequent groups are in preferential order
