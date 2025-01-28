@@ -71,7 +71,7 @@ std::vector<PresynapticUpdateStrategySIMT::Base*> BackendSIMT::s_PresynapticUpda
 //--------------------------------------------------------------------------
 size_t BackendSIMT::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const Type::TypeContext&) const
 {
-    return getPresynapticUpdateStrategy(sg)->getSynapticMatrixRowStride(sg);
+    return getPresynapticUpdateStrategy(sg)->getSynapticMatrixRowStride(sg, *this);
 }
 //--------------------------------------------------------------------------
 size_t BackendSIMT::getNeuronStride(const NeuronGroupInternal &ng, const Type::TypeContext &context) const
@@ -277,7 +277,7 @@ size_t BackendSIMT::getPaddedNumCustomUpdateTransposeWUThreads(const CustomUpdat
 //--------------------------------------------------------------------------
 size_t BackendSIMT::getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg) const
 {
-    return getPresynapticUpdateStrategy(sg)->getNumThreads(sg);
+    return getPresynapticUpdateStrategy(sg)->getNumThreads(sg, *this);
 }
 //--------------------------------------------------------------------------
 size_t BackendSIMT::getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg) const
@@ -2171,7 +2171,7 @@ const PresynapticUpdateStrategySIMT::Base *BackendSIMT::getPresynapticUpdateStra
     // Loop through presynaptic update strategies until we find one that is compatible with this synapse group
     // **NOTE** this is done backwards so that user-registered strategies get first priority
     for(auto s = s_PresynapticUpdateStrategies.rbegin(); s != s_PresynapticUpdateStrategies.rend(); ++s) {
-        if((*s)->isCompatible(sg, getPreferences())) {
+        if((*s)->isCompatible(sg, *this)) {
             return *s;
         }
     }
