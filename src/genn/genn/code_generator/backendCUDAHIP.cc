@@ -365,6 +365,28 @@ std::string BackendCUDAHIP::getVectorTypeName(const Type::ResolvedType &storageT
 
         return "nv_bfloat162";
     }
+    else if(storageType == Type::Uint16) {
+        if(vectorWidth == 2) {
+            return "ushort2";
+        }
+        else if(vectorWidth == 4) {
+            return "ushort4";
+        }
+        else {
+            throw std::runtime_error("Unsupported 'ushort' vector width " + std::to_string(vectorWidth));
+        }
+    }
+    else if(storageType == Type::Uint8) {
+        if(vectorWidth == 2) {
+            return "uchar2";
+        }
+        else if(vectorWidth == 4) {
+            return "uchar4";
+        }
+        else {
+            throw std::runtime_error("Unsupported 'uchar' vector width " + std::to_string(vectorWidth));
+        }
+    }
     else {
         throw std::runtime_error("Unsupported storage type '" + storageType.getName() + "'");
     }
@@ -386,8 +408,16 @@ std::string BackendCUDAHIP::getExtractVector(const Type::ResolvedType &type, con
         }
         else {
             throw std::runtime_error("Invalid lane for 16-bit vector '" + std::to_string(lane) + "'");
+        }   
+    }
+    else if((type == Type::Uint16 || type == Type::Uint8) && type == storageType) {
+        const char fields[] = "xyzw";
+        if(lane < 4) {
+            return "value." + std::string{fields[lane]};
         }
-        
+        else {
+            throw std::runtime_error("Invalid lane for " + type.getName() + " vector '" + std::to_string(lane) + "'");
+        }
     }
     else {
         throw std::runtime_error("Unsupported storage type '" + storageType.getName() + "'");
@@ -411,7 +441,28 @@ std::string BackendCUDAHIP::getRecombineVector(const Type::ResolvedType &type, c
         else {
             throw std::runtime_error("Unsupported storage type '" + storageType.getName() + "'");
         }
-        
+    }
+    else if(type == storageType && type == Type::Uint16) {
+        if(vectorWidth == 2) {
+            return "make_ushort2(" + valuePrefix + "_0, " + valuePrefix + "_1)";
+        }
+        else if(vectorWidth == 4) {
+            return "make_ushort4(" + valuePrefix + "_0, " + valuePrefix + "_1, " + valuePrefix + "_2, " + valuePrefix + "_3)";
+        }
+        else {
+            throw std::runtime_error("Unsupported vector width " + std::to_string(vectorWidth));
+        }
+    }
+    else if(type == storageType && type == Type::Uint8) {
+        if(vectorWidth == 2) {
+            return "make_uchar2(" + valuePrefix + "_0, " + valuePrefix + "_1)";
+        }
+        else if(vectorWidth == 4) {
+            return "make_uchar4(" + valuePrefix + "_0, " + valuePrefix + "_1, " + valuePrefix + "_2, " + valuePrefix + "_3)";
+        }
+        else {
+            throw std::runtime_error("Unsupported vector width " + std::to_string(vectorWidth));
+        }
     }
     else {
         throw std::runtime_error("Unsupported type '" + type.getName() + "'");
