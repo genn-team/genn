@@ -23,8 +23,6 @@ from pygenn import (create_current_source_model,
 # Neuron model which does nothing
 empty_neuron_model = create_neuron_model("empty")
 
-@pytest.mark.parametrize("backend, batch_size", [("single_threaded_cpu", 1), 
-                                                 ("cuda", 1), ("cuda", 5)])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_num(make_model, backend, precision, batch_size):
     # Models which set state variables to double one of the num_XXX variables

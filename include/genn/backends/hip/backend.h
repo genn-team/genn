@@ -11,15 +11,27 @@
 // Standard C includes
 #include <cassert>
 
-// CUDA includes
-#include <cuda.h>
-#include <cuda_runtime.h>
+// **YUCK** disable the myriad of warning produced by HIP NVIDIA backend
+#if defined(__HIP_PLATFORM_NVIDIA__) && defined(__GNUC__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+    #pragma GCC diagnostic ignored "-Wsign-compare"
+    #pragma GCC diagnostic ignored "-Wreturn-local-addr" 
+#endif
 
-#if __has_include(<nccl.h>)
+// HIP includes
+#include <hip/hip_runtime.h>
+
+#if defined(__HIP_PLATFORM_NVIDIA__) && defined(__GNUC__)
+    #pragma GCC diagnostic pop
+#endif
+
+/*#if __has_include(<hip/nccl.h>)
     #include <nccl.h>
 
     #define NCCL_AVAILABLE
-#endif
+#endif*/
 
 // GeNN includes
 #include "backendExport.h"
@@ -35,32 +47,11 @@ namespace filesystem
 }
 
 //--------------------------------------------------------------------------
-// GeNN::CodeGenerator::CUDA::DeviceSelectMethod
+// GeNN::CodeGenerator::HIP::Preferences
 //--------------------------------------------------------------------------
-namespace GeNN::CodeGenerator::CUDA
+namespace GeNN::CodeGenerator::HIP
 {
-//! Methods for selecting CUDA device
-enum class DeviceSelect
-{
-    OPTIMAL,        //!< Pick optimal device based on how well kernels can be simultaneously simulated and occupancy
-    MOST_MEMORY,    //!< Pick device with most global memory
-    MANUAL,         //!< Use device specified by user
-};
-
-//--------------------------------------------------------------------------
-// CodeGenerator::CUDA::BlockSizeSelect
-//--------------------------------------------------------------------------
-//! Methods for selecting CUDA kernel block size
-enum class BlockSizeSelect
-{
-    OCCUPANCY,  //!< Pick optimal blocksize for each kernel based on occupancy
-    MANUAL,     //!< Use block sizes specified by user
-};
-
-//--------------------------------------------------------------------------
-// CodeGenerator::CUDA::Preferences
-//--------------------------------------------------------------------------
-//! Preferences for CUDA backend
+//! Preferences for HIP backend
 struct Preferences : public PreferencesCUDAHIP
 {
     Preferences()
@@ -69,19 +60,19 @@ struct Preferences : public PreferencesCUDAHIP
     }
 
     //! Should PTX assembler information be displayed for each CUDA kernel during compilation?
-    bool showPtxInfo = false;
+    //bool showPtxInfo = false;
 
     //! Should line info be included in resultant executable for debugging/profiling purposes?
-    bool generateLineInfo = false;
+    //bool generateLineInfo = false;
 
     //! How to select GPU device
-    DeviceSelect deviceSelectMethod = DeviceSelect::MANUAL;
+    //DeviceSelect deviceSelectMethod = DeviceSelect::MANUAL;
 
     //! If device select method is set to DeviceSelect::MANUAL, id of device to use
     unsigned int manualDeviceID = 0;
 
     //! How to select CUDA blocksize
-    BlockSizeSelect blockSizeSelectMethod = BlockSizeSelect::OCCUPANCY;
+    //BlockSizeSelect blockSizeSelectMethod = BlockSizeSelect::OCCUPANCY;
 
     //! If block size select method is set to BlockSizeSelect::MANUAL, block size to use for each kernel
     KernelBlockSize manualBlockSizes;
@@ -92,12 +83,12 @@ struct Preferences : public PreferencesCUDAHIP
         additional constant cache, increase this */
     size_t constantCacheOverhead = 72 * 5;
 
-    //! NVCC compiler options for all GPU code
-    std::string userNvccFlags = "";
+    //! HIPCC compiler options for all GPU code
+    std::string userHipccFlags = "";
 
     void updateHash(boost::uuids::detail::sha1 &hash) const
     {
-        // Superclass 
+        // Superclass
         PreferencesCUDAHIP::updateHash(hash);
 
         // **NOTE** showPtxInfo, generateLineInfo and userNvccFlags only affect makefiles/msbuild 
@@ -105,13 +96,13 @@ struct Preferences : public PreferencesCUDAHIP
         // **NOTE** while device selection is also not relevant as the chosen device is hashed in the backend, DeviceSelect::MANUAL_OVERRIDE is used in the backend
 
         //! Update hash with preferences
-        Utils::updateHash(deviceSelectMethod, hash);
+        //Utils::updateHash(deviceSelectMethod, hash);
         Utils::updateHash(constantCacheOverhead, hash);
     }
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::CUDA::Backend
+// CodeGenerator::HIP::Backend
 //--------------------------------------------------------------------------
 class BACKEND_EXPORT State : public Runtime::StateBase
 {
@@ -123,10 +114,10 @@ public:
     //------------------------------------------------------------------------
     //! To be called on one rank to generate ID before creating communicator
     void ncclGenerateUniqueID();
-    
+
     //! Get pointer to unique ID
     unsigned char *ncclGetUniqueID();
-    
+
     //! Get size of unique ID in bytes
     size_t ncclGetUniqueIDSize() const;
 
@@ -151,7 +142,7 @@ private:
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::CUDA::Backend
+// CodeGenerator::HIP::Backend
 //--------------------------------------------------------------------------
 class BACKEND_EXPORT Backend : public BackendCUDAHIP
 {
@@ -219,10 +210,10 @@ public:
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
-    const cudaDeviceProp &getChosenCUDADevice() const{ return m_ChosenDevice; }
+    const hipDeviceProp_t &getChosenHIPDevice() const{ return m_ChosenDevice; }
     int getChosenDeviceID() const{ return m_ChosenDeviceID; }
     int getRuntimeVersion() const{ return m_RuntimeVersion; }
-    std::string getNVCCFlags() const;
+    std::string getHIPCCFlags() const;
 
 protected:
     //--------------------------------------------------------------------------
@@ -239,14 +230,14 @@ protected:
 
     //! Generate HIP/CUDA specific bits of definitions preamble
     virtual void genDefinitionsPreambleInternal(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
-    
+
     virtual void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY = 1) const final;
 
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
     const int m_ChosenDeviceID;
-    cudaDeviceProp m_ChosenDevice;
+    hipDeviceProp_t m_ChosenDevice;
     int m_RuntimeVersion;
 };
 }   // GeNN::CUDA::CodeGenerator

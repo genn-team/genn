@@ -3,7 +3,7 @@
 // GeNN includes
 #include "backendExport.h"
 
-// OpenCL backend includes
+// CUDA backend includes
 #include "backend.h"
 
 // Forward declarations
@@ -19,11 +19,11 @@ class IAppender;
 
 
 //--------------------------------------------------------------------------
-// GeNN::CodeGenerator::OpenCL::Optimiser
+// GeNN::CodeGenerator::HIP::Optimiser
 //--------------------------------------------------------------------------
-namespace GeNN::CodeGenerator::OpenCL::Optimiser
+namespace GeNN::CodeGenerator::HIP::Optimiser
 {
 BACKEND_EXPORT Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath, 
                                      plog::Severity backendLevel, plog::IAppender *backendAppender, 
                                      const Preferences &preferences);
-}   // namespace GeNN::CodeGenerator::OpenCL::Optimiser
+}   // namespace GeNN::CodeGenerator::HIP::Optimiser

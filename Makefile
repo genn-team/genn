@@ -7,8 +7,8 @@ ifdef CUDA_PATH
 	BACKENDS	+=cuda_backend
 endif
 
-ifdef OPENCL_PATH
-	BACKENDS	+=opencl_backend
+ifdef HIP_PATH
+	BACKENDS	+=hip_backend
 endif
 
 # Build list of libraries
@@ -30,8 +30,8 @@ single_threaded_cpu_backend: genn
 cuda_backend: genn
 	$(MAKE) -C src/genn/backends/cuda
 
-opencl_backend: genn
-	$(MAKE) -C src/genn/backends/opencl
+hip_backend: genn
+	$(MAKE) -C src/genn/backends/hip
 
 clean:
 	@# Delete all objects, dependencies and coverage files if object directory exists

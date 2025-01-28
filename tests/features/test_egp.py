@@ -17,7 +17,6 @@ from pygenn import (create_current_source_model,
 # Neuron model which does nothing
 empty_neuron_model = create_neuron_model("empty")
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_egp_var_init(make_model, backend, precision):
     # Create var init snippet which fills variable with 10 repeated value
@@ -134,7 +133,6 @@ def test_egp_var_init(make_model, backend, precision):
     if not np.allclose(sparse_s_pop.vars["repeat"].values, tiled_correct):
         assert False, f"'{sparse_s_pop.name}' initialisation incorrect"
 
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_egp_ref(make_model, backend, precision):
     neuron_model = create_neuron_model(
