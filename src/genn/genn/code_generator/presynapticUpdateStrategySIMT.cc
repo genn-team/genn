@@ -396,10 +396,10 @@ size_t PostSpanVectorised::getNumThreads(const SynapseGroupInternal &sg, const B
     const size_t vectorWidth = backend.getPresynapticUpdateVectorWidth(sg, typeContext);
     assert(vectorWidth > 1);
 
-    // Pad max connections / num neurons to vector width
-    return padSize((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) 
-                   ? sg.getMaxConnections() : sg.getTrgNeuronGroup()->getNumNeurons(), 
-                   vectorWidth);
+    // Divide max connections / num neurons by vector width
+    return ceilDivide((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) 
+                      ? sg.getMaxConnections() : sg.getTrgNeuronGroup()->getNumNeurons(), 
+                      vectorWidth);
 }
 //----------------------------------------------------------------------------
 size_t PostSpanVectorised::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const BackendSIMT &backend,
@@ -422,7 +422,7 @@ bool PostSpanVectorised::isCompatible(const SynapseGroupInternal &sg, const Back
     // connectivity if synapse group is vectorisable and hint is towards postsynaptic parallelism
     return ((backend.getPresynapticUpdateVectorWidth(sg, typeContext) > 1)
             && (sg.getParallelismHint() == SynapseGroup::ParallelismHint::POSTSYNAPTIC)
-            && ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
+            && (((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && sg.getSparseIndType() != Type::Uint32)
                 || (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE)));
 }
 //----------------------------------------------------------------------------
@@ -517,13 +517,11 @@ void PostSpanVectorised::genUpdate(EnvironmentExternalBase &env, PresynapticUpda
                 idEnv.add(indexType.addConst(), "_id_syn_vec", "synAddressVec",
                           {idEnv.addInitialiser( "const " + indexTypeName + " synAddressVec = ((" + indexTypeName + ")$(_sh_spk" + eventSuffix + ")[j] * numVectors) + $(id);")});
 
-                // If connectivity is sparse and indeices are less than 32-bit
-                const auto &sparseIndType = sg.getArchetype().getSparseIndType();
-                const bool vectorSparseInd = ((sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) 
-                                              && sparseIndType != Type::Uint32);
-                if(vectorSparseInd) {
+                // If connectivity is sparse
+                if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     // Read vector of indices
                     // **TODO** this should really be a initialiser
+                    const auto &sparseIndType = sg.getArchetype().getSparseIndType();
                     const std::string sparseIndVecType = backend.getVectorTypeName(sparseIndType, vectorWidth);
                     idEnv.print("const " + sparseIndVecType + " ipostVec = ");
                     idEnv.printLine("reinterpret_cast<" + sparseIndVecType + "*>($(_ind))[$(_id_syn_vec)];");
@@ -535,9 +533,7 @@ void PostSpanVectorised::genUpdate(EnvironmentExternalBase &env, PresynapticUpda
                         idEnv.printLine(" = " + backend.getExtractVector(sparseIndType, sparseIndType,
                                                                           vectorWidth, i, "ipostVec") + ";");
                     }
-                }
 
-                if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     idEnv.printLine("const unsigned int npost = $(_sh_row_length)[j];");
                 }
 
@@ -571,13 +567,8 @@ void PostSpanVectorised::genUpdate(EnvironmentExternalBase &env, PresynapticUpda
                         synEnv.print("if ($(vid) < npost)");
                         synEnv.getStream() << CodeStream::OB(140);
 
-                        if(vectorSparseInd) {
-                            synEnv.add(Type::Uint32.addConst(), "id_post", "ipost_" + iStr);
-                        }
-                        else {
-                            synEnv.add(Type::Uint32.addConst(), "id_post", "ipost",
-                                       {synEnv.addInitialiser("const unsigned int ipost = $(_ind)[$(id_syn)];")});
-                        }
+                        // Alias id-post to correct vectorised version
+                        synEnv.add(Type::Uint32.addConst(), "id_post", "ipost_" + iStr);
                     }
                     // If this isn't first lane, add if statment to check we haven't overrun population
                     else {
