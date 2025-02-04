@@ -824,9 +824,9 @@ public:
     void addVectorLaneAliases(size_t lane)
     {
         // Loop through variables and add unhiding aliases
-        const A archetypeAdaptor(getGroup().getArchetype());
+        const A archetypeAdaptor(this->getGroup().getArchetype());
         for(const auto &v : archetypeAdaptor.getDefs()) {
-            const auto resolvedType = v.type.resolve(getGroup().getTypeContext());
+            const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
             const auto qualifiedType = (getVarAccessMode(v.access) & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
             add(qualifiedType, "_" + v.name, "$(_" + v.name + "_" + std::to_string(lane) + ")");
         }
