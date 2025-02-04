@@ -29,18 +29,6 @@ size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
             });
         });
 }
-//--------------------------------------------------------------------------
-template<typename A, typename G, typename F>
-void addVectorLaneAliases(EnvironmentGroupMergedField<G, F> &env, size_t lane)
-{
-    // Loop through variables and add unhiding aliases
-    const A archetypeAdaptor(env.getGroup().getArchetype());
-    for(const auto &v : archetypeAdaptor.getDefs()) {
-        const auto resolvedType = v.type.resolve(env.getGroup().getTypeContext());
-        const auto qualifiedType = (getVarAccessMode(v.access) & VarAccessModeAttribute::READ_ONLY) ? resolvedType.addConst() : resolvedType;
-        env.add(qualifiedType, "_" + v.name, "$(_" + v.name + "_" + std::to_string(lane) + ")");
-    }
-}
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -67,7 +55,8 @@ std::vector<PresynapticUpdateStrategySIMT::Base*> BackendSIMT::s_PresynapticUpda
     new PresynapticUpdateStrategySIMT::PostSpan,
     new PresynapticUpdateStrategySIMT::PreSpanProcedural,
     new PresynapticUpdateStrategySIMT::PostSpanBitmask,
-    new PresynapticUpdateStrategySIMT::PostSpanToeplitz};
+    new PresynapticUpdateStrategySIMT::PostSpanToeplitz,
+    new PresynapticUpdateStrategySIMT::PostSpanVectorised};
 //--------------------------------------------------------------------------
 size_t BackendSIMT::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const Type::TypeContext &context) const
 {
@@ -584,7 +573,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                         }
 
                         // Expose $(_XXX_i) variables as $(_XXX) to generic code
-                        addVectorLaneAliases<NeuronVarAdapter>(vecEnv, i);
+                        vecEnv.addVectorLaneAliases<NeuronVarAdapter>(i);
 
                         // Generate neuron update
                         ng.generateNeuronUpdate(
