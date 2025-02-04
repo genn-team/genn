@@ -676,7 +676,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
 
                         // If this isn't first lane, add if statment to check we haven't overrun spikes
                         if(i > 0) {
-                            groupEnv.print("if($(id) < $(_sh_spk_count)[0])");
+                            groupEnv.print("if(((" + getThreadID() + " * " + vectorWidthStr + ") + 1) < $(_sh_spk_count)[0])");
                             groupEnv.getStream() << CodeStream::OB(12);
                         }
 
@@ -752,7 +752,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
 
                             // If this isn't first lane, add if statment to check we haven't overrun spikes
                             if(i > 0) {
-                                env.print("if($(id) < " + shSpkEventCount + ")");
+                                env.print("if(((" + getThreadID() + " * " + vectorWidthStr + ") + 1) < " + shSpkEventCount + ")");
                                 env.getStream() << CodeStream::OB(12);
                             }
                             const std::string eventIndex = ((vectorWidth == 1) 
