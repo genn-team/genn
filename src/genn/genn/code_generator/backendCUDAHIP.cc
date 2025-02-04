@@ -413,7 +413,7 @@ std::string BackendCUDAHIP::getExtractVector(const Type::ResolvedType &type, con
     else if((type == Type::Uint16 || type == Type::Uint8) && type == storageType) {
         const char fields[] = "xyzw";
         if(lane < 4) {
-            return "value." + std::string{fields[lane]};
+            return value + "." + std::string{fields[lane]};
         }
         else {
             throw std::runtime_error("Invalid lane for " + type.getName() + " vector '" + std::to_string(lane) + "'");
