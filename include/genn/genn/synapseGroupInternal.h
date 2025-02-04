@@ -189,6 +189,8 @@ public:
 
     const SynapseGroup &getTarget() const{ return m_SG; }
 
+    std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const{ return std::nullopt; }
+
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 
 private:
