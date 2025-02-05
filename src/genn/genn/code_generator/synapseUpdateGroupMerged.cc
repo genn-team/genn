@@ -149,7 +149,7 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
     
     // If weights are individual, substitute variables for values stored in global memory
     if(wumVarsProvided) {
-        synEnv.addVarExposeAliases<SynapseWUVarAdapter>();
+        synEnv.template addVarExposeAliases<SynapseWUVarAdapter>();
     }
     else {
         if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
