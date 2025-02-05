@@ -262,7 +262,7 @@ void genInitWUVarCode(const BackendBase &backend, EnvironmentExternalBase &env, 
             varEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), var.name);
 
             // Add field for variable itself
-            varEnv.addField(resolvedType.createPointer(), "_value", var.name,
+            varEnv.addField(resolvedStorageType.createPointer(), "_value", var.name,
                             [var](const auto &runtime, const auto &g, size_t) 
                             { 
                                 return runtime.getArray(g, var.name); 
