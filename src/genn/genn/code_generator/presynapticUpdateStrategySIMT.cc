@@ -140,10 +140,10 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
             synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "lOutPre += ($(0))");
             
             if(trueSpike) {
-                sg.generateSpikeUpdate(backend, synEnv, batchSize, dt);
+                sg.generateSpikeUpdate(backend, synEnv, batchSize, dt, false);
             }
             else {
-                sg.generateSpikeEventUpdate(backend, synEnv, batchSize, dt);
+                sg.generateSpikeEventUpdate(backend, synEnv, batchSize, dt, false);
             }
             
         }
@@ -317,10 +317,10 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
                 synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "lOutPre += ($(0))");
 
                 if(trueSpike) {
-                    sg.generateSpikeUpdate(backend, synEnv, batchSize, dt);
+                    sg.generateSpikeUpdate(backend, synEnv, batchSize, dt, false);
                 }
                 else {
-                    sg.generateSpikeEventUpdate(backend, synEnv, batchSize, dt);
+                    sg.generateSpikeEventUpdate(backend, synEnv, batchSize, dt, false);
                 }
 
                 if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -606,10 +606,10 @@ void PostSpanVectorised::genUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "lOutPre += ($(0))");
 
                     if(trueSpike) {
-                        sg.generateSpikeUpdate(backend, synEnv, batchSize, dt);
+                        sg.generateSpikeUpdate(backend, synEnv, batchSize, dt, true);
                     }
                     else {
-                        sg.generateSpikeEventUpdate(backend, synEnv, batchSize, dt);
+                        sg.generateSpikeEventUpdate(backend, synEnv, batchSize, dt, true);
                     }
 
                     if((sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) || (i > 0)) {
@@ -793,10 +793,10 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
 
             // Generate spike update
             if(trueSpike) {
-                sg.generateSpikeUpdate(backend, preUpdateEnv, batchSize, dt);
+                sg.generateSpikeUpdate(backend, preUpdateEnv, batchSize, dt, false);
             }
             else {
-                sg.generateSpikeEventUpdate(backend, preUpdateEnv, batchSize, dt);
+                sg.generateSpikeEventUpdate(backend, preUpdateEnv, batchSize, dt, false);
             }
         }
 
@@ -973,10 +973,10 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
                     postEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "lOutPre += ($(0))");
 
                     if(trueSpike) {
-                        sg.generateSpikeUpdate(backend, postEnv, batchSize, dt);
+                        sg.generateSpikeUpdate(backend, postEnv, batchSize, dt, false);
                     }
                     else {
-                        sg.generateSpikeEventUpdate(backend, postEnv, batchSize, dt);
+                        sg.generateSpikeEventUpdate(backend, postEnv, batchSize, dt, false);
                     }
 
                     postEnv.getStream() << "ibit++;" << std::endl;
@@ -1111,10 +1111,10 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
 
         // Generate spike update
         if(trueSpike) {
-            sg.generateSpikeUpdate(backend, preUpdateEnv, 1, dt);
+            sg.generateSpikeUpdate(backend, preUpdateEnv, 1, dt, false);
         }
         else {
-            sg.generateSpikeEventUpdate(backend, preUpdateEnv, 1, dt);
+            sg.generateSpikeEventUpdate(backend, preUpdateEnv, 1, dt, false);
         }
     }
 

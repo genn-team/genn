@@ -48,7 +48,7 @@ void addHeterogeneousDelayPostVarRefs(EnvironmentGroupMergedField<G> &env, const
 //--------------------------------------------------------------------------
 template<typename G>
 void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBase &env, const std::vector<Transpiler::Token> &tokens, const std::string &errorContext,
-                               G &sg, unsigned int batchSize, double dt)
+                               G &sg, unsigned int batchSize, double dt, bool wumVarsProvided)
 {
     const auto *wu = sg.getArchetype().getWUInitialiser().getSnippet();
 
@@ -148,65 +148,70 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
                {synEnv.addInitialiser("const " + timeStr + " prevSETPost = " + backPropDelayMs + " + $(_trg_prev_set)[" + prevPostSETIndex + "];")});
     
     // If weights are individual, substitute variables for values stored in global memory
-    if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-        synEnv.template addVars<SynapseWUVarAdapter>(
-            [&sg, batchSize](VarAccess a, const std::string&) 
-            { 
-                return sg.getSynVarIndex(batchSize, getVarAccessDim(a), "$(id_syn)");
-            });
+    if(wumVarsProvided) {
+        synEnv.addVarExposeAliases<SynapseWUVarAdapter>();
     }
-    // Otherwise, if weights are procedual
-    else if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
-        for(const auto &var : wu->getVars()) {
-            // If this variable has any initialisation code
-            const auto &varInit = sg.getArchetype().getWUInitialiser().getVarInitialisers().at(var.name);
-            if(!Utils::areTokensEmpty(varInit.getCodeTokens())) {
-                // Declare variable
-                const auto resolvedType = var.type.resolve(sg.getTypeContext());
-                synEnv.printLine(resolvedType.getName() + " _l" + var.name + ";");
-                {
-                    CodeStream::Scope b(synEnv.getStream());
+    else {
+        if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+            synEnv.template addVars<SynapseWUVarAdapter>(
+                [&sg, batchSize](VarAccess a, const std::string&) 
+                { 
+                    return sg.getSynVarIndex(batchSize, getVarAccessDim(a), "$(id_syn)");
+                });
+        }
+        // Otherwise, if weights are procedual
+        else if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
+            for(const auto &var : wu->getVars()) {
+                // If this variable has any initialisation code
+                const auto &varInit = sg.getArchetype().getWUInitialiser().getVarInitialisers().at(var.name);
+                if(!Utils::areTokensEmpty(varInit.getCodeTokens())) {
+                    // Declare variable
+                    const auto resolvedType = var.type.resolve(sg.getTypeContext());
+                    synEnv.printLine(resolvedType.getName() + " _l" + var.name + ";");
+                    {
+                        CodeStream::Scope b(synEnv.getStream());
 
-                    // Substitute in parameters and derived parameters for initialising variables
-                    // **THINK** synEnv has quite a lot of unwanted stuff at t
-                    EnvironmentGroupMergedField<G> varInitEnv(synEnv, sg);
-                    varInitEnv.template addVarInitParams<SynapseWUVarAdapter>(var.name);
-                    varInitEnv.template addVarInitDerivedParams<SynapseWUVarAdapter>(var.name);
-                    varInitEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), var.name);
+                        // Substitute in parameters and derived parameters for initialising variables
+                        // **THINK** synEnv has quite a lot of unwanted stuff at t
+                        EnvironmentGroupMergedField<G> varInitEnv(synEnv, sg);
+                        varInitEnv.template addVarInitParams<SynapseWUVarAdapter>(var.name);
+                        varInitEnv.template addVarInitDerivedParams<SynapseWUVarAdapter>(var.name);
+                        varInitEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), var.name);
 
-                    // Add read-write environment entry for variable
-                    varInitEnv.add(resolvedType, "value", "_l" + var.name);
+                        // Add read-write environment entry for variable
+                        varInitEnv.add(resolvedType, "value", "_l" + var.name);
 
-                    // Pretty print variable initialisation code
-                    Transpiler::ErrorHandler errorHandler("Synapse group '" + sg.getArchetype().getName() + "' variable '" + var.name + "' init code");
-                    prettyPrintStatements(varInit.getCodeTokens(), sg.getTypeContext(), varInitEnv, errorHandler);
+                        // Pretty print variable initialisation code
+                        Transpiler::ErrorHandler errorHandler("Synapse group '" + sg.getArchetype().getName() + "' variable '" + var.name + "' init code");
+                        prettyPrintStatements(varInit.getCodeTokens(), sg.getTypeContext(), varInitEnv, errorHandler);
+                    }
+
+                    // Add read-only environment entry for variable
+                    synEnv.add(resolvedType.addConst(), var.name, "_l" + var.name);
                 }
-
-                // Add read-only environment entry for variable
-                synEnv.add(resolvedType.addConst(), var.name, "_l" + var.name);
             }
         }
-    }
-    // Otherwise, if weights are kernels, use kernel index to index into variables
-    else if(sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
-        assert(!sg.getArchetype().getKernelSize().empty());
+        // Otherwise, if weights are kernels, use kernel index to index into variables
+        else if(sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
+            assert(!sg.getArchetype().getKernelSize().empty());
 
-        // Add hidden fields with pointers to weight update model variables
-        synEnv.template addVarPointers<SynapseWUVarAdapter>("", true);
+            // Add hidden fields with pointers to weight update model variables
+            synEnv.template addVarPointers<SynapseWUVarAdapter>("", true);
 
-        // Loop through weight update model variables
-        for(const auto &v : sg.getArchetype().getWUInitialiser().getSnippet()->getVars()) {
-            // Resolve types
-            const auto resolvedType = v.type.resolve(sg.getTypeContext());
+            // Loop through weight update model variables
+            for(const auto &v : sg.getArchetype().getWUInitialiser().getSnippet()->getVars()) {
+                // Resolve types
+                const auto resolvedType = v.type.resolve(sg.getTypeContext());
             
-            // Add read-only accessors to de-reference pointers
-            const std::string var = "$(_" + v.name + ")[" + sg.getKernelVarIndex(batchSize, getVarAccessDim(v.access), "$(id_kernel)") + "]";
-            synEnv.add(resolvedType.addConst(), v.name, var);
+                // Add read-only accessors to de-reference pointers
+                const std::string var = "$(_" + v.name + ")[" + sg.getKernelVarIndex(batchSize, getVarAccessDim(v.access), "$(id_kernel)") + "]";
+                synEnv.add(resolvedType.addConst(), v.name, var);
 
-            // If variable is read-write, also add function to add to it atomically
-            if(getVarAccessMode(v.access) & VarAccessModeAttribute::READ_WRITE) {
-                synEnv.add(Type::ResolvedType::createFunction(resolvedType, {resolvedType}), "atomic_add_" + v.name,
-                           backend.getAtomicOperation("&" + var, "$(0)", resolvedType));
+                // If variable is read-write, also add function to add to it atomically
+                if(getVarAccessMode(v.access) & VarAccessModeAttribute::READ_WRITE) {
+                    synEnv.add(Type::ResolvedType::createFunction(resolvedType, {resolvedType}), "atomic_add_" + v.name,
+                               backend.getAtomicOperation("&" + var, "$(0)", resolvedType));
+                }
             }
         }
     }
@@ -393,17 +398,17 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest() 
 const std::string PresynapticUpdateGroupMerged::name = "PresynapticUpdate";
 //----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
-                                                            unsigned int batchSize, double dt)
+                                                            unsigned int batchSize, double dt, bool wumVarsProvided)
 {
     applySynapseSubstitutions(backend, env, getArchetype().getWUInitialiser().getPreEventSynCodeTokens(), 
-                              "presynaptic event code", *this, batchSize, dt);
+                              "presynaptic event code", *this, batchSize, dt, wumVarsProvided);
 }
 //----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
-                                                       unsigned int batchSize, double dt)
+                                                       unsigned int batchSize, double dt, bool wumVarsProvided)
 {
     applySynapseSubstitutions(backend, env, getArchetype().getWUInitialiser().getPreSpikeSynCodeTokens(),
-                              "sim code", *this, batchSize, dt);
+                              "sim code", *this, batchSize, dt, wumVarsProvided);
 }
 //----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateProceduralConnectivity(EnvironmentExternalBase &env)
@@ -449,14 +454,14 @@ void PostsynapticUpdateGroupMerged::generateSpikeEventUpdate(const BackendBase &
                                                              unsigned int batchSize, double dt)
 {
     applySynapseSubstitutions(backend, env, getArchetype().getWUInitialiser().getPostEventSynCodeTokens(),
-                              "postsynaptic event code", *this, batchSize, dt);
+                              "postsynaptic event code", *this, batchSize, dt, false);
 }
 //----------------------------------------------------------------------------
 void PostsynapticUpdateGroupMerged::generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
                                                         unsigned int batchSize, double dt)
 {
     applySynapseSubstitutions(backend, env, getArchetype().getWUInitialiser().getPostSpikeSynCodeTokens(), 
-                              "learn post code", *this, batchSize, dt);
+                              "learn post code", *this, batchSize, dt, false);
 }
 
 //----------------------------------------------------------------------------
@@ -468,7 +473,7 @@ void SynapseDynamicsGroupMerged::generateSynapseUpdate(const BackendBase &backen
                                                        unsigned int batchSize, double dt)
 {
     applySynapseSubstitutions(backend, env, getArchetype().getWUInitialiser().getSynapseDynamicsCodeTokens(), 
-                              "synapse dynamics", *this, batchSize, dt);
+                              "synapse dynamics", *this, batchSize, dt, false);
 }
 
 

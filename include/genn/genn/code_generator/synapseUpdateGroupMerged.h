@@ -79,9 +79,9 @@ public:
     }
 
     void generateSpikeEventUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
-                                  unsigned int batchSize, double dt);
+                                  unsigned int batchSize, double dt, bool wumVarsProvided);
     void generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
-                             unsigned int batchSize, double dt);
+                             unsigned int batchSize, double dt, bool wumVarsProvided);
     void generateProceduralConnectivity(EnvironmentExternalBase &env);
     void generateToeplitzConnectivity(EnvironmentExternalBase &env,
                                       Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
