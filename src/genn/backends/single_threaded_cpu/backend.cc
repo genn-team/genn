@@ -1847,10 +1847,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
 
             // Generate spike update
             if(trueSpike) {
-                sg.generateSpikeUpdate(*this, preUpdateEnv, 1, dt);
+                sg.generateSpikeUpdate(*this, preUpdateEnv, 1, dt, false);
             }
             else {
-                sg.generateSpikeEventUpdate(*this, preUpdateEnv, 1, dt);
+                sg.generateSpikeEventUpdate(*this, preUpdateEnv, 1, dt, false);
             }
         }
 
@@ -1944,10 +1944,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
 
                     if(trueSpike) {
-                        sg.generateSpikeUpdate(*this, synEnv, 1, dt);
+                        sg.generateSpikeUpdate(*this, synEnv, 1, dt, false);
                     }
                     else {
-                        sg.generateSpikeEventUpdate(*this, synEnv, 1, dt);
+                        sg.generateSpikeEventUpdate(*this, synEnv, 1, dt, false);
                     }
                 }
             }
@@ -1996,10 +1996,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                         {
                             CodeStream::Scope b(env.getStream());
                             if(trueSpike) {
-                                sg.generateSpikeUpdate(*this, groupEnv, 1, dt);
+                                sg.generateSpikeUpdate(*this, groupEnv, 1, dt, false);
                             }
                             else {
-                                sg.generateSpikeEventUpdate(*this, groupEnv, 1, dt);
+                                sg.generateSpikeEventUpdate(*this, groupEnv, 1, dt, false);
                             }
                         }
 
@@ -2035,10 +2035,10 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     }
 
                     if(trueSpike) {
-                        sg.generateSpikeUpdate(*this, synEnv, 1, dt);
+                        sg.generateSpikeUpdate(*this, synEnv, 1, dt, false);
                     }
                     else {
-                        sg.generateSpikeEventUpdate(*this, synEnv, 1, dt);
+                        sg.generateSpikeEventUpdate(*this, synEnv, 1, dt, false);
                     }
 
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
