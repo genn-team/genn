@@ -573,7 +573,7 @@ void PostSpanVectorised::genUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     // If this isn't first lane, add if statment to check we haven't overrun population
                     else {
                         if(i > 0) {
-                            synEnv.print("if($(vid) < $(num_neurons))");
+                            synEnv.print("if($(vid) < $(num_post))");
                             synEnv.getStream() << CodeStream::OB(140);
                         }
 
@@ -639,16 +639,23 @@ void PostSpanVectorised::genPostamble(EnvironmentExternalBase &env, PresynapticU
     if(sg.getArchetype().isPostsynapticOutputRequired()) {
         // If we should accumulate output directly into register
         if(shouldAccumulateInRegister(sg)) {
+            // Get vector width
+            const size_t vectorWidth = backend.getPresynapticUpdateVectorWidth(sg.getArchetype(), sg.getTypeContext());
+            assert(vectorWidth > 1);
+ 
             env.getStream() << "// only do this for existing neurons" << std::endl;
-            env.print("if ($(id) < $(num_post))");
-            {
-                CodeStream::Scope b(env.getStream());
-                const std::string inSyn = printSubs("$(_out_post)[" + sg.getPostISynIndex(batchSize, "$(id)") + "]", env);
-                if(sg.getArchetype().isPSModelFused()) {
-                    env.getStream() << backend.getAtomic(sg.getScalarType()) << "(&" << inSyn << ", linSyn);" << std::endl;
-                }
-                else {
-                    env.getStream() << inSyn << " += linSyn;" << std::endl;
+            for(size_t i = 0; i < vectorWidth; i++) {            
+                const std::string index = "(($(id) * " + std::to_string(vectorWidth) + ") + " + std::to_string(i) + ")";
+                env.print("if(" + index + " < $(num_post))");
+                {
+                    CodeStream::Scope b(env.getStream());
+                    const std::string inSyn = printSubs("$(_out_post)[" + sg.getPostISynIndex(batchSize, index) + "]", env);
+                    if(sg.getArchetype().isPSModelFused()) {
+                        env.getStream() << backend.getAtomic(sg.getScalarType()) << "(&" << inSyn << ", linSyn_" << i << ");" << std::endl;
+                    }
+                    else {
+                        env.getStream() << inSyn << " += linSyn_" << i << ";" << std::endl;
+                    }
                 }
             }
         }
