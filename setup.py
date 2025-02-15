@@ -3,7 +3,7 @@ import sys
 from copy import deepcopy
 from platform import system, uname
 from psutil import cpu_count
-from shutil import copytree, rmtree
+from shutil import copytree, rmtree, which
 from subprocess import check_call
 from pybind11.setup_helpers import Pybind11Extension, build_ext, WIN, MACOS
 from setuptools import find_packages, setup
@@ -235,6 +235,30 @@ ext_modules = [
                       [os.path.join(pygenn_src, "weightUpdateModels.cc")],
                       **genn_extension_kwargs)]
 
+if WIN and build_genn_libs:
+    # Try import the helper to get Visual C++ environment from setuptools
+    # **NOTE** this was removed in version 74.0
+    try:
+        from setuptools.msvc import msvc14_get_vc_env as _get_vc_env
+    # If this fails, import from distutils
+    except ImportError:
+        from distutils._msvccompiler import _get_vc_env
+    
+    # Get environment and cache in class, convertings
+    # all keys to upper-case for consistency
+    msvc_env = _get_vc_env("x86_amd64")
+    msvc_env = {k.upper(): v for k, v in msvc_env.items()}
+    
+    # Update process's environment with this
+    # **NOTE** this handles both child processes (manually launching msbuild)
+    # and stuff within this process (running the code generator)
+    os.environ.update(msvc_env)
+    
+    # Find MSBuild in path
+    # **NOTE** we need to do this because setting the path via 
+    # check_call's env kwarg does not effect finding the executable
+    msbuild = which("msbuild",  path=msvc_env["PATH"])
+
 # Loop through namespaces of supported backends
 for module_stem, source_stem, kwargs in backends:
     # Take a copy of the standard extension kwargs
@@ -273,7 +297,7 @@ for module_stem, source_stem, kwargs in backends:
         if WIN:
             # **NOTE** ensure pygenn_path has trailing slash to make MSVC happy
             out_dir = os.path.join(pygenn_path, "")
-            check_call(["msbuild", "genn.sln", f"/t:{module_stem}_backend",
+            check_call([msbuild, "genn.sln", f"/t:{module_stem}_backend",
                         f"/p:Configuration={genn_lib_suffix[1:]}",
                         "/m", "/verbosity:quiet",
                         f"/p:OutDir={out_dir}"],
