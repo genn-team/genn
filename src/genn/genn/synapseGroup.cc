@@ -520,7 +520,7 @@ void SynapseGroup::finalise(double dt)
     m_SparseConnectivityInitialiser.finalise(dt);
     m_ToeplitzConnectivityInitialiser.finalise(dt);
 
-    // Determine whether any postsynaptic neuron variable references 
+    // Determine whether any postsynaptic neuron or PSM variable references 
     // are accessed with heterogeneous delays in synapse code
     bool heterogeneousVarDelay = std::any_of(getWUInitialiser().getPostNeuronVarReferences().cbegin(), 
                                              getWUInitialiser().getPostNeuronVarReferences().cend(),
@@ -528,6 +528,15 @@ void SynapseGroup::finalise(double dt)
                                              { 
                                                 return getWUInitialiser().isVarHeterogeneouslyDelayedInSynCode(v.first);
                                              });
+    heterogeneousVarDelay |= std::any_of(getWUInitialiser().getPSMVarReferences().cbegin(), 
+                                         getWUInitialiser().getPSMVarReferences().cend(),
+                                         [this](const auto &v)
+                                         { 
+                                             return getWUInitialiser().isVarHeterogeneouslyDelayedInSynCode(v.first);
+                                         });   
+    
+    // Determine whether any postsynaptic weight update model variables 
+    // are accesed with heterogeneous delays in synapse code
     for(const auto &v : getWUInitialiser().getSnippet()->getPostVars()) {
         if(getWUInitialiser().isVarHeterogeneouslyDelayedInSynCode(v.name)) {
             m_HeterogeneouslyDelayedWUPostVars.insert(v.name);
@@ -571,6 +580,21 @@ void SynapseGroup::finalise(double dt)
            || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getSynapseDynamicsCodeTokens()))
         {
             getTrgNeuronGroup()->setVarQueueRequired(v.second.getVarName());
+        }
+    }
+
+    // Loop through PSM variable references
+    for(const auto &v : getWUMPSMVarReferences()) {
+        // If variable reference is referenced in synapse code, mark variable 
+        // reference target as requiring queuing on target neuron group
+        // **NOTE** this will also detect delayed references
+        if(Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPreSpikeSynCodeTokens())
+           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPreEventSynCodeTokens())
+           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPostEventSynCodeTokens())
+           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getPostSpikeSynCodeTokens())
+           || Utils::isIdentifierReferenced(v.first, getWUInitialiser().getSynapseDynamicsCodeTokens()))
+        {
+            setPSMVarQueueRequired(v.second.getVarName());
         }
     }
 
@@ -1008,6 +1032,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest(const Neur
     Utils::updateHash(getPSInitialiser().getSnippet()->getHashDigest(), hash);
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
     Utils::updateHash(getPostTargetVar(), hash);
+    Utils::updateHash(m_PSMVarQueueRequired, hash);
     m_PSDynamicParams.updateHash(hash);
 
     // Loop through neuron variable references and update hash with 
@@ -1063,6 +1088,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSFuseHashDigest(const 
     Utils::updateHash(getPSInitialiser().getSnippet()->getHashDigest(), hash);
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
     Utils::updateHash(getPostTargetVar(), hash);
+    Utils::updateHash(m_PSMVarQueueRequired, hash);
     Utils::updateHash(getPSInitialiser().getParams(), hash);
     Utils::updateHash(getPSInitialiser().getDerivedParams(), hash);
     
@@ -1248,6 +1274,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSInitHashDigest(const 
 
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
+    Utils::updateHash(m_PSMVarQueueRequired, hash);
     Utils::updateHash(getPSInitialiser().getSnippet()->getVars(), hash);
 
     // Include postsynaptic model variable initialiser hashes

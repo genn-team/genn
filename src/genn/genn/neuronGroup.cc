@@ -557,11 +557,6 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getFusedOutSynWithPreVars() cons
     return vec;
 }
 //----------------------------------------------------------------------------
-bool NeuronGroup::isVarQueueRequired(const std::string &var) const
-{
-    return (m_VarQueueRequired.count(var) == 0) ? false : true;
-}
-//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
 {
     boost::uuids::detail::sha1 hash;

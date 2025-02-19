@@ -275,6 +275,9 @@ protected:
     void setFusedWUPrePostTarget(const NeuronGroup *ng, const SynapseGroup &target);
     void setFusedPreOutputTarget(const NeuronGroup *ng, const SynapseGroup &target);
     
+    // Set a variable as requiring queueing
+    void setPSMVarQueueRequired(const std::string &varName){ m_PSMVarQueueRequired.insert(varName); }
+
     void finalise(double dt);
 
     //! Add reference to custom connectivity update, referencing this synapse group
@@ -350,6 +353,8 @@ protected:
 
     //! Are any postsynaptic weight update model variable heterogeneously delayed?
     bool areAnyWUPostVarHeterogeneouslyDelayed() const;
+
+    bool isPSMVarQueueRequired(const std::string &var) const{ return (m_PSMVarQueueRequired.count(var) == 0) ? false : true; }
 
     //! Does this synapse group provide presynaptic output?
     bool isPresynapticOutputRequired() const; 
@@ -485,6 +490,9 @@ private:
 
     //! Maximum dendritic delay timesteps supported for synapses in this population
     std::optional<unsigned int> m_MaxDendriticDelayTimesteps;
+    
+    //! Set of names of PSM variable requiring queueing
+    std::set<std::string> m_PSMVarQueueRequired;
 
     //! Kernel size 
     std::vector<unsigned int> m_KernelSize;
