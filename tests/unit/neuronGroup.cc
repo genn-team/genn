@@ -719,8 +719,8 @@ TEST(NeuronGroup, FuseSpikeEvent)
     VarValues synVarVals2{{"g", 0.2}};
     ParamValues synParamVals1{{"VThresh", -50.0}};
     ParamValues synParamVals2{{"VThresh", -55.0}};
-    VarReferences synPreVarReferences1{{"V", createVarRef(pre, "V")}};
-    VarReferences synPreVarReferences2{{"V", createVarRef(pre, "U")}};
+    LocalVarReferences synPreVarReferences1{{"V", createVarRef(pre, "V")}};
+    LocalVarReferences synPreVarReferences2{{"V", "U"}};
  
     // Add baseline synapse population
     auto *sg0 = model.addSynapsePopulation(
