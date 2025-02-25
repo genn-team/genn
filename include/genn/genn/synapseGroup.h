@@ -354,7 +354,11 @@ protected:
     //! Are any postsynaptic weight update model variable heterogeneously delayed?
     bool areAnyWUPostVarHeterogeneouslyDelayed() const;
 
-    bool isPSMVarQueueRequired(const std::string &var) const{ return (m_PSMVarQueueRequired.count(var) == 0) ? false : true; }
+    //! Is the named postsynaptic  model variable heterogeneously delayed?
+    bool isPSMVarHeterogeneouslyDelayed(const std::string &var) const;
+
+    //! Is the named postsynaptic model variable referenced in synapse code?
+    bool isPSMVarQueueRequired(const std::string &var) const;
 
     //! Does this synapse group provide presynaptic output?
     bool isPresynapticOutputRequired() const; 
@@ -532,6 +536,10 @@ private:
     //! Set of names of postsynaptic weight update 
     //! model variables which are heterogeneously delayed
     std::set<std::string> m_HeterogeneouslyDelayedWUPostVars;
+
+    //! Set of names of postsynaptic model variables
+    //! which are heterogeneously delayed
+    std::set<std::string> m_HeterogeneouslyDelayedPSMVars;
     
     //! Location of individual per-synapse state variables.
     /*! This is ignored for simulations on hardware with a single memory space */

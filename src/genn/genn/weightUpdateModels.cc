@@ -183,6 +183,15 @@ bool Init::isVarHeterogeneouslyDelayedInSynCode(const std::string &name) const
             || Utils::isIdentifierDelayed(name, getSynapseDynamicsCodeTokens()));
 }
 //----------------------------------------------------------------------------
+bool Init::isVarReferencedInSynCode(const std::string &name) const
+{
+    return (Utils::isIdentifierReferenced(name, getPreSpikeSynCodeTokens())
+            || Utils::isIdentifierReferenced(name, getPreEventSynCodeTokens())
+            || Utils::isIdentifierReferenced(name, getPostEventSynCodeTokens())
+            || Utils::isIdentifierReferenced(name, getPostSpikeSynCodeTokens())
+            || Utils::isIdentifierReferenced(name, getSynapseDynamicsCodeTokens()));
+}
+//----------------------------------------------------------------------------
 void Init::finalise(double dt)
 {
     // Superclass
