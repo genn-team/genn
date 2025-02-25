@@ -48,7 +48,7 @@ post_event_weight_update_model = create_weight_update_model(
     
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
-@pytest.mark.parametrize("delay", [0])#, 20])
+@pytest.mark.parametrize("delay", [0, 20])
 @pytest.mark.parametrize("fuse", [False, True])
 def test_post_psm_var(make_model, backend, precision, delay, fuse):
     # Postsynaptic model which updates a state variable with time + per-neuron shift
