@@ -61,6 +61,7 @@ public:
     using SynapseGroup::isDendriticOutputDelayRequired;
     using SynapseGroup::isWUPostVarHeterogeneouslyDelayed;
     using SynapseGroup::areAnyWUPostVarHeterogeneouslyDelayed;
+    using SynapseGroup::isPSMVarHeterogeneouslyDelayed;
     using SynapseGroup::isPSMVarQueueRequired;
     using SynapseGroup::isPresynapticOutputRequired; 
     using SynapseGroup::isPostsynapticOutputRequired;
@@ -113,7 +114,11 @@ public:
 
     std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const
     {
-        if(m_SG.getBackPropDelaySteps() != 0 || m_SG.isWUPostVarHeterogeneouslyDelayed(varName)) {
+        // PSM variables are only delayed if they are referenced in synapse code and either
+        // there is a homogeneous backpropation delay or they are referenced with a heterogeneous delay
+        if(m_SG.isPSMVarQueueRequired(varName) 
+           && (m_SG.getBackPropDelaySteps() != 0 || m_SG.isPSMVarHeterogeneouslyDelayed(varName))) 
+        {
             return m_SG.getTrgNeuronGroup()->getNumDelaySlots();
         }
         else {

@@ -133,6 +133,13 @@ bool VarReference::isTargetSynapseGroupPSM(const SynapseGroupInternal *sg) const
             [](const auto&) { return false; }},
         m_Detail);
 }
+/*// PSM variables are only delayed if they are referenced in synapse code and either
+        // there is a homogeneous backpropation delay or they are referenced with a heterogeneous delay
+        if(m_SG.isPSMVarQueueRequired(varName) 
+           && (m_SG.getBackPropDelaySteps() != 0 || m_SG.isPSMVarHeterogeneouslyDelayed(varName))) 
+        {
+            return m_SG.getTrgNeuronGroup()->getNumDelaySlots();
+        }*/
 //----------------------------------------------------------------------------
 NeuronGroup *VarReference::getDelayNeuronGroup() const
 { 
@@ -148,6 +155,11 @@ NeuronGroup *VarReference::getDelayNeuronGroup() const
             [](const WUPostRef &ref)->NeuronGroup* {
                 return (ref.group->getBackPropDelaySteps() > 0 
                         || ref.group->getWUInitialiser().isVarHeterogeneouslyDelayedInSynCode(ref.var.name)) ? ref.group->getTrgNeuronGroup() : nullptr;
+            },
+            [](const PSMRef &ref)->NeuronGroup* {
+                return (ref.group->isPSMVarQueueRequired(ref.var.name)
+                        && (ref.group->getBackPropDelaySteps() > 0 
+                            || ref.group->isPSMVarHeterogeneouslyDelayed(ref.var.name))) ? ref.group->getTrgNeuronGroup() : nullptr;
             },
             [](const InternalNGRef &ref)->NeuronGroup* {
                 return ref.group->isSpikeQueueRequired() ? ref.group : nullptr;
