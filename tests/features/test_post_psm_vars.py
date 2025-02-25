@@ -45,6 +45,43 @@ post_event_weight_update_model = create_weight_update_model(
     """
     t >= (scalar)id && fmod(t - (scalar)id, 10.0) < 1e-4
     """)
+
+post_sim_delay_weight_update_model = create_weight_update_model(
+    "post_sim_delay_weight_update",
+    vars=[("w", "scalar")],
+    params=[("d", "int")],
+    psm_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
+
+    pre_spike_syn_code=
+    """
+    w = s[d];
+    """)
+
+post_learn_post_delay_weight_update_model = create_weight_update_model(
+    "post_learn_post_delay_weight_update",
+    vars=[("w", "scalar")],
+    params=[("d", "int")],
+    psm_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
+
+    post_spike_syn_code=
+    """
+    w = s[d];
+    """)
+
+post_event_delay_weight_update_model = create_weight_update_model(
+    "pre_sim_delay_weight_update",
+    vars=[("w", "scalar")],
+    params=[("d", "int")],
+    psm_var_refs=[("s", "scalar", VarAccessMode.READ_ONLY)],
+
+    pre_event_syn_code=
+    """
+    w = s[d];
+    """,
+    pre_event_threshold_condition_code=
+    """
+    t >= (scalar)id && fmod(t - (scalar)id, 10.0) < 1e-4
+    """)
     
 @pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
@@ -110,6 +147,31 @@ def test_post_psm_var(make_model, backend, precision, delay, fuse):
         init_sparse_connectivity("OneToOne"))
     s_post_event_sparse_pop.back_prop_delay_steps = delay
 
+    s_post_learn_post_sparse_delay_pop = model.add_synapse_population(
+        "PostLearnPostSparseDelaySynapses", "SPARSE",
+        post_n_pop, pre_n_pop,
+        init_weight_update(post_learn_post_delay_weight_update_model, {"d": delay}, {"w": float_min},
+                           psm_var_refs={"s": "s"}),
+        init_postsynaptic(pattern_postsynaptic_model, {}, {"s": float_min, "shift": shift}),
+        init_sparse_connectivity("OneToOne"))
+    s_post_learn_post_sparse_delay_pop.max_dendritic_delay_timesteps = delay + 1
+    s_post_sim_sparse_delay_pop = model.add_synapse_population(
+        "PostSimSparseDelaySynapses", "SPARSE",
+        pre_n_pop, post_n_pop,
+        init_weight_update(post_sim_delay_weight_update_model, {"d": delay}, {"w": float_min},
+                           psm_var_refs={"s": "s"}),
+        init_postsynaptic(pattern_postsynaptic_model, {}, {"s": float_min, "shift": shift}),
+        init_sparse_connectivity("OneToOne"))
+    s_post_sim_sparse_delay_pop.max_dendritic_delay_timesteps = delay + 1
+    s_post_event_sparse_delay_pop = model.add_synapse_population(
+        "PostEventSparseDelaySynapses", "SPARSE",
+        pre_n_pop, post_n_pop,
+        init_weight_update(post_event_delay_weight_update_model, {"d": delay}, {"w": float_min},
+                           psm_var_refs={"s": "s"}),
+        init_postsynaptic(pattern_postsynaptic_model, {}, {"s": float_min, "shift": shift}),
+        init_sparse_connectivity("OneToOne"))
+    s_post_event_sparse_delay_pop.max_dendritic_delay_timesteps = delay + 1
+
     # Build model and load
     model.build()
     model.load()
@@ -117,7 +179,10 @@ def test_post_psm_var(make_model, backend, precision, delay, fuse):
     # Pull all synaptic connectivity from device
     synapse_groups = [s_post_sim_sparse_pop, 
                       s_post_learn_post_sparse_pop,
-                      s_post_event_sparse_pop]
+                      s_post_event_sparse_pop,
+                      s_post_learn_post_sparse_delay_pop,
+                      s_post_sim_sparse_delay_pop,
+                      s_post_event_sparse_delay_pop]
     for s in synapse_groups:
         s.pull_connectivity_from_device()
     
