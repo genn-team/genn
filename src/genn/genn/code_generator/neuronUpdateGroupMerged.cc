@@ -119,9 +119,13 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     // Create an environment which caches variables in local variables if they are accessed
     EnvironmentLocalVarCache<SynapsePSMVarAdapter, InSynPSM, NeuronUpdateGroupMerged> varEnv(
         *this, ng, getTypeContext(), psmEnv, fieldSuffix, "l", false,
-        [batchSize, &ng](const std::string&, VarAccess d, bool)
+        [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
         {
-            return ng.getVarIndex(batchSize, getVarAccessDim(d), "$(id)");
+            return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
+        },
+        [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
+        {
+            return ng.getWriteVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)");
         });
 
     // Pretty print code back to environment
