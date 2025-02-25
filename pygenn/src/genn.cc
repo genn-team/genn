@@ -677,7 +677,9 @@ PYBIND11_MODULE(_genn, m)
         WRAP_METHOD("set_ps_var_location", SynapseGroup, setPSVarLocation)
         
         // **NOTE** we use the 'publicist' pattern to expose some protected methods
-        .def("_is_wu_post_var_heterogeneously_delayed", &SynapseGroupInternal::isWUPostVarHeterogeneouslyDelayed);
+        .def("_is_wu_post_var_heterogeneously_delayed", &SynapseGroupInternal::isWUPostVarHeterogeneouslyDelayed)
+        .def("_is_psm_var_heterogeneously_delayed", &SynapseGroupInternal::isPSMVarHeterogeneouslyDelayed)
+        .def("_is_psm_var_queue_required", &SynapseGroupInternal::isPSMVarQueueRequired);
         
     //------------------------------------------------------------------------
     // genn.NumericValue
