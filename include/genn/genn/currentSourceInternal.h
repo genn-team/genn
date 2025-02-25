@@ -15,8 +15,8 @@ public:
 
     CurrentSourceInternal(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
                           const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers,
-                          const std::map<std::string, Models::VarReference> &neuronVarReferences, const NeuronGroupInternal *targetNeuronGroup, 
-                          VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+                          const std::map<std::string, std::variant<std::string, Models::VarReference>> &neuronVarReferences, 
+                          NeuronGroupInternal *targetNeuronGroup, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   CurrentSource(name, currentSourceModel, params, varInitialisers, neuronVarReferences, 
                       targetNeuronGroup, defaultVarLocation, defaultExtraGlobalParamLocation)
     {

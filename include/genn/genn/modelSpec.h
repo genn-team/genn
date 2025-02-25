@@ -42,6 +42,7 @@ namespace GeNN
 {
 using VarValues = std::map<std::string, InitVarSnippet::Init>;
 using VarReferences = std::map<std::string, Models::VarReference>;
+using LocalVarReferences = std::map<std::string, std::variant<std::string, Models::VarReference>>;
 using WUVarReferences = std::map<std::string, Models::WUVarReference>;
 using EGPReferences = std::map<std::string, Models::EGPReference>;
 
@@ -100,7 +101,7 @@ inline InitToeplitzConnectivitySnippet::Init initToeplitzConnectivity(const Para
     \return                 PostsynapticModels::Init object for passing to ``ModelSpec::addSynapsePopulation``*/
 template<typename S>
 inline PostsynapticModels::Init initPostsynaptic(const ParamValues &params = {}, const VarValues &vars = {}, 
-                                                 const VarReferences &neuronVarRefs = {})
+                                                 const LocalVarReferences &neuronVarRefs = {})
 {
     return PostsynapticModels::Init(S::getInstance(), params, vars, neuronVarRefs);
 }
@@ -113,15 +114,17 @@ inline PostsynapticModels::Init initPostsynaptic(const ParamValues &params = {},
     \param postVars             postsynaptic variables for snippet wrapped in VarValues object.
     \param preNeuronVarRefs     presynaptic neuron variable references for snippet wrapped in VarReferences object.
     \param postNeuronVarRefs    postsynaptic neuron variable references for snippet wrapped in VarReferences object.
+    \param psmVarRefs           postsynaptic modelvariable references for snippet wrapped in VarReferences object.
     \return                     PostsynapticModels::Init object for passing to ``ModelSpec::addSynapsePopulation``*/
 template<typename S>
 inline WeightUpdateModels::Init initWeightUpdate(const ParamValues &params = {}, const VarValues &vars = {}, 
                                                  const VarValues &preVars = {}, const VarValues &postVars = {}, 
-                                                 const VarReferences &preNeuronVarRefs = {}, 
-                                                 const VarReferences &postNeuronVarRefs = {})
+                                                 const LocalVarReferences &preNeuronVarRefs = {}, 
+                                                 const LocalVarReferences &postNeuronVarRefs = {},
+                                                 const LocalVarReferences &psmVarRefs = {})
 {
     return WeightUpdateModels::Init(S::getInstance(), params, vars, preVars, postVars, 
-                                    preNeuronVarRefs, postNeuronVarRefs);
+                                    preNeuronVarRefs, postNeuronVarRefs, psmVarRefs);
 }
 
 //! Creates a reference to a neuron group variable.
@@ -441,7 +444,8 @@ public:
         \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
         \return pointer to newly created CurrentSource */
     CurrentSource *addCurrentSource(const std::string &currentSourceName, const CurrentSourceModels::Base *model, NeuronGroup *neuronGroup,
-                                    const ParamValues &paramValues = {}, const VarValues &varInitialisers = {}, const VarReferences &neuronVarReferences = {});
+                                    const ParamValues &paramValues = {}, const VarValues &varInitialisers = {},
+                                    const LocalVarReferences &neuronVarReferences = {});
 
     //! Adds a new current source to the model using a singleton current source model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
     /*! \tparam CurrentSourceModel type of neuron model (derived from CurrentSourceModel::Base).
@@ -453,7 +457,7 @@ public:
     template<typename CurrentSourceModel>
     CurrentSource *addCurrentSource(const std::string &currentSourceName, NeuronGroup *neuronGroup,
                                     const ParamValues &paramValues = {}, const VarValues &varInitialisers = {}, 
-                                    const VarReferences &neuronVarReferences = {})
+                                    const LocalVarReferences &neuronVarReferences = {})
     {
         return addCurrentSource(currentSourceName, CurrentSourceModel::getInstance(),
                                 neuronGroup, paramValues, varInitialisers, neuronVarReferences);

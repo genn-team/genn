@@ -125,6 +125,22 @@ bool VarReference::isTargetNeuronGroup(const NeuronGroupInternal *ng) const
         m_Detail);
 }
 //----------------------------------------------------------------------------
+bool VarReference::isTargetSynapseGroupPSM(const SynapseGroupInternal *sg) const
+{
+    return std::visit(
+        Utils::Overload{
+            [sg](const PSMRef &ref){ return (ref.group == sg); },
+            [](const auto&) { return false; }},
+        m_Detail);
+}
+/*// PSM variables are only delayed if they are referenced in synapse code and either
+        // there is a homogeneous backpropation delay or they are referenced with a heterogeneous delay
+        if(m_SG.isPSMVarQueueRequired(varName) 
+           && (m_SG.getBackPropDelaySteps() != 0 || m_SG.isPSMVarHeterogeneouslyDelayed(varName))) 
+        {
+            return m_SG.getTrgNeuronGroup()->getNumDelaySlots();
+        }*/
+//----------------------------------------------------------------------------
 NeuronGroup *VarReference::getDelayNeuronGroup() const
 { 
     return std::visit(
@@ -139,6 +155,11 @@ NeuronGroup *VarReference::getDelayNeuronGroup() const
             [](const WUPostRef &ref)->NeuronGroup* {
                 return (ref.group->getBackPropDelaySteps() > 0 
                         || ref.group->getWUInitialiser().isVarHeterogeneouslyDelayedInSynCode(ref.var.name)) ? ref.group->getTrgNeuronGroup() : nullptr;
+            },
+            [](const PSMRef &ref)->NeuronGroup* {
+                return (ref.group->isPSMVarQueueRequired(ref.var.name)
+                        && (ref.group->getBackPropDelaySteps() > 0 
+                            || ref.group->isPSMVarHeterogeneouslyDelayed(ref.var.name))) ? ref.group->getTrgNeuronGroup() : nullptr;
             },
             [](const InternalNGRef &ref)->NeuronGroup* {
                 return ref.group->isSpikeQueueRequired() ? ref.group : nullptr;
@@ -770,29 +791,6 @@ void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(e.name, hash);
     Type::updateHash(e.type, hash);
-}
-//----------------------------------------------------------------------------
-void checkLocalVarReferences(const std::map<std::string, VarReference> &varRefs, const Base::VarRefVec &modelVarRefs,
-                             const NeuronGroupInternal *ng, const std::string &targetErrorDescription)
-{
-    // Loop through all variable references
-    for(const auto &modelVarRef : modelVarRefs) {
-        const auto &varRef = varRefs.at(modelVarRef.name);
-
-        // If (neuron) variable being targetted doesn't have BATCH or ELEMENT axis,
-        // check it's only accessed read-only
-        const auto varDims = varRef.getVarDims();
-        if((!(varDims & VarAccessDim::BATCH) || !(varDims & VarAccessDim::ELEMENT))
-            && (modelVarRef.access != VarAccessMode::READ_ONLY))
-        {
-            throw std::runtime_error("Variable references to SHARED_NEURON or SHARED neuron variables cannot be read-write.");
-        }
-
-        // If variable reference target doesn't belong to neuron group, give error
-        if(!varRef.isTargetNeuronGroup(ng)) {
-            throw std::runtime_error(targetErrorDescription);
-        }
-    }
 }
 //----------------------------------------------------------------------------
 void checkEGPReferenceTypes(const std::map<std::string, EGPReference> &egpRefs,

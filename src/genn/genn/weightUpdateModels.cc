@@ -37,6 +37,7 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     Utils::updateHash(getPostVars(), hash);
     Utils::updateHash(getPreNeuronVarRefs(), hash);
     Utils::updateHash(getPostNeuronVarRefs(), hash);
+    Utils::updateHash(getPSMVarRefs(), hash);
 
     // Return digest
     return hash.get_digest();
@@ -94,6 +95,7 @@ boost::uuids::detail::sha1::digest_type Base::getPostEventHashDigest() const
     Utils::updateHash(getPostEventThresholdConditionCode(), hash);
     Utils::updateHash(getPostVars(), hash);
     Utils::updateHash(getPostNeuronVarRefs(), hash);
+    Utils::updateHash(getPSMVarRefs(), hash);
 
     // Return digest
     return hash.get_digest();
@@ -103,8 +105,9 @@ void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues
                     const std::map<std::string, InitVarSnippet::Init> &varValues,
                     const std::map<std::string, InitVarSnippet::Init> &preVarValues,
                     const std::map<std::string, InitVarSnippet::Init> &postVarValues,
-                    const std::map<std::string, Models::VarReference> &preVarRefTargets,
-                    const std::map<std::string, Models::VarReference> &postVarRefTargets) const
+                    const std::map<std::string, std::variant<std::string, Models::VarReference>> &preVarRefTargets,
+                    const std::map<std::string, std::variant<std::string, Models::VarReference>> &postVarRefTargets,
+                    const std::map<std::string, std::variant<std::string, Models::VarReference>> &psmVarRefTargets) const
 {
     // Superclass
     Snippet::Base::validate(paramValues, "Weight update model");
@@ -124,10 +127,13 @@ void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues
     // Validate variable reference initialisers
     const auto preVarRefs = getPreNeuronVarRefs();
     const auto postVarRefs = getPostNeuronVarRefs();
+    const auto psmVarRefs = getPSMVarRefs();
     Utils::validateVecNames(preVarRefs, "Presynaptic neuron variable reference");
     Utils::validateVecNames(postVarRefs, "Postsynaptic neuron variable reference");
+    Utils::validateVecNames(psmVarRefs, "Postsynaptic model variable reference");
     Utils::validateInitialisers(preVarRefs, preVarRefTargets, "Presynaptic neuron variable reference", "Weight update model");
-    Utils::validateInitialisers(postVarRefs, postVarRefTargets, "Postsyanptic neuron variable reference", "Weight update model");
+    Utils::validateInitialisers(postVarRefs, postVarRefTargets, "Postsynaptic neuron variable reference", "Weight update model");
+    Utils::validateInitialisers(psmVarRefs, psmVarRefTargets, "Postsynaptic model variable reference", "Weight update model");
 
     // Check if event-threshold condition code is provided, then event-handler is also provided
     if(getPreEventSynCode().empty() != getPreEventThresholdConditionCode().empty()) {
@@ -144,17 +150,15 @@ void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues
 //----------------------------------------------------------------------------
 Init::Init(const Base *snippet, const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers, 
            const std::map<std::string, InitVarSnippet::Init> &preVarInitialisers, const std::map<std::string, InitVarSnippet::Init> &postVarInitialisers,
-           const std::map<std::string, Models::VarReference> &preNeuronVarReferences, const std::map<std::string, Models::VarReference> &postNeuronVarReferences)
+           const std::map<std::string, std::variant<std::string, Models::VarReference>> &preNeuronVarReferences,
+           const std::map<std::string, std::variant<std::string, Models::VarReference>> &postNeuronVarReferences,
+           const std::map<std::string, std::variant<std::string, Models::VarReference>> &psmVarReferences)
 :   Snippet::Init<Base>(snippet, params), m_VarInitialisers(varInitialisers), m_PreVarInitialisers(preVarInitialisers), m_PostVarInitialisers(postVarInitialisers), 
-    m_PreNeuronVarReferences(preNeuronVarReferences), m_PostNeuronVarReferences(postNeuronVarReferences)
+    m_PreNeuronVarReferences(preNeuronVarReferences), m_PostNeuronVarReferences(postNeuronVarReferences), m_PSMVarReferences(psmVarReferences)
 {
     // Validate
     getSnippet()->validate(getParams(), getVarInitialisers(), getPreVarInitialisers(), getPostVarInitialisers(),
-                           getPreNeuronVarReferences(), getPostNeuronVarReferences());
-
-    // Check variable reference types
-    Models::checkVarReferenceTypes(getPreNeuronVarReferences(), getSnippet()->getPreNeuronVarRefs());
-    Models::checkVarReferenceTypes(getPostNeuronVarReferences(), getSnippet()->getPostNeuronVarRefs());
+                           getPreNeuronVarReferences(), getPostNeuronVarReferences(), getPSMVarReferences());
 
     // Scan code tokens
     m_PreSpikeSynCodeTokens = Utils::scanCode(getSnippet()->getPreSpikeSynCode(), "Weight update model presynaptic spike synaptic code");
@@ -177,6 +181,15 @@ bool Init::isVarHeterogeneouslyDelayedInSynCode(const std::string &name) const
             || Utils::isIdentifierDelayed(name, getPostEventSynCodeTokens())
             || Utils::isIdentifierDelayed(name, getPostSpikeSynCodeTokens())
             || Utils::isIdentifierDelayed(name, getSynapseDynamicsCodeTokens()));
+}
+//----------------------------------------------------------------------------
+bool Init::isVarReferencedInSynCode(const std::string &name) const
+{
+    return (Utils::isIdentifierReferenced(name, getPreSpikeSynCodeTokens())
+            || Utils::isIdentifierReferenced(name, getPreEventSynCodeTokens())
+            || Utils::isIdentifierReferenced(name, getPostEventSynCodeTokens())
+            || Utils::isIdentifierReferenced(name, getPostSpikeSynCodeTokens())
+            || Utils::isIdentifierReferenced(name, getSynapseDynamicsCodeTokens()));
 }
 //----------------------------------------------------------------------------
 void Init::finalise(double dt)

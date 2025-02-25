@@ -221,6 +221,7 @@ public:
     
     virtual std::vector<Models::Base::VarRef> getPreNeuronVarRefs() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::VarRef> , Base, "get_pre_neuron_var_refs", getPreNeuronVarRefs); }
     virtual std::vector<Models::Base::VarRef> getPostNeuronVarRefs() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::VarRef> , Base, "get_post_neuron_var_refs", getPostNeuronVarRefs); }
+    virtual std::vector<Models::Base::VarRef> getPSMVarRefs() const override { PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::VarRef> , Base, "get_psm_var_refs", getPSMVarRefs); }
 };
 
 const CodeGenerator::ModelSpecMerged *generateCode(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, 
@@ -453,7 +454,7 @@ PYBIND11_MODULE(_genn, m)
         .def("_add_current_source",  
              static_cast<CurrentSource* (ModelSpec::*)(
                 const std::string&, const CurrentSourceModels::Base*, NeuronGroup*, 
-                const ParamValues&, const VarValues&, const VarReferences&)>(&ModelSpec::addCurrentSource),
+                const ParamValues&, const VarValues&, const LocalVarReferences&)>(&ModelSpec::addCurrentSource),
             pybind11::return_value_policy::reference)
         .def("_add_custom_connectivity_update",  
              static_cast<CustomConnectivityUpdate* (ModelSpec::*)(
@@ -677,7 +678,9 @@ PYBIND11_MODULE(_genn, m)
         WRAP_METHOD("set_ps_var_location", SynapseGroup, setPSVarLocation)
         
         // **NOTE** we use the 'publicist' pattern to expose some protected methods
-        .def("_is_wu_post_var_heterogeneously_delayed", &SynapseGroupInternal::isWUPostVarHeterogeneouslyDelayed);
+        .def("_is_wu_post_var_heterogeneously_delayed", &SynapseGroupInternal::isWUPostVarHeterogeneouslyDelayed)
+        .def("_is_psm_var_heterogeneously_delayed", &SynapseGroupInternal::isPSMVarHeterogeneouslyDelayed)
+        .def("_is_psm_var_queue_required", &SynapseGroupInternal::isPSMVarQueueRequired);
         
     //------------------------------------------------------------------------
     // genn.NumericValue
@@ -933,7 +936,8 @@ PYBIND11_MODULE(_genn, m)
         WRAP_NS_METHOD("get_pre_vars", WeightUpdateModels, Base, getPreVars)
         WRAP_NS_METHOD("get_post_vars", WeightUpdateModels, Base, getPostVars)
         WRAP_NS_METHOD("get_pre_neuron_var_refs", WeightUpdateModels, Base, getPreNeuronVarRefs)
-        WRAP_NS_METHOD("get_post_neuron_var_refs", WeightUpdateModels, Base, getPostNeuronVarRefs);
+        WRAP_NS_METHOD("get_post_neuron_var_refs", WeightUpdateModels, Base, getPostNeuronVarRefs)
+        WRAP_NS_METHOD("get_psm_var_refs", WeightUpdateModels, Base, getPSMVarRefs);
 
     //------------------------------------------------------------------------
     // genn.SparseConnectivityInit
@@ -961,14 +965,14 @@ PYBIND11_MODULE(_genn, m)
     // genn.WeightUpdateInit
     //------------------------------------------------------------------------
     pybind11::class_<WeightUpdateModels::Init>(m, "WeightUpdateInit")
-        .def(pybind11::init<const WeightUpdateModels::Base*, const ParamValues&, const VarValues&, const VarValues&, const VarValues&, const VarReferences&, const VarReferences&>())
+        .def(pybind11::init<const WeightUpdateModels::Base*, const ParamValues&, const VarValues&, const VarValues&, const VarValues&, const LocalVarReferences&, const LocalVarReferences&, const LocalVarReferences&>())
         .def_property_readonly("snippet", &WeightUpdateModels::Init::getSnippet, pybind11::return_value_policy::reference);
     
     //------------------------------------------------------------------------
     // genn.PostsynapticInit
     //------------------------------------------------------------------------
     pybind11::class_<PostsynapticModels::Init>(m, "PostsynapticInit")
-        .def(pybind11::init<const PostsynapticModels::Base*, const ParamValues&, const VarValues&, const VarReferences&>())
+        .def(pybind11::init<const PostsynapticModels::Base*, const ParamValues&, const VarValues&, const LocalVarReferences&>())
         .def_property_readonly("snippet", &PostsynapticModels::Init::getSnippet, pybind11::return_value_policy::reference);
     
     //------------------------------------------------------------------------

@@ -186,6 +186,9 @@ public:
     
     //! Does this variable reference's target belong to neuron group
     bool isTargetNeuronGroup(const NeuronGroupInternal *ng) const;
+
+    //! Does this variable reference's target belong to synapse group postsynaptic model
+    bool isTargetSynapseGroupPSM(const SynapseGroupInternal *sg) const;
     
     //! If variable is delayed, get neuron group which manages its delay
     NeuronGroup *getDelayNeuronGroup() const;
@@ -485,8 +488,30 @@ GENN_EXPORT void updateHash(const Base::EGPRef &e, boost::uuids::detail::sha1 &h
 // Free functions
 //----------------------------------------------------------------------------
 //! Helper function to check if local variable references are configured correctly
-GENN_EXPORT void checkLocalVarReferences(const std::map<std::string, VarReference> &varRefs, const Base::VarRefVec &modelVarRefs,
-                                         const NeuronGroupInternal *ng, const std::string &targetErrorDescription);
+template<typename G>
+void checkLocalVarReferences(const std::map<std::string, VarReference> &varRefs, const Base::VarRefVec &modelVarRefs,
+                             const G *g, const std::string &targetErrorDescription, 
+                             bool (VarReference::*isTargetCorrectFn)(const G*) const)
+{
+    // Loop through all variable references
+    for(const auto &modelVarRef : modelVarRefs) {
+        const auto &varRef = varRefs.at(modelVarRef.name);
+
+        // If (neuron) variable being targetted doesn't have BATCH or ELEMENT axis,
+        // check it's only accessed read-only
+        const auto varDims = varRef.getVarDims();
+        if((!(varDims & VarAccessDim::BATCH) || !(varDims & VarAccessDim::ELEMENT))
+            && (modelVarRef.access != VarAccessMode::READ_ONLY))
+        {
+            throw std::runtime_error("Variable references to SHARED_NEURON or SHARED neuron variables cannot be read-write.");
+        }
+
+        // If variable reference target doesn't have correct target, give error
+        if(!std::invoke(isTargetCorrectFn, varRef, g)) {
+            throw std::runtime_error(targetErrorDescription);
+        }
+    }
+}
 //! Helper function to check if variable reference types match those specified in model
 template<typename V>
 void checkVarReferenceTypes(const std::map<std::string, V> &varRefs, const Base::VarRefVec &modelVarRefs)
@@ -503,6 +528,27 @@ void checkVarReferenceTypes(const std::map<std::string, V> &varRefs, const Base:
     }
 }
 
+//! Helper function to 'resolve' local variable references which may be specified with just a string
+template<typename G, typename C>
+void resolveVarReferences(const std::map<std::string, std::variant<std::string, VarReference>> &unresolvedVarRefs,
+                          std::map<std::string, VarReference> &varRefs, G *group, C createVarRef)
+{
+    // Loop through unresolved variable references
+    for(const auto &v : unresolvedVarRefs) {
+        varRefs.try_emplace(v.first,
+                            std::visit(
+                                Utils::Overload{
+                                    [createVarRef, group](const std::string &name)
+                                    {
+                                        return createVarRef(group, name);
+                                    },
+                                    [](const Models::VarReference &v)
+                                    {
+                                        return v;
+                                    }},
+                                v.second));
+    }
+}
 GENN_EXPORT void checkEGPReferenceTypes(const std::map<std::string, EGPReference> &egpRefs,
                                         const Base::EGPRefVec &modelEGPRefs);
 

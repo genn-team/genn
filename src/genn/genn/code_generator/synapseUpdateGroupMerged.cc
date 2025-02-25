@@ -14,6 +14,38 @@ using namespace GeNN::CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
+template<typename A, typename G>
+void addHeterogeneousDelayPostVarRefs(EnvironmentGroupMergedField<G> &env, const std::vector<Transpiler::Token> &tokens,
+                                      G &sg, unsigned int batchSize)
+{
+    // Loop through variable references
+    const A archetypeAdaptor(sg.getArchetype());
+    for(const auto &v : archetypeAdaptor.getDefs()) {
+        // If variable refernce is accessed with delay in synapse code tokens
+        const auto resolvedType = v.type.resolve(sg.getTypeContext());
+        const Models::VarReference &archetypeVarRef = archetypeAdaptor.getInitialisers().at(v.name);
+        if(Utils::isIdentifierDelayed(v.name, tokens)) {
+            env.addField(Type::getArraySubscript(resolvedType.addConst()), v.name,
+                         resolvedType.createPointer(), v.name,
+                         [v](auto &runtime, const auto &g, size_t) 
+                         { 
+                             return A(g).getInitialisers().at(v.name).getTargetArray(runtime); 
+                         },
+                         sg.getPostVarHetDelayIndex(batchSize, archetypeVarRef.getVarDims(), "$(id_post)"));
+        }
+        else {
+            env.addField(resolvedType.addConst(), v.name,
+                         resolvedType.createPointer(), v.name,
+                         [v](auto &runtime, const auto &g, size_t) 
+                         { 
+                             return A(g).getInitialisers().at(v.name).getTargetArray(runtime); 
+                         },
+                         sg.getPostVarIndex(archetypeVarRef.getDelayNeuronGroup() != nullptr, batchSize,
+                                            archetypeVarRef.getVarDims(), "$(id_post)"));
+        }
+    }
+}
+//--------------------------------------------------------------------------
 template<typename G>
 void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBase &env, const std::vector<Transpiler::Token> &tokens, const std::string &errorContext,
                                G &sg, unsigned int batchSize, double dt)
@@ -36,31 +68,9 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
         }, 
         "", true);
 
-    // Loop through referenced postsynaptic neuron variables
-    for(const auto &v : sg.getArchetype().getWUInitialiser().getSnippet()->getPostNeuronVarRefs()) {
-        // If variable refernce is accessed with delay in synapse code tokens
-        const auto resolvedType = v.type.resolve(sg.getTypeContext());
-        const Models::VarReference &archetypeVarRef = sg.getArchetype().getWUInitialiser().getPostNeuronVarReferences().at(v.name);
-        if(Utils::isIdentifierDelayed(v.name, tokens)) {
-            synEnv.addField(Type::getArraySubscript(resolvedType.addConst()), v.name,
-                            resolvedType.createPointer(), v.name,
-                            [v](auto &runtime, const auto &g, size_t) 
-                            { 
-                                return g.getWUInitialiser().getPostNeuronVarReferences().at(v.name).getTargetArray(runtime); 
-                            },
-                            sg.getPostVarHetDelayIndex(batchSize, archetypeVarRef.getVarDims(), "$(id_post)"));
-        }
-        else {
-            synEnv.addField(resolvedType.addConst(), v.name,
-                            resolvedType.createPointer(), v.name,
-                            [v](auto &runtime, const auto &g, size_t) 
-                            { 
-                                return g.getWUInitialiser().getPostNeuronVarReferences().at(v.name).getTargetArray(runtime); 
-                            },
-                            sg.getPostVarIndex(archetypeVarRef.getDelayNeuronGroup() != nullptr, batchSize,
-                                               archetypeVarRef.getVarDims(), "$(id_post)"));
-        }
-    }
+    // Add, potentially heterogeneously-delayed, references to postsynaptic model and neuron variables
+    addHeterogeneousDelayPostVarRefs<SynapseWUPostNeuronVarRefAdapter>(synEnv, tokens, sg, batchSize);
+    addHeterogeneousDelayPostVarRefs<SynapseWUPSMVarRefAdapter>(synEnv, tokens, sg, batchSize);
 
     // Substitute names of preynaptic weight update variables
     synEnv.template addVars<SynapseWUPreVarAdapter>(

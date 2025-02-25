@@ -358,7 +358,7 @@ class SynapseGroupMixin(GroupMixin):
         # Prepare postsynaptic model variables and EGPS
         ps_snippet = self.ps_initialiser.snippet
         self.psm_vars = _prepare_vars(ps_snippet.get_vars(),
-                                     ps_vars, self)
+                                      ps_vars, self)
         self.psm_extra_global_params = _prepare_egps(
             ps_snippet.get_extra_global_params(), self)
 
@@ -616,17 +616,20 @@ class SynapseGroupMixin(GroupMixin):
                 lambda v: (self.trg if self.back_prop_delay_steps > 0 
                            or self._is_wu_post_var_heterogeneously_delayed(v.name)
                            else None))
-        
+
         # If this synapse group's postsynaptic model hasn't been fused
         if not self._ps_model_fused:
             # Load postsynaptic update model variables
             self._load_vars(
                 self.ps_initialiser.snippet.get_vars(),
                 lambda v, d: _get_neuron_var_shape(
-                    get_var_access_dim(v.access),
-                    self.trg.num_neurons,
-                    self._model.batch_size),
-                self.psm_vars, self.get_ps_var_location)
+                    get_var_access_dim(v.access), self.trg.num_neurons,
+                    self._model.batch_size, d),
+                self.psm_vars, self.get_ps_var_location,
+                lambda v: (self.trg if self._is_psm_var_queue_required(v.name)
+                           and (self.back_prop_delay_steps > 0 
+                                or self._is_psm_var_heterogeneously_delayed(v.name))
+                           else None))
                 
             # If it's inSyn is accessible on the host
             if self.output_location & VarLocationAttribute.HOST:

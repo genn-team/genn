@@ -225,7 +225,7 @@ protected:
     //! Tokens produced by scanner from reset code
     const auto &getResetCodeTokens() const { return m_ResetCodeTokens; }
 
-    bool isVarQueueRequired(const std::string &var) const;
+    bool isVarQueueRequired(const std::string &var) const{ return (m_VarQueueRequired.count(var) == 0) ? false : true; }
 
     bool isSpikeQueueRequired() const{ return m_SpikeQueueRequired; }
 
