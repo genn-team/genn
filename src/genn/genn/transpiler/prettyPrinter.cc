@@ -1,17 +1,17 @@
 #include "transpiler/prettyPrinter.h"
 
-// Standard C++ includes
+/* Standard C++ includes */
 #include <fstream>
 #include <iostream>
 #include <iterator>
 #include <sstream>
 #include <stack>
 
-// GeNN code generator includes
+/* GeNN code generator includes */
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
 
-// Transpiler includes
+/* Transpiler includes */
 #include "transpiler/typeChecker.h"
 
 using namespace GeNN;
@@ -19,15 +19,11 @@ using namespace GeNN::CodeGenerator;
 using namespace GeNN::Transpiler;
 using namespace GeNN::Transpiler::PrettyPrinter;
 
-//---------------------------------------------------------------------------
-// Anonymous namespace
-//---------------------------------------------------------------------------
-
+/*---------------------------------------------------------------------------
+ Anonymous namespace
+---------------------------------------------------------------------------*/
 namespace
 {
-    //---------------------------------------------------------------------------
-    // EnvironmentCallArgument
-    //---------------------------------------------------------------------------
 
     class EnvironmentCallArgument : public EnvironmentBase
     {
@@ -37,9 +33,7 @@ namespace
         {
         }
 
-        //---------------------------------------------------------------------------
         // EnvironmentBase virtuals
-        //---------------------------------------------------------------------------
         virtual std::string define(const std::string &) final
         {
             throw std::runtime_error("Cannot declare variable in call environment");
@@ -55,26 +49,17 @@ namespace
             return m_CodeStream;
         }
 
-        //---------------------------------------------------------------------------
         // Public API
-        //---------------------------------------------------------------------------
         std::string getString() const
         {
             return m_Stream.str();
         }
 
     private:
-        //---------------------------------------------------------------------------
-        // Members
-        //---------------------------------------------------------------------------
         EnvironmentBase &m_Enclosing;
         std::ostringstream m_Stream;
         CodeStream m_CodeStream;
     };
-
-    //---------------------------------------------------------------------------
-    // Visitor
-    //---------------------------------------------------------------------------
 
     class Visitor : public Expression::Visitor, public Statement::Visitor
     {
@@ -98,13 +83,10 @@ namespace
             expression.get()->accept(*this);
         }
 
-    private:
-        //---------------------------------------------------------------------------
         // Expression::Visitor virtuals
-        //---------------------------------------------------------------------------
         virtual void visit(const Expression::ArraySubscript &arraySubscript) final
         {
-            // Cache reference to current reference
+            // Cache reference to current environment
             std::reference_wrapper<EnvironmentBase> oldEnvironment = m_Environment;
 
             // Create new call argument environment and set to current
@@ -124,8 +106,7 @@ namespace
             m_CallArguments.top().second.push_back(environment.getString());
 
             // Pretty print array
-            // **NOTE** like with Expression::Call, when this reaches an
-            // Expression::Identifier, the indexing will get created from m_CallArguments
+            // NOTE: when this reaches an Expression::Identifier, the indexing will be created from m_CallArguments
             arraySubscript.getArray()->accept(*this);
 
             // Pop stack
@@ -148,7 +129,7 @@ namespace
 
         virtual void visit(const Expression::Call &call) final
         {
-            // Cache reference to current reference
+            // Cache reference to current environment
             std::reference_wrapper<EnvironmentBase> oldEnvironment = m_Environment;
 
             // Loop through call arguments
@@ -251,7 +232,7 @@ namespace
             const auto &type = m_ResolvedTypes.at(&variable);
             std::string name = m_Environment.get().getName(variable.getName().lexeme, type);
 
-            // If identifier is function i.e. name is a function template
+            // If identifier is a function i.e. name is a function template
             if (type.isFunction())
             {
                 // Check that there are call arguments on the stack
@@ -263,14 +244,11 @@ namespace
                 {
                     // If name contains a $(i) placeholder to replace with this argument, replace with pretty-printed argument
                     const std::string placeholder = "$(" + std::to_string(i) + ")";
-
-                    // If placeholder isn't found at all, stop looking for arguments
                     size_t found = name.find(placeholder);
                     if (found == std::string::npos)
                     {
                         break;
                     }
-
                     // Keep replacing placeholders
                     do
                     {
@@ -286,29 +264,36 @@ namespace
                     const size_t found = name.find(variadicPlaceholder);
                     if (found != std::string::npos)
                     {
-                        std::ostringstream variadicArgumentsStream;
-                        // Only copy remaining arguments if there are any
-                        if (m_CallArguments.top().second.size() > i)
+                        // If no extra variadic arguments, remove the placeholder and preceding comma if present
+                        if (m_CallArguments.top().second.size() <= i)
                         {
-                            std::copy(m_CallArguments.top().second.cbegin() + i,
-                                      m_CallArguments.top().second.cend(),
+                            if (found > 0 && name[found - 1] == ',')
+                            {
+                                size_t remove_start = found - 1;
+                                size_t remove_len = variadicPlaceholder.length() + 1;
+                                name.erase(remove_start, remove_len);
+                            }
+                            else
+                            {
+                                name.erase(found, variadicPlaceholder.length());
+                            }
+                        }
+                        else
+                        {
+                            std::ostringstream variadicArgumentsStream;
+                            std::copy(m_CallArguments.top().second.cbegin() + i, m_CallArguments.top().second.cend(),
                                       std::ostream_iterator<std::string>(variadicArgumentsStream, ", "));
+                            std::string variadicArguments = variadicArgumentsStream.str();
+                            if (!variadicArguments.empty())
+                                variadicArguments.resize(variadicArguments.size() - 2);
+                            name.replace(found, variadicPlaceholder.length(), variadicArguments);
                         }
-                        std::string variadicArguments = variadicArgumentsStream.str();
-                        // If variadicArguments is not empty, remove the trailing comma and space.
-                        if (!variadicArguments.empty())
-                        {
-                            variadicArguments = variadicArguments.substr(0, variadicArguments.size() - 2);
-                        }
-                        name.replace(found, variadicPlaceholder.length(), variadicArguments);
                     }
                     else
                     {
-                        throw std::runtime_error("Variadic function template for '" +
-                                                 variable.getName().lexeme + "' (" + name + ") has "
-                                                                                            "insufficient placeholders for " +
-                                                 std::to_string(m_CallArguments.top().second.size()) +
-                                                 " argument call and no variadic placeholder '$(@)'");
+                        throw std::runtime_error("Variadic function template for '" + variable.getName().lexeme + "' (" + name + ") has "
+                                                                                                                                 "insufficient placeholders for " +
+                                                 std::to_string(m_CallArguments.top().second.size()) + " argument call and no variadic placeholder '$(@)'");
                     }
                 }
             }
@@ -316,13 +301,11 @@ namespace
             else if (!m_CallArguments.empty() && m_CallArguments.top().first)
             {
                 assert(m_CallArguments.top().second.size() == 1);
-
                 // Add standard indexing to name
                 name += "[" + m_CallArguments.top().second.front() + "]";
             }
 
-            // Print out name
-            // **NOTE** this will apply any remaining substitutions
+            // Print out name (this will apply any remaining substitutions)
             m_Environment.get().print(name);
         }
 
@@ -332,9 +315,7 @@ namespace
             unary.getRight()->accept(*this);
         }
 
-        //---------------------------------------------------------------------------
         // Statement::Visitor virtuals
-        //---------------------------------------------------------------------------
         virtual void visit(const Statement::Break &) final
         {
             m_Environment.get().getStream() << "break;";
@@ -342,20 +323,17 @@ namespace
 
         virtual void visit(const Statement::Compound &compound) final
         {
-            // Cache reference to current reference
+            // Cache reference to current environment
             std::reference_wrapper<EnvironmentBase> oldEnvironment = m_Environment;
-
             // Create new environment and set to current
             EnvironmentInternal environment(m_Environment);
             m_Environment = environment;
-
             CodeGenerator::CodeStream::Scope b(m_Environment.get().getStream());
             for (auto &s : compound.getStatements())
             {
                 s->accept(*this);
                 m_Environment.get().getStream() << std::endl;
             }
-
             // Restore old environment
             m_Environment = oldEnvironment;
         }
@@ -385,13 +363,11 @@ namespace
 
         virtual void visit(const Statement::For &forStatement) final
         {
-            // Cache reference to current reference
+            // Cache reference to current environment
             std::reference_wrapper<EnvironmentBase> oldEnvironment = m_Environment;
-
             // Create new environment and set to current
             EnvironmentInternal environment(m_Environment);
             m_Environment = environment;
-
             m_Environment.get().getStream() << "for(";
             if (forStatement.getInitialiser())
             {
@@ -402,12 +378,10 @@ namespace
                 m_Environment.get().getStream() << ";";
             }
             m_Environment.get().getStream() << " ";
-
             if (forStatement.getCondition())
             {
                 forStatement.getCondition()->accept(*this);
             }
-
             m_Environment.get().getStream() << "; ";
             if (forStatement.getIncrement())
             {
@@ -415,20 +389,17 @@ namespace
             }
             m_Environment.get().getStream() << ")";
             forStatement.getBody()->accept(*this);
-
             // Restore old environment
             m_Environment = oldEnvironment;
         }
 
         virtual void visit(const Statement::ForEachSynapse &forEachSynapseStatement) final
         {
-            // Cache reference to current reference
+            // Cache reference to current environment
             std::reference_wrapper<EnvironmentBase> oldEnvironment = m_Environment;
-
             // Create new environment and set to current
             EnvironmentInternal environment(m_Environment);
             m_Environment = environment;
-
             m_ForEachSynapseHandler(m_Environment,
                                     [this, &forEachSynapseStatement](EnvironmentBase &env)
                                     {
@@ -474,7 +445,6 @@ namespace
         virtual void visit(const Statement::VarDeclaration &varDeclaration) final
         {
             m_Environment.get().getStream() << varDeclaration.getType().getName() << " ";
-
             const size_t numDeclarators = varDeclaration.getInitDeclaratorList().size();
             for (size_t i = 0; i < numDeclarators; i++)
             {
@@ -502,44 +472,37 @@ namespace
         }
 
     private:
-        //---------------------------------------------------------------------------
-        // Members
-        //---------------------------------------------------------------------------
         std::reference_wrapper<EnvironmentBase> m_Environment;
         const Type::TypeContext &m_Context;
         const TypeChecker::ResolvedTypeMap &m_ResolvedTypes;
         StatementHandler m_ForEachSynapseHandler;
         std::stack<std::pair<bool, std::vector<std::string>>> m_CallArguments;
     };
-} // Anonymous namespace
 
-//---------------------------------------------------------------------------
-// GeNN::Transpiler::PrettyPrinter::EnvironmentBase
-//---------------------------------------------------------------------------
+} // anonymous namespace
 
+/*---------------------------------------------------------------------------
+ GeNN::Transpiler::PrettyPrinter::EnvironmentBase
+---------------------------------------------------------------------------*/
 void EnvironmentBase::print(const std::string &format)
 {
     getStream() << printSubs(format, *this);
 }
-
-//----------------------------------------------------------------------------
 
 void EnvironmentBase::printLine(const std::string &format)
 {
     getStream() << printSubs(format, *this) << std::endl;
 }
 
-//---------------------------------------------------------------------------
-// GeNN::Transpiler::PrettyPrinter::EnvironmentInternal
-//---------------------------------------------------------------------------
-
+/*---------------------------------------------------------------------------
+ GeNN::Transpiler::PrettyPrinter::EnvironmentInternal
+---------------------------------------------------------------------------*/
 std::string EnvironmentInternal::define(const std::string &name)
 {
     if (!m_LocalVariables.emplace(name).second)
     {
         throw std::runtime_error("Redeclaration of variable");
     }
-
     return "_" + name;
 }
 
@@ -555,10 +518,9 @@ std::string EnvironmentInternal::getName(const std::string &name, std::optional<
     }
 }
 
-//---------------------------------------------------------------------------
-// GeNN::Transpiler::PrettyPrinter
-//---------------------------------------------------------------------------
-
+/*---------------------------------------------------------------------------
+ GeNN::Transpiler::PrettyPrinter
+---------------------------------------------------------------------------*/
 void GeNN::Transpiler::PrettyPrinter::print(const Statement::StatementList &statements, EnvironmentInternal &environment,
                                             const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes,
                                             StatementHandler forEachSynapseHandler)
