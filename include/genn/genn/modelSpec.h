@@ -101,9 +101,9 @@ inline InitToeplitzConnectivitySnippet::Init initToeplitzConnectivity(const Para
     \return                 PostsynapticModels::Init object for passing to ``ModelSpec::addSynapsePopulation``*/
 template<typename S>
 inline PostsynapticModels::Init initPostsynaptic(const ParamValues &params = {}, const VarValues &vars = {}, 
-                                                 const LocalVarReferences &neuronVarRefs = {})
+                                                 const LocalVarReferences &neuronVarRefs = {}, const EGPReferences &neuronEGPReferences = {})
 {
-    return PostsynapticModels::Init(S::getInstance(), params, vars, neuronVarRefs);
+    return PostsynapticModels::Init(S::getInstance(), params, vars, neuronVarRefs, neuronEGPReferences);
 }
 
 //! Initialise weight update model

@@ -58,7 +58,8 @@ class GENN_EXPORT Init : public Snippet::Init<Base>
 public:
     Init(const Base *snippet, const std::map<std::string, Type::NumericValue> &params, 
          const std::map<std::string, InitVarSnippet::Init> &varInitialisers, 
-         const std::map<std::string, std::variant<std::string, Models::VarReference>> &neuronVarReferences);
+         const std::map<std::string, std::variant<std::string, Models::VarReference>> &neuronVarReferences,
+         const std::map<std::string, std::variant<std::string, Models::EGPReference>> &neuronEGPReferences);
 
     //------------------------------------------------------------------------
     // Public API
@@ -68,7 +69,8 @@ public:
 
     const auto &getVarInitialisers() const{ return m_VarInitialisers; }
     const auto &getNeuronVarReferences() const{ return m_NeuronVarReferences;  }
-    
+    const auto &getNeuronEGPReferences() const{ return m_NeuronEGPReferences; }
+
     const auto &getSimCodeTokens() const{ return m_SimCodeTokens; }
 
     void finalise(double dt);
@@ -81,6 +83,7 @@ private:
 
     std::map<std::string, InitVarSnippet::Init> m_VarInitialisers;
     std::map<std::string, std::variant<std::string, Models::VarReference>> m_NeuronVarReferences;
+    std::map<std::string, std::variant<std::string, Models::EGPReference>> m_NeuronEGPReferences;
 };
 
 //----------------------------------------------------------------------------
