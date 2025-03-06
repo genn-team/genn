@@ -160,19 +160,59 @@ def test_egp_ref(make_model, backend, precision):
         var_refs=[("v", "scalar")],
         extra_global_param_refs=[("e", "scalar*")])
 
+    current_source_model = create_current_source_model(
+        "current_source_model",
+        injection_code=
+        """
+        if(id == (int)round(fmod(t, 10.0))) {
+           e[id] = 1.0;
+        }
+        else {
+           e[id] = 0.0;
+        }
+        """,
+        neuron_extra_global_param_refs=[("e", "scalar*")])
+
+    postsynaptic_model = create_postsynaptic_model(
+        "postsynaptic_model",
+        sim_code=
+        """
+        if(id == (int)round(fmod(t, 10.0))) {
+           e[id] = 1.0;
+        }
+        else {
+           e[id] = 0.0;
+        }
+        """,
+        neuron_extra_global_param_refs=[("e", "scalar*")])
+
     model = make_model(precision, "test_egp_ref", backend=backend)
     model.dt = 1.0
 
-    n_pop = model.add_neuron_population("Neurons", 10, neuron_model, {}, {"x": 10.0});
-    n_pop.extra_global_params["e"].set_init_values(np.empty(10))
+    n_pop_cu = model.add_neuron_population("NeuronsCU", 10, neuron_model, {}, {"x": 10.0})
+    n_pop_cu.extra_global_params["e"].set_init_values(np.empty(10))
 
-    cu = model.add_custom_update("CU", "CustomUpdate", custom_update_model,
-                                 {}, {}, {"v": create_var_ref(n_pop, "x")}, {"e": create_egp_ref(n_pop, "e")})
+    n_pop_cs = model.add_neuron_population("NeuronsCS", 10, neuron_model, {}, {"x": 10.0})
+    n_pop_cs.extra_global_params["e"].set_init_values(np.empty(10))
+
+    n_pop_psm = model.add_neuron_population("NeuronsPSM", 10, neuron_model, {}, {"x": 10.0})
+    n_pop_psm.extra_global_params["e"].set_init_values(np.empty(10))
+
+    model.add_custom_update("CU", "CustomUpdate", custom_update_model,
+                            {}, {}, {"v": create_var_ref(n_pop_cu, "x")}, {"e": create_egp_ref(n_pop_cu, "e")})
+
+    model.add_current_source("CS", current_source_model, n_pop_cs,
+                             egp_refs={"e": create_egp_ref(n_pop_cs, "e")})
+    
+    model.add_synapse_population("SG", "DENSE", n_pop_cu, n_pop_psm,
+                                 init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
+                                 init_postsynaptic(postsynaptic_model, egp_refs={"e": create_egp_ref(n_pop_psm, "e")}))
 
     # Build model and load
     model.build()
     model.load()
 
+    n_pops = [n_pop_cu, n_pop_cs, n_pop_psm]
     while model.timestep < 10:
         model.custom_update("CustomUpdate")
         model.step_time()
@@ -180,5 +220,6 @@ def test_egp_ref(make_model, backend, precision):
         correct = np.zeros(10)
         correct[model.timestep - 1] = 1.0
 
-        n_pop.vars["x"].pull_from_device()
-        assert np.allclose(n_pop.vars["x"].view, correct)
+        for n in n_pops:
+            n.vars["x"].pull_from_device()
+            assert np.allclose(n.vars["x"].view, correct)
