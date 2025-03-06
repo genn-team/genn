@@ -1036,12 +1036,15 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest(const Neur
     Utils::updateHash(m_HeterogeneouslyDelayedPSMVars, hash);
     m_PSDynamicParams.updateHash(hash);
 
-    // Loop through neuron variable references and update hash with 
+    // Loop through neuron variable and EGP references and update hash with 
     // name of target variable. These must be the same across merged group
     // as these variable references are just implemented as aliases for neuron variables
     for(const auto &v : getPSNeuronVarReferences()) {
         Utils::updateHash(v.second.getVarName(), hash);
-    };
+    }
+    for(const auto &e : getPSNeuronEGPReferences()) {
+        Utils::updateHash(e.second.getEGP().name, hash);
+    }
 
     return hash.get_digest();
 }
@@ -1102,12 +1105,15 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSFuseHashDigest(const 
         Type::updateHash(w.second.getParams().at("constant"), hash);
     }
 
-    // Loop through neuron variable references and update hash with 
+    // Loop through neuron variable and EGP references and update hash with 
     // name of target variable. These must be the same across merged group
     // as these variable references are just implemented as aliases for neuron variables
     for(const auto &v : getPSNeuronVarReferences()) {
         Utils::updateHash(v.second.getVarName(), hash);
-    };
+    }
+    for(const auto &e : getPSNeuronEGPReferences()) {
+        Utils::updateHash(e.second.getEGP().name, hash);
+    }
     
     return hash.get_digest();
 }
