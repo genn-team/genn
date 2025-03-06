@@ -543,20 +543,33 @@ public:
         }
     }
 
-    void addExtraGlobalParams(const Snippet::Base::EGPVec &egps, const std::string &arraySuffix = "", const std::string &fieldSuffix = "")
+    void addExtraGlobalParams(const Snippet::Base::EGPVec &egps, const std::string &arraySuffix = "", 
+                              const std::string &fieldSuffix = "", bool hidden = false)
     {
         // Loop through EGPs
         for(const auto &e : egps) {
+            const auto name = hidden ? ("_" + e.name) : e.name;
             const auto resolvedType = e.type.resolve(this->getGroup().getTypeContext());
             assert(!resolvedType.isPointer());
             const auto pointerType = resolvedType.createPointer();
-            addField(pointerType, e.name,
+            addField(pointerType, name,
                      pointerType, e.name + arraySuffix + fieldSuffix,
                      [e, arraySuffix](auto &runtime, const auto &g, size_t) 
                      {
                          return runtime.getArray(g, e.name + arraySuffix); 
                      },
                      "", GroupMergedFieldType::DYNAMIC);
+        }
+    }
+
+    void addExtraGlobalParamExposeAliases(const Snippet::Base::EGPVec &egps)
+    {
+        // Loop through variables and add unhiding aliases
+        for(const auto &e : egps) {
+            const auto resolvedType = e.type.resolve(this->getGroup().getTypeContext());
+            assert(!resolvedType.isPointer());
+            const auto pointerType = resolvedType.createPointer();
+            add(pointerType, e.name, "$(_" + e.name + ")");
         }
     }
 

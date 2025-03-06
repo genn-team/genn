@@ -37,6 +37,22 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(EnvironmentExternalBase &e
     // Add neuron variable references
     csEnv.addLocalVarRefs<CurrentSourceNeuronVarRefAdapter>(true);
 
+    // **TODO** tidy
+    // Loop through EGP references
+    for(const auto &e : cm->getNeuronExtraGlobalParamRefs()) {
+        const auto resolvedType = e.type.resolve(getTypeContext());
+        assert(!resolvedType.isPointer());
+        const auto pointerType = resolvedType.createPointer();  
+
+        // Get ARCHETYPE EGP reference
+        // **NOTE** this means all local variable references
+        // in merged group must point to same variable
+        const auto egpRef = getArchetype().getNeuronEGPReferences().at(e.name);
+
+        // Add alias from variable reference name to hidden variable name
+        csEnv.add(pointerType, e.name, "$(_" + egpRef.getEGP().name + ")");
+    }
+
     // Define inject current function
     csEnv.add(Type::ResolvedType::createFunction(Type::Void, {getScalarType()}),
               "injectCurrent", "$(_" + getArchetype().getTargetVar() + ") += $(0)");
@@ -108,6 +124,22 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     
     // Add neuron variable references
     psmEnv.addLocalVarRefs<SynapsePSMNeuronVarRefAdapter>(true);
+
+    // **TODO** tidy
+    // Loop through EGP references
+    for(const auto &e : psm->getNeuronExtraGlobalParamRefs()) {
+        const auto resolvedType = e.type.resolve(getTypeContext());
+        assert(!resolvedType.isPointer());
+        const auto pointerType = resolvedType.createPointer();  
+
+        // Get ARCHETYPE EGP reference
+        // **NOTE** this means all local variable references
+        // in merged group must point to same variable
+        const auto egpRef = getArchetype().getPSNeuronEGPReferences().at(e.name);
+
+        // Add alias from variable reference name to hidden variable name
+        psmEnv.add(pointerType, e.name, "$(_" + egpRef.getEGP().name + ")");
+    }
 
     // **TODO** naming convention
     psmEnv.add(getScalarType(), "inSyn", "linSyn");
@@ -569,6 +601,10 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
                            {neuronChildEnv.addInitialiser(resolvedType.getName() + " _" + v.name + " = " + Type::writeNumeric(v.value, resolvedType) + ";")});
     }
 
+    // Add extra gloval parameters
+    // **NOTE** we do this right at the top so that local copies can be used by child groups
+    neuronChildEnv.addExtraGlobalParams(nm->getExtraGlobalParams(), "", "", true);
+
     // Create an environment which caches neuron variable fields in local variables if they are accessed
     // **NOTE** we do this right at the top so that local copies can be used by child groups
     EnvironmentLocalVarCache<NeuronVarAdapter, NeuronUpdateGroupMerged> neuronChildVarEnv(
@@ -611,14 +647,14 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
         neuronEnv.add(resolvedType, v.name, "$(_" + v.name + ")");
     }
 
-    // Expose neuron variables
+    // Expose neuron variables and EGPS
     neuronEnv.addVarExposeAliases<NeuronVarAdapter>();
+    neuronEnv.addExtraGlobalParamExposeAliases(nm->getExtraGlobalParams());
 
     // Substitute parameter and derived parameter names
     neuronEnv.addParams(nm->getParams(), "", &NeuronGroupInternal::getParams,
                         &NeuronGroupInternal::isParamDynamic);
     neuronEnv.addDerivedParams(nm->getDerivedParams(), "", &NeuronGroupInternal::getDerivedParams);
-    neuronEnv.addExtraGlobalParams(nm->getExtraGlobalParams());
     
     // Substitute spike time
     // **NOTE** previous spike time is meaningless in neuron kernel
