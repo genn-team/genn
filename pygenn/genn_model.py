@@ -57,6 +57,7 @@ PopParamVals = Dict[str, Union[int, float]]
 PopVarVals = Dict[str, Union[VarInit, int, float, np.ndarray, Sequence]]
 PopVarRefs = Dict[str, VarReference] 
 PopLocalVarRefs = Dict[str, Union[VarReference, str]] 
+PopLocalEGPRefs = Dict[str, Union[EGPReference, str]] 
 PopWUVarRefs = Dict[str, WUVarReference]
 PopEGPRefs = Dict[str, EGPReference]
 
@@ -460,7 +461,8 @@ class GeNNModel(ModelSpec):
 
     def add_current_source(self, cs_name: str, current_source_model: Union[CurrentSourceModelBase, str], 
                            pop: NeuronGroup, params: PopParamVals = {}, vars: PopVarVals = {}, 
-                           var_refs: PopLocalVarRefs = {}) -> CurrentSource:
+                           var_refs: PopLocalVarRefs = {}, 
+                           egp_refs: PopLocalEGPRefs = {}) -> CurrentSource:
         """Add a current source to the GeNN model
 
         Args:
@@ -475,6 +477,11 @@ class GeNNModel(ModelSpec):
             var_refs:               variables references to neuron variables in ``pop``,
                                     either specified by name or created using :func:`.create_var_ref`
                                     (see :ref:`section-variables-references`)
+            egp_refs:               references to postsynaptic neuron extra
+                                    global parameters, either specified by
+                                    name or created using 
+                                    :func:`.create_egp_ref` (see 
+                                    :ref:`section-extra-global-parameter-references`)
 
         For example, a current source to inject a Gaussian noise current can be added to a model as follows:
 
@@ -500,7 +507,7 @@ class GeNNModel(ModelSpec):
         c_source = self._add_current_source(cs_name,
                                             current_source_model, pop,
                                             _prepare_param_vals(params),
-                                            var_init, var_refs)
+                                            var_init, var_refs, egp_refs)
         
         # Initialise group, store group in dictionary and return
         c_source._init_group(self, vars, pop)
@@ -876,7 +883,8 @@ def init_sparse_connectivity(snippet: Union[InitSparseConnectivitySnippetBase, s
 
 def init_postsynaptic(snippet: Union[PostsynapticModelBase, str], 
                       params: PopParamVals = {}, vars: PopVarVals = {}, 
-                      var_refs: PopLocalVarRefs = {}):
+                      var_refs: PopLocalVarRefs = {}, 
+                      egp_refs: PopLocalEGPRefs = {}):
     """Initialises a postsynaptic model with parameter values, 
     variable initialisers and variable references
 
@@ -891,6 +899,9 @@ def init_postsynaptic(snippet: Union[PostsynapticModelBase, str],
         var_refs:       references to postsynaptic neuron variables,
                         either specified by name or created using :func:`.create_var_ref`
                         (see :ref:`section-variables-references`)
+        egp_refs:       references to postsynaptic neuron extra global parameters,
+                        either specified by name or created using :func:`.create_egp_ref`
+                        (see :ref:`section-extra-global-parameter-references`)
 
     For example, the built-in conductance model with exponential 
     current shaping could be initialised as follows:
@@ -911,7 +922,7 @@ def init_postsynaptic(snippet: Union[PostsynapticModelBase, str],
     var_init = _get_var_init(vars)
     
     return (PostsynapticInit(snippet, _prepare_param_vals(params), 
-                             var_init, var_refs), 
+                             var_init, var_refs, egp_refs), 
             vars)
 
 def init_weight_update(snippet, params: PopParamVals = {}, vars: PopVarVals = {},

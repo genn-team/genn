@@ -453,7 +453,7 @@ PYBIND11_MODULE(_genn, m)
         .def("_add_current_source",  
              static_cast<CurrentSource* (ModelSpec::*)(
                 const std::string&, const CurrentSourceModels::Base*, NeuronGroup*, 
-                const ParamValues&, const VarValues&, const LocalVarReferences&)>(&ModelSpec::addCurrentSource),
+                const ParamValues&, const VarValues&, const LocalVarReferences&, const LocalEGPReferences&)>(&ModelSpec::addCurrentSource),
             pybind11::return_value_policy::reference)
         .def("_add_custom_connectivity_update",  
              static_cast<CustomConnectivityUpdate* (ModelSpec::*)(
@@ -971,7 +971,7 @@ PYBIND11_MODULE(_genn, m)
     // genn.PostsynapticInit
     //------------------------------------------------------------------------
     pybind11::class_<PostsynapticModels::Init>(m, "PostsynapticInit")
-        .def(pybind11::init<const PostsynapticModels::Base*, const ParamValues&, const VarValues&, const LocalVarReferences&>())
+        .def(pybind11::init<const PostsynapticModels::Base*, const ParamValues&, const VarValues&, const LocalVarReferences&, const LocalEGPReferences&>())
         .def_property_readonly("snippet", &PostsynapticModels::Init::getSnippet, pybind11::return_value_policy::reference);
     
     //------------------------------------------------------------------------
