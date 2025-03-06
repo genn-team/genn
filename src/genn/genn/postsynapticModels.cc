@@ -57,7 +57,7 @@ void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues
 Init::Init(const Base *snippet, const std::map<std::string, Type::NumericValue> &params, 
            const std::map<std::string, InitVarSnippet::Init> &varInitialisers, 
            const std::map<std::string, std::variant<std::string, Models::VarReference>> &neuronVarReferences,
-           const const std::map<std::string, std::variant<std::string, Models::EGPReference>> &neuronEGPReferences)
+           const std::map<std::string, std::variant<std::string, Models::EGPReference>> &neuronEGPReferences)
 :   Snippet::Init<Base>(snippet, params), m_VarInitialisers(varInitialisers), m_NeuronVarReferences(neuronVarReferences),
     m_NeuronEGPReferences(neuronEGPReferences)
 {
