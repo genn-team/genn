@@ -239,14 +239,16 @@ CurrentSource *ModelSpec::findCurrentSource(const std::string &name)
 }
 // ---------------------------------------------------------------------------
 CurrentSource *ModelSpec::addCurrentSource(const std::string &currentSourceName, const CurrentSourceModels::Base *model, NeuronGroup *neuronGroup, 
-                                           const ParamValues &paramValues, const VarValues &varInitialisers, const LocalVarReferences &neuronVarReferences)
+                                           const ParamValues &paramValues, const VarValues &varInitialisers, 
+                                           const LocalVarReferences &neuronVarReferences, const LocalEGPReferences &neuronEGPReferences )
 {
     // Add current source to map
     auto *neuronGroupInternal = static_cast<NeuronGroupInternal*>(neuronGroup);
     auto result = m_LocalCurrentSources.try_emplace(
         currentSourceName,
-        currentSourceName, model, paramValues,
-        varInitialisers, neuronVarReferences, neuronGroupInternal, 
+        currentSourceName, model, paramValues, varInitialisers, 
+        neuronVarReferences, neuronEGPReferences,
+        neuronGroupInternal, 
         m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation);
 
     if(!result.second) {

@@ -22,13 +22,15 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
     Snippet::Base::updateHash(hash);
     Utils::updateHash(getVars(), hash);
     Utils::updateHash(getNeuronVarRefs(), hash);
+    Utils::updateHash(getNeuronExtraGlobalParamRefs(), hash);
     Utils::updateHash(getSimCode(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
 void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues, 
                     const std::map<std::string, InitVarSnippet::Init> &varValues,
-                    const std::map<std::string, std::variant<std::string, Models::VarReference>> &varRefTargets) const
+                    const std::map<std::string, std::variant<std::string, Models::VarReference>> &varRefTargets,
+                    const std::map<std::string, std::variant<std::string, Models::EGPReference>> &egpRefTargets) const
 {
     // Superclass
     Snippet::Base::validate(paramValues, "Postsynaptic model");
@@ -42,6 +44,11 @@ void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues
     const auto varRefs = getNeuronVarRefs();
     Utils::validateVecNames(varRefs, "Neuron variable reference");
     Utils::validateInitialisers(varRefs, varRefTargets, "Neuron variable reference", "Postsynaptic model");
+
+    // Validate EGP references
+    const auto egpRefs = getNeuronExtraGlobalParamRefs();
+    Utils::validateVecNames(egpRefs, "Neuron extra global parameter reference");
+    Utils::validateInitialisers(egpRefs, egpRefTargets, "Neuron extra Global Parameter reference", "Postsynaptic model");
 }
 
 //----------------------------------------------------------------------------
@@ -55,7 +62,7 @@ Init::Init(const Base *snippet, const std::map<std::string, Type::NumericValue> 
     m_NeuronEGPReferences(neuronEGPReferences)
 {
     // Validate
-    getSnippet()->validate(getParams(), getVarInitialisers(), getNeuronVarReferences());
+    getSnippet()->validate(getParams(), getVarInitialisers(), getNeuronVarReferences(), getNeuronEGPReferences());
 
     // Scan code tokens
     m_SimCodeTokens = Utils::scanCode(getSnippet()->getSimCode(), "Postsynaptic model sim code");

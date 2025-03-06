@@ -29,6 +29,9 @@ public:
 
     //! Gets names and types of model variable references
     virtual VarRefVec getNeuronVarRefs() const{ return {}; }
+
+    //! Gets names and types of model extra global parameter references
+    virtual EGPRefVec getNeuronExtraGlobalParamRefs() const { return {}; }
     
     virtual std::string getSimCode() const{ return ""; }
     
@@ -47,7 +50,8 @@ public:
     //! Validate names of parameters etc
     void validate(const std::map<std::string, Type::NumericValue> &paramValues, 
                   const std::map<std::string, InitVarSnippet::Init> &varValues,
-                  const std::map<std::string, std::variant<std::string, Models::VarReference>> &varRefTargets) const;
+                  const std::map<std::string, std::variant<std::string, Models::VarReference>> &varRefTargets,
+                  const std::map<std::string, std::variant<std::string, Models::EGPReference>> &egpRefTargets) const;
 };
 
 //----------------------------------------------------------------------------

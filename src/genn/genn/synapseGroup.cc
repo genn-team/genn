@@ -292,17 +292,22 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_FusedWUPreTarget(nullptr), m_FusedWUPostTarget(nullptr), m_FusedPreOutputTarget(nullptr), m_PostTargetVar("Isyn"), m_PreTargetVar("Isyn")
 {
     // 'Resolve' local variable references
-    Models::resolveVarReferences(getWUInitialiser().getPreNeuronVarReferences(),
-                                 m_WUMPreNeuronVarReferences, getSrcNeuronGroup(),
-                                 static_cast<Models::VarReference(*)(NeuronGroup*, const std::string&)>(&Models::VarReference::createVarRef));
-    Models::resolveVarReferences(getWUInitialiser().getPostNeuronVarReferences(),
-                                 m_WUMPostNeuronVarReferences, getTrgNeuronGroup(),
-                                 static_cast<Models::VarReference(*)(NeuronGroup*, const std::string&)>(&Models::VarReference::createVarRef));
-    Models::resolveVarReferences(getWUInitialiser().getPSMVarReferences(),
-                                 m_WUMPSMVarReferences, this, &Models::VarReference::createPSMVarRef);
-    Models::resolveVarReferences(getPSInitialiser().getNeuronVarReferences(),
-                                 m_PSNeuronVarReferences, getTrgNeuronGroup(),
-                                 static_cast<Models::VarReference(*)(NeuronGroup*, const std::string&)>(&Models::VarReference::createVarRef));
+    Models::resolveLocalReferences(getWUInitialiser().getPreNeuronVarReferences(),
+                                   m_WUMPreNeuronVarReferences, getSrcNeuronGroup(),
+                                   static_cast<Models::VarReference(*)(NeuronGroup*, const std::string&)>(&Models::VarReference::createVarRef));
+    Models::resolveLocalReferences(getWUInitialiser().getPostNeuronVarReferences(),
+                                   m_WUMPostNeuronVarReferences, getTrgNeuronGroup(),
+                                   static_cast<Models::VarReference(*)(NeuronGroup*, const std::string&)>(&Models::VarReference::createVarRef));
+    Models::resolveLocalReferences(getWUInitialiser().getPSMVarReferences(),
+                                   m_WUMPSMVarReferences, this, &Models::VarReference::createPSMVarRef);
+    Models::resolveLocalReferences(getPSInitialiser().getNeuronVarReferences(),
+                                   m_PSNeuronVarReferences, getTrgNeuronGroup(),
+                                   static_cast<Models::VarReference(*)(NeuronGroup*, const std::string&)>(&Models::VarReference::createVarRef));
+
+    // 'Resolve' local EGP references
+    Models::resolveLocalReferences(getPSInitialiser().getNeuronEGPReferences(),
+                                   m_PSNeuronEGPReferences, getTrgNeuronGroup(),
+                                   static_cast<Models::EGPReference(*)(NeuronGroup*, const std::string&)>(&Models::EGPReference::createEGPRef));
 
     // Validate names
     Utils::validatePopName(name, "Synapse group");
@@ -314,7 +319,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
     Models::checkVarReferenceTypes(getWUMPSMVarReferences(), getWUInitialiser().getSnippet()->getPSMVarRefs());
     Models::checkVarReferenceTypes(getPSNeuronVarReferences(), getPSInitialiser().getSnippet()->getNeuronVarRefs());
 
-    // Check additional local variable reference constraints
+    // Check additional local variable and EGP reference constraints
     Models::checkLocalVarReferences(getWUMPreNeuronVarReferences(), getWUInitialiser().getSnippet()->getPreNeuronVarRefs(),
                                     getSrcNeuronGroup(), "Weight update model presynaptic variable references can only point to presynaptic neuron group.",
                                     &Models::VarReference::isTargetNeuronGroup);
@@ -327,6 +332,9 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
     Models::checkLocalVarReferences(getPSNeuronVarReferences(), getPSInitialiser().getSnippet()->getNeuronVarRefs(),
                                     getTrgNeuronGroup(), "Postsynaptic model variable references can only point to postsynaptic neuron group.",
                                     &Models::VarReference::isTargetNeuronGroup);
+    Models::checkLocalEGPReferences(getPSNeuronEGPReferences(), getTrgNeuronGroup(), 
+                                    "Postsynaptic model EGP references can only point to postsynaptic neuron group.",
+                                    &Models::EGPReference::isTargetNeuronGroup);
 
     // If connectivity is procedural
     if(m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) {

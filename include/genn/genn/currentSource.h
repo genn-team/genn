@@ -56,6 +56,7 @@ public:
     const auto &getParams() const{ return m_Params; }
     const auto &getVarInitialisers() const{ return m_VarInitialisers; }
     const auto &getNeuronVarReferences() const{ return m_NeuronVarReferences;  }
+    const auto &getNeuronEGPReferences() const{ return m_NeuronEGPReferences;  }
 
     //! Get variable location for current source model state variable
     VarLocation getVarLocation(const std::string &varName) const{ return m_VarLocation.get(varName); }
@@ -74,6 +75,7 @@ protected:
     CurrentSource(const std::string &name, const CurrentSourceModels::Base *model,
                   const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers,
                   const std::map<std::string, std::variant<std::string, Models::VarReference>> &neuronVarReferences, 
+                  const std::map<std::string, std::variant<std::string, Models::EGPReference>> &neuronEGPReferences, 
                   NeuronGroupInternal *trgNeuronGroup, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
@@ -122,6 +124,7 @@ private:
     //! Initialisers for current source variables
     std::map<std::string, InitVarSnippet::Init> m_VarInitialisers;
     std::map<std::string, Models::VarReference> m_NeuronVarReferences;
+    std::map<std::string, Models::EGPReference> m_NeuronEGPReferences;
 
     const NeuronGroupInternal *m_TrgNeuronGroup;
 

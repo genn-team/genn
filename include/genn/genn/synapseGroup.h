@@ -240,6 +240,9 @@ public:
     //! Get 'resolved' variable references to neurons variables used in postsynaptic update model
     const auto &getPSNeuronVarReferences() const{ return m_PSNeuronVarReferences; }
 
+    //! Get 'resolved' EGP references to neurons EGPs used in postsynaptic update model
+    const auto &getPSNeuronEGPReferences() const{ return m_PSNeuronEGPReferences; }
+
     const auto &getSparseConnectivityInitialiser() const{ return m_SparseConnectivityInitialiser; }
     const auto &getToeplitzConnectivityInitialiser() const { return m_ToeplitzConnectivityInitialiser; }
 
@@ -634,6 +637,9 @@ private:
     
     //! 'Resolved' variable references to neurons variables used in postsynaptic update model
     std::map<std::string, Models::VarReference> m_PSNeuronVarReferences;
+
+    //! 'Resolved' EGP references to neurons EGPs used in postsynaptic update model
+    std::map<std::string, Models::EGPReference> m_PSNeuronEGPReferences;
     
 };
 }   // namespace GeNN

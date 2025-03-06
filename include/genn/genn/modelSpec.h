@@ -43,6 +43,7 @@ namespace GeNN
 using VarValues = std::map<std::string, InitVarSnippet::Init>;
 using VarReferences = std::map<std::string, Models::VarReference>;
 using LocalVarReferences = std::map<std::string, std::variant<std::string, Models::VarReference>>;
+using LocalEGPReferences = std::map<std::string, std::variant<std::string, Models::EGPReference>>;
 using WUVarReferences = std::map<std::string, Models::WUVarReference>;
 using EGPReferences = std::map<std::string, Models::EGPReference>;
 
@@ -101,7 +102,7 @@ inline InitToeplitzConnectivitySnippet::Init initToeplitzConnectivity(const Para
     \return                 PostsynapticModels::Init object for passing to ``ModelSpec::addSynapsePopulation``*/
 template<typename S>
 inline PostsynapticModels::Init initPostsynaptic(const ParamValues &params = {}, const VarValues &vars = {}, 
-                                                 const LocalVarReferences &neuronVarRefs = {}, const EGPReferences &neuronEGPReferences = {})
+                                                 const LocalVarReferences &neuronVarRefs = {}, const LocalEGPReferences &neuronEGPReferences = {})
 {
     return PostsynapticModels::Init(S::getInstance(), params, vars, neuronVarRefs, neuronEGPReferences);
 }
@@ -445,7 +446,7 @@ public:
         \return pointer to newly created CurrentSource */
     CurrentSource *addCurrentSource(const std::string &currentSourceName, const CurrentSourceModels::Base *model, NeuronGroup *neuronGroup,
                                     const ParamValues &paramValues = {}, const VarValues &varInitialisers = {},
-                                    const LocalVarReferences &neuronVarReferences = {});
+                                    const LocalVarReferences &neuronVarReferences = {}, const LocalEGPReferences &neuronEGPReferences = {});
 
     //! Adds a new current source to the model using a singleton current source model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
     /*! \tparam CurrentSourceModel type of neuron model (derived from CurrentSourceModel::Base).
@@ -457,10 +458,11 @@ public:
     template<typename CurrentSourceModel>
     CurrentSource *addCurrentSource(const std::string &currentSourceName, NeuronGroup *neuronGroup,
                                     const ParamValues &paramValues = {}, const VarValues &varInitialisers = {}, 
-                                    const LocalVarReferences &neuronVarReferences = {})
+                                    const LocalVarReferences &neuronVarReferences = {}, const LocalEGPReferences &neuronEGPReferences = {})
     {
         return addCurrentSource(currentSourceName, CurrentSourceModel::getInstance(),
-                                neuronGroup, paramValues, varInitialisers, neuronVarReferences);
+                                neuronGroup, paramValues, varInitialisers, 
+                                neuronVarReferences, neuronEGPReferences);
     }
 
     //! Adds a new custom update with references to the model using a custom update model managed by the user

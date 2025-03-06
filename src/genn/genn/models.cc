@@ -672,6 +672,15 @@ const Runtime::ArrayBase *EGPReference::getTargetArray(const Runtime::Runtime &r
         m_Detail);
 }
 //----------------------------------------------------------------------------
+bool EGPReference::isTargetNeuronGroup(const NeuronGroupInternal *ng) const
+{
+    return std::visit(
+        Utils::Overload{
+            [ng](const NGRef &ref){ return (ref.group == ng); },
+            [](const auto&) { return false; }},
+        m_Detail);
+}
+//----------------------------------------------------------------------------
 EGPReference EGPReference::createEGPRef(NeuronGroup *ng, const std::string &egpName)
 {
     const auto *nm = ng->getModel();

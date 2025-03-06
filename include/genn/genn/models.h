@@ -414,6 +414,9 @@ public:
     // **YUCK** dependency on codegenerator and runtime suggests this belongs elsewhere
     const Runtime::ArrayBase *getTargetArray(const Runtime::Runtime &runtime) const;
 
+    //! Does this EGP reference's target belong to neuron group
+    bool isTargetNeuronGroup(const NeuronGroupInternal *ng) const;
+
     //------------------------------------------------------------------------
     // Static API
     //------------------------------------------------------------------------
@@ -506,12 +509,27 @@ void checkLocalVarReferences(const std::map<std::string, VarReference> &varRefs,
             throw std::runtime_error("Variable references to SHARED_NEURON or SHARED neuron variables cannot be read-write.");
         }
 
-        // If variable reference target doesn't have correct target, give error
+        // If variable reference doesn't have correct target, give error
         if(!std::invoke(isTargetCorrectFn, varRef, g)) {
             throw std::runtime_error(targetErrorDescription);
         }
     }
 }
+
+//! Helper function to check if local variable references are configured correctly
+template<typename G>
+void checkLocalEGPReferences(const std::map<std::string, EGPReference> &egpRefs,
+                             const G *g, const std::string &targetErrorDescription, 
+                             bool (EGPReference::*isTargetCorrectFn)(const G*) const)
+{
+    // Loop through all EGP references and, if EGP reference doesn't have correct target, give error
+    for(const auto &egpRef : egpRefs) {
+        if(!std::invoke(isTargetCorrectFn, egpRef.second, g)) {
+            throw std::runtime_error(targetErrorDescription);
+        }
+    }
+}
+
 //! Helper function to check if variable reference types match those specified in model
 template<typename V>
 void checkVarReferenceTypes(const std::map<std::string, V> &varRefs, const Base::VarRefVec &modelVarRefs)
@@ -528,27 +546,28 @@ void checkVarReferenceTypes(const std::map<std::string, V> &varRefs, const Base:
     }
 }
 
-//! Helper function to 'resolve' local variable references which may be specified with just a string
-template<typename G, typename C>
-void resolveVarReferences(const std::map<std::string, std::variant<std::string, VarReference>> &unresolvedVarRefs,
-                          std::map<std::string, VarReference> &varRefs, G *group, C createVarRef)
+//! Helper function to 'resolve' local variable or EGP references which may be specified with just a string
+template<typename G, typename C, typename R>
+void resolveLocalReferences(const std::map<std::string, std::variant<std::string, R>> &unresolvedLocalRefs,
+                            std::map<std::string, R> &localRefs, G *group, C createRef)
 {
     // Loop through unresolved variable references
-    for(const auto &v : unresolvedVarRefs) {
-        varRefs.try_emplace(v.first,
-                            std::visit(
-                                Utils::Overload{
-                                    [createVarRef, group](const std::string &name)
-                                    {
-                                        return createVarRef(group, name);
-                                    },
-                                    [](const Models::VarReference &v)
-                                    {
-                                        return v;
-                                    }},
-                                v.second));
+    for(const auto &v : unresolvedLocalRefs) {
+        localRefs.try_emplace(v.first,
+                              std::visit(
+                                  Utils::Overload{
+                                      [createRef, group](const std::string &name)
+                                      {
+                                          return createRef(group, name);
+                                      },
+                                      [](const R &v)
+                                      {
+                                          return v;
+                                      }},
+                                  v.second));
     }
 }
+
 GENN_EXPORT void checkEGPReferenceTypes(const std::map<std::string, EGPReference> &egpRefs,
                                         const Base::EGPRefVec &modelEGPRefs);
 

@@ -23,6 +23,7 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 
     Utils::updateHash(getVars(), hash);
     Utils::updateHash(getNeuronVarRefs(), hash);
+    Utils::updateHash(getNeuronExtraGlobalParamRefs(), hash);
     Utils::updateHash(getInjectionCode(), hash);
     return hash.get_digest();
 }
@@ -30,6 +31,7 @@ boost::uuids::detail::sha1::digest_type Base::getHashDigest() const
 void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues, 
                     const std::map<std::string, InitVarSnippet::Init> &varValues,
                     const std::map<std::string, Models::VarReference> &varRefTargets,
+                    const std::map<std::string, Models::EGPReference> &egpRefTargets,
                     const std::string &description) const
 {
     // Superclass
@@ -46,5 +48,10 @@ void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues
     const auto varRefs = getNeuronVarRefs();
     Utils::validateVecNames(varRefs, "Neuron variable reference");
     Utils::validateInitialisers(varRefs, varRefTargets, "Neuron variable reference", description);
+
+    // Validate EGP references
+    const auto egpRefs = getNeuronExtraGlobalParamRefs();
+    Utils::validateVecNames(egpRefs, "Neuron extra global parameter reference");
+    Utils::validateInitialisers(egpRefs, egpRefTargets, "Neuron extra Global Parameter reference", description);
 }
 }   // namespace GeNN::CurrentSourceModels
