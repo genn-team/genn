@@ -122,6 +122,7 @@ class PyCurrentSourceModelBase : public PySnippet<CurrentSourceModels::Base>
 public:
     virtual std::vector<Models::Base::Var> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_vars", getVars); }
     virtual VarRefVec getNeuronVarRefs() const override { PYBIND11_OVERRIDE_NAME(VarRefVec, Base, "get_neuron_var_refs", getNeuronVarRefs); }
+    virtual EGPRefVec getNeuronExtraGlobalParamRefs() const override { PYBIND11_OVERRIDE_NAME(EGPRefVec, Base, "get_neuron_extra_global_param_refs", getNeuronExtraGlobalParamRefs); }
 
     virtual std::string getInjectionCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_injection_code", getInjectionCode); }
 };
@@ -190,7 +191,8 @@ class PyPostsynapticModelBase : public PySnippet<PostsynapticModels::Base>
 public:
     virtual std::vector<Models::Base::Var> getVars() const override{ PYBIND11_OVERRIDE_NAME(std::vector<Models::Base::Var>, Base, "get_vars", getVars); }
     virtual VarRefVec getNeuronVarRefs() const override { PYBIND11_OVERRIDE_NAME(VarRefVec, Base, "get_neuron_var_refs", getNeuronVarRefs); }
-    
+    virtual EGPRefVec getNeuronExtraGlobalParamRefs() const override { PYBIND11_OVERRIDE_NAME(EGPRefVec, Base, "get_neuron_extra_global_param_refs", getNeuronExtraGlobalParamRefs); }
+
     virtual std::string getSimCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_sim_code", getSimCode); }
 };
 
@@ -855,6 +857,7 @@ PYBIND11_MODULE(_genn, m)
 
         WRAP_NS_METHOD("get_vars", CurrentSourceModels, Base, getVars)
         WRAP_NS_METHOD("get_neuron_var_refs", CurrentSourceModels, Base, getNeuronVarRefs)
+        WRAP_NS_METHOD("get_neuron_extra_global_param_refs", CurrentSourceModels, Base, getNeuronExtraGlobalParamRefs)
 
         WRAP_NS_METHOD("get_injection_code", CurrentSourceModels, Base, getInjectionCode);
 
@@ -911,7 +914,8 @@ PYBIND11_MODULE(_genn, m)
         
         WRAP_NS_METHOD("get_vars", PostsynapticModels, Base, getVars)
         WRAP_NS_METHOD("get_neuron_var_refs", PostsynapticModels, Base, getNeuronVarRefs)
-        
+        WRAP_NS_METHOD("get_neuron_extra_global_param_refs", PostsynapticModels, Base, getNeuronExtraGlobalParamRefs)
+
         WRAP_NS_METHOD("get_sim_code", PostsynapticModels, Base, getSimCode);
 
     //------------------------------------------------------------------------

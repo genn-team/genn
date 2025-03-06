@@ -1213,7 +1213,8 @@ def create_postsynaptic_model(class_name, params=None, param_names=None,
                               derived_params: ModelDerivedParamsType = None,
                               sim_code: Optional[str] = None, decay_code=None,
                               apply_input_code=None,
-                              extra_global_params: ModelEGPType = None):
+                              extra_global_params: ModelEGPType = None,
+                              neuron_extra_global_param_refs = None):
     """Creates a new postsynaptic update model.
     Within all of the code strings, the variables, parameters,
     derived parameters and extra global parameters defined in this model
@@ -1230,19 +1231,24 @@ def create_postsynaptic_model(class_name, params=None, param_names=None,
     configured using the :attr:`SynapseGroup.post_target_var`. By default it targets ``Isyn``.
 
     Args:
-        class_name:                 name of the new class (only for debugging)
-        params:                     name and optional types of model parameters
-        vars:                       names, types and optional variable access
-                                    modifiers of model variables
-        neuron_var_refs:            names, types and optional variable access
-                                    of references to be assigned to postsynaptic
-                                    neuron variables
-        derived_params:             names, types and callables to calculate
-                                    derived parameter values from params
-        sim_code:                   string containing the simulation code
-                                    statements to be run every timestep
-        extra_global_params:        names and types of model
-                                    extra global parameters
+        class_name:                     name of the new class 
+                                        (only for debugging)
+        params:                         name and optional types of 
+                                        model parameters
+        vars:                           names, types and optional variable
+                                        access modifiers of model variables
+        neuron_var_refs:                names, types and optional variable
+                                        access of references to be assigned
+                                        to postsynaptic neuron variables
+        derived_params:                 names, types and callables to 
+                                        calculate derived parameter values
+                                        from params
+        sim_code:                       string containing the simulation code
+                                        statements to be run every timestep
+        extra_global_params:            names and types of model
+                                        extra global parameters
+        neuron_extra_global_param_refs: names and types of extra global
+                                        parameter references
     """
     body = {}
     if decay_code is not None or apply_input_code is not None:
@@ -1267,6 +1273,10 @@ def create_postsynaptic_model(class_name, params=None, param_names=None,
         body["get_neuron_var_refs"] =\
             lambda self: [VarRef(*v) for v in neuron_var_refs]
     
+    if neuron_extra_global_param_refs is not None:
+        body["get_neuron_extra_global_param_refs"] =\
+            lambda self: [EGPRef(*e) for e in neuron_extra_global_param_refs]
+
     return _create_model(class_name, PostsynapticModelBase, params,
                          param_names, derived_params,
                          extra_global_params, body)
@@ -1617,7 +1627,8 @@ def create_current_source_model(class_name: str, params: ModelParamsType = None,
                                 neuron_var_refs: ModelVarRefsType = None, 
                                 derived_params: ModelDerivedParamsType = None,
                                 injection_code: Optional[str] = None, 
-                                extra_global_params: ModelEGPType = None):
+                                extra_global_params: ModelEGPType = None,
+                                neuron_extra_global_param_refs = None):
     """Creates a new current source model.
     Within the ``injection_code`` code string, the variables, parameters,
     derived parameters, neuron variable references and extra global
@@ -1633,20 +1644,26 @@ def create_current_source_model(class_name: str, params: ModelParamsType = None,
     configured using the :attr:`CurrentSource.target_var`. It defaults to ``Isyn``.
 
     Args:
-        class_name:             name of the new class (only for debugging)
-        params:                 name and optional types of model parameters
-        vars:                   names, types and optional variable access
-                                modifiers of model variables
-        neuron_var_refs:        names, types and optional variable access
-                                of references to be assigned to variables
-                                in neuron population current source is attached to
-        derived_params:         names, types and callables to calculate
-                                derived parameter values from params
-        injection_code:         string containing the simulation code
-                                statements to be run every timestep
-        extra_global_params:    names and types of model
-                                extra global parameters
-    
+        class_name:                     name of the new class
+                                        (only for debugging)
+        params:                         name and optional types of
+                                        model parameters
+        vars:                           names, types and optional variable
+                                        access modifiers of model variables
+        neuron_var_refs:                names, types and optional variable
+                                        access of references to be assigned
+                                        to variables in neuron population
+                                        current source is attached to
+        derived_params:                 names, types and callables to
+                                        calculate derived parameter values
+                                        from params
+        injection_code:                 string containing the simulation code
+                                        statements to be run every timestep
+        extra_global_params:            names and types of model
+                                        extra global parameters
+        neuron_extra_global_param_refs: names and types of extra global
+                                        parameter references
+
     For example, we can define a simple current source that
     injects uniformly-distributed noise as follows:
     
@@ -1677,6 +1694,10 @@ def create_current_source_model(class_name: str, params: ModelParamsType = None,
         body["get_neuron_var_refs"] =\
             lambda self: [VarRef(*v) for v in var_refs]
 
+    if neuron_extra_global_param_refs is not None:
+        body["get_neuron_extra_global_param_refs"] =\
+            lambda self: [EGPRef(*e) for e in neuron_extra_global_param_refs]
+        
     return _create_model(class_name, CurrentSourceModelBase, params,
                          param_names, derived_params,
                          extra_global_params, body)

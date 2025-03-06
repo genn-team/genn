@@ -448,6 +448,8 @@ static const char *__doc_CurrentSourceModels_Base_getHashDigest = R"doc(Update h
 
 static const char *__doc_CurrentSourceModels_Base_getInjectionCode = R"doc(Gets the code that defines current injected each timestep)doc";
 
+static const char *__doc_CurrentSourceModels_Base_getNeuronExtraGlobalParamRefs = R"doc(Gets names and types of model extra global parameter references)doc";
+
 static const char *__doc_CurrentSourceModels_Base_getNeuronVarRefs = R"doc(Gets names and types of model variable references)doc";
 
 static const char *__doc_CurrentSourceModels_Base_getVar = R"doc(Find the named variable)doc";
@@ -560,6 +562,8 @@ static const char *__doc_CurrentSource_getModel = R"doc(Gets the current source 
 
 static const char *__doc_CurrentSource_getName = R"doc()doc";
 
+static const char *__doc_CurrentSource_getNeuronEGPReferences = R"doc()doc";
+
 static const char *__doc_CurrentSource_getNeuronVarReferences = R"doc()doc";
 
 static const char *__doc_CurrentSource_getParams = R"doc()doc";
@@ -593,6 +597,8 @@ static const char *__doc_CurrentSource_m_InjectionCodeTokens = R"doc(Tokens prod
 static const char *__doc_CurrentSource_m_Model = R"doc(Current source model used for this source)doc";
 
 static const char *__doc_CurrentSource_m_Name = R"doc(Unique name of current source)doc";
+
+static const char *__doc_CurrentSource_m_NeuronEGPReferences = R"doc()doc";
 
 static const char *__doc_CurrentSource_m_NeuronVarReferences = R"doc()doc";
 
@@ -2473,6 +2479,8 @@ static const char *__doc_Models_EGPReference_getTargetArray = R"doc(Get array as
 
 static const char *__doc_Models_EGPReference_getTargetName = R"doc()doc";
 
+static const char *__doc_Models_EGPReference_isTargetNeuronGroup = R"doc(Does this EGP reference's target belong to neuron group)doc";
+
 static const char *__doc_Models_EGPReference_m_Detail = R"doc()doc";
 
 static const char *__doc_Models_VarReference = R"doc()doc";
@@ -2643,11 +2651,13 @@ static const char *__doc_Models_WUVarReference_operator_lt = R"doc()doc";
 
 static const char *__doc_Models_checkEGPReferenceTypes = R"doc()doc";
 
+static const char *__doc_Models_checkLocalEGPReferences = R"doc(Helper function to check if local variable references are configured correctly)doc";
+
 static const char *__doc_Models_checkLocalVarReferences = R"doc(Helper function to check if local variable references are configured correctly)doc";
 
 static const char *__doc_Models_checkVarReferenceTypes = R"doc(Helper function to check if variable reference types match those specified in model)doc";
 
-static const char *__doc_Models_resolveVarReferences = R"doc(Helper function to 'resolve' local variable references which may be specified with just a string)doc";
+static const char *__doc_Models_resolveLocalReferences = R"doc(Helper function to 'resolve' local variable or EGP references which may be specified with just a string)doc";
 
 static const char *__doc_Models_updateHash = R"doc()doc";
 
@@ -3284,6 +3294,8 @@ static const char *__doc_PostsynapticModels_Base = R"doc(Base class for all post
 
 static const char *__doc_PostsynapticModels_Base_getHashDigest = R"doc(Update hash from model)doc";
 
+static const char *__doc_PostsynapticModels_Base_getNeuronExtraGlobalParamRefs = R"doc(Gets names and types of model extra global parameter references)doc";
+
 static const char *__doc_PostsynapticModels_Base_getNeuronVarRefs = R"doc(Gets names and types of model variable references)doc";
 
 static const char *__doc_PostsynapticModels_Base_getSimCode = R"doc()doc";
@@ -3345,6 +3357,8 @@ static const char *__doc_PostsynapticModels_Init_Init = R"doc()doc";
 
 static const char *__doc_PostsynapticModels_Init_finalise = R"doc()doc";
 
+static const char *__doc_PostsynapticModels_Init_getNeuronEGPReferences = R"doc()doc";
+
 static const char *__doc_PostsynapticModels_Init_getNeuronVarReferences = R"doc()doc";
 
 static const char *__doc_PostsynapticModels_Init_getSimCodeTokens = R"doc()doc";
@@ -3354,6 +3368,8 @@ static const char *__doc_PostsynapticModels_Init_getVarInitialisers = R"doc()doc
 static const char *__doc_PostsynapticModels_Init_isRNGRequired = R"doc()doc";
 
 static const char *__doc_PostsynapticModels_Init_isVarInitRequired = R"doc()doc";
+
+static const char *__doc_PostsynapticModels_Init_m_NeuronEGPReferences = R"doc()doc";
 
 static const char *__doc_PostsynapticModels_Init_m_NeuronVarReferences = R"doc()doc";
 
@@ -3622,6 +3638,8 @@ NOTE: this can only be called after model is finalized)doc";
 
 static const char *__doc_SynapseGroup_getPSInitialiser = R"doc()doc";
 
+static const char *__doc_SynapseGroup_getPSNeuronEGPReferences = R"doc(Get 'resolved' EGP references to neurons EGPs used in postsynaptic update model)doc";
+
 static const char *__doc_SynapseGroup_getPSNeuronVarReferences = R"doc(Get 'resolved' variable references to neurons variables used in postsynaptic update model)doc";
 
 static const char *__doc_SynapseGroup_getPSVarLocation = R"doc(Get location of postsynaptic model state variable)doc";
@@ -3717,6 +3735,10 @@ NOTE: this can only be called after model is finalized)doc";
 static const char *__doc_SynapseGroup_getWUVarLocation = R"doc(Get location of weight update model synaptic state variable)doc";
 
 static const char *__doc_SynapseGroup_isDendriticOutputDelayRequired = R"doc(Is this synapse group's output dendritically delayed?)doc";
+
+static const char *__doc_SynapseGroup_isPSMVarHeterogeneouslyDelayed = R"doc(Is the named postsynaptic  model variable heterogeneously delayed?)doc";
+
+static const char *__doc_SynapseGroup_isPSMVarQueueRequired = R"doc(Is the named postsynaptic model variable referenced in synapse code?)doc";
 
 static const char *__doc_SynapseGroup_isPSModelFused = R"doc(Has this synapse group's postsynaptic model been fused with those from other synapse groups?)doc";
 
@@ -3838,6 +3860,10 @@ static const char *__doc_SynapseGroup_m_FusedWUPreTarget =
 R"doc(Synapse group presynaptic weight update has been fused with.
 If this is nullptr, presynaptic weight update has not been fused)doc";
 
+static const char *__doc_SynapseGroup_m_HeterogeneouslyDelayedPSMVars =
+R"doc(Set of names of postsynaptic model variables
+which are heterogeneously delayed)doc";
+
 static const char *__doc_SynapseGroup_m_HeterogeneouslyDelayedWUPostVars =
 R"doc(Set of names of postsynaptic weight update
 model variables which are heterogeneously delayed)doc";
@@ -3869,6 +3895,10 @@ R"doc(Location of postsynaptic model extra global parameters.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_m_PSInitialiser = R"doc(Initialiser used for creating postsynaptic update model)doc";
+
+static const char *__doc_SynapseGroup_m_PSMVarQueueRequired = R"doc(Set of names of PSM variable requiring queueing)doc";
+
+static const char *__doc_SynapseGroup_m_PSNeuronEGPReferences = R"doc('Resolved' EGP references to neurons EGPs used in postsynaptic update model)doc";
 
 static const char *__doc_SynapseGroup_m_PSNeuronVarReferences = R"doc('Resolved' variable references to neurons variables used in postsynaptic update model)doc";
 
@@ -3957,6 +3987,8 @@ This is ignored for simulations on hardware with a single memory space)doc";
 static const char *__doc_SynapseGroup_setPSExtraGlobalParamLocation =
 R"doc(Set location of postsynaptic model extra global parameter.
 This is ignored for simulations on hardware with a single memory space.)doc";
+
+static const char *__doc_SynapseGroup_setPSMVarQueueRequired = R"doc()doc";
 
 static const char *__doc_SynapseGroup_setPSParamDynamic = R"doc(Set whether weight update model parameter is dynamic or not i.e. it can be changed at runtime)doc";
 
@@ -4651,6 +4683,8 @@ static const char *__doc_WeightUpdateModels_Init_getVarInitialisers = R"doc()doc
 static const char *__doc_WeightUpdateModels_Init_isRNGRequired = R"doc()doc";
 
 static const char *__doc_WeightUpdateModels_Init_isVarHeterogeneouslyDelayedInSynCode = R"doc()doc";
+
+static const char *__doc_WeightUpdateModels_Init_isVarReferencedInSynCode = R"doc()doc";
 
 static const char *__doc_WeightUpdateModels_Init_m_PSMVarReferences = R"doc()doc";
 
