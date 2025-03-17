@@ -67,9 +67,12 @@ jobs:
         env:
           GTEST_DIR: ${{ github.workspace }}/googletest/googletest
         run: |
-          mkdir build
+          # Debug: List directory contents to find CMakeLists.txt
+          ls -la ${{ github.workspace }}
+          # Create build directory and run cmake from the repo root
+          mkdir -p build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release
+          cmake ${{ github.workspace }} -DCMAKE_BUILD_TYPE=Release
           make -j$(nproc)
           cd ../tests/unit
           make clean all COVERAGE=1
