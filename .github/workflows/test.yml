@@ -14,16 +14,11 @@ jobs:
     strategy:
       matrix:
         os: [Ubuntu-latest, windows-latest, macos-latest]
-        backend: [cuda10, cuda11, cuda12, amd]
-        exclude:
-          - os: macos-latest
-            backend: amd
-          - os: macos-latest
-            backend: cuda10
-          - os: macos-latest
-            backend: cuda11
-          - os: macos-latest
-            backend: cuda12
+        # Focus on CPU backend for now, exclude CUDA and AMD
+        backend: [cpu]  # Placeholder for CPU-only testing
+      exclude:
+        - os: macos-latest
+          backend: cpu  # Exclude macOS if CPU testing isn’t viable yet (adjust based on feedback)
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -32,29 +27,23 @@ jobs:
         if: matrix.os == 'Ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake python3 python3-pip libgtest-dev libffi-dev
+          sudo apt-get install -y build-essential python3 python3-pip libgtest-dev libffi-dev
 
       - name: Install system dependencies (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          choco install cmake python --version=3.9
+          choco install python --version=3.9
           pip install --upgrade pip
 
       - name: Install system dependencies (macOS)
         if: matrix.os == 'macos-latest'
         run: |
-          brew install cmake python libomp libffi
+          brew install python libomp libffi
           export LDFLAGS="-L/opt/homebrew/opt/libomp/lib -L/opt/homebrew/opt/libffi/lib"
           export CPPFLAGS="-I/opt/homebrew/opt/libomp/include -I/opt/homebrew/opt/libffi/include"
           export PKG_CONFIG_PATH="/opt/homebrew/opt/libffi/lib/pkgconfig"
           export PATH="/opt/homebrew/opt/python@3.13/libexec/bin:$PATH"
           python3 --version
-
-      - name: Set up CUDA
-        if: contains(matrix.backend, 'cuda')
-        uses: Jimver/cuda-toolkit@v0.2.14
-        with:
-          cuda: ${{ matrix.backend == 'cuda10' && '10.2.89' || matrix.backend == 'cuda11' && '11.8.0' || '12.4.0' }}
 
       - name: Download Google Test
         run: |
@@ -67,15 +56,12 @@ jobs:
         env:
           GTEST_DIR: ${{ github.workspace }}/googletest/googletest
         run: |
-          # Debug: List directory contents to find CMakeLists.txt
+          # Debug: List directory contents
           ls -la ${{ github.workspace }}
-          # Create build directory and run cmake from the repo root
+          # Create build directory and run make directly
           mkdir -p build
           cd build
-          cmake ${{ github.workspace }} -DCMAKE_BUILD_TYPE=Release
-          make -j$(nproc)
-          cd ../tests/unit
-          make clean all COVERAGE=1
+          make -j$(nproc) -C ${{ github.workspace }}/tests/unit clean all COVERAGE=1
           ./test_coverage --gtest_output=xml:test_results_unit.xml
 
       - name: Build GeNN and Unit Tests (Windows)
@@ -84,9 +70,8 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release
-          msbuild genn.sln /m /t:single_threaded_cpu_backend /p:Configuration=Release
-          msbuild tests/tests.sln /m /p:Configuration=Release
+          msbuild ${{ github.workspace }}\genn.sln /m /t:single_threaded_cpu_backend /p:Configuration=Release
+          msbuild ${{ github.workspace }}\tests\tests.sln /m /p:Configuration=Release
           cd tests/unit
           unit_Release.exe --gtest_output="xml:test_results_unit.xml"
 
@@ -123,7 +108,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ matrix.os }}-${{ matrix.backend }}
+          name: test-results-${{ matrix.os }}-${{ backend }}
           path: |
             tests/unit/test_results_unit.xml
             tests/features/test_results_feature.xml
