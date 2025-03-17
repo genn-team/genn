@@ -18,6 +18,12 @@ jobs:
         exclude:
           - os: macos-latest
             backend: amd
+          - os: macos-latest
+            backend: cuda10
+          - os: macos-latest
+            backend: cuda11
+          - os: macos-latest
+            backend: cuda12
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
