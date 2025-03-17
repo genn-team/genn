@@ -1,0 +1,104 @@
+name: GeNN CI
+
+on:
+  push:
+    branches:
+      - master 
+  pull_request:
+    branches:
+      - master 
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [Ubuntu-latest, windows-latest, macos-latest]
+        backend: [cuda10, cuda11, cuda12, amd]
+        exclude:
+          - os: macos-latest
+            backend: amd
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies (Ubuntu)
+        if: matrix.os == 'Ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake python3 python3-pip libgtest-dev
+
+      - name: Install system dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install cmake python --version=3.9
+          pip install --upgrade pip
+
+      - name: Install system dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install cmake python libomp
+          pip3 install --upgrade pip
+
+      - name: Set up CUDA
+        if: contains(matrix.backend, 'cuda')
+        uses: Jimver/cuda-toolkit@v0.2.14
+        with:
+          cuda: ${{ matrix.backend == 'cuda10' && '10.2.89' || matrix.backend == 'cuda11' && '11.8.0' || '12.4.0' }}
+
+      - name: Download Google Test
+        run: |
+          curl -L -o release-1.11.0.zip https://github.com/google/googletest/archive/refs/tags/release-1.11.0.zip
+          unzip release-1.11.0.zip
+          mv googletest-release-1.11.0 googletest
+
+      - name: Build GeNN and Unit Tests (Unix)
+        if: matrix.os != 'windows-latest'
+        env:
+          GTEST_DIR: ${{ github.workspace }}/googletest/googletest
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          make -j$(nproc)
+          cd ../tests/unit
+          make clean all COVERAGE=1
+          ./test_coverage --gtest_output=xml:test_results_unit.xml
+
+      - name: Build GeNN and Unit Tests (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: cmd
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          msbuild genn.sln /m /t:single_threaded_cpu_backend /p:Configuration=Release
+          msbuild tests/tests.sln /m /p:Configuration=Release
+          cd tests/unit
+          unit_Release.exe --gtest_output="xml:test_results_unit.xml"
+
+      - name: Set up Python virtualenv
+        run: |
+          python3 -m venv venv
+          . venv/bin/activate  # Use venv\Scripts\activate on Windows
+          pip install numpy scipy pybind11 pytest flaky pytest-cov wheel flake8 bitarray psutil
+
+      - name: Install PyGeNN
+        run: |
+          . venv/bin/activate
+          python setup.py develop --coverage
+
+      - name: Run Python Feature Tests
+        working-directory: tests/features
+        run: |
+          . ../../venv/bin/activate
+          pytest -s -v --cov ../../pygenn --cov-report=xml:coverage_python.xml --junitxml=test_results_feature.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}-${{ matrix.backend }}
+          path: |
+            tests/unit/test_results_unit.xml
+            tests/features/test_results_feature.xml
