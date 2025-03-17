@@ -3,10 +3,10 @@ name: GeNN CI
 on:
   push:
     branches:
-      - master 
+      - master
   pull_request:
     branches:
-      - master 
+      - master
 
 jobs:
   test:
@@ -26,7 +26,7 @@ jobs:
         if: matrix.os == 'Ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake python3 python3-pip libgtest-dev
+          sudo apt-get install -y build-essential cmake python3 python3-pip libgtest-dev libffi-dev
 
       - name: Install system dependencies (Windows)
         if: matrix.os == 'windows-latest'
@@ -37,8 +37,13 @@ jobs:
       - name: Install system dependencies (macOS)
         if: matrix.os == 'macos-latest'
         run: |
-          brew install cmake python libomp
+          brew install cmake python libomp libffi
+          export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
+          export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
+          export PATH="/opt/homebrew/opt/python@3.9/libexec/bin:$PATH"
+          python3 --version
           pip3 install --upgrade pip
+          pip3 install pybind11 psutil numpy
 
       - name: Set up CUDA
         if: contains(matrix.backend, 'cuda')
@@ -80,18 +85,30 @@ jobs:
       - name: Set up Python virtualenv
         run: |
           python3 -m venv venv
-          . venv/bin/activate  # Use venv\Scripts\activate on Windows
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            source venv/Scripts/activate
+          else
+            source venv/bin/activate
+          fi
           pip install numpy scipy pybind11 pytest flaky pytest-cov wheel flake8 bitarray psutil
 
       - name: Install PyGeNN
         run: |
-          . venv/bin/activate
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            source venv/Scripts/activate
+          else
+            source venv/bin/activate
+          fi
           python setup.py develop --coverage
 
       - name: Run Python Feature Tests
         working-directory: tests/features
         run: |
-          . ../../venv/bin/activate
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            source ../../venv/Scripts/activate
+          else
+            source ../../venv/bin/activate
+          fi
           pytest -s -v --cov ../../pygenn --cov-report=xml:coverage_python.xml --junitxml=test_results_feature.xml
 
       - name: Upload test results
