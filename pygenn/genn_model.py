@@ -661,16 +661,12 @@ class GeNNModel(ModelSpec):
         # Create suitable preferences object for backend
         self._preferences = self._backend_module.Preferences()
 
-        # Validate preference kwargs
-        for k, v in self._preference_kwargs.items():
-            if not hasattr(self._preferences, k):
-                raise ValueError(f"Unknown preference '{k}'")
-        
-            
         # Set attributes on preferences object from kwargs
         for k, v in self._preference_kwargs.items():
             if hasattr(self._preferences, k):
                 setattr(self._preferences, k, v)
+            else:
+                raise ValueError(f"Unknown preference '{k}'")
         
         # Create backend
         self._backend = self._backend_module._create_backend(
