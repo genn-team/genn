@@ -665,6 +665,8 @@ class GeNNModel(ModelSpec):
         for k, v in self._preference_kwargs.items():
             if hasattr(self._preferences, k):
                 setattr(self._preferences, k, v)
+            else:
+                raise ValueError(f"Unknown preference '{k}'")
         
         # Create backend
         self._backend = self._backend_module._create_backend(
