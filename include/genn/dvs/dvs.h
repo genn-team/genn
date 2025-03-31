@@ -69,7 +69,9 @@ public:
     template<typename D>
     static DVS createDVS(uint16_t deviceID)
     {
-        return DVS(std::make_unique<D>(deviceID), 
+        auto device = std::make_unique<D>(deviceID);
+        auto info = device->infoGet();
+        return DVS(std::move(device),
                    static_cast<uint32_t>(info.dvsSizeX), 
                    static_cast<uint32_t>(info.dvsSizeY));
     }
@@ -83,6 +85,6 @@ private:
     //------------------------------------------------------------------------
     std::unique_ptr<libcaer::devices::device> m_Device;
     uint32_t m_Width;
-    uuint32_t m_Height;
+    uint32_t m_Height;
 };
 }
