@@ -38,6 +38,15 @@ hip_path = os.environ.get("HIP_PATH")
 # Is HIP installed
 hip_installed = hip_path is not None and os.path.exists(hip_path)
 
+# Is LIBCAER installed
+libcaer_installed = False
+if not WIN:
+    try:
+        import pkgconfig
+        libcaer_installed = pkgconfig.exists("libcaer")
+    except ImportError:
+        pass
+ 
 # Are we on Linux?
 # **NOTE** Pybind11Extension provides WIN and MAC
 LINUX = system() == "Linux"
@@ -231,6 +240,31 @@ ext_modules = [
     Pybind11Extension("weight_update_models",
                       [os.path.join(pygenn_src, "weightUpdateModels.cc")],
                       **genn_extension_kwargs)]
+
+# If LIBCAER is installed
+if libcaer_installed:
+    assert LINUX
+    import pkgconfig
+
+    # Take a copy of the standard extension kwargs
+    dvs_extension_kwargs = deepcopy(genn_extension_kwargs)
+    
+    # Extend any settings specified by libcaer
+    for n, v in pkgconfig.parse("libcaer").items():
+        dvs_extension_kwargs[n].extend(v)
+        
+    # Add DVS library as dependency and package
+    dvs_extension_kwargs["depends"].append(
+        os.path.join(pygenn_path, "libgenn_dvs" + genn_lib_suffix + ".so"))
+    package_data.append("libgenn_dvs" + genn_lib_suffix + ".so")
+    
+    # Add DVS include directory
+    dvs_include_dir = os.path.join(genn_path, "include", "genn", "dvs")
+    dvs_extension_kwargs["include_dirs"].append(dvs_include_dir)
+    
+    ext_modules.append(Pybind11Extension("dvs",
+                                         [os.path.join(pygenn_src, "dvs.cc")],
+                                         **dvs_extension_kwargs))
 
 # Loop through namespaces of supported backends
 for module_stem, source_stem, kwargs in backends:
