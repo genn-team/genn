@@ -67,7 +67,7 @@ public:
     //------------------------------------------------------------------------
     //! Create DVS interface for camera type
     template<typename D>
-    static DVS createDVS(uint16_t deviceID)
+    static DVS create(uint16_t deviceID)
     {
         auto device = std::make_unique<D>(deviceID);
         auto info = device->infoGet();
