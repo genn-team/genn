@@ -12,3 +12,7 @@ if [[ -n "$HIP_PATH" ]]; then
     python mkdoc.py -o hipBackendDocStrings.h -std=c++17 -D__HIP_PLATFORM_AMD__ -I ../../include/genn/third_party -I ../../include/genn/third_party/plog -I ../../include/genn/genn/ -I $HIP_PATH/include ../../include/genn/backends/hip/*.h
   fi
 fi
+
+if pkg-config --exists libcaer; then
+    python mkdoc.py -o dvsDocStrings.h -std=c++17  -I ../../include/genn/third_party -I ../../include/genn/third_party/plog -I ../../include/genn/genn/ ../../include/genn/dvs/*.h
+fi
