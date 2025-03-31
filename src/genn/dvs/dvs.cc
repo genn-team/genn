@@ -1,4 +1,4 @@
-#include "dvs/dvs.h"
+#include "dvs.h"
 
 // GeNN code generator includes
 // **YUCK**
@@ -35,7 +35,7 @@ inline bool isInCrop(const libcaer::events::PolarityEvent &event, const DVS::Cro
             && (event.getY() >= cropRect->top) && (event.getY() < cropRect->bottom));
 }
 
-std::tuple<uint32_t, uin32_t> scaleEvent(uint32_t x, uint32_t y,  float scale)
+std::tuple<uint32_t, uint32_t> scaleEvent(uint32_t x, uint32_t y,  float scale)
 {
     return std::make_tuple(static_cast<uint32_t>(std::round(x * scale)),
                            static_cast<uint32_t>(std::round(y * scale)));
@@ -58,7 +58,7 @@ inline void forEachPolarityEvent(const libcaer::events::EventPacketContainer &ev
                           P onPolarityEventFn)
 {
     // Loop through packets
-    for(auto &packet : *packetContainer) {
+    for(auto &packet : eventPacketContainer) {
         // If packet's empty, skip
         if (packet == nullptr) {
             continue;
@@ -66,7 +66,7 @@ inline void forEachPolarityEvent(const libcaer::events::EventPacketContainer &ev
         // Otherwise if this is a polarity event
         else if (packet->getEventType() == POLARITY_EVENT) {
             // Cast to polarity packet
-            auto polarityPacket = std::static_pointer_cast<libcaer::events::PolarityEventPacket>(packet);
+            auto polarityPacket = std::static_pointer_cast<const libcaer::events::PolarityEventPacket>(packet);
 
             // Loop through events
             for(const auto &event : *polarityPacket) {
@@ -137,7 +137,7 @@ void DVS::readEvents(GeNN::Runtime::ArrayBase *array, Polarity polarity,
                 [=](const auto &event)
                 {
                     if(isPolarityCorrect(event, polarity) && isInCrop(event, cropRect)) {
-                        const auto [x, y] = scaleEvent(event.getX() - cropRect->x, 
+                        const auto [x, y] = scaleEvent(event.getX() - cropRect->left, 
                                                        event.getY() - cropRect->top, scale);
                         setEvent(x, y, outputWidth, arrayPointer);
                     }
@@ -163,7 +163,7 @@ void DVS::readEvents(GeNN::Runtime::ArrayBase *array, Polarity polarity,
                 [=](const auto &event)
                 {
                     if(isPolarityCorrect(event, polarity)) {
-                        const auto [x, y] = scaleEvent(event, scale);
+                        const auto [x, y] = scaleEvent(event.getX(), event.getY(), scale);
                         setEvent(x, y, outputWidth, arrayPointer);
                     }
                 });
@@ -189,7 +189,7 @@ void DVS::readEvents(GeNN::Runtime::ArrayBase *array, Polarity polarity,
                 [=](const auto &event)
                 {
                     if(isInCrop(event, cropRect)) {
-                        const auto [x, y] = scaleEvent(event.getX() - cropRect->x, 
+                        const auto [x, y] = scaleEvent(event.getX() - cropRect->left, 
                                                        event.getY() - cropRect->top, scale);
                         setEvent(x, y, event.getPolarity(), 
                                  outputWidth, arrayPointer);
@@ -215,7 +215,7 @@ void DVS::readEvents(GeNN::Runtime::ArrayBase *array, Polarity polarity,
                 *packetContainer,
                 [=](const auto &event)
                 {
-                    const auto [x, y] = scaleEvent(event, scale);
+                    const auto [x, y] = scaleEvent(event.getX(), event.getY(), scale);
                     setEvent(x, y, event.getPolarity(), 
                                 outputWidth, arrayPointer);
                 });
@@ -233,9 +233,9 @@ void DVS::readEvents(GeNN::Runtime::ArrayBase *array, Polarity polarity,
     }  
 }
 //----------------------------------------------------------------------------
-DVS::DeviceInterface(std::unique_ptr<libcaer::devices::device> device,
-                     unsigned int width, unsigned int height)
-:   m_Device(device), m_Width(width), m_Height(height)
+DVS::DVS(std::unique_ptr<libcaer::devices::device> device,
+         unsigned int width, unsigned int height)
+:   m_Device(std::move(device)), m_Width(width), m_Height(height)
 {
     // Send the default configuration before using the device.
     // No configuration is sent automatically!
