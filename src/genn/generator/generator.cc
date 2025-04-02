@@ -19,6 +19,12 @@
 #include "code_generator/generateMSBuild.h"
 #include "code_generator/modelSpecMerged.h"
 
+// GeNN DVS includes
+#ifdef EVENT_CAMERA
+    #include "dvs.h"
+    using namespace GeNN::EventCamera;
+#endif
+
 // GeNN runtime includes
 #include "runtime/runtime.h"
 

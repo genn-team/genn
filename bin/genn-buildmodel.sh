@@ -7,6 +7,7 @@ genn_help () {
     echo "-c            generate simulation code for the CPU"
     echo "-p            generate simulation code for HIP"
     echo "-d            enables the debugging mode"
+    echo "-e            enable DVS event-camera integration"
     echo "-m            generate MPI simulation code"
     echo "-v            generates coverage information"
     echo "-h            shows this help message"
@@ -32,11 +33,12 @@ GENERATOR_MAKEFILE="MakefileCUDA"
 CXX_STANDARD="c++17"
 FORCE_REBUILD=0
 while [[ -n "${!OPTIND}" ]]; do
-    while getopts "clpdvfs:o:i:h" option; do
+    while getopts "clpdevfs:o:i:h" option; do
     case $option in
         c) GENERATOR_MAKEFILE="MakefileSingleThreadedCPU";;
         p) GENERATOR_MAKEFILE="MakefileHIP";;
         d) DEBUG=1;;
+        e) EVENT_CAMERA=1;;
         v) COVERAGE=1;;
         f) FORCE_REBUILD=1;;
         h) genn_help; exit;;
@@ -76,6 +78,11 @@ fi
 if [[ -n "$COVERAGE" ]]; then
     MACROS="$MACROS COVERAGE=1";
     GENERATOR="$GENERATOR"_coverage
+fi
+
+if [[ -n "$EVENT_CAMERA" ]]; then
+    MACROS="$MACROS EVENT_CAMERA=1";
+    GENERATOR="$GENERATOR"_event_camera
 fi
 
 # If CUDA path isn't set, default to standard path for (at least Ubuntu) Linux systems
