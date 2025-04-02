@@ -2,13 +2,13 @@
 include ../MakefileCommon
 
 # Add DVS and LIBCAER include directories to compiler flags
-CXXFLAGS		+=-I$(GENN_DIR)/include/genn/dvs $(shell pkg-config libcaer --cflags)
+CXXFLAGS		+=-I$(GENN_DIR)/include/genn/event_camera $(shell pkg-config libcaer --cflags)
 
 # Add prefix to object directory and library name
-BACKEND			:=$(LIBRARY_DIRECTORY)/libgenn_dvs$(GENN_PREFIX).$(LIBRARY_EXTENSION)
+LIBEVENT_CAMERA	:=$(LIBRARY_DIRECTORY)/libgenn_event_camera$(GENN_PREFIX).$(LIBRARY_EXTENSION)
 
 # Build objecs in sub-directory
-OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/genn/dvs
+OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/genn/event_camera
 
 # Find source files
 SOURCES			:= $(wildcard *.cc)
@@ -19,21 +19,21 @@ DEPS			:=$(OBJECTS:.o=.d)
 
 .PHONY: all
 
-all: $(BACKEND)
+all: $(LIBEVENT_CAMERA)
 
 ifdef DYNAMIC
 ifeq ($(DARWIN),DARWIN)
-$(BACKEND): $(OBJECTS)
+$(LIBEVENT_CAMERA): $(OBJECTS)
 	mkdir -p $(@D)
 	$(CXX) -dynamiclib -undefined dynamic_lookup $(CXXFLAGS) -o $@ $(OBJECTS)
 	install_name_tool -id "@loader_path/$(@F)" $@
 else
-$(BACKEND): $(OBJECTS)
+$(LIBEVENT_CAMERA): $(OBJECTS)
 	mkdir -p $(@D)
 	$(CXX) -shared $(CXXFLAGS) -o $@ $(OBJECTS)
 endif
 else
-$(BACKEND): $(OBJECTS)
+$(LIBEVENT_CAMERA): $(OBJECTS)
 	mkdir -p $(@D)
 	$(AR) $(ARFLAGS) $@ $(OBJECTS)
 endif
@@ -47,4 +47,4 @@ $(OBJECT_DIRECTORY)/%.o: %.cc $(OBJECT_DIRECTORY)/%.d
 %.d: ;
 
 clean:
-	@rm -f $(OBJECT_DIRECTORY)/*.o $(OBJECT_DIRECTORY)/*.d $(BACKEND)
+	@rm -f $(OBJECT_DIRECTORY)/*.o $(OBJECT_DIRECTORY)/*.d $(LIBEVENT_CAMERA)

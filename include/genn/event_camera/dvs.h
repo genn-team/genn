@@ -6,25 +6,32 @@
 // Standard C includes
 #include <cstdint>
 
+// LibCAER includes
+#include <libcaercpp/devices/davis.hpp>
+#include <libcaercpp/devices/dvs128.hpp>
+#include <libcaercpp/devices/dvxplorer.hpp>
+
+
 // Forward declarations
-namespace libcaer::devices
-{
-class device;
-}
 namespace GeNN::Runtime
 {
 class ArrayBase;
 }
 
 //----------------------------------------------------------------------------
-// GeNN::DVS::DVS
+// GeNN::EventCamera::DVS
 //----------------------------------------------------------------------------
 //! Simply interface for reading spikes from DVS sensors supported by LibCAER into GeNN
-namespace GeNN::DVS
+namespace GeNN::EventCamera
 {
 class DVS
 {
 public:
+    ~DVS()
+    {
+        stop();
+    }
+
     //! How to handle event polarity
     enum class Polarity : uint32_t
     {
@@ -67,7 +74,7 @@ public:
     //------------------------------------------------------------------------
     //! Create DVS interface for camera type
     template<typename D>
-    static DVS create(uint16_t deviceID)
+    static DVS create(uint16_t deviceID = 1)
     {
         auto device = std::make_unique<D>(deviceID);
         auto info = device->infoGet();
