@@ -73,8 +73,8 @@ public:
 protected:
     CurrentSource(const std::string &name, const CurrentSourceModels::Base *model,
                   const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers,
-                  const std::map<std::string, Models::VarReference> &neuronVarReferences, const NeuronGroupInternal *trgNeuronGroup, 
-                  VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
+                  const std::map<std::string, std::variant<std::string, Models::VarReference>> &neuronVarReferences, 
+                  NeuronGroupInternal *trgNeuronGroup, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
     // Protected methods

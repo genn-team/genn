@@ -1,5 +1,8 @@
 #pragma once
 
+// Standard C++ includes
+#include <variant>
+
 // GeNN includes
 #include "models.h"
 
@@ -24,6 +27,7 @@
 
 #define SET_PRE_NEURON_VAR_REFS(...) virtual VarRefVec getPreNeuronVarRefs() const override{ return __VA_ARGS__; }
 #define SET_POST_NEURON_VAR_REFS(...) virtual VarRefVec getPostNeuronVarRefs() const override{ return __VA_ARGS__; }
+#define SET_PSM_VAR_REFS(...) virtual VarRefVec getPSMVarRefs() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // GeNN::WeightUpdateModels::Base
@@ -101,6 +105,9 @@ public:
     //! Gets names and types of variable references to postsynaptic neuron
     virtual VarRefVec getPostNeuronVarRefs() const{ return {}; }
 
+    //! Gets names and types of variable references to postsynaptic model
+    virtual VarRefVec getPSMVarRefs() const{ return {}; }
+
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
@@ -142,8 +149,9 @@ public:
                   const std::map<std::string, InitVarSnippet::Init> &varValues,
                   const std::map<std::string, InitVarSnippet::Init> &preVarValues,
                   const std::map<std::string, InitVarSnippet::Init> &postVarValues,
-                  const std::map<std::string, Models::VarReference> &preVarRefTargets,
-                  const std::map<std::string, Models::VarReference> &postVarRefTargets) const;
+                  const std::map<std::string, std::variant<std::string, Models::VarReference>> &preVarRefTargets,
+                  const std::map<std::string, std::variant<std::string, Models::VarReference>> &postVarRefTargets,
+                  const std::map<std::string, std::variant<std::string, Models::VarReference>> &psmVarRefTargets) const;
 };
 
 
@@ -157,8 +165,9 @@ public:
          const std::map<std::string, InitVarSnippet::Init> &varInitialisers, 
          const std::map<std::string, InitVarSnippet::Init> &preVarInitialisers, 
          const std::map<std::string, InitVarSnippet::Init> &postVarInitialisers,
-         const std::map<std::string, Models::VarReference> &preNeuronVarReferences, 
-         const std::map<std::string, Models::VarReference> &postNeuronVarReferences);
+         const std::map<std::string, std::variant<std::string, Models::VarReference>> &preNeuronVarReferences, 
+         const std::map<std::string, std::variant<std::string, Models::VarReference>> &postNeuronVarReferences,
+         const std::map<std::string, std::variant<std::string, Models::VarReference>> &psmVarReferences);
 
     //------------------------------------------------------------------------
     // Public API
@@ -170,6 +179,7 @@ public:
     const auto &getPostVarInitialisers() const{ return m_PostVarInitialisers; }
     const auto &getPreNeuronVarReferences() const{ return m_PreNeuronVarReferences;  }
     const auto &getPostNeuronVarReferences() const{ return m_PostNeuronVarReferences;  }
+    const auto &getPSMVarReferences() const{ return m_PSMVarReferences;  }
     
     const auto &getPreSpikeSynCodeTokens() const{ return m_PreSpikeSynCodeTokens; }
     const auto &getPreEventSynCodeTokens() const{ return m_PreEventSynCodeTokens; }
@@ -184,7 +194,8 @@ public:
     const auto &getPostDynamicsCodeTokens() const{ return m_PostDynamicsCodeTokens; }
 
     bool isVarHeterogeneouslyDelayedInSynCode(const std::string &name) const;
-
+    bool isVarReferencedInSynCode(const std::string &name) const;
+    
     void finalise(double dt);
     
 private:
@@ -206,8 +217,9 @@ private:
     std::map<std::string, InitVarSnippet::Init> m_VarInitialisers;
     std::map<std::string, InitVarSnippet::Init> m_PreVarInitialisers;
     std::map<std::string, InitVarSnippet::Init> m_PostVarInitialisers;
-    std::map<std::string, Models::VarReference> m_PreNeuronVarReferences;
-    std::map<std::string, Models::VarReference> m_PostNeuronVarReferences;
+    std::map<std::string, std::variant<std::string, Models::VarReference>> m_PreNeuronVarReferences;
+    std::map<std::string, std::variant<std::string, Models::VarReference>> m_PostNeuronVarReferences;
+    std::map<std::string, std::variant<std::string, Models::VarReference>> m_PSMVarReferences;
 };
 
 //----------------------------------------------------------------------------

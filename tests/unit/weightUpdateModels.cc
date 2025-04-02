@@ -115,8 +115,9 @@ TEST(WeightUpdateModels, ValidateParamValues)
     const VarValues varVals{{"g", uninitialisedVar()}};
     const VarValues preVarVals{{"preTrace", uninitialisedVar()}};
     const VarValues postVarVals{{"postTrace", uninitialisedVar()}};
-    const VarReferences preNeuronVarRefs{};
-    const VarReferences postNeuronVarRefs{};
+    const LocalVarReferences preNeuronVarRefs{};
+    const LocalVarReferences postNeuronVarRefs{};
+    const LocalVarReferences psmVarRefs{};
 
     const ParamValues paramValsCorrect{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
     const ParamValues paramValsMisSpelled{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"APlus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
@@ -124,11 +125,11 @@ TEST(WeightUpdateModels, ValidateParamValues)
     const ParamValues paramValsExtra{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Bminus", 0.01},{"Wmin", 0.0}, {"Wmax", 1.0}};
 
     STDPAdditive::getInstance()->validate(paramValsCorrect, varVals, preVarVals, postVarVals, 
-                                          preNeuronVarRefs, postNeuronVarRefs);
+                                          preNeuronVarRefs, postNeuronVarRefs, psmVarRefs);
 
     try {
         STDPAdditive::getInstance()->validate(paramValsMisSpelled, varVals, preVarVals, postVarVals, 
-                                              preNeuronVarRefs, postNeuronVarRefs);
+                                              preNeuronVarRefs, postNeuronVarRefs, psmVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -136,7 +137,7 @@ TEST(WeightUpdateModels, ValidateParamValues)
 
     try {
         STDPAdditive::getInstance()->validate(paramValsMissing, varVals, preVarVals, postVarVals, 
-                                              preNeuronVarRefs, postNeuronVarRefs);
+                                              preNeuronVarRefs, postNeuronVarRefs, psmVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -144,7 +145,7 @@ TEST(WeightUpdateModels, ValidateParamValues)
 
     try {
         STDPAdditive::getInstance()->validate(paramValsExtra, varVals, preVarVals, postVarVals, 
-                                              preNeuronVarRefs, postNeuronVarRefs);
+                                              preNeuronVarRefs, postNeuronVarRefs, psmVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -156,8 +157,9 @@ TEST(WeightUpdateModels, ValidateVarValues)
     const VarValues preVarVals{{"preTrace", 0.0}};
     const VarValues postVarVals{{"postTrace", 0.0}};
     const ParamValues paramVals{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
-    const VarReferences preNeuronVarRefs{};
-    const VarReferences postNeuronVarRefs{};
+    const LocalVarReferences preNeuronVarRefs{};
+    const LocalVarReferences postNeuronVarRefs{};
+    const LocalVarReferences psmVarRefs{};
     
     const VarValues varValsCorrect{{"g", uninitialisedVar()}};
     const VarValues varValsMisSpelled{{"G", uninitialisedVar()}};
@@ -165,11 +167,11 @@ TEST(WeightUpdateModels, ValidateVarValues)
     const VarValues varValsExtra{{"g", uninitialisedVar()}, {"d", uninitialisedVar()}};
 
     STDPAdditive::getInstance()->validate(paramVals, varValsCorrect, preVarVals, postVarVals, 
-                                          preNeuronVarRefs, postNeuronVarRefs);
+                                          preNeuronVarRefs, postNeuronVarRefs, psmVarRefs);
 
     try {
         STDPAdditive::getInstance()->validate(paramVals, varValsMisSpelled, preVarVals, postVarVals, 
-                                              preNeuronVarRefs, postNeuronVarRefs);
+                                              preNeuronVarRefs, postNeuronVarRefs, psmVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -177,7 +179,7 @@ TEST(WeightUpdateModels, ValidateVarValues)
 
     try {
         STDPAdditive::getInstance()->validate(paramVals, varValsMissing, preVarVals, postVarVals, 
-                                              preNeuronVarRefs, postNeuronVarRefs);
+                                              preNeuronVarRefs, postNeuronVarRefs, psmVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -185,7 +187,7 @@ TEST(WeightUpdateModels, ValidateVarValues)
 
     try {
         STDPAdditive::getInstance()->validate(paramVals, varValsExtra, preVarVals, postVarVals, 
-                                              preNeuronVarRefs, postNeuronVarRefs);
+                                              preNeuronVarRefs, postNeuronVarRefs, psmVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -197,8 +199,9 @@ TEST(WeightUpdateModels, ValidatePreVarValues)
     const VarValues postVarVals{{"postTrace", 0.0}};
     const VarValues varVals{{"g", uninitialisedVar()}};
     const ParamValues paramVals{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
-    const VarReferences preNeuronVarRefs{};
-    const VarReferences postNeuronVarRefs{};
+    const LocalVarReferences preNeuronVarRefs{};
+    const LocalVarReferences postNeuronVarRefs{};
+    const LocalVarReferences psmVarRefs{};
     
     const VarValues preVarValsCorrect{{"preTrace", 0.0}};
     const VarValues preVarValsMisSpelled{{"prETrace", 0.0}};
@@ -206,11 +209,11 @@ TEST(WeightUpdateModels, ValidatePreVarValues)
     const VarValues preVarValsExtra{{"preTrace", 0.0}, {"postTrace", 0.0}};
 
     STDPAdditive::getInstance()->validate(paramVals, varVals, preVarValsCorrect, postVarVals, 
-                                          preNeuronVarRefs, postNeuronVarRefs);
+                                          preNeuronVarRefs, postNeuronVarRefs, psmVarRefs);
 
     try {
         STDPAdditive::getInstance()->validate(paramVals, varVals, preVarValsMisSpelled, postVarVals, 
-                                              preNeuronVarRefs, postNeuronVarRefs);
+                                              preNeuronVarRefs, postNeuronVarRefs, psmVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -218,7 +221,7 @@ TEST(WeightUpdateModels, ValidatePreVarValues)
 
     try {
         STDPAdditive::getInstance()->validate(paramVals, varVals, preVarValsMissing, postVarVals, 
-                                              preNeuronVarRefs, postNeuronVarRefs);
+                                              preNeuronVarRefs, postNeuronVarRefs, psmVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -226,7 +229,7 @@ TEST(WeightUpdateModels, ValidatePreVarValues)
 
     try {
         STDPAdditive::getInstance()->validate(paramVals, varVals, preVarValsExtra, postVarVals, 
-                                              preNeuronVarRefs, postNeuronVarRefs);
+                                              preNeuronVarRefs, postNeuronVarRefs, psmVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -238,8 +241,9 @@ TEST(WeightUpdateModels, ValidatePostVarValues)
     const VarValues preVarVals{{"preTrace", 0.0}};
     const VarValues varVals{{"g", uninitialisedVar()}};
     const ParamValues paramVals{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
-    const VarReferences preNeuronVarRefs{};
-    const VarReferences postNeuronVarRefs{};
+    const LocalVarReferences preNeuronVarRefs{};
+    const LocalVarReferences postNeuronVarRefs{};
+    const LocalVarReferences psmVarRefs{};
     
     const VarValues postVarValsCorrect{{"postTrace", 0.0}};
     const VarValues postVarValsMisSpelled{{"PostTrace", 0.0}};
@@ -247,11 +251,11 @@ TEST(WeightUpdateModels, ValidatePostVarValues)
     const VarValues postVarValsExtra{{"postTrace", 0.0}, {"preTrace", 0.0}};
 
     STDPAdditive::getInstance()->validate(paramVals, varVals, preVarVals, postVarValsCorrect, 
-                                          preNeuronVarRefs, postNeuronVarRefs);
+                                          preNeuronVarRefs, postNeuronVarRefs, psmVarRefs);
 
     try {
         STDPAdditive::getInstance()->validate(paramVals, varVals, preVarVals, postVarValsMisSpelled, 
-                                              preNeuronVarRefs, postNeuronVarRefs);
+                                              preNeuronVarRefs, postNeuronVarRefs, psmVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -259,7 +263,7 @@ TEST(WeightUpdateModels, ValidatePostVarValues)
 
     try {
         STDPAdditive::getInstance()->validate(paramVals, varVals, preVarVals, postVarValsMissing, 
-                                              preNeuronVarRefs, postNeuronVarRefs);
+                                              preNeuronVarRefs, postNeuronVarRefs, psmVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -267,7 +271,7 @@ TEST(WeightUpdateModels, ValidatePostVarValues)
 
     try {
         STDPAdditive::getInstance()->validate(paramVals, varVals, preVarVals, postVarValsExtra, 
-                                              preNeuronVarRefs, postNeuronVarRefs);
+                                              preNeuronVarRefs, postNeuronVarRefs, psmVarRefs);
         FAIL();
     }
     catch(const std::runtime_error &) {

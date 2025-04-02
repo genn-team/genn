@@ -227,7 +227,19 @@ public:
 
     const auto &getPSInitialiser() const{ return m_PSInitialiser; }
     const auto &getWUInitialiser() const{ return m_WUInitialiser; }
-      
+    
+    //! Get 'resolved' variable references to presynaptic neuron variables used in weight update model
+    const auto &getWUMPreNeuronVarReferences() const{ return m_WUMPreNeuronVarReferences; }
+
+    //! Get 'resolved' variable references to presynaptic neurons variables used in weight update model
+    const auto &getWUMPostNeuronVarReferences() const{ return m_WUMPostNeuronVarReferences; }
+    
+    //! Get 'resolved' variable references to presynaptic model variables used in weight update model
+    const auto &getWUMPSMVarReferences() const{ return m_WUMPSMVarReferences; }
+    
+    //! Get 'resolved' variable references to neurons variables used in postsynaptic update model
+    const auto &getPSNeuronVarReferences() const{ return m_PSNeuronVarReferences; }
+
     const auto &getSparseConnectivityInitialiser() const{ return m_SparseConnectivityInitialiser; }
     const auto &getToeplitzConnectivityInitialiser() const { return m_ToeplitzConnectivityInitialiser; }
 
@@ -263,6 +275,9 @@ protected:
     void setFusedWUPrePostTarget(const NeuronGroup *ng, const SynapseGroup &target);
     void setFusedPreOutputTarget(const NeuronGroup *ng, const SynapseGroup &target);
     
+    // Set a variable as requiring queueing
+    void setPSMVarQueueRequired(const std::string &varName){ m_PSMVarQueueRequired.insert(varName); }
+
     void finalise(double dt);
 
     //! Add reference to custom connectivity update, referencing this synapse group
@@ -338,6 +353,12 @@ protected:
 
     //! Are any postsynaptic weight update model variable heterogeneously delayed?
     bool areAnyWUPostVarHeterogeneouslyDelayed() const;
+
+    //! Is the named postsynaptic  model variable heterogeneously delayed?
+    bool isPSMVarHeterogeneouslyDelayed(const std::string &var) const;
+
+    //! Is the named postsynaptic model variable referenced in synapse code?
+    bool isPSMVarQueueRequired(const std::string &var) const;
 
     //! Does this synapse group provide presynaptic output?
     bool isPresynapticOutputRequired() const; 
@@ -473,6 +494,9 @@ private:
 
     //! Maximum dendritic delay timesteps supported for synapses in this population
     std::optional<unsigned int> m_MaxDendriticDelayTimesteps;
+    
+    //! Set of names of PSM variable requiring queueing
+    std::set<std::string> m_PSMVarQueueRequired;
 
     //! Kernel size 
     std::vector<unsigned int> m_KernelSize;
@@ -512,6 +536,10 @@ private:
     //! Set of names of postsynaptic weight update 
     //! model variables which are heterogeneously delayed
     std::set<std::string> m_HeterogeneouslyDelayedWUPostVars;
+
+    //! Set of names of postsynaptic model variables
+    //! which are heterogeneously delayed
+    std::set<std::string> m_HeterogeneouslyDelayedPSMVars;
     
     //! Location of individual per-synapse state variables.
     /*! This is ignored for simulations on hardware with a single memory space */
@@ -594,6 +622,18 @@ private:
     //! Custom updates which reference this synapse group.
     /*! Because, if connectivity is sparse, all groups share connectivity this is required if connectivity changes. */
     std::vector<CustomUpdateWUInternal*> m_CustomUpdateReferences;
+
+    //! 'Resolved' variable references to presynaptic neuron variables used in weight update model
+    std::map<std::string, Models::VarReference> m_WUMPreNeuronVarReferences;
+
+    //! 'Resolved' variable references to presynaptic neurons variables used in weight update model
+    std::map<std::string, Models::VarReference> m_WUMPostNeuronVarReferences;
+
+    //! 'Resolved' variable references to postsynaptic model variables used in weight update model
+    std::map<std::string, Models::VarReference> m_WUMPSMVarReferences;
+    
+    //! 'Resolved' variable references to neurons variables used in postsynaptic update model
+    std::map<std::string, Models::VarReference> m_PSNeuronVarReferences;
     
 };
 }   // namespace GeNN

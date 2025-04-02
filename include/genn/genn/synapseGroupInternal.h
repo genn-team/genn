@@ -61,6 +61,8 @@ public:
     using SynapseGroup::isDendriticOutputDelayRequired;
     using SynapseGroup::isWUPostVarHeterogeneouslyDelayed;
     using SynapseGroup::areAnyWUPostVarHeterogeneouslyDelayed;
+    using SynapseGroup::isPSMVarHeterogeneouslyDelayed;
+    using SynapseGroup::isPSMVarQueueRequired;
     using SynapseGroup::isPresynapticOutputRequired; 
     using SynapseGroup::isPostsynapticOutputRequired;
     using SynapseGroup::isProceduralConnectivityRNGRequired;
@@ -110,7 +112,19 @@ public:
 
     const SynapseGroup &getTarget() const{ return m_SG.getFusedPSTarget(); }
 
-    std::optional<unsigned int> getNumVarDelaySlots(const std::string&) const{ return std::nullopt; }
+    std::optional<unsigned int> getNumVarDelaySlots(const std::string &varName) const
+    {
+        // PSM variables are only delayed if they are referenced in synapse code and either
+        // there is a homogeneous backpropation delay or they are referenced with a heterogeneous delay
+        if(m_SG.isPSMVarQueueRequired(varName) 
+           && (m_SG.getBackPropDelaySteps() != 0 || m_SG.isPSMVarHeterogeneouslyDelayed(varName))) 
+        {
+            return m_SG.getTrgNeuronGroup()->getNumDelaySlots();
+        }
+        else {
+            return std::nullopt;
+        }
+    }
 
     VarAccessDim getVarDims(const Models::Base::Var &var) const{ return getVarAccessDim(var.access); }
 
@@ -160,7 +174,7 @@ public:
     //----------------------------------------------------------------------------
     auto getDefs() const{ return m_SG.getPSInitialiser().getSnippet()->getNeuronVarRefs(); }
 
-    const auto &getInitialisers() const{ return m_SG.getPSInitialiser().getNeuronVarReferences(); }
+    const auto &getInitialisers() const{ return m_SG.getPSNeuronVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -315,7 +329,7 @@ public:
     //----------------------------------------------------------------------------
     auto getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getPreNeuronVarRefs(); }
 
-    const auto &getInitialisers() const{ return m_SG.getWUInitialiser().getPreNeuronVarReferences(); }
+    const auto &getInitialisers() const{ return m_SG.getWUMPreNeuronVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------
@@ -340,7 +354,32 @@ public:
     //----------------------------------------------------------------------------
     auto getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getPostNeuronVarRefs(); }
 
-    const auto &getInitialisers() const{ return m_SG.getWUInitialiser().getPostNeuronVarReferences(); }
+    const auto &getInitialisers() const{ return m_SG.getWUMPostNeuronVarReferences(); }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    const SynapseGroupInternal &m_SG;
+};
+
+//----------------------------------------------------------------------------
+// SynapseWUPSMVarRefAdapter
+//----------------------------------------------------------------------------
+class SynapseWUPSMVarRefAdapter
+{
+public:
+    SynapseWUPSMVarRefAdapter(const SynapseGroupInternal &sg) : m_SG(sg)
+    {}
+
+    using RefType = Models::VarReference;
+
+    //----------------------------------------------------------------------------
+    // Public methods
+    //----------------------------------------------------------------------------
+    auto getDefs() const{ return m_SG.getWUInitialiser().getSnippet()->getPSMVarRefs(); }
+
+    const auto &getInitialisers() const{ return m_SG.getWUMPSMVarReferences(); }
 
 private:
     //----------------------------------------------------------------------------

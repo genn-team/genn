@@ -54,12 +54,17 @@ void CurrentSource::setTargetVar(const std::string &varName)
 //----------------------------------------------------------------------------
 CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels::Base *model,
                              const std::map<std::string, Type::NumericValue> &params, const std::map<std::string, InitVarSnippet::Init> &varInitialisers,
-                             const std::map<std::string, Models::VarReference> &neuronVarReferences, const NeuronGroupInternal *trgNeuronGroup, 
-                             VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+                             const std::map<std::string, std::variant<std::string, Models::VarReference>> &neuronVarReferences, 
+                             NeuronGroupInternal *trgNeuronGroup, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_Model(model), m_Params(params), m_VarInitialisers(varInitialisers),
-    m_NeuronVarReferences(neuronVarReferences), m_TrgNeuronGroup(trgNeuronGroup), m_VarLocation(defaultVarLocation), 
+    m_TrgNeuronGroup(trgNeuronGroup), m_VarLocation(defaultVarLocation), 
     m_ExtraGlobalParamLocation(defaultExtraGlobalParamLocation), m_TargetVar("Isyn")
 {
+    // 'Resolve' local variable references
+    Models::resolveVarReferences(neuronVarReferences,
+                                 m_NeuronVarReferences, trgNeuronGroup,
+                                 static_cast<Models::VarReference(*)(NeuronGroup*, const std::string&)>(&Models::VarReference::createVarRef));
+
     // Validate names
     Utils::validatePopName(name, "Current source");
     getModel()->validate(getParams(), getVarInitialisers(), getNeuronVarReferences(), "Current source " + getName());
@@ -69,7 +74,8 @@ CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels:
 
     // Check additional local variable reference constraints
     Models::checkLocalVarReferences(getNeuronVarReferences(), getModel()->getNeuronVarRefs(),
-                                    getTrgNeuronGroup(), "Variable references to in current source can only point to target neuron group.");
+                                    getTrgNeuronGroup(), "Variable references to in current source can only point to target neuron group.",
+                                    &Models::VarReference::isTargetNeuronGroup);
     
     // Scan current source model code string
     m_InjectionCodeTokens = Utils::scanCode(getModel()->getInjectionCode(), 
