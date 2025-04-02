@@ -10,7 +10,7 @@
 // LibCAER includes
 #include <libcaercpp/devices/device.hpp>
 
-using namespace GeNN::DVS;
+using namespace GeNN::EventCamera;
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -78,9 +78,9 @@ inline void forEachPolarityEvent(const libcaer::events::EventPacketContainer &ev
 }
 
 //----------------------------------------------------------------------------
-// GeNN::DVS::DVS
+// GeNN::EventCamera::DVS
 //----------------------------------------------------------------------------
-namespace GeNN::DVS
+namespace GeNN::EventCamera
 {
 void DVS::start()
 {
