@@ -37,6 +37,7 @@ make clean all -j $CORE_COUNT COVERAGE=1
 
 # Run tests
 ./test_coverage --gtest_output="xml:test_results_unit.xml"
+TEST_EXIT_CODE=$?
 
 popd    # unit
 
@@ -102,3 +103,12 @@ if [ $REPORT -eq 1 ]; then
     # Generate browseable HTML
     genhtml coverage.txt --branch-coverage --output-directory ./code_coverage_report/ 1>> ../../msg 2>> msg
 fi
+# Return the correct exit status
+if [ $TEST_EXIT_CODE -ne 0 ]; then
+    echo "❌ Tests failed!"
+    exit 1
+else
+    echo "✅ All tests passed!"
+    exit 0
+fi
+
