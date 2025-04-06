@@ -1,20 +1,23 @@
 # Include common makefile
 include ../../src/genn/MakefileCommon
 
-# Get simulate SpineML path i.e. directory of this Makefile
-UNIT_TEST_PATH		:=$(GENN_DIR)/tests/unit
-OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/tests/unit
+UNIT_TEST_PATH      := $(GENN_DIR)/tests/unit
+OBJECT_DIRECTORY    := $(OBJECT_DIRECTORY)/tests/unit
+GTEST_BUILD_DIR     := $(GTEST_DIR)/build
 
-SOURCES			:=$(GTEST_DIR)/src/gtest-all.cc $(GTEST_DIR)/src/gtest_main.cc $(wildcard *.cc)
-OBJECTS			:=$(SOURCES:%.cc=$(OBJECT_DIRECTORY)/%.o)
-DEPS			:=$(OBJECTS:.o=.d)
+SOURCES             := $(wildcard *.cc)
+OBJECTS             := $(SOURCES:%.cc=$(OBJECT_DIRECTORY)/%.o)
+DEPS                := $(OBJECTS:.o=.d)
 
-# Add compiler and linker flags to link libGeNN and pthreads
-LDFLAGS			+= -L$(LIBRARY_DIRECTORY) -lgenn_single_threaded_cpu_backend$(GENN_PREFIX) -lgenn$(GENN_PREFIX) -lpthread -ldl $(shell pkg-config libffi --libs)
-CXXFLAGS		+= -I$(GENN_DIR)/include/genn/backends/single_threaded_cpu -I "$(GTEST_DIR)" -isystem "$(GTEST_DIR)/include" 
+# Link against compiled GTest static libraries
+LDFLAGS             += -L$(LIBRARY_DIRECTORY) -lgenn_single_threaded_cpu_backend$(GENN_PREFIX) -lgenn$(GENN_PREFIX) \
+                       -lpthread -ldl $(shell pkg-config libffi --libs) \
+                       -L$(GTEST_BUILD_DIR) -lgtest -lgtest_main
 
-# Determine full path to generator and backend
-TEST			:=$(UNIT_TEST_PATH)/test$(GENN_PREFIX)
+CXXFLAGS            += -I$(GENN_DIR)/include/genn/backends/single_threaded_cpu \
+                       -I"$(GTEST_DIR)/include" -std=c++17
+
+TEST                := $(UNIT_TEST_PATH)/test$(GENN_PREFIX)
 
 .PHONY: all clean libgenn backend
 
@@ -27,7 +30,7 @@ $(TEST): $(OBJECTS) libgenn backend
 
 $(OBJECT_DIRECTORY)/%.o: %.cc $(OBJECT_DIRECTORY)/%.d
 	mkdir -p $(@D)
-	$(CXX) -std=c++17 $(CXXFLAGS) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 %.d: ;
 
