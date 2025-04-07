@@ -41,6 +41,7 @@ const std::unordered_map<std::string_view, Token::Type> keywords{
     {"short", Token::Type::TYPE_SPECIFIER},
     {"fract", Token::Type::TYPE_SPECIFIER},
     {"accum", Token::Type::TYPE_SPECIFIER},
+    {"sat", Token::Type::TYPE_SPECIFIER},
     {"int", Token::Type::TYPE_SPECIFIER},
     {"long", Token::Type::TYPE_SPECIFIER},
     {"float", Token::Type::TYPE_SPECIFIER},
@@ -292,7 +293,8 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
                         tokens.emplace_back(
                             Token::Type::NUMBER, numberLexeme, scanState.getLine(), 
                             Type::ResolvedType::createFixedPointNumeric<int16_t>("s" + std::to_string(numInteger) + "_" + std::to_string(numFractional) + "_t", 
-                                                                                 Type::S0_15.getNumeric().rank + numInteger, numFractional, &ffi_type_sint16));
+                                                                                 Type::S0_15.getNumeric().rank + numInteger, numFractional, false, 
+                                                                                 Type::RoundMode::TO_NEAREST, &ffi_type_sint16));
                     }
                     else {
                         scanState.error("Invalid fixed point literal suffix.");
