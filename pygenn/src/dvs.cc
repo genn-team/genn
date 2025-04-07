@@ -3,12 +3,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-// LibCAER includes
-#include <libcaercpp/devices/davis.hpp>
-#include <libcaercpp/devices/dvs128.hpp>
-#include <libcaercpp/devices/dvxplorer.hpp>
-
-
 // GeNN runtime includes
 #include "runtime/runtime.h"
 
