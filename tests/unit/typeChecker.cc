@@ -346,6 +346,15 @@ TEST(TypeChecker, Binary)
         EXPECT_EQ(type, Type::S8_7);
     }
 
+    // Fixed point + saturating fixed point
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::S8_7, "a");
+        typeEnvironment.define(Type::S0_15Sat, "b");
+        const auto type = typeCheckExpression("a + b", typeEnvironment);
+        EXPECT_EQ(type, Type::S8_7Sat);
+    }
+
     // Pointer + integer
     {
         TestEnvironment typeEnvironment;
