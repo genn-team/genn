@@ -82,8 +82,7 @@ post_event_delay_weight_update_model = create_weight_update_model(
     """
     t >= (scalar)id && fmod(t - (scalar)id, 10.0) < 1e-4
     """)
-    
-@pytest.mark.parametrize("backend", ["single_threaded_cpu", "cuda"])
+
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 @pytest.mark.parametrize("delay", [0, 20])
 @pytest.mark.parametrize("fuse", [False, True])
