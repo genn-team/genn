@@ -145,14 +145,14 @@ struct GENN_EXPORT ResolvedType
 
         bool operator != (const Numeric &other) const
         {
-            return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral, fixedPoint, saturating, roundMode,) 
+            return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral, fixedPoint, saturating, roundMode) 
                     != std::tie(other.rank, other.min, other.max, other.lowest, other.maxDigits10, other.isSigned,
                                 other.isIntegral, other.fixedPoint, other.saturating, other.roundMode));
         }
 
         bool operator < (const Numeric &other) const
         {
-            return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral fixedPoint, saturating, roundMode,)
+            return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral, fixedPoint, saturating, roundMode)
                     < std::tie(other.rank, other.min, other.max, other.lowest, other.maxDigits10,
                                other.isSigned, other.isIntegral, other.fixedPoint, other.saturating, other.roundMode));
         }
@@ -450,35 +450,35 @@ inline static const ResolvedType Uint32 = CREATE_NUMERIC(uint32_t, 30, &ffi_type
 inline static const ResolvedType Uint64 = CREATE_NUMERIC(uint64_t, 40, &ffi_type_uint64, "u");
 
 inline static const ResolvedType S0_15 = ResolvedType::createFixedPointNumeric<int16_t>("s0_15_t", 50, 15, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
-inline static const ResolvedType S0_15Sat = ResolvedType::createFixedPointNumeric<int16_t>("s0_15_t", 50, 15, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
+inline static const ResolvedType S0_15Sat = ResolvedType::createFixedPointNumeric<int16_t>("s0_15_sat_t", 50, 15, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
 inline static const ResolvedType S1_14 = ResolvedType::createFixedPointNumeric<int16_t>("s1_14_t", 51, 14, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
-inline static const ResolvedType S1_14Sat = ResolvedType::createFixedPointNumeric<int16_t>("s1_14_t", 51, 14, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
+inline static const ResolvedType S1_14Sat = ResolvedType::createFixedPointNumeric<int16_t>("s1_14_sat_t", 51, 14, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
 inline static const ResolvedType S2_13 = ResolvedType::createFixedPointNumeric<int16_t>("s2_13_t", 52, 13, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
-inline static const ResolvedType S2_13Sat = ResolvedType::createFixedPointNumeric<int16_t>("s2_13_t", 52, 13, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
+inline static const ResolvedType S2_13Sat = ResolvedType::createFixedPointNumeric<int16_t>("s2_13_sat_t", 52, 13, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
 inline static const ResolvedType S3_12 = ResolvedType::createFixedPointNumeric<int16_t>("s3_12_t", 53, 12, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
-inline static const ResolvedType S3_12Sat = ResolvedType::createFixedPointNumeric<int16_t>("s3_12_t", 53, 12, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
+inline static const ResolvedType S3_12Sat = ResolvedType::createFixedPointNumeric<int16_t>("s3_12_sat_t", 53, 12, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
 inline static const ResolvedType S4_11 = ResolvedType::createFixedPointNumeric<int16_t>("s4_11_t", 54, 11, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
-inline static const ResolvedType S4_11Sat = ResolvedType::createFixedPointNumeric<int16_t>("s4_11_t", 54, 11, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
+inline static const ResolvedType S4_11Sat = ResolvedType::createFixedPointNumeric<int16_t>("s4_11_sat_t", 54, 11, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
 inline static const ResolvedType S5_10 = ResolvedType::createFixedPointNumeric<int16_t>("s5_10_t", 55, 10, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
-inline static const ResolvedType S5_10Sat = ResolvedType::createFixedPointNumeric<int16_t>("s5_10_t", 55, 10, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
+inline static const ResolvedType S5_10Sat = ResolvedType::createFixedPointNumeric<int16_t>("s5_10_sat_t", 55, 10, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
 inline static const ResolvedType S6_9 = ResolvedType::createFixedPointNumeric<int16_t>("s6_9_t", 56, 9, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
-inline static const ResolvedType S6_9Sat = ResolvedType::createFixedPointNumeric<int16_t>("s6_9_t", 56, 9, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
+inline static const ResolvedType S6_9Sat = ResolvedType::createFixedPointNumeric<int16_t>("s6_9_sat_t", 56, 9, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
 inline static const ResolvedType S7_8 = ResolvedType::createFixedPointNumeric<int16_t>("s7_8_t", 57, 8, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
-inline static const ResolvedType S7_8Sat = ResolvedType::createFixedPointNumeric<int16_t>("s7_8_t", 57, 8, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
+inline static const ResolvedType S7_8Sat = ResolvedType::createFixedPointNumeric<int16_t>("s7_8_sat_t", 57, 8, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
 inline static const ResolvedType S8_7 = ResolvedType::createFixedPointNumeric<int16_t>("s8_7_t", 58, 7, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
-inline static const ResolvedType S8_7Sat = ResolvedType::createFixedPointNumeric<int16_t>("s8_7_t", 58, 7, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
+inline static const ResolvedType S8_7Sat = ResolvedType::createFixedPointNumeric<int16_t>("s8_7_sat_t", 58, 7, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
 inline static const ResolvedType S9_6 = ResolvedType::createFixedPointNumeric<int16_t>("s9_6_t", 59, 6, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
-inline static const ResolvedType S9_6Sat = ResolvedType::createFixedPointNumeric<int16_t>("s9_6_t", 59, 6, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
+inline static const ResolvedType S9_6Sat = ResolvedType::createFixedPointNumeric<int16_t>("s9_6_sat_t", 59, 6, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
 inline static const ResolvedType S10_5 = ResolvedType::createFixedPointNumeric<int16_t>("s10_5_t", 60, 5, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
-inline static const ResolvedType S10_5Sat = ResolvedType::createFixedPointNumeric<int16_t>("s10_5_t", 60, 5, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
+inline static const ResolvedType S10_5Sat = ResolvedType::createFixedPointNumeric<int16_t>("s10_5_sat_t", 60, 5, true, RoundMode::TO_ZERO, &ffi_type_sint16, "");
 inline static const ResolvedType S11_4 = ResolvedType::createFixedPointNumeric<int16_t>("s11_4_t", 61, 4, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
-inline static const ResolvedType S11_4Sat = ResolvedType::createFixedPointNumeric<int16_t>("s11_4_t", 61, 4, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
+inline static const ResolvedType S11_4Sat = ResolvedType::createFixedPointNumeric<int16_t>("s11_4_sat_t", 61, 4, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
 inline static const ResolvedType S12_3 = ResolvedType::createFixedPointNumeric<int16_t>("s12_3_t", 62, 3, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
-inline static const ResolvedType S12_3Sat = ResolvedType::createFixedPointNumeric<int16_t>("s12_3_t", 62, 3, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
+inline static const ResolvedType S12_3Sat = ResolvedType::createFixedPointNumeric<int16_t>("s12_3_sat_t", 62, 3, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
 inline static const ResolvedType S13_2 = ResolvedType::createFixedPointNumeric<int16_t>("s13_2_t", 63, 2, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
-inline static const ResolvedType S13_2Sat = ResolvedType::createFixedPointNumeric<int16_t>("s13_2_t", 63, 2, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
+inline static const ResolvedType S13_2Sat = ResolvedType::createFixedPointNumeric<int16_t>("s13_2_sat_t", 63, 2, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
 inline static const ResolvedType S14_1 = ResolvedType::createFixedPointNumeric<int16_t>("s14_1_t", 64, 1, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
-inline static const ResolvedType S14_1Sat = ResolvedType::createFixedPointNumeric<int16_t>("s14_1_t", 64, 1, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
+inline static const ResolvedType S14_1Sat = ResolvedType::createFixedPointNumeric<int16_t>("s14_1_sat_t", 64, 1, false, RoundMode::TO_ZERO, &ffi_type_sint16, "");
 
 inline static const ResolvedType Float = CREATE_NUMERIC(float, 80, &ffi_type_float, "f");
 inline static const ResolvedType Double = CREATE_NUMERIC(double, 90, &ffi_type_double, "");

@@ -256,10 +256,21 @@ ResolvedType getCommonType(const ResolvedType &a, const ResolvedType &b)
     if(unqualifiedA == Float || unqualifiedB == Float) {
         return Float;
     }
-    // Otherwise, if either type is fixed-point, result should be highest ranking type
+    // Otherwise, if either type is fixed-point
     else if(unqualifiedA.getNumeric().fixedPoint || unqualifiedB.getNumeric().fixedPoint) {
-        // **TODO** saturation out-ranks
-        return (unqualifiedA.getNumeric().rank > unqualifiedB.getNumeric().rank) ? unqualifiedA : unqualifiedB;
+        // Get highest ranking type (most integer bits)
+        const auto &aNumeric = unqualifiedA.getNumeric();
+        const auto &bNumeric = unqualifiedB.getNumeric();
+        const auto highestRanking = (aNumeric.rank > bNumeric.rank) ? unqualifiedA : unqualifiedB;
+
+        // Make a copy of Value struct from highest ranking type
+        auto highestRankingValue = highestRanking.getValue();
+        
+        // Set saturating if a or b are saturating
+        highestRankingValue.numeric->saturating = (aNumeric.saturating || bNumeric.saturating);
+        
+        // Return new resolved type
+        return ResolvedType(highestRankingValue);
     }
     // Otherwise, must be an integer type
     else {
