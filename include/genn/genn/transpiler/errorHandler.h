@@ -3,6 +3,9 @@
 // Standard C++ includes
 #include <string_view>
 
+// GeNN includes
+#include "gennExport.h"
+
 // Transpiler includes
 #include "transpiler/token.h"
 
@@ -24,7 +27,7 @@ public:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::ErrorHandler
 //---------------------------------------------------------------------------
-class ErrorHandler : public ErrorHandlerBase
+class GENN_EXPORT ErrorHandler : public ErrorHandlerBase
 {
 public:
     explicit ErrorHandler(const std::string &context) : m_Context(context), m_Error(false)
@@ -59,7 +62,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::SingleLineErrorHandler
 //---------------------------------------------------------------------------
-class SingleLineErrorHandler : public ErrorHandlerBase
+class GENN_EXPORT SingleLineErrorHandler : public ErrorHandlerBase
 {
 public:
     SingleLineErrorHandler() : m_Error(false)
