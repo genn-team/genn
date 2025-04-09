@@ -289,7 +289,7 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
                     const int numFractional = std::stoi(std::string{scanState.getLexeme()});
                     const int numInteger = 15 - numFractional;
                     if(numFractional >= 1 && numFractional <= 15) {
-                        // Create (non-saturating) 16-bit fixed-point type
+                        // Create (non-isSaturating) 16-bit fixed-point type
                         tokens.emplace_back(
                             Token::Type::NUMBER, numberLexeme, scanState.getLine(), 
                             Type::ResolvedType::createFixedPointNumeric<int16_t>("s" + std::to_string(numInteger) + "_" + std::to_string(numFractional) + "_t", 

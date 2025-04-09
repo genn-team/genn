@@ -346,7 +346,7 @@ TEST(TypeChecker, Binary)
         EXPECT_EQ(type, Type::S8_7);
     }
 
-    // Fixed point + saturating fixed point
+    // Fixed point + isSaturating fixed point
     {
         TestEnvironment typeEnvironment;
         typeEnvironment.define(Type::S8_7, "a");

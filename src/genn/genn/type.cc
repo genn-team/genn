@@ -266,8 +266,8 @@ ResolvedType getCommonType(const ResolvedType &a, const ResolvedType &b)
         // Make a copy of Value struct from highest ranking type
         auto highestRankingValue = highestRanking.getValue();
         
-        // Set saturating if a or b are saturating
-        highestRankingValue.numeric->saturating = (aNumeric.saturating || bNumeric.saturating);
+        // Set isSaturating if a or b are isSaturating
+        highestRankingValue.numeric->isSaturating = (aNumeric.isSaturating || bNumeric.isSaturating);
         
         // Return new resolved type
         return ResolvedType(highestRankingValue);

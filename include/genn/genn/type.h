@@ -117,7 +117,7 @@ struct GENN_EXPORT ResolvedType
 
         bool isSigned;
         bool isIntegral;
-        bool saturating;
+        bool isSaturating;
         std::optional<int> fixedPoint;
 
         std::string literalSuffix;
@@ -127,23 +127,23 @@ struct GENN_EXPORT ResolvedType
         //------------------------------------------------------------------------
         bool operator == (const Numeric &other) const
         {
-            return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral, saturating, fixedPoint) 
+            return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral, isSaturating, fixedPoint) 
                     == std::tie(other.rank, other.min, other.max, other.lowest, other.maxDigits10, other.isSigned, 
-                                other.isIntegral, other.saturating, other.fixedPoint));
+                                other.isIntegral, other.isSaturating, other.fixedPoint));
         }
 
         bool operator != (const Numeric &other) const
         {
-            return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral, saturating, fixedPoint) 
+            return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral, isSaturating, fixedPoint) 
                     != std::tie(other.rank, other.min, other.max, other.lowest, other.maxDigits10, other.isSigned,
-                                other.isIntegral, other.saturating, other.fixedPoint));
+                                other.isIntegral, other.isSaturating, other.fixedPoint));
         }
 
         bool operator < (const Numeric &other) const
         {
-            return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral, saturating, fixedPoint)
+            return (std::tie(rank, min, max, lowest, maxDigits10, isSigned, isIntegral, isSaturating, fixedPoint)
                     < std::tie(other.rank, other.min, other.max, other.lowest, other.maxDigits10,
-                               other.isSigned, other.isIntegral, other.saturating, other.fixedPoint));
+                               other.isSigned, other.isIntegral, other.isSaturating, other.fixedPoint));
         }
     };
 
