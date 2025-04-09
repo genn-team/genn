@@ -289,12 +289,11 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
                     const int numFractional = std::stoi(std::string{scanState.getLexeme()});
                     const int numInteger = 15 - numFractional;
                     if(numFractional >= 1 && numFractional <= 15) {
-                        // Create 16-bit fixed-point type
+                        // Create (non-saturating) 16-bit fixed-point type
                         tokens.emplace_back(
                             Token::Type::NUMBER, numberLexeme, scanState.getLine(), 
                             Type::ResolvedType::createFixedPointNumeric<int16_t>("s" + std::to_string(numInteger) + "_" + std::to_string(numFractional) + "_t", 
-                                                                                 Type::S0_15.getNumeric().rank + numInteger, numFractional, false, 
-                                                                                 Type::RoundMode::TO_NEAREST, &ffi_type_sint16));
+                                                                                 Type::S0_15.getNumeric().rank + numInteger, false, numFractional, &ffi_type_sint16));
                     }
                     else {
                         scanState.error("Invalid fixed point literal suffix.");
@@ -373,7 +372,6 @@ void scanToken(ScanState &scanState, std::vector<Token> &tokens)
 
         // Assignment operators
         case '*': emplaceToken(tokens, scanState.match('=') ? Token::Type::STAR_EQUAL : Token::Type::STAR, scanState); break;
-        //case '/': emplaceToken(tokens, scanState.match('=') ? Token::Type::SLASH_EQUAL : Token::Type::SLASH, scanState); break;
         case '%': emplaceToken(tokens, scanState.match('=') ? Token::Type::PERCENT_EQUAL : Token::Type::PERCENT, scanState); break;
         case '^': emplaceToken(tokens, scanState.match('=') ? Token::Type::CARET_EQUAL : Token::Type::CARET, scanState); break;
 
@@ -480,7 +478,7 @@ void scanToken(ScanState &scanState, std::vector<Token> &tokens)
                 }
             }
             else {
-                emplaceToken(tokens, Token::Type::SLASH, scanState);
+                emplaceToken(tokens, scanState.match('=') ? Token::Type::SLASH_EQUAL : Token::Type::SLASH, scanState);
             }
             break;
         }
