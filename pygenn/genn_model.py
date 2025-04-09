@@ -71,12 +71,15 @@ SynapseGroup.__bases__ += (SynapseGroupMixin,)
 # If we're on windows
 if system() == "Windows":
     # Try import the helper to get Visual C++ environment from setuptools
-    # **NOTE** this was removed in version 74.0
     try:
         from setuptools.msvc import msvc14_get_vc_env as _get_vc_env
-    # If this fails, import from distutils
+    # Setuptools 0.74.0 removed this function 
     except ImportError:
-        from distutils._msvccompiler import _get_vc_env
+        try:
+            from distutils._msvccompiler import _get_vc_env
+        # Things keep moving around in distutils/setuptools 
+        except ImportError:
+            from distutils.compilers.C.msvc import _get_vc_env
     
     # Get environment and cache in class, convertings
     # all keys to upper-case for consistency
