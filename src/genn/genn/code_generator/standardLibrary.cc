@@ -115,6 +115,8 @@ const auto libraryTypes = initLibraryTypes(
     ADD_ONE_ARG_FLOAT_DOUBLE_FUNC(lgamma),
     ADD_TWO_ARG_FLOAT_DOUBLE_FUNC(copysign),
     ADD_THREE_ARG_FLOAT_DOUBLE_FUNC(fma),
+    std::make_pair("signbit", std::make_pair(Type::ResolvedType::createFunction(Type::Bool, {Type::Float}), "signbit($(0))")),
+    std::make_pair("signbit", std::make_pair(Type::ResolvedType::createFunction(Type::Bool, {Type::Double}),"signbit($(0))")),
 
     // Integer functions
     ADD_TWO_ARG_INT_FUNC(min),
