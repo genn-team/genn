@@ -24,6 +24,7 @@
         <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -110,12 +111,8 @@
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">get_ipython</span><span class="p">()):</span>
-    <span class="c1">#import IPython</span>
-    <span class="c1">#IPython.core.magics.execution.ExecutionMagics.run.func_defaults[2] = lambda a: a</span>
-    <span class="c1">#%run &quot;../install_collab.ipynb&quot;</span>
-    <span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>gdown<span class="w"> </span>--upgrade
-    <span class="o">!</span>gdown<span class="w"> </span>1V_GzXUDzcFz9QDIpxAD8QNEglcSipssW
-    <span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>pygenn-5.0.0-cp310-cp310-linux_x86_64.whl
+    <span class="o">!</span>gdown<span class="w"> </span>1wUeynMCgEOl2oK2LAd4E0s0iT_OiNOfl
+    <span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>pygenn-5.1.0-cp311-cp311-linux_x86_64.whl
     <span class="o">%</span><span class="k">env</span> CUDA_PATH=/usr/local/cuda
 </pre></div>
 </div>
@@ -125,26 +122,14 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Requirement already satisfied: gdown in /usr/local/lib/python3.10/dist-packages (5.1.0)
-Requirement already satisfied: beautifulsoup4 in /usr/local/lib/python3.10/dist-packages (from gdown) (4.12.3)
-Requirement already satisfied: filelock in /usr/local/lib/python3.10/dist-packages (from gdown) (3.13.1)
-Requirement already satisfied: requests[socks] in /usr/local/lib/python3.10/dist-packages (from gdown) (2.31.0)
-Requirement already satisfied: tqdm in /usr/local/lib/python3.10/dist-packages (from gdown) (4.66.2)
-Requirement already satisfied: soupsieve&gt;1.2 in /usr/local/lib/python3.10/dist-packages (from beautifulsoup4-&gt;gdown) (2.5)
-Requirement already satisfied: charset-normalizer&lt;4,&gt;=2 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (3.3.2)
-Requirement already satisfied: idna&lt;4,&gt;=2.5 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (3.6)
-Requirement already satisfied: urllib3&lt;3,&gt;=1.21.1 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (2.0.7)
-Requirement already satisfied: certifi&gt;=2017.4.17 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (2024.2.2)
-Requirement already satisfied: PySocks!=1.5.7,&gt;=1.5.6 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (1.7.1)
 Downloading...
-From: https://drive.google.com/uc?id=1V_GzXUDzcFz9QDIpxAD8QNEglcSipssW
-To: /content/pygenn-5.0.0-cp310-cp310-linux_x86_64.whl
-100% 8.29M/8.29M [00:00&lt;00:00, 118MB/s]
-Processing ./pygenn-5.0.0-cp310-cp310-linux_x86_64.whl
-Requirement already satisfied: numpy&gt;=1.17 in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (1.25.2)
-Requirement already satisfied: deprecated in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (1.2.14)
-Requirement already satisfied: psutil in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (5.9.5)
-Requirement already satisfied: wrapt&lt;2,&gt;=1.10 in /usr/local/lib/python3.10/dist-packages (from deprecated-&gt;pygenn==5.0.0) (1.14.1)
+From: https://drive.google.com/uc?id=1wUeynMCgEOl2oK2LAd4E0s0iT_OiNOfl
+To: /content/pygenn-5.1.0-cp311-cp311-linux_x86_64.whl
+100% 8.49M/8.49M [00:00&lt;00:00, 18.8MB/s]
+Processing ./pygenn-5.1.0-cp311-cp311-linux_x86_64.whl
+Requirement already satisfied: numpy&gt;=1.17 in /usr/local/lib/python3.11/dist-packages (from pygenn==5.1.0) (1.26.4)
+Requirement already satisfied: psutil in /usr/local/lib/python3.11/dist-packages (from pygenn==5.1.0) (5.9.5)
+Requirement already satisfied: setuptools in /usr/local/lib/python3.11/dist-packages (from pygenn==5.1.0) (75.1.0)
 pygenn is already installed with the same version as the provided wheel. Use --force-reinstall to force an installation of the wheel.
 env: CUDA_PATH=/usr/local/cuda
 </pre></div></div>
@@ -229,7 +214,7 @@ env: CUDA_PATH=/usr/local/cuda
 </div>
 <p>We want to record these voltages for each neuron every timestep so, after every we simulate each time step, we copy the membrane voltage back from the GPU and add a copy (because the memory view gives access to the actual simulator state we need to make a copy) to a list</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">voltages</span> <span class="o">=</span> <span class="p">[]</span>
@@ -242,7 +227,7 @@ env: CUDA_PATH=/usr/local/cuda
 </div>
 <p>Plot the voltages over time in 4 seperate panels</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Stack voltages together into a 2000x4 matrix</span>

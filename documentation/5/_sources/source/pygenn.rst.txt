@@ -41,10 +41,26 @@ pygenn.custom\_update\_models module
    :undoc-members:
    :show-inheritance:
 
+pygenn.dvs module
+-----------------
+
+.. automodule:: pygenn.dvs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pygenn.genn\_groups module
 --------------------------
 
 .. automodule:: pygenn.genn_groups
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pygenn.hip\_backend module
+--------------------------
+
+.. automodule:: pygenn.hip_backend
    :members:
    :undoc-members:
    :show-inheritance:
@@ -89,6 +105,14 @@ pygenn.libgenn\_cuda\_backend\_dynamic\_debug module
    :undoc-members:
    :show-inheritance:
 
+pygenn.libgenn\_dvs\_dynamic module
+-----------------------------------
+
+.. automodule:: pygenn.libgenn_dvs_dynamic
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pygenn.libgenn\_dynamic module
 ------------------------------
 
@@ -101,6 +125,22 @@ pygenn.libgenn\_dynamic\_debug module
 -------------------------------------
 
 .. automodule:: pygenn.libgenn_dynamic_debug
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pygenn.libgenn\_hip\_backend\_dynamic module
+--------------------------------------------
+
+.. automodule:: pygenn.libgenn_hip_backend_dynamic
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pygenn.libgenn\_hip\_backend\_dynamic\_debug module
+---------------------------------------------------
+
+.. automodule:: pygenn.libgenn_hip_backend_dynamic_debug
    :members:
    :undoc-members:
    :show-inheritance:

@@ -24,6 +24,7 @@
         <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -101,7 +102,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="Testing">
+  <p><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></p>
+<section id="Testing">
 <h1>Testing<a class="headerlink" href="#Testing" title="Link to this heading"></a></h1>
 <p>In this final tutorial we load the weights we trained in the previous tutorial into a static version of the mushroom body model and evaluate its performance on the MNIST test set.</p>
 <section id="Install-PyGeNN-wheel-from-Google-Drive">
@@ -112,12 +114,8 @@
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">get_ipython</span><span class="p">()):</span>
-    <span class="c1">#import IPython</span>
-    <span class="c1">#IPython.core.magics.execution.ExecutionMagics.run.func_defaults[2] = lambda a: a</span>
-    <span class="c1">#%run &quot;../install_collab.ipynb&quot;</span>
-    <span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>gdown<span class="w"> </span>--upgrade
-    <span class="o">!</span>gdown<span class="w"> </span>1V_GzXUDzcFz9QDIpxAD8QNEglcSipssW
-    <span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>pygenn-5.0.0-cp310-cp310-linux_x86_64.whl
+    <span class="o">!</span>gdown<span class="w"> </span>1wUeynMCgEOl2oK2LAd4E0s0iT_OiNOfl
+    <span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>pygenn-5.1.0-cp311-cp311-linux_x86_64.whl
     <span class="o">%</span><span class="k">env</span> CUDA_PATH=/usr/local/cuda
 </pre></div>
 </div>
@@ -127,24 +125,14 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Requirement already satisfied: gdown in /usr/local/lib/python3.10/dist-packages (5.1.0)
-Requirement already satisfied: beautifulsoup4 in /usr/local/lib/python3.10/dist-packages (from gdown) (4.12.3)
-Requirement already satisfied: filelock in /usr/local/lib/python3.10/dist-packages (from gdown) (3.13.4)
-Requirement already satisfied: requests[socks] in /usr/local/lib/python3.10/dist-packages (from gdown) (2.31.0)
-Requirement already satisfied: tqdm in /usr/local/lib/python3.10/dist-packages (from gdown) (4.66.2)
-Requirement already satisfied: soupsieve&gt;1.2 in /usr/local/lib/python3.10/dist-packages (from beautifulsoup4-&gt;gdown) (2.5)
-Requirement already satisfied: charset-normalizer&lt;4,&gt;=2 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (3.3.2)
-Requirement already satisfied: idna&lt;4,&gt;=2.5 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (3.7)
-Requirement already satisfied: urllib3&lt;3,&gt;=1.21.1 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (2.0.7)
-Requirement already satisfied: certifi&gt;=2017.4.17 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (2024.2.2)
-Requirement already satisfied: PySocks!=1.5.7,&gt;=1.5.6 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (1.7.1)
 Downloading...
-From: https://drive.google.com/uc?id=1V_GzXUDzcFz9QDIpxAD8QNEglcSipssW
-To: /content/pygenn-5.0.0-cp310-cp310-linux_x86_64.whl
-100% 8.38M/8.38M [00:00&lt;00:00, 187MB/s]
-Processing ./pygenn-5.0.0-cp310-cp310-linux_x86_64.whl
-Requirement already satisfied: numpy&gt;=1.17 in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (1.25.2)
-Requirement already satisfied: psutil in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (5.9.5)
+From: https://drive.google.com/uc?id=1wUeynMCgEOl2oK2LAd4E0s0iT_OiNOfl
+To: /content/pygenn-5.1.0-cp311-cp311-linux_x86_64.whl
+100% 8.49M/8.49M [00:00&lt;00:00, 108MB/s]
+Processing ./pygenn-5.1.0-cp311-cp311-linux_x86_64.whl
+Requirement already satisfied: numpy&gt;=1.17 in /usr/local/lib/python3.11/dist-packages (from pygenn==5.1.0) (2.0.2)
+Requirement already satisfied: psutil in /usr/local/lib/python3.11/dist-packages (from pygenn==5.1.0) (5.9.5)
+Requirement already satisfied: setuptools in /usr/local/lib/python3.11/dist-packages (from pygenn==5.1.0) (75.1.0)
 pygenn is already installed with the same version as the provided wheel. Use --force-reinstall to force an installation of the wheel.
 env: CUDA_PATH=/usr/local/cuda
 </pre></div></div>
@@ -165,8 +153,12 @@ env: CUDA_PATH=/usr/local/cuda
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Requirement already satisfied: mnist in /usr/local/lib/python3.10/dist-packages (0.2.2)
-Requirement already satisfied: numpy in /usr/local/lib/python3.10/dist-packages (from mnist) (1.25.2)
+Collecting mnist
+  Downloading mnist-0.2.2-py2.py3-none-any.whl.metadata (1.6 kB)
+Requirement already satisfied: numpy in /usr/local/lib/python3.11/dist-packages (from mnist) (2.0.2)
+Downloading mnist-0.2.2-py2.py3-none-any.whl (3.5 kB)
+Installing collected packages: mnist
+Successfully installed mnist-0.2.2
 </pre></div></div>
 </div>
 </section>
@@ -184,6 +176,7 @@ Requirement already satisfied: numpy in /usr/local/lib/python3.10/dist-packages 
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 <span class="kn">from</span> <span class="nn">pygenn</span> <span class="kn">import</span> <span class="p">(</span><span class="n">create_current_source_model</span><span class="p">,</span> <span class="n">create_neuron_model</span><span class="p">,</span> <span class="n">init_postsynaptic</span><span class="p">,</span>
                     <span class="n">init_sparse_connectivity</span><span class="p">,</span> <span class="n">init_weight_update</span><span class="p">,</span> <span class="n">GeNNModel</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pygenn</span> <span class="kn">import</span> <span class="n">create_var_ref</span><span class="p">,</span> <span class="n">create_out_post_var_ref</span><span class="p">,</span> <span class="n">create_custom_update_model</span>
 <span class="kn">from</span> <span class="nn">tqdm.auto</span> <span class="kn">import</span> <span class="n">tqdm</span>
 </pre></div>
 </div>
@@ -207,7 +200,7 @@ Requirement already satisfied: numpy in /usr/local/lib/python3.10/dist-packages 
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">google.colab</span> <span class="kn">import</span> <span class="n">drive</span>
 <span class="n">drive</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span><span class="s2">&quot;/content/drive&quot;</span><span class="p">)</span>
-<br/></pre></div>
+</pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -215,7 +208,7 @@ Requirement already satisfied: numpy in /usr/local/lib/python3.10/dist-packages 
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Drive already mounted at /content/drive; to attempt to forcibly remount, call drive.mount(&#34;/content/drive&#34;, force_remount=True).
+Mounted at /content/drive
 </pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
@@ -324,13 +317,13 @@ Drive already mounted at /content/drive; to attempt to forcibly remount, call dr
 <section id="Model-definition">
 <h2>Model definition<a class="headerlink" href="#Model-definition" title="Link to this heading"></a></h2>
 <p>Create a new model called “mnist_mb_second_layer_gain_control” as before although we no longer need to record spikes from individual neurons:</p>
-<div class="nbinput docutils container">
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create model</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">GeNNModel</span><span class="p">(</span><span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="s2">&quot;mnist_mb_testing&quot;</span><span class="p">)</span>
-<span class="n">model</span><span class="o">.</span><span class="n">dT</span> <span class="o">=</span> <span class="n">DT</span>
+<span class="n">model</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="n">DT</span>
 
 <span class="c1"># Create neuron populations</span>
 <span class="n">lif_init</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;V&quot;</span><span class="p">:</span> <span class="n">PN_PARAMS</span><span class="p">[</span><span class="s2">&quot;Vreset&quot;</span><span class="p">],</span> <span class="s2">&quot;RefracTime&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
@@ -358,17 +351,8 @@ Drive already mounted at /content/drive; to attempt to forcibly remount, call dr
                                       <span class="n">ggn</span><span class="p">,</span> <span class="n">kc</span><span class="p">,</span>
                                       <span class="n">init_weight_update</span><span class="p">(</span><span class="s2">&quot;StaticPulseConstantWeight&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;g&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">5.0</span><span class="p">}),</span>
                                       <span class="n">init_postsynaptic</span><span class="p">(</span><span class="s2">&quot;ExpCurr&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;tau&quot;</span><span class="p">:</span> <span class="mf">5.0</span><span class="p">}))</span>
-<br/><br/></pre></div>
+</pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-/usr/local/lib/python3.10/dist-packages/pygenn/_deprecated.py:14: FutureWarning: Call to deprecated function dT. (The name of this property was inconsistent, use dt instead) -- Deprecated since version 4.9.0
-  warn(f&#34;Call to deprecated function {func.__name__}.&#34;
-</pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
@@ -404,6 +388,65 @@ Drive already mounted at /content/drive; to attempt to forcibly remount, call dr
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Convert present time into timesteps</span>
 <span class="n">present_timesteps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">PRESENT_TIME_MS</span> <span class="o">/</span> <span class="n">DT</span><span class="p">))</span>
 
+<span class="c1"># Define custom update models</span>
+<span class="n">reset_neuron_model</span> <span class="o">=</span> <span class="n">create_custom_update_model</span><span class="p">(</span>
+    <span class="s2">&quot;reset_neuron&quot;</span><span class="p">,</span>
+    <span class="n">var_refs</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;RefracTime&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">)],</span>
+    <span class="n">update_code</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    V = -60.0;</span>
+<span class="s2">    RefracTime = 0.0;</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+
+<span class="n">reset_neuron_ggn_model</span> <span class="o">=</span> <span class="n">create_custom_update_model</span><span class="p">(</span>
+    <span class="s2">&quot;reset_neuron_ggn&quot;</span><span class="p">,</span>
+    <span class="n">var_refs</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">)],</span>
+    <span class="n">update_code</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    V = -60.0;</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+
+<span class="n">reset_synapse_model</span> <span class="o">=</span> <span class="n">create_custom_update_model</span><span class="p">(</span>
+    <span class="s2">&quot;reset_synapse&quot;</span><span class="p">,</span>
+    <span class="n">var_refs</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;out_post&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar&quot;</span><span class="p">)],</span>
+    <span class="n">update_code</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    out_post = 0.0;</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+
+<span class="c1"># Create custom updates</span>
+<span class="n">reset_neuron_pn</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_custom_update</span><span class="p">(</span>
+    <span class="s2">&quot;reset_neuron_pn&quot;</span><span class="p">,</span> <span class="s2">&quot;reset_group&quot;</span><span class="p">,</span> <span class="n">reset_neuron_model</span><span class="p">,</span>
+    <span class="n">var_refs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;V&quot;</span><span class="p">:</span> <span class="n">create_var_ref</span><span class="p">(</span><span class="n">pn</span><span class="p">,</span> <span class="s2">&quot;V&quot;</span><span class="p">),</span> <span class="s2">&quot;RefracTime&quot;</span><span class="p">:</span> <span class="n">create_var_ref</span><span class="p">(</span><span class="n">pn</span><span class="p">,</span> <span class="s2">&quot;RefracTime&quot;</span><span class="p">)}</span>
+<span class="p">)</span>
+
+<span class="n">reset_neuron_kc</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_custom_update</span><span class="p">(</span>
+    <span class="s2">&quot;reset_neuron_kc&quot;</span><span class="p">,</span> <span class="s2">&quot;reset_group&quot;</span><span class="p">,</span> <span class="n">reset_neuron_model</span><span class="p">,</span>
+    <span class="n">var_refs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;V&quot;</span><span class="p">:</span> <span class="n">create_var_ref</span><span class="p">(</span><span class="n">kc</span><span class="p">,</span> <span class="s2">&quot;V&quot;</span><span class="p">),</span> <span class="s2">&quot;RefracTime&quot;</span><span class="p">:</span> <span class="n">create_var_ref</span><span class="p">(</span><span class="n">kc</span><span class="p">,</span> <span class="s2">&quot;RefracTime&quot;</span><span class="p">)}</span>
+<span class="p">)</span>
+
+<span class="n">reset_neuron_ggn</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_custom_update</span><span class="p">(</span>
+    <span class="s2">&quot;reset_neuron_ggn&quot;</span><span class="p">,</span> <span class="s2">&quot;reset_group&quot;</span><span class="p">,</span> <span class="n">reset_neuron_ggn_model</span><span class="p">,</span>
+    <span class="n">var_refs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;V&quot;</span><span class="p">:</span> <span class="n">create_var_ref</span><span class="p">(</span><span class="n">ggn</span><span class="p">,</span> <span class="s2">&quot;V&quot;</span><span class="p">)}</span>
+<span class="p">)</span>
+
+<span class="n">reset_neuron_mbon</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_custom_update</span><span class="p">(</span>
+    <span class="s2">&quot;reset_neuron_mbon&quot;</span><span class="p">,</span> <span class="s2">&quot;reset_group&quot;</span><span class="p">,</span> <span class="n">reset_neuron_model</span><span class="p">,</span>
+    <span class="n">var_refs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;V&quot;</span><span class="p">:</span> <span class="n">create_var_ref</span><span class="p">(</span><span class="n">mbon</span><span class="p">,</span> <span class="s2">&quot;V&quot;</span><span class="p">),</span> <span class="s2">&quot;RefracTime&quot;</span><span class="p">:</span> <span class="n">create_var_ref</span><span class="p">(</span><span class="n">mbon</span><span class="p">,</span> <span class="s2">&quot;RefracTime&quot;</span><span class="p">)}</span>
+<span class="p">)</span>
+
+<span class="n">reset_synapse_pn_kc</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_custom_update</span><span class="p">(</span>
+    <span class="s2">&quot;reset_synapse_pn_kc&quot;</span><span class="p">,</span> <span class="s2">&quot;reset_group&quot;</span><span class="p">,</span> <span class="n">reset_synapse_model</span><span class="p">,</span>
+    <span class="n">var_refs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;out_post&quot;</span><span class="p">:</span> <span class="n">create_out_post_var_ref</span><span class="p">(</span><span class="n">pn_kc</span><span class="p">)}</span>
+<span class="p">)</span>
+
+<span class="n">reset_synapse_ggn_kc</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_custom_update</span><span class="p">(</span>
+    <span class="s2">&quot;reset_synapse_ggn_kc&quot;</span><span class="p">,</span> <span class="s2">&quot;reset_group&quot;</span><span class="p">,</span> <span class="n">reset_synapse_model</span><span class="p">,</span>
+    <span class="n">var_refs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;out_post&quot;</span><span class="p">:</span> <span class="n">create_out_post_var_ref</span><span class="p">(</span><span class="n">ggn_kc</span><span class="p">)}</span>
+<span class="p">)</span>
+
+<span class="n">reset_synapse_kc_mbon</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_custom_update</span><span class="p">(</span>
+    <span class="s2">&quot;reset_synapse_kc_mbon&quot;</span><span class="p">,</span> <span class="s2">&quot;reset_group&quot;</span><span class="p">,</span> <span class="n">reset_synapse_model</span><span class="p">,</span>
+    <span class="n">var_refs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;out_post&quot;</span><span class="p">:</span> <span class="n">create_out_post_var_ref</span><span class="p">(</span><span class="n">kc_mbon</span><span class="p">)}</span>
+<span class="p">)</span>
+
 <span class="c1"># Build model and load it</span>
 <span class="n">model</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
 <span class="n">model</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">num_recording_timesteps</span><span class="o">=</span><span class="n">present_timesteps</span><span class="p">)</span>
@@ -415,26 +458,8 @@ Drive already mounted at /content/drive; to attempt to forcibly remount, call dr
 <h2>Simulate tutorial model<a class="headerlink" href="#Simulate-tutorial-model" title="Link to this heading"></a></h2>
 <p>As well as resetting the state of every neuron after presenting each stimuli, because we have now added synapses with their own dynamics, these also need to be reset. This function resets neuron state variables selected by the keys of a dictionary to the values specifed in the dictionary values and pushes the new values to the GPU.</p>
 <p>Now, like before, we loop through 4 stimuli and simulate the model. However, now we need to reset the Projection Neuron and Kenyon Cell populations; <strong>and</strong> the synapses between them. Additionally, we want to show spikes from the Kenyon Cells as well as the Projection Neurons.</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">reset_out_post</span><span class="p">(</span><span class="n">pop</span><span class="p">):</span>
-    <span class="n">pop</span><span class="o">.</span><span class="n">out_post</span><span class="o">.</span><span class="n">view</span><span class="p">[:]</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="n">pop</span><span class="o">.</span><span class="n">out_post</span><span class="o">.</span><span class="n">push_to_device</span><span class="p">()</span>
-
-<span class="k">def</span> <span class="nf">reset_neuron</span><span class="p">(</span><span class="n">pop</span><span class="p">,</span> <span class="n">var_init</span><span class="p">):</span>
-    <span class="c1"># Reset variables</span>
-    <span class="k">for</span> <span class="n">var_name</span><span class="p">,</span> <span class="n">var_val</span> <span class="ow">in</span> <span class="n">var_init</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">pop</span><span class="o">.</span><span class="n">vars</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">var_val</span>
-
-        <span class="c1"># Push the new values to GPU</span>
-        <span class="n">pop</span><span class="o">.</span><span class="n">vars</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span><span class="o">.</span><span class="n">push_to_device</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
@@ -446,18 +471,11 @@ Drive already mounted at /content/drive; to attempt to forcibly remount, call dr
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">present_timesteps</span><span class="p">):</span>
         <span class="n">model</span><span class="o">.</span><span class="n">step_time</span><span class="p">()</span>
 
-    <span class="c1"># Reset neuron state for next stimuli</span>
-    <span class="n">reset_neuron</span><span class="p">(</span><span class="n">pn</span><span class="p">,</span> <span class="n">lif_init</span><span class="p">)</span>
-    <span class="n">reset_neuron</span><span class="p">(</span><span class="n">kc</span><span class="p">,</span> <span class="n">lif_init</span><span class="p">)</span>
-    <span class="n">reset_neuron</span><span class="p">(</span><span class="n">ggn</span><span class="p">,</span> <span class="n">if_init</span><span class="p">)</span>
-    <span class="n">reset_neuron</span><span class="p">(</span><span class="n">mbon</span><span class="p">,</span> <span class="n">lif_init</span><span class="p">)</span>
-
-    <span class="c1"># Reset synapse state</span>
-    <span class="n">reset_out_post</span><span class="p">(</span><span class="n">pn_kc</span><span class="p">)</span>
-    <span class="n">reset_out_post</span><span class="p">(</span><span class="n">ggn_kc</span><span class="p">)</span>
+    <span class="c1"># Reset neuron and synapse state</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">custom_update</span><span class="p">(</span><span class="s2">&quot;reset_group&quot;</span><span class="p">)</span>
 
     <span class="c1"># Download spikes from GPU</span>
-    <span class="n">model</span><span class="o">.</span><span class="n">pull_recording_buffers_from_device</span><span class="p">();</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">pull_recording_buffers_from_device</span><span class="p">()</span>
 
     <span class="c1"># Plot PN, KC and MBON spikes</span>
     <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -512,7 +530,7 @@ Drive already mounted at /content/drive; to attempt to forcibly remount, call dr
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_correct</span> <span class="o">=</span> <span class="mi">0</span>
@@ -525,16 +543,8 @@ Drive already mounted at /content/drive; to attempt to forcibly remount, call dr
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">present_timesteps</span><span class="p">):</span>
         <span class="n">model</span><span class="o">.</span><span class="n">step_time</span><span class="p">()</span>
 
-    <span class="c1"># Reset neuron state</span>
-    <span class="n">reset_neuron</span><span class="p">(</span><span class="n">pn</span><span class="p">,</span> <span class="n">lif_init</span><span class="p">)</span>
-    <span class="n">reset_neuron</span><span class="p">(</span><span class="n">kc</span><span class="p">,</span> <span class="n">lif_init</span><span class="p">)</span>
-    <span class="n">reset_neuron</span><span class="p">(</span><span class="n">ggn</span><span class="p">,</span> <span class="n">if_init</span><span class="p">)</span>
-    <span class="n">reset_neuron</span><span class="p">(</span><span class="n">mbon</span><span class="p">,</span> <span class="n">lif_init</span><span class="p">)</span>
-
-    <span class="c1"># Reset synapse state</span>
-    <span class="n">reset_out_post</span><span class="p">(</span><span class="n">pn_kc</span><span class="p">)</span>
-    <span class="n">reset_out_post</span><span class="p">(</span><span class="n">ggn_kc</span><span class="p">)</span>
-    <span class="n">reset_out_post</span><span class="p">(</span><span class="n">kc_mbon</span><span class="p">)</span>
+    <span class="c1"># Reset neuron and synapse state</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">custom_update</span><span class="p">(</span><span class="s2">&quot;reset_group&quot;</span><span class="p">)</span>
 
     <span class="c1"># Download spikes from GPU</span>
     <span class="n">model</span><span class="o">.</span><span class="n">pull_recording_buffers_from_device</span><span class="p">();</span>
@@ -553,7 +563,7 @@ Drive already mounted at /content/drive; to attempt to forcibly remount, call dr
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "3c6d0f80b8af4b20b3a3e91c74c7c231"}</script></div>
+<script type="application/vnd.jupyter.widget-view+json">{"version_major": 2, "version_minor": 0, "model_id": "8284a00ba4f94e7a8f470b190f2972b7"}</script></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
@@ -561,11 +571,19 @@ Drive already mounted at /content/drive; to attempt to forcibly remount, call dr
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 
-8052/10000 correct (80.52 %%)
+7832/10000 correct (78.32 %%)
 </pre></div></div>
 </div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
 <script type="application/vnd.jupyter.widget-state+json">
-{"3c6d0f80b8af4b20b3a3e91c74c7c231": {"model_module": "@jupyter-widgets/controls", "model_name": "HBoxModel", "model_module_version": "1.5.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_fe054b21d4cb4ae5b86dcce145a8013a", "IPY_MODEL_9f5a3cb52b504147ae2247e128ef7976", "IPY_MODEL_a86fe457ec8949558e0ecd2e804276ac"], "layout": "IPY_MODEL_f087df3eecb94bb69725fca53b11fb63"}}, "fe054b21d4cb4ae5b86dcce145a8013a": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "model_module_version": "1.5.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HTMLView", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_f2c75de91cde4523b6d2af8f6323895b", "placeholder": "\u200b", "style": "IPY_MODEL_31f3b4137b7b4c37860472e38fa49c77", "value": "100%"}}, "9f5a3cb52b504147ae2247e128ef7976": {"model_module": "@jupyter-widgets/controls", "model_name": "FloatProgressModel", "model_module_version": "1.5.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "FloatProgressModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "ProgressView", "bar_style": "success", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_8a76de51c0b44f65a03d0ffa3eb84122", "max": 10000, "min": 0, "orientation": "horizontal", "style": "IPY_MODEL_55135bc79a5b4ad8a40e6d1f7839b7e6", "value": 10000}}, "a86fe457ec8949558e0ecd2e804276ac": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "model_module_version": "1.5.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HTMLView", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_d91434654f674eb49cf321a6d2358146", "placeholder": "\u200b", "style": "IPY_MODEL_1101e9fcfe904daeb1bb00742576a66c", "value": "\u200710000/10000\u2007[00:22&lt;00:00,\u2007477.73it/s]"}}, "f087df3eecb94bb69725fca53b11fb63": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "f2c75de91cde4523b6d2af8f6323895b": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "31f3b4137b7b4c37860472e38fa49c77": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "model_module_version": "1.5.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "description_width": ""}}, "8a76de51c0b44f65a03d0ffa3eb84122": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "55135bc79a5b4ad8a40e6d1f7839b7e6": {"model_module": "@jupyter-widgets/controls", "model_name": "ProgressStyleModel", "model_module_version": "1.5.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "ProgressStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "bar_color": null, "description_width": ""}}, "d91434654f674eb49cf321a6d2358146": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "1101e9fcfe904daeb1bb00742576a66c": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "model_module_version": "1.5.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "description_width": ""}}}
+{"8284a00ba4f94e7a8f470b190f2972b7": {"model_module": "@jupyter-widgets/controls", "model_name": "HBoxModel", "model_module_version": "1.5.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_703d57f6c4454a63ba87f1d52bec687d", "IPY_MODEL_463fd25ebba34b8c86c21c62251230be", "IPY_MODEL_8f0039155e4d4b27ab1185d73b51f444"], "layout": "IPY_MODEL_b86e1c04fc4144d6af5a7cc0e9a488a9"}}, "703d57f6c4454a63ba87f1d52bec687d": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "model_module_version": "1.5.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HTMLView", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_2bfb67d4f0264f2cade8df24645f3200", "placeholder": "\u200b", "style": "IPY_MODEL_f1de438eca61458fa36fbbac3bc9ed48", "value": "100%"}}, "463fd25ebba34b8c86c21c62251230be": {"model_module": "@jupyter-widgets/controls", "model_name": "FloatProgressModel", "model_module_version": "1.5.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "FloatProgressModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "ProgressView", "bar_style": "success", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_08435f1a72124084bc5964d3c81813dd", "max": 10000, "min": 0, "orientation": "horizontal", "style": "IPY_MODEL_78512d6fc794446683a98a13a38202a8", "value": 10000}}, "8f0039155e4d4b27ab1185d73b51f444": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "model_module_version": "1.5.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HTMLView", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_e6dcdd5922dd490db4074ca859cb2696", "placeholder": "\u200b", "style": "IPY_MODEL_a94b4541c92546c29e0cd897108eefd1", "value": "\u200710000/10000\u2007[00:22&lt;00:00,\u2007348.84it/s]"}}, "b86e1c04fc4144d6af5a7cc0e9a488a9": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "2bfb67d4f0264f2cade8df24645f3200": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "f1de438eca61458fa36fbbac3bc9ed48": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "model_module_version": "1.5.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "description_width": ""}}, "08435f1a72124084bc5964d3c81813dd": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "78512d6fc794446683a98a13a38202a8": {"model_module": "@jupyter-widgets/controls", "model_name": "ProgressStyleModel", "model_module_version": "1.5.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "ProgressStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "bar_color": null, "description_width": ""}}, "e6dcdd5922dd490db4074ca859cb2696": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "a94b4541c92546c29e0cd897108eefd1": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "model_module_version": "1.5.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "description_width": ""}}}
 </script></section>
 </section>
 

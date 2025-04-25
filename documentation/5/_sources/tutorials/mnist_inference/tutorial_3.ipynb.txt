@@ -18,17 +18,13 @@
       "cell_type": "code",
       "source": [
         "if \"google.colab\" in str(get_ipython()):\n",
-        "    #import IPython\n",
-        "    #IPython.core.magics.execution.ExecutionMagics.run.func_defaults[2] = lambda a: a\n",
-        "    #%run \"../install_collab.ipynb\"\n",
-        "    !pip install gdown --upgrade\n",
-        "    !gdown 1V_GzXUDzcFz9QDIpxAD8QNEglcSipssW\n",
-        "    !pip install pygenn-5.0.0-cp310-cp310-linux_x86_64.whl\n",
+        "    !gdown 1wUeynMCgEOl2oK2LAd4E0s0iT_OiNOfl\n",
+        "    !pip install pygenn-5.1.0-cp311-cp311-linux_x86_64.whl\n",
         "    %env CUDA_PATH=/usr/local/cuda"
       ],
       "metadata": {
         "id": "qWqAJtsiejvU",
-        "outputId": "86e675c6-f429-4d2f-ba02-2100d1cb85ae",
+        "outputId": "7b9904a5-c5f2-40e6-9118-219812c261c9",
         "colab": {
           "base_uri": "https://localhost:8080/"
         }
@@ -39,24 +35,14 @@
           "output_type": "stream",
           "name": "stdout",
           "text": [
-            "Requirement already satisfied: gdown in /usr/local/lib/python3.10/dist-packages (5.1.0)\n",
-            "Requirement already satisfied: beautifulsoup4 in /usr/local/lib/python3.10/dist-packages (from gdown) (4.12.3)\n",
-            "Requirement already satisfied: filelock in /usr/local/lib/python3.10/dist-packages (from gdown) (3.13.4)\n",
-            "Requirement already satisfied: requests[socks] in /usr/local/lib/python3.10/dist-packages (from gdown) (2.31.0)\n",
-            "Requirement already satisfied: tqdm in /usr/local/lib/python3.10/dist-packages (from gdown) (4.66.2)\n",
-            "Requirement already satisfied: soupsieve>1.2 in /usr/local/lib/python3.10/dist-packages (from beautifulsoup4->gdown) (2.5)\n",
-            "Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.10/dist-packages (from requests[socks]->gdown) (3.3.2)\n",
-            "Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.10/dist-packages (from requests[socks]->gdown) (3.7)\n",
-            "Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.10/dist-packages (from requests[socks]->gdown) (2.0.7)\n",
-            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.10/dist-packages (from requests[socks]->gdown) (2024.2.2)\n",
-            "Requirement already satisfied: PySocks!=1.5.7,>=1.5.6 in /usr/local/lib/python3.10/dist-packages (from requests[socks]->gdown) (1.7.1)\n",
             "Downloading...\n",
-            "From: https://drive.google.com/uc?id=1V_GzXUDzcFz9QDIpxAD8QNEglcSipssW\n",
-            "To: /content/pygenn-5.0.0-cp310-cp310-linux_x86_64.whl\n",
-            "100% 8.38M/8.38M [00:00<00:00, 17.4MB/s]\n",
-            "Processing ./pygenn-5.0.0-cp310-cp310-linux_x86_64.whl\n",
-            "Requirement already satisfied: numpy>=1.17 in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (1.25.2)\n",
-            "Requirement already satisfied: psutil in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (5.9.5)\n",
+            "From: https://drive.google.com/uc?id=1wUeynMCgEOl2oK2LAd4E0s0iT_OiNOfl\n",
+            "To: /content/pygenn-5.1.0-cp311-cp311-linux_x86_64.whl\n",
+            "\r  0% 0.00/8.49M [00:00<?, ?B/s]\r 25% 2.10M/8.49M [00:00<00:00, 20.7MB/s]\r100% 8.49M/8.49M [00:00<00:00, 54.8MB/s]\n",
+            "Processing ./pygenn-5.1.0-cp311-cp311-linux_x86_64.whl\n",
+            "Requirement already satisfied: numpy>=1.17 in /usr/local/lib/python3.11/dist-packages (from pygenn==5.1.0) (1.26.4)\n",
+            "Requirement already satisfied: psutil in /usr/local/lib/python3.11/dist-packages (from pygenn==5.1.0) (5.9.5)\n",
+            "Requirement already satisfied: setuptools in /usr/local/lib/python3.11/dist-packages (from pygenn==5.1.0) (75.1.0)\n",
             "pygenn is already installed with the same version as the provided wheel. Use --force-reinstall to force an installation of the wheel.\n",
             "env: CUDA_PATH=/usr/local/cuda\n"
           ]
@@ -80,7 +66,7 @@
           "base_uri": "https://localhost:8080/"
         },
         "id": "N-2PV7LcdFg_",
-        "outputId": "d19dbd88-f5f3-4755-c8a9-7363fdc52ebf"
+        "outputId": "9e485b23-c0c1-485f-8a53-c4a8059e15a3"
       },
       "outputs": [
         {
@@ -90,11 +76,11 @@
             "Downloading...\n",
             "From: https://drive.google.com/uc?id=1cmNL8W0QZZtn3dPHiOQnVjGAYTk6Rhpc\n",
             "To: /content/weights_0_1.npy\n",
-            "100% 402k/402k [00:00<00:00, 105MB/s]\n",
+            "100% 402k/402k [00:00<00:00, 9.47MB/s]\n",
             "Downloading...\n",
             "From: https://drive.google.com/uc?id=131lCXLEH6aTXnBZ9Nh4eJLSy5DQ6LKSF\n",
             "To: /content/weights_1_2.npy\n",
-            "100% 5.25k/5.25k [00:00<00:00, 21.5MB/s]\n"
+            "100% 5.25k/5.25k [00:00<00:00, 22.8MB/s]\n"
           ]
         }
       ],
@@ -119,7 +105,7 @@
       ],
       "metadata": {
         "id": "AikBc4sfg1b-",
-        "outputId": "2a0191a1-161a-4eac-9951-446f158994e0",
+        "outputId": "4aa30fb7-7bc4-456e-82ae-cd9f6da1cebd",
         "colab": {
           "base_uri": "https://localhost:8080/"
         }
@@ -130,8 +116,8 @@
           "output_type": "stream",
           "name": "stdout",
           "text": [
-            "Requirement already satisfied: mnist in /usr/local/lib/python3.10/dist-packages (0.2.2)\n",
-            "Requirement already satisfied: numpy in /usr/local/lib/python3.10/dist-packages (from mnist) (1.25.2)\n"
+            "Requirement already satisfied: mnist in /usr/local/lib/python3.11/dist-packages (0.2.2)\n",
+            "Requirement already satisfied: numpy in /usr/local/lib/python3.11/dist-packages (from mnist) (1.26.4)\n"
           ]
         }
       ]
@@ -428,21 +414,21 @@
           "base_uri": "https://localhost:8080/",
           "height": 101,
           "referenced_widgets": [
-            "e52e8044c42c46d682fa95bcb7f53fab",
-            "b59fbc72dba94f4fa809231c05640c66",
-            "dc4989f3a58442ce83de37ac916a0403",
-            "3d86add0efb449059aa63ae48b33fef8",
-            "f7418e0b10d0488cb2c9dd1bd5764208",
-            "44b5d0e667c4400b9e870f6a941d4146",
-            "0fcf7fa1f40d41cda4897095a1e54556",
-            "cc04830147424649a823a853696bd9f6",
-            "575665753d7c4fbfbf1613f3c12e40e4",
-            "abd7296b31c94a97adf5005affef1341",
-            "7bd8056178df4906ac21615f6458118a"
+            "014d59d47eef4e619d33b82cf7f5db59",
+            "15bf134c6a8a492dabed33292ebcba0f",
+            "ea65685c7c3d4b95b9ce9c67d22bf760",
+            "4ce60e820bf144c581e3d0e3f52ee630",
+            "b3c99396f7f549b3a339c36101d60323",
+            "05800645d5c94dc288174b686f6e053e",
+            "0f27a53b50b8488383754aa33b71be22",
+            "fd4aa3edea654f9297c863527b38ea11",
+            "7b070625071841369d0048a25644e29c",
+            "177921ea7bb541a984a825dbc3c7a8ad",
+            "5eb156dfed1f40b781bf642f93c35a26"
           ]
         },
         "id": "4qSoinT4etKq",
-        "outputId": "a48972c2-f7cd-44c2-8061-10d57a0980a0"
+        "outputId": "5e4d32dc-d003-401b-e5a8-b16d29e11517"
       },
       "outputs": [
         {
@@ -454,7 +440,7 @@
             "application/vnd.jupyter.widget-view+json": {
               "version_major": 2,
               "version_minor": 0,
-              "model_id": "e52e8044c42c46d682fa95bcb7f53fab"
+              "model_id": "014d59d47eef4e619d33b82cf7f5db59"
             }
           },
           "metadata": {}
@@ -465,7 +451,7 @@
           "text": [
             "\n",
             "Accuracy 97.54%%\n",
-            "Time 0.28141129400000864 seconds\n"
+            "Time 0.2900535689999515 seconds\n"
           ]
         }
       ],
@@ -537,7 +523,7 @@
     },
     "widgets": {
       "application/vnd.jupyter.widget-state+json": {
-        "e52e8044c42c46d682fa95bcb7f53fab": {
+        "014d59d47eef4e619d33b82cf7f5db59": {
           "model_module": "@jupyter-widgets/controls",
           "model_name": "HBoxModel",
           "model_module_version": "1.5.0",
@@ -552,14 +538,14 @@
             "_view_name": "HBoxView",
             "box_style": "",
             "children": [
-              "IPY_MODEL_b59fbc72dba94f4fa809231c05640c66",
-              "IPY_MODEL_dc4989f3a58442ce83de37ac916a0403",
-              "IPY_MODEL_3d86add0efb449059aa63ae48b33fef8"
+              "IPY_MODEL_15bf134c6a8a492dabed33292ebcba0f",
+              "IPY_MODEL_ea65685c7c3d4b95b9ce9c67d22bf760",
+              "IPY_MODEL_4ce60e820bf144c581e3d0e3f52ee630"
             ],
-            "layout": "IPY_MODEL_f7418e0b10d0488cb2c9dd1bd5764208"
+            "layout": "IPY_MODEL_b3c99396f7f549b3a339c36101d60323"
           }
         },
-        "b59fbc72dba94f4fa809231c05640c66": {
+        "15bf134c6a8a492dabed33292ebcba0f": {
           "model_module": "@jupyter-widgets/controls",
           "model_name": "HTMLModel",
           "model_module_version": "1.5.0",
@@ -574,13 +560,13 @@
             "_view_name": "HTMLView",
             "description": "",
             "description_tooltip": null,
-            "layout": "IPY_MODEL_44b5d0e667c4400b9e870f6a941d4146",
+            "layout": "IPY_MODEL_05800645d5c94dc288174b686f6e053e",
             "placeholder": "​",
-            "style": "IPY_MODEL_0fcf7fa1f40d41cda4897095a1e54556",
+            "style": "IPY_MODEL_0f27a53b50b8488383754aa33b71be22",
             "value": "100%"
           }
         },
-        "dc4989f3a58442ce83de37ac916a0403": {
+        "ea65685c7c3d4b95b9ce9c67d22bf760": {
           "model_module": "@jupyter-widgets/controls",
           "model_name": "FloatProgressModel",
           "model_module_version": "1.5.0",
@@ -596,15 +582,15 @@
             "bar_style": "success",
             "description": "",
             "description_tooltip": null,
-            "layout": "IPY_MODEL_cc04830147424649a823a853696bd9f6",
+            "layout": "IPY_MODEL_fd4aa3edea654f9297c863527b38ea11",
             "max": 79,
             "min": 0,
             "orientation": "horizontal",
-            "style": "IPY_MODEL_575665753d7c4fbfbf1613f3c12e40e4",
+            "style": "IPY_MODEL_7b070625071841369d0048a25644e29c",
             "value": 79
           }
         },
-        "3d86add0efb449059aa63ae48b33fef8": {
+        "4ce60e820bf144c581e3d0e3f52ee630": {
           "model_module": "@jupyter-widgets/controls",
           "model_name": "HTMLModel",
           "model_module_version": "1.5.0",
@@ -619,13 +605,13 @@
             "_view_name": "HTMLView",
             "description": "",
             "description_tooltip": null,
-            "layout": "IPY_MODEL_abd7296b31c94a97adf5005affef1341",
+            "layout": "IPY_MODEL_177921ea7bb541a984a825dbc3c7a8ad",
             "placeholder": "​",
-            "style": "IPY_MODEL_7bd8056178df4906ac21615f6458118a",
-            "value": " 79/79 [00:00&lt;00:00, 245.49it/s]"
+            "style": "IPY_MODEL_5eb156dfed1f40b781bf642f93c35a26",
+            "value": " 79/79 [00:00&lt;00:00, 238.24it/s]"
           }
         },
-        "f7418e0b10d0488cb2c9dd1bd5764208": {
+        "b3c99396f7f549b3a339c36101d60323": {
           "model_module": "@jupyter-widgets/base",
           "model_name": "LayoutModel",
           "model_module_version": "1.2.0",
@@ -677,7 +663,7 @@
             "width": null
           }
         },
-        "44b5d0e667c4400b9e870f6a941d4146": {
+        "05800645d5c94dc288174b686f6e053e": {
           "model_module": "@jupyter-widgets/base",
           "model_name": "LayoutModel",
           "model_module_version": "1.2.0",
@@ -729,7 +715,7 @@
             "width": null
           }
         },
-        "0fcf7fa1f40d41cda4897095a1e54556": {
+        "0f27a53b50b8488383754aa33b71be22": {
           "model_module": "@jupyter-widgets/controls",
           "model_name": "DescriptionStyleModel",
           "model_module_version": "1.5.0",
@@ -744,7 +730,7 @@
             "description_width": ""
           }
         },
-        "cc04830147424649a823a853696bd9f6": {
+        "fd4aa3edea654f9297c863527b38ea11": {
           "model_module": "@jupyter-widgets/base",
           "model_name": "LayoutModel",
           "model_module_version": "1.2.0",
@@ -796,7 +782,7 @@
             "width": null
           }
         },
-        "575665753d7c4fbfbf1613f3c12e40e4": {
+        "7b070625071841369d0048a25644e29c": {
           "model_module": "@jupyter-widgets/controls",
           "model_name": "ProgressStyleModel",
           "model_module_version": "1.5.0",
@@ -812,7 +798,7 @@
             "description_width": ""
           }
         },
-        "abd7296b31c94a97adf5005affef1341": {
+        "177921ea7bb541a984a825dbc3c7a8ad": {
           "model_module": "@jupyter-widgets/base",
           "model_name": "LayoutModel",
           "model_module_version": "1.2.0",
@@ -864,7 +850,7 @@
             "width": null
           }
         },
-        "7bd8056178df4906ac21615f6458118a": {
+        "5eb156dfed1f40b781bf642f93c35a26": {
           "model_module": "@jupyter-widgets/controls",
           "model_name": "DescriptionStyleModel",
           "model_module_version": "1.5.0",

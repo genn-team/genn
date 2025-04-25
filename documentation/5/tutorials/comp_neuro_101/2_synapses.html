@@ -24,6 +24,7 @@
         <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -108,16 +109,12 @@
 <h2>Install PyGeNN wheel from Google Drive<a class="headerlink" href="#Install-PyGeNN-wheel-from-Google-Drive" title="Link to this heading"></a></h2>
 <p>Download wheel file</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">get_ipython</span><span class="p">()):</span>
-    <span class="c1">#import IPython</span>
-    <span class="c1">#IPython.core.magics.execution.ExecutionMagics.run.func_defaults[2] = lambda a: a</span>
-    <span class="c1">#%run &quot;../install_collab.ipynb&quot;</span>
-    <span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>gdown<span class="w"> </span>--upgrade
-    <span class="o">!</span>gdown<span class="w"> </span>1V_GzXUDzcFz9QDIpxAD8QNEglcSipssW
-    <span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>pygenn-5.0.0-cp310-cp310-linux_x86_64.whl
+    <span class="o">!</span>gdown<span class="w"> </span>1wUeynMCgEOl2oK2LAd4E0s0iT_OiNOfl
+    <span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>pygenn-5.1.0-cp311-cp311-linux_x86_64.whl
     <span class="o">%</span><span class="k">env</span> CUDA_PATH=/usr/local/cuda
 </pre></div>
 </div>
@@ -127,33 +124,21 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Requirement already satisfied: gdown in /usr/local/lib/python3.10/dist-packages (5.1.0)
-Requirement already satisfied: beautifulsoup4 in /usr/local/lib/python3.10/dist-packages (from gdown) (4.12.3)
-Requirement already satisfied: filelock in /usr/local/lib/python3.10/dist-packages (from gdown) (3.13.1)
-Requirement already satisfied: requests[socks] in /usr/local/lib/python3.10/dist-packages (from gdown) (2.31.0)
-Requirement already satisfied: tqdm in /usr/local/lib/python3.10/dist-packages (from gdown) (4.66.2)
-Requirement already satisfied: soupsieve&gt;1.2 in /usr/local/lib/python3.10/dist-packages (from beautifulsoup4-&gt;gdown) (2.5)
-Requirement already satisfied: charset-normalizer&lt;4,&gt;=2 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (3.3.2)
-Requirement already satisfied: idna&lt;4,&gt;=2.5 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (3.6)
-Requirement already satisfied: urllib3&lt;3,&gt;=1.21.1 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (2.0.7)
-Requirement already satisfied: certifi&gt;=2017.4.17 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (2024.2.2)
-Requirement already satisfied: PySocks!=1.5.7,&gt;=1.5.6 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (1.7.1)
 Downloading...
-From: https://drive.google.com/uc?id=1V_GzXUDzcFz9QDIpxAD8QNEglcSipssW
-To: /content/pygenn-5.0.0-cp310-cp310-linux_x86_64.whl
-100% 8.29M/8.29M [00:00&lt;00:00, 98.5MB/s]
-Processing ./pygenn-5.0.0-cp310-cp310-linux_x86_64.whl
-Requirement already satisfied: numpy&gt;=1.17 in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (1.25.2)
-Requirement already satisfied: deprecated in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (1.2.14)
-Requirement already satisfied: psutil in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (5.9.5)
-Requirement already satisfied: wrapt&lt;2,&gt;=1.10 in /usr/local/lib/python3.10/dist-packages (from deprecated-&gt;pygenn==5.0.0) (1.14.1)
+From: https://drive.google.com/uc?id=1wUeynMCgEOl2oK2LAd4E0s0iT_OiNOfl
+To: /content/pygenn-5.1.0-cp311-cp311-linux_x86_64.whl
+100% 8.49M/8.49M [00:00&lt;00:00, 51.6MB/s]
+Processing ./pygenn-5.1.0-cp311-cp311-linux_x86_64.whl
+Requirement already satisfied: numpy&gt;=1.17 in /usr/local/lib/python3.11/dist-packages (from pygenn==5.1.0) (1.26.4)
+Requirement already satisfied: psutil in /usr/local/lib/python3.11/dist-packages (from pygenn==5.1.0) (5.9.5)
+Requirement already satisfied: setuptools in /usr/local/lib/python3.11/dist-packages (from pygenn==5.1.0) (75.1.0)
 pygenn is already installed with the same version as the provided wheel. Use --force-reinstall to force an installation of the wheel.
 env: CUDA_PATH=/usr/local/cuda
 </pre></div></div>
 </div>
 <p>Import numpy, matplotlib and the main <code class="docutils literal notranslate"><span class="pre">GeNNModel</span></code> class from PyGeNN</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -168,7 +153,7 @@ env: CUDA_PATH=/usr/local/cuda
 <h2>Build model<a class="headerlink" href="#Build-model" title="Link to this heading"></a></h2>
 <p>Create a new model called “tutorial2” with floating point precision and set the simulation timestep to 1ms</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">GeNNModel</span><span class="p">(</span><span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="s2">&quot;tutorial2&quot;</span><span class="p">)</span>
@@ -184,7 +169,7 @@ env: CUDA_PATH=/usr/local/cuda
 <p>end{align}`</p>
 <p>We configure these using the parameters from (Vogels &amp; Abbott, 2005 <a class="reference external" href="https://doi.org/10.1523/JNEUROSCI.3508-05.2005">link text</a>). Note that the resting voltage is <strong>higher</strong> than the reset to provide a constant current input <strong>TODO</strong> get rid of this</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lif_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;C&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;TauM&quot;</span><span class="p">:</span> <span class="mf">20.0</span><span class="p">,</span> <span class="s2">&quot;Vrest&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">49.0</span><span class="p">,</span> <span class="s2">&quot;Vreset&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">60.0</span><span class="p">,</span>
@@ -194,7 +179,7 @@ env: CUDA_PATH=/usr/local/cuda
 </div>
 <p>So that the network starts in a non-pathological state, we want to randomly initialise the neuron’s membrane potentials so that they are between their threshold and resting potentials. GeNN provides <a class="reference external" href="https://genn-team.github.io/genn/documentation/4/html/d4/dc6/sectVariableInitialisation.html">various</a> initialisation “snippets” which can be used to parallelise variable initialisation but, here we are going to use <code class="docutils literal notranslate"><span class="pre">Uniform</span></code> to sample values from a uniform distribution.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lif_init</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;V&quot;</span><span class="p">:</span> <span class="n">init_var</span><span class="p">(</span><span class="s2">&quot;Uniform&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">60.0</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mf">50.0</span><span class="p">}),</span>
@@ -204,7 +189,7 @@ env: CUDA_PATH=/usr/local/cuda
 </div>
 <p>For this tutorial we create an excitary and inhibitory population of these neurons and we enable spike recording for both</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">exc_pop</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_neuron_population</span><span class="p">(</span><span class="s2">&quot;E&quot;</span><span class="p">,</span> <span class="mi">3200</span><span class="p">,</span> <span class="s2">&quot;LIF&quot;</span><span class="p">,</span> <span class="n">lif_params</span><span class="p">,</span> <span class="n">lif_init</span><span class="p">)</span>
@@ -217,7 +202,7 @@ env: CUDA_PATH=/usr/local/cuda
 </div>
 <p>So this network sits in a asynchronous irregular state, we initialise the inhibitory weights as follows:</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">exc_synapse_init</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;g&quot;</span><span class="p">:</span> <span class="mf">0.0008</span><span class="p">}</span>
@@ -231,7 +216,7 @@ env: CUDA_PATH=/usr/local/cuda
 </dl>
 <p>end{align}` To approximate biolological AMPA and GABA receptors, we pick different time constants for excitatory and inhibitory synapses.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">exc_post_syn_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;tau&quot;</span><span class="p">:</span> <span class="mf">5.0</span><span class="p">}</span>
@@ -241,7 +226,7 @@ env: CUDA_PATH=/usr/local/cuda
 </div>
 <p>We want to connect these with a fixed probability of 0.1</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fixed_prob</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;prob&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">}</span>
@@ -251,7 +236,7 @@ env: CUDA_PATH=/usr/local/cuda
 <p>Now we have defined the synaptic weights (in GeNN, this is the responsibility of the <strong>weight update model</strong>), the synapse dynamics (in GeNN this is the responsibility of the <strong>postsynaptic model</strong>) and the connectivity parameters we can add the synapse populations to the model. Each of these synapse populations all configured with: * <code class="docutils literal notranslate"><span class="pre">SPARSE</span></code> connectivity meaning that they are connected with a sparse weight matrix. * The built in <code class="docutils literal notranslate"><span class="pre">StaticPulseConstantWeight</span></code> <strong>weight update model</strong> which
 is used for spiking synapses without any sort of learning. This has a single parameter <code class="docutils literal notranslate"><span class="pre">g</span></code> representing the synaptic weight used for all synapses. * The build in <code class="docutils literal notranslate"><span class="pre">ExpCurr</span></code> <strong>postsynaptic model</strong> which implements the exponential synapses described previously * The sparse connectivity is configured using the built in <code class="docutils literal notranslate"><span class="pre">FixedProbability</span></code> model described previosuly</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">add_synapse_population</span><span class="p">(</span><span class="s2">&quot;EE&quot;</span><span class="p">,</span> <span class="s2">&quot;SPARSE&quot;</span><span class="p">,</span>
@@ -282,7 +267,7 @@ is used for spiking synapses without any sort of learning. This has a single par
 </div>
 <p>Run code generator to generate simulation code for model and load it into PyGeNN. Allocate a spike recording buffer large enough to store the spikes emitted throughout our entire 1 second simulation</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
@@ -295,7 +280,7 @@ is used for spiking synapses without any sort of learning. This has a single par
 <h2>Simulate model<a class="headerlink" href="#Simulate-model" title="Link to this heading"></a></h2>
 <p>Simulate the model for 1000 timesteps</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">while</span> <span class="n">model</span><span class="o">.</span><span class="n">timestep</span> <span class="o">&lt;</span> <span class="mi">1000</span><span class="p">:</span>
@@ -305,7 +290,7 @@ is used for spiking synapses without any sort of learning. This has a single par
 </div>
 <p>Copy the recorded spike data back from the GPU and extract the spike times and IDs</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">pull_recording_buffers_from_device</span><span class="p">()</span>
@@ -317,7 +302,7 @@ is used for spiking synapses without any sort of learning. This has a single par
 </div>
 <p>Plot spikes and rates</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
@@ -355,7 +340,7 @@ is used for spiking synapses without any sort of learning. This has a single par
 </div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>

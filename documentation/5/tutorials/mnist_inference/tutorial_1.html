@@ -24,6 +24,7 @@
         <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -110,16 +111,12 @@
 <h2>Install PyGeNN wheel from Google Drive<a class="headerlink" href="#Install-PyGeNN-wheel-from-Google-Drive" title="Link to this heading"></a></h2>
 <p>Download wheel file</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">get_ipython</span><span class="p">()):</span>
-    <span class="c1">#import IPython</span>
-    <span class="c1">#IPython.core.magics.execution.ExecutionMagics.run.func_defaults[2] = lambda a: a</span>
-    <span class="c1">#%run &quot;../install_collab.ipynb&quot;</span>
-    <span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>gdown<span class="w"> </span>--upgrade
-    <span class="o">!</span>gdown<span class="w"> </span>1V_GzXUDzcFz9QDIpxAD8QNEglcSipssW
-    <span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>pygenn-5.0.0-cp310-cp310-linux_x86_64.whl
+    <span class="o">!</span>gdown<span class="w"> </span>1wUeynMCgEOl2oK2LAd4E0s0iT_OiNOfl
+    <span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>pygenn-5.1.0-cp311-cp311-linux_x86_64.whl
     <span class="o">%</span><span class="k">env</span> CUDA_PATH=/usr/local/cuda
 </pre></div>
 </div>
@@ -129,26 +126,14 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Requirement already satisfied: gdown in /usr/local/lib/python3.10/dist-packages (5.1.0)
-Requirement already satisfied: beautifulsoup4 in /usr/local/lib/python3.10/dist-packages (from gdown) (4.12.3)
-Requirement already satisfied: filelock in /usr/local/lib/python3.10/dist-packages (from gdown) (3.13.1)
-Requirement already satisfied: requests[socks] in /usr/local/lib/python3.10/dist-packages (from gdown) (2.31.0)
-Requirement already satisfied: tqdm in /usr/local/lib/python3.10/dist-packages (from gdown) (4.66.2)
-Requirement already satisfied: soupsieve&gt;1.2 in /usr/local/lib/python3.10/dist-packages (from beautifulsoup4-&gt;gdown) (2.5)
-Requirement already satisfied: charset-normalizer&lt;4,&gt;=2 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (3.3.2)
-Requirement already satisfied: idna&lt;4,&gt;=2.5 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (3.6)
-Requirement already satisfied: urllib3&lt;3,&gt;=1.21.1 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (2.0.7)
-Requirement already satisfied: certifi&gt;=2017.4.17 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (2024.2.2)
-Requirement already satisfied: PySocks!=1.5.7,&gt;=1.5.6 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (1.7.1)
 Downloading...
-From: https://drive.google.com/uc?id=1V_GzXUDzcFz9QDIpxAD8QNEglcSipssW
-To: /content/pygenn-5.0.0-cp310-cp310-linux_x86_64.whl
-100% 8.29M/8.29M [00:00&lt;00:00, 147MB/s]
-Processing ./pygenn-5.0.0-cp310-cp310-linux_x86_64.whl
-Requirement already satisfied: numpy&gt;=1.17 in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (1.25.2)
-Requirement already satisfied: deprecated in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (1.2.14)
-Requirement already satisfied: psutil in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (5.9.5)
-Requirement already satisfied: wrapt&lt;2,&gt;=1.10 in /usr/local/lib/python3.10/dist-packages (from deprecated-&gt;pygenn==5.0.0) (1.14.1)
+From: https://drive.google.com/uc?id=1wUeynMCgEOl2oK2LAd4E0s0iT_OiNOfl
+To: /content/pygenn-5.1.0-cp311-cp311-linux_x86_64.whl
+100% 8.49M/8.49M [00:00&lt;00:00, 53.9MB/s]
+Processing ./pygenn-5.1.0-cp311-cp311-linux_x86_64.whl
+Requirement already satisfied: numpy&gt;=1.17 in /usr/local/lib/python3.11/dist-packages (from pygenn==5.1.0) (1.26.4)
+Requirement already satisfied: psutil in /usr/local/lib/python3.11/dist-packages (from pygenn==5.1.0) (5.9.5)
+Requirement already satisfied: setuptools in /usr/local/lib/python3.11/dist-packages (from pygenn==5.1.0) (75.1.0)
 pygenn is already installed with the same version as the provided wheel. Use --force-reinstall to force an installation of the wheel.
 env: CUDA_PATH=/usr/local/cuda
 </pre></div></div>
@@ -157,7 +142,7 @@ env: CUDA_PATH=/usr/local/cuda
 <section id="Download-pre-trained-weights-and-MNIST-test-data">
 <h2>Download pre-trained weights and MNIST test data<a class="headerlink" href="#Download-pre-trained-weights-and-MNIST-test-data" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>gdown<span class="w"> </span>1cmNL8W0QZZtn3dPHiOQnVjGAYTk6Rhpc
@@ -173,18 +158,18 @@ env: CUDA_PATH=/usr/local/cuda
 Downloading...
 From: https://drive.google.com/uc?id=1cmNL8W0QZZtn3dPHiOQnVjGAYTk6Rhpc
 To: /content/weights_0_1.npy
-100% 402k/402k [00:00&lt;00:00, 142MB/s]
+100% 402k/402k [00:00&lt;00:00, 8.83MB/s]
 Downloading...
 From: https://drive.google.com/uc?id=131lCXLEH6aTXnBZ9Nh4eJLSy5DQ6LKSF
 To: /content/weights_1_2.npy
-100% 5.25k/5.25k [00:00&lt;00:00, 18.8MB/s]
+100% 5.25k/5.25k [00:00&lt;00:00, 15.6MB/s]
 </pre></div></div>
 </div>
 </section>
 <section id="Install-MNIST-package">
 <h2>Install MNIST package<a class="headerlink" href="#Install-MNIST-package" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>mnist
@@ -197,8 +182,9 @@ To: /content/weights_1_2.npy
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 Collecting mnist
-  Downloading mnist-0.2.2-py2.py3-none-any.whl (3.5 kB)
-Requirement already satisfied: numpy in /usr/local/lib/python3.10/dist-packages (from mnist) (1.25.2)
+  Downloading mnist-0.2.2-py2.py3-none-any.whl.metadata (1.6 kB)
+Requirement already satisfied: numpy in /usr/local/lib/python3.11/dist-packages (from mnist) (1.26.4)
+Downloading mnist-0.2.2-py2.py3-none-any.whl (3.5 kB)
 Installing collected packages: mnist
 Successfully installed mnist-0.2.2
 </pre></div></div>
@@ -208,7 +194,7 @@ Successfully installed mnist-0.2.2
 <h2>Build model<a class="headerlink" href="#Build-model" title="Link to this heading"></a></h2>
 <p>Import standard modules and required PyGeNN functions and classes</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -221,7 +207,7 @@ Successfully installed mnist-0.2.2
 </div>
 <p>Define some simulation parameters</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simulation timestep of model in ms</span>
@@ -238,7 +224,7 @@ Successfully installed mnist-0.2.2
 <p>Because the ReLU neurons our ANN was trained with are best matched by a very simple Integrate-and-Fire neuron without a leak, define a custom model with: * A single parameter (parameters are common across all neurons in population) <code class="docutils literal notranslate"><span class="pre">Vthr</span></code> which specifies it’s spiking threshold * A single <code class="docutils literal notranslate"><span class="pre">V</span></code> state variable to hold the membrane potential of the neurons * Simulation code which simply adds the incoming current <code class="docutils literal notranslate"><span class="pre">Isyn</span></code> (this is a built in variable provided by GeNN) to the membrane potential
 <code class="docutils literal notranslate"><span class="pre">V</span></code> (note, we’re assuming that the membrane resistance is 1 here) * Threshold condition code which causes the neuron to emit a spike if it’s membrane potential <code class="docutils literal notranslate"><span class="pre">V</span></code> crosses the threshold <code class="docutils literal notranslate"><span class="pre">Vthr</span></code> * Reset code which zeros the membrane potential <code class="docutils literal notranslate"><span class="pre">V</span></code> after a spike is emitted.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">if_model</span> <span class="o">=</span> <span class="n">create_neuron_model</span><span class="p">(</span>
@@ -260,7 +246,7 @@ Successfully installed mnist-0.2.2
 <li><p>Injection code which injects a current of <code class="docutils literal notranslate"><span class="pre">magnitude</span></code> every timestep (<code class="docutils literal notranslate"><span class="pre">$(injectCurrent,</span> <span class="pre">X)</span></code> is a function provided by GeNN for use in current sources).</p></li>
 </ul>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cs_model</span> <span class="o">=</span> <span class="n">create_current_source_model</span><span class="p">(</span>
@@ -272,7 +258,7 @@ Successfully installed mnist-0.2.2
 </div>
 <p>Create a new model implementing <code class="docutils literal notranslate"><span class="pre">scalar</span></code> variables as single-precision and generating code into tutorial_1 directory</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">GeNNModel</span><span class="p">(</span><span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="s2">&quot;tutorial_1&quot;</span><span class="p">)</span>
@@ -282,7 +268,7 @@ Successfully installed mnist-0.2.2
 </div>
 <p>Load the weight matrices extracted from our original ANN</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load weights</span>
@@ -293,7 +279,7 @@ Successfully installed mnist-0.2.2
 </div>
 <p>Create three populations of Integrate-and-Fire neurons sized to match the shapes of the weight matrices and initialised so their membrane potential’s are all initialised to 0mv and their spiking thresholds to 5mv.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">if_init</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;V&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
@@ -309,7 +295,7 @@ Successfully installed mnist-0.2.2
 </div>
 <p>Because, in this first tutorial we want to examine the spike emitted by each neuron, turn on spike recording for each population.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">neurons</span><span class="p">:</span>
@@ -320,7 +306,7 @@ Successfully installed mnist-0.2.2
 <p>Add synapse populations to sequentially connect the three populations of neurons. These are all configured identically with: * <code class="docutils literal notranslate"><span class="pre">DENSE</span></code> connectivity meaning that they are connected with a basic dense weight matrix(see <a class="reference external" href="https://genn-team.github.io/genn/documentation/4/html/d5/d39/subsect34.html">documentation</a>). * The built in <code class="docutils literal notranslate"><span class="pre">StaticPulse</span></code> <strong>weight update model</strong> which is used for spiking synapses without any sort of learning. This has no parameters and a single state variable <code class="docutils literal notranslate"><span class="pre">g</span></code>
 representing its synaptic weights which we initialise using our arrays of pre-trained weights. * The build in <code class="docutils literal notranslate"><span class="pre">DeltaCurr</span></code> <strong>postsynaptic model</strong> which specified that weighted incoming spikes are added directly to the postsynaptic neuron’s membrane potential without any additional shaping occuring. This model has no parameters or state variables.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">add_synapse_population</span><span class="p">(</span>
@@ -338,7 +324,7 @@ representing its synaptic weights which we initialise using our arrays of pre-tr
 </div>
 <p>Add current source to provide input into the input population of neurons</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">current_input</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_current_source</span><span class="p">(</span><span class="s2">&quot;current_input&quot;</span><span class="p">,</span> <span class="n">cs_model</span><span class="p">,</span>
@@ -348,7 +334,7 @@ representing its synaptic weights which we initialise using our arrays of pre-tr
 </div>
 <p>Run code generator to generate simulation code for model and load it into PyGeNN. Allocate a spike recording buffer large enough to store the spikes emitted throughout a single stimuli presentation.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
@@ -361,7 +347,7 @@ representing its synaptic weights which we initialise using our arrays of pre-tr
 <h2>Simulate model<a class="headerlink" href="#Simulate-model" title="Link to this heading"></a></h2>
 <p>First we load the two numpy arrays containing the images and labels from the MNIST test set and verify that the size of the input images matches that of the first (input) population and that the size of the last (output) population is enough to one-hot encode all of the labels.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mnist</span><span class="o">.</span><span class="n">datasets_url</span> <span class="o">=</span> <span class="s2">&quot;https://storage.googleapis.com/cvdf-datasets/mnist/&quot;</span>
@@ -376,7 +362,7 @@ representing its synaptic weights which we initialise using our arrays of pre-tr
 </div>
 <p>PyGeNN uses <em>memory views</em> to directly expose the memory used by the simulation to numpy. Copy the first testing image into the memory view of the current source’s magnitude variable.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">current_input</span><span class="o">.</span><span class="n">vars</span><span class="p">[</span><span class="s2">&quot;magnitude&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">testing_images</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">INPUT_CURRENT_SCALE</span>
@@ -386,7 +372,7 @@ representing its synaptic weights which we initialise using our arrays of pre-tr
 <p><img alt="pci-e_single_dual-400x142.png" src="data:image/png;base64,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" /></p>
 <p>On most systems, memory accessible by the GPU and the CPU is seperate. Therefore, we need to manually copy the values we just placed in the current source’s magnitude variable to the GPU (if we’re running GeNN on the CPU, this call will not do anything)</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">current_input</span><span class="o">.</span><span class="n">vars</span><span class="p">[</span><span class="s2">&quot;magnitude&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">push_to_device</span><span class="p">()</span>
@@ -395,7 +381,7 @@ representing its synaptic weights which we initialise using our arrays of pre-tr
 </div>
 <p>Simulate the model for <code class="docutils literal notranslate"><span class="pre">PRESENT_TIMESTEPS</span></code> (<code class="docutils literal notranslate"><span class="pre">model.timestep</span></code> tracks integer timesteps whereas <code class="docutils literal notranslate"><span class="pre">model.time</span></code> tracks time in ms)</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">while</span> <span class="n">model</span><span class="o">.</span><span class="n">timestep</span> <span class="o">&lt;</span> <span class="n">PRESENT_TIMESTEPS</span><span class="p">:</span>
@@ -405,7 +391,7 @@ representing its synaptic weights which we initialise using our arrays of pre-tr
 </div>
 <p>Download the recorded spikes from the GPU</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">pull_recording_buffers_from_device</span><span class="p">()</span>
@@ -414,7 +400,7 @@ representing its synaptic weights which we initialise using our arrays of pre-tr
 </div>
 <p>Plot raster plots of the spikes from all neuron populations, illustrating the correct label for this image with a horizontal line</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create figure with one axis per neuron population</span>

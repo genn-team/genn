@@ -23,6 +23,7 @@
         <script src="../_static/doctools.js?v=9a2dae69"></script>
         <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
@@ -406,8 +407,8 @@ backend for your system</p></li>
 <li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>) – parameter values for the current source model (see <a class="reference internal" href="../building_networks.html#section-parameters"><span class="std std-ref">Parameters</span></a>)</p></li>
 <li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial variable values or initialisers
 for the current source model (see <a class="reference internal" href="../building_networks.html#section-variables"><span class="std std-ref">Variables</span></a>)</p></li>
-<li><p><strong>var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarReference</em><em>]</em>) – variables references to neuron variables in <code class="docutils literal notranslate"><span class="pre">pop</span></code>,
-typically created using <a class="reference internal" href="#pygenn.create_var_ref" title="pygenn.create_var_ref"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_var_ref()</span></code></a>
+<li><p><strong>var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarReference</em><em> | </em><em>str</em><em>]</em>) – variables references to neuron variables in <code class="docutils literal notranslate"><span class="pre">pop</span></code>,
+either specified by name or created using <a class="reference internal" href="#pygenn.create_var_ref" title="pygenn.create_var_ref"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_var_ref()</span></code></a>
 (see <a class="reference internal" href="../building_networks.html#section-variables-references"><span class="std std-ref">Variables references</span></a>)</p></li>
 </ul>
 </dd>
@@ -2320,7 +2321,7 @@ redrawing if the value is negative (which could be useful to ensure delays remai
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pygenn.create_weight_update_model">
-<span class="sig-prename descclassname"><span class="pre">pygenn.</span></span><span class="sig-name descname"><span class="pre">create_weight_update_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">class_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vars=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_vars=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_</span> <span class="pre">post_vars=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_</span> <span class="pre">pre_neuron_var_refs=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_neuron_var_refs=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derived_params=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_spike_syn_code=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_event_syn_code=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_event_syn_code=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_spike_syn_code=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">synapse_dynamics_code=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_</span> <span class="pre">post_</span> <span class="pre">pre_spike_code=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_spike_code=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_dynamics_code=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_dynamics_code=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_global_params=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.create_weight_update_model" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pygenn.</span></span><span class="sig-name descname"><span class="pre">create_weight_update_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">class_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vars=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_vars=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_</span> <span class="pre">post_vars=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_</span> <span class="pre">pre_neuron_var_refs=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_neuron_var_refs=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psm_var_refs=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derived_params=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_spike_syn_code=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_event_syn_code=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_event_syn_code=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_spike_syn_code=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">synapse_dynamics_code=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_</span> <span class="pre">post_</span> <span class="pre">pre_spike_code=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_spike_code=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_dynamics_code=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_dynamics_code=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_global_params=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.create_weight_update_model" title="Link to this definition"></a></dt>
 <dd><p>Creates a new weight update model.
 GeNN operates on the assumption that the postsynaptic output of the synapses are added linearly at the postsynaptic neuron.
 Within all of the synaptic code strings (<code class="docutils literal notranslate"><span class="pre">pre_spike_syn_code</span></code>, <code class="docutils literal notranslate"><span class="pre">pre_event_syn_code</span></code>,
@@ -2373,6 +2374,9 @@ neuron variables</p></li>
 <li><p><strong>post_neuron_var_refs</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>] </em><em>| </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>, </em><a class="reference internal" href="#pygenn.VarAccessMode" title="pygenn._genn.VarAccessMode"><em>VarAccessMode</em></a><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and optional variable access
 of references to be assigned to postsynaptic
 neuron variables</p></li>
+<li><p><strong>psm_var_refs</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>] </em><em>| </em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>, </em><a class="reference internal" href="#pygenn.VarAccessMode" title="pygenn._genn.VarAccessMode"><em>VarAccessMode</em></a><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and optional variable access
+of references to be assigned to postsynaptic
+model variables</p></li>
 <li><p><strong>derived_params</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>, </em><em>str</em><em> | </em><em>ResolvedType</em><em>]</em><em>] </em><em>| </em><em>None</em>) – names, types and callables to calculate
 derived parameter values from params</p></li>
 <li><p><strong>pre_spike_syn_code</strong> (<em>str</em><em> | </em><em>None</em>) – string with the presynaptic spike code</p></li>
@@ -2570,8 +2574,8 @@ by <a class="reference internal" href="#pygenn.create_postsynaptic_model" title=
 <li><p><strong>params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em> | </em><em>float</em><em>]</em>) – parameter values for the postsynaptic model (see <a class="reference internal" href="../building_networks.html#section-parameters"><span class="std std-ref">Parameters</span></a>)</p></li>
 <li><p><strong>vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial synaptic variable values or initialisers
 for the postsynaptic model (see <a class="reference internal" href="../building_networks.html#section-variables"><span class="std std-ref">Variables</span></a>)</p></li>
-<li><p><strong>var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – references to postsynaptic neuron variables,
-typically created using <a class="reference internal" href="#pygenn.create_var_ref" title="pygenn.create_var_ref"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_var_ref()</span></code></a>
+<li><p><strong>var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarReference</em><em> | </em><em>str</em><em>]</em>) – references to postsynaptic neuron variables,
+either specified by name or created using <a class="reference internal" href="#pygenn.create_var_ref" title="pygenn.create_var_ref"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_var_ref()</span></code></a>
 (see <a class="reference internal" href="../building_networks.html#section-variables-references"><span class="std std-ref">Variables references</span></a>)</p></li>
 </ul>
 </dd>
@@ -2666,7 +2670,7 @@ by sampling from the normal distribution with a mean of 0 and a standard deviati
 
 <dl class="py function">
 <dt class="sig sig-object py" id="pygenn.init_weight_update">
-<span class="sig-prename descclassname"><span class="pre">pygenn.</span></span><span class="sig-name descname"><span class="pre">init_weight_update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">snippet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_vars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_vars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_var_refs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_var_refs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.init_weight_update" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pygenn.</span></span><span class="sig-name descname"><span class="pre">init_weight_update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">snippet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_vars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_vars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_var_refs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post_var_refs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psm_var_refs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.init_weight_update" title="Link to this definition"></a></dt>
 <dd><p>Initialises a weight update model with parameter values,
 variable initialisers and variable references.</p>
 <dl class="field-list simple">
@@ -2683,12 +2687,14 @@ initialisers (see <a class="reference internal" href="../building_networks.html#
 initialisers (see <a class="reference internal" href="../building_networks.html#section-variables"><span class="std std-ref">Variables</span></a>)</p></li>
 <li><p><strong>post_vars</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarInit</em><em> | </em><em>int</em><em> | </em><em>float</em><em> | </em><em>ndarray</em><em> | </em><em>Sequence</em><em>]</em>) – initial postsynaptic variable values or initialisers
 (see <a class="reference internal" href="../building_networks.html#section-variables"><span class="std std-ref">Variables</span></a>)</p></li>
-<li><p><strong>pre_var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarReference</em><em>]</em>) – references to presynaptic neuron variables,
-typically created using <a class="reference internal" href="#pygenn.create_var_ref" title="pygenn.create_var_ref"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_var_ref()</span></code></a>
+<li><p><strong>pre_var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarReference</em><em> | </em><em>str</em><em>]</em>) – references to presynaptic neuron variables,
+either specified by name or created using <a class="reference internal" href="#pygenn.create_var_ref" title="pygenn.create_var_ref"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_var_ref()</span></code></a>
 (see <a class="reference internal" href="../building_networks.html#section-variables-references"><span class="std std-ref">Variables references</span></a>)</p></li>
-<li><p><strong>post_var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarReference</em><em>]</em>) – references to postsynaptic neuron variables,
-typically created using <a class="reference internal" href="#pygenn.create_var_ref" title="pygenn.create_var_ref"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_var_ref()</span></code></a>
+<li><p><strong>post_var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarReference</em><em> | </em><em>str</em><em>]</em>) – references to postsynaptic neuron variables,
+either specified by name or created using <a class="reference internal" href="#pygenn.create_var_ref" title="pygenn.create_var_ref"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_var_ref()</span></code></a>
 (see <a class="reference internal" href="../building_networks.html#section-variables-references"><span class="std std-ref">Variables references</span></a>)</p></li>
+<li><p><strong>psm_var_refs</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>VarReference</em><em> | </em><em>str</em><em>]</em>) – references to postsynaptic model variables,
+specified by name (see <a class="reference internal" href="../building_networks.html#section-variables-references"><span class="std std-ref">Variables references</span></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -2777,7 +2783,7 @@ constant weights could be initialised as follows:</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="pygenn.cuda_backend.Preferences">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenn.cuda_backend.</span></span><span class="sig-name descname"><span class="pre">Preferences</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pygenn.cuda_backend.Preferences" title="pygenn.cuda_backend.Preferences"><span class="pre">pygenn.cuda_backend.Preferences</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.cuda_backend.Preferences" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PreferencesBase</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PreferencesCUDAHIP</span></code></p>
 <p>Preferences for CUDA backend</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="pygenn.cuda_backend.Preferences.block_size_select_method">
@@ -2798,12 +2804,6 @@ additional constant cache, increase this</p>
 <dt class="sig sig-object py" id="pygenn.cuda_backend.Preferences.device_select_method">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">device_select_method</span></span><a class="headerlink" href="#pygenn.cuda_backend.Preferences.device_select_method" title="Link to this definition"></a></dt>
 <dd><p>How to select GPU device</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="pygenn.cuda_backend.Preferences.enable_nccl_reductions">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">enable_nccl_reductions</span></span><a class="headerlink" href="#pygenn.cuda_backend.Preferences.enable_nccl_reductions" title="Link to this definition"></a></dt>
-<dd><p>Generate corresponding NCCL batch reductions</p>
 </dd></dl>
 
 <dl class="py property">
@@ -2881,6 +2881,9 @@ It has 3 parameters:</p>
 <dd><p>Minimal custom update model for calculating tranpose</p>
 </dd></dl>
 
+</section>
+<section id="pygenn-dvs-module">
+<h2>pygenn.dvs module<a class="headerlink" href="#pygenn-dvs-module" title="Link to this heading"></a></h2>
 </section>
 <section id="module-pygenn.genn_groups">
 <span id="pygenn-genn-groups-module"></span><h2>pygenn.genn_groups module<a class="headerlink" href="#module-pygenn.genn_groups" title="Link to this heading"></a></h2>
@@ -3093,6 +3096,37 @@ must be called to copy spike recording data from device</p>
 <dt class="sig sig-object py" id="pygenn.genn_groups.SynapseGroupMixin.weight_update_var_size">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">weight_update_var_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#pygenn.genn_groups.SynapseGroupMixin.weight_update_var_size" title="Link to this definition"></a></dt>
 <dd><p>Size of each weight update variable</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-pygenn.hip_backend">
+<span id="pygenn-hip-backend-module"></span><h2>pygenn.hip_backend module<a class="headerlink" href="#module-pygenn.hip_backend" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="pygenn.hip_backend.Preferences">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pygenn.hip_backend.</span></span><span class="sig-name descname"><span class="pre">Preferences</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pygenn.hip_backend.Preferences" title="pygenn.hip_backend.Preferences"><span class="pre">pygenn.hip_backend.Preferences</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.hip_backend.Preferences" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PreferencesCUDAHIP</span></code></p>
+<p>Preferences for HIP backend</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="pygenn.hip_backend.Preferences.constant_cache_overhead">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">constant_cache_overhead</span></span><a class="headerlink" href="#pygenn.hip_backend.Preferences.constant_cache_overhead" title="Link to this definition"></a></dt>
+<dd><p>How much constant cache is already used and therefore can’t be used by GeNN?
+Each of the four modules which includes CUDA headers(neuronUpdate, synapseUpdate, custom update, init and runner)
+Takes 72 bytes of constant memory for a lookup table used by cuRAND. If your application requires
+additional constant cache, increase this</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pygenn.hip_backend.Preferences.manual_block_sizes">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">manual_block_sizes</span></span><a class="headerlink" href="#pygenn.hip_backend.Preferences.manual_block_sizes" title="Link to this definition"></a></dt>
+<dd><p>If block size select method is set to BlockSizeSelect::MANUAL, block size to use for each kernel</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pygenn.hip_backend.Preferences.manual_device_id">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">manual_device_id</span></span><a class="headerlink" href="#pygenn.hip_backend.Preferences.manual_device_id" title="Link to this definition"></a></dt>
+<dd><p>If device select method is set to DeviceSelect::MANUAL, id of device to use</p>
 </dd></dl>
 
 </dd></dl>
@@ -3401,11 +3435,20 @@ This snippet takes 2 parameters:</p>
 <section id="pygenn-libgenn-cuda-backend-dynamic-debug-module">
 <h2>pygenn.libgenn_cuda_backend_dynamic_debug module<a class="headerlink" href="#pygenn-libgenn-cuda-backend-dynamic-debug-module" title="Link to this heading"></a></h2>
 </section>
+<section id="pygenn-libgenn-dvs-dynamic-module">
+<h2>pygenn.libgenn_dvs_dynamic module<a class="headerlink" href="#pygenn-libgenn-dvs-dynamic-module" title="Link to this heading"></a></h2>
+</section>
 <section id="pygenn-libgenn-dynamic-module">
 <h2>pygenn.libgenn_dynamic module<a class="headerlink" href="#pygenn-libgenn-dynamic-module" title="Link to this heading"></a></h2>
 </section>
 <section id="pygenn-libgenn-dynamic-debug-module">
 <h2>pygenn.libgenn_dynamic_debug module<a class="headerlink" href="#pygenn-libgenn-dynamic-debug-module" title="Link to this heading"></a></h2>
+</section>
+<section id="pygenn-libgenn-hip-backend-dynamic-module">
+<h2>pygenn.libgenn_hip_backend_dynamic module<a class="headerlink" href="#pygenn-libgenn-hip-backend-dynamic-module" title="Link to this heading"></a></h2>
+</section>
+<section id="pygenn-libgenn-hip-backend-dynamic-debug-module">
+<h2>pygenn.libgenn_hip_backend_dynamic_debug module<a class="headerlink" href="#pygenn-libgenn-hip-backend-dynamic-debug-module" title="Link to this heading"></a></h2>
 </section>
 <section id="pygenn-libgenn-single-threaded-cpu-backend-dynamic-module">
 <h2>pygenn.libgenn_single_threaded_cpu_backend_dynamic module<a class="headerlink" href="#pygenn-libgenn-single-threaded-cpu-backend-dynamic-module" title="Link to this heading"></a></h2>

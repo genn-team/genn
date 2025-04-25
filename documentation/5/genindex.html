@@ -22,6 +22,7 @@
         <script src="_static/doctools.js?v=9a2dae69"></script>
         <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="#" />
     <link rel="search" title="Search" href="search.html" /> 
@@ -179,7 +180,11 @@
       <li><a href="source/pygenn.html#pygenn.init_var_snippets.Constant">Constant() (in module pygenn.init_var_snippets)</a>
 </li>
       <li><a href="source/pygenn.html#pygenn.cuda_backend.Preferences.constant_cache_overhead">constant_cache_overhead (pygenn.cuda_backend.Preferences property)</a>
+
+      <ul>
+        <li><a href="source/pygenn.html#pygenn.hip_backend.Preferences.constant_cache_overhead">(pygenn.hip_backend.Preferences property)</a>
 </li>
+      </ul></li>
       <li><a href="source/pygenn.html#pygenn.init_sparse_connectivity_snippets.Conv2D">Conv2D() (in module pygenn.init_sparse_connectivity_snippets)</a>
 
       <ul>
@@ -218,10 +223,10 @@
 </li>
       <li><a href="source/pygenn.html#pygenn.create_toeplitz_connect_init_snippet">create_toeplitz_connect_init_snippet() (in module pygenn)</a>
 </li>
-      <li><a href="source/pygenn.html#pygenn.create_var_init_snippet">create_var_init_snippet() (in module pygenn)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="source/pygenn.html#pygenn.create_var_init_snippet">create_var_init_snippet() (in module pygenn)</a>
+</li>
       <li><a href="source/pygenn.html#pygenn.create_var_ref">create_var_ref() (in module pygenn)</a>
 </li>
       <li><a href="source/pygenn.html#pygenn.create_weight_update_model">create_weight_update_model() (in module pygenn)</a>
@@ -320,14 +325,12 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="source/pygenn.html#pygenn.VarAccessDim.ELEMENT">ELEMENT (pygenn.VarAccessDim attribute)</a>
 </li>
-      <li><a href="source/pygenn.html#pygenn.cuda_backend.Preferences.enable_nccl_reductions">enable_nccl_reductions (pygenn.cuda_backend.Preferences property)</a>
-</li>
       <li><a href="source/pygenn.html#pygenn.PlogSeverity.ERROR">ERROR (pygenn.PlogSeverity attribute)</a>
+</li>
+      <li><a href="source/pygenn.html#pygenn.postsynaptic_models.ExpCond">ExpCond() (in module pygenn.postsynaptic_models)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="source/pygenn.html#pygenn.postsynaptic_models.ExpCond">ExpCond() (in module pygenn.postsynaptic_models)</a>
-</li>
       <li><a href="source/pygenn.html#pygenn.postsynaptic_models.ExpCurr">ExpCurr() (in module pygenn.postsynaptic_models)</a>
 </li>
       <li><a href="source/pygenn.html#pygenn.init_var_snippets.Exponential">Exponential() (in module pygenn.init_var_snippets)</a>
@@ -493,9 +496,17 @@
 </li>
       </ul></li>
       <li><a href="source/pygenn.html#pygenn.cuda_backend.Preferences.manual_block_sizes">manual_block_sizes (pygenn.cuda_backend.Preferences property)</a>
+
+      <ul>
+        <li><a href="source/pygenn.html#pygenn.hip_backend.Preferences.manual_block_sizes">(pygenn.hip_backend.Preferences property)</a>
 </li>
+      </ul></li>
       <li><a href="source/pygenn.html#pygenn.cuda_backend.Preferences.manual_device_id">manual_device_id (pygenn.cuda_backend.Preferences property)</a>
+
+      <ul>
+        <li><a href="source/pygenn.html#pygenn.hip_backend.Preferences.manual_device_id">(pygenn.hip_backend.Preferences property)</a>
 </li>
+      </ul></li>
       <li><a href="source/pygenn.html#pygenn.SynapseGroup.matrix_type">matrix_type (pygenn.SynapseGroup property)</a>
 </li>
       <li><a href="source/pygenn.html#pygenn.VarAccessModeAttribute.MAX">MAX (pygenn.VarAccessModeAttribute attribute)</a>
@@ -533,6 +544,8 @@
         <li><a href="source/pygenn.html#module-pygenn.custom_update_models">pygenn.custom_update_models</a>
 </li>
         <li><a href="source/pygenn.html#module-pygenn.genn_groups">pygenn.genn_groups</a>
+</li>
+        <li><a href="source/pygenn.html#module-pygenn.hip_backend">pygenn.hip_backend</a>
 </li>
         <li><a href="source/pygenn.html#module-pygenn.init_sparse_connectivity_snippets">pygenn.init_sparse_connectivity_snippets</a>
 </li>
@@ -692,6 +705,8 @@
       <li><a href="source/pygenn.html#pygenn.cuda_backend.Preferences">Preferences (class in pygenn.cuda_backend)</a>
 
       <ul>
+        <li><a href="source/pygenn.html#pygenn.hip_backend.Preferences">(class in pygenn.hip_backend)</a>
+</li>
         <li><a href="source/pygenn.html#pygenn.single_threaded_cpu_backend.Preferences">(class in pygenn.single_threaded_cpu_backend)</a>
 </li>
       </ul></li>
@@ -721,10 +736,10 @@
 </li>
       <li><a href="source/pygenn.html#pygenn.genn_groups.SynapseGroupMixin.push_connectivity_to_device">push_connectivity_to_device() (pygenn.genn_groups.SynapseGroupMixin method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="source/pygenn.html#pygenn.model_preprocessor.ArrayBase.push_to_device">push_to_device() (pygenn.model_preprocessor.ArrayBase method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     pygenn
 
@@ -765,6 +780,13 @@
 
       <ul>
         <li><a href="source/pygenn.html#module-pygenn.genn_groups">module</a>
+</li>
+      </ul></li>
+      <li>
+    pygenn.hip_backend
+
+      <ul>
+        <li><a href="source/pygenn.html#module-pygenn.hip_backend">module</a>
 </li>
       </ul></li>
       <li>

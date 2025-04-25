@@ -24,6 +24,7 @@
         <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -108,16 +109,12 @@
 <h2>Install PyGeNN wheel from Google Drive<a class="headerlink" href="#Install-PyGeNN-wheel-from-Google-Drive" title="Link to this heading"></a></h2>
 <p>Download wheel file</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="s2">&quot;google.colab&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">get_ipython</span><span class="p">()):</span>
-    <span class="c1">#import IPython</span>
-    <span class="c1">#IPython.core.magics.execution.ExecutionMagics.run.func_defaults[2] = lambda a: a</span>
-    <span class="c1">#%run &quot;../install_collab.ipynb&quot;</span>
-    <span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>gdown<span class="w"> </span>--upgrade
-    <span class="o">!</span>gdown<span class="w"> </span>1V_GzXUDzcFz9QDIpxAD8QNEglcSipssW
-    <span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>pygenn-5.0.0-cp310-cp310-linux_x86_64.whl
+    <span class="o">!</span>gdown<span class="w"> </span>1wUeynMCgEOl2oK2LAd4E0s0iT_OiNOfl
+    <span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>pygenn-5.1.0-cp311-cp311-linux_x86_64.whl
     <span class="o">%</span><span class="k">env</span> CUDA_PATH=/usr/local/cuda
 </pre></div>
 </div>
@@ -127,26 +124,14 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Requirement already satisfied: gdown in /usr/local/lib/python3.10/dist-packages (5.1.0)
-Requirement already satisfied: beautifulsoup4 in /usr/local/lib/python3.10/dist-packages (from gdown) (4.12.3)
-Requirement already satisfied: filelock in /usr/local/lib/python3.10/dist-packages (from gdown) (3.13.1)
-Requirement already satisfied: requests[socks] in /usr/local/lib/python3.10/dist-packages (from gdown) (2.31.0)
-Requirement already satisfied: tqdm in /usr/local/lib/python3.10/dist-packages (from gdown) (4.66.2)
-Requirement already satisfied: soupsieve&gt;1.2 in /usr/local/lib/python3.10/dist-packages (from beautifulsoup4-&gt;gdown) (2.5)
-Requirement already satisfied: charset-normalizer&lt;4,&gt;=2 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (3.3.2)
-Requirement already satisfied: idna&lt;4,&gt;=2.5 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (3.6)
-Requirement already satisfied: urllib3&lt;3,&gt;=1.21.1 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (2.0.7)
-Requirement already satisfied: certifi&gt;=2017.4.17 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (2024.2.2)
-Requirement already satisfied: PySocks!=1.5.7,&gt;=1.5.6 in /usr/local/lib/python3.10/dist-packages (from requests[socks]-&gt;gdown) (1.7.1)
 Downloading...
-From: https://drive.google.com/uc?id=1V_GzXUDzcFz9QDIpxAD8QNEglcSipssW
-To: /content/pygenn-5.0.0-cp310-cp310-linux_x86_64.whl
-100% 8.29M/8.29M [00:00&lt;00:00, 279MB/s]
-Processing ./pygenn-5.0.0-cp310-cp310-linux_x86_64.whl
-Requirement already satisfied: numpy&gt;=1.17 in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (1.25.2)
-Requirement already satisfied: deprecated in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (1.2.14)
-Requirement already satisfied: psutil in /usr/local/lib/python3.10/dist-packages (from pygenn==5.0.0) (5.9.5)
-Requirement already satisfied: wrapt&lt;2,&gt;=1.10 in /usr/local/lib/python3.10/dist-packages (from deprecated-&gt;pygenn==5.0.0) (1.14.1)
+From: https://drive.google.com/uc?id=1wUeynMCgEOl2oK2LAd4E0s0iT_OiNOfl
+To: /content/pygenn-5.1.0-cp311-cp311-linux_x86_64.whl
+100% 8.49M/8.49M [00:00&lt;00:00, 57.3MB/s]
+Processing ./pygenn-5.1.0-cp311-cp311-linux_x86_64.whl
+Requirement already satisfied: numpy&gt;=1.17 in /usr/local/lib/python3.11/dist-packages (from pygenn==5.1.0) (1.26.4)
+Requirement already satisfied: psutil in /usr/local/lib/python3.11/dist-packages (from pygenn==5.1.0) (5.9.5)
+Requirement already satisfied: setuptools in /usr/local/lib/python3.11/dist-packages (from pygenn==5.1.0) (75.1.0)
 pygenn is already installed with the same version as the provided wheel. Use --force-reinstall to force an installation of the wheel.
 env: CUDA_PATH=/usr/local/cuda
 </pre></div></div>
@@ -155,7 +140,7 @@ env: CUDA_PATH=/usr/local/cuda
 <section id="Install-MNIST-package">
 <h2>Install MNIST package<a class="headerlink" href="#Install-MNIST-package" title="Link to this heading"></a></h2>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">!</span>pip<span class="w"> </span>install<span class="w"> </span>mnist
@@ -167,11 +152,8 @@ env: CUDA_PATH=/usr/local/cuda
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Collecting mnist
-  Downloading mnist-0.2.2-py2.py3-none-any.whl (3.5 kB)
-Requirement already satisfied: numpy in /usr/local/lib/python3.10/dist-packages (from mnist) (1.25.2)
-Installing collected packages: mnist
-Successfully installed mnist-0.2.2
+Requirement already satisfied: mnist in /usr/local/lib/python3.11/dist-packages (0.2.2)
+Requirement already satisfied: numpy in /usr/local/lib/python3.11/dist-packages (from mnist) (1.26.4)
 </pre></div></div>
 </div>
 </section>
@@ -179,7 +161,7 @@ Successfully installed mnist-0.2.2
 <h2>Build tutorial model<a class="headerlink" href="#Build-tutorial-model" title="Link to this heading"></a></h2>
 <p>Import modules</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mnist</span>
@@ -192,7 +174,7 @@ Successfully installed mnist-0.2.2
 </div>
 <p>Load training images from downloaded file and normalise so each image’s pixels add up to one</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">mnist</span><span class="o">.</span><span class="n">datasets_url</span> <span class="o">=</span> <span class="s2">&quot;https://storage.googleapis.com/cvdf-datasets/mnist/&quot;</span>
@@ -208,7 +190,7 @@ Successfully installed mnist-0.2.2
 <h2>Visualize training data<a class="headerlink" href="#Visualize-training-data" title="Link to this heading"></a></h2>
 <p>Reshape first training image from 784 element vector to 28x28 matrix and visualize.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
@@ -228,7 +210,7 @@ Successfully installed mnist-0.2.2
 <h2>Parameters<a class="headerlink" href="#Parameters" title="Link to this heading"></a></h2>
 <p>Define some model parameters</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simulation time step</span>
@@ -247,7 +229,7 @@ Successfully installed mnist-0.2.2
 </div>
 <p>Define a standard set of parameters to use for all leaky-integrate and fire neurons</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Standard LIF neurons parameters</span>
@@ -264,7 +246,7 @@ Successfully installed mnist-0.2.2
 </div>
 <p>Make a copy of this to customise for our Projection neurons and increase the refractory time way above <code class="docutils literal notranslate"><span class="pre">PRESENT_TIME_MS</span></code> so these neurons will only spike once per input.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># We only want PNs to spike once</span>
@@ -278,7 +260,7 @@ Successfully installed mnist-0.2.2
 <h2>Custom models<a class="headerlink" href="#Custom-models" title="Link to this heading"></a></h2>
 <p>We are going to apply inputs to our model by treating scaled image pixels as neuronal input currents so here we define a simple model to inject the current specified by a state variable. Like all types of custom model in GeNN, the <code class="docutils literal notranslate"><span class="pre">var_name_types</span></code> kwarg is used to specify state variable names and types</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Current source model, allowing current to be injected into neuron from variable</span>
@@ -294,7 +276,7 @@ Successfully installed mnist-0.2.2
 <h2>Model definition<a class="headerlink" href="#Model-definition" title="Link to this heading"></a></h2>
 <p>Create a new model called “mnist_mb_first_layer” with floating point precision and set the simulation timestep to our chosen value</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create model</span>
@@ -305,7 +287,7 @@ Successfully installed mnist-0.2.2
 </div>
 <p>Add a population of <code class="docutils literal notranslate"><span class="pre">NUM_PN</span></code> Projection Neurons, using the built-in LIF model, the parameters we previously chose and initialising the membrane voltage to the reset voltage.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create neuron populations</span>
@@ -319,7 +301,7 @@ Successfully installed mnist-0.2.2
 </div>
 <p>Add a current source to inject current into <code class="docutils literal notranslate"><span class="pre">pn</span></code> using our newly-defined custom model with the initial magnitude set to zero.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create current sources to deliver input to network</span>
@@ -332,7 +314,7 @@ Successfully installed mnist-0.2.2
 <h2>Build model<a class="headerlink" href="#Build-model" title="Link to this heading"></a></h2>
 <p>Generate code and load it into PyGeNN allocating a large enough spike recording buffer to cover <code class="docutils literal notranslate"><span class="pre">PRESENT_TIME_MS</span></code> (after converting from ms to timesteps)</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Concert present time into timesteps</span>
@@ -349,7 +331,7 @@ Successfully installed mnist-0.2.2
 <h2>Simulate tutorial model<a class="headerlink" href="#Simulate-tutorial-model" title="Link to this heading"></a></h2>
 <p>In order to ensure that the same stimulus causes exactly the same input each time it is presented, we want to reset the model’s state after presenting each stimulus. This function resets neuron state variables selected by the keys of a dictionary to the values specifed in the dictionary values and pushes the new values to the GPU.</p>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">reset_neuron</span><span class="p">(</span><span class="n">pop</span><span class="p">,</span> <span class="n">var_init</span><span class="p">):</span>
@@ -364,7 +346,7 @@ Successfully installed mnist-0.2.2
 </div>
 <p>As an initial test of our model, we loop through 4 stimuli and show the Projection Neurons spikes emitted by the model in response.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
