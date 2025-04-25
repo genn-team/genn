@@ -47,14 +47,6 @@ $Parameter ``location``:
 
      location of array e.g. device-only)doc";
 
-static const char *__doc_CodeGenerator_CUDA_Backend_createPopulationRNG =
-R"doc(Create array of backend-specific population RNGs (if they are initialised on host this will occur here)
-
-
-$Parameter ``count``:
-
-        number of RNGs required)doc";
-
 static const char *__doc_CodeGenerator_CUDA_Backend_createState =
 R"doc(Create backend-specific runtime state object
 
@@ -103,7 +95,7 @@ static const char *__doc_CodeGenerator_CUDA_Backend_getNumLanes =
 R"doc(How many 'lanes' does underlying hardware have?
 This is typically used for warp-shuffle algorithms)doc";
 
-static const char *__doc_CodeGenerator_CUDA_Backend_getPopulationRNGType = R"doc(Get type of population RNG)doc";
+static const char *__doc_CodeGenerator_CUDA_Backend_getPopulationRNGInternalType = R"doc(Get internal type population RNG gets loaded into)doc";
 
 static const char *__doc_CodeGenerator_CUDA_Backend_getRNGFunctions = R"doc(Get library of RNG functions to use)doc";
 

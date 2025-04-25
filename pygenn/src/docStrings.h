@@ -346,6 +346,18 @@ static const char *__doc_CodeGenerator_BackendCUDAHIP = R"doc()doc";
 
 static const char *__doc_CodeGenerator_BackendCUDAHIP_BackendCUDAHIP = R"doc()doc";
 
+static const char *__doc_CodeGenerator_BackendCUDAHIP_buildPopulationRNGEnvironment = R"doc(Generate a preamble to add substitution name for population RNG)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_buildPopulationRNGEnvironment_2 = R"doc(Add $(_rng) to environment based on $(_rng_internal) field with any initialisers and destructors required)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_createPopulationRNG =
+R"doc(Create array of backend-specific population RNGs (if they are initialised on host this will occur here)
+
+
+$Parameter ``count``:
+
+        number of RNGs required)doc";
+
 static const char *__doc_CodeGenerator_BackendCUDAHIP_genAllocateMemPreamble = R"doc()doc";
 
 static const char *__doc_CodeGenerator_BackendCUDAHIP_genAssert = R"doc(On backends which support it, generate a runtime assert)doc";
@@ -382,12 +394,6 @@ static const char *__doc_CodeGenerator_BackendCUDAHIP_genNeuronUpdate = R"doc()d
 
 static const char *__doc_CodeGenerator_BackendCUDAHIP_genPopulationRNGInit = R"doc(For SIMT backends which initialize RNGs on device, initialize population RNG with specified seed and sequence)doc";
 
-static const char *__doc_CodeGenerator_BackendCUDAHIP_genPopulationRNGPostamble =
-R"doc(If required, generate a postamble for population RNG
-For example, in OpenCL, this is used to write local RNG state back to global memory)doc";
-
-static const char *__doc_CodeGenerator_BackendCUDAHIP_genPopulationRNGPreamble = R"doc(Generate a preamble to add substitution name for population RNG)doc";
-
 static const char *__doc_CodeGenerator_BackendCUDAHIP_genReturnFreeDeviceMemoryBytes = R"doc(Generate code to return amount of free 'device' memory in bytes)doc";
 
 static const char *__doc_CodeGenerator_BackendCUDAHIP_genRunnerPreamble = R"doc()doc";
@@ -420,6 +426,10 @@ Place arrays in these and their size in preferential order)doc";
 static const char *__doc_CodeGenerator_BackendCUDAHIP_getNCCLReductionType = R"doc()doc";
 
 static const char *__doc_CodeGenerator_BackendCUDAHIP_getNCCLType = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_getPopulationRNGInternalType = R"doc(Get internal type population RNG gets loaded into)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_getPopulationRNGType = R"doc(Get type of population RNG)doc";
 
 static const char *__doc_CodeGenerator_BackendCUDAHIP_getRNGFunctions = R"doc(Get library of RNG functions to use)doc";
 
@@ -3827,6 +3837,10 @@ static const char *__doc_SynapseGroup_getWUVarLocation = R"doc(Get location of w
 
 static const char *__doc_SynapseGroup_isDendriticOutputDelayRequired = R"doc(Is this synapse group's output dendritically delayed?)doc";
 
+static const char *__doc_SynapseGroup_isPSMVarHeterogeneouslyDelayed = R"doc(Is the named postsynaptic  model variable heterogeneously delayed?)doc";
+
+static const char *__doc_SynapseGroup_isPSMVarQueueRequired = R"doc(Is the named postsynaptic model variable referenced in synapse code?)doc";
+
 static const char *__doc_SynapseGroup_isPSModelFused = R"doc(Has this synapse group's postsynaptic model been fused with those from other synapse groups?)doc";
 
 static const char *__doc_SynapseGroup_isPSParamDynamic = R"doc(Is postsynaptic model parameter dynamic i.e. it can be changed at runtime)doc";
@@ -3947,6 +3961,10 @@ static const char *__doc_SynapseGroup_m_FusedWUPreTarget =
 R"doc(Synapse group presynaptic weight update has been fused with.
 If this is nullptr, presynaptic weight update has not been fused)doc";
 
+static const char *__doc_SynapseGroup_m_HeterogeneouslyDelayedPSMVars =
+R"doc(Set of names of postsynaptic model variables
+which are heterogeneously delayed)doc";
+
 static const char *__doc_SynapseGroup_m_HeterogeneouslyDelayedWUPostVars =
 R"doc(Set of names of postsynaptic weight update
 model variables which are heterogeneously delayed)doc";
@@ -3978,6 +3996,8 @@ R"doc(Location of postsynaptic model extra global parameters.
 This is ignored for simulations on hardware with a single memory space)doc";
 
 static const char *__doc_SynapseGroup_m_PSInitialiser = R"doc(Initialiser used for creating postsynaptic update model)doc";
+
+static const char *__doc_SynapseGroup_m_PSMVarQueueRequired = R"doc(Set of names of PSM variable requiring queueing)doc";
 
 static const char *__doc_SynapseGroup_m_PSNeuronVarReferences = R"doc('Resolved' variable references to neurons variables used in postsynaptic update model)doc";
 
@@ -4066,6 +4086,8 @@ This is ignored for simulations on hardware with a single memory space)doc";
 static const char *__doc_SynapseGroup_setPSExtraGlobalParamLocation =
 R"doc(Set location of postsynaptic model extra global parameter.
 This is ignored for simulations on hardware with a single memory space.)doc";
+
+static const char *__doc_SynapseGroup_setPSMVarQueueRequired = R"doc()doc";
 
 static const char *__doc_SynapseGroup_setPSParamDynamic = R"doc(Set whether weight update model parameter is dynamic or not i.e. it can be changed at runtime)doc";
 
@@ -4428,6 +4450,8 @@ static const char *__doc_Type_ResolvedType_createPointer = R"doc()doc";
 
 static const char *__doc_Type_ResolvedType_createValue = R"doc()doc";
 
+static const char *__doc_Type_ResolvedType_createValue_2 = R"doc()doc";
+
 static const char *__doc_Type_ResolvedType_detail = R"doc()doc";
 
 static const char *__doc_Type_ResolvedType_getFFIType = R"doc()doc";
@@ -4760,6 +4784,8 @@ static const char *__doc_WeightUpdateModels_Init_getVarInitialisers = R"doc()doc
 static const char *__doc_WeightUpdateModels_Init_isRNGRequired = R"doc()doc";
 
 static const char *__doc_WeightUpdateModels_Init_isVarHeterogeneouslyDelayedInSynCode = R"doc()doc";
+
+static const char *__doc_WeightUpdateModels_Init_isVarReferencedInSynCode = R"doc()doc";
 
 static const char *__doc_WeightUpdateModels_Init_m_PSMVarReferences = R"doc()doc";
 
