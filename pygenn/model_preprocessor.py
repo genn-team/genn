@@ -64,6 +64,33 @@ class ArrayBase:
     def _unload(self):
         self._view = None
         self._array = None
+        
+    @property
+    def __cuda_array_interface__(self):
+        """CUDA array interface property for interoperability with other Python libraries.
+        This property follows the CUDA Array Interface standard:
+        https://numba.readthedocs.io/en/stable/cuda/cuda_array_interface.html
+        """
+        if self._array is None:
+            raise RuntimeError("Array is not initialized")
+            
+        if hasattr(self._array, "_device_pointer"):
+            model = self.group._model
+            resolved_type = (self.type if isinstance(self.type, ResolvedType)
+                            else self.type.resolve(model._type_context))
+            dtype = model.genn_types[resolved_type]
+            
+            shape = self._view.shape
+            
+            return {
+                "data": (self._array._device_pointer, False),
+                "shape": shape,
+                "strides": None,
+                "typestr": dtype.str,
+                "version": 3,
+            }
+        else:
+            raise RuntimeError("Array is not a CUDA array")
 
 
 class Array(ArrayBase):
