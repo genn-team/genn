@@ -111,7 +111,7 @@ struct Preferences : public PreferencesCUDAHIP
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::CUDA::Backend
+// CodeGenerator::CUDA::State
 //--------------------------------------------------------------------------
 class BACKEND_EXPORT State : public Runtime::StateBase
 {
@@ -148,6 +148,41 @@ private:
     BytePtrFunction m_NCCLGetUniqueID;
     NCCLInitCommunicatorFunction m_NCCLInitCommunicator;
     const size_t *m_NCCLUniqueIDSize;
+};
+
+//--------------------------------------------------------------------------
+// CodeGenerator::CUDA::Array
+//--------------------------------------------------------------------------
+class BACKEND_EXPORT Array : public Runtime::ArrayBase
+{
+public:
+    Array(const Type::ResolvedType &type, size_t count, 
+          VarLocation location, bool uninitialized);
+    virtual ~Array();
+    
+    //------------------------------------------------------------------------
+    // ArrayBase virtuals
+    //------------------------------------------------------------------------
+    virtual void allocate(size_t count) final;
+    virtual void free() final;
+    virtual void pushToDevice() final;
+    virtual void pullFromDevice() final;
+    virtual void pushSlice1DToDevice(size_t offset, size_t count) final;
+    virtual void pullSlice1DFromDevice(size_t offset, size_t count) final;
+    virtual void memsetDeviceObject(int value) final;
+    virtual void serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToPointer) const final;
+    virtual void serialiseHostObject(std::vector<std::byte>&, bool) const final;
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    std::byte *getDevicePointer() const;
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::byte *m_DevicePointer;
 };
 
 //--------------------------------------------------------------------------
