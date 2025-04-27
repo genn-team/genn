@@ -1,32 +1,29 @@
-#!/usr/bin/env python3
-
-"""
-Verification script for CUDA Array Interface implementation in GeNN.
-
-This test verifies that:
-1. GeNN arrays correctly implement the __cuda_array_interface__ property
-2. CuPy can access GeNN's device memory directly through this interface
-3. Modifications made by CuPy are reflected in GeNN's arrays
-4. The entire data exchange happens without unnecessary memory copies
-
-This interoperability feature enables GeNN to be used in workflows with
-other Python libraries like CuPy, PyTorch, and other frameworks that
-implement the CUDA Array Interface protocol.
-"""
-
 import numpy as np
+import pytest
 import sys
 
 try:
     import cupy as cp
 except ImportError:
-    print("CuPy is required for this verification")
-    sys.exit(1)
+    pytest.skip("CuPy is required for this test", allow_module_level=True)
 
 from pygenn import genn_model
 
-def verify_implementation():
-    model = genn_model.GeNNModel("float", "verify_cuda_interface", "cuda")
+@pytest.mark.parametrize("precision,np_dtype", [("float", np.float32), ("double", np.float64)])
+def test_cuda_array_interface(make_model, backend, precision, np_dtype):
+    """
+    Verification test for CUDA Array Interface implementation in GeNN.
+
+    This test verifies that:
+    1. GeNN arrays correctly implement the __cuda_array_interface__ property
+    2. CuPy can access GeNN's device memory directly through this interface
+    3. Modifications made by CuPy are reflected in GeNN's arrays
+    4. The entire data exchange happens without unnecessary memory copies
+    """
+    if backend != "cuda":
+        pytest.skip("CUDA Array Interface test requires CUDA backend")
+    
+    model = make_model(precision, "verify_cuda_interface", backend=backend)
     
     neurons = model.add_neuron_population(
         "neurons", 100, "LIF", 
@@ -48,7 +45,7 @@ def verify_implementation():
     model.build()
     model.load()
     
-    init_values = np.linspace(-70.0, -60.0, 100)
+    init_values = np.linspace(-70.0, -60.0, 100, dtype=np_dtype)
     neurons.vars["V"].view[:] = init_values
     neurons.vars["V"].push_to_device()
     
@@ -60,18 +57,8 @@ def verify_implementation():
     modified_values = neurons.vars["V"].view
     
     expected = init_values + 10.0
-    is_correct = np.allclose(modified_values, expected)
-    
-    if is_correct:
-        print("CUDA Array Interface verification: SUCCESS")
-        print("CuPy was able to modify GeNN memory directly")
-        return True
-    else:
-        print("CUDA Array Interface verification: FAILED")
-        print(f"Expected: {expected[:5]}...")
-        print(f"Got: {modified_values[:5]}...")
-        return False
+    assert np.allclose(modified_values, expected), \
+        f"Expected: {expected[:5]}..., Got: {modified_values[:5]}..."
 
 if __name__ == "__main__":
-    success = verify_implementation()
-    sys.exit(0 if success else 1) 
+    pytest.main() 
