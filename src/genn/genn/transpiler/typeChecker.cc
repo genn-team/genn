@@ -567,7 +567,7 @@ private:
                         const auto argConversionRank = std::visit(
                             Utils::Overload{
                                 // If types are numeric, any cast goes
-                                [c, a](const Type::ResolvedType::Value &cValue, const Type::ResolvedType::Value&) -> std::optional<int>
+                                [c, a](const Type::ResolvedType::Value &cValue, const Type::ResolvedType::Value &aValue) -> std::optional<int>
                                 {
                                     // If types are identical, match is exact
                                     const auto unqualifiedA = a->removeConst();
@@ -575,20 +575,34 @@ private:
                                     if(unqualifiedC == unqualifiedA) {
                                         return 0;
                                     }
-                                    // Integer promotion
-                                    else if(unqualifiedA == Type::Int32 && cValue.numeric->isIntegral
-                                            && cValue.numeric->rank < Type::Int32.getNumeric().rank)
-                                    {
-                                        return 1;
+                                    // Otherwise, if both types are numeric
+                                    else if (cValue.numeric && aValue.numeric) {
+                                        // Integer promotion
+                                        if (unqualifiedA == Type::Int32 && cValue.numeric->rank < Type::Int32.getNumeric().rank)
+                                        {
+                                            return 1;
+                                        }
+                                        // Fixed point promotion of non-saturated to saturating and lower rank
+                                        else if (cValue.numeric->fixedPoint && aValue.numeric->fixedPoint
+                                                 && cValue.numeric->rank <= aValue.numeric->rank
+                                                 && ((!cValue.numeric->isSaturating && aValue.numeric->isSaturating)
+                                                      || (cValue.numeric->isSaturating == aValue.numeric->isSaturating)))
+                                        {
+                                            return 1;
+                                        }
+                                        // Float promotion
+                                        else if (unqualifiedA == Type::Double && unqualifiedC == Type::Float) {
+                                            return 1;
+                                        }
+                                        // Otherwise, numeric conversion
+                                        // **TODO** integer to scalar promotion should be lower ranked than general conversion
+                                        else {
+                                            return 2;
+                                        }
                                     }
-                                    // Float promotion
-                                    else if(unqualifiedA == Type::Double && unqualifiedC == Type::Float) {
-                                        return 1;
-                                    }
-                                    // Otherwise, numeric conversion
-                                    // **TODO** integer to scalar promotion should be lower ranked than general conversion
+                                    // No promotions for non-numeric value types
                                     else {
-                                        return 2;
+                                        return std::nullopt;
                                     }
                                 },
                                 // Otherwise, if we're trying to cast pointer to pointer
