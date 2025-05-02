@@ -460,13 +460,13 @@ inline static const ResolvedType S9_6Sat = ResolvedType::createFixedPointNumeric
 inline static const ResolvedType S10_5 = ResolvedType::createFixedPointNumeric<int16_t>("s10_5_t", 60, false, 5, &ffi_type_sint16, "");
 inline static const ResolvedType S10_5Sat = ResolvedType::createFixedPointNumeric<int16_t>("s10_5_sat_t", 60, true, 5, &ffi_type_sint16, "");
 inline static const ResolvedType S11_4 = ResolvedType::createFixedPointNumeric<int16_t>("s11_4_t", 61, false, 4, &ffi_type_sint16, "");
-inline static const ResolvedType S11_4Sat = ResolvedType::createFixedPointNumeric<int16_t>("s11_4_sat_t", 61, false, 4, &ffi_type_sint16, "");
+inline static const ResolvedType S11_4Sat = ResolvedType::createFixedPointNumeric<int16_t>("s11_4_sat_t", 61, true, 4, &ffi_type_sint16, "");
 inline static const ResolvedType S12_3 = ResolvedType::createFixedPointNumeric<int16_t>("s12_3_t", 62, false, 3, &ffi_type_sint16, "");
-inline static const ResolvedType S12_3Sat = ResolvedType::createFixedPointNumeric<int16_t>("s12_3_sat_t", 62, false, 3, &ffi_type_sint16, "");
+inline static const ResolvedType S12_3Sat = ResolvedType::createFixedPointNumeric<int16_t>("s12_3_sat_t", 62, true, 3, &ffi_type_sint16, "");
 inline static const ResolvedType S13_2 = ResolvedType::createFixedPointNumeric<int16_t>("s13_2_t", 63, false, 2, &ffi_type_sint16, "");
-inline static const ResolvedType S13_2Sat = ResolvedType::createFixedPointNumeric<int16_t>("s13_2_sat_t", 63, false, 2, &ffi_type_sint16, "");
+inline static const ResolvedType S13_2Sat = ResolvedType::createFixedPointNumeric<int16_t>("s13_2_sat_t", 63, true, 2, &ffi_type_sint16, "");
 inline static const ResolvedType S14_1 = ResolvedType::createFixedPointNumeric<int16_t>("s14_1_t", 64, false, 1, &ffi_type_sint16, "");
-inline static const ResolvedType S14_1Sat = ResolvedType::createFixedPointNumeric<int16_t>("s14_1_sat_t", 64, false, 1, &ffi_type_sint16, "");
+inline static const ResolvedType S14_1Sat = ResolvedType::createFixedPointNumeric<int16_t>("s14_1_sat_t", 64, true, 1, &ffi_type_sint16, "");
 
 inline static const ResolvedType Float = CREATE_NUMERIC(float, 80, &ffi_type_float, "f");
 inline static const ResolvedType Double = CREATE_NUMERIC(double, 90, &ffi_type_double, "");
