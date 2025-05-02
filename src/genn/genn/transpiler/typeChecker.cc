@@ -582,13 +582,23 @@ private:
                                         {
                                             return 1;
                                         }
-                                        // Fixed point promotion of non-saturated to saturating and lower rank
-                                        else if (cValue.numeric->fixedPoint && aValue.numeric->fixedPoint
-                                                 && cValue.numeric->rank <= aValue.numeric->rank
-                                                 && ((!cValue.numeric->isSaturating && aValue.numeric->isSaturating)
-                                                      || (cValue.numeric->isSaturating == aValue.numeric->isSaturating)))
+                                        // Fixed point promotion - if both numbers are fixed point
+                                        else if (cValue.numeric->fixedPoint && aValue.numeric->fixedPoint)
                                         {
-                                            return 1;
+                                            // If saturation isn't being removed
+                                            if ((!cValue.numeric->isSaturating && aValue.numeric->isSaturating)
+                                                || (cValue.numeric->isSaturating == aValue.numeric->isSaturating))
+                                            {
+                                                // If ranks are the same
+                                                if(cValue.numeric->rank == aValue.numeric->rank) {
+                                                    return 1;
+                                                }
+                                                // Otherwise, if we're increasing rank i.e. implicit conversion is ok
+                                                else if (cValue.numeric->rank < aValue.numeric->rank) {
+                                                    return 2;
+                                                }
+                                            }
+                                            return std::nullopt;
                                         }
                                         // Float promotion
                                         else if (unqualifiedA == Type::Double && unqualifiedC == Type::Float) {
