@@ -511,6 +511,37 @@ TEST(TypeChecker, Call)
         EXPECT_EQ(type, Type::Float);
     }
 
+    // Fixed point
+    {
+        CodeGenerator::EnvironmentLibrary::Library fixedMulLibrary{
+            {"mul_s", {Type::ResolvedType::createFunction(Type::S0_15, {Type::S0_15, Type::S0_15}), "$(0) * $(1)"}},
+            {"mul_s", {Type::ResolvedType::createFunction(Type::S14_1, {Type::S14_1, Type::S0_15}), "$(0) * $(1)"}},
+            {"mul_s", {Type::ResolvedType::createFunction(Type::S14_1, {Type::S14_1, Type::S14_1}), "$(0) * $(1)"}},
+            {"mul_s", {Type::ResolvedType::createFunction(Type::S0_15Sat, {Type::S0_15Sat, Type::S0_15Sat}), "$(0) * $(1)"}},
+            {"mul_s", {Type::ResolvedType::createFunction(Type::S14_1Sat, {Type::S14_1Sat, Type::S0_15Sat}), "$(0) * $(1)"}},
+            {"mul_s", {Type::ResolvedType::createFunction(Type::S14_1Sat, {Type::S14_1Sat, Type::S14_1Sat}), "$(0) * $(1)"}},
+            {"a", {Type::S0_15, "a"}},
+            {"b", {Type::S14_1, "b"}},
+            {"a_s", {Type::S0_15Sat, "a_s"}},
+            {"b_s", {Type::S14_1Sat, "b_s"}}};
+        TestLibraryEnvironment fixedMulEnvironment(fixedMulLibrary);
+
+        // Non-saturating overloads
+        EXPECT_EQ(typeCheckExpression("mul_s(a, a)", fixedMulEnvironment), Type::S0_15);
+        EXPECT_EQ(typeCheckExpression("mul_s(a, b)", fixedMulEnvironment), Type::S14_1);
+        EXPECT_EQ(typeCheckExpression("mul_s(b, b)", fixedMulEnvironment), Type::S14_1);
+        
+        // Saturating overloads
+        EXPECT_EQ(typeCheckExpression("mul_s(a_s, a_s)", fixedMulEnvironment), Type::S0_15Sat);
+        EXPECT_EQ(typeCheckExpression("mul_s(a_s, b_s)", fixedMulEnvironment), Type::S14_1Sat);
+        EXPECT_EQ(typeCheckExpression("mul_s(b_s, b_s)", fixedMulEnvironment), Type::S14_1Sat);
+
+        // Mixed overloads
+        EXPECT_EQ(typeCheckExpression("mul_s(a, a_s)", fixedMulEnvironment), Type::S0_15Sat);
+        EXPECT_EQ(typeCheckExpression("mul_s(a, b_s)", fixedMulEnvironment), Type::S14_1Sat);
+        EXPECT_EQ(typeCheckExpression("mul_s(b, b_s)", fixedMulEnvironment), Type::S14_1Sat);
+    }
+
     // Variadic with too few arguments
     EXPECT_THROW({
         typeCheckExpression("printf()", stdLibraryEnv);},
