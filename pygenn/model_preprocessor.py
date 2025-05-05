@@ -43,7 +43,7 @@ class ArrayBase:
         model = self.group._model
         resolved_type = (self.type if isinstance(self.type, ResolvedType)
                          else self.type.resolve(model._type_context))
-        dtype = model.genn_types[resolved_type]
+        dtype = np.dtype(model.genn_types[resolved_type])
         
         # Get dtype view of host memoryview
         self._view = np.asarray(array.host_view).view(dtype)

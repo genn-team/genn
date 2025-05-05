@@ -10,7 +10,7 @@ except ImportError:
 from pygenn import genn_model
 
 @pytest.mark.parametrize("precision", ["float", "double"])
-def test_cuda_array_interface(make_model, backend, precision):
+def test_cuda_array_interface(make_model, backend_cuda, precision):
     """
     Verification test for CUDA Array Interface implementation in GeNN.
 
@@ -20,10 +20,8 @@ def test_cuda_array_interface(make_model, backend, precision):
     3. Modifications made by CuPy are reflected in GeNN's arrays
     4. The entire data exchange happens without unnecessary memory copies
     """
-    if backend != "cuda":
-        pytest.skip("CUDA Array Interface test requires CUDA backend")
     
-    model = make_model(precision, "verify_cuda_interface", backend=backend)
+    model = make_model(precision, "verify_cuda_interface", backend=backend_cuda)
     
     neurons = model.add_neuron_population(
         "neurons", 100, "LIF", 
@@ -45,7 +43,7 @@ def test_cuda_array_interface(make_model, backend, precision):
     model.build()
     model.load()
     
-    init_values = np.linspace(-70.0, -60.0, 100, dtype=np_dtype)
+    init_values = np.linspace(-70.0, -60.0, 100)
     neurons.vars["V"].view[:] = init_values
     neurons.vars["V"].push_to_device()
     
@@ -61,4 +59,4 @@ def test_cuda_array_interface(make_model, backend, precision):
         f"Expected: {expected[:5]}..., Got: {modified_values[:5]}..."
 
 if __name__ == "__main__":
-    pytest.main() 
+    pytest.main()

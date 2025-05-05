@@ -313,4 +313,4 @@ setup(
     extras_require={
         "doc": ["sphinx", "sphinx-gallery", "sphinx-argparse"],
         "userproject": ["mnist", "tqdm", "scipy", "matplotlib"],
-        "test": ["bitarray", "pytest", "flaky", "pytest-cov"]})
+        "test": ["bitarray", "pytest", "flaky", "pytest-cov", "cupy"]})

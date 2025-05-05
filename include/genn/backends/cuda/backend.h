@@ -163,20 +163,43 @@ public:
     //------------------------------------------------------------------------
     // ArrayBase virtuals
     //------------------------------------------------------------------------
+    //! Allocate array
     virtual void allocate(size_t count) final;
+    
+    //! Free array
     virtual void free() final;
+    
+    //! Copy entire array to device
     virtual void pushToDevice() final;
+    
+    //! Copy entire array from device
     virtual void pullFromDevice() final;
+    
+    //! Copy a 1D slice of elements to device 
+    /*! \param offset   Offset in elements to start copying from
+        \param count    Number of elements to copy*/
     virtual void pushSlice1DToDevice(size_t offset, size_t count) final;
+    
+    //! Copy a 1D slice of elements from device 
+    /*! \param offset   Offset in elements to start copying from
+        \param count    Number of elements to copy*/
     virtual void pullSlice1DFromDevice(size_t offset, size_t count) final;
+    
+    //! Memset the host pointer
     virtual void memsetDeviceObject(int value) final;
+    
+    //! Serialise backend-specific device object to bytes
     virtual void serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToPointer) const final;
+    
+    //! Serialise backend-specific host object to bytes
     virtual void serialiseHostObject(std::vector<std::byte>&, bool) const final;
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    std::byte *getDevicePointer() const;
+    //! Get device pointer
+    //! Returns the pointer to the device memory
+    inline std::byte *getDevicePointer() const { return m_DevicePointer; }
 
 private:
     //------------------------------------------------------------------------

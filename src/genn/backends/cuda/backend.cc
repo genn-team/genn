@@ -64,10 +64,14 @@ class Array;
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator::CUDA
 {
+//--------------------------------------------------------------------------
+// GeNN::CodeGenerator::CUDA::Array
+//--------------------------------------------------------------------------
 Array::Array(const Type::ResolvedType &type, size_t count, 
           VarLocation location, bool uninitialized)
 :   ArrayBase(type, count, location, uninitialized), m_DevicePointer(nullptr)
 {
+    // Allocate if count is specified
     if(count > 0) {
         allocate(count);
     }
@@ -83,7 +87,6 @@ Array::~Array()
 //------------------------------------------------------------------------
 // ArrayBase virtuals
 //------------------------------------------------------------------------
-//! Allocate array
 void Array::allocate(size_t count)
 {
     setCount(count);
@@ -106,7 +109,6 @@ void Array::allocate(size_t count)
     }
 }
 
-//! Free array
 void Array::free()
 {
     if(getLocation() & VarLocationAttribute::HOST) {
@@ -122,7 +124,6 @@ void Array::free()
     setCount(0);
 }
 
-//! Copy entire array to device
 void Array::pushToDevice()
 {
     if(!(getLocation() & VarLocationAttribute::DEVICE) || !(getLocation() & VarLocationAttribute::HOST)) {
@@ -134,7 +135,6 @@ void Array::pushToDevice()
     }
 }
 
-//! Copy entire array from device
 void Array::pullFromDevice()
 {
     if(!(getLocation() & VarLocationAttribute::DEVICE) || !(getLocation() & VarLocationAttribute::HOST)) {
@@ -146,9 +146,6 @@ void Array::pullFromDevice()
     }
 }
 
-//! Copy a 1D slice of elements to device 
-/*! \param offset   Offset in elements to start copying from
-    \param count    Number of elements to copy*/
 void Array::pushSlice1DToDevice(size_t offset, size_t count)
 {
     if(!(getLocation() & VarLocationAttribute::DEVICE) || !(getLocation() & VarLocationAttribute::HOST)) {
@@ -167,9 +164,6 @@ void Array::pushSlice1DToDevice(size_t offset, size_t count)
     }
 }
 
-//! Copy a 1D slice of elements from device 
-/*! \param offset   Offset in elements to start copying from
-    \param count    Number of elements to copy*/
 void Array::pullSlice1DFromDevice(size_t offset, size_t count)
 {
     if(!(getLocation() & VarLocationAttribute::DEVICE) || !(getLocation() & VarLocationAttribute::HOST)) {
@@ -188,13 +182,11 @@ void Array::pullSlice1DFromDevice(size_t offset, size_t count)
     }
 }
 
-//! Memset the host pointer
 void Array::memsetDeviceObject(int value)
 {
     CHECK_CUDA_ERRORS(cudaMemset(m_DevicePointer, value, getSizeBytes()));
 }
 
-//! Serialise backend-specific device object to bytes
 void Array::serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToPointer) const
 {
     std::byte vBytes[sizeof(void*)];
@@ -208,16 +200,12 @@ void Array::serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToP
     std::copy(std::begin(vBytes), std::end(vBytes), std::back_inserter(bytes));
 }
 
-//! Serialise backend-specific host object to bytes
 void Array::serialiseHostObject(std::vector<std::byte>&, bool) const
 {
     throw std::runtime_error("CUDA arrays have no host objects");
 }
 
-std::byte *Array::getDevicePointer() const
-{
-    return m_DevicePointer;
-}
+
 }   // namespace GeNN::CodeGenerator::CUDA
 
 //--------------------------------------------------------------------------
