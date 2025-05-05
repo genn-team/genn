@@ -9,8 +9,8 @@ except ImportError:
 
 from pygenn import genn_model
 
-@pytest.mark.parametrize("precision,np_dtype", [("float", np.float32), ("double", np.float64)])
-def test_cuda_array_interface(make_model, backend, precision, np_dtype):
+@pytest.mark.parametrize("precision", ["float", "double"])
+def test_cuda_array_interface(make_model, backend, precision):
     """
     Verification test for CUDA Array Interface implementation in GeNN.
 
