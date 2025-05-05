@@ -8,15 +8,12 @@ properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '',
 
 // All the types of build we'll ideally run if suitable nodes exist
 def desiredBuilds = [
-    ["cuda10", "windows"] as Set,
     ["cuda11", "windows"] as Set,
     ["cuda12", "windows"] as Set,
     ["amd", "windows"] as Set,
-    ["cuda10", "linux"] as Set,
     ["cuda11", "linux"] as Set,
     ["cuda12", "linux"] as Set,
     ["amd", "linux"] as Set,
-    ["cuda10", "mac"] as Set,
     ["cuda11", "mac"] as Set,
     ["cuda12", "mac"] as Set,
     ["amd", "mac"] as Set]
@@ -186,6 +183,8 @@ for(b = 0; b < builderNodes.size(); b++) {
                 }
 
                 buildStep("Setup virtualenv (${NODE_NAME})") {
+                    def cupy = ("cuda11" in nodeLabel) ? "cupy-cuda11x" : "cupy-cuda12x";
+                    
                     // Set up new virtualenv
                     echo "Creating virtualenv";
                     sh """
@@ -193,7 +192,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                     ${env.PYTHON} -m venv ${WORKSPACE}/venv
                     . ${WORKSPACE}/venv/bin/activate
                     pip install -U pip
-                    pip install numpy scipy pybind11 pytest flaky pytest-cov wheel flake8 bitarray psutil cupy
+                    pip install numpy scipy pybind11 pytest flaky pytest-cov wheel flake8 bitarray psutil ${cupy}
                     """;
                 }
 
