@@ -85,6 +85,16 @@ PYBIND11_MODULE(cuda_backend, m)
                return pybind11::memoryview::from_memory(a.ncclGetUniqueID(),
                                                         a.ncclGetUniqueIDSize());
             });
+            
+    //------------------------------------------------------------------------
+    // cuda_backend.Array
+    //------------------------------------------------------------------------
+    pybind11::class_<Array, Runtime::ArrayBase>(m, "_Array")
+        .def_property_readonly("_device_pointer",
+            [](Array &a)
+            {
+                return reinterpret_cast<uintptr_t>(a.getDevicePointer());
+            });
 
     //------------------------------------------------------------------------
     // cuda_backend.Backend
