@@ -37,7 +37,7 @@ def test_cuda_array_interface(make_model, backend, precision):
             "TauRefrac": 0.0
         }, 
         {
-            "V": -65.0,
+            "V": np.linspace(-70.0, -60.0, 100),
             "RefracTime": 0.0
         }
     )
