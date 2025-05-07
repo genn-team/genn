@@ -508,8 +508,10 @@ PYBIND11_MODULE(_genn, m)
              pybind11::arg("param_name"), pybind11::arg("dynamic") = true,
              DOC(CurrentSource, setParamDynamic))
         WRAP_METHOD("set_var_location", CurrentSource, setVarLocation)
-        WRAP_METHOD("get_var_location", CurrentSource, getVarLocation);
-    
+        WRAP_METHOD("get_var_location", CurrentSource, getVarLocation)
+        WRAP_METHOD("set_target_var", CurrentSource, setTargetVar)
+        WRAP_METHOD("get_target_var", CurrentSource, getTargetVar);
+
     //------------------------------------------------------------------------
     // genn.CustomConnectivityUpdate
     //------------------------------------------------------------------------
