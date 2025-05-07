@@ -1606,7 +1606,7 @@ def create_current_source_model(class_name: str, params: ModelParamsType = None,
     
     Finally, the function ``injectCurrent(x)`` can be used to inject a current
     ``x`` into the attached neuron. The variable it goes into can be
-    configured using the :meth:`.CurrentSource.set_target_var` method. It defaults to ``Isyn``.
+    configured using the :attr:`CurrentSource.target_var`. It defaults to ``Isyn``.
 
     Args:
         class_name:             name of the new class (only for debugging)
