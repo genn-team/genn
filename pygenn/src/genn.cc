@@ -502,6 +502,7 @@ PYBIND11_MODULE(_genn, m)
         WRAP_PROPERTY_RO("name", CurrentSource, Name)
         WRAP_PROPERTY_RO_REF("model", CurrentSource, Model)
         WRAP_PROPERTY_RO("params", CurrentSource, Params)
+        WRAP_PROPERTY("target_var", CurrentSource, TargetVar)
 
         //--------------------------------------------------------------------
         // Methods
@@ -511,7 +512,7 @@ PYBIND11_MODULE(_genn, m)
              DOC(CurrentSource, setParamDynamic))
         WRAP_METHOD("set_var_location", CurrentSource, setVarLocation)
         WRAP_METHOD("get_var_location", CurrentSource, getVarLocation);
-    
+
     //------------------------------------------------------------------------
     // genn.CustomConnectivityUpdate
     //------------------------------------------------------------------------
