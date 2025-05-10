@@ -431,8 +431,8 @@ void scanToken(ScanState &scanState, std::vector<Token> &tokens)
             if(std::isdigit(c) || c == '.') {
                 scanNumber(c, scanState, tokens);
             }
-            // Otherwise, scan identifier
-            else if(std::isalpha(c)) {
+            // Otherwise, scan identifier. Identifiers may start with an underscore
+            else if(std::isalpha(c) || c == '_') {
                 scanIdentifier(scanState, tokens);
             }
             else {
