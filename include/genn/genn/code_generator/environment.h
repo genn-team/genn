@@ -502,9 +502,11 @@ public:
                                     [getFieldValue](Runtime::Runtime&, const auto &g, size_t i){ return getFieldValue(g, i); }};
             this->addInternal(type, name, std::make_tuple(false, LazyString{"", *this}, std::make_optional(field)));
         }
-        // Otherwise, just add value
+        // Otherwise, just add parenthesised value
+        // **NOTE** parentheses are necessary because literals are being used with the 
+        // semantics of identifiers and, while -identifier is correct, --12 is not
         else {
-            this->add(type, name, Type::writeNumeric(archetypeValue, type));
+            this->add(type, name, "(" + Type::writeNumeric(archetypeValue, type) + ")");
         }
     }
 
