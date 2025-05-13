@@ -28,6 +28,7 @@
     <ClCompile Include="neuronModels.cc" />
     <ClCompile Include="parser.cc" />
     <ClCompile Include="postsynapticModels.cc" />
+    <ClCompile Include="prettyPrinter.cc" />
     <ClCompile Include="scanner.cc" />
     <ClCompile Include="synapseGroup.cc" />
     <ClCompile Include="models.cc" />
