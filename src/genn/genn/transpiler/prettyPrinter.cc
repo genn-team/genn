@@ -275,14 +275,18 @@ private:
                 const size_t found = name.find(variadicPlaceholder);
                 if (found != std::string::npos) {
                     // Concatenate together all remaining arguments
+                    // **NOTE** variadic function templates shouldn't have a comma 
+                    // between required and variadic arguments e.g. "printf($(0)$(@))"
+                    // so, arguments simply require leading printing with leading comma
                     std::ostringstream variadicArgumentsStream;
-                    std::copy(m_CallArguments.top().second.cbegin() + i, m_CallArguments.top().second.cend(),
-                                std::ostream_iterator<std::string>(variadicArgumentsStream, ", "));
-
-                    // Replace variadic placeholder with all remaining arguments (after trimming trailing ", ")
-                    std::string variadicArguments = variadicArgumentsStream.str();
-                    name.replace(found, variadicPlaceholder.length(),
-                                 variadicArguments.substr(0, variadicArguments.length() - 2));
+                    const auto varArgBegin = m_CallArguments.top().second.cbegin() + i;
+                    const auto varArgEnd = m_CallArguments.top().second.cend();
+                    for(auto a = varArgBegin; a != varArgEnd; a++) {
+                        variadicArgumentsStream << ", " << *a;
+                    }
+             
+                    // Replace variadic placeholder with all remaining arguments 
+                    name.replace(found, variadicPlaceholder.length(), variadicArgumentsStream.str());
                 }
                 else {
                     throw std::runtime_error("Variadic function template for '" + variable.getName().lexeme + "' (" + name + ") has "
