@@ -326,6 +326,15 @@ public:
     //! Get hash digest of this backends identification and the preferences it has been configured with
     virtual boost::uuids::detail::sha1::digest_type getHashDigest() const = 0;
 
+    //! Check if NVTX markers are enabled for this backend
+    virtual bool isNVTXMarkerEnabled() const { return false; }
+    
+    //! Push a named NVTX range marker for profiling
+    virtual void pushNVTXRange(const std::string &) const {}
+    
+    //! Pop the current NVTX range marker
+    virtual void popNVTXRange() const {}
+
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------

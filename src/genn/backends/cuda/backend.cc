@@ -507,6 +507,9 @@ std::string Backend::getNVCCFlags() const
     if(getPreferences<Preferences>().generateLineInfo) {
         nvccFlags += " --generate-line-info";
     }
+    if(getPreferences<Preferences>().enableNVTX) {
+        nvccFlags += " -lnvToolsExt";
+    }
 
     return nvccFlags;
 }
@@ -533,6 +536,18 @@ void Backend::genDefinitionsPreambleInternal(CodeStream &os, const ModelSpecMerg
     os << "#include <curand_kernel.h>" << std::endl;
     if(getRuntimeVersion() >= 9000) {
         os <<"#include <cuda_fp16.h>" << std::endl;
+    }
+    
+    // If NVTX profiling is enabled, include nvToolsExt header
+    if(getPreferences<Preferences>().enableNVTX) {
+        os << "#include <nvToolsExt.h>" << std::endl;
+        
+        // Add helper macros for NVTX ranges
+        os << std::endl;
+        os << "// NVTX profiling macros" << std::endl;
+        os << "#define NVTX_PUSH(name) nvtxRangePushA(name)" << std::endl;
+        os << "#define NVTX_POP() nvtxRangePop()" << std::endl;
+        os << std::endl;
     }
 
     // If NCCL is enabled
@@ -632,6 +647,20 @@ void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThrea
     else {
         assert(batchSize < (size_t)getChosenCUDADevice().maxThreadsDim[1]);
         os << "const dim3 grid(" << gridSize << ", " << batchSize << ");" << std::endl;
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::pushNVTXRange(const std::string &name) const
+{
+    if(getPreferences<Preferences>().enableNVTX) {
+        nvtxRangePushA(name.c_str());
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::popNVTXRange() const
+{
+    if(getPreferences<Preferences>().enableNVTX) {
+        nvtxRangePop();
     }
 }
 }   // namespace GeNN::CodeGenerator::CUDA
