@@ -275,7 +275,7 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
         CodeStream::Scope b(runner);
 
         // Add profiler range for step time
-        backend.genPushProfilerRange(runner, "stepTime");
+        backend.genPushProfilerRange(runner, "stepTime (" + std::to_string(timestep) + ")");
 
         runner << "const " << model.getTimePrecision().getName() << " t = timestep * " << Type::writeNumeric(model.getDT(), model.getTimePrecision()) << ";" << std::endl;
 
