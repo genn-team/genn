@@ -139,6 +139,8 @@ static const char *__doc_CodeGenerator_CUDA_Preferences_deviceSelectMethod = R"d
 
 static const char *__doc_CodeGenerator_CUDA_Preferences_generateLineInfo = R"doc(Should line info be included in resultant executable for debugging/profiling purposes?)doc";
 
+static const char *__doc_CodeGenerator_CUDA_Preferences_enableNVTX = R"doc(Should NVTX markers be inserted to make profiling easier?)doc";
+
 static const char *__doc_CodeGenerator_CUDA_Preferences_manualBlockSizes = R"doc(If block size select method is set to BlockSizeSelect::MANUAL, block size to use for each kernel)doc";
 
 static const char *__doc_CodeGenerator_CUDA_Preferences_manualDeviceID = R"doc(If device select method is set to DeviceSelect::MANUAL, id of device to use)doc";

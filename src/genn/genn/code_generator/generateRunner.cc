@@ -274,42 +274,30 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
     {
         CodeStream::Scope b(runner);
 
-        // Add NVTX range if NVTX is enabled
-        if(dynamic_cast<const BackendCUDAHIP&>(backend).getPreferences<BackendCUDAHIP::PreferencesCUDAHIP>().enableNVTX) {
-            runner << "NVTX_PUSH(\"stepTime\");" << std::endl;
-        }
+        // Add profiler range for step time
+        backend.genPushProfilerRange(runner, "stepTime");
 
         runner << "const " << model.getTimePrecision().getName() << " t = timestep * " << Type::writeNumeric(model.getDT(), model.getTimePrecision()) << ";" << std::endl;
 
         // Update synaptic state
-        if(dynamic_cast<const BackendCUDAHIP&>(backend).getPreferences<BackendCUDAHIP::PreferencesCUDAHIP>().enableNVTX) {
-            runner << "NVTX_PUSH(\"updateSynapses\");" << std::endl;
-        }
+        backend.genPushProfilerRange(runner, "updateSynapses");
         runner << "updateSynapses(t);" << std::endl;
-        if(dynamic_cast<const BackendCUDAHIP&>(backend).getPreferences<BackendCUDAHIP::PreferencesCUDAHIP>().enableNVTX) {
-            runner << "NVTX_POP();" << std::endl;
-        }
+        backend.genPopProfilerRange(runner);
 
         // Update neuronal state
-        if(dynamic_cast<const BackendCUDAHIP&>(backend).getPreferences<BackendCUDAHIP::PreferencesCUDAHIP>().enableNVTX) {
-            runner << "NVTX_PUSH(\"updateNeurons\");" << std::endl;
-        }
+        backend.genPushProfilerRange(runner, "updateNeurons");
         runner << "updateNeurons(t";
         if(model.isRecordingInUse()) {
             runner << ", (unsigned int)(timestep % numRecordingTimesteps)";
         }
         runner << "); " << std::endl;
-        if(dynamic_cast<const BackendCUDAHIP&>(backend).getPreferences<BackendCUDAHIP::PreferencesCUDAHIP>().enableNVTX) {
-            runner << "NVTX_POP();" << std::endl;
-        }
+        backend.genPopProfilerRange(runner);
 
         // Write step time finalise logic to runner
         runner << runnerStepTimeFinaliseStream.str();
         
-        // End NVTX range for stepTime if NVTX is enabled
-        if(dynamic_cast<const BackendCUDAHIP&>(backend).getPreferences<BackendCUDAHIP::PreferencesCUDAHIP>().enableNVTX) {
-            runner << "NVTX_POP();" << std::endl;
-        }
+        // End profiler range for stepTime
+        backend.genPopProfilerRange(runner);
     }
     runner << std::endl;
 

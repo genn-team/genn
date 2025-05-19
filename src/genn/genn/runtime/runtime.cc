@@ -700,11 +700,6 @@ void Runtime::stepTime()
 //----------------------------------------------------------------------------
 void Runtime::customUpdate(const std::string &name)
 {
-    // If NVTX markers are enabled, push range
-    if(m_Backend.get().isNVTXMarkerEnabled()) {
-        m_Backend.get().pushNVTXRange("customUpdate:" + name);
-    }
-
     // If there are column length arrays that must be zeroed 
     // before making connectivity update in this group
     auto colLengthArrays = m_CustomUpdateColLengthArrays.find(name);
@@ -722,11 +717,6 @@ void Runtime::customUpdate(const std::string &name)
 
     // Run custom update
     m_CustomUpdateFunctions.at(name)(getTimestep());
-
-    // If NVTX markers are enabled, pop range
-    if(m_Backend.get().isNVTXMarkerEnabled()) {
-        m_Backend.get().popNVTXRange();
-    }
 }
 //----------------------------------------------------------------------------
 double Runtime::getTime() const

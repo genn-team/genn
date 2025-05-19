@@ -65,6 +65,7 @@ PYBIND11_MODULE(cuda_backend, m)
         
         WRAP_ATTR("show_ptx_info", Preferences, showPtxInfo)
         WRAP_ATTR("generate_line_info", Preferences, generateLineInfo)
+        WRAP_ATTR("enable_nvtx", Preferences, enableNVTX)
         WRAP_ATTR("device_select_method", Preferences, deviceSelectMethod)
         WRAP_ATTR("manual_device_id", Preferences, manualDeviceID)
         WRAP_ATTR("block_size_select_method", Preferences, blockSizeSelectMethod)

@@ -271,14 +271,11 @@ public:
     //! Get hash digest of this backends identification and the preferences it has been configured with
     virtual boost::uuids::detail::sha1::digest_type getHashDigest() const final;
 
-    //! Check if NVTX markers are enabled for this backend
-    virtual bool isNVTXMarkerEnabled() const final { return getPreferences<Preferences>().enableNVTX; }
+    //! Generate code to push a profiler range marker 
+    virtual void genPushProfilerRange(CodeStream &os, const std::string &name) const final;
     
-    //! Push a named NVTX range marker for profiling
-    virtual void pushNVTXRange(const std::string &name) const final;
-    
-    //! Pop the current NVTX range marker
-    virtual void popNVTXRange() const final;
+    //! Generate code to pop the current profiler range marker
+    virtual void genPopProfilerRange(CodeStream &os) const final;
 
     //--------------------------------------------------------------------------
     // Public API

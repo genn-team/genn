@@ -272,6 +272,11 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     // Get CUDA runtime version
     cudaRuntimeGetVersion(&m_RuntimeVersion);
 
+    // If NVTX is enabled, verify CUDA version is >= 10.0
+    if(getPreferences<Preferences>().enableNVTX && m_RuntimeVersion < 10000) {
+        throw std::runtime_error("NVTX profiling requires CUDA 10.0 or later");
+    }
+
 #ifdef _WIN32
     // If we're on Windows and NCCL is enabled, give error
     // **NOTE** There are several NCCL Windows ports e.g. https://github.com/MyCaffe/NCCL but we don't have access to any suitable systems to test
@@ -507,9 +512,6 @@ std::string Backend::getNVCCFlags() const
     if(getPreferences<Preferences>().generateLineInfo) {
         nvccFlags += " --generate-line-info";
     }
-    if(getPreferences<Preferences>().enableNVTX) {
-        nvccFlags += " -lnvToolsExt";
-    }
 
     return nvccFlags;
 }
@@ -540,14 +542,7 @@ void Backend::genDefinitionsPreambleInternal(CodeStream &os, const ModelSpecMerg
     
     // If NVTX profiling is enabled, include nvToolsExt header
     if(getPreferences<Preferences>().enableNVTX) {
-        os << "#include <nvToolsExt.h>" << std::endl;
-        
-        // Add helper macros for NVTX ranges
-        os << std::endl;
-        os << "// NVTX profiling macros" << std::endl;
-        os << "#define NVTX_PUSH(name) nvtxRangePushA(name)" << std::endl;
-        os << "#define NVTX_POP() nvtxRangePop()" << std::endl;
-        os << std::endl;
+        os << "#include \"nvtx3/nvToolsExt.h\"" << std::endl;
     }
 
     // If NCCL is enabled
@@ -650,17 +645,17 @@ void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThrea
     }
 }
 //--------------------------------------------------------------------------
-void Backend::pushNVTXRange(const std::string &name) const
+void Backend::genPushProfilerRange(CodeStream &os, const std::string &name) const
 {
     if(getPreferences<Preferences>().enableNVTX) {
-        nvtxRangePushA(name.c_str());
+        os << "nvtxRangePushA(\"" << name << "\");" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
-void Backend::popNVTXRange() const
+void Backend::genPopProfilerRange(CodeStream &os) const
 {
     if(getPreferences<Preferences>().enableNVTX) {
-        nvtxRangePop();
+        os << "nvtxRangePop();" << std::endl;
     }
 }
 }   // namespace GeNN::CodeGenerator::CUDA
