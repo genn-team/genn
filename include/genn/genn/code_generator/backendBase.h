@@ -330,7 +330,7 @@ public:
     virtual void genPushProfilerRange(CodeStream&, const std::string&) const {}
     
     //! Generate code to pop the current profiler range marker
-    virtual void genPopProfilerRange(CodeStream &os) const {}
+    virtual void genPopProfilerRange(CodeStream&) const {}
 
     //--------------------------------------------------------------------------
     // Public API
