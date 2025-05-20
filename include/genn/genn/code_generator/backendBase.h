@@ -327,7 +327,7 @@ public:
     virtual boost::uuids::detail::sha1::digest_type getHashDigest() const = 0;
 
     //! Generate code to push a profiler range marker
-    virtual void genPushProfilerRange(CodeStream &os, const std::string &name) const {}
+    virtual void genPushProfilerRange(CodeStream&, const std::string&) const {}
     
     //! Generate code to pop the current profiler range marker
     virtual void genPopProfilerRange(CodeStream &os) const {}
