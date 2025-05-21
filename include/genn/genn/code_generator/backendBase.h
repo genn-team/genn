@@ -326,6 +326,12 @@ public:
     //! Get hash digest of this backends identification and the preferences it has been configured with
     virtual boost::uuids::detail::sha1::digest_type getHashDigest() const = 0;
 
+    //! Generate code to push a profiler range marker
+    virtual void genPushProfilerRange(CodeStream&, const std::string&) const {}
+    
+    //! Generate code to pop the current profiler range marker
+    virtual void genPopProfilerRange(CodeStream&) const {}
+
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------

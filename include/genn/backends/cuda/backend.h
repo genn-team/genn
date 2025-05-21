@@ -73,6 +73,9 @@ struct Preferences : public PreferencesCUDAHIP
 
     //! Should line info be included in resultant executable for debugging/profiling purposes?
     bool generateLineInfo = false;
+    
+    //! Should NVTX markers be inserted to make profiling easier?
+    bool enableNVTX = false;
 
     //! How to select GPU device
     DeviceSelect deviceSelectMethod = DeviceSelect::MANUAL;
@@ -107,6 +110,7 @@ struct Preferences : public PreferencesCUDAHIP
         //! Update hash with preferences
         Utils::updateHash(deviceSelectMethod, hash);
         Utils::updateHash(constantCacheOverhead, hash);
+        Utils::updateHash(enableNVTX, hash);
     }
 };
 
@@ -266,6 +270,12 @@ public:
 
     //! Get hash digest of this backends identification and the preferences it has been configured with
     virtual boost::uuids::detail::sha1::digest_type getHashDigest() const final;
+
+    //! Generate code to push a profiler range marker 
+    virtual void genPushProfilerRange(CodeStream &os, const std::string &name) const final;
+    
+    //! Generate code to pop the current profiler range marker
+    virtual void genPopProfilerRange(CodeStream &os) const final;
 
     //--------------------------------------------------------------------------
     // Public API

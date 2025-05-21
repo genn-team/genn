@@ -269,25 +269,35 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
     runner << std::endl;
 
     // ------------------------------------------------------------------------
-    // Function to free all global memory structures
+    // Function to step time in the simulation
     runner << "void stepTime(unsigned long long timestep, unsigned long long numRecordingTimesteps)";
     {
         CodeStream::Scope b(runner);
 
+        // Add profiler range for step time
+        backend.genPushProfilerRange(runner, "stepTime");
+
         runner << "const " << model.getTimePrecision().getName() << " t = timestep * " << Type::writeNumeric(model.getDT(), model.getTimePrecision()) << ";" << std::endl;
 
         // Update synaptic state
+        backend.genPushProfilerRange(runner, "updateSynapses");
         runner << "updateSynapses(t);" << std::endl;
+        backend.genPopProfilerRange(runner);
 
         // Update neuronal state
+        backend.genPushProfilerRange(runner, "updateNeurons");
         runner << "updateNeurons(t";
         if(model.isRecordingInUse()) {
             runner << ", (unsigned int)(timestep % numRecordingTimesteps)";
         }
         runner << "); " << std::endl;
+        backend.genPopProfilerRange(runner);
 
         // Write step time finalise logic to runner
         runner << runnerStepTimeFinaliseStream.str();
+        
+        // End profiler range for stepTime
+        backend.genPopProfilerRange(runner);
     }
     runner << std::endl;
 

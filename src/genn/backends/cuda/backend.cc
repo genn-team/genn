@@ -272,6 +272,11 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     // Get CUDA runtime version
     cudaRuntimeGetVersion(&m_RuntimeVersion);
 
+    // If NVTX is enabled, verify CUDA version is >= 10.0
+    if(getPreferences<Preferences>().enableNVTX && m_RuntimeVersion < 10000) {
+        throw std::runtime_error("NVTX profiling requires CUDA 10.0 or later");
+    }
+
 #ifdef _WIN32
     // If we're on Windows and NCCL is enabled, give error
     // **NOTE** There are several NCCL Windows ports e.g. https://github.com/MyCaffe/NCCL but we don't have access to any suitable systems to test
@@ -534,6 +539,11 @@ void Backend::genDefinitionsPreambleInternal(CodeStream &os, const ModelSpecMerg
     if(getRuntimeVersion() >= 9000) {
         os <<"#include <cuda_fp16.h>" << std::endl;
     }
+    
+    // If NVTX profiling is enabled, include nvToolsExt header
+    if(getPreferences<Preferences>().enableNVTX) {
+        os << "#include \"nvtx3/nvToolsExt.h\"" << std::endl;
+    }
 
     // If NCCL is enabled
     if(getPreferences<Preferences>().enableNCCLReductions) {
@@ -632,6 +642,20 @@ void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThrea
     else {
         assert(batchSize < (size_t)getChosenCUDADevice().maxThreadsDim[1]);
         os << "const dim3 grid(" << gridSize << ", " << batchSize << ");" << std::endl;
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genPushProfilerRange(CodeStream &os, const std::string &name) const
+{
+    if(getPreferences<Preferences>().enableNVTX) {
+        os << "nvtxRangePushA(\"" << name << "\");" << std::endl;
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genPopProfilerRange(CodeStream &os) const
+{
+    if(getPreferences<Preferences>().enableNVTX) {
+        os << "nvtxRangePop();" << std::endl;
     }
 }
 }   // namespace GeNN::CodeGenerator::CUDA
