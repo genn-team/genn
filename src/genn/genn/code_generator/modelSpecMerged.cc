@@ -107,13 +107,14 @@ using namespace GeNN::CodeGenerator;
                         &SynapseGroupInternal::getDendriticDelayUpdateHashDigest);
 
     createMergedGroups(getModel().getNeuronGroups(), m_MergedNeuronInitGroups,
-                       [](const NeuronGroupInternal &ng)
+                       [&backend](const NeuronGroupInternal &ng)
                        { 
                            return (ng.isSpikeEventRequired() || ng.isTrueSpikeRequired()
                                    || ng.isSpikeTimeRequired() || ng.isPrevSpikeTimeRequired()
                                    || ng.isSpikeEventTimeRequired() || ng.isPrevSpikeEventTimeRequired()
                                    || !ng.getFusedPSMInSyn().empty() || !ng.getFusedPreOutputOutSyn().empty()
-                                   || ng.isVarInitRequired());
+                                   || ng.isVarInitRequired()
+                                   || (backend.isPopulationRNGInitialisedOnDevice() && ng.isSimRNGRequired()));
                        },
                        &NeuronGroupInternal::getInitHashDigest);
 
