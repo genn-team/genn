@@ -1455,6 +1455,11 @@ void BackendCUDAHIP::genMergedDynamicVariablePush(CodeStream &os, const std::str
     os << getRuntimePrefix() << "MemcpyHostToDevice, 0));" << std::endl;
 }
 //--------------------------------------------------------------------------
+std::string BackendCUDAHIP::getRestrictKeyword() const
+{
+    return " __restrict__";
+}
+//--------------------------------------------------------------------------
 void BackendCUDAHIP::genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner,
                                         CodeStream &, CodeStream &) const
 {

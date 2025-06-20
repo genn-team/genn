@@ -119,6 +119,10 @@ public:
     virtual std::string getAtomicOperation(const std::string &lhsPointer, const std::string &rhsValue,
                                            const Type::ResolvedType &type, AtomicOperation op = AtomicOperation::ADD) const final;
 
+    //! GeNN knows that pointers used in some places in thew code e.g. in merged groups are
+    //! "restricted" i.e. not aliased. What keyword should be used to indicate this?
+    virtual std::string getRestrictKeyword() const final;
+
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free) const final;
     virtual void genTimer(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise, 
                           const std::string &name, bool updateInStepTime) const final;

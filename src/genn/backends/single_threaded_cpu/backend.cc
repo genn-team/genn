@@ -1612,6 +1612,11 @@ std::string Backend::getAtomicOperation(const std::string &lhsPointer, const std
     }
 }
 //--------------------------------------------------------------------------
+std::string Backend::getRestrictKeyword() const
+{
+    return getHostRestrictKeyword();
+}
+//--------------------------------------------------------------------------
 void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&) const
 {
     assert(false);

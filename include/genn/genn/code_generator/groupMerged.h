@@ -235,10 +235,18 @@ public:
             CodeStream::Scope b(os);
             const auto sortedFields = getSortedFields(backend);
             for(const auto &f : sortedFields) {
-                // If field is a pointer and not marked as being a host field 
-                // (in which case the backend should leave its type alone!)
-                if(f.type.isPointer() && !(f.fieldType & GroupMergedFieldType::HOST)) {
+                // If field is a pointer
+                if(f.type.isPointer()) {
                     os << f.type.getName();
+                    
+                    // If this is a host structure, use host restrict keyword
+                    if(host) {
+                        os << getHostRestrictKeyword();
+                    }
+                    // Otherwise, use backend
+                    else {
+                        os << backend.getRestrictKeyword();
+                    }
                 }
                 // Otherwise, leave the type alone
                 else {
