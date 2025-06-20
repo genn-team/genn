@@ -72,6 +72,9 @@ public:
     //! On some older devices, shared memory atomics are actually slower than global memory atomics so should be avoided
     virtual bool areSharedMemAtomicsSlow() const = 0;
 
+    //! Get the maximum amount of SM that can be used per thread without reducing performance i.e. occupancy
+    virtual size_t getMaxOptimalSMPerThread(Kernel kernel) const = 0;
+
     //! Get the prefix to use for shared memory variables
     virtual std::string getSharedPrefix() const = 0;
 

@@ -304,6 +304,19 @@ bool Backend::areSharedMemAtomicsSlow() const
     return (getChosenCUDADevice().major < 5);
 }
 //--------------------------------------------------------------------------
+size_t Backend::getMaxOptimalSMPerThread(Kernel kernel) const
+{
+    const size_t blockThreads = getKernelBlockSize(kernel);
+
+    // Get the maximum number of blocks this GPU can run per SM
+    size_t maxBlocksPerSM;
+    std::tie(std::ignore, std::ignore, std::ignore, maxBlocksPerSM) = getDeviceArchitectureProperties();
+
+    // Start estimating SM block limit - the number of blocks of this size that can run on a single SM
+    size_t smBlockLimit = m_ChosenDevice.maxThreadsPerMultiProcessor / blockThreads;
+    smBlockLimit = std::min(smBlockLimit, maxBlocksPerSM);
+}
+//--------------------------------------------------------------------------
 unsigned int Backend::getNumLanes() const
 {
     return 32;
@@ -514,6 +527,60 @@ std::string Backend::getNVCCFlags() const
     }
 
     return nvccFlags;
+}
+//--------------------------------------------------------------------------
+std::tuple<size_t, size_t, size_t, size_t> Backend::getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps)
+{
+    //warpAllocGran, regAllocGran, smemAllocGran, maxBlocksPerSM
+    if(deviceProps.major == 1) {
+        return std::make_tuple(2, (deviceProps.minor < 2) ? 256 : 512,
+                               512, 8);
+    }
+    else if(deviceProps.major == 2) {
+        return std::make_tuple(2, 64, 128, 8);
+    }
+    else if(deviceProps.major == 3) {
+        return std::make_tuple(4, 256, 256, 16);
+    }
+    else if(deviceProps.major == 5) {
+        return std::make_tuple(4, 256, 256, 32);
+    }
+    else if(deviceProps.major == 6) {
+        return std::make_tuple((deviceProps.minor == 0) ? 2 : 4,
+                               256, 256, 32);
+    }
+    else if(deviceProps.major == 7) {
+        return std::make_tuple(4, 256, 256,
+                               (deviceProps.minor == 5) ? 16 : 32);
+    }
+    else if (deviceProps.major == 8) {
+        size_t maxBlocksPerSM;
+        if (deviceProps.minor == 0) {
+            maxBlocksPerSM = 32;
+        }
+        else if (deviceProps.minor == 9) {
+            maxBlocksPerSM = 24;
+        }
+        else {
+            maxBlocksPerSM = 16;
+        }
+
+        return std::make_tuple(4, 256, 128, maxBlocksPerSM);
+    }
+    else {
+        if(deviceProps.minor != 0) {
+            LOGW_BACKEND << "Unsupported CUDA device version: 9." << deviceProps.minor;
+            LOGW_BACKEND << "This is a bug! Please report it at https://github.com/genn-team/genn.";
+            LOGW_BACKEND << "Falling back to SM 9.0 parameters.";
+        }
+        if(deviceProps.major > 9) {
+            LOGW_BACKEND << "Unsupported CUDA device major version: " << deviceProps.major;
+            LOGW_BACKEND << "This is a bug! Please report it at https://github.com/genn-team/genn.";
+            LOGW_BACKEND << "Falling back to next latest SM version parameters.";
+        }
+
+        return std::make_tuple(4, 256, 128, 32);
+    }
 }
 //--------------------------------------------------------------------------
 Type::ResolvedType Backend::getPopulationRNGInternalType() const

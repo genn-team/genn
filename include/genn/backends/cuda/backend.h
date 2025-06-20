@@ -7,6 +7,7 @@
 #include <map>
 #include <numeric>
 #include <string>
+#include <tuple>
 
 // Standard C includes
 #include <cassert>
@@ -227,6 +228,9 @@ public:
     //! On some older devices, shared memory atomics are actually slower than global memory atomics so should be avoided
     virtual bool areSharedMemAtomicsSlow() const final;
 
+    //! Get the maximum amount of SM that can be used per thread without reducing performance i.e. occupancy
+    virtual size_t getMaxOptimalSMPerThread(Kernel kernel) const final;
+
     //! How many 'lanes' does underlying hardware have?
     /*! This is typically used for warp-shuffle algorithms */
     virtual unsigned int getNumLanes() const final;
@@ -284,6 +288,13 @@ public:
     int getChosenDeviceID() const{ return m_ChosenDeviceID; }
     int getRuntimeVersion() const{ return m_RuntimeVersion; }
     std::string getNVCCFlags() const;
+
+    std::tuple<size_t, size_t, size_t, size_t> getDeviceArchitectureProperties() const{ return getDeviceArchitectureProperties(m_ChosenDevice); }
+
+    //--------------------------------------------------------------------------
+    // Static API
+    //--------------------------------------------------------------------------
+    static std::tuple<size_t, size_t, size_t, size_t> getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps);
 
 protected:
     //--------------------------------------------------------------------------

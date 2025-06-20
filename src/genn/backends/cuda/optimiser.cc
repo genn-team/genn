@@ -88,78 +88,6 @@ bool getKernelResourceUsage(CUmodule module, const std::string &kernelName, int 
     }
 }
 //--------------------------------------------------------------------------
-void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &warpAllocGran, size_t &regAllocGran,
-                                     size_t &smemAllocGran, size_t &maxBlocksPerSM)
-{
-    if(deviceProps.major == 1) {
-        smemAllocGran = 512;
-        warpAllocGran = 2;
-        regAllocGran = (deviceProps.minor < 2) ? 256 : 512;
-        maxBlocksPerSM = 8;
-    }
-    else if(deviceProps.major == 2) {
-        smemAllocGran = 128;
-        warpAllocGran = 2;
-        regAllocGran = 64;
-        maxBlocksPerSM = 8;
-    }
-    else if(deviceProps.major == 3) {
-        smemAllocGran = 256;
-        warpAllocGran = 4;
-        regAllocGran = 256;
-        maxBlocksPerSM = 16;
-    }
-    else if(deviceProps.major == 5) {
-        smemAllocGran = 256;
-        warpAllocGran = 4;
-        regAllocGran = 256;
-        maxBlocksPerSM = 32;
-    }
-    else if(deviceProps.major == 6) {
-        smemAllocGran = 256;
-        warpAllocGran = (deviceProps.minor == 0) ? 2 : 4;
-        regAllocGran = 256;
-        maxBlocksPerSM = 32;
-    }
-    else if(deviceProps.major == 7) {
-        smemAllocGran = 256;
-        warpAllocGran = 4;
-        regAllocGran = 256;
-        maxBlocksPerSM = (deviceProps.minor == 5) ? 16 : 32;
-    }
-    else if (deviceProps.major == 8) {
-        smemAllocGran = 128;
-        warpAllocGran = 4;
-        regAllocGran = 256;
-
-        if (deviceProps.minor == 0) {
-            maxBlocksPerSM = 32;
-        }
-        else if (deviceProps.minor == 9) {
-            maxBlocksPerSM = 24;
-        }
-        else {
-            maxBlocksPerSM = 16;
-        }
-    }
-    else {
-        smemAllocGran = 128;
-        warpAllocGran = 4;
-        regAllocGran = 256;
-        maxBlocksPerSM = 32;
-        if(deviceProps.minor != 0) {
-            LOGW_BACKEND << "Unsupported CUDA device version: 9." << deviceProps.minor;
-            LOGW_BACKEND << "This is a bug! Please report it at https://github.com/genn-team/genn.";
-            LOGW_BACKEND << "Falling back to SM 9.0 parameters.";
-        }
-        if(deviceProps.major > 9) {
-            LOGW_BACKEND << "Unsupported CUDA device major version: " << deviceProps.major;
-            LOGW_BACKEND << "This is a bug! Please report it at https://github.com/genn-team/genn.";
-            LOGW_BACKEND << "Falling back to next latest SM version parameters.";
-        }
-    }
-}
-//--------------------------------------------------------------------------
 void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInternal &model,
                     std::vector<size_t> (&groupSizes)[KernelMax], std::set<std::string> &customUpdateKernels,
                     std::set<std::string> &customTransposeUpdateKernels)
@@ -526,11 +454,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     CHECK_CU_ERRORS(cuCtxDestroy(cuContext));
 
     // Get properties of device architecture
-    size_t warpAllocGran;
-    size_t regAllocGran;
-    size_t smemAllocGran;
-    size_t maxBlocksPerSM;
-    getDeviceArchitectureProperties(deviceProps, warpAllocGran, regAllocGran, smemAllocGran, maxBlocksPerSM);
+    auto [warpAllocGran, regAllocGran, smemAllocGran, maxBlocksPerSM] = Backend::getDeviceArchitectureProperties(deviceProps);
 
     // Zero block sizes
     std::fill(blockSize.begin(), blockSize.end(), 0);
