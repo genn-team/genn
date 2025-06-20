@@ -361,7 +361,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
                         // Generate neuron update
                         n.generateNeuronUpdate(
-                            *this, rngEnv, 1,
+                            rngEnv, 1,
                             // Emit true spikes
                             [&n, this](EnvironmentExternalBase &env)
                             {

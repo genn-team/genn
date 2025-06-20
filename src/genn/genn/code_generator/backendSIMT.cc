@@ -508,7 +508,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
 
                 // Generate neuron update
                 ng.generateNeuronUpdate(
-                    *this, validEnv, batchSize,
+                    validEnv, batchSize,
                     // Emit true spikes
                     [&ng, this](EnvironmentExternalBase &env)
                     {
