@@ -238,14 +238,7 @@ public:
                 // If field is a pointer and not marked as being a host field 
                 // (in which case the backend should leave its type alone!)
                 if(f.type.isPointer() && !(f.fieldType & GroupMergedFieldType::HOST)) {
-                    // If we are generating a host structure, allow the backend to override the type
-                    if(host) {
-                        os << backend.getMergedGroupFieldHostTypeName(f.type);
-                    }
-                    // Otherwise, allow the backend to add a prefix 
-                    else {
-                        os << backend.getPointerPrefix() << f.type.getName();
-                    }
+                    os << f.type.getName();
                 }
                 // Otherwise, leave the type alone
                 else {
@@ -265,7 +258,7 @@ public:
         const auto sortedFields = getSortedFields(backend);
         for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
             const auto &f = sortedFields[fieldIndex];
-            os << backend.getMergedGroupFieldHostTypeName(f.type) << " " << f.name;
+            os << f.type.getName() << " " << f.name;
             if(fieldIndex != (sortedFields.size() - 1)) {
                 os << ", ";
             }
@@ -376,7 +369,7 @@ protected:
         for(const auto &f : m_Fields) {
             if((f.fieldType & GroupMergedFieldType::DYNAMIC)) {
                 definitions << "EXPORT_FUNC void pushMerged" << name << this->getIndex() << f.name << "ToDevice(unsigned int idx, ";
-                definitions << backend.getMergedGroupFieldHostTypeName(f.type) << " value);" << std::endl;
+                definitions << f.type.getName() << " value);" << std::endl;
             }
 
             // If field is a pointer, assert that this is a host structure if field is a host or host object field

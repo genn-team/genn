@@ -1537,12 +1537,6 @@ void Backend::genMergedDynamicVariablePush(CodeStream &os, const std::string &su
 {
     os << "merged" << suffix << "Group" << mergedGroupIdx << "[" << groupIdx << "]." << fieldName << " = " << egpName << ";" << std::endl;
 }
-
-//--------------------------------------------------------------------------
-std::string Backend::getMergedGroupFieldHostTypeName(const Type::ResolvedType &type) const
-{
-    return type.getName();
-}
 //--------------------------------------------------------------------------
 void Backend::genPopVariableInit(EnvironmentExternalBase &env, HandlerEnv handler) const
 {

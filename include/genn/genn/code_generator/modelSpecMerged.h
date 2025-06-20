@@ -287,7 +287,7 @@ public:
                     // Add reference to this group's variable to data structure
                     // **NOTE** this works fine with EGP references because the function to
                     // get their value will just return the name of the referenced EGP
-                    os << "void pushMerged" << T::name << g << f.name << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostTypeName(f.type) << " value)";
+                    os << "void pushMerged" << T::name << g << f.name << "ToDevice(unsigned int idx, " << f.type.getName() << " value)";
                     {
                         CodeStream::Scope b(os);
                         if(host) {
