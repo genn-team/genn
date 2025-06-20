@@ -196,15 +196,15 @@ public:
     void genMergedNeuronSpikeQueueUpdateStructs(CodeStream &os, const BackendBase &backend) const{ genMergedStructures(os, backend, m_MergedNeuronSpikeQueueUpdateGroups); }
     void genMergedNeuronPrevSpikeTimeUpdateStructs(CodeStream &os, const BackendBase &backend) const{ genMergedStructures(os, backend, m_MergedNeuronPrevSpikeTimeUpdateGroups); }
     void genMergedSynapseDendriticDelayUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseDendriticDelayUpdateGroups); }
-    void genMergedSynapseConnectivityHostInitStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseConnectivityHostInitGroups); }
+    void genMergedSynapseConnectivityHostInitStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseConnectivityHostInitGroups, true); }
     void genMergedCustomUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomUpdateGroups); }
     void genMergedCustomUpdateWUStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomUpdateWUGroups); }
     void genMergedCustomUpdateTransposeWUStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomUpdateTransposeWUGroups); }
-    void genMergedCustomUpdateHostReductionStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomUpdateHostReductionGroups); }
-    void genMergedCustomWUUpdateHostReductionStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomWUUpdateHostReductionGroups); }
+    void genMergedCustomUpdateHostReductionStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomUpdateHostReductionGroups, true); }
+    void genMergedCustomWUUpdateHostReductionStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomWUUpdateHostReductionGroups, true); }
     void genMergedCustomConnectivityUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomConnectivityUpdateGroups); }
     void genMergedCustomConnectivityRemapUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomConnectivityRemapUpdateGroups); }
-    void genMergedCustomConnectivityHostUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomConnectivityHostUpdateGroups); }
+    void genMergedCustomConnectivityHostUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomConnectivityHostUpdateGroups, true); }
 
 
     void genMergedNeuronUpdateGroupHostStructArrayPush(CodeStream &os, const BackendBase &backend) const { genHostMergedStructArrayPush(os, backend, m_MergedNeuronUpdateGroups); }
@@ -287,7 +287,7 @@ public:
                     // Add reference to this group's variable to data structure
                     // **NOTE** this works fine with EGP references because the function to
                     // get their value will just return the name of the referenced EGP
-                    os << "void pushMerged" << T::name << g << f.name << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostTypeName(f.type) << " value)";
+                    os << "void pushMerged" << T::name << g << f.name << "ToDevice(unsigned int idx, " << f.type.getName() << " value)";
                     {
                         CodeStream::Scope b(os);
                         if(host) {
@@ -307,11 +307,11 @@ private:
     // Private methods
     //--------------------------------------------------------------------------
     template<typename T>
-    void genMergedStructures(CodeStream &os, const BackendBase &backend, const std::vector<T> &mergedGroups) const
+    void genMergedStructures(CodeStream &os, const BackendBase &backend, const std::vector<T> &mergedGroups, bool host = false) const
     {
         // Loop through all merged groups and generate struct
         for(const auto &g : mergedGroups) {
-            g.generateStruct(os, backend, T::name);
+            g.generateStruct(os, backend, T::name, host);
         }
     }
 

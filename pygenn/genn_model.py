@@ -657,7 +657,6 @@ class GeNNModel(ModelSpec):
 
         # Create output path
         output_path = path.join(path_to_model, self.name + "_CODE")
-        share_path = path.join(path.split(__file__)[0], "share")
 
         # Finalize model
         self._finalise()
@@ -677,8 +676,8 @@ class GeNNModel(ModelSpec):
             self, output_path, self.backend_log_level, self._preferences)
 
         # Generate code
-        self._model_merged = generate_code(self, self._backend, share_path,
-                                           output_path, always_rebuild, never_rebuild)
+        self._model_merged = generate_code(self, self._backend, output_path,
+                                           always_rebuild, never_rebuild)
 
         # Build code
         if not never_rebuild:

@@ -267,7 +267,7 @@ private:
 
             if(gMerge.getGroups().size() == 1) {
                 EnvironmentExternal groupEnv(env);
-                groupEnv.getStream() << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
+                groupEnv.getStream() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
                 groupEnv.getStream() << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[0]; " << std::endl;
                 groupEnv.add(Type::Uint32.addConst(), "id", "lid",
                              {groupEnv.addInitialiser("const unsigned int lid = id - " + std::to_string(idStart) + ";")});
@@ -300,7 +300,7 @@ private:
                 }
 
                 // Use this to get reference to merged group structure
-                env.getStream() << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
+                env.getStream() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
                 env.getStream() << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
 
                 // Get group start thread ID and use as group_start_id

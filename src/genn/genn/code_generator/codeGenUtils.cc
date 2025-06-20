@@ -31,6 +31,16 @@ void genTypeRange(CodeStream &os, const Type::ResolvedType &type, const std::str
     os << "#define " << prefix << "_MAX " << Type::writeNumeric(numeric.max, type) << std::endl;
 }
 //----------------------------------------------------------------------------
+std::string getHostRestrictKeyword()
+{
+    // **YUCK** restrict isn't standardised in C++
+#ifdef _WIN32
+    return " __restrict";
+#else
+    return " __restrict__";
+#endif
+}
+//----------------------------------------------------------------------------
 void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, 
                                        Transpiler::TypeChecker::EnvironmentInternal &typeCheckEnv, Transpiler::PrettyPrinter::EnvironmentInternal &prettyPrintEnv,
                                        Transpiler::ErrorHandler &errorHandler)

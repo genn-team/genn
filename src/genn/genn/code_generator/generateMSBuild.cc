@@ -13,7 +13,7 @@
 // GeNN::CodeGenerator
 //--------------------------------------------------------------------------
 void GeNN::CodeGenerator::generateMSBuild(std::ostream &os, const ModelSpecInternal &model, const BackendBase &backend, 
-                                          const std::string &projectGUID, const std::vector<std::string> &moduleNames)
+                                          const std::vector<std::string> &moduleNames)
 {
     // Generate header and targets for release and debug builds
     os << "<?xml version=\"1.0\" encoding=\"utf-8\"?>" << std::endl;
@@ -30,9 +30,6 @@ void GeNN::CodeGenerator::generateMSBuild(std::ostream &os, const ModelSpecInter
     os << "\t</ItemGroup>" << std::endl;
 
     os << "\t<PropertyGroup Label=\"Globals\">" << std::endl;
-    if (!projectGUID.empty()) {
-        os << "\t\t<ProjectGuid>{" << projectGUID << "}</ProjectGuid>" << std::endl;
-    }
     os << "\t\t<RootNamespace>runner</RootNamespace>" << std::endl;
     os << "\t</PropertyGroup>" << std::endl;
 

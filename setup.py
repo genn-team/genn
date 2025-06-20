@@ -3,7 +3,6 @@ import sys
 from copy import deepcopy
 from platform import system, uname
 from psutil import cpu_count
-from shutil import copytree, rmtree
 from subprocess import check_call
 from pybind11.setup_helpers import Pybind11Extension, build_ext, WIN, MACOS
 from setuptools import find_packages, setup
@@ -67,8 +66,6 @@ pygenn_src = os.path.join(pygenn_path, "src")
 pygenn_include = os.path.join(pygenn_path, "include")
 genn_include = os.path.join(genn_path, "include", "genn", "genn")
 genn_third_party_include = os.path.join(genn_path, "include", "genn", "third_party")
-genn_share = os.path.join(genn_path, "share", "genn")
-pygenn_share = os.path.join(pygenn_path, "share")
 
 # Always package LibGeNN
 if WIN:
@@ -76,17 +73,6 @@ if WIN:
                     "libffi" + genn_lib_suffix + ".dll"]
 else:
     package_data = ["libgenn" + genn_lib_suffix + ".so"]
-
-
-# Copy GeNN 'share' tree into pygenn and add all files to package
-# **THINK** this could be done on a per-backend basis
-rmtree(pygenn_share, ignore_errors=True)
-copytree(genn_share, pygenn_share)
-for root, _, filenames in os.walk(pygenn_share):
-    for f in filenames:
-        f_path = os.path.join(root, f)
-        if os.path.isfile(f_path):
-            package_data.append(f_path)
 
 # Define standard kwargs for building all extensions
 genn_extension_kwargs = {

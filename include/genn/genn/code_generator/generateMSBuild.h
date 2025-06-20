@@ -22,5 +22,5 @@ class BackendBase;
 namespace GeNN::CodeGenerator
 {
 GENN_EXPORT void generateMSBuild(std::ostream &os, const ModelSpecInternal &model, const BackendBase &backend, 
-                                 const std::string &projectGUID, const std::vector<std::string> &moduleNames);
+                                 const std::vector<std::string> &moduleNames);
 }
