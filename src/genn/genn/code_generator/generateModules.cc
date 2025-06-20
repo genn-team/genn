@@ -74,8 +74,8 @@ bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::
 namespace GeNN::CodeGenerator
 {
 std::vector<std::string> generateAll(ModelSpecMerged &modelMerged, const BackendBase &backend,
-                                     const filesystem::path &sharePath, const filesystem::path &outputPath,
-                                     bool alwaysRebuild, bool neverRebuild)
+                                     const filesystem::path &outputPath, bool alwaysRebuild, 
+                                     bool neverRebuild)
 {
     // Create directory for generated code
     filesystem::create_directory(outputPath);

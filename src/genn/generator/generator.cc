@@ -66,7 +66,6 @@ int main(int argc,     //!< number of arguments; expected to be 3
 
         // Determine code generation path
         const filesystem::path outputPath = targetPath / (model.getName() + "_CODE");
-        const filesystem::path sharePath = gennPath / "share" / "genn";
 
         // Create output path
         filesystem::create_directory(outputPath);
@@ -78,7 +77,7 @@ int main(int argc,     //!< number of arguments; expected to be 3
 
         // Create merged model and generate code
         CodeGenerator::ModelSpecMerged modelMerged(backend, model);
-        const auto moduleNames = CodeGenerator::generateAll(modelMerged, backend, sharePath, 
+        const auto moduleNames = CodeGenerator::generateAll(modelMerged, backend, 
                                                             outputPath, forceRebuild);
 
 #ifdef _WIN32
