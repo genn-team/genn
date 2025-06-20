@@ -312,9 +312,14 @@ size_t Backend::getMaxOptimalSMPerThread(Kernel kernel) const
     size_t maxBlocksPerSM;
     std::tie(std::ignore, std::ignore, std::ignore, maxBlocksPerSM) = getDeviceArchitectureProperties();
 
-    // Start estimating SM block limit - the number of blocks of this size that can run on a single SM
+    // Start estimating SM block limit dictated by architecture
+    // **NOTE** block limit COULD be dictated by register count but this is rare in GeNN kernels
     size_t smBlockLimit = m_ChosenDevice.maxThreadsPerMultiProcessor / blockThreads;
     smBlockLimit = std::min(smBlockLimit, maxBlocksPerSM);
+
+    // Use limit to calculate how much shared memory per-thread can be used in this configuration
+    // **TODO** apply granularity
+    return (m_ChosenDevice.sharedMemPerMultiprocessor / smBlockLimit) / blockThreads;
 }
 //--------------------------------------------------------------------------
 unsigned int Backend::getNumLanes() const

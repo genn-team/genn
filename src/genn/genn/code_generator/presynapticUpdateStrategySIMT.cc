@@ -1,6 +1,7 @@
 #include "code_generator/presynapticUpdateStrategySIMT.h"
 
 // Standard C++ includes
+#include <iostream>
 #include <numeric>
 
 // GeNN includes
@@ -199,6 +200,8 @@ bool PostSpan::isCompatible(const SynapseGroupInternal &sg, const PreferencesBas
 void PostSpan::genPreamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
                            const BackendSIMT &backend) const
 {
+    std::cout << backend.getMaxOptimalSMPerThread(KernelPresynapticUpdate) << " bytes shared mem per Presynaptic update thread" << std::endl;
+    
     // If synapse group provides any postsynaptic output
     if(sg.getArchetype().isPostsynapticOutputRequired()) {
         // If data structure is dense, we can accumulate output directly into register
