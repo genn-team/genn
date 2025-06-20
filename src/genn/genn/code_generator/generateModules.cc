@@ -33,27 +33,6 @@ void writeStringStream(const filesystem::path &file, const std::ostringstream &s
     fileStream << stream.str();
 }
 //--------------------------------------------------------------------------
-void copyFile(const filesystem::path &file, const filesystem::path &sharePath, const filesystem::path &outputPath)
-{
-    // Get full path to input and output files
-    const auto inputFile = sharePath / file;
-    const auto outputFile = outputPath / file;
-
-    // Assert that input file exists
-    assert(inputFile.exists());
-
-    // Create output directory if required
-    filesystem::create_directory_recursive(outputFile.parent_path());
-
-    // Copy file
-    // **THINK** we could check modification etc but it doesn't seem worthwhile
-    LOGD_CODE_GEN << "Copying '" << inputFile << "' to '" << outputFile << "'" << std::endl;
-    std::ifstream inputFileStream(inputFile.str(), std::ios::binary);
-    std::ofstream outputFileStream(outputFile.str(), std::ios::binary);
-    assert(outputFileStream.good());
-    outputFileStream << inputFileStream.rdbuf();
-}
-//--------------------------------------------------------------------------
 bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::detail::sha1::digest_type &hashDigest)
 {
     try
@@ -128,14 +107,6 @@ std::vector<std::string> generateAll(ModelSpecMerged &modelMerged, const Backend
         writeStringStream(outputPath / "customUpdate.cc", customUpdateStream);
         writeStringStream(outputPath / "synapseUpdate.cc", synapseUpdateStream);
         writeStringStream(outputPath / "init.cc", initStream);
-
-        // Get list of files to copy into generated code
-        const auto backendSharePath = sharePath / "backends";
-        const auto filesToCopy = backend.getFilesToCopy(modelMerged);
-        const auto absOutputPath = outputPath.make_absolute();
-        for(const auto &f : filesToCopy) {
-            copyFile(f, backendSharePath, absOutputPath);
-        }
 
         // Open file
         std::ofstream os((outputPath / "model.sha").str());
