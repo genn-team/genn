@@ -410,7 +410,7 @@ TEST(SynapseGroup, CompareWUDifferentParams)
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
     // Generate code but don't actually write any files
-    CodeGenerator::generateAll(modelSpecMerged, backend, ".", ".", false, true);
+    CodeGenerator::generateAll(modelSpecMerged, backend, ".", false, true);
 
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
@@ -521,7 +521,7 @@ TEST(SynapseGroup, CompareWUDifferentToeplitzConnectivity)
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
     // Generate code but don't actually write any files
-    CodeGenerator::generateAll(modelSpecMerged, backend, ".", ".", false, true);
+    CodeGenerator::generateAll(modelSpecMerged, backend, ".", false, true);
 
     // Check all groups are merged
     ASSERT_EQ(modelSpecMerged.getMergedNeuronUpdateGroups().size(), 3);
@@ -678,7 +678,7 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
     // Generate code but don't actually write any files
-    CodeGenerator::generateAll(modelSpecMerged, backend, ".", ".", false, true);
+    CodeGenerator::generateAll(modelSpecMerged, backend, ".", false, true);
 
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
@@ -830,7 +830,7 @@ TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
     // Generate code but don't actually write any files
-    CodeGenerator::generateAll(modelSpecMerged, backend, ".", ".", false, true);
+    CodeGenerator::generateAll(modelSpecMerged, backend, ".", false, true);
 
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
