@@ -247,7 +247,7 @@ public:
     virtual std::string getAtomicOperation(const std::string &lhsPointer, const std::string &rhsValue,
                                            const Type::ResolvedType &type, AtomicOperation op = AtomicOperation::ADD) const = 0;
 
-    //! GeNN knows that pointers used in some places in thew code e.g. in merged groups are
+    //! GeNN knows that pointers used in some places in the code e.g. in merged groups are
     //! "restricted" i.e. not aliased. What keyword should be used to indicate this?
     virtual std::string getRestrictKeyword() const = 0;
 

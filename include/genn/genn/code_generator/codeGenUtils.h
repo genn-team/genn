@@ -57,7 +57,7 @@ inline auto padSize(A size, B blockSize)
 
 GENN_EXPORT void genTypeRange(CodeStream &os, const Type::ResolvedType &type, const std::string &prefix);
 
-//! GeNN knows that pointers used in some places in thew code e.g. in merged groups are
+//! GeNN knows that pointers used in some places in the code e.g. in merged groups are
     //! "restricted" i.e. not aliased. What keyword should be used to indicate this?
 GENN_EXPORT std::string getHostRestrictKeyword();
 

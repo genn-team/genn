@@ -135,7 +135,7 @@ public:
                                               const std::string &groupIdx, const std::string &fieldName,
                                               const std::string &egpName) const final;
 
-    //! GeNN knows that pointers used in some places in thew code e.g. in merged groups are
+    //! GeNN knows that pointers used in some places in the code e.g. in merged groups are
     //! "restricted" i.e. not aliased. What keyword should be used to indicate this?
     virtual std::string getRestrictKeyword() const final;
 
