@@ -2,10 +2,6 @@
 #include <fstream>
 #include <thread>
 
-#ifdef _WIN32
-#include <Objbase.h>
-#endif
-
 // PLOG includes
 #include <plog/Appenders/ConsoleAppender.h>
 
@@ -66,7 +62,6 @@ int main(int argc,     //!< number of arguments; expected to be 3
 
         // Determine code generation path
         const filesystem::path outputPath = targetPath / (model.getName() + "_CODE");
-        const filesystem::path sharePath = gennPath / "share" / "genn";
 
         // Create output path
         filesystem::create_directory(outputPath);
@@ -78,49 +73,14 @@ int main(int argc,     //!< number of arguments; expected to be 3
 
         // Create merged model and generate code
         CodeGenerator::ModelSpecMerged modelMerged(backend, model);
-        const auto moduleNames = CodeGenerator::generateAll(modelMerged, backend, sharePath, 
+        const auto moduleNames = CodeGenerator::generateAll(modelMerged, backend, 
                                                             outputPath, forceRebuild);
 
 #ifdef _WIN32
-        // If runner GUID file doesn't exist
-        const filesystem::path projectGUIDFilename = targetPath / "runner_guid.txt";
-        std::string projectGUIDString;
-        if(!projectGUIDFilename.exists()) {
-            // Create a new GUID for project
-            GUID guid;
-            if(::CoCreateGuid(&guid) != S_OK) {
-                LOGE_CODE_GEN << "Unable to generate project GUID";
-                return EXIT_FAILURE;
-            }
-
-            // Write GUID to string stream
-            std::stringstream projectGUIDStream;
-            projectGUIDStream << std::uppercase << std::hex << std::setfill('0');
-            projectGUIDStream << std::setw(8)<< guid.Data1 << '-';
-            projectGUIDStream << std::setw(4) << guid.Data2 << '-';
-            projectGUIDStream << std::setw(4) << guid.Data3 << '-';
-            projectGUIDStream << std::setw(2) << static_cast<short>(guid.Data4[0]) << std::setw(2) << static_cast<short>(guid.Data4[1]) << '-';
-            projectGUIDStream << static_cast<short>(guid.Data4[2]) << static_cast<short>(guid.Data4[3]) << static_cast<short>(guid.Data4[4]) << static_cast<short>(guid.Data4[5]) << static_cast<short>(guid.Data4[6]) << static_cast<short>(guid.Data4[7]);
-
-            // Use result as project GUID string
-            projectGUIDString = projectGUIDStream.str();
-            LOGI_CODE_GEN << "Generated new project GUID:" << projectGUIDString;
-
-            // Write GUID to project GUID file
-            std::ofstream projectGUIDFile(projectGUIDFilename.str());
-            projectGUIDFile << projectGUIDString << std::endl;
-        }
-        // Otherwise
-        else {
-            // Read GUID from project GUID file
-            std::ifstream projectGUIDFile(projectGUIDFilename.str());
-            std::getline(projectGUIDFile, projectGUIDString);
-            LOGI_CODE_GEN << "Using previously generated project GUID:" << projectGUIDString;
-        }
         // Create MSBuild project to compile and link all generated modules
         {
             std::ofstream msbuild((outputPath / "runner.vcxproj").str());
-            CodeGenerator::generateMSBuild(msbuild, model, backend, projectGUIDString, moduleNames);
+            CodeGenerator::generateMSBuild(msbuild, model, backend, moduleNames);
         }
         
         // Generate command to build using msbuild

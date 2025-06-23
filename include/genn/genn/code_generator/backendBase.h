@@ -236,9 +236,6 @@ public:
                                               const std::string &groupIdx, const std::string &fieldName,
                                               const std::string &egpName) const = 0;
 
-    //! When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host
-    virtual std::string getMergedGroupFieldHostTypeName(const Type::ResolvedType &type) const = 0;
-
     virtual void genPopVariableInit(EnvironmentExternalBase &env, HandlerEnv handler) const = 0;
     virtual void genVariableInit(EnvironmentExternalBase &env, const std::string &count, const std::string &indexVarName, HandlerEnv handler) const = 0;
     virtual void genSparseSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const = 0;
@@ -249,6 +246,10 @@ public:
     //! Get suitable atomic *lhsPointer += rhsValue or *lhsPointer |= rhsValue style operation
     virtual std::string getAtomicOperation(const std::string &lhsPointer, const std::string &rhsValue,
                                            const Type::ResolvedType &type, AtomicOperation op = AtomicOperation::ADD) const = 0;
+
+    //! GeNN knows that pointers used in some places in the code e.g. in merged groups are
+    //! "restricted" i.e. not aliased. What keyword should be used to indicate this?
+    virtual std::string getRestrictKeyword() const = 0;
 
     //! Generate a single RNG instance
     /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
@@ -286,13 +287,6 @@ public:
     virtual void genMSBuildItemDefinitions(std::ostream &os) const = 0;
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const = 0;
     virtual void genMSBuildImportTarget(std::ostream &os) const = 0;
-
-    //! Get list of files to copy into generated code
-    /*! Paths should be relative to share/genn/backends/ */
-    virtual std::vector<filesystem::path> getFilesToCopy(const ModelSpecMerged&) const{ return {}; }
-
-    //! Different backends may have different or no pointer prefix (e.g. __global for OpenCL)
-    virtual std::string getPointerPrefix() const { return ""; }
 
     //! As well as host pointers, are device objects required?
     virtual bool isArrayDeviceObjectRequired() const = 0;

@@ -361,7 +361,7 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
                         // Generate neuron update
                         n.generateNeuronUpdate(
-                            *this, rngEnv, 1,
+                            rngEnv, 1,
                             // Emit true spikes
                             [&n, this](EnvironmentExternalBase &env)
                             {
@@ -1537,12 +1537,6 @@ void Backend::genMergedDynamicVariablePush(CodeStream &os, const std::string &su
 {
     os << "merged" << suffix << "Group" << mergedGroupIdx << "[" << groupIdx << "]." << fieldName << " = " << egpName << ";" << std::endl;
 }
-
-//--------------------------------------------------------------------------
-std::string Backend::getMergedGroupFieldHostTypeName(const Type::ResolvedType &type) const
-{
-    return type.getName();
-}
 //--------------------------------------------------------------------------
 void Backend::genPopVariableInit(EnvironmentExternalBase &env, HandlerEnv handler) const
 {
@@ -1616,6 +1610,11 @@ std::string Backend::getAtomicOperation(const std::string &lhsPointer, const std
     else {
         assert(false);
     }
+}
+//--------------------------------------------------------------------------
+std::string Backend::getRestrictKeyword() const
+{
+    return getHostRestrictKeyword();
 }
 //--------------------------------------------------------------------------
 void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&) const
