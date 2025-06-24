@@ -259,6 +259,125 @@ public:
     SET_POST_DYNAMICS_CODE("postTrace *= tauMinusDecay;\n");
 };
 IMPLEMENT_SNIPPET(STDPAdditivePostDelay);
+
+
+//----------------------------------------------------------------------------
+// EPropRecurrent
+//----------------------------------------------------------------------------
+class EPropRecurrent : public NeuronModels::Base
+{
+public:
+    DECLARE_SNIPPET(EPropRecurrent);
+
+    SET_PARAMS({
+        "TauM",         // Membrane time constant [ms]
+        "Vthresh",      // Spiking threshold [mV]
+        "TauRefrac"});  // Refractory time constant [ms]
+
+    SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}, {"E", "scalar"}});
+
+    SET_DERIVED_PARAMS({
+        {"Alpha", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("TauM").cast<double>()); }}});
+
+    SET_ADDITIONAL_INPUT_VARS({{"IsynFeedback", "scalar", 0.0}});
+
+    SET_SIM_CODE(
+        "E = IsynFeedback;\n"
+        "V = (Alpha * V) + Isyn;\n"
+        "if (RefracTime > 0.0) {\n"
+        "  RefracTime -= dt;\n"
+        "}\n");
+
+    SET_THRESHOLD_CONDITION_CODE("RefracTime <= 0.0 && V >= Vthresh");
+
+    SET_RESET_CODE(
+        "RefracTime = TauRefrac;\n"
+        "V -= Vthresh;\n");
+
+    SET_NEEDS_AUTO_REFRACTORY(false);
+};
+IMPLEMENT_SNIPPET(EPropRecurrent);
+
+//---------------------------------------------------------------------------
+// EProp
+//---------------------------------------------------------------------------
+//! Basic implementation of EProp learning rule
+class EProp : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_SNIPPET(EProp);
+    
+    SET_PARAMS({
+        "TauE",             // Eligibility trace time constant [ms]
+        "CReg",             // Regularizer strength
+        "FTarget",          // Target spike rate [Hz]
+        "TauFAvg",          // Firing rate averaging time constant [ms]
+        "Vthresh_post"});   // Postsynaptic spiking threshold 
+
+    SET_VARS({{"g", "scalar"}, {"eFiltered", "scalar"}, {"DeltaG", "scalar"}});
+
+    SET_PRE_VARS({{"ZFilter", "scalar"}});
+    SET_POST_VARS({{"Psi", "scalar"}, {"FAvg", "scalar"}});
+
+    SET_POST_NEURON_VAR_REFS({{"E_post", "scalar"}, {"V_post", "scalar"}});
+
+    SET_DERIVED_PARAMS({
+        {"Alpha", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("TauE").cast<double>()); }},
+        {"FTargetTimestep", [](const ParamValues &pars, double dt){ return (pars.at("FTarget").cast<double>() * dt) / 1000.0; }},
+        {"AlphaFAv", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("TauFAvg").cast<double>()); }}});
+
+    SET_PRE_SPIKE_SYN_CODE("addToPost(g);\n");
+
+    SET_SYNAPSE_DYNAMICS_CODE(
+        "const scalar e = ZFilter * Psi;\n"
+        "scalar eFiltered = eFiltered;\n"
+        "eFiltered = (eFiltered * Alpha) + e;\n"
+        "DeltaG += (eFiltered * E_post) + ((FAvg - FTargetTimestep) * CReg * e);\n"
+        "eFiltered = eFiltered;\n");
+
+    SET_PRE_SPIKE_CODE("ZFilter += 1.0;\n");
+    SET_PRE_DYNAMICS_CODE("ZFilter *= Alpha;\n");
+    
+    SET_POST_SPIKE_CODE("FAvg += (1.0 - AlphaFAv);\n");
+    SET_POST_DYNAMICS_CODE(
+        "FAvg *= AlphaFAv;\n"
+        "if (RefracTime_post > 0.0) {\n"
+        "  Psi = 0.0;\n"
+        "}\n"
+        "else {\n"
+        "  Psi = (1.0 / Vthresh_post) * 0.3 * fmax(0.0, 1.0 - fabs((V_post - Vthresh_post) / Vthresh_post));\n"
+        "}\n");
+};
+IMPLEMENT_SNIPPET(EProp);
+
+//---------------------------------------------------------------------------
+// EPropOutputLearning
+//---------------------------------------------------------------------------
+//! Basic implementation of output learning rule
+class EPropOutputLearning : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_SNIPPET(EPropOutputLearning);
+
+    SET_PARAMS({"TauE"});  // Eligibility trace time constant [ms]
+
+    SET_VARS({{"g", "scalar"}, {"DeltaG", "scalar"}});
+
+    SET_PRE_VARS({{"ZFilter", "scalar"}});
+
+    SET_POST_NEURON_VAR_REFS({{"E_post", "scalar"}});
+
+    SET_DERIVED_PARAMS({
+        {"Alpha", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("TauE").cast<double>()); }}});
+
+    SET_PRE_SPIKE_SYN_CODE("addToPost(g);\n");
+
+    SET_SYNAPSE_DYNAMICS_CODE("DeltaG += ZFilter * E_post;\n");
+
+    SET_PRE_SPIKE_CODE("ZFilter += 1.0;\n");
+    SET_PRE_DYNAMICS_CODE("ZFilter *= Alpha;\n");
+};
+IMPLEMENT_SNIPPET(EPropOutputLearning);
 }
 
 //--------------------------------------------------------------------------
@@ -771,6 +890,75 @@ TEST(NeuronGroup, FuseSpikeEvent)
 
     ASSERT_EQ(preInternal->getFusedSpikeEvent().size(), 3);
     ASSERT_TRUE(postInternal->getFusedSpikeEvent().empty());
+}
+
+TEST(NeuronGroup, FuseEProp)
+{
+    ModelSpecInternal model;
+    model.setFusePrePostWeightUpdateModels(true);
+
+    // Add neuron populations for three layer classifier
+    ParamValues epropNeuronParamVals{{"TauM", 20.0}, {"Vthresh", 0.6}, {"TauRefrac", 5.0}};
+    VarValues epropNeuronVarVals{{"V", 0.0}, {"RefracTime", 0.0}, {"E", 0.0}};
+    auto *inputPop = model.addNeuronPopulation<EmptyNeuron>("Input", 10);
+    auto *recurrentPop = model.addNeuronPopulation<EPropRecurrent>("Recurrent", 10, epropNeuronParamVals, epropNeuronVarVals);
+    auto *outputPop = model.addNeuronPopulation<EPropRecurrent>("Output", 10, epropNeuronParamVals, epropNeuronVarVals);
+
+    // Add synapse populations
+    ParamValues epropSynParamVals{{"TauE", 20.0}, {"CReg", 0.001}, {"FTarget", 10.0}, {"TauFAvg", 500.0}, {"Vthresh_post", 0.6}};
+    ParamValues outSynParamVals{{"TauE", 20.0}};
+    VarValues epropSynVarVals{{"g", 1.0}, {"eFiltered", 0.0}, {"DeltaG", 0.0}};
+    VarValues outSynVarVals{{"g", 1.0}, {"DeltaG", 0.0}};
+    VarValues epropSynPreVarVals{{"ZFilter", 0.0}};
+    VarValues epropSynPostVarVals{{"Psi", 0.0}, {"FAvg", 0.0}};
+    LocalVarReferences epropSynPostVarReferences{{"E_post", "E"}, {"V_post", "V"}};
+    LocalVarReferences outSynPostVarReferences{{"E_post", "E"}};
+    auto *inRecurrentPop = model.addSynapsePopulation(
+        "InRecurrent", SynapseMatrixType::DENSE,
+        inputPop, recurrentPop,
+        initWeightUpdate<EProp>(epropSynParamVals, epropSynVarVals, epropSynPreVarVals, epropSynPostVarVals, {}, epropSynPostVarReferences),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+
+    auto *recurrentRecurrentPop = model.addSynapsePopulation(
+        "RecurrentRecurrent", SynapseMatrixType::DENSE,
+        recurrentPop, recurrentPop,
+        initWeightUpdate<EProp>(epropSynParamVals, epropSynVarVals, epropSynPreVarVals, epropSynPostVarVals, {}, epropSynPostVarReferences),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+
+    auto *recurrentOutPop = model.addSynapsePopulation(
+        "RecurrentOut", SynapseMatrixType::DENSE,
+        recurrentPop, outputPop,
+        initWeightUpdate<EPropOutputLearning>(outSynParamVals, outSynVarVals, epropSynPreVarVals, {}, {}, outSynPostVarReferences),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+
+    model.finalise();
+
+    // Cast neuron groups to internal 
+    auto recurrentPopInternal = static_cast<NeuronGroupInternal*>(recurrentPop);
+
+    // Cast synapse groups to internal types
+    auto inRecurrentPopInternal = static_cast<SynapseGroupInternal*>(inRecurrentPop);
+    auto recurrentRecurrentPopInternal = static_cast<SynapseGroupInternal*>(recurrentRecurrentPop);
+    auto recurrentOutPopInternal = static_cast<SynapseGroupInternal*>(recurrentOutPop);
+    
+    // Check the 'ends' of all synapse groups attached to the recurrent population CAN be fused
+    ASSERT_TRUE(inRecurrentPopInternal->canWUMPrePostUpdateBeFused(recurrentPop));
+    ASSERT_TRUE(recurrentRecurrentPopInternal->canWUMPrePostUpdateBeFused(recurrentPop));
+    ASSERT_TRUE(recurrentOutPopInternal->canWUMPrePostUpdateBeFused(recurrentPop));
+    
+    // Check the surrogate gradient calculation in the postsynaptic end of 
+    // inRecurrent can be fused with the postsynaptic end of recurrentRecurrent
+    ASSERT_EQ(inRecurrentPopInternal->getWUPrePostFuseHashDigest(recurrentPop),
+              recurrentRecurrentPopInternal->getWUPrePostFuseHashDigest(recurrentPop));
+
+    // Check the ZFilter calculation in the presynaptic end of 
+    // recurrentRecurrent can be fused with the presynaptic end of recurrentOutPopInternal
+    ASSERT_EQ(inRecurrentPopInternal->getWUPrePostFuseHashDigest(recurrentPop),
+              recurrentOutPopInternal->getWUPrePostFuseHashDigest(recurrentPop));
+
+    // Check that fusion results in one presynaptic and one postsynaptic update in the recurrent neuron
+    ASSERT_EQ(recurrentPopInternal->getFusedInSynWithPostCode().size(), 1);
+    ASSERT_EQ(recurrentPopInternal->getFusedOutSynWithPreCode().size(), 1);
 }
 
 TEST(NeuronGroup, CompareNeuronModels)
