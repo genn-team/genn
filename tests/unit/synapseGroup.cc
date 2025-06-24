@@ -1105,11 +1105,11 @@ TEST(SynapseGroup, CanWUMPreUpdateBeFused)
     dynamicDecay->setWUParamDynamic("tauPlusDecay", true);
     dynamicDecay->setWUParamDynamic("tauMinusDecay", true);
 
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(constPre)->canWUMPrePostUpdateBeFused(pre));
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(nonConstPre)->canWUMPrePostUpdateBeFused(pre));
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(dynamicWMinMax)->canWUMPrePostUpdateBeFused(pre));
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(dynamicSpike)->canWUMPrePostUpdateBeFused(pre));
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(dynamicDecay)->canWUMPrePostUpdateBeFused(pre));
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(constPre)->canWUMPreUpdateBeFused(pre));
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(nonConstPre)->canWUMPreUpdateBeFused(pre));
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(dynamicWMinMax)->canWUMPreUpdateBeFused(pre));
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(dynamicSpike)->canWUMPreUpdateBeFused(pre));
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(dynamicDecay)->canWUMPreUpdateBeFused(pre));
 }
 
 TEST(SynapseGroup, CanWUMPostUpdateBeFused)
@@ -1165,11 +1165,11 @@ TEST(SynapseGroup, CanWUMPostUpdateBeFused)
     dynamicDecay->setWUParamDynamic("tauPlusDecay", true);
     dynamicDecay->setWUParamDynamic("tauMinusDecay", true);
 
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(constPost)->canWUMPrePostUpdateBeFused(post));
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(nonConstPost)->canWUMPrePostUpdateBeFused(post));
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(dynamicWMinMax)->canWUMPrePostUpdateBeFused(post));
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(dynamicSpike)->canWUMPrePostUpdateBeFused(post));
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(dynamicDecay)->canWUMPrePostUpdateBeFused(post));
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(constPost)->canWUMPostUpdateBeFused(post));
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(nonConstPost)->canWUMPostUpdateBeFused(post));
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(dynamicWMinMax)->canWUMPostUpdateBeFused(post));
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(dynamicSpike)->canWUMPostUpdateBeFused(post));
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(dynamicDecay)->canWUMPostUpdateBeFused(post));
 }
 
 TEST(SynapseGroup, InvalidPSOutputVar)

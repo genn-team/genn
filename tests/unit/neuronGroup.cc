@@ -942,19 +942,20 @@ TEST(NeuronGroup, FuseEProp)
     auto recurrentOutPopInternal = static_cast<SynapseGroupInternal*>(recurrentOutPop);
     
     // Check the 'ends' of all synapse groups attached to the recurrent population CAN be fused
-    ASSERT_TRUE(inRecurrentPopInternal->canWUMPrePostUpdateBeFused(recurrentPop));
-    ASSERT_TRUE(recurrentRecurrentPopInternal->canWUMPrePostUpdateBeFused(recurrentPop));
-    ASSERT_TRUE(recurrentOutPopInternal->canWUMPrePostUpdateBeFused(recurrentPop));
+    ASSERT_TRUE(inRecurrentPopInternal->canWUMPostUpdateBeFused(recurrentPop));
+    ASSERT_TRUE(recurrentRecurrentPopInternal->canWUMPreUpdateBeFused(recurrentPop));
+    ASSERT_TRUE(recurrentRecurrentPopInternal->canWUMPostUpdateBeFused(recurrentPop));
+    ASSERT_TRUE(recurrentOutPopInternal->canWUMPreUpdateBeFused(recurrentPop));
     
     // Check the surrogate gradient calculation in the postsynaptic end of 
     // inRecurrent can be fused with the postsynaptic end of recurrentRecurrent
-    ASSERT_EQ(inRecurrentPopInternal->getWUPrePostFuseHashDigest(recurrentPop),
-              recurrentRecurrentPopInternal->getWUPrePostFuseHashDigest(recurrentPop));
+    ASSERT_EQ(inRecurrentPopInternal->getWUPostFuseHashDigest(recurrentPop),
+              recurrentRecurrentPopInternal->getWUPostFuseHashDigest(recurrentPop));
 
-    // Check the ZFilter calculation in the presynaptic end of 
-    // recurrentRecurrent can be fused with the presynaptic end of recurrentOutPopInternal
-    ASSERT_EQ(inRecurrentPopInternal->getWUPrePostFuseHashDigest(recurrentPop),
-              recurrentOutPopInternal->getWUPrePostFuseHashDigest(recurrentPop));
+    // Check the ZFilter calculation in the presynaptic end of recurrentRecurrent
+    // can be fused with the presynaptic end of recurrentOutPopInternal
+    ASSERT_EQ(recurrentRecurrentPopInternal->getWUPreFuseHashDigest(recurrentPop),
+              recurrentOutPopInternal->getWUPreFuseHashDigest(recurrentPop));
 
     // Check that fusion results in one presynaptic and one postsynaptic update in the recurrent neuron
     ASSERT_EQ(recurrentPopInternal->getFusedInSynWithPostCode().size(), 1);
