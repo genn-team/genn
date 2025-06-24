@@ -449,8 +449,8 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
         // If there are any, merge
         if(!inSynWithPostUpdate.empty()) {
             fuseSynapseGroups(this, inSynWithPostUpdate, fusePrePostWUM, m_FusedWUPostInSyn, "postsynaptic weight update",
-                              &SynapseGroupInternal::canWUMPrePostUpdateBeFused, &SynapseGroupInternal::getWUPrePostFuseHashDigest,
-                              &SynapseGroupInternal::setFusedWUPrePostTarget);
+                              &SynapseGroupInternal::canWUMPostUpdateBeFused, &SynapseGroupInternal::getWUPostFuseHashDigest,
+                              &SynapseGroupInternal::setFusedWUPostTarget);
         }
     }
 
@@ -467,8 +467,8 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
      // If there are any
     if(!outSynWithPreUpdate.empty()) {
         fuseSynapseGroups(this, outSynWithPreUpdate, fusePrePostWUM, m_FusedWUPreOutSyn, "presynaptic weight update",
-                          &SynapseGroupInternal::canWUMPrePostUpdateBeFused, &SynapseGroupInternal::getWUPrePostFuseHashDigest,
-                          &SynapseGroupInternal::setFusedWUPrePostTarget);
+                          &SynapseGroupInternal::canWUMPreUpdateBeFused, &SynapseGroupInternal::getWUPreFuseHashDigest,
+                          &SynapseGroupInternal::setFusedWUPreTarget);
     }
 
     // Copy groups with output onto the presynaptic neuron into new vector

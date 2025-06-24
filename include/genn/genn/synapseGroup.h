@@ -272,7 +272,8 @@ protected:
     void setFusedPSTarget(const NeuronGroup *ng, const SynapseGroup &target);
     void setFusedSpikeTarget(const NeuronGroup *ng, const SynapseGroup &target);
     void setFusedSpikeEventTarget(const NeuronGroup *ng, const SynapseGroup &target);
-    void setFusedWUPrePostTarget(const NeuronGroup *ng, const SynapseGroup &target);
+    void setFusedWUPreTarget(const NeuronGroup *ng, const SynapseGroup &target);
+    void setFusedWUPostTarget(const NeuronGroup *ng, const SynapseGroup &target);
     void setFusedPreOutputTarget(const NeuronGroup *ng, const SynapseGroup &target);
     
     // Set a variable as requiring queueing
@@ -319,8 +320,11 @@ protected:
     //! Can spike event generation for this synapse group be safely fused?
     bool canWUSpikeEventBeFused(const NeuronGroup *ng) const;
 
-    //! Can presynaptic/postsynaptic update component of this synapse group's weight update model be safely fused with other whose hashes match so only one needs simulating at all?
-    bool canWUMPrePostUpdateBeFused(const NeuronGroup *ng) const;
+    //! Can presynapticupdate component of this synapse group's weight update model be safely fused with other whose hashes match so only one needs simulating at all?
+    bool canWUMPreUpdateBeFused(const NeuronGroup *ng) const;
+
+    //! Can postsynaptic update component of this synapse group's weight update model be safely fused with other whose hashes match so only one needs simulating at all?
+    bool canWUMPostUpdateBeFused(const NeuronGroup *ng) const;
 
     //! Has this synapse group's postsynaptic model been fused with those from other synapse groups?
     bool isPSModelFused() const{ return m_FusedPSTarget != nullptr; }
@@ -416,11 +420,16 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getWUSpikeEventHashDigest(const NeuronGroup *ng) const;
 
-    //! Generate hash of presynaptic or postsynaptic weight update component of this synapse group with additional components to ensure those
+    //! Generate hash of presynaptic weight update component of this synapse group with additional components to ensure those
     //! with matching hashes can not only be simulated using the same code, but fused so only one needs simulating at all
     /*! NOTE: this can only be called after model is finalized */
-    boost::uuids::detail::sha1::digest_type getWUPrePostFuseHashDigest(const NeuronGroup *ng) const;
+    boost::uuids::detail::sha1::digest_type getWUPreFuseHashDigest(const NeuronGroup *ng) const;
 
+    //! Generate hash of presynaptic weight update component of this synapse group with additional components to ensure those
+    //! with matching hashes can not only be simulated using the same code, but fused so only one needs simulating at all
+    /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getWUPostFuseHashDigest(const NeuronGroup *ng) const;
+    
     //! Generate hash of postsynaptic update component of this synapse group with additional components to ensure PSMs 
     //! with matching hashes can not only be simulated using the same code, but fused so only one needs simulating at all
     /*! NOTE: this can only be called after model is finalized */
@@ -468,6 +477,17 @@ protected:
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
 
 private:
+    //------------------------------------------------------------------------
+    // Private API
+    //------------------------------------------------------------------------
+    //! Can presynaptic/postsynaptic update component of this synapse group's weight update model be safely fused with other whose hashes match so only one needs simulating at all?
+    bool canWUMPrePostUpdateBeFused(bool presynaptic) const;
+    
+    //! Generate hash of presynaptic or postsynaptic weight update component of this synapse group with additional components to ensure those
+    //! with matching hashes can not only be simulated using the same code, but fused so only one needs simulating at all
+    /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getWUPrePostFuseHashDigest(bool presynaptic) const;
+
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------

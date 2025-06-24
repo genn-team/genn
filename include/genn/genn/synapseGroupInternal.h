@@ -37,7 +37,8 @@ public:
     using SynapseGroup::setFusedSpikeTarget;
     using SynapseGroup::setFusedSpikeEventTarget;
     using SynapseGroup::setFusedPreOutputTarget;
-    using SynapseGroup::setFusedWUPrePostTarget;
+    using SynapseGroup::setFusedWUPreTarget;
+    using SynapseGroup::setFusedWUPostTarget;
     using SynapseGroup::finalise;
     using SynapseGroup::addCustomUpdateReference;
     using SynapseGroup::getFusedPSTarget;
@@ -51,7 +52,8 @@ public:
     using SynapseGroup::getCustomUpdateReferences;
     using SynapseGroup::canPSBeFused;
     using SynapseGroup::canSpikeBeFused;
-    using SynapseGroup::canWUMPrePostUpdateBeFused;
+    using SynapseGroup::canWUMPreUpdateBeFused;
+    using SynapseGroup::canWUMPostUpdateBeFused;
     using SynapseGroup::canWUSpikeEventBeFused;
     using SynapseGroup::canPreOutputBeFused;
     using SynapseGroup::isPSModelFused;
@@ -79,7 +81,8 @@ public:
     using SynapseGroup::getPSFuseHashDigest;
     using SynapseGroup::getSpikeHashDigest;
     using SynapseGroup::getPreOutputHashDigest;
-    using SynapseGroup::getWUPrePostFuseHashDigest;
+    using SynapseGroup::getWUPreFuseHashDigest;
+    using SynapseGroup::getWUPostFuseHashDigest;
     using SynapseGroup::getWUSpikeEventFuseHashDigest;
     using SynapseGroup::getDendriticDelayUpdateHashDigest;
     using SynapseGroup::getWUInitHashDigest;
