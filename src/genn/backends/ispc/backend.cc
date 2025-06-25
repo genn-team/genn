@@ -39,7 +39,7 @@ State::State(const GeNN::Runtime::Runtime &)
 //--------------------------------------------------------------------------
 Array::Array(const Type::ResolvedType &type, size_t count, 
              VarLocation, bool uninitialized)
-:   Runtime::ArrayBase(type, count, VarLocation::DEVICE, uninitialized)
+:   Runtime::ArrayBase(type, count, VarLocation::HOST, uninitialized)
 {
 }
     
