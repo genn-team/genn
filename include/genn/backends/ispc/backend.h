@@ -30,26 +30,11 @@ namespace GeNN::CodeGenerator::ISPC
 {
 struct Preferences : public PreferencesBase
 {
-    //! Which SIMD instruction set to target
-    std::string targetISA = "avx2";
-    
-    //! Maximize use of uniform variables for performance
-    bool maximizeUniforms = true;
-
-    //! Debug flag - if true, more debug information is generated
-    bool debugCode = false;
-    
-    //! Optimize flag - if true, generates optimized code
-    bool optimizeCode = true;
-    
-    //! If true, optimize for size rather than speed
-    bool optimizeForSize = false;
-    
     //! Update hash with preferences
-    EXPORT_GENN virtual void updateHash(boost::uuids::detail::sha1 &hash) const override;
+    virtual void updateHash(boost::uuids::detail::sha1 &hash) const;
 
     //! Get import suffix
-    EXPORT_GENN virtual const char *getImportSuffix() const override;
+    virtual const char *getImportSuffix() const;
 };
 
 //--------------------------------------------------------------------------
@@ -86,100 +71,109 @@ public:
     virtual void serialiseHostObject(std::vector<std::byte> &result, bool compress) const final;
 };
 
+
 //--------------------------------------------------------------------------
 // GeNN::CodeGenerator::ISPC::Backend
 //--------------------------------------------------------------------------
-class Backend : public GeNN::CodeGenerator::BackendBase
+class BACKEND_EXPORT Backend : public BackendBase
 {
 public:
-    Backend()
-    {
-        setPreferencesBase(std::make_shared<Preferences>());
-    }
-    
-    //--------------------------------------------------------------------------
-    // GeNN::CodeGenerator::BackendBase virtuals
-    //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
-                                HostHandler preambleHandler) const override;
-                                
-    virtual void genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
-                                 HostHandler preambleHandler) const override;
-                                 
-    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
-                               HostHandler preambleHandler) const override;
-                               
-    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces,
-                       HostHandler preambleHandler) const override;
-                       
-    virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const std::string&) const override;
-    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
-    
-    virtual void genNeuronPrevSpikeTimeUpdateKernel(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng,
-                                                 BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const override;
-                                                  
-    virtual void genNeuronSpikeQueueUpdateKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged, 
-                                               BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const override;
-                                               
-    virtual void genNeuronUpdateKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged,
-                                     BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const override;
-                                     
-    virtual void genInitializeKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged,
-                                   BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const override;
-                                   
-    virtual void genInitializeSparseKernel(EnvironmentExternalBase &env, const ModelSpecMerged &modelMerged,
-                                         BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const override;
-    
-    virtual void genAssert(CodeStream &os, const std::string &condition) const override;
-    virtual void genMakefilePreamble(std::ostream &os) const override;
-    virtual void genMakefileLinkRule(std::ostream &os) const override;
-    virtual void genMakefileCompileRule(std::ostream &os) const override;
-    virtual void genMSBuildConfigProperties(std::ostream &os) const override;
-    virtual void genMSBuildImportProps(std::ostream &os) const override;
-    virtual void genMSBuildItemDefinitions(std::ostream &os) const override;
-    virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const override;
-    virtual void genMSBuildImportTarget(std::ostream &os) const override;
-    
-    virtual std::vector<filesystem::path> getFilesToCopy(const ModelSpecMerged &model) const override;
-    virtual boost::uuids::detail::sha1::digest_type getHashDigest() const override;
-    virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const override;
-    
-    virtual bool isGlobalHostRNGRequired(const ModelSpecInternal &model) const override;
-    virtual bool isGlobalDeviceRNGRequired(const ModelSpecInternal &model) const override;
-    virtual BackendBase::MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override;
-    virtual Type::ResolvedType getPopulationRNGType() const override { return Type::Void; }
-    
-    //--------------------------------------------------------------------------
-    // Public methods
-    //--------------------------------------------------------------------------
-    //! Get appropriate ISPC type for GeNN type
-    std::string getISPCType(const Type::ResolvedType &type, bool uniform = false) const;
-    
-    //! Generate custom neuron model code for ISPC
-    void genCustomNeuronModelCode(CodeStream &os, const NeuronGroupInternal &ng, 
-                                const std::string &modelName) const;
-    
-protected:
-    //--------------------------------------------------------------------------
-    // Protected methods
-    //--------------------------------------------------------------------------
-    //! Get the string name for the given neuron model
-    std::string getNeuronModelType(const NeuronGroupInternal &ng) const;
-    
-    //! Get the kernel function name for the given neuron model type
-    std::string getNeuronKernelName(const std::string &modelType) const;
-    
-    // Backend-specific implementation to generate for conditions in presynaptic update
-    virtual void genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
-                                    double dt, bool trueSpike) const override;
-                                    
-    // Backend-specific implementation to generate for each synapse post-update
-    virtual void genPostsynapticUpdate(EnvironmentExternalBase &env, PostsynapticUpdateGroupMerged &sg, 
-                                     double dt, bool trueSpike) const override;
-                                     
-    // Backend-specific implementation to generate prev. spike time update triggered by events
-    virtual void genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng,
-                                      bool trueSpike) const override;
-};
+    Backend(const Preferences &preferences);
 
-} // namespace GeNN::CodeGenerator::ISPC 
+    //--------------------------------------------------------------------------
+    // CodeGenerator::BackendBase virtuals
+    //--------------------------------------------------------------------------
+    virtual void genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
+                                 HostHandler preambleHandler) const final;
+
+    virtual void genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
+                                  HostHandler preambleHandler) const final;
+
+    virtual void genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
+                                 HostHandler preambleHandler) const final;
+
+    virtual void genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
+                         HostHandler preambleHandler) const final;
+
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const final;
+
+    virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+    virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+    virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+
+    virtual std::unique_ptr<GeNN::Runtime::StateBase> createState(const Runtime::Runtime &runtime) const final;
+
+    virtual std::unique_ptr<Runtime::ArrayBase> createArray(const Type::ResolvedType &type, size_t count, 
+                                                            VarLocation location, bool uninitialized) const final;
+
+    virtual std::unique_ptr<Runtime::ArrayBase> createPopulationRNG(size_t) const final;
+
+    virtual void genLazyVariableDynamicAllocation(CodeStream &os, 
+                                                  const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
+                                                  const std::string &countVarName) const final;
+
+    virtual void genLazyVariableDynamicPush(CodeStream &os, 
+                                            const Type::ResolvedType &type, const std::string &name,
+                                            VarLocation loc, const std::string &countVarName) const final;
+
+    virtual void genLazyVariableDynamicPull(CodeStream &os, 
+                                            const Type::ResolvedType &type, const std::string &name,
+                                            VarLocation loc, const std::string &countVarName) const final;
+
+    virtual void genMergedDynamicVariablePush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
+                                              const std::string &groupIdx, const std::string &fieldName,
+                                              const std::string &egpName) const final;
+
+    virtual std::string getMergedGroupFieldHostTypeName(const Type::ResolvedType &type) const final;
+
+    virtual void genPopVariableInit(EnvironmentExternalBase &env, HandlerEnv handler) const final;
+    virtual void genVariableInit(EnvironmentExternalBase &env, const std::string &count, const std::string &indexVarName, HandlerEnv handler) const final;
+    virtual void genSparseSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const final;
+    virtual void genDenseSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const final;
+    virtual void genKernelSynapseVariableInit(EnvironmentExternalBase &env, SynapseInitGroupMerged &sg, HandlerEnv handler) const final;
+    virtual void genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const final;
+
+    virtual std::string getAtomicOperation(const std::string &lhsPointer, const std::string &rhsValue,
+                                           const Type::ResolvedType &type, AtomicOperation op = AtomicOperation::ADD) const final;
+
+    virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free) const final;
+    virtual void genTimer(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise, 
+                          const std::string &name, bool updateInStepTime) const final;
+    
+    virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const final;
+    
+    virtual void genAssert(CodeStream &os, const std::string &condition) const final;
+
+    virtual void genMakefilePreamble(std::ostream &os) const final;
+    virtual void genMakefileLinkRule(std::ostream &os) const final;
+    virtual void genMakefileCompileRule(std::ostream &os) const final;
+
+    virtual void genMSBuildConfigProperties(std::ostream &os) const final;
+    virtual void genMSBuildImportProps(std::ostream &os) const final;
+    virtual void genMSBuildItemDefinitions(std::ostream &os) const final;
+    virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const final;
+    virtual void genMSBuildImportTarget(std::ostream &os) const final;
+    
+    virtual bool isArrayDeviceObjectRequired() const final;
+    
+    virtual bool isArrayHostObjectRequired() const final;
+
+    virtual bool isGlobalHostRNGRequired(const ModelSpecInternal &model) const final;
+    virtual bool isGlobalDeviceRNGRequired(const ModelSpecInternal &model) const final;
+    
+    virtual bool isPopulationRNGInitialisedOnDevice() const final;
+
+    virtual bool isPostsynapticRemapRequired() const final;
+    
+    virtual bool isHostReductionRequired() const final;
+    
+    virtual size_t getDeviceMemoryBytes() const final;
+    
+    virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const final;
+    
+    virtual boost::uuids::detail::sha1::digest_type getHashDigest() const final;
+
+};
+}
