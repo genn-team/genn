@@ -30,11 +30,12 @@ namespace GeNN::CodeGenerator::ISPC
 {
 struct Preferences : public PreferencesBase
 {
-    //! Update hash with preferences
-    virtual void updateHash(boost::uuids::detail::sha1 &hash) const;
+    //! Which SIMD instruction set to target e.g. sse4, avx, avx2, avx512skx-i32x8
+    std::string targetISA = "avx2";
 
-    //! Get import suffix
-    virtual const char *getImportSuffix() const;
+    //! Update hash with preferences
+    virtual void updateHash(boost::uuids::detail::sha1 &hash) const final;
+
 };
 
 //--------------------------------------------------------------------------
@@ -53,7 +54,7 @@ class Array : public GeNN::Runtime::ArrayBase
 {
 public:
     Array(const Type::ResolvedType &type, size_t count, 
-          VarLocation location, bool uninitialized);
+          VarLocation location, bool uninitialized, size_t alignment);
     
     virtual ~Array();
     
@@ -69,6 +70,9 @@ public:
     virtual void memsetDeviceObject(int value) final;
     virtual void serialiseDeviceObject(std::vector<std::byte> &result, bool compress) const final;
     virtual void serialiseHostObject(std::vector<std::byte> &result, bool compress) const final;
+
+private:
+    size_t m_Alignment;
 };
 
 
@@ -78,7 +82,7 @@ public:
 class BACKEND_EXPORT Backend : public BackendBase
 {
 public:
-    Backend(const Preferences &preferences);
+    Backend();
 
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
