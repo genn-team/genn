@@ -7,12 +7,57 @@
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
 #include "code_generator/modelSpecMerged.h"
+#include "code_generator/standardLibrary.h"
 
 #include <vector>
 
 using namespace GeNN;
 using namespace GeNN::CodeGenerator;
+using namespace GeNN::Transpiler;
 using namespace GeNN::CodeGenerator::ISPC;
+
+//--------------------------------------------------------------------------
+// Anonymous namespace
+//--------------------------------------------------------------------------
+namespace
+{
+const EnvironmentLibrary::Library backendFunctions = {
+    {"clz", {Type::ResolvedType::createFunction(Type::Int32, {Type::Uint32}), "clz($(0))"}},
+    {"atomic_fetch_add", {Type::ResolvedType::createFunction(Type::Uint32, {Type::Uint32.createPointer(), Type::Uint32}), "atomic_add_global($(0), $(1))"}}
+};
+
+//--------------------------------------------------------------------------
+// Timer
+//--------------------------------------------------------------------------
+class Timer
+{
+public:
+    Timer(CodeStream &codeStream, const std::string &name, bool timingEnabled)
+    :   m_CodeStream(codeStream), m_Name(name), m_TimingEnabled(timingEnabled)
+    {
+        // Record start event
+        if(m_TimingEnabled) {
+            m_CodeStream << "const auto " << m_Name << "Start = std::chrono::high_resolution_clock::now();" << std::endl;
+        }
+    }
+
+    ~Timer()
+    {
+        // Record stop event
+        if(m_TimingEnabled) {
+            m_CodeStream << m_Name << "Time += std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - " << m_Name << "Start).count();" << std::endl;
+        }
+    }
+
+private:
+    //--------------------------------------------------------------------------
+    // Members
+    //--------------------------------------------------------------------------
+    CodeStream &m_CodeStream;
+    const std::string m_Name;
+    const bool m_TimingEnabled;
+};
+}
 
 //--------------------------------------------------------------------------
 // GeNN::CodeGenerator::ISPC::Preferences
@@ -121,8 +166,218 @@ Backend::Backend()
     setPreferencesBase(std::make_shared<Preferences>());
 }
 
-void Backend::genNeuronUpdate(CodeStream &, ModelSpecMerged &, BackendBase::MemorySpaces &, HostHandler) const
+void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
+                              HostHandler preambleHandler) const
 {
+    if(modelMerged.getModel().getBatchSize() != 1) {
+        throw std::runtime_error("The ISPC backend only supports simulations with a batch size of 1");
+    }
+   
+    // Generate stream with neuron update code
+    std::ostringstream neuronUpdateStream;
+    CodeStream neuronUpdate(neuronUpdateStream);
+
+    // Begin environment with standard library
+    EnvironmentLibrary backendEnv(neuronUpdate, backendFunctions);
+    EnvironmentLibrary neuronUpdateEnv(backendEnv, StandardLibrary::getMathsFunctions());
+
+    neuronUpdateEnv.getStream() << "void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
+    if(modelMerged.getModel().isRecordingInUse()) {
+        neuronUpdateEnv.getStream() << ", unsigned int recordingTimestep";
+    }
+    neuronUpdateEnv.getStream() << ")";
+    {
+        CodeStream::Scope b(neuronUpdateEnv.getStream());
+
+        EnvironmentExternal funcEnv(neuronUpdateEnv);
+        funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t");
+        funcEnv.add(Type::Uint32.addConst(), "batch", "0");
+        funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
+                    Type::writeNumeric(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
+        
+        Timer t(funcEnv.getStream(), "neuronUpdate", modelMerged.getModel().isTimingEnabled());
+        
+        // Process neuron spike time updates
+        modelMerged.genMergedNeuronPrevSpikeTimeUpdateGroups(
+            *this, memorySpaces,
+            [this, &funcEnv](auto &n)
+            {
+                CodeStream::Scope b(funcEnv.getStream());
+                funcEnv.getStream() << "// merged neuron prev spike update group " << n.getIndex() << std::endl;
+                funcEnv.getStream() << "for(unsigned int g = 0; g < " << n.getGroups().size() << "; g++)";
+                {
+                    CodeStream::Scope b(funcEnv.getStream());
+
+                    // Get reference to group
+                    funcEnv.getStream() << "const auto *group = &mergedNeuronPrevSpikeTimeUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
+                    
+                    // Create matching environment
+                    EnvironmentGroupMergedField<NeuronPrevSpikeTimeUpdateGroupMerged> groupEnv(funcEnv, n);
+                    buildStandardEnvironment(groupEnv, 1);
+
+                    if(n.getArchetype().isDelayRequired()) {
+                        groupEnv.printLine("const unsigned int lastTimestepDelaySlot = *$(_spk_que_ptr);");
+                        groupEnv.printLine("const unsigned int lastTimestepDelayOffset = lastTimestepDelaySlot * $(num_neurons);");
+                    }
+
+                    // Generate code to update previous spike times
+                    if(n.getArchetype().isPrevSpikeTimeRequired()) {
+                        n.generateSpikes(
+                            groupEnv,
+                            [&n, this](EnvironmentExternalBase &env)
+                            {
+                                genPrevEventTimeUpdate(env, n, true);
+                            });
+                    }
+                    
+                    // Generate code to update previous spike-event times
+                    if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
+                        n.generateSpikeEvents(
+                            groupEnv,
+                            [&n, this](EnvironmentExternalBase &env)
+                            {
+                                genPrevEventTimeUpdate(env, n, false);
+                            });
+                    }
+                }
+            });
+
+        // Loop through merged neuron spike queue update groups
+        modelMerged.genMergedNeuronSpikeQueueUpdateGroups(
+            *this, memorySpaces,
+            [this, &funcEnv](auto &n)
+            {
+                CodeStream::Scope b(funcEnv.getStream());
+                funcEnv.getStream() << "// merged neuron spike queue update group " << n.getIndex() << std::endl;
+                funcEnv.getStream() << "for(unsigned int g = 0; g < " << n.getGroups().size() << "; g++)";
+                {
+                    CodeStream::Scope b(funcEnv.getStream());
+
+                    // Get reference to group
+                    funcEnv.getStream() << "const auto *group = &mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
+                    EnvironmentGroupMergedField<NeuronSpikeQueueUpdateGroupMerged> groupEnv(funcEnv, n);
+                    buildStandardEnvironment(groupEnv, 1);
+
+                    // Generate spike count reset
+                    n.genSpikeQueueUpdate(groupEnv, 1);
+                }
+            });
+
+        // Loop through merged neuron update groups
+        modelMerged.genMergedNeuronUpdateGroups(
+            *this, memorySpaces,
+            [this, &funcEnv, &modelMerged](auto &n)
+            {
+                CodeStream::Scope b(funcEnv.getStream());
+                funcEnv.getStream() << "// merged neuron update group " << n.getIndex() << std::endl;
+                funcEnv.getStream() << "for(unsigned int g = 0; g < " << n.getGroups().size() << "; g++)";
+                {
+                    CodeStream::Scope b(funcEnv.getStream());
+
+                    // Get reference to group
+                    funcEnv.getStream() << "const auto *group = &mergedNeuronUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
+                    EnvironmentGroupMergedField<NeuronUpdateGroupMerged> groupEnv(funcEnv, n);
+                    buildStandardEnvironment(groupEnv, 1);
+
+                    // If spike or spike-like event recording is in use
+                    if(n.getArchetype().isSpikeRecordingEnabled() || n.getArchetype().isSpikeEventRecordingEnabled()) {
+                        // Calculate number of words which will be used to record this population's spikes
+                        groupEnv.printLine("const unsigned int numRecordingWords = ($(num_neurons) + 31) / 32;");
+
+                        // Zero spike recording buffer
+                        if(n.getArchetype().isSpikeRecordingEnabled()) {
+                            groupEnv.printLine("std::fill_n(&$(_record_spk)[recordingTimestep * numRecordingWords], numRecordingWords, 0);");
+                        }
+
+                        // Zero spike-like-event recording buffer
+                        if(n.getArchetype().isSpikeEventRecordingEnabled()) {
+                            n.generateSpikeEvents(
+                                groupEnv,
+                                [](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent&)
+                                {
+                                    env.printLine("std::fill_n(&$(_record_spk_event)[recordingTimestep * numRecordingWords], numRecordingWords, 0);");
+                                });
+                        }
+                    }
+
+                    groupEnv.getStream() << std::endl;
+
+                    // ISPC
+                    // Foreach to enable SIMD parallelism
+                    groupEnv.print("foreach(i = 0 ... $(num_neurons))");
+                    {
+                        CodeStream::Scope b(groupEnv.getStream());
+
+                        groupEnv.add(Type::Uint32, "id", "i");
+
+                        // Generate neuron update
+                        n.generateNeuronUpdate(
+                            groupEnv, 1,
+                            // Emit true spikes
+                            [&n, this](EnvironmentExternalBase &env)
+                            {
+                                // Insert code to update WU vars
+                                n.generateWUVarUpdate(env, 1);
+
+                                // If recording is enabled
+                                if(n.getArchetype().isSpikeRecordingEnabled()) {
+                                    env.printLine("atomic_or_global(&($(_record_spk)[(recordingTimestep * numRecordingWords) + ($(id) / 32)]), (1 << ($(id) % 32)));");
+                                }
+
+                                // Update event time
+                                if(n.getArchetype().isSpikeTimeRequired()) {
+                                    const std::string queueOffset = n.getArchetype().isSpikeDelayRequired() ? "$(_write_delay_offset) + " : "";
+                                    env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
+                                }
+
+                                // Generate spike data structure updates
+                                n.generateSpikes(
+                                    env,
+                                    [&n, this](EnvironmentExternalBase &env)
+                                    {
+                                        genEmitEvent(env, n, true);
+                                    });
+                               
+                            },
+                            // Emit spike-like events
+                            [&n, this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent &sg)
+                            {
+                                sg.generate(
+                                    env, n,
+                                    [&n, this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent&)
+                                    {
+                                        genEmitEvent(env, n, false);
+
+                                        if(n.getArchetype().isSpikeEventTimeRequired()) {
+                                            const std::string queueOffset = n.getArchetype().isSpikeEventDelayRequired() ? "$(_write_delay_offset) + " : "";
+                                            env.printLine("$(_set)[" + queueOffset + "$(id)] = $(t);");
+                                        }
+
+                                        // If recording is enabled
+                                        if(n.getArchetype().isSpikeEventRecordingEnabled()) {
+                                            env.printLine("atomic_or_global(&($(_record_spk_event)[(recordingTimestep * numRecordingWords) + ($(id) / 32)]), (1 << ($(id) % 32)));");
+                                        }
+                                    });
+                            });
+                    }
+                }
+            });
+    }
+
+    // Generate struct definitions
+    modelMerged.genMergedNeuronUpdateGroupStructs(os, *this);
+    modelMerged.genMergedNeuronSpikeQueueUpdateStructs(os, *this);
+    modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(os, *this);
+
+    // Generate arrays of merged structs and functions to set them
+    modelMerged.genMergedNeuronUpdateGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedNeuronSpikeQueueUpdateHostStructArrayPush(os, *this);
+    modelMerged.genMergedNeuronPrevSpikeTimeUpdateHostStructArrayPush(os, *this);
+
+    // Generate preamble
+    preambleHandler(os);
+
+    os << neuronUpdateStream.str();
 }
 
 void Backend::genSynapseUpdate(CodeStream &, ModelSpecMerged &, BackendBase::MemorySpaces &, HostHandler) const
@@ -330,4 +585,51 @@ BackendBase::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMer
 boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
 {
     return {};
+}
+
+void Backend::genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng, bool trueSpike) const
+{
+    const std::string suffix = trueSpike ? "" : "_event";
+    const std::string time = trueSpike ? "st" : "set";
+    if(trueSpike ? ng.getArchetype().isSpikeDelayRequired() : ng.getArchetype().isSpikeEventDelayRequired()) {
+        // Loop through neurons which spiked last timestep in parallel using foreach
+        env.print("foreach(i = 0 ... $(_spk_cnt" + suffix + ")[lastTimestepDelaySlot])");
+        {
+            CodeStream::Scope b(env.getStream());
+            env.printLine("$(_prev_" + time + ")[lastTimestepDelayOffset + $(_spk" + suffix + ")[lastTimestepDelayOffset + i]] = $(t) - $(dt);");
+        }
+    }
+    else {
+        // Loop through neurons which spiked last timestep in parallel using foreach
+        env.print("foreach(i = 0 ... $(_spk_cnt" + suffix + ")[0])");
+        {
+            CodeStream::Scope b(env.getStream());
+            env.printLine("$(_prev_" + time + ")[$(_spk" + suffix + ")[i]] = $(t) - $(dt);");
+        }
+    }
+}
+
+void Backend::genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike) const
+{
+    const bool delayRequired = (trueSpike ? ng.getArchetype().isSpikeDelayRequired()
+                                : ng.getArchetype().isSpikeEventDelayRequired());
+    const std::string suffix = trueSpike ? "" : "_event";
+
+    if(!delayRequired) {
+        // Atomically increment spike counter to get a unique index for this spike
+        env.printLine("const unsigned int spkIdx = atomic_fetch_add(&($(_spk_cnt" + suffix + ")[0]), 1u);");
+        
+        // Write spike to this unique location
+        env.printLine("$(_spk" + suffix + ")[spkIdx] = $(id);");
+    }
+    else {
+        // For delayed spikes, the logic is similar but uses the spike queue pointer
+        const std::string queueOffset = "$(_write_delay_offset) + ";
+        
+        // Atomically increment spike counter for the correct delay slot
+        env.printLine("const unsigned int spkIdx = atomic_fetch_add(&($(_spk_cnt" + suffix + ")[*$(_spk_que_ptr)]), 1u);");
+        
+        // Write spike to this unique location in the correct delay slot
+        env.printLine("$(_spk" + suffix + ")[" + queueOffset + "spkIdx] = $(id);");
+    }
 }

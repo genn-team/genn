@@ -179,5 +179,8 @@ public:
     
     virtual boost::uuids::detail::sha1::digest_type getHashDigest() const final;
 
+private:
+    void genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng, bool trueSpike) const;
+    void genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike) const;
 };
 }
