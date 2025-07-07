@@ -65,7 +65,6 @@ bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::
 
     return true;
 }
-
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -84,17 +83,19 @@ std::vector<std::string> generateAll(ModelSpecMerged &modelMerged, const Backend
     // **NOTE** Memory spaces are given out on a first-come, first-serve basis so subsequent groups are in preferential order
     auto memorySpaces = backend.getMergedGroupMemorySpaces(modelMerged);
     
-    // Generate modules into string streams
-    // **NOTE** because code generation is one-pass, this needs to be done whether code needs compiling or not
-    std::ostringstream synapseUpdateStream;
-    std::ostringstream neuronUpdateStream;
-    std::ostringstream customUpdateStream;
-    std::ostringstream initStream;
+    // Create vector to hold file streams and lambda function to create them
+    std::vector<std::tuple<std::string, std::string, std::ostringstream>> fileStreams;
+    auto fileStreamCreator =
+        [&fileStreams](const std::string &title, const std::string &extension) -> std::ostream&
+        {
+            fileStreams.emplace_back(title, extension, std::ostringstream());
+            return std::get<2>(fileStreams.back());
+        };
 
-    generateSynapseUpdate(synapseUpdateStream, modelMerged, backend, memorySpaces);
-    generateNeuronUpdate(neuronUpdateStream, modelMerged, backend, memorySpaces);
-    generateCustomUpdate(customUpdateStream, modelMerged, backend, memorySpaces);
-    generateInit(initStream, modelMerged, backend, memorySpaces);
+    generateSynapseUpdate(fileStreamCreator, modelMerged, backend, memorySpaces);
+    generateNeuronUpdate(fileStreamCreator, modelMerged, backend, memorySpaces);
+    generateCustomUpdate(fileStreamCreator, modelMerged, backend, memorySpaces);
+    generateInit(fileStreamCreator, modelMerged, backend, memorySpaces);
 
     // If force rebuild flag is set or model should be rebuilt
     const auto hashDigest = modelMerged.getHashDigest(backend);
@@ -102,11 +103,11 @@ std::vector<std::string> generateAll(ModelSpecMerged &modelMerged, const Backend
         // Generate runner
         generateRunner(outputPath, modelMerged, backend);
 
-        // Write module files to disk
-        writeStringStream(outputPath / "neuronUpdate.cc", neuronUpdateStream);
-        writeStringStream(outputPath / "customUpdate.cc", customUpdateStream);
-        writeStringStream(outputPath / "synapseUpdate.cc", synapseUpdateStream);
-        writeStringStream(outputPath / "init.cc", initStream);
+        // Write file streams to disk
+        for(const auto &s : fileStreams) {
+            std::ofstream fileStream((outputPath / (std::get<0>(s) + "." + std::get<1>(s))).str());
+            fileStream << std::get<2>(s).str();
+        }
 
         // Open file
         std::ofstream os((outputPath / "model.sha").str());
@@ -148,11 +149,11 @@ std::vector<std::string> generateAll(ModelSpecMerged &modelMerged, const Backend
     return std::vector<std::string>{"customUpdate", "neuronUpdate", "synapseUpdate", "init", "runner"};
 }
 //--------------------------------------------------------------------------
-void generateNeuronUpdate(std::ostream &stream, ModelSpecMerged &modelMerged, const BackendBase &backend, 
+void generateNeuronUpdate(FileStreamCreator streamCreator, ModelSpecMerged &modelMerged, const BackendBase &backend,
                           BackendBase::MemorySpaces &memorySpaces, const std::string &suffix)
 {
     // Wrap output stream in CodeStream
-    CodeStream neuronUpdate(stream);
+    CodeStream neuronUpdate(streamCreator("neuronUpdate", "cc"));
 
     neuronUpdate << "#include \"definitions" << suffix << ".h\"" << std::endl;
     neuronUpdate << std::endl;
@@ -168,11 +169,11 @@ void generateNeuronUpdate(std::ostream &stream, ModelSpecMerged &modelMerged, co
         });
 }
 //--------------------------------------------------------------------------
-void generateCustomUpdate(std::ostream &stream, ModelSpecMerged &modelMerged, const BackendBase &backend, 
+void generateCustomUpdate(FileStreamCreator streamCreator, ModelSpecMerged &modelMerged, const BackendBase &backend,
                           BackendBase::MemorySpaces &memorySpaces, const std::string &suffix)
 {
     // Wrap output stream in CodeStream
-    CodeStream customUpdate(stream);
+    CodeStream customUpdate(streamCreator("customUpdate", "cc"));
 
     customUpdate << "#include \"definitions" << suffix << ".h\"" << std::endl;
     customUpdate << std::endl;
@@ -191,11 +192,11 @@ void generateCustomUpdate(std::ostream &stream, ModelSpecMerged &modelMerged, co
         });
 }
 //--------------------------------------------------------------------------
-void generateSynapseUpdate(std::ostream &stream, ModelSpecMerged &modelMerged, const BackendBase &backend, 
+void generateSynapseUpdate(FileStreamCreator streamCreator, ModelSpecMerged &modelMerged, const BackendBase &backend,
                            BackendBase::MemorySpaces &memorySpaces, const std::string &suffix)
 {
     // Wrap output stream in CodeStream
-    CodeStream synapseUpdate(stream);
+    CodeStream synapseUpdate(streamCreator("synapseUpdate", "cc"));
 
     synapseUpdate << "#include \"definitions" << suffix << ".h\"" << std::endl;
     synapseUpdate << std::endl;
@@ -212,11 +213,11 @@ void generateSynapseUpdate(std::ostream &stream, ModelSpecMerged &modelMerged, c
         });
 }
 //--------------------------------------------------------------------------
-void generateInit(std::ostream &stream, ModelSpecMerged &modelMerged, const BackendBase &backend, 
+void generateInit(FileStreamCreator streamCreator, ModelSpecMerged &modelMerged, const BackendBase &backend,
                   BackendBase::MemorySpaces &memorySpaces, const std::string &suffix)
 {
     // Wrap output stream in CodeStream
-    CodeStream init(stream);
+    CodeStream init(streamCreator("init", "cc"));
 
     init << "#include \"definitions" << suffix << ".h\"" << std::endl;
 

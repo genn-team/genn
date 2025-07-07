@@ -26,19 +26,21 @@ namespace filesystem
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator
 {
+using FileStreamCreator = std::function<std::ostream &(const std::string &, const std::string &)>;
+
 GENN_EXPORT std::vector<std::string> generateAll(ModelSpecMerged &modelMerged, const BackendBase &backend, 
                                                  const filesystem::path &outputPath, bool alwaysRebuild = false, 
                                                  bool neverRebuild = false);
 
-GENN_EXPORT void generateNeuronUpdate(std::ostream &stream, ModelSpecMerged &modelMerged, const BackendBase &backend,
+GENN_EXPORT void generateNeuronUpdate(FileStreamCreator streamCreator, ModelSpecMerged &modelMerged, const BackendBase &backend,
                                       BackendBase::MemorySpaces &memorySpaces, const std::string &suffix = "");
 
-GENN_EXPORT void generateCustomUpdate(std::ostream &stream, ModelSpecMerged &modelMerged, const BackendBase &backend, 
+GENN_EXPORT void generateCustomUpdate(FileStreamCreator streamCreator, ModelSpecMerged &modelMerged, const BackendBase &backend,
                                       BackendBase::MemorySpaces &memorySpaces, const std::string &suffix = "");
 
-GENN_EXPORT void generateSynapseUpdate(std::ostream &stream, ModelSpecMerged &modelMerged, const BackendBase &backend, 
+GENN_EXPORT void generateSynapseUpdate(FileStreamCreator streamCreator, ModelSpecMerged &modelMerged, const BackendBase &backend,
                                        BackendBase::MemorySpaces &memorySpaces, const std::string &suffix = "");
 
-GENN_EXPORT void generateInit(std::ostream &stream, ModelSpecMerged &modelMerged, const BackendBase &backend, 
+GENN_EXPORT void generateInit(FileStreamCreator streamCreator, ModelSpecMerged &modelMerged, const BackendBase &backend,
                               BackendBase::MemorySpaces &memorySpaces, const std::string &suffix = "");
 }
