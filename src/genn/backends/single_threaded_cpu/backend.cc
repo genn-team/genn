@@ -216,8 +216,8 @@ void genRemap(EnvironmentExternalBase &env)
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator::SingleThreadedCPU
 {
-void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
-                              HostHandler preambleHandler) const
+void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelMerged, 
+                              BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
     if(modelMerged.getModel().getBatchSize() != 1) {
         throw std::runtime_error("The single-threaded CPU backend only supports simulations with a batch size of 1");
@@ -429,8 +429,8 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
     os << neuronUpdateStream.str();
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
-                               HostHandler preambleHandler) const
+void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelMerged, 
+                               BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
     if (modelMerged.getModel().getBatchSize() != 1) {
         throw std::runtime_error("The single-threaded CPU backend only supports simulations with a batch size of 1");
@@ -634,8 +634,8 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Bac
     os << synapseUpdateStream.str();
 }
 //--------------------------------------------------------------------------
-void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
-                              HostHandler preambleHandler) const
+void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelMerged, 
+                              BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -996,8 +996,8 @@ void Backend::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
-                      HostHandler preambleHandler) const
+void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelMerged,
+                      BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
     if(model.getBatchSize() != 1) {

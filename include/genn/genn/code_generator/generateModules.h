@@ -26,8 +26,6 @@ namespace filesystem
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator
 {
-using FileStreamCreator = std::function<std::ostream &(const std::string &, const std::string &)>;
-
 GENN_EXPORT std::vector<std::string> generateAll(ModelSpecMerged &modelMerged, const BackendBase &backend, 
                                                  const filesystem::path &outputPath, bool alwaysRebuild = false, 
                                                  bool neverRebuild = false);
