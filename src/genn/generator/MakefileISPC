@@ -1,0 +1,6 @@
+# Configure for ISPC backend
+BACKEND_NAME        :=ispc
+BACKEND_NAMESPACE   :=ISPC
+
+# Include common makefile
+include MakefileCommon

@@ -7,7 +7,8 @@ goto :genn_begin
 rem :: display genn-buildmodel.bat help
 echo genn-buildmodel.bat script usage:
 echo genn-buildmodel.bat [cdho] model
-echo -c             only generate simulation code for the CPU
+echo -c             generate simulation code for the CPU
+echo -b             generate simulation code for ISPC
 echo -d             enables the debugging mode
 echo -h             shows this help message
 echo -s             build GeNN without SDL checks
@@ -21,7 +22,7 @@ rem :: define genn-buildmodel.bat options separated by spaces
 rem :: -<option>:              option
 rem :: -<option>:""            option with argument
 rem :: -<option>:"<default>"   option with argument and default value
-set "OPTIONS=-o:"%CD%" -i:"" -d: -c: -h: -s: -f: -l:"
+set "OPTIONS=-o:"%CD%" -i:"" -d: -c: -b: -h: -s: -f: -l:"
 for %%O in (%OPTIONS%) do for /f "tokens=1,* delims=:" %%A in ("%%O") do set "%%A=%%~B"
 
 :genn_option
@@ -79,9 +80,15 @@ if defined -d (
         set "MACROS=%MACROS% /p:Configuration=Debug"
         set GENERATOR=.\generator_Debug.exe
     ) else (
-        set "BACKEND_PROJECT=cuda_backend"
-        set "MACROS=%MACROS% /p:Configuration=Debug_CUDA"
-        set GENERATOR=.\generator_Debug_CUDA.exe
+        if defined -b (
+            set "BACKEND_PROJECT=ispc_backend"
+            set "MACROS=%MACROS% /p:Configuration=Debug_ISPC"
+            set GENERATOR=.\generator_Debug_ISPC.exe
+        ) else (
+            set "BACKEND_PROJECT=cuda_backend"
+            set "MACROS=%MACROS% /p:Configuration=Debug_CUDA"
+            set GENERATOR=.\generator_Debug_CUDA.exe
+        )
     )
 ) else (
     set "BACKEND_MACROS= /p:Configuration=Release"
@@ -91,9 +98,15 @@ if defined -d (
         set "MACROS=%MACROS% /p:Configuration=Release"
         set GENERATOR=.\generator_Release.exe
     ) else ( 
-        set "BACKEND_PROJECT=cuda_backend"
-        set "MACROS=%MACROS% /p:Configuration=Release_CUDA"
-        set GENERATOR=.\generator_Release_CUDA.exe
+        if defined -b (
+            set "BACKEND_PROJECT=ispc_backend"
+            set "MACROS=%MACROS% /p:Configuration=Release_ISPC"
+            set GENERATOR=.\generator_Release_ISPC.exe
+        ) else (
+            set "BACKEND_PROJECT=cuda_backend"
+            set "MACROS=%MACROS% /p:Configuration=Release_CUDA"
+            set GENERATOR=.\generator_Release_CUDA.exe
+        )
     )
 )
 
