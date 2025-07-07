@@ -483,14 +483,17 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         // **NOTE** we don't really need to generate all the code but, on windows, generating code selectively seems to result in werid b
         const std::string dryRunSuffix = "CUDAOptim";
         {
-            std::ofstream neuronUpdateStream((outputPath / "neuronUpdateCUDAOptim.cc").str());
-            std::ofstream customUpdateStream((outputPath / "customUpdateCUDAOptim.cc").str());
-            std::ofstream synapseUpdateStream((outputPath / "synapseUpdateCUDAOptim.cc").str());
-            std::ofstream initStream((outputPath / "initCUDAOptim.cc").str());
-            generateSynapseUpdate(synapseUpdateStream, modelMerged, backend, memorySpaces, dryRunSuffix);
-            generateNeuronUpdate(neuronUpdateStream, modelMerged, backend, memorySpaces, dryRunSuffix);
-            generateCustomUpdate(customUpdateStream, modelMerged, backend, memorySpaces, dryRunSuffix);
-            generateInit(initStream, modelMerged, backend, memorySpaces, dryRunSuffix);
+            std::vector<std::ofstream> fileStreams;
+            auto fileStreamCreator =
+                [&dryRunSuffix, &fileStreams, &outputPath](const std::string &title, const std::string &extension) -> std::ostream &
+                {
+                    fileStreams.emplace_back((outputPath / (title + "CUDAOptim." + extension)).str());
+                    return fileStreams.back();
+                };
+            generateSynapseUpdate(fileStreamCreator, modelMerged, backend, memorySpaces, dryRunSuffix);
+            generateNeuronUpdate(fileStreamCreator, modelMerged, backend, memorySpaces, dryRunSuffix);
+            generateCustomUpdate(fileStreamCreator, modelMerged, backend, memorySpaces, dryRunSuffix);
+            generateInit(fileStreamCreator, modelMerged, backend, memorySpaces, dryRunSuffix);
             generateRunner(outputPath, modelMerged, backend, dryRunSuffix);
         }
 
