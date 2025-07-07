@@ -159,7 +159,7 @@ void generateNeuronUpdate(FileStreamCreator streamCreator, ModelSpecMerged &mode
     neuronUpdate << std::endl;
 
     // Neuron update kernel
-    backend.genNeuronUpdate(neuronUpdate, modelMerged, memorySpaces,
+    backend.genNeuronUpdate(neuronUpdate, streamCreator, modelMerged, memorySpaces,
         // Preamble handler
         [&modelMerged, &backend](CodeStream &os)
         {
@@ -179,7 +179,7 @@ void generateCustomUpdate(FileStreamCreator streamCreator, ModelSpecMerged &mode
     customUpdate << std::endl;
 
     // Neuron update kernel
-    backend.genCustomUpdate(customUpdate, modelMerged, memorySpaces,
+    backend.genCustomUpdate(customUpdate, streamCreator, modelMerged, memorySpaces,
         // Preamble handler
         [&modelMerged, &backend](CodeStream &os)
         {
@@ -202,7 +202,7 @@ void generateSynapseUpdate(FileStreamCreator streamCreator, ModelSpecMerged &mod
     synapseUpdate << std::endl;
 
     // Synaptic update kernels
-    backend.genSynapseUpdate(synapseUpdate, modelMerged, memorySpaces,
+    backend.genSynapseUpdate(synapseUpdate, streamCreator, modelMerged, memorySpaces,
         // Preamble handler
         [&modelMerged, &backend](CodeStream &os)
         {
@@ -221,7 +221,7 @@ void generateInit(FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
 
     init << "#include \"definitions" << suffix << ".h\"" << std::endl;
 
-    backend.genInit(init, modelMerged, memorySpaces,
+    backend.genInit(init, streamCreator, modelMerged, memorySpaces,
         // Preamble handler
         [&modelMerged, &memorySpaces, &backend](CodeStream &os)
         {
