@@ -179,19 +179,18 @@ Backend::Backend(const Preferences &preferences)
 {
 }
 
-void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
-                              HostHandler preambleHandler) const
+void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged, 
+                              BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
     if(modelMerged.getModel().getBatchSize() != 1) {
         throw std::runtime_error("The ISPC backend only supports simulations with a batch size of 1");
     }
-   
-    // Generate stream with neuron update code
-    std::ostringstream neuronUpdateStream;
-    CodeStream neuronUpdate(neuronUpdateStream);
 
+    // Create seperate stream for ISPC file
+    CodeStream neuronUpdateISPC(streamCreator("neuronUpdate", "ispc"));
+   
     // Begin environment with standard library
-    EnvironmentLibrary backendEnv(neuronUpdate, backendFunctions);
+    EnvironmentLibrary backendEnv(neuronUpdateISPC, backendFunctions);
     EnvironmentLibrary neuronUpdateEnv(backendEnv, StandardLibrary::getMathsFunctions());
 
     neuronUpdateEnv.getStream() << "void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
@@ -389,19 +388,17 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Back
 
     // Generate preamble
     preambleHandler(os);
-
-    os << neuronUpdateStream.str();
 }
 
-void Backend::genSynapseUpdate(CodeStream &, ModelSpecMerged &, BackendBase::MemorySpaces &, HostHandler) const
+void Backend::genSynapseUpdate(CodeStream &, FileStreamCreator, ModelSpecMerged &, BackendBase::MemorySpaces &, HostHandler) const
 {
 }
 
-void Backend::genCustomUpdate(CodeStream &, ModelSpecMerged &, BackendBase::MemorySpaces &, HostHandler) const
+void Backend::genCustomUpdate(CodeStream &, FileStreamCreator, ModelSpecMerged &, BackendBase::MemorySpaces &, HostHandler) const
 {
 }
 
-void Backend::genInit(CodeStream &, ModelSpecMerged &, BackendBase::MemorySpaces &, HostHandler) const
+void Backend::genInit(CodeStream &, FileStreamCreator, ModelSpecMerged &, BackendBase::MemorySpaces &, HostHandler) const
 {
 }
 
