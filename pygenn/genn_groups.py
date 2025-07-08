@@ -350,6 +350,8 @@ class SynapseGroupMixin(GroupMixin):
         self.src = source
         self.trg = target
         self.out_post = None
+        self._ind = None
+        self._row_lengths = None
         self.connections_set = False
 
         # Prepare weight update model variables and EGPS
@@ -466,19 +468,25 @@ class SynapseGroupMixin(GroupMixin):
             presynaptic indices
         """
         if self.matrix_type & SynapseMatrixConnectivity.SPARSE:
-            rl = (self._row_lengths.view if self._connectivity_initialiser_provided
-                  else self.row_lengths)
+            # If this synapse group isn't modified by any 
+            # custom connectivity updates and connectivity
+            # was set manually, it's fine to use cached copy,
+            # otherwise use view
+            row_ls = (self.row_lengths 
+                      if not self._any_ccu_references and self.connections_set
+                      else self._row_lengths.view)
 
-            if rl is None:
-                raise Exception("problem accessing connectivity ")
+            if row_ls is None:
+                raise Exception("Problem accessing connectivity. "
+                                "Try calling pull_connectivity_from_device()")
 
             # Expand row lengths into full array
             # of presynaptic indices and return
-            return np.hstack([np.repeat(i, l) for i, l in enumerate(rl)])
+            return np.hstack([np.repeat(i, l) for i, l in enumerate(row_ls)])
 
         else:
             raise Exception("get_sparse_pre_inds only supports"
-                            "ragged format sparse connectivity")
+                            "SPARSE connectivity")
 
     def get_sparse_post_inds(self) -> np.ndarray:
         """Get postsynaptic indices of synapse group connections
@@ -487,15 +495,16 @@ class SynapseGroupMixin(GroupMixin):
             postsynaptic indices
         """
         if (self.matrix_type & SynapseMatrixConnectivity.SPARSE):
-            if not self._connectivity_initialiser_provided:
-                if self.ind is None or self.row_lengths is None:
-                    raise Exception("problem accessing manually initialised connectivity ")
-                # Return cached indices
+            # If this synapse group isn't modified by any 
+            # custom connectivity updates and connectivity
+            # was set manually, return cached indices
+            if not self._any_ccu_references and self.connections_set:
                 return self.ind
-
+            # Otherwise
             else:
                 if self._ind is None or self._row_lengths is None:
-                    raise Exception("problem accessing on-device initialised connectivity ")
+                    raise Exception("Problem accessing connectivity. Try "
+                                    "calling pull_connectivity_from_device()")
 
                 # the _ind array view still has some non-valid data so we remove them
                 # with the row_lengths
