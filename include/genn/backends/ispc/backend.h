@@ -82,7 +82,7 @@ private:
 class BACKEND_EXPORT Backend : public BackendBase
 {
 public:
-    Backend();
+    Backend(const Preferences &preferences);
 
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals

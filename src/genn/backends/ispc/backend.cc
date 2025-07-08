@@ -1,5 +1,8 @@
 #include "backend.h"
 
+// Standard C includes
+#include <cstdlib>
+
 // GeNN includes
 #include "gennUtils.h"
 
@@ -65,7 +68,7 @@ private:
 void Preferences::updateHash(boost::uuids::detail::sha1 &hash) const
 {
     PreferencesBase::updateHash(hash);
-    GeNN::updateHash(targetISA, hash);
+    Utils::updateHash(targetISA, hash);
 }
 
 
@@ -103,7 +106,13 @@ void Array::allocate(size_t count)
     // Using std::aligned_alloc
     // Size must be a multiple of alignment
     const size_t alignedSizeBytes = padSize(sizeBytes, m_Alignment);
-    setHostPointer(reinterpret_cast<std::byte*>(std::aligned_alloc(m_Alignment, alignedSizeBytes)));
+    setHostPointer(reinterpret_cast<std::byte*>(
+#ifdef _WIN32
+        _aligned_malloc(alignedSizeBytes, m_Alignment)
+#else
+        std::aligned_alloc(m_Alignment, alignedSizeBytes)
+#endif
+        ));
     if (!getHostPointer()) {
         throw std::bad_alloc();
     }
@@ -112,7 +121,11 @@ void Array::allocate(size_t count)
 void Array::free()
 {
     // std::free is used to deallocate memory allocated by std::aligned_alloc
+#ifdef _WIN32
+    _aligned_free(getHostPointer());
+#else
     std::free(getHostPointer());
+#endif
     setHostPointer(nullptr);
     setCount(0);
 }
@@ -161,9 +174,9 @@ void Array::serialiseHostObject(std::vector<std::byte>& result, bool) const
 //--------------------------------------------------------------------------
 // GeNN::CodeGenerator::ISPC::Backend
 //--------------------------------------------------------------------------
-Backend::Backend()
+Backend::Backend(const Preferences &preferences)
+:   BackendBase(preferences)
 {
-    setPreferencesBase(std::make_shared<Preferences>());
 }
 
 void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 

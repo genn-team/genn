@@ -20,9 +20,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="backend.cc" />
+    <ClCompile Include="optimiser.cc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\include\genn\backends\ispc\backend.h" />
+    <ClInclude Include="..\..\..\..\include\genn\backends\ispc\optimiser.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C22}</ProjectGuid>

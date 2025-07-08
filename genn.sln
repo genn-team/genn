@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.34114.132
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34607.119
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "genn", "src\genn\genn\genn.vcxproj", "{A793E397-1D2F-4E81-8D10-0776A1EBA6DB}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -26,6 +26,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "unit", "tests\unit\unit.vcx
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libffi", "src\genn\third_party\libffi\libffi.vcxproj", "{20B1EFDE-150B-4BF5-988F-C1299D492D5D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ispc_backend", "src\genn\backends\ispc\ispc_backend.vcxproj", "{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C22}"
+	ProjectSection(ProjectDependencies) = postProject
+		{20B1EFDE-150B-4BF5-988F-C1299D492D5D} = {20B1EFDE-150B-4BF5-988F-C1299D492D5D}
+		{A793E397-1D2F-4E81-8D10-0776A1EBA6DB} = {A793E397-1D2F-4E81-8D10-0776A1EBA6DB}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -75,6 +81,14 @@ Global
 		{20B1EFDE-150B-4BF5-988F-C1299D492D5D}.Release_DLL|x64.Build.0 = Release_DLL|x64
 		{20B1EFDE-150B-4BF5-988F-C1299D492D5D}.Release|x64.ActiveCfg = Release|x64
 		{20B1EFDE-150B-4BF5-988F-C1299D492D5D}.Release|x64.Build.0 = Release|x64
+		{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C22}.Debug_DLL|x64.ActiveCfg = Debug_DLL|x64
+		{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C22}.Debug_DLL|x64.Build.0 = Debug_DLL|x64
+		{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C22}.Debug|x64.ActiveCfg = Debug|x64
+		{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C22}.Debug|x64.Build.0 = Debug|x64
+		{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C22}.Release_DLL|x64.ActiveCfg = Release_DLL|x64
+		{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C22}.Release_DLL|x64.Build.0 = Release_DLL|x64
+		{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C22}.Release|x64.ActiveCfg = Release|x64
+		{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C22}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
