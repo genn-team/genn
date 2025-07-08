@@ -283,12 +283,6 @@ class SynapseVariable(VariableBase):
             (sg.matrix_type & SynapseMatrixWeight.KERNEL)):
             self._view[:] = vals
         elif (sg.matrix_type & SynapseMatrixConnectivity.SPARSE):
-            # Sort variable to match GeNN order
-            if len(self._view.shape) == 1:
-                sorted_var = vals[sg.synapse_order]
-            else:
-                sorted_var = vals[:,sg.synapse_order]
-
             # Create range containing the index
             # where each row starts in ind
             row_start_idx = range(0, sg.weight_update_var_size,
@@ -299,9 +293,9 @@ class SynapseVariable(VariableBase):
             for i, r in zip(row_start_idx, sg.row_lengths):
                 # Copy row from non-padded indices into correct location
                 if len(self._view.shape) == 1:
-                    self._view[i:i + r] = sorted_var[syn:syn + r]
+                    self._view[i:i + r] = vals[syn:syn + r]
                 else:
-                    self._view[:,i:i + r] = sorted_var[:,syn:syn + r]
+                    self._view[:,i:i + r] = vals[:,syn:syn + r]
                 syn += r
         else:
             raise Exception("Matrix format not supported")
