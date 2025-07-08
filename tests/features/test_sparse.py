@@ -4,7 +4,8 @@ from pygenn import types
 
 from pygenn import VarAccess, VarAccessMode
 
-from pygenn import (create_custom_update_model, create_neuron_model, 
+from pygenn import (create_custom_connectivity_update_model, 
+                    create_custom_update_model, create_neuron_model, 
                     create_var_init_snippet, create_wu_var_ref, 
                     init_postsynaptic, init_sparse_connectivity,
                     init_var, init_weight_update)
@@ -26,6 +27,16 @@ weight_init_snippet = create_var_init_snippet(
         """
         value = (scalar)id_pre / id_post;
         """)
+
+remove_first_synapse_model = create_custom_connectivity_update_model(
+    "remove_first_synapse",
+    row_update_code=
+    """
+    for_each_synapse {
+        remove_synapse();
+        break;
+    }
+    """)
 
 def _safe_check(a, b):
     assert (np.allclose(a[np.isfinite(a)], b[np.isfinite(b)]) 
@@ -57,7 +68,6 @@ def test_host_sparsity(make_model, backend, precision, batch_size):
     model.add_custom_update("DoubleG", "Double", double_custom_update_model,
                             {}, {}, {"X": create_wu_var_ref(sg, "g")})
    
-
     # Build model and load
     model.build()
     model.load(num_recording_timesteps=100)
@@ -133,3 +143,102 @@ def test_device_sparsity(make_model, backend, precision, batch_size):
     _safe_check(sg.vars["g"].values, double_baseline_g)
 
 
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_host_sparsity_ccu(make_model, backend, precision, batch_size):
+    model = make_model(precision, "test_host_sparsity_ccu", backend=backend)
+    model.dt = 1.0
+    model.batch_size = batch_size
+
+    # Add empty pre and postsynatic populations
+    pre_pop = model.add_neuron_population("Pre", 10, empty_neuron_model)
+    post_pop = model.add_neuron_population("Post", 10, empty_neuron_model)
+
+    pre_ind = np.random.randint(10, size=20)
+    post_ind = np.random.randint(10, size=20)
+    g = pre_ind / post_ind
+
+    # Count number of non-empty rows i.e. how many synapses custom 
+    # connectivity update will remove
+    num_non_empty_rows = np.sum(np.bincount(pre_ind, minlength=10) > 0)
+
+    # Connect with synapse population
+    sg = model.add_synapse_population(
+        "Synapses", "SPARSE",
+        pre_pop, post_pop,
+        init_weight_update("StaticPulse", {}, {"g": g}),
+        init_postsynaptic("DeltaCurr"))
+    sg.set_sparse_connections(pre_ind, post_ind)
+
+    # Add custom connectivity update to remove connections
+    model.add_custom_connectivity_update(
+        "RemoveSynapse", "RemoveSynapse", sg,
+        remove_first_synapse_model)
+   
+    # Build model and load
+    model.build()
+    model.load(num_recording_timesteps=100)
+
+    # Run custom update to double
+    model.custom_update("RemoveSynapse")
+
+    # Pull g and connectivity
+    sg.vars["g"].pull_from_device()
+    sg.pull_connectivity_from_device()
+    g_values = sg.get_sparse_pre_inds() / sg.get_sparse_post_inds()
+
+    # Check correct number of connections have been removed
+    assert len(g_values) == (len(g) - num_non_empty_rows)
+
+    # Check g values are correct
+    _safe_check(sg.vars["g"].values, g_values)
+
+
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_device_sparsity_ccu(make_model, backend, precision, batch_size):
+    model = make_model(precision, "test_device_sparsity_ccu", backend=backend)
+    model.dt = 1.0
+    model.batch_size = batch_size
+
+    # Add empty pre and postsynatic populations
+    pre_pop = model.add_neuron_population("Pre", 10, empty_neuron_model)
+    post_pop = model.add_neuron_population("Post", 10, empty_neuron_model)
+
+    # Connect with synapse population
+    sg = model.add_synapse_population(
+        "Synapses", "SPARSE",
+        pre_pop, post_pop,
+        init_weight_update("StaticPulse", {}, {"g": init_var(weight_init_snippet)}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity("FixedNumberTotalWithReplacement", {"num": 20}))
+
+    # Add custom connectivity update to remove connections
+    model.add_custom_connectivity_update(
+        "RemoveSynapse", "RemoveSynapse", sg,
+        remove_first_synapse_model)
+   
+    # Build model and load
+    model.build()
+    model.load(num_recording_timesteps=100)
+
+    # Pull initial connectivity from device
+    sg.pull_connectivity_from_device()
+    
+    # Count number of non-empty rows i.e. how many synapses custom 
+    # connectivity update will remove
+    num_non_empty_rows = np.sum(np.bincount(sg.get_sparse_pre_inds(),
+                                            minlength=10) > 0)
+
+    # Run custom update to double
+    model.custom_update("RemoveSynapse")
+
+    # Pull g and connectivity
+    sg.vars["g"].pull_from_device()
+    sg.pull_connectivity_from_device()
+    g_values = sg.get_sparse_pre_inds() / sg.get_sparse_post_inds()
+
+    # Check correct number of connections have been removed
+    assert len(g_values) == (20 - num_non_empty_rows)
+
+    # Check g values are correct
+    _safe_check(sg.vars["g"].values, g_values)
+    
