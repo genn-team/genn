@@ -147,6 +147,13 @@ TEST(Scanner, String)
     ASSERT_EQ(tokens[1].lexeme, "\"pre-processor\"");
 }
 //--------------------------------------------------------------------------
+TEST(Scanner, UnTerminatedString)
+{
+    TestErrorHandler errorHandler;
+    const auto tokens = Scanner::scanSource("\"hello world", errorHandler);
+    ASSERT_TRUE(errorHandler.hasError());
+}
+//--------------------------------------------------------------------------
 TEST(Scanner, IsIdentifierDelayed)
 {
     TestErrorHandler errorHandler;
