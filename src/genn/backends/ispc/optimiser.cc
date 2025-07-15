@@ -20,4 +20,4 @@ Backend createBackend(const ModelSpecInternal&,const filesystem::path&,
 
     return Backend(preferences);
 }
-}   // namespace GeNN::CodeGenerator::SingleThreadedCPU::Optimiser
+}   // namespace GeNN::CodeGenerator::ISPC::Optimiser

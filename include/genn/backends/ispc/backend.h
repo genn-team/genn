@@ -16,7 +16,10 @@
 // Forward declarations
 namespace GeNN::CodeGenerator
 {
+    class ModelSpecMerged;
+    class CustomUpdateGroupMerged;
     class CustomUpdateWUGroupMergedBase;
+    struct KernelBlockSize;
 }
 namespace filesystem
 {
@@ -174,10 +177,23 @@ public:
     virtual bool isHostReductionRequired() const final;
     
     virtual size_t getDeviceMemoryBytes() const final;
+
+    virtual std::string getRestrictKeyword() const override{ return ""; }
     
     virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const final;
     
     virtual boost::uuids::detail::sha1::digest_type getHashDigest() const final;
+
+    //--------------------------------------------------------------------------
+    // Public API
+    //--------------------------------------------------------------------------
+    //! Build generated code
+    /*! \param modelSpecMerged     merged model to generate code for
+        \param outputPath          path to which code should be generated
+        \param compiler            compiler to use to build code
+        \param runtimeSymbols      map of symbol names to their addresses in the runtime library */
+    void build(const ModelSpecMerged &modelSpecMerged, const filesystem::path &outputPath,
+               const std::string &compiler, const std::map<std::string, size_t> &runtimeSymbols) const;
 
 private:
     void genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng, bool trueSpike) const;
