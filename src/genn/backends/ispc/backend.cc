@@ -192,83 +192,6 @@ Backend::Backend(const Preferences &preferences)
 {
 }
 
-void Backend::build(const ModelSpecMerged &modelSpecMerged, const filesystem::path &outputPath,
-                   const std::string &compiler, const std::map<std::string, size_t> &) const
-{
-    // Get ISPC preferences
-    const auto &preferences = getPreferences<Preferences>();
-    
-    // Build command to compile ISPC code
-    std::string ispcCommand = "ispc -O2";
-    
-    // Add target ISA
-    ispcCommand += " --target=" + preferences.targetISA;
-    
-    // Convert output path to string
-    #ifdef _WIN32
-    const char pathSeparator = '\\';
-    #else
-    const char pathSeparator = '/';
-    #endif
-    
-    // Create output path string manually
-    // This is to avoid unavailable filesystem methods 
-    std::stringstream ss;
-    ss << outputPath;
-    std::string outputPathStr = ss.str();
-    
-    // Remove quotes if present
-    if (!outputPathStr.empty() && outputPathStr.front() == '"' && outputPathStr.back() == '"') {
-        outputPathStr = outputPathStr.substr(1, outputPathStr.length() - 2);
-    }
-    
-    // Ensure path ends with separator
-    if(!outputPathStr.empty() && outputPathStr.back() != pathSeparator) {
-        outputPathStr += pathSeparator;
-    }
-    
-    // Construct file paths
-    std::string neuronUpdatePath = outputPathStr + "neuronUpdate";
-    
-    ispcCommand += " \"" + neuronUpdatePath + ".ispc\"";
-    
-    // Add output object file
-    ispcCommand += " -o \"" + neuronUpdatePath + ".o\"";
-    
-    // Add header file
-    ispcCommand += " -h \"" + neuronUpdatePath + ".h\"";
-    
-    // Execute ISPC command
-    const int ispcRetVal = system(ispcCommand.c_str());
-    if(ispcRetVal != 0) {
-        throw std::runtime_error("ISPC compilation failed with return code " + std::to_string(ispcRetVal));
-    }
-    
-    // Build command to compile C++ code
-    std::string cppCommand = compiler;
-    cppCommand += " -shared -fPIC";
-    if(getPreferences().optimizeCode) {
-        cppCommand += " -O3";
-    }
-    
-    // Add object file
-    cppCommand += " \"" + neuronUpdatePath + ".o\"";
-    
-    // Add output shared library
-    #ifdef _WIN32
-    std::string libPath = outputPathStr + "runner_Release.dll";
-    #else
-    std::string libPath = outputPathStr + "librunner.so";
-    #endif
-    cppCommand += " -o \"" + libPath + "\"";
-    
-    // Execute C++ command
-    const int cppRetVal = system(cppCommand.c_str());
-    if(cppRetVal != 0) {
-        throw std::runtime_error("C++ compilation failed with return code " + std::to_string(cppRetVal));
-    }
-}
-
 void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged, 
                               BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
@@ -276,16 +199,13 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
         throw std::runtime_error("The ISPC backend only supports simulations with a batch size of 1");
     }
 
-    // Create seperate stream for ISPC file
+    // Create streams for both ISPC and C++ files
     CodeStream neuronUpdateISPC(streamCreator("neuronUpdate", "ispc"));
+    CodeStream neuronUpdateCPP(streamCreator("neuronUpdate", "cc"));
    
     // Begin environment with standard library
     EnvironmentLibrary backendEnv(neuronUpdateISPC, backendFunctions);
     EnvironmentLibrary neuronUpdateEnv(neuronUpdateISPC, StandardLibrary::getMathsFunctions());
-    
-    // Create a stream for C++ wrapper code
-    std::stringstream neuronUpdateStream;
-    CodeStream neuronUpdateCPP(neuronUpdateStream);
     
     // Generate ISPC code for neuron update
     neuronUpdateEnv.getStream() << "void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
@@ -483,51 +403,47 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
 
     // Generate preamble
     preambleHandler(neuronUpdateCPP);
-
-    // Write the C++ wrapper code to the main output stream
-    os << neuronUpdateStream.str();
+    
+    // No need to copy the content to os as streamCreator handles file output
 }
 
 void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
                               BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
-    // ISPC file stream
+    // Create streams for both ISPC and C++ files
     CodeStream synapseUpdateISPC(streamCreator("synapseUpdate", "ispc"));
+    CodeStream synapseUpdateCPP(streamCreator("synapseUpdate", "cc"));
     
-    // C++ wrapper code stream
-    std::stringstream synapseUpdateStream;
-    CodeStream synapseUpdateCPP(synapseUpdateStream);
+    // Generate preamble
+    preambleHandler(synapseUpdateCPP);
     
-    // Write C++ wrapper code to main output stream
-    os << synapseUpdateStream.str();
+    // No need to copy content to os as streamCreator handles file output
 }
 
 void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
                              BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
-    // ISPC file stream
+    // Create streams for both ISPC and C++ files
     CodeStream customUpdateISPC(streamCreator("customUpdate", "ispc"));
+    CodeStream customUpdateCPP(streamCreator("customUpdate", "cc"));
     
-    // C++ wrapper code stream
-    std::stringstream customUpdateStream;
-    CodeStream customUpdateCPP(customUpdateStream);
+    // Generate preamble
+    preambleHandler(customUpdateCPP);
     
-    // Write C++ wrapper code to main output stream
-    os << customUpdateStream.str();
+    // No need to copy content to os as streamCreator handles file output
 }
 
 void Backend::genInit(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
                      BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
-    // ISPC file stream
+    // Create streams for both ISPC and C++ files
     CodeStream initISPC(streamCreator("init", "ispc"));
+    CodeStream initCPP(streamCreator("init", "cc"));
     
-    // C++ wrapper code stream
-    std::stringstream initStream;
-    CodeStream initCPP(initStream);
+    // Generate preamble
+    preambleHandler(initCPP);
     
-    // Write the C++ wrapper code to the main output stream
-    os << initStream.str();
+    // No need to copy content to os as streamCreator handles file output
 }
 
 size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &) const
@@ -666,12 +582,16 @@ void Backend::genMakefilePreamble(std::ostream &os) const
     os << "LINKFLAGS := " << linkFlags << std::endl;
     os << "ISPC := ispc" << std::endl;
     os << "ISPCFLAGS := -O2 --target=" << ispcPrefs.targetISA << std::endl;
-
+    
+    // Add OBJECTS variable to include all object files
+    os << "OBJECTS := neuronUpdate.o synapseUpdate.o customUpdate.o init.o" << std::endl;
+    
     os << std::endl;
 }
 
 void Backend::genMakefileLinkRule(std::ostream &os) const
 {
+    // Use the OBJECTS variable defined in preamble
     os << "\t@$(CXX) $(LINKFLAGS) -o $@ $(OBJECTS)" << std::endl;
 }
 
@@ -684,6 +604,10 @@ void Backend::genMakefileCompileRule(std::ostream &os) const
     // Rule for compiling ISPC files
     os << "%.o: %.ispc" << std::endl;
     os << "\t@$(ISPC) $(ISPCFLAGS) -o $@ -h $(@:.o=.h) $<" << std::endl;
+    
+    // Add dependency generation rule
+    os << "%.d: %.cc" << std::endl;
+    os << "\t@$(CXX) $(CXXFLAGS) -MM -o $@ $<" << std::endl;
 }
 
 void Backend::genMSBuildConfigProperties(std::ostream &) const
