@@ -1638,7 +1638,7 @@ void Backend::genAssert(CodeStream &os, const std::string &condition) const
     os << "assert(" << condition << ");" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genMakefilePreamble(std::ostream &os) const
+void Backend::genMakefilePreamble(std::ostream &os, const std::vector<std::string>&) const
 {
     std::string linkFlags = "-shared ";
     std::string cxxFlags = "-c -fPIC -std=c++11 -MMD -MP";

@@ -272,7 +272,7 @@ public:
     virtual void genAssert(CodeStream &os, const std::string &condition) const = 0;
 
     //! This function can be used to generate a preamble for the GNU makefile used to build
-    virtual void genMakefilePreamble(std::ostream &os) const = 0;
+    virtual void genMakefilePreamble(std::ostream &os, const std::vector<std::string> &moduleNames) const = 0;
 
     //! The GNU make build system will populate a variable called ``$(OBJECTS)`` with a list of objects to link.
     //! This function should generate a GNU make rule to build these objects into a shared library.
