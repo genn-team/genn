@@ -559,7 +559,7 @@ void Backend::genAssert(CodeStream &os, const std::string &condition) const
     os << "assert(" << condition << ");" << std::endl;
 }
 
-void Backend::genMakefilePreamble(std::ostream &os) const
+void Backend::genMakefilePreamble(std::ostream &os, const std::vector<std::string> &moduleNames) const
 {
     std::string linkFlags = "-shared ";
     std::string cxxFlags = "-c -fPIC -std=c++11 -MMD -MP";
@@ -583,9 +583,13 @@ void Backend::genMakefilePreamble(std::ostream &os) const
     os << "ISPC := ispc" << std::endl;
     os << "ISPCFLAGS := -O2 --target=" << ispcPrefs.targetISA << std::endl;
     
-    // Add OBJECTS variable to include all object files
-    os << "OBJECTS := neuronUpdate.o synapseUpdate.o customUpdate.o init.o" << std::endl;
-    
+    // Add ISPC objects
+    os << "OBJECTS += ";
+    for(const auto &m : moduleNames) {
+        if(m != "runner") {
+            os << m << "ISPC.o ";
+        }
+    }
     os << std::endl;
 }
 
@@ -602,7 +606,7 @@ void Backend::genMakefileCompileRule(std::ostream &os) const
     os << "\t@$(CXX) $(CXXFLAGS) -o $@ $<" << std::endl;
     
     // Rule for compiling ISPC files
-    os << "%.o: %.ispc" << std::endl;
+    os << "%ISPC.o: %.ispc" << std::endl;
     os << "\t@$(ISPC) $(ISPCFLAGS) -o $@ -h $(@:.o=.h) $<" << std::endl;
     
     // Add dependency generation rule

@@ -364,7 +364,7 @@ void Backend::genLazyVariableDynamicAllocation(CodeStream &os, const Type::Resol
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genMakefilePreamble(std::ostream &os) const
+void Backend::genMakefilePreamble(std::ostream &os, const std::vector<std::string>&) const
 {
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
     std::string linkFlags = "--shared -arch " + architecture;

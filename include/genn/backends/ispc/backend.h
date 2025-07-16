@@ -153,7 +153,7 @@ public:
     
     virtual void genAssert(CodeStream &os, const std::string &condition) const final;
 
-    virtual void genMakefilePreamble(std::ostream &os) const final;
+    virtual void genMakefilePreamble(std::ostream &os, const std::vector<std::string> &moduleNames) const final;
     virtual void genMakefileLinkRule(std::ostream &os) const final;
     virtual void genMakefileCompileRule(std::ostream &os) const final;
 

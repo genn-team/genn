@@ -25,7 +25,7 @@ void GeNN::CodeGenerator::generateMakefile(std::ostream &os, const BackendBase &
     os << std::endl;
 
     // Generate make file preamble
-    backend.genMakefilePreamble(os);
+    backend.genMakefilePreamble(os, moduleNames);
     os << std::endl;
 
     // Apply substitution to generate dependency list
