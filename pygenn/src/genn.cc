@@ -659,6 +659,13 @@ PYBIND11_MODULE(_genn, m)
         .def_property_readonly("_wu_post_model_fused", &SynapseGroupInternal::isWUPostModelFused)
         .def_property_readonly("_sparse_ind_type", &SynapseGroupInternal::getSparseIndType)
         
+        .def_property_readonly("_any_ccu_references", 
+            [](const SynapseGroup &sg)
+            {
+                const auto &sgInternal = static_cast<const SynapseGroupInternal&>(sg);
+                return !sgInternal.getCustomConnectivityUpdateReferences().empty();
+            })
+
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------

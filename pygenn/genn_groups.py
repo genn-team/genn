@@ -136,7 +136,8 @@ class GroupMixin(object):
         return array
 
     def _load_vars(self, vars, get_shape_fn, var_dict=None,
-                   get_location_fn=None, get_delay_group_fn=None):
+                   get_location_fn=None, get_delay_group_fn=None,
+                   order=None):
         # If no variable dictionary is specified, use standard one
         if var_dict is None:
             var_dict = self.vars
@@ -166,9 +167,16 @@ class GroupMixin(object):
                     self._model._runtime.get_array(self, v.name),
                     var_shape, delay_group)
 
-                # If manual initialisation is required, copy in init_values
+                # If manual initialisation is required
                 if var_data.init_required:
-                    var_data.values = var_data.init_values
+                    # If an ordering is provided, use to order values
+                    if order is not None:
+                        var_data.values = (var_data.init_values[order]
+                                           if len(var_shape) == 1
+                                           else var_data.init_values[:,order])
+                    # Otherwise copy initial values directly
+                    else:
+                         var_data.values = var_data.init_values
             else:
                 assert not var_data.init_required
 
@@ -342,6 +350,8 @@ class SynapseGroupMixin(GroupMixin):
         self.src = source
         self.trg = target
         self.out_post = None
+        self._ind = None
+        self._row_lengths = None
         self.connections_set = False
 
         # Prepare weight update model variables and EGPS
@@ -458,19 +468,25 @@ class SynapseGroupMixin(GroupMixin):
             presynaptic indices
         """
         if self.matrix_type & SynapseMatrixConnectivity.SPARSE:
-            rl = (self._row_lengths.view if self._connectivity_initialiser_provided
-                  else self.row_lengths)
+            # If this synapse group isn't modified by any 
+            # custom connectivity updates and connectivity
+            # was set manually, it's fine to use cached copy,
+            # otherwise use view
+            row_ls = (self.row_lengths 
+                      if not self._any_ccu_references and self.connections_set
+                      else self._row_lengths.view)
 
-            if rl is None:
-                raise Exception("problem accessing connectivity ")
+            if row_ls is None:
+                raise Exception("Problem accessing connectivity. "
+                                "Try calling pull_connectivity_from_device()")
 
             # Expand row lengths into full array
             # of presynaptic indices and return
-            return np.hstack([np.repeat(i, l) for i, l in enumerate(rl)])
+            return np.hstack([np.repeat(i, l) for i, l in enumerate(row_ls)])
 
         else:
             raise Exception("get_sparse_pre_inds only supports"
-                            "ragged format sparse connectivity")
+                            "SPARSE connectivity")
 
     def get_sparse_post_inds(self) -> np.ndarray:
         """Get postsynaptic indices of synapse group connections
@@ -479,15 +495,16 @@ class SynapseGroupMixin(GroupMixin):
             postsynaptic indices
         """
         if (self.matrix_type & SynapseMatrixConnectivity.SPARSE):
-            if not self._connectivity_initialiser_provided:
-                if self.ind is None or self.row_lengths is None:
-                    raise Exception("problem accessing manually initialised connectivity ")
-                # Return cached indices
+            # If this synapse group isn't modified by any 
+            # custom connectivity updates and connectivity
+            # was set manually, return cached indices
+            if not self._any_ccu_references and self.connections_set:
                 return self.ind
-
+            # Otherwise
             else:
                 if self._ind is None or self._row_lengths is None:
-                    raise Exception("problem accessing on-device initialised connectivity ")
+                    raise Exception("Problem accessing connectivity. Try "
+                                    "calling pull_connectivity_from_device()")
 
                 # the _ind array view still has some non-valid data so we remove them
                 # with the row_lengths
@@ -580,7 +597,8 @@ class SynapseGroupMixin(GroupMixin):
                 raise Exception("Matrix format not supported")
 
         # If population has individual synapse variables, 
-        # load weight update model variables
+        # load weight update model variables, re-ordering to match
+        # connectivity if connectivity was set manually
         wu_snippet = self.wu_initialiser.snippet
         if ((self.matrix_type & SynapseMatrixWeight.INDIVIDUAL) or 
                 (self.matrix_type & SynapseMatrixWeight.KERNEL)):
@@ -589,7 +607,9 @@ class SynapseGroupMixin(GroupMixin):
                     lambda v, d: _get_synapse_var_shape(
                         get_var_access_dim(v.access), 
                         self, self._model.batch_size),
-                    self.vars, self.get_wu_var_location)
+                    self.vars, self.get_wu_var_location,
+                    order=(self.synapse_order if self.connections_set
+                           else None))
 
         # If population's presynaptic weight update hasn't been 
         # fused, load weight update model presynaptic variables
@@ -792,7 +812,10 @@ class CustomUpdateWUMixin(GroupMixin):
             lambda v, d: _get_synapse_var_shape(
                 get_var_access_dim(v.access, self._dims),
                 self.synapse_group, batch_size),
-            self.vars, self.get_var_location)
+            self.vars, self.get_var_location,
+            order=(self.synapse_group.synapse_order 
+                   if self.synapse_group.connections_set
+                   else None))
 
         # Load custom update extra global parameters
         self._load_egp()
@@ -851,7 +874,10 @@ class CustomConnectivityUpdateMixin(GroupMixin):
             self.model.get_vars(),
             lambda v, d: _get_synapse_var_shape(
                 get_var_access_dim(v.access), self.synapse_group, 1),
-            self.vars, self.get_var_location)
+            self.vars, self.get_var_location,
+            order=(self.synapse_group.synapse_order 
+                   if self.synapse_group.connections_set
+                   else None))
   
         # Load pre and postsynaptic variables
         self._load_vars(
