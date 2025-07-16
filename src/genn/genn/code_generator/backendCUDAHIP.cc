@@ -302,8 +302,8 @@ void BackendCUDAHIP::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<C
     ::buildPopulationRNGEnvironment(env, getRandPrefix(), getPopulationRNGInternalType());
 }
 //--------------------------------------------------------------------------
-void BackendCUDAHIP::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
-                                     HostHandler preambleHandler) const
+void BackendCUDAHIP::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelMerged, 
+                                     BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -447,8 +447,8 @@ void BackendCUDAHIP::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerge
     os << neuronUpdateStream.str();
 }
 //--------------------------------------------------------------------------
-void BackendCUDAHIP::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
-                                      HostHandler preambleHandler) const
+void BackendCUDAHIP::genSynapseUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelMerged,
+                                      BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
     // Generate stream with synapse update code
     std::ostringstream synapseUpdateStream;
@@ -619,8 +619,8 @@ void BackendCUDAHIP::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerg
 
 }
 //--------------------------------------------------------------------------
-void BackendCUDAHIP::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
-                                     HostHandler preambleHandler) const
+void BackendCUDAHIP::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelMerged,
+                                     BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -876,8 +876,8 @@ void BackendCUDAHIP::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerge
     os << customUpdateStream.str();
 }
 //--------------------------------------------------------------------------
-void BackendCUDAHIP::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
-                             HostHandler preambleHandler) const
+void BackendCUDAHIP::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelMerged, 
+                             BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
