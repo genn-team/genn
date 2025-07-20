@@ -199,20 +199,39 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
         throw std::runtime_error("The ISPC backend only supports simulations with a batch size of 1");
     }
 
-    // Create streams for both ISPC and C++ files
-    CodeStream neuronUpdateISPC(streamCreator("neuronUpdate", "ispc"));
-    CodeStream neuronUpdateCPP(streamCreator("neuronUpdate", "cc"));
+    // Module name for both ISPC file and header
+    const std::string moduleName = "neuronUpdate";
+
+    // Create stream only for ISPC file
+    CodeStream neuronUpdateISPC(streamCreator(moduleName, "ispc"));
    
     // Begin environment with standard library
     EnvironmentLibrary backendEnv(neuronUpdateISPC, backendFunctions);
     EnvironmentLibrary neuronUpdateEnv(neuronUpdateISPC, StandardLibrary::getMathsFunctions());
     
-    // Generate ISPC code for neuron update
-    neuronUpdateEnv.getStream() << "void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
+    // Include the ISPC header
+    os << "#include \"" << moduleName << ".h\"" << std::endl << std::endl;
+    
+    // C++ wrapper function for updateNeurons that calls the ISPC function
+    os << "void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
     if(modelMerged.getModel().isRecordingInUse()) {
-        neuronUpdateEnv.getStream() << ", unsigned int recordingTimestep";
+        os << ", unsigned int recordingTimestep";
     }
-    neuronUpdateEnv.getStream() << ")";
+    os << ")" << std::endl;
+    os << "{" << std::endl;
+    os << "    ispc::updateNeurons(t";
+    if(modelMerged.getModel().isRecordingInUse()) {
+        os << ", recordingTimestep";
+    }
+    os << ");" << std::endl;
+    os << "}" << std::endl << std::endl;
+    
+    // ISPC code for neuron update
+    neuronUpdateISPC << "export void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
+    if(modelMerged.getModel().isRecordingInUse()) {
+        neuronUpdateISPC << ", uniform unsigned int recordingTimestep";
+    }
+    neuronUpdateISPC << ")";
     {
         CodeStream::Scope b(neuronUpdateEnv.getStream());
 
@@ -235,8 +254,9 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
                 {
                     CodeStream::Scope b(funcEnv.getStream());
 
-                    // Get reference to group
-                    funcEnv.getStream() << "const auto *group = &mergedNeuronPrevSpikeTimeUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
+                    // Get reference to group -  auto replaced with uniform
+                    funcEnv.getStream() << "const uniform MergedNeuronPrevSpikeTimeUpdateGroup" << n.getIndex() 
+                                      << " *group = &mergedNeuronPrevSpikeTimeUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
                     
                     // Create matching environment
                     EnvironmentGroupMergedField<NeuronPrevSpikeTimeUpdateGroupMerged> groupEnv(funcEnv, n);
@@ -280,8 +300,9 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
                 {
                     CodeStream::Scope b(funcEnv.getStream());
 
-                    // Get reference to group
-                    funcEnv.getStream() << "const auto *group = &mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
+                    // Get reference to group - auto replaced with uniform
+                    funcEnv.getStream() << "const uniform MergedNeuronSpikeQueueUpdateGroup" << n.getIndex() 
+                                      << " *group = &mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<NeuronSpikeQueueUpdateGroupMerged> groupEnv(funcEnv, n);
                     buildStandardEnvironment(groupEnv, 1);
 
@@ -301,8 +322,9 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
                 {
                     CodeStream::Scope b(funcEnv.getStream());
 
-                    // Get reference to group
-                    funcEnv.getStream() << "const auto *group = &mergedNeuronUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
+                    // Get reference to group - auto replaced with uniform
+                    funcEnv.getStream() << "const uniform MergedNeuronUpdateGroup" << n.getIndex() 
+                                      << " *group = &mergedNeuronUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<NeuronUpdateGroupMerged> groupEnv(funcEnv, n);
                     buildStandardEnvironment(groupEnv, 1);
 
@@ -391,59 +413,125 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
             });
     }
 
-    // Generate struct definitions
-    modelMerged.genMergedNeuronUpdateGroupStructs(neuronUpdateCPP, *this);
-    modelMerged.genMergedNeuronSpikeQueueUpdateStructs(neuronUpdateCPP, *this);
-    modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(neuronUpdateCPP, *this);
+    // Generate struct definitions in the provided os stream
+    modelMerged.genMergedNeuronUpdateGroupStructs(os, *this);
+    modelMerged.genMergedNeuronSpikeQueueUpdateStructs(os, *this);
+    modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
-    modelMerged.genMergedNeuronUpdateGroupHostStructArrayPush(neuronUpdateCPP, *this);
-    modelMerged.genMergedNeuronSpikeQueueUpdateHostStructArrayPush(neuronUpdateCPP, *this);
-    modelMerged.genMergedNeuronPrevSpikeTimeUpdateHostStructArrayPush(neuronUpdateCPP, *this);
+    modelMerged.genMergedNeuronUpdateGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedNeuronSpikeQueueUpdateHostStructArrayPush(os, *this);
+    modelMerged.genMergedNeuronPrevSpikeTimeUpdateHostStructArrayPush(os, *this);
 
     // Generate preamble
-    preambleHandler(neuronUpdateCPP);
-    
-    // No need to copy the content to os as streamCreator handles file output
+    preambleHandler(os);
 }
 
 void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
                               BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
-    // Create streams for both ISPC and C++ files
-    CodeStream synapseUpdateISPC(streamCreator("synapseUpdate", "ispc"));
-    CodeStream synapseUpdateCPP(streamCreator("synapseUpdate", "cc"));
+    // Module name for both ISPC file and header
+    const std::string moduleName = "synapseUpdate";
+    
+    // Create stream only for ISPC file
+    CodeStream synapseUpdateISPC(streamCreator(moduleName, "ispc"));
+    
+    // Include the ISPC header 
+    os << "#include \"" << moduleName << ".h\"" << std::endl << std::endl;
+    
+    // C++ wrapper function for updateSynapses that calls the ISPC function
+    os << "void updateSynapses(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl;
+    os << "{" << std::endl;
+    os << "    ispc::updateSynapses(t);" << std::endl;
+    os << "}" << std::endl << std::endl;
+    
+    // Generate ISPC code for synapse update
+    synapseUpdateISPC << "export void updateSynapses(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl;
+    synapseUpdateISPC << "{" << std::endl;
+    synapseUpdateISPC << "    // Synapse update implementation" << std::endl;
+    synapseUpdateISPC << "}" << std::endl;
     
     // Generate preamble
-    preambleHandler(synapseUpdateCPP);
-    
-    // No need to copy content to os as streamCreator handles file output
+    preambleHandler(os);
 }
 
 void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
                              BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
-    // Create streams for both ISPC and C++ files
-    CodeStream customUpdateISPC(streamCreator("customUpdate", "ispc"));
-    CodeStream customUpdateCPP(streamCreator("customUpdate", "cc"));
+    // Module name for both ISPC file and header
+    const std::string moduleName = "customUpdate";
+    
+    // Create stream only for ISPC file
+    CodeStream customUpdateISPC(streamCreator(moduleName, "ispc"));
+    
+    // Include the ISPC header
+    os << "#include \"" << moduleName << ".h\"" << std::endl << std::endl;
+    
+    // C++ wrapper function for custom updates that calls the ISPC function
+    os << "void updateCustom(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl;
+    os << "{" << std::endl;
+    os << "    ispc::updateCustom(t);" << std::endl;
+    os << "}" << std::endl << std::endl;
+    
+    // Generate ISPC code for custom update
+    customUpdateISPC << "export void updateCustom(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl;
+    customUpdateISPC << "{" << std::endl;
+    customUpdateISPC << "    // Custom update implementation" << std::endl;
+    customUpdateISPC << "}" << std::endl;
     
     // Generate preamble
-    preambleHandler(customUpdateCPP);
-    
-    // No need to copy content to os as streamCreator handles file output
+    preambleHandler(os);
 }
 
 void Backend::genInit(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
                      BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
-    // Create streams for both ISPC and C++ files
-    CodeStream initISPC(streamCreator("init", "ispc"));
-    CodeStream initCPP(streamCreator("init", "cc"));
+    // Module name for both ISPC file and header
+    const std::string moduleName = "init";
+    
+    // Create stream only for ISPC file
+    CodeStream initISPC(streamCreator(moduleName, "ispc"));
+    
+    // Include the ISPC header
+    os << "#include \"" << moduleName << ".h\"" << std::endl << std::endl;
+    
+    // C++ wrapper functions that call the ISPC functions
+    // Initialize function
+    os << "void initialize()" << std::endl;
+    os << "{" << std::endl;
+    os << "    ispc::initialize();" << std::endl;
+    os << "}" << std::endl << std::endl;
+    
+    // InitializeSparse function
+    os << "void initializeSparse()" << std::endl;
+    os << "{" << std::endl;
+    os << "    ispc::initializeSparse();" << std::endl;
+    os << "}" << std::endl << std::endl;
+    
+    // InitializeHost function
+    os << "void initializeHost()" << std::endl;
+    os << "{" << std::endl;
+    os << "    ispc::initializeHost();" << std::endl;
+    os << "}" << std::endl << std::endl;
+    
+    // ISPC code for initialization
+    initISPC << "export void initialize()" << std::endl;
+    initISPC << "{" << std::endl;
+    initISPC << "    // Initialize implementation" << std::endl;
+    initISPC << "}" << std::endl << std::endl;
+    
+    initISPC << "export void initializeSparse()" << std::endl;
+    initISPC << "{" << std::endl;
+    initISPC << "    // Initialize sparse implementation" << std::endl;
+    initISPC << "}" << std::endl << std::endl;
+    
+    initISPC << "export void initializeHost()" << std::endl;
+    initISPC << "{" << std::endl;
+    initISPC << "    // Initialize host implementation" << std::endl;
+    initISPC << "}" << std::endl;
     
     // Generate preamble
-    preambleHandler(initCPP);
-    
-    // No need to copy content to os as streamCreator handles file output
+    preambleHandler(os);
 }
 
 size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &) const
