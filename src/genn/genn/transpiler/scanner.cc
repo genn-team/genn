@@ -250,11 +250,25 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
 //---------------------------------------------------------------------------
 void scanString(ScanState &scanState, std::vector<Token> &tokens)
 {
-    // Read until end of string
+    // Loop
     // **TODO** more complex logic here
-    while(scanState.peek() != '"') {
-        scanState.advance();
+    while(true) {
+        // If we have reached end of string, give error
+        if(scanState.isAtEnd()) {
+            scanState.error("Unterminated string literal encountered.");
+            return;
+        }
+        // Otherwise, if next character is closing quote, stop
+        else if(scanState.peek() == '"') {
+            break;
+        }
+        // Otherwise, advance over string
+        else {
+            scanState.advance();
+        }
     }
+
+    // Match closing quote and emplace string token
     scanState.match('"');
     emplaceToken(tokens, Token::Type::STRING, scanState);
 }
