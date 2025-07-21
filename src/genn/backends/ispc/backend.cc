@@ -205,10 +205,6 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
     // Create stream only for ISPC file
     CodeStream neuronUpdateISPC(streamCreator(moduleName, "ispc"));
    
-    // Begin environment with standard library
-    EnvironmentLibrary backendEnv(neuronUpdateISPC, backendFunctions);
-    EnvironmentLibrary neuronUpdateEnv(neuronUpdateISPC, StandardLibrary::getMathsFunctions());
-    
     // Include the ISPC header
     os << "#include \"" << moduleName << ".h\"" << std::endl << std::endl;
     
@@ -225,6 +221,46 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
     }
     os << ");" << std::endl;
     os << "}" << std::endl << std::endl;
+    
+    preambleHandler(os);
+    
+    // Begin environment with standard library in ISPC file
+    EnvironmentLibrary backendEnv(neuronUpdateISPC, backendFunctions);
+    EnvironmentLibrary neuronUpdateEnv(neuronUpdateISPC, StandardLibrary::getMathsFunctions());
+    
+    // Struct definitions in the ISPC file
+    neuronUpdateISPC << std::endl << "// Merged neuron group structures" << std::endl;
+    modelMerged.genMergedNeuronUpdateGroupStructs(neuronUpdateISPC, *this);
+    modelMerged.genMergedNeuronSpikeQueueUpdateStructs(neuronUpdateISPC, *this);
+    modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(neuronUpdateISPC, *this);
+    
+    // Export global arrays in ISPC
+    neuronUpdateISPC << std::endl << "// Exported global arrays" << std::endl;
+    for(size_t i = 0; i < modelMerged.getMergedNeuronUpdateGroups().size(); i++) {
+        const auto &g = modelMerged.getMergedNeuronUpdateGroups()[i];
+        neuronUpdateISPC << "export uniform MergedNeuronUpdateGroup" << g.getIndex() 
+                  << " mergedNeuronUpdateGroup" << g.getIndex() 
+                  << "[" << g.getGroups().size() << "];" << std::endl;
+    }
+    
+    for(size_t i = 0; i < modelMerged.getMergedNeuronSpikeQueueUpdateGroups().size(); i++) {
+        const auto &g = modelMerged.getMergedNeuronSpikeQueueUpdateGroups()[i];
+        neuronUpdateISPC << "export uniform MergedNeuronSpikeQueueUpdateGroup" << g.getIndex() 
+                  << " mergedNeuronSpikeQueueUpdateGroup" << g.getIndex() 
+                  << "[" << g.getGroups().size() << "];" << std::endl;
+    }
+    
+    for(size_t i = 0; i < modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups().size(); i++) {
+        const auto &g = modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups()[i];
+        neuronUpdateISPC << "export uniform MergedNeuronPrevSpikeTimeUpdateGroup" << g.getIndex() 
+                  << " mergedNeuronPrevSpikeTimeUpdateGroup" << g.getIndex() 
+                  << "[" << g.getGroups().size() << "];" << std::endl;
+    }
+    
+    // Functions in C++ to set the exported arrays
+    modelMerged.genMergedNeuronUpdateGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedNeuronSpikeQueueUpdateHostStructArrayPush(os, *this);
+    modelMerged.genMergedNeuronPrevSpikeTimeUpdateHostStructArrayPush(os, *this);
     
     // ISPC code for neuron update
     neuronUpdateISPC << "export void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
@@ -412,19 +448,6 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
                 }
             });
     }
-
-    // Generate struct definitions in the provided os stream
-    modelMerged.genMergedNeuronUpdateGroupStructs(os, *this);
-    modelMerged.genMergedNeuronSpikeQueueUpdateStructs(os, *this);
-    modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(os, *this);
-
-    // Generate arrays of merged structs and functions to set them
-    modelMerged.genMergedNeuronUpdateGroupHostStructArrayPush(os, *this);
-    modelMerged.genMergedNeuronSpikeQueueUpdateHostStructArrayPush(os, *this);
-    modelMerged.genMergedNeuronPrevSpikeTimeUpdateHostStructArrayPush(os, *this);
-
-    // Generate preamble
-    preambleHandler(os);
 }
 
 void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
@@ -445,12 +468,49 @@ void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator streamCreator, 
     os << "    ispc::updateSynapses(t);" << std::endl;
     os << "}" << std::endl << std::endl;
     
-    // Generate ISPC code for synapse update
-    synapseUpdateISPC << "export void updateSynapses(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl;
-    synapseUpdateISPC << "{" << std::endl;
-    synapseUpdateISPC << "    // Synapse update implementation" << std::endl;
-    synapseUpdateISPC << "}" << std::endl;
-    
+    // Generate struct definitions in the ISPC file
+    synapseUpdateISPC << std::endl << "// Merged synapse group structures" << std::endl;
+    modelMerged.genMergedPresynapticUpdateGroupStructs(synapseUpdateISPC, *this);
+    modelMerged.genMergedPostsynapticUpdateGroupStructs(synapseUpdateISPC, *this);
+    modelMerged.genMergedSynapseConnectivityInitGroupStructs(synapseUpdateISPC, *this);
+
+    // Export global arrays in ISPC
+    synapseUpdateISPC << std::endl << "// Exported global arrays" << std::endl;
+    for(size_t i = 0; i < modelMerged.getMergedPresynapticUpdateGroups().size(); i++) {
+        const auto &g = modelMerged.getMergedPresynapticUpdateGroups()[i];
+        synapseUpdateISPC << "export uniform MergedPresynapticUpdateGroup" << g.getIndex() 
+                  << " mergedPresynapticUpdateGroup" << g.getIndex() 
+                  << "[" << g.getGroups().size() << "];" << std::endl;
+    }
+
+    for(size_t i = 0; i < modelMerged.getMergedPostsynapticUpdateGroups().size(); i++) {
+        const auto &g = modelMerged.getMergedPostsynapticUpdateGroups()[i];
+        synapseUpdateISPC << "export uniform MergedPostsynapticUpdateGroup" << g.getIndex() 
+                  << " mergedPostsynapticUpdateGroup" << g.getIndex() 
+                  << "[" << g.getGroups().size() << "];" << std::endl;
+    }
+
+    for(size_t i = 0; i < modelMerged.getMergedSynapseConnectivityInitGroups().size(); i++) {
+        const auto &g = modelMerged.getMergedSynapseConnectivityInitGroups()[i];
+        synapseUpdateISPC << "export uniform MergedSynapseConnectivityInitGroup" << g.getIndex() 
+                  << " mergedSynapseConnectivityInitGroup" << g.getIndex() 
+                  << "[" << g.getGroups().size() << "];" << std::endl;
+    }
+
+    // Functions in C++ to set the exported arrays
+    modelMerged.genMergedPresynapticUpdateGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedPostsynapticUpdateGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedSynapseConnectivityInitGroupHostStructArrayPush(os, *this);
+
+    // ISPC code for synapse update
+    synapseUpdateISPC << std::endl << "// Main ISPC entry point for synapse updates" << std::endl;
+    synapseUpdateISPC << "export void updateSynapses(" << modelMerged.getModel().getTimePrecision().getName() << " t)";
+    {
+        CodeStream::Scope b(synapseUpdateISPC);
+        
+        synapseUpdateISPC << "    // Synapse update implementation" << std::endl;
+    }
+
     // Generate preamble
     preambleHandler(os);
 }
@@ -473,11 +533,45 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator streamCreator, M
     os << "    ispc::updateCustom(t);" << std::endl;
     os << "}" << std::endl << std::endl;
     
+    // Generate struct definitions in the ISPC file
+    customUpdateISPC << std::endl << "// Merged custom update group structures" << std::endl;
+    
+    // Export global arrays in ISPC
+    customUpdateISPC << std::endl << "// Exported global arrays" << std::endl;
+    for(size_t i = 0; i < modelMerged.getMergedCustomUpdateGroups().size(); i++) {
+        const auto &g = modelMerged.getMergedCustomUpdateGroups()[i];
+        customUpdateISPC << "export uniform MergedCustomUpdateGroup" << g.getIndex() 
+                  << " mergedCustomUpdateGroup" << g.getIndex() 
+                  << "[" << g.getGroups().size() << "];" << std::endl;
+    }
+
+    for(size_t i = 0; i < modelMerged.getMergedCustomUpdateWUGroups().size(); i++) {
+        const auto &g = modelMerged.getMergedCustomUpdateWUGroups()[i];
+        customUpdateISPC << "export uniform MergedCustomUpdateWUGroup" << g.getIndex() 
+                  << " mergedCustomUpdateWUGroup" << g.getIndex() 
+                  << "[" << g.getGroups().size() << "];" << std::endl;
+    }
+
+    for(size_t i = 0; i < modelMerged.getMergedCustomUpdateHostReductionGroups().size(); i++) {
+        const auto &g = modelMerged.getMergedCustomUpdateHostReductionGroups()[i];
+        customUpdateISPC << "export uniform MergedCustomUpdateHostReductionGroup" << g.getIndex() 
+                  << " mergedCustomUpdateHostReductionGroup" << g.getIndex() 
+                  << "[" << g.getGroups().size() << "];" << std::endl;
+    }
+
+    // Functions in C++ to set the exported arrays
+    modelMerged.genMergedCustomUpdateHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomUpdateWUHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomUpdateHostReductionHostStructArrayPush(os, *this);
+
     // Generate ISPC code for custom update
-    customUpdateISPC << "export void updateCustom(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl;
-    customUpdateISPC << "{" << std::endl;
-    customUpdateISPC << "    // Custom update implementation" << std::endl;
-    customUpdateISPC << "}" << std::endl;
+    customUpdateISPC << std::endl << "// Main ISPC entry point for custom updates" << std::endl;
+    customUpdateISPC << "export void updateCustom(" << modelMerged.getModel().getTimePrecision().getName() << " t)";
+    {
+        CodeStream::Scope b(customUpdateISPC);
+        
+        customUpdateISPC << "    // Custom update implementation" << std::endl;
+    }
     
     // Generate preamble
     preambleHandler(os);
@@ -514,21 +608,71 @@ void Backend::genInit(CodeStream &os, FileStreamCreator streamCreator, ModelSpec
     os << "    ispc::initializeHost();" << std::endl;
     os << "}" << std::endl << std::endl;
     
+    // Generate struct definitions in the ISPC file
+    initISPC << std::endl << "// Merged initialization group structures" << std::endl;
+    modelMerged.genMergedNeuronInitGroupStructs(initISPC, *this);
+    modelMerged.genMergedSynapseInitGroupStructs(initISPC, *this);
+
+    // Export global arrays in ISPC
+    initISPC << std::endl << "// Exported global arrays" << std::endl;
+    for(size_t i = 0; i < modelMerged.getMergedNeuronInitGroups().size(); i++) {
+        const auto &g = modelMerged.getMergedNeuronInitGroups()[i];
+        initISPC << "export uniform MergedNeuronInitGroup" << g.getIndex() 
+                << " mergedNeuronInitGroup" << g.getIndex() 
+                << "[" << g.getGroups().size() << "];" << std::endl;
+    }
+
+    for(size_t i = 0; i < modelMerged.getMergedSynapseInitGroups().size(); i++) {
+        const auto &g = modelMerged.getMergedSynapseInitGroups()[i];
+        initISPC << "export uniform MergedSynapseInitGroup" << g.getIndex() 
+                << " mergedSynapseInitGroup" << g.getIndex() 
+                << "[" << g.getGroups().size() << "];" << std::endl;
+    }
+
+    for(size_t i = 0; i < modelMerged.getMergedCustomUpdateInitGroups().size(); i++) {
+        const auto &g = modelMerged.getMergedCustomUpdateInitGroups()[i];
+        initISPC << "export uniform MergedCustomUpdateInitGroup" << g.getIndex() 
+                << " mergedCustomUpdateInitGroup" << g.getIndex() 
+                << "[" << g.getGroups().size() << "];" << std::endl;
+    }
+
+    for(size_t i = 0; i < modelMerged.getMergedCustomWUUpdateInitGroups().size(); i++) {
+        const auto &g = modelMerged.getMergedCustomWUUpdateInitGroups()[i];
+        initISPC << "export uniform MergedCustomWUUpdateInitGroup" << g.getIndex() 
+                << " mergedCustomWUUpdateInitGroup" << g.getIndex() 
+                << "[" << g.getGroups().size() << "];" << std::endl;
+    }
+
+    // Functions in C++ to set the exported arrays
+    modelMerged.genMergedNeuronInitGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedSynapseInitGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomUpdateInitGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedCustomWUUpdateInitGroupHostStructArrayPush(os, *this);
+    
     // ISPC code for initialization
-    initISPC << "export void initialize()" << std::endl;
-    initISPC << "{" << std::endl;
-    initISPC << "    // Initialize implementation" << std::endl;
-    initISPC << "}" << std::endl << std::endl;
-    
-    initISPC << "export void initializeSparse()" << std::endl;
-    initISPC << "{" << std::endl;
-    initISPC << "    // Initialize sparse implementation" << std::endl;
-    initISPC << "}" << std::endl << std::endl;
-    
-    initISPC << "export void initializeHost()" << std::endl;
-    initISPC << "{" << std::endl;
-    initISPC << "    // Initialize host implementation" << std::endl;
-    initISPC << "}" << std::endl;
+    initISPC << std::endl << "// Main ISPC entry point for standard initialization" << std::endl;
+    initISPC << "export void initialize()";
+    {
+        CodeStream::Scope b(initISPC);
+        
+        initISPC << "    // Initialize implementation" << std::endl;
+    }
+
+    initISPC << std::endl << std::endl << "// Main ISPC entry point for sparse initialization" << std::endl;
+    initISPC << "export void initializeSparse()";
+    {
+        CodeStream::Scope b(initISPC);
+        
+        initISPC << "    // Initialize sparse implementation" << std::endl;
+    }
+
+    initISPC << std::endl << std::endl << "// Main ISPC entry point for host initialization" << std::endl;
+    initISPC << "export void initializeHost()";
+    {
+        CodeStream::Scope b(initISPC);
+        
+        initISPC << "    // Initialize host implementation" << std::endl;
+    }
     
     // Generate preamble
     preambleHandler(os);
