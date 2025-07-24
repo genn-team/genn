@@ -843,7 +843,8 @@ void Backend::genMakefileLinkRule(std::ostream &os) const
 void Backend::genMakefileCompileRule(std::ostream &os) const
 {
     // Rule for compiling C++ files
-    os << "%.o: %.cc %.d" << std::endl;
+    // **NOTE** needs top depend on ISPC for auto-generated header
+    os << "%.o: %.cc %.d %ISPC.o" << std::endl;
     os << "\t@$(CXX) $(CXXFLAGS) -o $@ $<" << std::endl;
     
     // Rule for compiling ISPC files
@@ -851,7 +852,8 @@ void Backend::genMakefileCompileRule(std::ostream &os) const
     os << "\t@$(ISPC) $(ISPCFLAGS) -o $@ -h $(@:.o=.h) $<" << std::endl;
     
     // Add dependency generation rule
-    os << "%.d: %.cc" << std::endl;
+    // **NOTE** needs top depend on ISPC for auto-generated header
+    os << "%.d: %.cc %ISPC.o" << std::endl;
     os << "\t@$(CXX) $(CXXFLAGS) -MM -o $@ $<" << std::endl;
 }
 
