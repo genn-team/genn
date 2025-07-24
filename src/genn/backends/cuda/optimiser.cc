@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <list>
 #include <map>
 #include <mutex>
 #include <numeric>
@@ -483,7 +484,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         // **NOTE** we don't really need to generate all the code but, on windows, generating code selectively seems to result in werid b
         const std::string dryRunSuffix = "CUDAOptim";
         {
-            std::vector<std::ofstream> fileStreams;
+            std::list<std::ofstream> fileStreams;
             auto fileStreamCreator =
                 [&dryRunSuffix, &fileStreams, &outputPath](const std::string &title, const std::string &extension) -> std::ostream &
                 {
