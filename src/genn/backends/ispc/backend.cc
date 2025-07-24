@@ -415,24 +415,6 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
     // Include the ISPC header
     os << "#include \"neuronUpdateISPC.h\"" << std::endl << std::endl;
     
-    // C++ wrapper function for updateNeurons that calls the ISPC function
-    os << "void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
-    if(modelMerged.getModel().isRecordingInUse()) {
-        os << ", unsigned int recordingTimestep";
-    }
-    os << ")" << std::endl;
-    {
-        CodeStream::Scope b(os);
-    
-        os << "ispc::updateNeurons(t";
-        if(modelMerged.getModel().isRecordingInUse()) {
-            os << ", recordingTimestep";
-        }
-        os << ");" << std::endl;
-    }
-    os << std::endl;
-
-    
     preambleHandler(os);
 }
 
@@ -447,13 +429,7 @@ void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator streamCreator, 
     
     // Include the ISPC header 
     os << "#include \"" << moduleName << "ISPC.h\"" << std::endl << std::endl;
-    
-    // C++ wrapper function for updateSynapses that calls the ISPC function
-    os << "void updateSynapses(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl;
-    os << "{" << std::endl;
-    os << "    ispc::updateSynapses(t);" << std::endl;
-    os << "}" << std::endl << std::endl;
-    
+
     // Generate struct definitions in the ISPC file
     synapseUpdateISPC << std::endl << "// Merged synapse group structures" << std::endl;
     modelMerged.genMergedPresynapticUpdateGroupStructs(synapseUpdateISPC, *this);
@@ -512,13 +488,7 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator streamCreator, M
     
     // Include the ISPC header
     os << "#include \"" << moduleName << "ISPC.h\"" << std::endl << std::endl;
-    
-    // C++ wrapper function for custom updates that calls the ISPC function
-    os << "void updateCustom(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl;
-    os << "{" << std::endl;
-    os << "    ispc::updateCustom(t);" << std::endl;
-    os << "}" << std::endl << std::endl;
-    
+
     // Generate struct definitions in the ISPC file
     customUpdateISPC << std::endl << "// Merged custom update group structures" << std::endl;
     
@@ -575,23 +545,9 @@ void Backend::genInit(CodeStream &os, FileStreamCreator streamCreator, ModelSpec
     // Include the ISPC header
     os << "#include \"" << moduleName << "ISPC.h\"" << std::endl << std::endl;
     
-    // C++ wrapper functions that call the ISPC functions
-    // Initialize function
-    os << "void initialize()" << std::endl;
-    os << "{" << std::endl;
-    os << "    ispc::initialize();" << std::endl;
-    os << "}" << std::endl << std::endl;
-    
-    // InitializeSparse function
-    os << "void initializeSparse()" << std::endl;
-    os << "{" << std::endl;
-    os << "    ispc::initializeSparse();" << std::endl;
-    os << "}" << std::endl << std::endl;
-    
     // InitializeHost function
     os << "void initializeHost()" << std::endl;
     os << "{" << std::endl;
-    os << "    ispc::initializeHost();" << std::endl;
     os << "}" << std::endl << std::endl;
     
     // Generate struct definitions in the ISPC file
@@ -650,14 +606,6 @@ void Backend::genInit(CodeStream &os, FileStreamCreator streamCreator, ModelSpec
         CodeStream::Scope b(initISPC);
         
         initISPC << "    // Initialize sparse implementation" << std::endl;
-    }
-
-    initISPC << std::endl << std::endl << "// Main ISPC entry point for host initialization" << std::endl;
-    initISPC << "export void initializeHost()";
-    {
-        CodeStream::Scope b(initISPC);
-        
-        initISPC << "    // Initialize host implementation" << std::endl;
     }
     
     // Generate preamble
