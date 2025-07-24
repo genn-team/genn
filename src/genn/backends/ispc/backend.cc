@@ -536,77 +536,66 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator streamCreator, M
 void Backend::genInit(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
                      BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
-    // Module name for both ISPC file and header
-    const std::string moduleName = "init";
+    // Generate stream with neuron update code
+    std::ostringstream initStream;
+    CodeStream init(initStream);
+
+    // ISPC code for initialization
+    init << std::endl << "// Main ISPC entry point for standard initialization" << std::endl;
+    init << "export void initialize()";
+    {
+        CodeStream::Scope b(init);
+        
+        init << "    // Initialize implementation" << std::endl;
+    }
+
+    init << std::endl << std::endl << "// Main ISPC entry point for sparse initialization" << std::endl;
+    init << "export void initializeSparse()";
+    {
+        CodeStream::Scope b(init);
+        
+        init << "    // Initialize sparse implementation" << std::endl;
+    }
+
+    // Create stream for ISPC file
+    CodeStream initISPC(streamCreator("init", "ispc"));
+     
+    // Struct definitions in the ISPC file
+    initISPC << std::endl << "// Merged neuron group structures" << std::endl;
     
-    // Create stream only for ISPC file
-    CodeStream initISPC(streamCreator(moduleName, "ispc"));
-    
+    // Generate struct definitions
+    modelMerged.genMergedNeuronInitGroupStructs(initISPC, *this);
+    modelMerged.genMergedSynapseInitGroupStructs(initISPC, *this);
+    modelMerged.genMergedCustomUpdateInitGroupStructs(initISPC, *this);
+    modelMerged.genMergedCustomWUUpdateInitGroupStructs(initISPC, *this);
+    modelMerged.genMergedSynapseConnectivityInitGroupStructs(initISPC, *this);
+    modelMerged.genMergedSynapseSparseInitGroupStructs(initISPC, *this);
+    modelMerged.genMergedCustomWUUpdateSparseInitGroupStructs(initISPC, *this);
+    modelMerged.genMergedCustomConnectivityUpdatePreInitStructs(initISPC, *this);
+    modelMerged.genMergedCustomConnectivityUpdatePostInitStructs(initISPC, *this);
+    modelMerged.genMergedCustomConnectivityUpdateSparseInitStructs(initISPC, *this);
+
+    // Generate arrays of merged structs and functions to set them
+    genMergedStructArrayPush(initISPC, modelMerged.getMergedNeuronInitGroups());
+    genMergedStructArrayPush(initISPC, modelMerged.getMergedSynapseInitGroups());
+    genMergedStructArrayPush(initISPC, modelMerged.getMergedCustomUpdateInitGroups());
+    genMergedStructArrayPush(initISPC, modelMerged.getMergedCustomWUUpdateSparseInitGroups());
+    genMergedStructArrayPush(initISPC, modelMerged.getMergedSynapseConnectivityInitGroups());
+    genMergedStructArrayPush(initISPC, modelMerged.getMergedSynapseSparseInitGroups());
+    genMergedStructArrayPush(initISPC, modelMerged.getMergedCustomWUUpdateInitGroups());
+    genMergedStructArrayPush(initISPC, modelMerged.getMergedCustomConnectivityUpdatePreInitGroups());
+    genMergedStructArrayPush(initISPC, modelMerged.getMergedCustomConnectivityUpdatePostInitGroups());
+    genMergedStructArrayPush(initISPC, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups());
+
+    initISPC << initStream.str();
+
     // Include the ISPC header
-    os << "#include \"" << moduleName << "ISPC.h\"" << std::endl << std::endl;
+    os << "#include \"initISPC.h\"" << std::endl << std::endl;
     
     // InitializeHost function
     os << "void initializeHost()" << std::endl;
     os << "{" << std::endl;
     os << "}" << std::endl << std::endl;
-    
-    // Generate struct definitions in the ISPC file
-    initISPC << std::endl << "// Merged initialization group structures" << std::endl;
-    modelMerged.genMergedNeuronInitGroupStructs(initISPC, *this);
-    modelMerged.genMergedSynapseInitGroupStructs(initISPC, *this);
-
-    // Export global arrays in ISPC
-    initISPC << std::endl << "// Exported global arrays" << std::endl;
-    for(size_t i = 0; i < modelMerged.getMergedNeuronInitGroups().size(); i++) {
-        const auto &g = modelMerged.getMergedNeuronInitGroups()[i];
-        initISPC << "uniform MergedNeuronInitGroup" << g.getIndex() 
-                << " mergedNeuronInitGroup" << g.getIndex() 
-                << "[" << g.getGroups().size() << "];" << std::endl;
-    }
-
-    for(size_t i = 0; i < modelMerged.getMergedSynapseInitGroups().size(); i++) {
-        const auto &g = modelMerged.getMergedSynapseInitGroups()[i];
-        initISPC << "uniform MergedSynapseInitGroup" << g.getIndex() 
-                << " mergedSynapseInitGroup" << g.getIndex() 
-                << "[" << g.getGroups().size() << "];" << std::endl;
-    }
-
-    for(size_t i = 0; i < modelMerged.getMergedCustomUpdateInitGroups().size(); i++) {
-        const auto &g = modelMerged.getMergedCustomUpdateInitGroups()[i];
-        initISPC << "uniform MergedCustomUpdateInitGroup" << g.getIndex() 
-                << " mergedCustomUpdateInitGroup" << g.getIndex() 
-                << "[" << g.getGroups().size() << "];" << std::endl;
-    }
-
-    for(size_t i = 0; i < modelMerged.getMergedCustomWUUpdateInitGroups().size(); i++) {
-        const auto &g = modelMerged.getMergedCustomWUUpdateInitGroups()[i];
-        initISPC << "uniform MergedCustomWUUpdateInitGroup" << g.getIndex() 
-                << " mergedCustomWUUpdateInitGroup" << g.getIndex() 
-                << "[" << g.getGroups().size() << "];" << std::endl;
-    }
-
-    // Functions in C++ to set the exported arrays
-    modelMerged.genMergedNeuronInitGroupHostStructArrayPush(os, *this);
-    modelMerged.genMergedSynapseInitGroupHostStructArrayPush(os, *this);
-    modelMerged.genMergedCustomUpdateInitGroupHostStructArrayPush(os, *this);
-    modelMerged.genMergedCustomWUUpdateInitGroupHostStructArrayPush(os, *this);
-    
-    // ISPC code for initialization
-    initISPC << std::endl << "// Main ISPC entry point for standard initialization" << std::endl;
-    initISPC << "export void initialize()";
-    {
-        CodeStream::Scope b(initISPC);
-        
-        initISPC << "    // Initialize implementation" << std::endl;
-    }
-
-    initISPC << std::endl << std::endl << "// Main ISPC entry point for sparse initialization" << std::endl;
-    initISPC << "export void initializeSparse()";
-    {
-        CodeStream::Scope b(initISPC);
-        
-        initISPC << "    // Initialize sparse implementation" << std::endl;
-    }
     
     // Generate preamble
     preambleHandler(os);
