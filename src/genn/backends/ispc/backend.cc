@@ -419,7 +419,7 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
 }
 
 void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
-                              BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
+                               BackendBase::MemorySpaces&, HostHandler preambleHandler) const
 {
     // Module name for both ISPC file and header
     const std::string moduleName = "synapseUpdate";
@@ -478,7 +478,7 @@ void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator streamCreator, 
 }
 
 void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
-                             BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
+                              BackendBase::MemorySpaces&, HostHandler preambleHandler) const
 {
     // Module name for both ISPC file and header
     const std::string moduleName = "customUpdate";
@@ -534,7 +534,7 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator streamCreator, M
 }
 
 void Backend::genInit(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
-                     BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
+                      BackendBase::MemorySpaces&, HostHandler preambleHandler) const
 {
     // Generate stream with neuron update code
     std::ostringstream initStream;
@@ -591,12 +591,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator streamCreator, ModelSpec
 
     // Include the ISPC header
     os << "#include \"initISPC.h\"" << std::endl << std::endl;
-    
-    // InitializeHost function
-    os << "void initializeHost()" << std::endl;
-    os << "{" << std::endl;
-    os << "}" << std::endl << std::endl;
-    
+
     // Generate preamble
     preambleHandler(os);
 }
@@ -738,7 +733,7 @@ void Backend::genMakefilePreamble(std::ostream &os, const std::vector<std::strin
     os << "CXXFLAGS := " << cxxFlags << std::endl;
     os << "LINKFLAGS := " << linkFlags << std::endl;
     os << "ISPC := ispc" << std::endl;
-    os << "ISPCFLAGS := -O2 -PIC --target=" << ispcPrefs.targetISA << std::endl;
+    os << "ISPCFLAGS := -O2 --PIC --target=" << ispcPrefs.targetISA << std::endl;
     
     // Add ISPC objects
     os << "OBJECTS += ";
