@@ -743,9 +743,9 @@ void Backend::genMergedDynamicVariablePush(CodeStream &, const std::string &, si
 {
 }
 
-std::string Backend::getMergedGroupFieldHostTypeName(const Type::ResolvedType &) const
+std::string Backend::getMergedGroupFieldHostTypeName(const Type::ResolvedType &type) const
 {
-    return "";
+    return type.getName();
 }
 
 void Backend::genPopVariableInit(EnvironmentExternalBase &, HandlerEnv) const
