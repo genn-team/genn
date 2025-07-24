@@ -405,28 +405,10 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
     modelMerged.genMergedNeuronSpikeQueueUpdateStructs(neuronUpdateISPC, *this);
     modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(neuronUpdateISPC, *this);
     
-    // Export global arrays in ISPC
-    neuronUpdateISPC << std::endl << "// Exported global arrays" << std::endl;
-    for(size_t i = 0; i < modelMerged.getMergedNeuronUpdateGroups().size(); i++) {
-        const auto &g = modelMerged.getMergedNeuronUpdateGroups()[i];
-        neuronUpdateISPC << "uniform MergedNeuronUpdateGroup" << g.getIndex() 
-                  << " mergedNeuronUpdateGroup" << g.getIndex() 
-                  << "[" << g.getGroups().size() << "];" << std::endl;
-    }
+    genMergedStructArrayPush(neuronUpdateISPC, modelMerged.getMergedNeuronUpdateGroups());
+    genMergedStructArrayPush(neuronUpdateISPC, modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
+    genMergedStructArrayPush(neuronUpdateISPC, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups());
     
-    for(size_t i = 0; i < modelMerged.getMergedNeuronSpikeQueueUpdateGroups().size(); i++) {
-        const auto &g = modelMerged.getMergedNeuronSpikeQueueUpdateGroups()[i];
-        neuronUpdateISPC << "uniform MergedNeuronSpikeQueueUpdateGroup" << g.getIndex() 
-                  << " mergedNeuronSpikeQueueUpdateGroup" << g.getIndex() 
-                  << "[" << g.getGroups().size() << "];" << std::endl;
-    }
-    
-    for(size_t i = 0; i < modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups().size(); i++) {
-        const auto &g = modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups()[i];
-        neuronUpdateISPC << "uniform MergedNeuronPrevSpikeTimeUpdateGroup" << g.getIndex() 
-                  << " mergedNeuronPrevSpikeTimeUpdateGroup" << g.getIndex() 
-                  << "[" << g.getGroups().size() << "];" << std::endl;
-    }
 
     neuronUpdateISPC << neuronUpdateStream.str();
 
@@ -451,11 +433,6 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
     os << std::endl;
 
     
-    // Functions in C++ to set the exported arrays
-    modelMerged.genMergedNeuronUpdateGroupHostStructArrayPush(os, *this);
-    modelMerged.genMergedNeuronSpikeQueueUpdateHostStructArrayPush(os, *this);
-    modelMerged.genMergedNeuronPrevSpikeTimeUpdateHostStructArrayPush(os, *this);
-
     preambleHandler(os);
 }
 
