@@ -198,76 +198,21 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
     if(modelMerged.getModel().getBatchSize() != 1) {
         throw std::runtime_error("The ISPC backend only supports simulations with a batch size of 1");
     }
+    
+    // Generate stream with neuron update code
+    std::ostringstream neuronUpdateStream;
+    CodeStream neuronUpdate(neuronUpdateStream);
 
-    // Module name for both ISPC file and header
-    const std::string moduleName = "neuronUpdate";
-
-    // Create stream only for ISPC file
-    CodeStream neuronUpdateISPC(streamCreator(moduleName, "ispc"));
-   
-    // Include the ISPC header
-    os << "#include \"" << moduleName << ".h\"" << std::endl << std::endl;
-    
-    // C++ wrapper function for updateNeurons that calls the ISPC function
-    os << "void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
-    if(modelMerged.getModel().isRecordingInUse()) {
-        os << ", unsigned int recordingTimestep";
-    }
-    os << ")" << std::endl;
-    os << "{" << std::endl;
-    os << "    ispc::updateNeurons(t";
-    if(modelMerged.getModel().isRecordingInUse()) {
-        os << ", recordingTimestep";
-    }
-    os << ");" << std::endl;
-    os << "}" << std::endl << std::endl;
-    
-    preambleHandler(os);
-    
     // Begin environment with standard library in ISPC file
-    EnvironmentLibrary backendEnv(neuronUpdateISPC, backendFunctions);
-    EnvironmentLibrary neuronUpdateEnv(neuronUpdateISPC, StandardLibrary::getMathsFunctions());
-    
-    // Struct definitions in the ISPC file
-    neuronUpdateISPC << std::endl << "// Merged neuron group structures" << std::endl;
-    modelMerged.genMergedNeuronUpdateGroupStructs(neuronUpdateISPC, *this);
-    modelMerged.genMergedNeuronSpikeQueueUpdateStructs(neuronUpdateISPC, *this);
-    modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(neuronUpdateISPC, *this);
-    
-    // Export global arrays in ISPC
-    neuronUpdateISPC << std::endl << "// Exported global arrays" << std::endl;
-    for(size_t i = 0; i < modelMerged.getMergedNeuronUpdateGroups().size(); i++) {
-        const auto &g = modelMerged.getMergedNeuronUpdateGroups()[i];
-        neuronUpdateISPC << "export uniform MergedNeuronUpdateGroup" << g.getIndex() 
-                  << " mergedNeuronUpdateGroup" << g.getIndex() 
-                  << "[" << g.getGroups().size() << "];" << std::endl;
-    }
-    
-    for(size_t i = 0; i < modelMerged.getMergedNeuronSpikeQueueUpdateGroups().size(); i++) {
-        const auto &g = modelMerged.getMergedNeuronSpikeQueueUpdateGroups()[i];
-        neuronUpdateISPC << "export uniform MergedNeuronSpikeQueueUpdateGroup" << g.getIndex() 
-                  << " mergedNeuronSpikeQueueUpdateGroup" << g.getIndex() 
-                  << "[" << g.getGroups().size() << "];" << std::endl;
-    }
-    
-    for(size_t i = 0; i < modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups().size(); i++) {
-        const auto &g = modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups()[i];
-        neuronUpdateISPC << "export uniform MergedNeuronPrevSpikeTimeUpdateGroup" << g.getIndex() 
-                  << " mergedNeuronPrevSpikeTimeUpdateGroup" << g.getIndex() 
-                  << "[" << g.getGroups().size() << "];" << std::endl;
-    }
-    
-    // Functions in C++ to set the exported arrays
-    modelMerged.genMergedNeuronUpdateGroupHostStructArrayPush(os, *this);
-    modelMerged.genMergedNeuronSpikeQueueUpdateHostStructArrayPush(os, *this);
-    modelMerged.genMergedNeuronPrevSpikeTimeUpdateHostStructArrayPush(os, *this);
+    EnvironmentLibrary backendEnv(neuronUpdate, backendFunctions);
+    EnvironmentLibrary neuronUpdateEnv(neuronUpdate, StandardLibrary::getMathsFunctions());
     
     // ISPC code for neuron update
-    neuronUpdateISPC << "export void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
+    neuronUpdateEnv.getStream() << "export void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
     if(modelMerged.getModel().isRecordingInUse()) {
-        neuronUpdateISPC << ", uniform unsigned int recordingTimestep";
+        neuronUpdateEnv.getStream() << ", uniform unsigned int recordingTimestep";
     }
-    neuronUpdateISPC << ")";
+    neuronUpdateEnv.getStream() << ")";
     {
         CodeStream::Scope b(neuronUpdateEnv.getStream());
 
@@ -448,6 +393,70 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
                 }
             });
     }
+
+    
+    // Create stream for ISPC file
+    CodeStream neuronUpdateISPC(streamCreator("neuronUpdate", "ispc"));
+   
+    
+    // Struct definitions in the ISPC file
+    neuronUpdateISPC << std::endl << "// Merged neuron group structures" << std::endl;
+    modelMerged.genMergedNeuronUpdateGroupStructs(neuronUpdateISPC, *this);
+    modelMerged.genMergedNeuronSpikeQueueUpdateStructs(neuronUpdateISPC, *this);
+    modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(neuronUpdateISPC, *this);
+    
+    // Export global arrays in ISPC
+    neuronUpdateISPC << std::endl << "// Exported global arrays" << std::endl;
+    for(size_t i = 0; i < modelMerged.getMergedNeuronUpdateGroups().size(); i++) {
+        const auto &g = modelMerged.getMergedNeuronUpdateGroups()[i];
+        neuronUpdateISPC << "export uniform MergedNeuronUpdateGroup" << g.getIndex() 
+                  << " mergedNeuronUpdateGroup" << g.getIndex() 
+                  << "[" << g.getGroups().size() << "];" << std::endl;
+    }
+    
+    for(size_t i = 0; i < modelMerged.getMergedNeuronSpikeQueueUpdateGroups().size(); i++) {
+        const auto &g = modelMerged.getMergedNeuronSpikeQueueUpdateGroups()[i];
+        neuronUpdateISPC << "export uniform MergedNeuronSpikeQueueUpdateGroup" << g.getIndex() 
+                  << " mergedNeuronSpikeQueueUpdateGroup" << g.getIndex() 
+                  << "[" << g.getGroups().size() << "];" << std::endl;
+    }
+    
+    for(size_t i = 0; i < modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups().size(); i++) {
+        const auto &g = modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups()[i];
+        neuronUpdateISPC << "export uniform MergedNeuronPrevSpikeTimeUpdateGroup" << g.getIndex() 
+                  << " mergedNeuronPrevSpikeTimeUpdateGroup" << g.getIndex() 
+                  << "[" << g.getGroups().size() << "];" << std::endl;
+    }
+
+    neuronUpdateISPC << neuronUpdateStream.str();
+
+    // Include the ISPC header
+    os << "#include \"neuronUpdate.h\"" << std::endl << std::endl;
+    
+    // C++ wrapper function for updateNeurons that calls the ISPC function
+    os << "void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
+    if(modelMerged.getModel().isRecordingInUse()) {
+        os << ", unsigned int recordingTimestep";
+    }
+    os << ")" << std::endl;
+    {
+        CodeStream::Scope b(os);
+    
+        os << "ispc::updateNeurons(t";
+        if(modelMerged.getModel().isRecordingInUse()) {
+            os << ", recordingTimestep";
+        }
+        os << ");" << std::endl;
+    }
+    os << std::endl;
+
+    
+    // Functions in C++ to set the exported arrays
+    modelMerged.genMergedNeuronUpdateGroupHostStructArrayPush(os, *this);
+    modelMerged.genMergedNeuronSpikeQueueUpdateHostStructArrayPush(os, *this);
+    modelMerged.genMergedNeuronPrevSpikeTimeUpdateHostStructArrayPush(os, *this);
+
+    preambleHandler(os);
 }
 
 void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
