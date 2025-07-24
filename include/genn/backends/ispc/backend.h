@@ -198,5 +198,42 @@ public:
 private:
     void genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng, bool trueSpike) const;
     void genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike) const;
+
+    template<typename T>
+    void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups) const
+    {
+        // Loop through groups
+        for(const auto &g : groups) {
+            os << "static uniform Merged" << T::name << "Group" << g.getIndex();
+            os << " merged" << T::name << "Group" << g.getIndex();
+            os << "[" << g.getGroups().size() << "];" << std::endl;
+
+            if(!g.getFields().empty()) {
+                const auto sortedFields = g.getSortedFields(*this);
+
+                os << "export void pushMerged" << T::name << "Group" << g.getIndex() << "ToDevice(uniform unsigned int idx, ";
+                for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
+                    const auto &f = sortedFields[fieldIndex];
+                    os << "uniform " << f.type.getName();
+                    if(f.type.isPointer()) {
+                        os << " uniform";
+                    }
+                    os << " " << f.name;
+                    if(fieldIndex != (sortedFields.size() - 1)) {
+                        os << ", ";
+                    }
+                }
+                os << ")";
+                {
+                    CodeStream::Scope b(os);
+                    // Loop through sorted fields and set array entry
+                    
+                    for(const auto &f : sortedFields) {
+                        os << "merged" << T::name << "Group" << g.getIndex() << "[idx]." << f.name << " = " << f.name << ";" << std::endl;
+                    }
+                }
+            }
+        }
+    }
 };
 }
