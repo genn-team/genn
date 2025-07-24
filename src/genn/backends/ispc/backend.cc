@@ -208,7 +208,7 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
     EnvironmentLibrary neuronUpdateEnv(neuronUpdate, StandardLibrary::getMathsFunctions());
     
     // ISPC code for neuron update
-    neuronUpdateEnv.getStream() << "export void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
+    neuronUpdateEnv.getStream() << "export void updateNeurons(uniform" << modelMerged.getModel().getTimePrecision().getName() << " t";
     if(modelMerged.getModel().isRecordingInUse()) {
         neuronUpdateEnv.getStream() << ", uniform unsigned int recordingTimestep";
     }
@@ -431,7 +431,7 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
     neuronUpdateISPC << neuronUpdateStream.str();
 
     // Include the ISPC header
-    os << "#include \"neuronUpdate.h\"" << std::endl << std::endl;
+    os << "#include \"neuronUpdateISPC.h\"" << std::endl << std::endl;
     
     // C++ wrapper function for updateNeurons that calls the ISPC function
     os << "void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
@@ -469,7 +469,7 @@ void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator streamCreator, 
     CodeStream synapseUpdateISPC(streamCreator(moduleName, "ispc"));
     
     // Include the ISPC header 
-    os << "#include \"" << moduleName << ".h\"" << std::endl << std::endl;
+    os << "#include \"" << moduleName << "ISPC.h\"" << std::endl << std::endl;
     
     // C++ wrapper function for updateSynapses that calls the ISPC function
     os << "void updateSynapses(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl;
@@ -513,7 +513,7 @@ void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator streamCreator, 
 
     // ISPC code for synapse update
     synapseUpdateISPC << std::endl << "// Main ISPC entry point for synapse updates" << std::endl;
-    synapseUpdateISPC << "export void updateSynapses(" << modelMerged.getModel().getTimePrecision().getName() << " t)";
+    synapseUpdateISPC << "export void updateSynapses(uniform" << modelMerged.getModel().getTimePrecision().getName() << " t)";
     {
         CodeStream::Scope b(synapseUpdateISPC);
         
@@ -534,7 +534,7 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator streamCreator, M
     CodeStream customUpdateISPC(streamCreator(moduleName, "ispc"));
     
     // Include the ISPC header
-    os << "#include \"" << moduleName << ".h\"" << std::endl << std::endl;
+    os << "#include \"" << moduleName << "ISPC.h\"" << std::endl << std::endl;
     
     // C++ wrapper function for custom updates that calls the ISPC function
     os << "void updateCustom(" << modelMerged.getModel().getTimePrecision().getName() << " t)" << std::endl;
@@ -575,7 +575,7 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator streamCreator, M
 
     // Generate ISPC code for custom update
     customUpdateISPC << std::endl << "// Main ISPC entry point for custom updates" << std::endl;
-    customUpdateISPC << "export void updateCustom(" << modelMerged.getModel().getTimePrecision().getName() << " t)";
+    customUpdateISPC << "export void updateCustom(uniform" << modelMerged.getModel().getTimePrecision().getName() << " t)";
     {
         CodeStream::Scope b(customUpdateISPC);
         
@@ -596,7 +596,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator streamCreator, ModelSpec
     CodeStream initISPC(streamCreator(moduleName, "ispc"));
     
     // Include the ISPC header
-    os << "#include \"" << moduleName << ".h\"" << std::endl << std::endl;
+    os << "#include \"" << moduleName << "ISPC.h\"" << std::endl << std::endl;
     
     // C++ wrapper functions that call the ISPC functions
     // Initialize function
