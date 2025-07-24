@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <fstream>
+#include <list>
 #include <string>
 #include <vector>
 
@@ -84,7 +85,7 @@ std::vector<std::string> generateAll(ModelSpecMerged &modelMerged, const Backend
     auto memorySpaces = backend.getMergedGroupMemorySpaces(modelMerged);
     
     // Create vector to hold file streams and lambda function to create them
-    std::vector<std::tuple<std::string, std::string, std::ostringstream>> fileStreams;
+    std::list<std::tuple<std::string, std::string, std::ostringstream>> fileStreams;
     auto fileStreamCreator =
         [&fileStreams](const std::string &title, const std::string &extension) -> std::ostream&
         {
