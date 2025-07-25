@@ -733,7 +733,7 @@ void Backend::genMakefilePreamble(std::ostream &os, const std::vector<std::strin
     os << "CXXFLAGS := " << cxxFlags << std::endl;
     os << "LINKFLAGS := " << linkFlags << std::endl;
     os << "ISPC := ispc" << std::endl;
-    os << "ISPCFLAGS := -O2 --PIC --target=" << ispcPrefs.targetISA << std::endl;
+    os << "ISPCFLAGS := -O2 --pic --target=" << ispcPrefs.targetISA << std::endl;
     
     // Add ISPC objects
     os << "OBJECTS += ";
