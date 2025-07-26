@@ -505,36 +505,398 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator streamCreator, M
 }
 
 void Backend::genInit(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
-                      BackendBase::MemorySpaces&, HostHandler preambleHandler) const
+                      BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
-    // Generate stream with neuron update code
+    const ModelSpecInternal &model = modelMerged.getModel();
+    if(model.getBatchSize() != 1) {
+        throw std::runtime_error("The ISPC backend only supports simulations with a batch size of 1");
+    }
+
+    // Generate stream with initialization code
     std::ostringstream initStream;
     CodeStream init(initStream);
 
-    // ISPC code for initialization
-    init << std::endl << "// Main ISPC entry point for standard initialization" << std::endl;
-    init << "export void initialize()";
-    {
-        CodeStream::Scope b(init);
-        
-        init << "    // Initialize implementation" << std::endl;
-    }
+    // Begin environment with RNG library and standard library
+    EnvironmentLibrary rngEnv(init, StandardLibrary::getHostRNGFunctions(modelMerged.getModel().getPrecision()));
+    EnvironmentLibrary backendEnv(rngEnv, backendFunctions);
+    EnvironmentLibrary initEnv(backendEnv, StandardLibrary::getMathsFunctions());
 
-    init << std::endl << std::endl << "// Main ISPC entry point for sparse initialization" << std::endl;
-    init << "export void initializeSparse()";
+    initEnv.getStream() << "export void initialize()";
     {
-        CodeStream::Scope b(init);
+        CodeStream::Scope b(initEnv.getStream());
+        EnvironmentExternal funcEnv(initEnv);
+        funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
+                    Type::writeNumeric(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
+
+        Timer t(funcEnv.getStream(), "init", model.isTimingEnabled());
+
+        funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
+        funcEnv.getStream() << "// Neuron groups" << std::endl;
+        modelMerged.genMergedNeuronInitGroups(
+            *this, memorySpaces,
+            [this, &funcEnv](auto &n)
+            {
+                CodeStream::Scope b(funcEnv.getStream());
+                funcEnv.getStream() << "// merged neuron init group " << n.getIndex() << std::endl;
+                funcEnv.getStream() << "for(unsigned int g = 0; g < " << n.getGroups().size() << "; g++)";
+                {
+                    CodeStream::Scope b(funcEnv.getStream());
+
+                    // Get reference to group
+                    funcEnv.getStream() << "const uniform MergedNeuronInitGroup" << n.getIndex() << " *group = &mergedNeuronInitGroup" << n.getIndex() << "[g]; " << std::endl;
+
+                    EnvironmentGroupMergedField<NeuronInitGroupMerged> groupEnv(funcEnv, n);
+                    buildStandardEnvironment(groupEnv, 1);
+                    n.generateInit(*this, groupEnv, 1);
+                }
+            });
+
+        funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
+        funcEnv.getStream() << "// Synapse groups" << std::endl;
+        modelMerged.genMergedSynapseInitGroups(
+            *this, memorySpaces,
+            [this, &funcEnv](auto &s)
+            {
+                CodeStream::Scope b(funcEnv.getStream());
+                funcEnv.getStream() << "// merged synapse init group " << s.getIndex() << std::endl;
+                funcEnv.getStream() << "for(unsigned int g = 0; g < " << s.getGroups().size() << "; g++)";
+                {
+                    CodeStream::Scope b(funcEnv.getStream());
+
+                    // Get reference to group
+                    funcEnv.getStream() << "const uniform MergedSynapseInitGroup" << s.getIndex() << " *group = &mergedSynapseInitGroup" << s.getIndex() << "[g]; " << std::endl;
+
+                    EnvironmentGroupMergedField<SynapseInitGroupMerged> groupEnv(funcEnv, s);
+                    buildStandardEnvironment(groupEnv, 1);
+                    s.generateInit(*this, groupEnv, 1);
+                }
+            });
+
+        funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
+        funcEnv.getStream() << "// Custom update groups" << std::endl;
+        modelMerged.genMergedCustomUpdateInitGroups(
+            *this, memorySpaces,
+            [this, &funcEnv](auto &c)
+            {
+                CodeStream::Scope b(funcEnv.getStream());
+                funcEnv.getStream() << "// merged custom init group " << c.getIndex() << std::endl;
+                funcEnv.getStream() << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                {
+                    CodeStream::Scope b(funcEnv.getStream());
+
+                    // Get reference to group
+                    funcEnv.getStream() << "const uniform MergedCustomUpdateInitGroup" << c.getIndex() << " *group = &mergedCustomUpdateInitGroup" << c.getIndex() << "[g]; " << std::endl;
+
+                    EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> groupEnv(funcEnv, c);
+                    buildStandardEnvironment(groupEnv, 1);
+                    c.generateInit(*this, groupEnv, 1);
+                }
+            });
+
+        funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
+        funcEnv.getStream() << "// Custom connectivity presynaptic update groups" << std::endl;
+        modelMerged.genMergedCustomConnectivityUpdatePreInitGroups(
+            *this, memorySpaces,
+            [this, &funcEnv](auto &c)
+            {
+                CodeStream::Scope b(funcEnv.getStream());
+                funcEnv.getStream() << "// merged custom connectivity presynaptic init group " << c.getIndex() << std::endl;
+                funcEnv.getStream() << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                {
+                    CodeStream::Scope b(funcEnv.getStream());
+
+                    // Get reference to group
+                    funcEnv.getStream() << "const uniform MergedCustomConnectivityUpdatePreInitGroup" << c.getIndex() << " *group = &mergedCustomConnectivityUpdatePreInitGroup" << c.getIndex() << "[g]; " << std::endl;
+
+                    EnvironmentGroupMergedField<CustomConnectivityUpdatePreInitGroupMerged> groupEnv(funcEnv, c);
+                    buildStandardEnvironment(groupEnv);
+                    c.generateInit(*this, groupEnv, 1);
+                }
+            });
+
+        funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
+        funcEnv.getStream() << "// Custom connectivity postsynaptic update groups" << std::endl;
+        modelMerged.genMergedCustomConnectivityUpdatePostInitGroups(
+            *this, memorySpaces,
+            [this, &funcEnv](auto &c)
+            {
+                CodeStream::Scope b(funcEnv.getStream());
+                funcEnv.getStream() << "// merged custom connectivity postsynaptic init group " << c.getIndex() << std::endl;
+                funcEnv.getStream() << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                {
+                    CodeStream::Scope b(funcEnv.getStream());
+
+                    // Get reference to group
+                    funcEnv.getStream() << "const uniform MergedCustomConnectivityUpdatePostInitGroup" << c.getIndex() << " *group = &mergedCustomConnectivityUpdatePostInitGroup" << c.getIndex() << "[g]; " << std::endl;
+                    EnvironmentGroupMergedField<CustomConnectivityUpdatePostInitGroupMerged> groupEnv(funcEnv, c);
+                    buildStandardEnvironment(groupEnv);
+                    c.generateInit(*this, groupEnv, 1);
+                }
+            });
+
+        funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
+        funcEnv.getStream() << "// Custom WU update groups" << std::endl;
+        modelMerged.genMergedCustomWUUpdateInitGroups(
+            *this, memorySpaces,
+            [this, &funcEnv](auto &c)
+            {
+                CodeStream::Scope b(funcEnv.getStream());
+                funcEnv.getStream() << "// merged custom WU update group " << c.getIndex() << std::endl;
+                funcEnv.getStream() << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                {
+                    CodeStream::Scope b(funcEnv.getStream());
+
+                    // Get reference to group
+                    funcEnv.getStream() << "const uniform MergedCustomWUUpdateInitGroup" << c.getIndex() << " *group = &mergedCustomWUUpdateInitGroup" << c.getIndex() << "[g]; " << std::endl;
+
+                    EnvironmentGroupMergedField<CustomWUUpdateInitGroupMerged> groupEnv(funcEnv, c);
+                    buildStandardEnvironment(groupEnv, 1);
+                    c.generateInit(*this, groupEnv, 1);
+                }
+            });
+
+        funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
+        funcEnv.getStream() << "// Synapse sparse connectivity" << std::endl;
+        modelMerged.genMergedSynapseConnectivityInitGroups(
+            *this, memorySpaces,
+            [this, &funcEnv, &modelMerged](auto &s)
+            {
+                CodeStream::Scope b(funcEnv.getStream());
+                funcEnv.getStream() << "// merged synapse connectivity init group " << s.getIndex() << std::endl;
+                funcEnv.getStream() << "for(unsigned int g = 0; g < " << s.getGroups().size() << "; g++)";
+                {
+                    CodeStream::Scope b(funcEnv.getStream());
+
+                    // Get reference to group
+                    funcEnv.getStream() << "const uniform MergedSynapseConnectivityInitGroup" << s.getIndex() << " *group = &mergedSynapseConnectivityInitGroup" << s.getIndex() << "[g]; " << std::endl;
+                    EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> groupEnv(funcEnv, s);
+                    buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
+
+                    // If matrix connectivity is neither sparse or bitmask, give error
+                    if(!(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE)
+                       && !(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK)) 
+                    {
+                        throw std::runtime_error("Only BITMASK and SPARSE format connectivity can be generated using a connectivity initialiser");
+                    }
+
+                    // If there is row-building code in this snippet
+                    const auto &connectInit = s.getArchetype().getSparseConnectivityInitialiser();
+                    if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
+                        // Generate loop through source neurons
+                        groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
+
+                        // Configure substitutions
+                        groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
+                        groupEnv.add(Type::Uint32.addConst(), "id_post_begin", "0");
+                        groupEnv.add(Type::Uint32.addConst(), "id_thread", "0");
+                        groupEnv.add(Type::Uint32.addConst(), "num_threads", "1");
+                    }
+                    // Otherwise
+                    else {
+                        assert(!Utils::areTokensEmpty(connectInit.getColBuildCodeTokens()));
+
+                        // Loop through target neurons
+                        groupEnv.print("for (unsigned int j = 0; j < $(num_post); j++)");
+
+                        // Configure substitutions
+                        groupEnv.add(Type::Uint32.addConst(), "id_post", "j");
+                        groupEnv.add(Type::Uint32.addConst(), "id_pre_begin", "0");
+                        groupEnv.add(Type::Uint32.addConst(), "id_thread", "0");
+                        groupEnv.add(Type::Uint32.addConst(), "num_threads", "1");
+                    }
+                    {
+                        CodeStream::Scope b(groupEnv.getStream());
+
+                        // Create environment for generating add synapsecode into seperate CodeStream
+                        std::ostringstream addSynapseStream;
+                        CodeStream addSynapse(addSynapseStream);
+                        {
+                            CodeStream::Scope b(addSynapse);
+                            EnvironmentExternal addSynapseEnv(groupEnv, addSynapse);
+
+                            // Get postsynaptic/presynaptic index from first addSynapse parameter
+                            // **YUCK** we need to do this in an initialiser so the $(0) doesn't get confused with those used in AddToXXXX
+                            if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
+                                addSynapseEnv.add(Type::Uint32.addConst(), "id_post", "idPost",
+                                                  {addSynapseEnv.addInitialiser("const unsigned int idPost = $(0);")});
+                            }
+                            else {
+                                addSynapseEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
+                                                  {addSynapseEnv.addInitialiser("const unsigned int idPre = $(0);")});
+                            }
+
+                            // If matrix is sparse
+                            if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                                // Calculate index of new synapse
+                                addSynapseEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn",
+                                                {addSynapseEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(_row_stride)) + $(_row_length)[$(id_pre)];")});
+
+                                // If there is a kernel
+                                if(!s.getArchetype().getKernelSize().empty()) {
+                                    // Create new environment
+                                    EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> kernelInitEnv(addSynapseEnv, s);
+
+                                    // Replace kernel indices with the subsequent 'function' parameters
+                                    // **YUCK** these also need doing in initialisers so the $(1) doesn't get confused with those used in addToPostDelay
+                                    for(size_t i = 0; i < s.getArchetype().getKernelSize().size(); i++) {
+                                        const std::string iStr = std::to_string(i);
+                                        kernelInitEnv.add(Type::Uint32.addConst(), "id_kernel_" + iStr, "idKernel" + iStr,
+                                                        {kernelInitEnv.addInitialiser("const unsigned int idKernel" + iStr + " = $(" + std::to_string(i + 1) + ");")});
+                                    }
+
+                                    // Call handler to initialize variables
+                                    s.generateKernelInit(kernelInitEnv, 1);
+                                }
+
+                                // Add synapse to data structure
+                                addSynapseEnv.printLine("$(_ind)[$(id_syn)] = $(id_post);");
+                                addSynapseEnv.printLine("$(_row_length)[$(id_pre)]++;");
+                            }
+                            // Otherwise, if it's bitmask
+                            else {
+                                assert(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK);
+                                assert(s.getArchetype().getKernelSize().empty()) ;
+
+                                 // If there is row-building code in this snippet
+                                 // **THINK** why is this logic so convoluted?
+                                if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
+                                    addSynapseEnv.printLine("const int64_t rowStartGID = $(id_pre) * $(_row_stride);");
+                                    addSynapseEnv.printLine("$(_gp)[(rowStartGID + $(id_post)) / 32] |= (0x80000000 >> ((rowStartGID + $(id_post)) & 31));");
+                                }
+                                // Otherwise
+                                else {
+                                    addSynapseEnv.printLine("const int64_t colStartGID = $(id_post);");
+                                    addSynapseEnv.printLine("$(_gp)[(colStartGID + ($(id_pre) * $(_row_stride))) / 32] |= (0x80000000 >> ((colStartGID + ($(id_pre) * $(_row_stride))) & 31));");
+                                }
+                            }
+                        }
+                        
+
+                        const Type::ResolvedType addSynapseType = Type::ResolvedType::createFunction(Type::Void, std::vector<Type::ResolvedType>{1ull + s.getArchetype().getKernelSize().size(), Type::Uint32});
+                        groupEnv.add(addSynapseType, "addSynapse", addSynapseStream.str());
+
+                        // Call appropriate connectivity handler
+                        if(!Utils::areTokensEmpty(connectInit.getRowBuildCodeTokens())) {
+                            s.generateSparseRowInit(groupEnv);
+                        }
+                        else {
+                            s.generateSparseColumnInit(groupEnv);
+                        }
+                    }
+                }
+            });
+    }
+    initEnv.getStream() << std::endl;
+    initEnv.getStream() << "export void initializeSparse()";
+    {
+        CodeStream::Scope b(initEnv.getStream());
+        EnvironmentExternal funcEnv(initEnv);
+
+        Timer t(funcEnv.getStream(), "initSparse", model.isTimingEnabled());
+
+        funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
+        funcEnv.getStream() << "// Synapse groups with sparse connectivity" << std::endl;
+        modelMerged.genMergedSynapseSparseInitGroups(
+            *this, memorySpaces,
+            [this, &funcEnv, &modelMerged](auto &s)
+            {
+                CodeStream::Scope b(funcEnv.getStream());
+                funcEnv.getStream() << "// merged sparse synapse init group " << s.getIndex() << std::endl;
+                funcEnv.getStream() << "for(unsigned int g = 0; g < " << s.getGroups().size() << "; g++)";
+                {
+                    CodeStream::Scope b(funcEnv.getStream());
+
+                    // Get reference to group
+                    funcEnv.getStream() << "const uniform MergedSynapseSparseInitGroup" << s.getIndex() << " *group = &mergedSynapseSparseInitGroup" << s.getIndex() << "[g]; " << std::endl;
+                    EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> groupEnv(funcEnv, s);
+                    buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
+
+                    groupEnv.printLine("// Loop through presynaptic neurons");
+                    groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
+                    {
+                        CodeStream::Scope b(groupEnv.getStream());
+
+                        // Generate sparse initialisation code
+                        groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
+                        if(s.getArchetype().isWUVarInitRequired()) {
+                            groupEnv.add(Type::Uint32.addConst(), "row_len", "$(_row_length)[i]");
+                            s.generateInit(*this, groupEnv, 1);
+                        }
+
+                        // If postsynaptic learning is required
+                        if(s.getArchetype().isPostSpikeRequired() || s.getArchetype().isPostSpikeEventRequired()) {
+                            genRemap(groupEnv);
+                        }
+                    }
+                }
+            });
+
+        funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
+        funcEnv.getStream() << "// Custom sparse WU update groups" << std::endl;
+        modelMerged.genMergedCustomWUUpdateSparseInitGroups(
+            *this, memorySpaces,
+            [this, &funcEnv](auto &c)
+            {
+                CodeStream::Scope b(funcEnv.getStream());
+                funcEnv.getStream() << "// merged custom sparse WU update group " << c.getIndex() << std::endl;
+                funcEnv.getStream() << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                {
+                    CodeStream::Scope b(funcEnv.getStream());
+
+                    // Get reference to group
+                    funcEnv.getStream() << "const uniform MergedCustomWUUpdateSparseInitGroup" << c.getIndex() << " *group = &mergedCustomWUUpdateSparseInitGroup" << c.getIndex() << "[g]; " << std::endl;
+                    EnvironmentGroupMergedField<CustomWUUpdateSparseInitGroupMerged> groupEnv(funcEnv, c);
+                    buildStandardEnvironment(groupEnv, 1);
+
+                    groupEnv.printLine("// Loop through presynaptic neurons");
+                    groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
+                    {
+                        CodeStream::Scope b(groupEnv.getStream());
+
+                        // Generate initialisation code  
+                        groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
+                        groupEnv.add(Type::Uint32.addConst(), "row_len", "$(_row_length)[i]");
+                        c.generateInit(*this, groupEnv, 1);
+                    }
+                }
+            });
         
-        init << "    // Initialize sparse implementation" << std::endl;
+        funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
+        funcEnv.getStream() << "// Custom connectivity update sparse init groups" << std::endl;
+         modelMerged.genMergedCustomConnectivityUpdateSparseInitGroups(
+            *this, memorySpaces,
+            [this, &funcEnv](auto &c)
+            {
+                CodeStream::Scope b(funcEnv.getStream());
+                funcEnv.getStream() << "// merged custom connectivity update sparse init group " << c.getIndex() << std::endl;
+                funcEnv.getStream() << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                {
+                    CodeStream::Scope b(funcEnv.getStream());
+
+                    // Get reference to group
+                    funcEnv.getStream() << "const uniform MergedCustomConnectivityUpdateSparseInitGroup" << c.getIndex() << " *group = &mergedCustomConnectivityUpdateSparseInitGroup" << c.getIndex() << "[g]; " << std::endl;
+                    EnvironmentGroupMergedField<CustomConnectivityUpdateSparseInitGroupMerged> groupEnv(funcEnv, c);
+                    buildStandardEnvironment(groupEnv);
+
+                    groupEnv.printLine("// Loop through presynaptic neurons");
+                    groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
+                    {
+                        CodeStream::Scope b(groupEnv.getStream());
+
+                        // Generate initialisation code  
+                        groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
+                        groupEnv.add(Type::Uint32.addConst(), "row_len", "$(_row_length)[i]");
+                        c.generateInit(*this, groupEnv, 1);
+                    }
+                }
+            });
     }
 
     // Create stream for ISPC file
     CodeStream initISPC(streamCreator("init", "ispc"));
-     
-    // Struct definitions in the ISPC file
-    initISPC << std::endl << "// Merged neuron group structures" << std::endl;
     
-    // Generate struct definitions
+    // Struct definitions in the ISPC file
+    initISPC << std::endl << "// Merged initialization group structures" << std::endl;
     modelMerged.genMergedNeuronInitGroupStructs(initISPC, *this);
     modelMerged.genMergedSynapseInitGroupStructs(initISPC, *this);
     modelMerged.genMergedCustomUpdateInitGroupStructs(initISPC, *this);
@@ -550,10 +912,10 @@ void Backend::genInit(CodeStream &os, FileStreamCreator streamCreator, ModelSpec
     genMergedStructArrayPush(initISPC, modelMerged.getMergedNeuronInitGroups());
     genMergedStructArrayPush(initISPC, modelMerged.getMergedSynapseInitGroups());
     genMergedStructArrayPush(initISPC, modelMerged.getMergedCustomUpdateInitGroups());
-    genMergedStructArrayPush(initISPC, modelMerged.getMergedCustomWUUpdateSparseInitGroups());
+    genMergedStructArrayPush(initISPC, modelMerged.getMergedCustomWUUpdateInitGroups());
     genMergedStructArrayPush(initISPC, modelMerged.getMergedSynapseConnectivityInitGroups());
     genMergedStructArrayPush(initISPC, modelMerged.getMergedSynapseSparseInitGroups());
-    genMergedStructArrayPush(initISPC, modelMerged.getMergedCustomWUUpdateInitGroups());
+    genMergedStructArrayPush(initISPC, modelMerged.getMergedCustomWUUpdateSparseInitGroups());
     genMergedStructArrayPush(initISPC, modelMerged.getMergedCustomConnectivityUpdatePreInitGroups());
     genMergedStructArrayPush(initISPC, modelMerged.getMergedCustomConnectivityUpdatePostInitGroups());
     genMergedStructArrayPush(initISPC, modelMerged.getMergedCustomConnectivityUpdateSparseInitGroups());
@@ -565,8 +927,8 @@ void Backend::genInit(CodeStream &os, FileStreamCreator streamCreator, ModelSpec
 
     // Generate preamble
     preambleHandler(os);
-}
 
+}
 size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &) const
 {
     return 0;
@@ -807,6 +1169,31 @@ BackendBase::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMer
 boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
 {
     return {};
+}
+
+void Backend::genRemap(EnvironmentExternalBase &env) const
+{
+    env.printLine("// Loop through synapses in corresponding matrix row");
+    env.print("for(unsigned int j = 0; j < $(_row_length)[i]; j++)");
+    {
+        CodeStream::Scope b(env.getStream());
+
+        // Calculate column length and remapping
+        env.printLine("// Calculate index of this synapse in the row-major matrix");
+        env.printLine("const unsigned int rowMajorIndex = (i * $(_row_stride)) + j;");
+
+        env.printLine("// Using this, lookup postsynaptic target");
+        env.printLine("const unsigned int postIndex = $(_ind)[rowMajorIndex];");
+
+        env.printLine("// From this calculate index of this synapse in the column-major matrix");
+        env.printLine("const unsigned int colMajorIndex = (postIndex * $(_col_stride)) + $(_col_length)[postIndex];");
+
+        env.printLine("// Increment column length corresponding to this postsynaptic neuron");
+        env.printLine("$(_col_length)[postIndex]++;");
+
+        env.printLine("// Add remapping entry");
+        env.printLine("$(_remap)[colMajorIndex] = rowMajorIndex;");
+    }
 }
 
 void Backend::genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng, bool trueSpike) const

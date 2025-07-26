@@ -196,6 +196,7 @@ public:
                const std::string &compiler, const std::map<std::string, size_t> &runtimeSymbols) const;
 
 private:
+    void genRemap(EnvironmentExternalBase &env) const;
     void genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng, bool trueSpike) const;
     void genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike) const;
 
