@@ -125,11 +125,12 @@ backends = [("single_threaded_cpu", "singleThreadedCPU", {})]
 # If CUDA was found, add backend configuration
 if cuda_installed:
     # Get CUDA library directory
+    # **NOTE** $(CUDA_PATH)/lib/x64 is correct for system CUDA installs on Windows but not conda
     cuda_library_dirs = []
     if MACOS:
         cuda_library_dirs.append(os.path.join(cuda_path, "lib"))
     elif WIN:
-        cuda_library_dirs.append(os.path.join(cuda_path, "lib", "x64"))
+        cuda_library_dirs.append(os.environ.get("CudaLibraryPath", os.path.join(cuda_path, "lib", "x64")))
     else:
         cuda_library_dirs.append(os.path.join(cuda_path, "lib64"))
 
