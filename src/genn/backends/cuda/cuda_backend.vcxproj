@@ -48,6 +48,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
+    <CudaLibraryPath Condition=" '$(CudaLibraryPath)' == '' ">$(CUDA_PATH)\lib\$(Platform)</CudaLibraryPath>
     <OutDir>..\..\..\..\lib\</OutDir>
     <IntDir>..\..\..\..\$(Platform)\$(Configuration)\cuda_backend\</IntDir>
     <TargetName>genn_cuda_backend_$(Configuration)</TargetName>
@@ -73,7 +74,7 @@
       <OptimizeReferences Condition=" $(Configuration.Contains('Debug')) ">true</OptimizeReferences>
       <AdditionalDependencies Condition=" '$(Configuration)'=='Release_DLL' ">libffi_Release_DLL.lib;genn_Release_DLL.lib;cudart.lib;cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalDependencies Condition=" '$(Configuration)'=='Debug_DLL' ">libffi_Debug_DLL.lib;genn_Debug_DLL.lib;cudart.lib;cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories Condition=" $(Configuration.Contains('DLL')) ">$(OutDir);$(CUDA_PATH)\lib\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition=" $(Configuration.Contains('DLL')) ">$(OutDir);$(CudaLibraryPath);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
