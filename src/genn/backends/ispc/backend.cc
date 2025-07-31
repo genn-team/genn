@@ -398,6 +398,16 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
     // Create stream for ISPC file
     CodeStream neuronUpdateISPC(streamCreator("neuronUpdate", "ispc"));
    
+    // Integer type definitions for ISPC
+    neuronUpdateISPC << "typedef uint8 uint8_t;" << std::endl;
+    neuronUpdateISPC << "typedef uint16 uint16_t;" << std::endl;
+    neuronUpdateISPC << "typedef uint32 uint32_t;" << std::endl;
+    neuronUpdateISPC << "typedef uint64 uint64_t;" << std::endl;
+    neuronUpdateISPC << "typedef int8 int8_t;" << std::endl;
+    neuronUpdateISPC << "typedef int16 int16_t;" << std::endl;
+    neuronUpdateISPC << "typedef int32 int32_t;" << std::endl;
+    neuronUpdateISPC << "typedef int64 int64_t;" << std::endl;
+    neuronUpdateISPC << std::endl;
     
     // Struct definitions in the ISPC file
     neuronUpdateISPC << std::endl << "// Merged neuron group structures" << std::endl;
@@ -419,8 +429,11 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
 }
 
 void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
-                               BackendBase::MemorySpaces&, HostHandler preambleHandler) const
+                               BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
+    if (modelMerged.getModel().getBatchSize() != 1) {
+        throw std::runtime_error("The ISPC backend only supports simulations with a batch size of 1");
+    }
     // Generate stream with synapse update code
     std::ostringstream synapseUpdateStream;
     CodeStream synapseUpdate(synapseUpdateStream);
@@ -430,16 +443,65 @@ void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator streamCreator, 
     EnvironmentLibrary synapseUpdateEnv(synapseUpdate, StandardLibrary::getMathsFunctions());
 
     // ISPC code for synapse update
-    synapseUpdateEnv.getStream() << std::endl << "// Main ISPC entry point for synapse updates" << std::endl;
     synapseUpdateEnv.getStream() << "export void updateSynapses(uniform " << modelMerged.getModel().getTimePrecision().getName() << " t)";
     {
         CodeStream::Scope b(synapseUpdateEnv.getStream());
-        
-        synapseUpdateEnv.getStream() << "    // Synapse update implementation" << std::endl;
+
+        EnvironmentExternal funcEnv(synapseUpdateEnv);
+        funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t");
+        funcEnv.add(Type::Uint32.addConst(), "batch", "0");
+        funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
+                    Type::writeNumeric(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
+
+        // Presynaptic update
+        {
+            Timer t(funcEnv.getStream(), "presynapticUpdate", modelMerged.getModel().isTimingEnabled());
+            modelMerged.genMergedPresynapticUpdateGroups(
+                *this, memorySpaces,
+                [this, &funcEnv, &modelMerged](auto &s)
+                {
+                    CodeStream::Scope b(funcEnv.getStream());
+                    funcEnv.getStream() << "// merged presynaptic update group " << s.getIndex() << std::endl;
+                    funcEnv.getStream() << "for(unsigned int g = 0; g < " << s.getGroups().size() << "; g++)";
+                    {
+                        CodeStream::Scope b(funcEnv.getStream());
+
+                        // Get reference to group - auto replaced with uniform
+                        funcEnv.getStream() << "const uniform MergedPresynapticUpdateGroup" << s.getIndex() 
+                                          << " *group = &mergedPresynapticUpdateGroup" << s.getIndex() << "[g]; " << std::endl;
+                        
+                        // Create matching environment
+                        EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(funcEnv, s);
+                        buildStandardEnvironment(groupEnv, 1);
+                    
+                        // generate the code for processing spike-like events
+                        if (s.getArchetype().isPreSpikeEventRequired()) {
+                            genPresynapticUpdate(groupEnv, s, modelMerged.getModel().getDT(), false);
+                        }
+
+                        // generate the code for processing true spike events
+                        if (s.getArchetype().isPreSpikeRequired()) {
+                            genPresynapticUpdate(groupEnv, s, modelMerged.getModel().getDT(), true);
+                        }
+                        funcEnv.getStream() << std::endl;
+                    }
+                });
+        }
     }
 
     // Create stream for ISPC file
     CodeStream synapseUpdateISPC(streamCreator("synapseUpdate", "ispc"));
+
+    // Integer type definitions for ISPC
+    synapseUpdateISPC << "typedef uint8 uint8_t;" << std::endl;
+    synapseUpdateISPC << "typedef uint16 uint16_t;" << std::endl;
+    synapseUpdateISPC << "typedef uint32 uint32_t;" << std::endl;
+    synapseUpdateISPC << "typedef uint64 uint64_t;" << std::endl;
+    synapseUpdateISPC << "typedef int8 int8_t;" << std::endl;
+    synapseUpdateISPC << "typedef int16 int16_t;" << std::endl;
+    synapseUpdateISPC << "typedef int32 int32_t;" << std::endl;
+    synapseUpdateISPC << "typedef int64 int64_t;" << std::endl;
+    synapseUpdateISPC << std::endl;
 
     // Struct definitions in the ISPC file
     synapseUpdateISPC << std::endl << "// Merged synapse group structures" << std::endl;
@@ -483,6 +545,17 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator streamCreator, M
 
     // Create stream for ISPC file
     CodeStream customUpdateISPC(streamCreator("customUpdate", "ispc"));
+
+    // Integer type definitions for ISPC
+    customUpdateISPC << "typedef uint8 uint8_t;" << std::endl;
+    customUpdateISPC << "typedef uint16 uint16_t;" << std::endl;
+    customUpdateISPC << "typedef uint32 uint32_t;" << std::endl;
+    customUpdateISPC << "typedef uint64 uint64_t;" << std::endl;
+    customUpdateISPC << "typedef int8 int8_t;" << std::endl;
+    customUpdateISPC << "typedef int16 int16_t;" << std::endl;
+    customUpdateISPC << "typedef int32 int32_t;" << std::endl;
+    customUpdateISPC << "typedef int64 int64_t;" << std::endl;
+    customUpdateISPC << std::endl;
 
     // Generate struct definitions in the ISPC file
     customUpdateISPC << std::endl << "// Merged custom update group structures" << std::endl;
@@ -895,6 +968,17 @@ void Backend::genInit(CodeStream &os, FileStreamCreator streamCreator, ModelSpec
     // Create stream for ISPC file
     CodeStream initISPC(streamCreator("init", "ispc"));
     
+    // Integer type definitions for ISPC
+    initISPC << "typedef uint8 uint8_t;" << std::endl;
+    initISPC << "typedef uint16 uint16_t;" << std::endl;
+    initISPC << "typedef uint32 uint32_t;" << std::endl;
+    initISPC << "typedef uint64 uint64_t;" << std::endl;
+    initISPC << "typedef int8 int8_t;" << std::endl;
+    initISPC << "typedef int16 int16_t;" << std::endl;
+    initISPC << "typedef int32 int32_t;" << std::endl;
+    initISPC << "typedef int64 int64_t;" << std::endl;
+    initISPC << std::endl;
+    
     // Struct definitions in the ISPC file
     initISPC << std::endl << "// Merged initialization group structures" << std::endl;
     modelMerged.genMergedNeuronInitGroupStructs(initISPC, *this);
@@ -1020,10 +1104,32 @@ void Backend::genKernelCustomUpdateVariableInit(EnvironmentExternalBase &, Custo
 {
 }
 
-std::string Backend::getAtomicOperation(const std::string &, const std::string &,
-                                       const Type::ResolvedType &, AtomicOperation) const
+std::string Backend::getAtomicOperation(const std::string &lhsPointer, const std::string &rhsValue,
+                                       const Type::ResolvedType &type, AtomicOperation op) const
 {
-    return "";
+    if(op == AtomicOperation::ADD) {
+        // atomic_add_global for different types
+        if(type == Type::Float) {
+            return "atomic_add_global(" + lhsPointer + ", " + rhsValue + ")";
+        }
+        else if(type == Type::Double) {
+            return "atomic_add_global(" + lhsPointer + ", " + rhsValue + ")";
+        }
+        else if(type == Type::Uint32 || type == Type::Int32) {
+            return "atomic_add_global(" + lhsPointer + ", " + rhsValue + ")";
+        }
+        else {
+            assert(false);
+        }
+    }
+    else if(op == AtomicOperation::OR) {
+        // atomic_or_global for different types
+        assert(type == Type::Uint32 || type == Type::Int32);
+        return "atomic_or_global(" + lhsPointer + ", " + rhsValue + ")";
+    }
+    else {
+        assert(false);
+    }
 }
 
 void Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &, CodeStream &, CodeStream &) const
@@ -1240,5 +1346,109 @@ void Backend::genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged
         
         // Write spike to this unique location in the correct delay slot
         env.printLine("$(_spk" + suffix + ")[" + queueOffset + "spkIdx] = $(id);");
+    }
+}
+
+void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
+                                   double dt, bool trueSpike) const
+{
+    // Get suffix based on type of events
+    const std::string eventSuffix = trueSpike ? "" : "_event";
+
+    const bool delayRequired = (trueSpike ? sg.getArchetype().getSrcNeuronGroup()->isSpikeDelayRequired()
+                                : sg.getArchetype().getSrcNeuronGroup()->isSpikeEventDelayRequired());
+
+    // Asserts
+    if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ) {
+        assert(false);
+    }
+    if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
+        assert(false);
+    }
+    if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+        assert(false);
+    }
+
+    // SPARSE and DENSE connectivity
+    if(!(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) &&
+       !(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::DENSE)) {
+        throw std::runtime_error("Only SPARSE and DENSE connectivity are supported");
+    }
+
+    // Detect spike events or spikes and do the update
+    env.getStream() << "// process presynaptic events: " << (trueSpike ? "True Spikes" : "Spike type events") << std::endl;
+    if(delayRequired) {
+        env.print("for (unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[$(_pre_delay_slot)]; i++)");
+    }
+    else {
+        env.print("for (unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[0]; i++)");
+    }
+    {
+        CodeStream::Scope b(env.getStream());
+        EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(env, sg);
+
+        const std::string queueOffset = delayRequired ? "$(_pre_delay_offset) + " : "";
+        groupEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
+                     {groupEnv.addInitialiser("const unsigned int idPre = $(_src_spk" + eventSuffix + ")[" + queueOffset + "i];")});
+
+        // If connectivity is sparse
+        if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            groupEnv.printLine("const unsigned int npost = $(_row_length)[$(id_pre)];");
+            
+            // ISPC
+            groupEnv.print("foreach (j = 0 ... npost)");
+            {
+                CodeStream::Scope b(groupEnv.getStream());
+                EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(groupEnv, sg);
+
+                const auto indexType = getSynapseIndexType(sg);
+                const auto indexTypeName = indexType.getName();
+                synEnv.add(indexType.addConst(), "id_syn", "idSyn",
+                           {synEnv.addInitialiser("const " + indexTypeName + " idSyn = ((" + indexTypeName + ")$(id_pre) * $(_row_stride)) + j;")});
+                synEnv.add(Type::Uint32.addConst(), "id_post", "idPost",
+                           {synEnv.addInitialiser("const unsigned int idPost = $(_ind)[$(id_syn)];")});
+                
+                // Add correct functions for apply synaptic input - atomic operations
+                synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay", 
+                           getAtomicOperation("&$(_den_delay)[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "]", "$(0)", sg.getScalarType(), AtomicOperation::ADD));
+                synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", 
+                           getAtomicOperation("&$(_out_post)[" + sg.getPostISynIndex(1, "$(id_post)") + "]", "$(0)", sg.getScalarType(), AtomicOperation::ADD));
+                synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
+
+                if(trueSpike) {
+                    sg.generateSpikeUpdate(*this, synEnv, 1, dt);
+                }
+                else {
+                    sg.generateSpikeEventUpdate(*this, synEnv, 1, dt);
+                }
+            }
+        }
+        // Otherwise (DENSE)
+        else {
+            // ISPC
+            groupEnv.print("foreach (ipost = 0 ... $(num_post))");
+            {
+                CodeStream::Scope b(groupEnv.getStream());
+                EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(groupEnv, sg);
+                synEnv.add(Type::Uint32, "id_post", "ipost");
+                
+                // Add correct functions for apply synaptic input - use atomic operations for addToPost and addToPostDelay
+                synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay", "$(_den_delay)[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");
+                synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
+                synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
+
+                const auto indexType = getSynapseIndexType(sg);
+                const auto indexTypeName = indexType.getName();
+                synEnv.add(indexType.addConst(), "id_syn", "idSyn",
+                           {synEnv.addInitialiser("const " + indexTypeName + " idSyn = ((" + indexTypeName + ")$(id_pre) * $(num_post)) + $(id_post);")});
+
+                if(trueSpike) {
+                    sg.generateSpikeUpdate(*this, synEnv, 1, dt);
+                }
+                else {
+                    sg.generateSpikeEventUpdate(*this, synEnv, 1, dt);
+                }
+            }
+        }
     }
 }
