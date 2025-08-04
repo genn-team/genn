@@ -53,7 +53,7 @@ public:
     {
         // Record start event
         if(m_TimingEnabled) {
-            m_CodeStream << "const auto " << m_Name << "Start = std::chrono::high_resolution_clock::now();" << std::endl;
+            m_CodeStream << "const uniform int64 " << m_Name << "Start = clock();" << std::endl;
         }
     }
 
@@ -61,7 +61,7 @@ public:
     {
         // Record stop event
         if(m_TimingEnabled) {
-            m_CodeStream << m_Name << "Time += std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - " << m_Name << "Start).count();" << std::endl;
+            m_CodeStream << m_Name << "Time += (double)(clock() - " << m_Name << "Start);" << std::endl;
         }
     }
 
