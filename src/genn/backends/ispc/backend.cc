@@ -39,7 +39,6 @@ namespace
 {
 const EnvironmentLibrary::Library backendFunctions = {
     {"clz", {Type::ResolvedType::createFunction(Type::Int32, {Type::Uint32}), "clz($(0))"}},
-    {"atomic_fetch_add", {Type::ResolvedType::createFunction(Type::Uint32, {Type::Uint32.createPointer(), Type::Uint32}), "atomic_add_global($(0), $(1))"}}
 };
 
 //--------------------------------------------------------------------------
@@ -409,6 +408,12 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
     neuronUpdateISPC << "typedef int64 int64_t;" << std::endl;
     neuronUpdateISPC << std::endl;
     
+    // Timing variables
+    if(modelMerged.getModel().isTimingEnabled()) {
+        neuronUpdateISPC << "uniform double neuronUpdateTime = 0.0;" << std::endl;
+    }
+    neuronUpdateISPC << std::endl;
+    
     // Struct definitions in the ISPC file
     neuronUpdateISPC << std::endl << "// Merged neuron group structures" << std::endl;
     modelMerged.genMergedNeuronUpdateGroupStructs(neuronUpdateISPC, *this);
@@ -501,6 +506,12 @@ void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator streamCreator, 
     synapseUpdateISPC << "typedef int16 int16_t;" << std::endl;
     synapseUpdateISPC << "typedef int32 int32_t;" << std::endl;
     synapseUpdateISPC << "typedef int64 int64_t;" << std::endl;
+    synapseUpdateISPC << std::endl;
+    
+    // Timing variables
+    if(modelMerged.getModel().isTimingEnabled()) {
+        synapseUpdateISPC << "uniform double presynapticUpdateTime = 0.0;" << std::endl;
+    }
     synapseUpdateISPC << std::endl;
 
     // Struct definitions in the ISPC file
@@ -979,6 +990,13 @@ void Backend::genInit(CodeStream &os, FileStreamCreator streamCreator, ModelSpec
     initISPC << "typedef int64 int64_t;" << std::endl;
     initISPC << std::endl;
     
+    // Timing variables
+    if(model.isTimingEnabled()) {
+        initISPC << "uniform double initTime = 0.0;" << std::endl;
+        initISPC << "uniform double initSparseTime = 0.0;" << std::endl;
+    }
+    initISPC << std::endl;
+    
     // Struct definitions in the ISPC file
     initISPC << std::endl << "// Merged initialization group structures" << std::endl;
     modelMerged.genMergedNeuronInitGroupStructs(initISPC, *this);
@@ -1119,16 +1137,20 @@ std::string Backend::getAtomicOperation(const std::string &lhsPointer, const std
             return "atomic_add_global(" + lhsPointer + ", " + rhsValue + ")";
         }
         else {
-            assert(false);
+            throw std::runtime_error("Unsupported type for atomic add operation in ISPC backend");
         }
     }
     else if(op == AtomicOperation::OR) {
         // atomic_or_global for different types
-        assert(type == Type::Uint32 || type == Type::Int32);
-        return "atomic_or_global(" + lhsPointer + ", " + rhsValue + ")";
+        if(type == Type::Uint32 || type == Type::Int32) {
+            return "atomic_or_global(" + lhsPointer + ", " + rhsValue + ")";
+        }
+        else {
+            throw std::runtime_error("Atomic OR operation only supported for integer types in ISPC backend");
+        }
     }
     else {
-        assert(false);
+        throw std::runtime_error("Unsupported atomic operation in ISPC backend");
     }
 }
 
@@ -1332,7 +1354,8 @@ void Backend::genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged
 
     if(!delayRequired) {
         // Atomically increment spike counter to get a unique index for this spike
-        env.printLine("const unsigned int spkIdx = atomic_fetch_add(&($(_spk_cnt" + suffix + ")[0]), 1u);");
+        // atomic_add_global returns the old value, so we use it directly as the index
+        env.printLine("const unsigned int spkIdx = atomic_add_global(&($(_spk_cnt" + suffix + ")[0]), 1u);");
         
         // Write spike to this unique location
         env.printLine("$(_spk" + suffix + ")[spkIdx] = $(id);");
@@ -1342,7 +1365,8 @@ void Backend::genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged
         const std::string queueOffset = "$(_write_delay_offset) + ";
         
         // Atomically increment spike counter for the correct delay slot
-        env.printLine("const unsigned int spkIdx = atomic_fetch_add(&($(_spk_cnt" + suffix + ")[*$(_spk_que_ptr)]), 1u);");
+        // atomic_add_global returns the old value, so we use it directly as the index
+        env.printLine("const unsigned int spkIdx = atomic_add_global(&($(_spk_cnt" + suffix + ")[*$(_spk_que_ptr)]), 1u);");
         
         // Write spike to this unique location in the correct delay slot
         env.printLine("$(_spk" + suffix + ")[" + queueOffset + "spkIdx] = $(id);");
