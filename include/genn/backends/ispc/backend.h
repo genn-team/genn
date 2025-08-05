@@ -180,6 +180,8 @@ public:
 
     virtual std::string getRestrictKeyword() const override{ return ""; }
     
+    virtual std::string getUniformKeyword() const override{ return "uniform "; }
+    
     virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const final;
     
     virtual boost::uuids::detail::sha1::digest_type getHashDigest() const final;

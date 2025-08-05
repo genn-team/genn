@@ -1460,6 +1460,11 @@ std::string BackendCUDAHIP::getRestrictKeyword() const
     return " __restrict__";
 }
 //--------------------------------------------------------------------------
+std::string BackendCUDAHIP::getUniformKeyword() const
+{
+    return "";
+}
+//--------------------------------------------------------------------------
 void BackendCUDAHIP::genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner,
                                         CodeStream &, CodeStream &) const
 {
