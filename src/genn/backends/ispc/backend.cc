@@ -103,6 +103,47 @@ private:
     const std::string m_Name;
     const bool m_TimingEnabled;
 };
+
+//-----------------------------------------------------------------------
+template<typename G>
+void genKernelIteration(EnvironmentExternalBase &env, G &g, size_t numKernelDims, BackendBase::HandlerEnv handler)
+{
+    // Define recursive function to generate nested kernel initialisation loops
+    // **NOTE** this is a std::function as type of auto lambda couldn't be determined inside for recursive call
+    std::function<void(EnvironmentExternalBase &env, size_t)> generateRecursive =
+        [&handler, &g, &generateRecursive, numKernelDims]
+        (EnvironmentExternalBase &env, size_t depth)
+        {
+            // Loop through this kernel dimensions
+            const std::string idxVar = "k" + std::to_string(depth);
+            env.print("for(unsigned int " + idxVar + " = 0; " + idxVar + " < " + getKernelSize(g, depth) + "; " + idxVar + "++)");
+            {
+                CodeStream::Scope b(env.getStream());
+                EnvironmentGroupMergedField<G> loopEnv(env, g);
+
+                // Add substitution for this kernel index
+                loopEnv.add(Type::Uint32.addConst(), "id_kernel_" + std::to_string(depth), idxVar);
+
+                // If we've recursed through all dimensions
+                if (depth == (numKernelDims - 1)) {
+                    // Generate kernel index and use as "synapse" index
+                    // **TODO** rename
+                    loopEnv.add(Type::Uint32.addConst(), "id_syn", "kernelInd", 
+                                {loopEnv.addInitialiser("const unsigned int kernelInd = " + getKernelIndex(g) + ";")});
+
+                    // Call handler
+                    handler(loopEnv);
+                }
+                // Otherwise, recurse
+                else {
+                    generateRecursive(loopEnv, depth + 1);
+                }
+            }
+        };
+
+    // Generate loops through kernel indices recursively
+    generateRecursive(env, 0);
+}
 }
 
 //--------------------------------------------------------------------------
@@ -382,7 +423,7 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
 
                                 // If recording is enabled
                                 if(n.getArchetype().isSpikeRecordingEnabled()) {
-                                    env.printLine("atomic_or_global(&($(_record_spk)[(recordingTimestep * numRecordingWords) + ($(id) / 32)]), (1 << ($(id) % 32)));");
+                                    env.printLine("atomic_or_local(&($(_record_spk)[(recordingTimestep * numRecordingWords) + ($(id) / 32)]), (1 << ($(id) % 32)));");
                                 }
 
                                 // Update event time
@@ -416,7 +457,7 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
 
                                         // If recording is enabled
                                         if(n.getArchetype().isSpikeEventRecordingEnabled()) {
-                                            env.printLine("atomic_or_global(&($(_record_spk_event)[(recordingTimestep * numRecordingWords) + ($(id) / 32)]), (1 << ($(id) % 32)));");
+                                            env.printLine("atomic_or_local(&($(_record_spk_event)[(recordingTimestep * numRecordingWords) + ($(id) / 32)]), (1 << ($(id) % 32)));");
                                         }
                                     });
                             });
@@ -1116,23 +1157,63 @@ std::string Backend::getMergedGroupFieldHostTypeName(const Type::ResolvedType &t
     return type.getName();
 }
 
-void Backend::genPopVariableInit(EnvironmentExternalBase &, HandlerEnv) const
+void Backend::genPopVariableInit(EnvironmentExternalBase &env, HandlerEnv handler) const
 {
+    // **NOTE** because initialisation is currently done in serial code, these should match single-threaded CPU backend
+    handler(env);
 }
-void Backend::genVariableInit(EnvironmentExternalBase &, const std::string &, const std::string &, HandlerEnv) const
+void Backend::genVariableInit(EnvironmentExternalBase &env, const std::string &count, const std::string &indexVarName, HandlerEnv handler) const
 {
+    // **NOTE** because initialisation is currently done in serial code, these should match single-threaded CPU backend
+    env.getStream() << "for (unsigned int i = 0; i < (" << env[count] << "); i++)";
+    {
+        CodeStream::Scope b(env.getStream());
+
+        EnvironmentExternal varEnv(env);
+        varEnv.add(Type::Uint32, indexVarName, "i");
+        handler(varEnv);
+    }
 }
-void Backend::genSparseSynapseVariableRowInit(EnvironmentExternalBase &, HandlerEnv) const
+void Backend::genSparseSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const
 {
+    // **NOTE** because initialisation is currently done in serial code, these should match single-threaded CPU backend
+    env.print("for (unsigned int j = 0; j < $(_row_length)[$(id_pre)]; j++)");
+    {
+        CodeStream::Scope b(env.getStream());
+
+        EnvironmentExternal varEnv(env);
+        // **TODO** 64-bit
+        varEnv.add(Type::Uint32, "id_syn", "idSyn",
+                   {varEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(_row_stride)) + j;")});
+        varEnv.add(Type::Uint32, "id_post", "idPost",
+                   {varEnv.addInitialiser("const unsigned int idPost = $(_ind)[$(id_syn)];")});
+        handler(varEnv);
+     }
 }
-void Backend::genDenseSynapseVariableRowInit(EnvironmentExternalBase &, HandlerEnv) const
+void Backend::genDenseSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const
 {
+    // **NOTE** because initialisation is currently done in serial code, these should match single-threaded CPU backend
+    env.print("for (unsigned int j = 0; j < $(num_post); j++)");
+    {
+        CodeStream::Scope b(env.getStream());
+
+        EnvironmentExternal varEnv(env);
+        // **TODO** 64-bit
+        varEnv.add(Type::Uint32, "id_syn", "idSyn",
+                   {varEnv.addInitialiser("const unsigned int idSyn = ($(id_pre) * $(_row_stride)) + j;")});
+        varEnv.add(Type::Uint32, "id_post", "j");
+        handler(varEnv);
+    }
 }
-void Backend::genKernelSynapseVariableInit(EnvironmentExternalBase &, SynapseInitGroupMerged &, HandlerEnv) const
+void Backend::genKernelSynapseVariableInit(EnvironmentExternalBase &env, SynapseInitGroupMerged &sg, HandlerEnv handler) const
 {
+    // **NOTE** because initialisation is currently done in serial code, these should match single-threaded CPU backend
+    genKernelIteration(env, sg, sg.getArchetype().getKernelSize().size(), handler);
 }
-void Backend::genKernelCustomUpdateVariableInit(EnvironmentExternalBase &, CustomWUUpdateInitGroupMerged &, HandlerEnv) const
+void Backend::genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const
 {
+    // **NOTE** because initialisation is currently done in serial code, these should match single-threaded CPU backend
+    genKernelIteration(env, cu, cu.getArchetype().getSynapseGroup()->getKernelSize().size(), handler);
 }
 
 std::string Backend::getAtomicOperation(const std::string &lhsPointer, const std::string &rhsValue,
@@ -1140,14 +1221,8 @@ std::string Backend::getAtomicOperation(const std::string &lhsPointer, const std
 {
     if(op == AtomicOperation::ADD) {
         // atomic_add_global for different types
-        if(type == Type::Float) {
-            return "atomic_add_global(" + lhsPointer + ", " + rhsValue + ")";
-        }
-        else if(type == Type::Double) {
-            return "atomic_add_global(" + lhsPointer + ", " + rhsValue + ")";
-        }
-        else if(type == Type::Uint32 || type == Type::Int32) {
-            return "atomic_add_global(" + lhsPointer + ", " + rhsValue + ")";
+        if(type == Type::Float || type == Type::Double || type == Type::Uint32 || type == Type::Int32) {
+            return "atomic_add_local(" + lhsPointer + ", " + rhsValue + ")";
         }
         else {
             throw std::runtime_error("Unsupported type for atomic add operation in ISPC backend");
@@ -1156,7 +1231,7 @@ std::string Backend::getAtomicOperation(const std::string &lhsPointer, const std
     else if(op == AtomicOperation::OR) {
         // atomic_or_global for different types
         if(type == Type::Uint32 || type == Type::Int32) {
-            return "atomic_or_global(" + lhsPointer + ", " + rhsValue + ")";
+            return "atomic_or_local(" + lhsPointer + ", " + rhsValue + ")";
         }
         else {
             throw std::runtime_error("Atomic OR operation only supported for integer types in ISPC backend");
@@ -1441,7 +1516,7 @@ void Backend::genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged
     if(!delayRequired) {
         // Atomically increment spike counter to get a unique index for this spike
         // atomic_add_global returns the old value, so we use it directly as the index
-        env.printLine("const unsigned int spkIdx = atomic_add_global(&($(_spk_cnt" + suffix + ")[0]), 1u);");
+        env.printLine("const unsigned int spkIdx = atomic_add_local(&($(_spk_cnt" + suffix + ")[0]), 1u);");
         
         // Write spike to this unique location
         env.printLine("$(_spk" + suffix + ")[spkIdx] = $(id);");
@@ -1452,7 +1527,7 @@ void Backend::genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged
         
         // Atomically increment spike counter for the correct delay slot
         // atomic_add_global returns the old value, so we use it directly as the index
-        env.printLine("const unsigned int spkIdx = atomic_add_global(&($(_spk_cnt" + suffix + ")[*$(_spk_que_ptr)]), 1u);");
+        env.printLine("const unsigned int spkIdx = atomic_add_local(&($(_spk_cnt" + suffix + ")[*$(_spk_que_ptr)]), 1u);");
         
         // Write spike to this unique location in the correct delay slot
         env.printLine("$(_spk" + suffix + ")[" + queueOffset + "spkIdx] = $(id);");
