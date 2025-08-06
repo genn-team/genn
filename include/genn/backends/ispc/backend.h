@@ -153,9 +153,15 @@ public:
     
     virtual void genAssert(CodeStream &os, const std::string &condition) const final;
 
+    virtual bool shouldUseNMakeBuildSystem() const final{ return true; }
+
     virtual void genMakefilePreamble(std::ostream &os, const std::vector<std::string> &moduleNames) const final;
     virtual void genMakefileLinkRule(std::ostream &os) const final;
     virtual void genMakefileCompileRule(std::ostream &os) const final;
+
+    virtual void genNMakefilePreamble(std::ostream &os, const std::vector<std::string> &moduleNames) const final;
+    virtual void genNMakefileLinkRule(std::ostream &os) const final;
+    virtual void genNMakefileCompileRule(std::ostream &os) const final;
 
     virtual void genMSBuildConfigProperties(std::ostream &os) const final;
     virtual void genMSBuildImportProps(std::ostream &os) const final;

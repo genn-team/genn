@@ -421,7 +421,7 @@ void Backend::genMakefileCompileRule(std::ostream &os) const
     os << "\t@$(NVCC) -dc $(NVCCFLAGS) $<" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genNMakefilePreamble(std::ostream &os) const
+void Backend::genNMakefilePreamble(std::ostream &os, const std::vector<std::string>&) const
 {
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
     std::string linkFlags = "--shared -arch " + architecture;

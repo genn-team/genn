@@ -26,7 +26,7 @@ void GeNN::CodeGenerator::generateNMakefile(std::ostream &os, const BackendBase 
     os << std::endl;
 
     // Generate make file preamble
-    backend.genNMakefilePreamble(os);
+    backend.genNMakefilePreamble(os, moduleNames);
     os << std::endl;
 
     

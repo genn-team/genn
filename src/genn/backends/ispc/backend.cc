@@ -1234,24 +1234,83 @@ void Backend::genMakefileCompileRule(std::ostream &os) const
     os << "\t@$(CXX) $(CXXFLAGS) -MM -o $@ $<" << std::endl;
 }
 
+void Backend::genNMakefilePreamble(std::ostream &os, const std::vector<std::string> &moduleNames) const
+{
+    // Write variables to preamble
+    os << "CXXFLAGS = /EHsc" << std::endl;
+    os << "ISPCFLAGS = -O2 --dllexport --target=" << getPreferences<Preferences>().targetISA << std::endl;
+
+    // Add ISPC objects
+    os << "OBJECTS = $(OBJECTS) ";
+    for(const auto &m : moduleNames) {
+        if(m != "runner" && m != "init") {
+            os << m << "ISPC.obj ";
+        }
+    }
+    os << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genNMakefileLinkRule(std::ostream &os) const
+{
+    os << "runner.dll: $(OBJECTS)" << std::endl;
+	os << "\t@link.exe /OUT:runner.dll /DLL $(OBJECTS)" << std::endl;
+    os << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genNMakefileCompileRule(std::ostream &os) const
+{
+     // Rules for compiling C++ files
+    // **NOTE** needs top depend on ISPC for auto-generated header
+    os << "neuronUpdate.obj: neuronUpdate.cc neuronUpdateISPC.obj" << std::endl;
+    os << "\t@$(CXX) $(CXXFLAGS) /c /Fo$@ neuronUpdate.cc" << std::endl;
+
+    os << "synapseUpdate.obj: synapseUpdate.cc synapseUpdateISPC.obj" << std::endl;
+    os << "\t@$(CXX) $(CXXFLAGS) /c /Fo$@ synapseUpdate.cc" << std::endl;
+
+    os << "customUpdate.obj: customUpdate.cc customUpdateISPC.obj" << std::endl;
+    os << "\t@$(CXX) $(CXXFLAGS) /c /Fo$@ customUpdate.cc" << std::endl;
+
+    os << "init.obj: init.cc" << std::endl;
+    os << "\t@$(CXX) $(CXXFLAGS) /c /Fo$@ init.cc" << std::endl;
+    
+    // Rules for compiling ISPC files
+    // **YUCK** I don't think NMAKE inference rules are smart enough to do this properly
+    os << "neuronUpdateISPC.obj: neuronUpdate.ispc" << std::endl;
+    os << "\t@ispc.exe $(ISPCFLAGS) -o $@ -h neuronUpdateISPC.h neuronUpdate.ispc" << std::endl;
+    os << std::endl;
+
+    os << "synapseUpdateISPC.obj: synapseUpdate.ispc" << std::endl;
+    os << "\t@ispc.exe $(ISPCFLAGS) -o $@ -h synapseUpdateISPC.h synapseUpdate.ispc" << std::endl;
+    os << std::endl;
+
+    os << "customUpdateISPC.obj: customUpdate.ispc" << std::endl;
+    os << "\t@ispc.exe $(ISPCFLAGS) -o $@ -h customUpdateISPC.h customUpdate.ispc" << std::endl;
+    os << std::endl;
+}
+
 void Backend::genMSBuildConfigProperties(std::ostream &) const
 {
+    assert(false);
 }
 
 void Backend::genMSBuildImportProps(std::ostream &) const
 {
+    assert(false);
 }
 
 void Backend::genMSBuildItemDefinitions(std::ostream &) const
 {
+    assert(false);
 }
 
 void Backend::genMSBuildCompileModule(const std::string &, std::ostream &) const
 {
+    assert(false);
 }
 
 void Backend::genMSBuildImportTarget(std::ostream &) const
 {
+    assert(false);
 }
 
 bool Backend::isArrayDeviceObjectRequired() const

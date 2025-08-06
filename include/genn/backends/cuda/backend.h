@@ -261,7 +261,7 @@ public:
     virtual void genMakefileLinkRule(std::ostream &os) const final;
     virtual void genMakefileCompileRule(std::ostream &os) const final;
 
-    virtual void genNMakefilePreamble(std::ostream &os) const final;
+    virtual void genNMakefilePreamble(std::ostream &os, const std::vector<std::string> &moduleNames) const final;
     virtual void genNMakefileLinkRule(std::ostream &os) const final;
     virtual void genNMakefileCompileRule(std::ostream &os) const final;
 

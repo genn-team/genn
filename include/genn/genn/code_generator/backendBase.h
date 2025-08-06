@@ -287,7 +287,7 @@ public:
     virtual void genMakefileCompileRule(std::ostream &os) const = 0;
 
     //! This function can be used to generate a preamble for the NMAKE makefile used to build
-    virtual void genNMakefilePreamble(std::ostream &os) const = 0;
+    virtual void genNMakefilePreamble(std::ostream &os, const std::vector<std::string> &moduleNames) const = 0;
 
     //! The NMAKE build system will populate a variable called ``$(OBJECTS)`` with a list of objects to link.
     //! This function should generate a NMAKE rule to build these objects into a DLL
