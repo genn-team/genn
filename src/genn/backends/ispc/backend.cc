@@ -1035,9 +1035,17 @@ void Backend::genInit(CodeStream &os, FileStreamCreator streamCreator, ModelSpec
     os << initStream.str();
 
 }
-size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &) const
+size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
 {
-    return 0;
+    if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) || (sg.getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ)) {
+        return sg.getMaxConnections();
+    }
+    else if(sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+        return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
+    }
+    else {
+        return sg.getTrgNeuronGroup()->getNumNeurons();
+    }
 }
 
 void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &) const
