@@ -1236,9 +1236,23 @@ void Backend::genMakefileCompileRule(std::ostream &os) const
 
 void Backend::genNMakefilePreamble(std::ostream &os, const std::vector<std::string> &moduleNames) const
 {
+    std::string cxxFlags = "/EHsc";
+    std::string ispcFlags = "-O2 --dllexport --target=" + getPreferences<Preferences>().targetISA;
+    std::string linkFlags = "/DLL";
+    if (getPreferences().optimizeCode) {
+        ispcFlags += " -O3";
+        cxxFlags += " /O2";
+    }
+    if (getPreferences().debugCode) {
+        ispcFlags += " -O0 -g";
+        cxxFlags += " /Od /Zi";
+        linkFlags += " /DEBUG";
+    }
+
     // Write variables to preamble
-    os << "CXXFLAGS = /EHsc" << std::endl;
-    os << "ISPCFLAGS = -O2 --dllexport --target=" << getPreferences<Preferences>().targetISA << std::endl;
+    os << "CXXFLAGS = " << cxxFlags << std::endl;
+    os << "LINKFLAGS = " << linkFlags << std::endl;
+    os << "ISPCFLAGS = " << ispcFlags << std::endl;
 
     // Add ISPC objects
     os << "OBJECTS = $(OBJECTS) ";
@@ -1253,7 +1267,7 @@ void Backend::genNMakefilePreamble(std::ostream &os, const std::vector<std::stri
 void Backend::genNMakefileLinkRule(std::ostream &os) const
 {
     os << "runner.dll: $(OBJECTS)" << std::endl;
-	os << "\t@link.exe /OUT:runner.dll /DLL $(OBJECTS)" << std::endl;
+	os << "\t@link.exe /OUT:runner.dll $(LINKFLAGS) $(OBJECTS)" << std::endl;
     os << std::endl;
 }
 //--------------------------------------------------------------------------
