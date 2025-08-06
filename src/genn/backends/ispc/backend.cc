@@ -308,25 +308,9 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
                     EnvironmentGroupMergedField<NeuronUpdateGroupMerged> groupEnv(funcEnv, n);
                     buildStandardEnvironment(groupEnv, 1);
 
-                    // If spike or spike-like event recording is in use
+                    // Calculate number of words which will be used to record this population's spikes
                     if(n.getArchetype().isSpikeRecordingEnabled() || n.getArchetype().isSpikeEventRecordingEnabled()) {
-                        // Calculate number of words which will be used to record this population's spikes
-                        groupEnv.printLine("const unsigned int numRecordingWords = ($(num_neurons) + 31) / 32;");
-
-                        // Zero spike recording buffer
-                        if(n.getArchetype().isSpikeRecordingEnabled()) {
-                            groupEnv.printLine("std::fill_n(&$(_record_spk)[recordingTimestep * numRecordingWords], numRecordingWords, 0);");
-                        }
-
-                        // Zero spike-like-event recording buffer
-                        if(n.getArchetype().isSpikeEventRecordingEnabled()) {
-                            n.generateSpikeEvents(
-                                groupEnv,
-                                [](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent&)
-                                {
-                                    env.printLine("std::fill_n(&$(_record_spk_event)[recordingTimestep * numRecordingWords], numRecordingWords, 0);");
-                                });
-                        }
+                        groupEnv.printLine("const uniform unsigned int numRecordingWords = ($(num_neurons) + 31) / 32;");
                     }
 
                     groupEnv.getStream() << std::endl;
@@ -429,6 +413,54 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
 
     // Include the ISPC header
     os << "#include \"neuronUpdateISPC.h\"" << std::endl << std::endl;
+    
+    // C++ wrapper function that handles std::fill_n calls
+    os << "void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
+    if(modelMerged.getModel().isRecordingInUse()) {
+        os << ", unsigned int recordingTimestep";
+    }
+    os << ")" << std::endl;
+    {
+        CodeStream::Scope b(os);
+        
+        // C++ initialization code
+        modelMerged.genMergedNeuronUpdateGroups(
+            *this, memorySpaces,
+            [this, &os](auto &n)
+            {
+                CodeStream::Scope b(os);
+                os << "for(unsigned int g = 0; g < " << n.getGroups().size() << "; g++)" << std::endl;
+                {
+                    CodeStream::Scope b(os);
+
+                    // Get reference to group
+                    os << "const auto *group = &mergedNeuronUpdateGroup" << n.getIndex() << "[g];" << std::endl;
+
+                    // If spike or spike-like event recording is in use
+                    if(n.getArchetype().isSpikeRecordingEnabled() || n.getArchetype().isSpikeEventRecordingEnabled()) {
+                        // Calculate number of words which will be used to record this population's spikes
+                        os << "const unsigned int numRecordingWords = (group->numNeurons + 31) / 32;" << std::endl;
+
+                        // Zero spike recording buffer - this goes in C++ code
+                        if(n.getArchetype().isSpikeRecordingEnabled()) {
+                            os << "std::fill_n(&group->recordSpk[recordingTimestep * numRecordingWords], numRecordingWords, 0);" << std::endl;
+                        }
+
+                        // Zero spike-like-event recording buffer - this goes in C++ code  
+                        if(n.getArchetype().isSpikeEventRecordingEnabled()) {
+                            os << "std::fill_n(&group->recordSpkEvent[recordingTimestep * numRecordingWords], numRecordingWords, 0);" << std::endl;
+                        }
+                    }
+                }
+            });
+        
+        // Call the ISPC function
+        os << "updateNeurons(t";
+        if(modelMerged.getModel().isRecordingInUse()) {
+            os << ", recordingTimestep";
+        }
+        os << ");" << std::endl;
+    }
     
     preambleHandler(os);
 }
