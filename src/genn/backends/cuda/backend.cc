@@ -435,6 +435,9 @@ void Backend::genNMakefilePreamble(std::ostream &os) const
 void Backend::genNMakefileLinkRule(std::ostream &os) const
 {
     // Use Visual C++ linker to link objects with device object code
+    // **NOTE** link.exe doesn't seem to care if LIBPATH exists or not.
+    // Anaconda adds its library directory to the LIB environment variable
+    // which gets searched after /LIBPATH
     // **YUCK** there should be some way to do this with $(CXX) /LINK
     os << "runner.dll: $(OBJECTS) runner_dlink.obj" << std::endl;
 	os << "\t@link.exe /OUT:runner.dll /LIBPATH:\"$(CUDA_PATH)\\lib\\x64\" cudart_static.lib  cudart.lib cudadevrt.lib /DLL $(OBJECTS) runner_dlink.obj" << std::endl;
