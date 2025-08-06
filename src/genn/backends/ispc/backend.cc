@@ -71,6 +71,38 @@ private:
     const std::string m_Name;
     const bool m_TimingEnabled;
 };
+
+//--------------------------------------------------------------------------
+// TimerHost
+//--------------------------------------------------------------------------
+class TimerHost
+{
+public:
+    TimerHost(CodeStream &codeStream, const std::string &name, bool timingEnabled)
+    :   m_CodeStream(codeStream), m_Name(name), m_TimingEnabled(timingEnabled)
+    {
+        // Record start event
+        if(m_TimingEnabled) {
+            m_CodeStream << "const auto " << m_Name << "Start = std::chrono::high_resolution_clock::now();" << std::endl;
+        }
+    }
+
+    ~TimerHost()
+    {
+        // Record stop event
+        if(m_TimingEnabled) {
+            m_CodeStream << m_Name << "Time += std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - " << m_Name << "Start).count();" << std::endl;
+        }
+    }
+
+private:
+    //--------------------------------------------------------------------------
+    // Members
+    //--------------------------------------------------------------------------
+    CodeStream &m_CodeStream;
+    const std::string m_Name;
+    const bool m_TimingEnabled;
+};
 }
 
 //--------------------------------------------------------------------------
@@ -410,7 +442,7 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
     
     // Timing variables
     if(modelMerged.getModel().isTimingEnabled()) {
-        neuronUpdateISPC << "uniform double neuronUpdateTime = 0.0;" << std::endl;
+        neuronUpdateISPC << "extern uniform double neuronUpdateTime;" << std::endl;
     }
     neuronUpdateISPC << std::endl;
     
@@ -507,7 +539,7 @@ void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator streamCreator, 
     
     // Timing variables
     if(modelMerged.getModel().isTimingEnabled()) {
-        synapseUpdateISPC << "uniform double presynapticUpdateTime = 0.0;" << std::endl;
+        synapseUpdateISPC << "extern uniform double presynapticUpdateTime;" << std::endl;
     }
     synapseUpdateISPC << std::endl;
 
@@ -609,7 +641,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator streamCreator, ModelSpec
         funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
                     Type::writeNumeric(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
 
-        Timer t(funcEnv.getStream(), "init", model.isTimingEnabled());
+        TimerHost t(funcEnv.getStream(), "init", model.isTimingEnabled());
 
         funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
         funcEnv.getStream() << "// Neuron groups" << std::endl;
@@ -873,7 +905,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator streamCreator, ModelSpec
         CodeStream::Scope b(initEnv.getStream());
         EnvironmentExternal funcEnv(initEnv);
 
-        Timer t(funcEnv.getStream(), "initSparse", model.isTimingEnabled());
+        TimerHost t(funcEnv.getStream(), "initSparse", model.isTimingEnabled());
 
         funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
         funcEnv.getStream() << "// Synapse groups with sparse connectivity" << std::endl;
@@ -1011,6 +1043,7 @@ size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &) const
 void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &) const
 {
     os << "// Standard C++ includes" << std::endl;
+    os << "#include <chrono>" << std::endl;
     os << "#include <random>" << std::endl;
 }
 void Backend::genRunnerPreamble(CodeStream &, const ModelSpecMerged &) const
