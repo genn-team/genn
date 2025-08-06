@@ -1676,6 +1676,21 @@ void Backend::genMakefileCompileRule(std::ostream &os) const
     os << "\t@$(CXX) $(CXXFLAGS) -o $@ $<" << std::endl;
 }
 //--------------------------------------------------------------------------
+void Backend::genNMakefilePreamble(std::ostream&) const
+{
+    assert(false)
+}
+//--------------------------------------------------------------------------
+void Backend::genNMakefileLinkRule(std::ostream&) const
+{
+    assert(false);
+}
+//--------------------------------------------------------------------------
+void Backend::genNMakefileCompileRule(std::ostream&) const
+{
+    assert(false);
+}
+//--------------------------------------------------------------------------
 void Backend::genMSBuildConfigProperties(std::ostream&) const
 {
 }
@@ -1694,8 +1709,8 @@ void Backend::genMSBuildItemDefinitions(std::ostream &os) const
     os << "\t\t\t<FunctionLevelLinking Condition=\"'$(Configuration)'=='Release'\">true</FunctionLevelLinking>" << std::endl;
     os << "\t\t\t<IntrinsicFunctions Condition=\"'$(Configuration)'=='Release'\">true</IntrinsicFunctions>" << std::endl;
     os << "\t\t\t<ExceptionHandling>SyncCThrow</ExceptionHandling>" << std::endl;
-    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">WIN32;WIN64;NDEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
-    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">WIN32;WIN64;_DEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
+    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
+    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
     os << "\t\t\t<FloatingPointModel>" << (getPreferences().optimizeCode ? "Fast" : "Precise") << "</FloatingPointModel>" << std::endl;
     os << "\t\t\t<MultiProcessorCompilation>true</MultiProcessorCompilation>" << std::endl;
     os << "\t\t</ClCompile>" << std::endl;
