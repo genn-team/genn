@@ -683,7 +683,7 @@ class GeNNModel(ModelSpec):
         if not never_rebuild:
             if system() == "Windows":
                 if self._backend.should_use_nmake_build_system:
-                    check_call(["nmake"], cwd=output_path)
+                    check_call(["nmake", "/NOLOGO"], cwd=output_path)
                 else:
                     debug = self._preference_kwargs.get("debug_code", False)
                     check_call(

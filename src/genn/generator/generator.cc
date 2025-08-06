@@ -85,7 +85,7 @@ int main(int argc,     //!< number of arguments; expected to be 3
                 CodeGenerator::generateNMakefile(nmake, backend, moduleNames);
             }
             
-            buildCommand = "cd \"" + outputPath.str() + "\" & nmake";
+            buildCommand = "cd \"" + outputPath.str() + "\" & nmake /NOLOGO";
         }
         else {
             // Create MSBuild project to compile and link all generated modules
