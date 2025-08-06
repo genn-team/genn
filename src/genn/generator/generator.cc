@@ -14,6 +14,7 @@
 
 // GeNN code generator includes
 #include "code_generator/generateMakefile.h"
+#include "code_generator/generateNMakefile.h"
 #include "code_generator/generateModules.h"
 #include "code_generator/generateMSBuild.h"
 #include "code_generator/modelSpecMerged.h"
@@ -75,17 +76,28 @@ int main(int argc,     //!< number of arguments; expected to be 3
         CodeGenerator::ModelSpecMerged modelMerged(backend, model);
         const auto moduleNames = CodeGenerator::generateAll(modelMerged, backend, 
                                                             outputPath, forceRebuild);
-
+        std::string buildCommand;
 #ifdef _WIN32
-        // Create MSBuild project to compile and link all generated modules
-        {
-            std::ofstream msbuild((outputPath / "runner.vcxproj").str());
-            CodeGenerator::generateMSBuild(msbuild, model, backend, moduleNames);
+        if(backend.shouldUseNMakeBuildSystem()) {
+            // Create NMake file to compile and link all generated modules
+            {
+                std::ofstream nmake((outputPath / "Makefile").str());
+                CodeGenerator::generateNMakefile(nmake, backend, moduleNames);
+            }
+            
+            buildCommand = "cd \"" + outputPath.str() + "\" & nmake runner.dll";
         }
-        
-        // Generate command to build using msbuild
-        const std::string config = GENN_PREFERENCES.debugCode ? "Debug" : "Release";
-        const std::string buildCommand = "msbuild /m /p:Configuration=" + config + " /verbosity:quiet \"" + (outputPath / "runner.vcxproj").str() + "\"";
+        else {
+            // Create MSBuild project to compile and link all generated modules
+            {
+                std::ofstream msbuild((outputPath / "runner.vcxproj").str());
+                CodeGenerator::generateMSBuild(msbuild, backend, moduleNames);
+            }
+            
+            // Generate command to build using msbuild
+            const std::string config = GENN_PREFERENCES.debugCode ? "Debug" : "Release";
+            buildCommand = "msbuild /m /p:Configuration=" + config + " /verbosity:quiet \"" + (outputPath / "runner.vcxproj").str() + "\"";
+        }
 #else
         // Create makefile to compile and link all generated modules
         {
@@ -95,7 +107,7 @@ int main(int argc,     //!< number of arguments; expected to be 3
 
         // Generate command to build using make, using as many threads as possible
         const unsigned int numThreads = std::thread::hardware_concurrency();
-        const std::string buildCommand = "make -C \"" + outputPath.str() + "\" -j " + std::to_string(numThreads);
+        buildCommand = "make -C \"" + outputPath.str() + "\" -j " + std::to_string(numThreads);
 #endif
 
         // Execute build command

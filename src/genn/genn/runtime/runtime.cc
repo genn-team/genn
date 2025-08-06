@@ -75,9 +75,7 @@ Runtime::Runtime(const filesystem::path &modelPath, const CodeGenerator::ModelSp
 
     // Load library
 #ifdef _WIN32
-    const std::string runnerName = "runner_" + modelMerged.getModel().getName();
-    const std::string runnerNameSuffix = backend.getPreferences().debugCode ?  "_Debug.dll" :  "_Release.dll";
-    const std::string libraryName = (modelPath / (runnerName + runnerNameSuffix)).str();
+    const std::string libraryName = (modelPath / (modelMerged.getModel().getName() + "_CODE") / "runner.dll").str();
     m_Library = LoadLibrary(libraryName.c_str());
 #else
     const std::string libraryName = (modelPath / (modelMerged.getModel().getName() + "_CODE") / "librunner.so").str();

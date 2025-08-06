@@ -1,3 +1,5 @@
+#pragma once
+
 // Standard C++ includes
 #include <string>
 #include <vector>
@@ -21,5 +23,6 @@ class BackendBase;
 //--------------------------------------------------------------------------
 namespace GeNN::CodeGenerator
 {
-GENN_EXPORT void generateMSBuild(std::ostream &os, const BackendBase &backend, const std::vector<std::string> &moduleNames);
+GENN_EXPORT void generateNMakefile(std::ostream &os, const BackendBase &backend,
+                                   const std::vector<std::string> &moduleNames);
 }
