@@ -682,12 +682,15 @@ class GeNNModel(ModelSpec):
         # Build code
         if not never_rebuild:
             if system() == "Windows":
-                debug = self._preference_kwargs.get("debug_code", False)
-                check_call(
-                    [_msbuild, 
-                     f"/p:Configuration={'Debug' if debug else 'Release'}",
-                     "/m", "/verbosity:quiet",
-                     path.join(output_path, "runner.vcxproj")])
+                if self._backend.should_use_nmake_build_system:
+                    check_call(["nmake"], cwd=output_path)
+                else:
+                    debug = self._preference_kwargs.get("debug_code", False)
+                    check_call(
+                        [_msbuild, 
+                         f"/p:Configuration={'Debug' if debug else 'Release'}",
+                         "/m", "/verbosity:quiet",
+                         path.join(output_path, "runner.vcxproj")])
             else:
                 check_call(["make", "-j", str(cpu_count(logical=False)), "-C", output_path])
 
