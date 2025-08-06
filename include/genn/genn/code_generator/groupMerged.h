@@ -235,11 +235,6 @@ public:
             CodeStream::Scope b(os);
             const auto sortedFields = getSortedFields(backend);
             for(const auto &f : sortedFields) {
-                // Add backend-specific qualifier for consistent values across parallel execution units
-                if(!host) {
-                    os << backend.getUniformKeyword();
-                }
-                
                 // If field is a pointer
                 if(f.type.isPointer()) {
                     os << f.type.getName();

@@ -258,10 +258,6 @@ public:
     //! "restricted" i.e. not aliased. What keyword should be used to indicate this?
     virtual std::string getRestrictKeyword() const = 0;
 
-    //! Some backends require qualifiers to ensure struct members have consistent values
-    //! across parallel execution units. What keyword should be used to indicate this?
-    virtual std::string getUniformKeyword() const = 0;
-
     //! Generate a single RNG instance
     /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free) const = 0;
@@ -275,6 +271,10 @@ public:
     //! On backends which support it, generate a runtime assert
     virtual void genAssert(CodeStream &os, const std::string &condition) const = 0;
 
+    //! On Windows, there are two choices of build system MSBuild and NMake. MSBuild is much better, offering parallel builds, 
+    //! Dependency tracking etc but various backends do not provide MSBuild plugins and sometimes these don't get installed
+    virtual bool shouldUseNMakeBuildSystem() const = 0;
+
     //! This function can be used to generate a preamble for the GNU makefile used to build
     virtual void genMakefilePreamble(std::ostream &os, const std::vector<std::string> &moduleNames) const = 0;
 
@@ -285,6 +285,17 @@ public:
     //! The GNU make build system uses 'pattern rules' (https://www.gnu.org/software/make/manual/html_node/Pattern-Intro.html) to build backend modules into objects.
     //! This function should generate a GNU make pattern rule capable of building each module (i.e. compiling .cc file $< into .o file $@).
     virtual void genMakefileCompileRule(std::ostream &os) const = 0;
+
+    //! This function can be used to generate a preamble for the NMAKE makefile used to build
+    virtual void genNMakefilePreamble(std::ostream &os, const std::vector<std::string> &moduleNames) const = 0;
+
+    //! The NMAKE build system will populate a variable called ``$(OBJECTS)`` with a list of objects to link.
+    //! This function should generate a NMAKE rule to build these objects into a DLL
+    virtual void genNMakefileLinkRule(std::ostream &os) const = 0;
+
+    //! The NMAKE build system uses 'inference rules' (https://learn.microsoft.com/en-us/cpp/build/reference/inference-rules?view=msvc-170) to build backend modules into objects.
+    //! This function should generate an NMAKE pattern rule capable of building each module (i.e. compiling .cc file $< into .obj file $@).
+    virtual void genNMakefileCompileRule(std::ostream &os) const = 0;
 
     //! In MSBuild, 'properties' are used to configure global project settings e.g. whether the MSBuild project builds a static or dynamic library
     //! This function can be used to add additional XML properties to this section.
