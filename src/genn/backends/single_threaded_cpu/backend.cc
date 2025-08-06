@@ -1617,11 +1617,6 @@ std::string Backend::getRestrictKeyword() const
     return getHostRestrictKeyword();
 }
 //--------------------------------------------------------------------------
-std::string Backend::getUniformKeyword() const
-{
-    return "";
-}
-//--------------------------------------------------------------------------
 void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&) const
 {
     assert(false);
