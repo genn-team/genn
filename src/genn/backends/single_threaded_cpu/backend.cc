@@ -1678,7 +1678,7 @@ void Backend::genMakefileCompileRule(std::ostream &os) const
 //--------------------------------------------------------------------------
 void Backend::genNMakefilePreamble(std::ostream&) const
 {
-    assert(false)
+    assert(false);
 }
 //--------------------------------------------------------------------------
 void Backend::genNMakefileLinkRule(std::ostream&) const
