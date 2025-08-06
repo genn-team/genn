@@ -123,10 +123,6 @@ public:
     //! "restricted" i.e. not aliased. What keyword should be used to indicate this?
     virtual std::string getRestrictKeyword() const final;
 
-    //! Some backends require qualifiers to ensure struct members have consistent values
-    //! across parallel execution units. What keyword should be used to indicate this?
-    virtual std::string getUniformKeyword() const final;
-
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free) const final;
     virtual void genTimer(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise, 
                           const std::string &name, bool updateInStepTime) const final;
