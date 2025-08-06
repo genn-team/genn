@@ -123,10 +123,6 @@ public:
     //! "restricted" i.e. not aliased. What keyword should be used to indicate this?
     virtual std::string getRestrictKeyword() const final;
 
-    //! Some backends require qualifiers to ensure struct members have consistent values
-    //! across parallel execution units. What keyword should be used to indicate this?
-    virtual std::string getUniformKeyword() const final;
-
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free) const final;
     virtual void genTimer(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise, 
                           const std::string &name, bool updateInStepTime) const final;
@@ -137,9 +133,15 @@ public:
      //! On backends which support it, generate a runtime assert
     virtual void genAssert(CodeStream &os, const std::string &condition) const final;
 
+    virtual bool shouldUseNMakeBuildSystem() const final{ return false; }
+
     virtual void genMakefilePreamble(std::ostream &os, const std::vector<std::string> &moduleNames) const final;
     virtual void genMakefileLinkRule(std::ostream &os) const final;
     virtual void genMakefileCompileRule(std::ostream &os) const final;
+
+    virtual void genNMakefilePreamble(std::ostream &os, const std::vector<std::string> &moduleNames) const final;
+    virtual void genNMakefileLinkRule(std::ostream &os) const final;
+    virtual void genNMakefileCompileRule(std::ostream &os) const final;
 
     virtual void genMSBuildConfigProperties(std::ostream &os) const final;
     virtual void genMSBuildImportProps(std::ostream &os) const final;
