@@ -1671,7 +1671,7 @@ void Backend::genMakefileCompileRule(std::ostream &os) const
     os << "\t@$(CXX) $(CXXFLAGS) -o $@ $<" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genNMakefilePreamble(std::ostream&) const
+void Backend::genNMakefilePreamble(std::ostream&, const std::vector<std::string>&) const
 {
     assert(false);
 }
