@@ -28,38 +28,6 @@ const EnvironmentLibrary::Library backendFunctions = {
 };
 
 //--------------------------------------------------------------------------
-// Timer
-//--------------------------------------------------------------------------
-class Timer
-{
-public:
-    Timer(CodeStream &codeStream, const std::string &name, bool timingEnabled)
-    :   m_CodeStream(codeStream), m_Name(name), m_TimingEnabled(timingEnabled)
-    {
-        // Record start event
-        if(m_TimingEnabled) {
-            m_CodeStream << "const auto " << m_Name << "Start = std::chrono::high_resolution_clock::now();" << std::endl;
-        }
-    }
-
-    ~Timer()
-    {
-        // Record stop event
-        if(m_TimingEnabled) {
-            m_CodeStream << m_Name << "Time += std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - " << m_Name << "Start).count();" << std::endl;
-        }
-    }
-
-private:
-    //--------------------------------------------------------------------------
-    // Members
-    //--------------------------------------------------------------------------
-    CodeStream &m_CodeStream;
-    const std::string m_Name;
-    const bool m_TimingEnabled;
-};
-
-//--------------------------------------------------------------------------
 // CodeGenerator::SingleThreadedCPU::Array
 //--------------------------------------------------------------------------
 class Array : public Runtime::ArrayBase
@@ -245,7 +213,7 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
         funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
                     Type::writeNumeric(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
         
-        Timer t(funcEnv.getStream(), "neuronUpdate", modelMerged.getModel().isTimingEnabled());
+        HostTimer t(funcEnv.getStream(), "neuronUpdate", modelMerged.getModel().isTimingEnabled());
         modelMerged.genMergedNeuronPrevSpikeTimeUpdateGroups(
             *this, memorySpaces,
             [this, &funcEnv](auto &n)
@@ -475,7 +443,7 @@ void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerge
 
         // Synapse dynamics
         {
-            Timer t(funcEnv.getStream(), "synapseDynamics", modelMerged.getModel().isTimingEnabled());
+            HostTimer t(funcEnv.getStream(), "synapseDynamics", modelMerged.getModel().isTimingEnabled());
             modelMerged.genMergedSynapseDynamicsGroups(
                 *this, memorySpaces,
                 [this, &funcEnv, &modelMerged](auto &s)
@@ -549,7 +517,7 @@ void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerge
 
         // Presynaptic update
         {
-            Timer t(funcEnv.getStream(), "presynapticUpdate", modelMerged.getModel().isTimingEnabled());
+            HostTimer t(funcEnv.getStream(), "presynapticUpdate", modelMerged.getModel().isTimingEnabled());
             modelMerged.genMergedPresynapticUpdateGroups(
                 *this, memorySpaces,
                 [this, &funcEnv, &modelMerged](auto &s)
@@ -583,7 +551,7 @@ void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerge
 
         // Postsynaptic update
         {
-            Timer t(funcEnv.getStream(), "postsynapticUpdate", modelMerged.getModel().isTimingEnabled());
+            HostTimer t(funcEnv.getStream(), "postsynapticUpdate", modelMerged.getModel().isTimingEnabled());
             modelMerged.genMergedPostsynapticUpdateGroups(
                 *this, memorySpaces,
                 [this, &funcEnv, &modelMerged](auto &s)
@@ -673,15 +641,18 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
                     Type::writeNumeric(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
 
             // Loop through host update groups and generate code for those in this custom update group
-            modelMerged.genMergedCustomConnectivityHostUpdateGroups(
-                *this, memorySpaces, g, 
-                [this, &funcEnv](auto &c)
-                {
-                    c.generateUpdate(*this, funcEnv);
-                });
+            if(!modelMerged.getMergedCustomConnectivityHostUpdateGroups().empty()) {
+                HostTimer t(funcEnv.getStream(), "customUpdate" + g + "Host", modelMerged.getModel().isTimingEnabled());
+                modelMerged.genMergedCustomConnectivityHostUpdateGroups(
+                    *this, memorySpaces, g, 
+                    [this, &funcEnv](auto &c)
+                    {
+                        c.generateUpdate(*this, funcEnv);
+                    });
+             }
             
             {
-                Timer t(funcEnv.getStream(), "customUpdate" + g, model.isTimingEnabled());
+                HostTimer t(funcEnv.getStream(), "customUpdate" + g, model.isTimingEnabled());
                 modelMerged.genMergedCustomUpdateGroups(
                     *this, memorySpaces, g,
                     [this, &funcEnv](auto &c)
@@ -884,7 +855,7 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
 
             // Loop through merged custom connectivity remap update groups
             {
-                Timer t(funcEnv.getStream(), "customUpdate" + g + "Remap", model.isTimingEnabled());
+                HostTimer t(funcEnv.getStream(), "customUpdate" + g + "Remap", model.isTimingEnabled());
                 modelMerged.genMergedCustomConnectivityRemapUpdateGroups(
                     *this, memorySpaces, g,
                     [this, &funcEnv](auto &c)
@@ -915,7 +886,7 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
 
             // Loop through merged custom WU transpose update groups
             {
-                Timer t(funcEnv.getStream(), "customUpdate" + g + "Transpose", model.isTimingEnabled());
+                HostTimer t(funcEnv.getStream(), "customUpdate" + g + "Transpose", model.isTimingEnabled());
                 modelMerged.genMergedCustomUpdateTransposeWUGroups(
                     *this, memorySpaces, g,
                     [this, &funcEnv](auto &c)
@@ -1020,7 +991,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelM
         funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
                     Type::writeNumeric(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
 
-        Timer t(funcEnv.getStream(), "init", model.isTimingEnabled());
+        HostTimer t(funcEnv.getStream(), "init", model.isTimingEnabled());
 
         funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
         funcEnv.getStream() << "// Neuron groups" << std::endl;
@@ -1284,7 +1255,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelM
         CodeStream::Scope b(initEnv.getStream());
         EnvironmentExternal funcEnv(initEnv);
 
-        Timer t(funcEnv.getStream(), "initSparse", model.isTimingEnabled());
+        HostTimer t(funcEnv.getStream(), "initSparse", model.isTimingEnabled());
 
         funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
         funcEnv.getStream() << "// Synapse groups with sparse connectivity" << std::endl;
