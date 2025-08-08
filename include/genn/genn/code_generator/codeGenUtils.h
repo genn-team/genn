@@ -37,10 +37,26 @@ class ErrorHandler;
 }
 
 //--------------------------------------------------------------------------
-// GeNN::CodeGenerator
+// GeNN::CodeGenerator::HostTimer
 //--------------------------------------------------------------------------
+//! RAII helper class to generate timing code
 namespace GeNN::CodeGenerator
 {
+class GENN_EXPORT HostTimer
+{
+public:
+    HostTimer(CodeStream &codeStream, const std::string &name, bool timingEnabled);
+    ~HostTimer();
+
+private:
+    //--------------------------------------------------------------------------
+    // Members
+    //--------------------------------------------------------------------------
+    std::reference_wrapper<CodeStream> m_CodeStream;
+    std::string m_Name;
+    bool m_TimingEnabled;
+};
+
 //! Divide two integers, rounding up i.e. effectively taking ceil
 template<typename A, typename B, typename = std::enable_if_t<std::is_integral_v<A> && std::is_integral_v<B>>>
 inline auto ceilDivide(A numerator, B denominator)

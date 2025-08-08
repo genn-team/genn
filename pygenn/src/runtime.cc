@@ -93,6 +93,7 @@ PYBIND11_MODULE(_runtime, m)
         .def("get_custom_update_time", &Runtime::getCustomUpdateTime)
         .def("get_custom_update_transpose_time", &Runtime::getCustomUpdateTransposeTime)
         .def("get_custom_update_remap_time", &Runtime::getCustomUpdateRemapTime)
+        .def("get_custom_update_host_time", &Runtime::getCustomUpdateHostTime)
         
         .def("get_recorded_spikes", 
              [](const Runtime &r, const GeNN::NeuronGroup &group)

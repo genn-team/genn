@@ -330,7 +330,7 @@ class GeNNModel(ModelSpec):
         Only available if :attr:`.ModelSpec.timing_enabled` is set.
     
         Args:
-            name:   Name of custom update
+            name:   Name of custom update group
         """
         return self._runtime.get_custom_update_time(name)
 
@@ -339,7 +339,7 @@ class GeNNModel(ModelSpec):
         Only available if :attr:`.ModelSpec.timing_enabled` is set.
     
         Args:
-            name:   Name of custom update
+            name:   Name of custom update group
         """
         return self._runtime.get_custom_update_transpose_time(name)
     
@@ -348,9 +348,18 @@ class GeNNModel(ModelSpec):
         Only available if :attr:`.ModelSpec.timing_enabled` is set.
     
         Args:
-            name:   Name of custom update
+            name:   Name of custom update group
         """
         return self._runtime.get_custom_update_remap_time(name)
+    
+    def get_custom_update_host_time(self, name: str) -> float:
+        """Get time in seconds spent in host custom update.
+        Only available if :attr:`.ModelSpec.timing_enabled` is set.
+    
+        Args:
+            name:   Name of custom update group
+        """
+        return self._runtime.get_custom_update_host_time(name)
 
     def add_neuron_population(self, pop_name: str, num_neurons: int, 
                               neuron: Union[NeuronModelBase, str],
