@@ -760,7 +760,10 @@ void BackendCUDAHIP::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpe
                         {funcEnv.addInitialiser("const " + model.getTimePrecision().getName() + " t = timestep * " + Type::writeNumeric(model.getDT(), model.getTimePrecision()) + ";")});
 
             // Loop through host update groups and generate code for those in this custom update group
-            if(!modelMerged.getMergedCustomConnectivityHostUpdateGroups().empty()) {
+            if(std::any_of(modelMerged.getMergedCustomConnectivityHostUpdateGroups().cbegin(), 
+                           modelMerged.getMergedCustomConnectivityHostUpdateGroups().cend(),
+                           [&g](const auto &cg){ return cg.getArchetype().getUpdateGroupName() == g; }))
+            {
                 HostTimer t(funcEnv.getStream(), "customUpdate" + g + "Host", modelMerged.getModel().isTimingEnabled());
                 modelMerged.genMergedCustomConnectivityHostUpdateGroups(
                     *this, memorySpaces, g, 
