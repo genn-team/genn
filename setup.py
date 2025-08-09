@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 from copy import deepcopy
 from platform import system, uname
@@ -37,6 +38,9 @@ hip_path = os.environ.get("HIP_PATH")
 
 # Is HIP installed
 hip_installed = hip_path is not None and os.path.exists(hip_path)
+
+# Is ISPC compiler available?
+ispc_installed = shutil.which("ispc") is not None
 
 # Are we on Linux?
 # **NOTE** Pybind11Extension provides WIN and MAC
@@ -182,6 +186,10 @@ if hip_installed:
                       "include_dirs": hip_include_dirs,
                       "library_dirs": hip_library_dirs,
                       "extra_compile_args": hip_extra_compile_args}))
+
+# If ISPC compiler was found, add backend configuration
+if ispc_installed:
+    backends.append(("ispc", "ispc", {}))
 
 ext_modules = [
     Pybind11Extension("_runtime",
