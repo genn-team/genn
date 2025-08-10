@@ -252,13 +252,17 @@ class SynapseVariable(VariableBase):
         elif sg.matrix_type & SynapseMatrixWeight.KERNEL:
             return np.copy(self._view)
         elif sg.matrix_type & SynapseMatrixConnectivity.SPARSE:
-            max_rl = sg.max_connections
-            row_ls = (sg._row_lengths._view 
-                      if sg._connectivity_initialiser_provided
-                      else sg.row_lengths)
+            # If this synapse group isn't modified by any 
+            # custom connectivity updates and connectivity
+            # was set manually, it's fine to use cached copy,
+            # otherwise use view
+            row_ls = (sg.row_lengths 
+                      if not sg._any_ccu_references and sg.connections_set
+                      else sg._row_lengths.view)
 
             # Create range containing the index where each row starts in ind
-            row_start_idx = range(0, sg.weight_update_var_size, max_rl)
+            row_start_idx = range(0, sg.weight_update_var_size, 
+                                  sg.max_connections)
 
             # Build list of subviews representing each row
             if len(self._view.shape) == 1:
@@ -283,25 +287,27 @@ class SynapseVariable(VariableBase):
             (sg.matrix_type & SynapseMatrixWeight.KERNEL)):
             self._view[:] = vals
         elif (sg.matrix_type & SynapseMatrixConnectivity.SPARSE):
-            # Sort variable to match GeNN order
-            if len(self._view.shape) == 1:
-                sorted_var = vals[sg.synapse_order]
-            else:
-                sorted_var = vals[:,sg.synapse_order]
-
             # Create range containing the index
             # where each row starts in ind
             row_start_idx = range(0, sg.weight_update_var_size,
                                   sg.max_connections)
 
-            # Loop through ragged matrix rows
+            # If this synapse group isn't modified by any 
+            # custom connectivity updates and connectivity
+            # was set manually, it's fine to use cached copy,
+            # otherwise use view
+            row_ls = (sg.row_lengths 
+                      if not sg._any_ccu_references and sg.connections_set
+                      else sg._row_lengths.view)
+
+            # Loop through sparse matrix rows
             syn = 0
-            for i, r in zip(row_start_idx, sg.row_lengths):
+            for i, r in zip(row_start_idx, row_ls):
                 # Copy row from non-padded indices into correct location
                 if len(self._view.shape) == 1:
-                    self._view[i:i + r] = sorted_var[syn:syn + r]
+                    self._view[i:i + r] = vals[syn:syn + r]
                 else:
-                    self._view[:,i:i + r] = sorted_var[:,syn:syn + r]
+                    self._view[:,i:i + r] = vals[:,syn:syn + r]
                 syn += r
         else:
             raise Exception("Matrix format not supported")
