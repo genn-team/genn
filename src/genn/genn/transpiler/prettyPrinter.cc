@@ -261,7 +261,7 @@ private:
                     continue;
                 }
                 
-                // Replacing all instances of placeholder
+                // Replace all instances of placeholder
                 do {
                     name.replace(found, placeholder.length(), m_CallArguments.top().second.at(i));
                     found = name.find(placeholder, found);
