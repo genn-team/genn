@@ -250,8 +250,8 @@ private:
             assert(!m_CallArguments.empty());
 
             // Loop through non-variadic function arguments
-            size_t i = 0;
-            for (i = 0; i < type.getFunction().argTypes.size(); i++) {
+            const size_t numArguments = type.getFunction().argTypes.size();
+            for (size_t i = 0; i < numArguments; i++) {
                 // If name contains a $(i) placeholder to replace with this argument, replace with pretty-printed argument
                 const std::string placeholder = "$(" + std::to_string(i) + ")";
 
@@ -279,7 +279,7 @@ private:
                     // between required and variadic arguments e.g. "printf($(0)$(@))"
                     // so, arguments simply require leading printing with leading comma
                     std::ostringstream variadicArgumentsStream;
-                    const auto varArgBegin = m_CallArguments.top().second.cbegin() + i;
+                    const auto varArgBegin = m_CallArguments.top().second.cbegin() + numArguments;
                     const auto varArgEnd = m_CallArguments.top().second.cend();
                     for(auto a = varArgBegin; a != varArgEnd; a++) {
                         variadicArgumentsStream << ", " << *a;
