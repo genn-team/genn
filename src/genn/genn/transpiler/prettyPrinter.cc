@@ -249,9 +249,9 @@ private:
             // Check that there are call arguments on the stack
             assert(!m_CallArguments.empty());
 
-            // Loop through call arguments on top of stack
+            // Loop through non-variadic function arguments
             size_t i = 0;
-            for (i = 0; i < m_CallArguments.top().second.size(); i++) {
+            for (i = 0; i < type.getFunction().argTypes.size(); i++) {
                 // If name contains a $(i) placeholder to replace with this argument, replace with pretty-printed argument
                 const std::string placeholder = "$(" + std::to_string(i) + ")";
 
