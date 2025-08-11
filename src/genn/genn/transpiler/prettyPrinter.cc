@@ -249,19 +249,19 @@ private:
             // Check that there are call arguments on the stack
             assert(!m_CallArguments.empty());
 
-            // Loop through call arguments on top of stack
-            size_t i = 0;
-            for (i = 0; i < m_CallArguments.top().second.size(); i++) {
+            // Loop through non-variadic function arguments
+            const size_t numArguments = type.getFunction().argTypes.size();
+            for (size_t i = 0; i < numArguments; i++) {
                 // If name contains a $(i) placeholder to replace with this argument, replace with pretty-printed argument
                 const std::string placeholder = "$(" + std::to_string(i) + ")";
 
-                // If placeholder isn't found at all, stop looking for arguments
+                // If placeholder isn't found at all, go onto next argument
                 size_t found = name.find(placeholder);
                 if(found == std::string::npos) {
-                    break;
+                    continue;
                 }
                 
-                // Keep replacing placeholders
+                // Replace all instances of placeholder
                 do {
                     name.replace(found, placeholder.length(), m_CallArguments.top().second.at(i));
                     found = name.find(placeholder, found);
@@ -279,7 +279,7 @@ private:
                     // between required and variadic arguments e.g. "printf($(0)$(@))"
                     // so, arguments simply require leading printing with leading comma
                     std::ostringstream variadicArgumentsStream;
-                    const auto varArgBegin = m_CallArguments.top().second.cbegin() + i;
+                    const auto varArgBegin = m_CallArguments.top().second.cbegin() + numArguments;
                     const auto varArgEnd = m_CallArguments.top().second.cend();
                     for(auto a = varArgBegin; a != varArgEnd; a++) {
                         variadicArgumentsStream << ", " << *a;

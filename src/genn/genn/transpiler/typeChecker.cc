@@ -558,7 +558,7 @@ private:
                     argumentConversionRank.reserve(m_CallArguments.top().size());
 
                     // Loop through arguments
-                    // **NOTE** we loop through function arguments to deal with variadic
+                    // **NOTE** we loop through function TYPE arguments to avoid variadic
                     bool viable = true;
                     auto c = m_CallArguments.top().cbegin();
                     auto a = argumentTypes.cbegin();
