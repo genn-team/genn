@@ -30,6 +30,7 @@
 #include "code_generator/generateMakefile.h"
 #include "code_generator/generateModules.h"
 #include "code_generator/generateMSBuild.h"
+#include "code_generator/generateNMakefile.h"
 #include "code_generator/modelSpecMerged.h"
 
 // GeNN runtime includes
@@ -237,9 +238,15 @@ const CodeGenerator::ModelSpecMerged *generateCode(ModelSpecInternal &model, Cod
         forceRebuild, neverRebuild);
 
 #ifdef _WIN32
-    // Create MSBuild project to compile and link all generated modules
-    std::ofstream makefile((outputPath / "runner.vcxproj").str());
-    CodeGenerator::generateMSBuild(makefile, model, backend, output);
+    if(backend.shouldUseNMakeBuildSystem()) {
+        std::ofstream nmake((outputPath / "Makefile").str());
+        CodeGenerator::generateNMakefile(nmake, backend, output);
+    }
+    // Otherwise, create MSBuild project to compile and link all generated modules
+    else {
+        std::ofstream makefile((outputPath / "runner.vcxproj").str());
+        CodeGenerator::generateMSBuild(makefile, backend, output);
+    }
 #else
     // Create makefile to compile and link all generated modules
     std::ofstream makefile((outputPath / "Makefile").str());
@@ -1011,8 +1018,9 @@ PYBIND11_MODULE(_genn, m)
     //------------------------------------------------------------------------
     // genn.BackendBase
     //------------------------------------------------------------------------
-    pybind11::class_<CodeGenerator::BackendBase>(m, "BackendBase");
-    
+    pybind11::class_<CodeGenerator::BackendBase>(m, "BackendBase")
+        .def_property_readonly("should_use_nmake_build_system", &CodeGenerator::BackendBase::shouldUseNMakeBuildSystem);
+
     //------------------------------------------------------------------------
     // genn.ModelSpecMerged
     //------------------------------------------------------------------------

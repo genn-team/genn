@@ -30,6 +30,7 @@
     <ClCompile Include="code_generator\generateModules.cc" />
     <ClCompile Include="code_generator\generateMakefile.cc" />
     <ClCompile Include="code_generator\generateMSBuild.cc" />
+    <ClCompile Include="code_generator\generateNMakefile.cc" />
     <ClCompile Include="code_generator\generateRunner.cc" />
     <ClCompile Include="code_generator\initGroupMerged.cc" />
     <ClCompile Include="code_generator\lazyString.cc" />
@@ -83,6 +84,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateModules.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMakefile.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMSBuild.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateNMakefile.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateRunner.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\groupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\initGroupMerged.h" />

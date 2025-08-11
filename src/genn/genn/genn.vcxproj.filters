@@ -47,6 +47,7 @@
     <ClCompile Include="code_generator\lazyString.cc" />
     <ClCompile Include="runtime\runtime.cc" />
     <ClCompile Include="code_generator\backendCUDAHIP.cc" />
+    <ClCompile Include="code_generator\generateNMakefile.cc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\include\genn\genn\backendExport.h" />
@@ -111,6 +112,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\lazyString.h" />
     <ClInclude Include="..\..\..\include\genn\genn\runtime\runtime.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\backendCUDAHIP.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateNMakefile.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\header.src" />
