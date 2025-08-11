@@ -149,10 +149,10 @@ void genKernelIteration(EnvironmentExternalBase &env, G &g, size_t numKernelDims
 //--------------------------------------------------------------------------
 // GeNN::CodeGenerator::ISPC::Preferences
 //--------------------------------------------------------------------------
-void Preferences::updateHash(boost::uuids::detail::sha1 &hash) const
+void ISPC::Preferences::updateHash(boost::uuids::detail::sha1 &hash) const
 {
     PreferencesBase::updateHash(hash);
-    Utils::updateHash(targetISA, hash);
+    GeNN::Utils::updateHash(targetISA, hash);
 }
 
 

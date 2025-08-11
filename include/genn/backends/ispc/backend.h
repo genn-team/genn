@@ -37,7 +37,7 @@ struct Preferences : public PreferencesBase
     std::string targetISA = "avx2";
 
     //! Update hash with preferences
-    virtual void updateHash(boost::uuids::detail::sha1 &hash) const final;
+    void updateHash(boost::uuids::detail::sha1 &hash) const;
 
 };
 
