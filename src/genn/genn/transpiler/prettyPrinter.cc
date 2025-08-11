@@ -255,13 +255,13 @@ private:
                 // If name contains a $(i) placeholder to replace with this argument, replace with pretty-printed argument
                 const std::string placeholder = "$(" + std::to_string(i) + ")";
 
-                // If placeholder isn't found at all, stop looking for arguments
+                // If placeholder isn't found at all, go onto next argument
                 size_t found = name.find(placeholder);
                 if(found == std::string::npos) {
-                    break;
+                    continue;
                 }
                 
-                // Keep replacing placeholders
+                // Replacing all instances of placeholder
                 do {
                     name.replace(found, placeholder.length(), m_CallArguments.top().second.at(i));
                     found = name.find(placeholder, found);
