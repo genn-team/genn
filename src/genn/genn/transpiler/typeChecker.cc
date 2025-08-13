@@ -282,7 +282,7 @@ private:
                         }
                         // Otherwise, any numeric type will do, take common type
                         else {
-                            return Type::getCommonType(leftType, rightType);
+                            return Type::getCommonType(leftType, rightType, opType == Token::Type::AT);
                         }
                     },
                     // Otherwise, if both operands are pointers

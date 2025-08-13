@@ -242,7 +242,7 @@ ResolvedType getPromotedType(const ResolvedType &type)
     }
 }
 //----------------------------------------------------------------------------
-ResolvedType getCommonType(const ResolvedType &a, const ResolvedType &b)
+ResolvedType getCommonType(const ResolvedType &a, const ResolvedType &b, bool reverseFixedPoint)
 {
     // If either type is double, common type is double
     assert(a.isNumeric());
@@ -261,7 +261,14 @@ ResolvedType getCommonType(const ResolvedType &a, const ResolvedType &b)
         // Get highest ranking type (most integer bits)
         const auto &aNumeric = unqualifiedA.getNumeric();
         const auto &bNumeric = unqualifiedB.getNumeric();
-        const auto highestRanking = (aNumeric.rank > bNumeric.rank) ? unqualifiedA : unqualifiedB;
+
+        ResolvedType highestRanking;
+        if(reverseFixedPoint) {
+            highestRanking = (aNumeric.rank < bNumeric.rank) ? unqualifiedA : unqualifiedB;
+        }
+        else {
+            highestRanking = (aNumeric.rank > bNumeric.rank) ? unqualifiedA : unqualifiedB;
+        }
 
         // Make a copy of Value struct from highest ranking type
         auto highestRankingValue = highestRanking.getValue();

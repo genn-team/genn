@@ -503,10 +503,11 @@ Expression::ExpressionPtr parseMultiplicative(ParserState &parserState)
     // multiplicative-expression ::=
     //      cast-expression
     //      multiplicative-parseExpression "*" cast-parseExpression
+    //      multiplicative-parseExpression "@" cast-parseExpression
     //      multiplicative-parseExpression "/" cast-parseExpression
     //      multiplicative-parseExpression "%" cast-parseExpression
     return parseBinary(parserState, parseCast, 
-                       {Token::Type::STAR, Token::Type::SLASH, Token::Type::PERCENT});
+                       {Token::Type::STAR, Token::Type::AT, Token::Type::SLASH, Token::Type::PERCENT});
 }
 
 Expression::ExpressionPtr parseAdditive(ParserState &parserState)

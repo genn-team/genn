@@ -355,6 +355,42 @@ TEST(TypeChecker, Binary)
         EXPECT_EQ(type, Type::S8_7Sat);
     }
 
+    // Fixed point * fixed point
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::S8_7, "a");
+        typeEnvironment.define(Type::S0_15, "b");
+        const auto type = typeCheckExpression("a * b", typeEnvironment);
+        EXPECT_EQ(type, Type::S8_7);
+    }
+
+    // Fixed point * integer
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::S8_7, "a");
+        typeEnvironment.define(Type::Int32, "b");
+        const auto type = typeCheckExpression("a * b", typeEnvironment);
+        EXPECT_EQ(type, Type::S8_7);
+    }
+
+    // Fixed point @ fixed point
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::S8_7, "a");
+        typeEnvironment.define(Type::S0_15, "b");
+        const auto type = typeCheckExpression("a @ b", typeEnvironment);
+        EXPECT_EQ(type, Type::S0_15);
+    }
+
+    // Fixed point @ integer
+    {
+        TestEnvironment typeEnvironment;
+        typeEnvironment.define(Type::S8_7, "a");
+        typeEnvironment.define(Type::Int32, "b");
+        const auto type = typeCheckExpression("a @ b", typeEnvironment);
+        EXPECT_EQ(type, Type::Int32);
+    }
+
     // Pointer + integer
     {
         TestEnvironment typeEnvironment;

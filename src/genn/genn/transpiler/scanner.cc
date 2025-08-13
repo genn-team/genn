@@ -380,6 +380,7 @@ void scanToken(ScanState &scanState, std::vector<Token> &tokens)
         case ';': emplaceToken(tokens, Token::Type::SEMICOLON, scanState); break;
         case '~': emplaceToken(tokens, Token::Type::TILDA, scanState); break;
         case '?': emplaceToken(tokens, Token::Type::QUESTION, scanState); break;
+        case '@': emplaceToken(tokens, Token::Type::AT, scanState); break;
 
         // Operators
         case '!': emplaceToken(tokens, scanState.match('=') ? Token::Type::NOT_EQUAL : Token::Type::NOT, scanState); break;

@@ -497,7 +497,7 @@ inline ResolvedType getArraySubscript(ResolvedType valueType) { return ResolvedT
 GENN_EXPORT ResolvedType getPromotedType(const ResolvedType &type);
 
 //! Apply C rules to get common type between numeric types a and b
-GENN_EXPORT ResolvedType getCommonType(const ResolvedType &a, const ResolvedType &b);
+GENN_EXPORT ResolvedType getCommonType(const ResolvedType &a, const ResolvedType &b, bool reverseFixedPoint = false);
 
 //! Write numeric value to string, formatting correctly for type
 GENN_EXPORT std::string writeNumeric(const NumericValue &value, const ResolvedType &type);
