@@ -23,6 +23,23 @@
 //----------------------------------------------------------------------------
 namespace GeNN::CodeGenerator
 {
+HostTimer::HostTimer(CodeStream &codeStream, const std::string &name, bool timingEnabled)
+:   m_CodeStream(codeStream), m_Name(name), m_TimingEnabled(timingEnabled)
+{
+    // Record start event
+    if(m_TimingEnabled) {
+        m_CodeStream.get() << "const auto " << m_Name << "Start = std::chrono::high_resolution_clock::now();" << std::endl;
+    }
+}
+//----------------------------------------------------------------------------
+HostTimer::~HostTimer()
+{
+    // Record stop event
+    if(m_TimingEnabled) {
+        m_CodeStream.get() << m_Name << "Time += std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - " << m_Name << "Start).count();" << std::endl;
+    }
+}
+//----------------------------------------------------------------------------
 void genTypeRange(CodeStream &os, const Type::ResolvedType &type, const std::string &prefix)
 {
     const auto &numeric = type.getNumeric();
