@@ -422,6 +422,18 @@ void Backend::genNMakefilePreamble(std::ostream &os) const
     os << "HIPCC = \"$(HIP_PATH)/bin/hipcc.exe\"" << std::endl;
     os << "HIPCCFLAGS = " << getNVCCFlags() << std::endl;
     os << "LINKFLAGS = " << linkFlags << std::endl;
+
+    // Prefer explicit CUDALIBRARYPATH (Conda/runtime), then manual CUDA installs, else nothing (fall back to LIB)
+    os << "!IF \"$(CUDALIBRARYPATH)\" != \"\"" << std::endl;
+    os << "LIBCUDA=/LIBPATH:\"$(CUDALIBRARYPATH)\"" << std::endl;
+    os << "!ELSEIF EXIST(\"$(CUDA_PATH)\\lib\\x64\\cudart.lib\")" << std::endl;
+    os << "LIBCUDA=/LIBPATH:\"$(CUDA_PATH)\\lib\\x64\"" << std::endl;
+    os << "!ELSEIF EXIST(\"$(CUDA_PATH)\\lib\\cudart.lib\")" << std::endl;
+    os << "LIBCUDA=/LIBPATH:\"$(CUDA_PATH)\\lib\"" << std::endl;
+    os << "!ELSE" << std::endl;
+    // Nothing – rely on LIB if it’s set by the environment/toolchain
+    os << "LIBCUDA=" << std::endl;
+    os << "!ENDIF" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genNMakefileLinkRule(std::ostream &os) const
@@ -429,7 +441,7 @@ void Backend::genNMakefileLinkRule(std::ostream &os) const
     // Use Visual C++ linker to link objects with device object code
     // **YUCK** there should be some way to do this with $(CXX) /LINK
     os << "runner.dll: $(OBJECTS) runner_dlink.obj" << std::endl;
-    os << "\t@link.exe /OUT:runner.dll /LIBPATH:\"$(CUDA_PATH)\\lib\\x64\" cudart_static.lib  cudart.lib cudadevrt.lib /DLL $(OBJECTS) runner_dlink.obj" << std::endl;
+    os << "\t@link.exe /OUT:runner.dll $(LIBCUDA) cudart.lib cuda.lib cudadevrt.lib /DLL $(OBJECTS) runner_dlink.obj\n";
     os << std::endl;
 
     // Use HIPCC to link the device code
