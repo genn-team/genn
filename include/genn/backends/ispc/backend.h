@@ -206,6 +206,8 @@ private:
     void genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng, bool trueSpike) const;
     void genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike) const;
     void genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, double dt, bool trueSpike) const;
+    void genPostsynapticUpdate(EnvironmentExternalBase &env, PostsynapticUpdateGroupMerged &sg, 
+                               double dt, bool trueSpike) const;
 
     template<typename T>
     void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups) const
