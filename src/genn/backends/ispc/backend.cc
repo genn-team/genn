@@ -12,6 +12,7 @@
 #endif
 
 // Standard C++ includes
+#include <set>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -493,10 +494,10 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
     modelMerged.genMergedNeuronSpikeQueueUpdateStructs(neuronUpdateISPC, *this);
     modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(neuronUpdateISPC, *this);
     
+    // Generate arrays of merged structs and functions to set them
     genMergedStructArrayPush(neuronUpdateISPC, modelMerged.getMergedNeuronUpdateGroups());
     genMergedStructArrayPush(neuronUpdateISPC, modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
     genMergedStructArrayPush(neuronUpdateISPC, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups());
-    
 
     neuronUpdateISPC << neuronUpdateStream.str();
     
@@ -681,12 +682,11 @@ void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator streamCreator, 
                         buildStandardEnvironment(groupEnv, 1);
 
                         // Generate postsynaptic update code
-                        genPostsynapticUpdate(groupEnv, s, modelMerged.getModel().getDT());
+                        genPostsynapticUpdate(groupEnv, s, modelMerged.getModel().getDT(), true);
                         funcEnv.getStream() << std::endl;
                     }
                 });
         }
-    }
     }
 
     // Create stream for ISPC file
@@ -736,8 +736,22 @@ void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator streamCreator, 
 }
 
 void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
-                              BackendBase::MemorySpaces&, HostHandler preambleHandler) const
+                              BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
+    const ModelSpecInternal &model = modelMerged.getModel();
+
+    // Build set containing names of all custom update groups
+    std::set<std::string> customUpdateGroups;
+    std::transform(model.getCustomUpdates().cbegin(), model.getCustomUpdates().cend(),
+                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
+                   [](const ModelSpec::CustomUpdateValueType &v) { return v.second.getUpdateGroupName(); });
+    std::transform(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
+                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
+                   [](const ModelSpec::CustomUpdateWUValueType &v) { return v.second.getUpdateGroupName(); });
+    std::transform(model.getCustomConnectivityUpdates().cbegin(), model.getCustomConnectivityUpdates().cend(),
+                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
+                   [](const ModelSpec::CustomConnectivityUpdateValueType &v) { return v.second.getUpdateGroupName(); });
+
     // Generate stream with custom update code
     std::ostringstream customUpdateStream;
     CodeStream customUpdate(customUpdateStream);
@@ -746,13 +760,325 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator streamCreator, M
     EnvironmentLibrary backendEnv(customUpdate, backendFunctions);
     EnvironmentLibrary customUpdateEnv(customUpdate, StandardLibrary::getMathsFunctions());
 
-    // ISPC code for custom update
-    customUpdateEnv.getStream() << std::endl << "// Main ISPC entry point for custom updates" << std::endl;
-    customUpdateEnv.getStream() << "export void updateCustom(uniform " << modelMerged.getModel().getTimePrecision().getName() << " t)";
-    {
-        CodeStream::Scope b(customUpdateEnv.getStream());
+    // Loop through custom update groups
+    for(const auto &g : customUpdateGroups) {
+        customUpdateEnv.getStream() << "export void update" << g << "(uniform uint64 timestep)";
+        {
+            CodeStream::Scope b(customUpdateEnv.getStream());
+
+            EnvironmentExternal funcEnv(customUpdateEnv);
+            funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t",
+                        {funcEnv.addInitialiser("const uniform " + model.getTimePrecision().getName() + " t = timestep * " + Type::writeNumeric(model.getDT(), model.getTimePrecision()) + ";")});
+            funcEnv.add(Type::Uint32.addConst(), "batch", "0");
+            funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
+                   Type::writeNumeric(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
+
+            // Loop through host update groups and generate code for those in this custom update group
+            modelMerged.genMergedCustomConnectivityHostUpdateGroups(
+                *this, memorySpaces, g, 
+                [this, &funcEnv](auto &c)
+                {
+                    c.generateUpdate(*this, funcEnv);
+                });
+            
+            {
+                Timer t(funcEnv.getStream(), "customUpdate" + g, model.isTimingEnabled());
+                modelMerged.genMergedCustomUpdateGroups(
+                    *this, memorySpaces, g,
+                    [this, &funcEnv](auto &c)
+                    {
+                        CodeStream::Scope b(funcEnv.getStream());
+                        funcEnv.getStream() << "// merged custom update group " << c.getIndex() << std::endl;
+                        funcEnv.getStream() << "for(uniform unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                        {
+                            CodeStream::Scope b(funcEnv.getStream());
+
+                            // Get reference to group
+                            funcEnv.getStream() << "const uniform MergedCustomUpdateGroup" << c.getIndex() 
+                                              << " * uniform group = &mergedCustomUpdateGroup" << c.getIndex() << "[g]; " << std::endl;
+                            
+                            // Create matching environment
+                            EnvironmentGroupMergedField<CustomUpdateGroupMerged> groupEnv(funcEnv, c);
+                            buildSizeEnvironment(groupEnv);
+                            buildStandardEnvironment(groupEnv, 1);
+
+                            if (c.getArchetype().isNeuronReduction()) {
+                                // Initialise reduction targets
+                                // **TODO** these should be provided with some sort of caching mechanism
+                                const auto reductionTargets = genInitReductionTargets(groupEnv.getStream(), c, 1);
+
+                                // Loop through group members
+                                EnvironmentGroupMergedField<CustomUpdateGroupMerged> memberEnv(groupEnv, c);
+                                if (c.getArchetype().getDims() & VarAccessDim::ELEMENT) {
+                                    memberEnv.print("foreach(i = 0 ... $(num_neurons))");
+                                    memberEnv.add(Type::Uint32.addConst(), "id", "i");
+                                }
+                                else {
+                                    memberEnv.add(Type::Uint32.addConst(), "id", "0");
+                                }
+                                {
+                                    CodeStream::Scope b(memberEnv.getStream());
+                                    c.generateCustomUpdate(memberEnv, 1,
+                                                           [&reductionTargets, this](auto &env, auto&)
+                                                           {        
+                                                               // Loop through reduction targets and generate reduction
+                                                               // **TODO** reduction should be automatically implemented by transpiler 
+                                                               for (const auto &r : reductionTargets) {
+                                                                   env.printLine(getReductionOperation("_lr" + r.name,  "$(" + r.name + ")", r.access, r.type) + ";");
+                                                               }
+                                                           });
+                                }
+
+                                // Write back reductions
+                                for (const auto &r : reductionTargets) {
+                                    memberEnv.getStream() << "group->" << r.name << "[" << r.index << "] = _lr" << r.name << ";" << std::endl;
+                                }
+                            }
+                            else {
+                                // Loop through group members
+                                EnvironmentGroupMergedField<CustomUpdateGroupMerged> memberEnv(groupEnv, c);
+                                if (c.getArchetype().getDims() & VarAccessDim::ELEMENT) {
+                                    memberEnv.print("foreach(i = 0 ... $(num_neurons))");
+                                    memberEnv.add(Type::Uint32.addConst(), "id", "i");
+                                }
+                                else {
+                                    memberEnv.add(Type::Uint32.addConst(), "id", "0");
+                                }
+                                {
+                                    CodeStream::Scope b(memberEnv.getStream());
+
+                                    // Generate custom update
+                                    c.generateCustomUpdate(memberEnv, 1,
+                                                           [this](auto &env, auto &c)
+                                                           {        
+                                                               // Write back reductions
+                                                               // **NOTE** this is just to handle batch reductions with batch size 1
+                                                               genWriteBackReductions(env, c, "id");
+                                                           });
+                                }
+                            }
+                        }
+                    });
+
+                // Loop through merged custom WU update groups
+                modelMerged.genMergedCustomUpdateWUGroups(
+                    *this, memorySpaces, g,
+                    [this, &funcEnv](auto &c)
+                    {
+                        CodeStream::Scope b(funcEnv.getStream());
+                        funcEnv.getStream() << "// merged custom WU update group " << c.getIndex() << std::endl;
+                        funcEnv.getStream() << "for(uniform unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                        {
+                            CodeStream::Scope b(funcEnv.getStream());
+
+                            // Get reference to group - auto replaced with uniform
+                            funcEnv.getStream() << "const uniform MergedCustomUpdateWUGroup" << c.getIndex() 
+                                              << " * uniform group = &mergedCustomUpdateWUGroup" << c.getIndex() << "[g]; " << std::endl;
+
+                            // Create matching environment
+                            EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> groupEnv(funcEnv, c);
+                            buildSizeEnvironment(groupEnv);
+                            buildStandardEnvironment(groupEnv, 1);
+
+                            // **TODO** add fields
+                            const SynapseGroupInternal *sg = c.getArchetype().getSynapseGroup();
+                            if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
+                                genKernelIteration(groupEnv, c, c.getArchetype().getSynapseGroup()->getKernelSize().size(), 
+                                                   [&c, this](EnvironmentExternalBase &env)
+                                                   {
+                                                       // Call custom update handler
+                                                       c.generateCustomUpdate(env, 1,
+                                                                              [this](auto &env, CustomUpdateWUGroupMergedBase &c)
+                                                                              {        
+                                                                                  // Write back reductions
+                                                                                  // **NOTE** this is just to handle batch reductions with batch size 1
+                                                                                  genWriteBackReductions(env, c, "id_syn");
+                                                                              });
+                                                   });
+                            }
+                            else {
+                                // Loop through presynaptic neurons
+                                groupEnv.print("for(uniform unsigned int i = 0; i < $(num_pre); i++)");
+                                {
+                                    // If this synapse group has sparse connectivity, loop through length of this row
+                                    CodeStream::Scope b(groupEnv.getStream());
+                                    if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                                        groupEnv.print("foreach(s = 0 ... $(_row_length)[i])");
+                                    }
+                                    // Otherwise, if it's dense, loop through each postsynaptic neuron
+                                    else if (sg->getMatrixType() & SynapseMatrixConnectivity::DENSE) {
+                                        groupEnv.print("foreach(j = 0 ... $(num_post))");
+                                    }
+                                    else {
+                                        throw std::runtime_error("Only DENSE and SPARSE format connectivity can be used for custom updates");
+                                    }
+                                    {
+                                        CodeStream::Scope b(groupEnv.getStream());
+
+                                        // Add presynaptic index to substitutions
+                                        EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> synEnv(groupEnv, c);
+                                        synEnv.add(Type::Uint32.addConst(), "id_pre", "i");
+                                        
+                                        const auto indexType = getSynapseIndexType(c);
+                                        const auto indexTypeName = indexType.getName();
+                                        // If connectivity is sparse
+                                        if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                                            // Add initialisers to calculate synaptic index and thus lookup postsynaptic index
+                                            const size_t idSynInit = synEnv.addInitialiser("const " + indexTypeName + " idSyn = ((" + indexTypeName + ")i * $(_row_stride)) + s;");
+                                            const size_t jInit = synEnv.addInitialiser("const unsigned int j = $(_ind)[idSyn];");
+
+                                            // Add substitutions
+                                            synEnv.add(indexType.addConst(), "id_syn", "idSyn", {idSynInit});
+                                            synEnv.add(Type::Uint32.addConst(), "id_post", "j", {jInit, idSynInit});
+                                        }
+                                        else {
+                                            synEnv.add(Type::Uint32.addConst(), "id_post", "j");
+
+                                            synEnv.add(indexType.addConst(), "id_syn", "idSyn", 
+                                                       {synEnv.addInitialiser("const " + indexTypeName + " idSyn = ((" + indexTypeName + ")i * $(num_post)) + j;")});
+                                        }
+
+                                        // Generate custom update
+                                        c.generateCustomUpdate(synEnv, 1,
+                                                               [this](auto &env, auto &c)
+                                                               {        
+                                                                   // Write back reductions
+                                                                   // **NOTE** this is just to handle batch reductions with batch size 1
+                                                                   genWriteBackReductions(env, c, "id_syn");
+                                                               });
+                                    }
+                                }
+                            }
+                        }
+                    });
+ 
+                // Loop through merged custom connectivity update groups
+                modelMerged.genMergedCustomConnectivityUpdateGroups(
+                    *this, memorySpaces, g,
+                    [this, &funcEnv](auto &c)
+                    {
+                        CodeStream::Scope b(funcEnv.getStream());
+                        funcEnv.getStream() << "// merged custom connectivity update group " << c.getIndex() << std::endl;
+                        funcEnv.getStream() << "for(uniform unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                        {
+                            CodeStream::Scope b(funcEnv.getStream());
+
+                            // Get reference to group - auto replaced with uniform
+                            funcEnv.getStream() << "const uniform MergedCustomConnectivityUpdateGroup" << c.getIndex() 
+                                              << " * uniform group = &mergedCustomConnectivityUpdateGroup" << c.getIndex() << "[g]; " << std::endl;
+                            
+                            // Add host RNG functions
+                            EnvironmentLibrary rngEnv(funcEnv, StandardLibrary::getHostRNGFunctions(c.getScalarType()));
+
+                            // Create matching environment
+                            EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> groupEnv(rngEnv, c);
+                            buildStandardEnvironment(groupEnv);
+           
+                            // Loop through presynaptic neurons
+                            groupEnv.print("for(uniform unsigned int i = 0; i < $(num_pre); i++)");
+                            {
+                                CodeStream::Scope b(groupEnv.getStream());
+                            
+                                // Configure substitutions
+                                groupEnv.add(Type::Uint32.addConst(), "id_pre", "i");
         
-        customUpdateEnv.getStream() << "    // Custom update implementation" << std::endl;
+                                c.generateUpdate(*this, groupEnv, 1);
+                            }
+                        }
+                    });
+            }
+
+            // Loop through merged custom connectivity remap update groups
+            {
+                Timer t(funcEnv.getStream(), "customUpdate" + g + "Remap", model.isTimingEnabled());
+                modelMerged.genMergedCustomConnectivityRemapUpdateGroups(
+                    *this, memorySpaces, g,
+                    [this, &funcEnv](auto &c)
+                    {
+                        CodeStream::Scope b(funcEnv.getStream());
+                        funcEnv.getStream() << "// merged custom connectivity remap update group " << c.getIndex() << std::endl;
+                        funcEnv.getStream() << "for(uniform unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                        {
+                            CodeStream::Scope b(funcEnv.getStream());
+
+                            // Get reference to group - auto replaced with uniform
+                            funcEnv.getStream() << "const uniform MergedCustomConnectivityRemapUpdateGroup" << c.getIndex() 
+                                              << " * uniform group = &mergedCustomConnectivityRemapUpdateGroup" << c.getIndex() << "[g]; " << std::endl;
+                     
+                            // Create matching environment
+                            EnvironmentGroupMergedField<CustomConnectivityRemapUpdateGroupMerged> groupEnv(funcEnv, c);
+                            buildStandardEnvironment(groupEnv);
+                            
+                            groupEnv.printLine("// Loop through presynaptic neurons");
+                            groupEnv.print("for (uniform unsigned int i = 0; i < $(num_pre); i++)");
+                            {
+                                CodeStream::Scope b(groupEnv.getStream());
+
+                                genRemap(groupEnv);
+                            }
+                        }
+                    });
+            }
+
+            // Loop through merged custom WU transpose update groups
+            {
+                Timer t(funcEnv.getStream(), "customUpdate" + g + "Transpose", model.isTimingEnabled());
+                modelMerged.genMergedCustomUpdateTransposeWUGroups(
+                    *this, memorySpaces, g,
+                    [this, &funcEnv](auto &c)
+                    {
+                        CodeStream::Scope b(funcEnv.getStream());
+                        funcEnv.getStream() << "// merged custom WU transpose update group " << c.getIndex() << std::endl;
+                        funcEnv.getStream() << "for(uniform unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                        {
+                            CodeStream::Scope b(funcEnv.getStream());
+
+                            // Get reference to group - auto replaced with uniform
+                            funcEnv.getStream() << "const uniform MergedCustomUpdateTransposeWUGroup" << c.getIndex() 
+                                              << " * uniform group = &mergedCustomUpdateTransposeWUGroup" << c.getIndex() << "[g]; " << std::endl;
+
+                            // Create matching environment
+                            EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> groupEnv(funcEnv, c);
+                            buildSizeEnvironment(groupEnv);
+                            buildStandardEnvironment(groupEnv, 1);
+
+                            // Add field for transpose field and get its name
+                            const std::string transposeVarName = c.addTransposeField(groupEnv);
+
+                            // Loop through presynaptic neurons
+                            groupEnv.print("for(uniform unsigned int i = 0; i < $(num_pre); i++)");
+                            {
+                                CodeStream::Scope b(groupEnv.getStream());
+
+                                // Loop through each postsynaptic neuron using foreach for SIMD
+                                groupEnv.print("foreach(j = 0 ... $(num_post))");
+                                {
+                                    CodeStream::Scope b(groupEnv.getStream());
+                                    EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> synEnv(groupEnv, c);
+
+                                    // Add pre and postsynaptic indices to environment
+                                    synEnv.add(Type::Uint32.addConst(), "id_pre", "i");
+                                    synEnv.add(Type::Uint32.addConst(), "id_post", "j");
+                                
+                                    // Add conditional initialisation code to calculate synapse index
+                                    synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", 
+                                               {synEnv.addInitialiser("const unsigned int idSyn = (i * $(num_post)) + j;")});
+                                
+                                    // Generate custom update
+                                    c.generateCustomUpdate(
+                                        synEnv, 1,
+                                        [&transposeVarName](auto &env, const auto&)
+                                        {        
+                                            // Update transpose variable
+                                            env.printLine("$(" + transposeVarName + "_transpose)[(j * $(num_pre)) + i] = $(" + transposeVarName + ");");
+                                        });
+                                }
+                            }
+
+                        }
+                    });
+            }
+        }
     }
 
     // Create stream for ISPC file
@@ -769,22 +1095,38 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator streamCreator, M
     customUpdateISPC << "typedef int64 int64_t;" << std::endl;
     customUpdateISPC << std::endl;
 
-    // Generate struct definitions in the ISPC file
+    // Timing variables
+    if(model.isTimingEnabled()) {
+        for(const auto &g : customUpdateGroups) {
+            customUpdateISPC << "extern uniform double customUpdate" << g << "Time;" << std::endl;
+            customUpdateISPC << "extern uniform double customUpdate" << g << "RemapTime;" << std::endl;
+            customUpdateISPC << "extern uniform double customUpdate" << g << "TransposeTime;" << std::endl;
+        }
+    }
+    customUpdateISPC << std::endl;
+
+    // Struct definitions in the ISPC file
     customUpdateISPC << std::endl << "// Merged custom update group structures" << std::endl;
-    modelMerged.genMergedCustomUpdateInitGroupStructs(customUpdateISPC, *this);
-    modelMerged.genMergedCustomWUUpdateInitGroupStructs(customUpdateISPC, *this);
-    modelMerged.genMergedCustomUpdateHostReductionStructs(customUpdateISPC, *this);
+    modelMerged.genMergedCustomUpdateStructs(customUpdateISPC, *this);
+    modelMerged.genMergedCustomUpdateWUStructs(customUpdateISPC, *this);
+    modelMerged.genMergedCustomUpdateTransposeWUStructs(customUpdateISPC, *this);
+    modelMerged.genMergedCustomConnectivityUpdateStructs(customUpdateISPC, *this);
+    modelMerged.genMergedCustomConnectivityRemapUpdateStructs(customUpdateISPC, *this);
+    modelMerged.genMergedCustomConnectivityHostUpdateStructs(customUpdateISPC, *this);
 
     // Generate arrays of merged structs and functions to set them
-    genMergedStructArrayPush(customUpdateISPC, modelMerged.getMergedCustomUpdateInitGroups());
-    genMergedStructArrayPush(customUpdateISPC, modelMerged.getMergedCustomWUUpdateInitGroups());
-    genMergedStructArrayPush(customUpdateISPC, modelMerged.getMergedCustomUpdateHostReductionGroups());
+    genMergedStructArrayPush(customUpdateISPC, modelMerged.getMergedCustomUpdateGroups());
+    genMergedStructArrayPush(customUpdateISPC, modelMerged.getMergedCustomUpdateWUGroups());
+    genMergedStructArrayPush(customUpdateISPC, modelMerged.getMergedCustomUpdateTransposeWUGroups());
+    genMergedStructArrayPush(customUpdateISPC, modelMerged.getMergedCustomConnectivityUpdateGroups());
+    genMergedStructArrayPush(customUpdateISPC, modelMerged.getMergedCustomConnectivityRemapUpdateGroups());
+    genMergedStructArrayPush(customUpdateISPC, modelMerged.getMergedCustomConnectivityHostUpdateGroups());
 
     customUpdateISPC << customUpdateStream.str();
 
     // Include the ISPC header
     os << "#include \"customUpdateISPC.h\"" << std::endl << std::endl;
-    
+
     // Generate preamble
     preambleHandler(os);
 }
@@ -870,7 +1212,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator streamCreator, ModelSpec
                     CodeStream::Scope b(funcEnv.getStream());
 
                     // Get reference to group
-                    funcEnv.getStream() << "const uniform MergedCustomUpdateInitGroup" << c.getIndex() << " *group = &mergedCustomUpdateInitGroup" << c.getIndex() << "[g]; " << std::endl;
+                    funcEnv.getStream() << "const MergedCustomUpdateInitGroup" << c.getIndex() << " *group = &mergedCustomUpdateInitGroup" << c.getIndex() << "[g]; " << std::endl;
 
                     EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> groupEnv(funcEnv, c);
                     buildStandardEnvironment(groupEnv, 1);
@@ -1220,11 +1562,25 @@ size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
     }
 }
 
-void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &) const
+void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
+    const ModelSpecInternal &model = modelMerged.getModel();
+    if(model.getBatchSize() != 1) {
+        throw std::runtime_error("The single-threaded CPU backend only supports simulations with a batch size of 1");
+    }
+
     os << "// Standard C++ includes" << std::endl;
+    os << "#include <algorithm>" << std::endl;
     os << "#include <chrono>" << std::endl;
+    os << "#include <iostream>" << std::endl;
     os << "#include <random>" << std::endl;
+    os << std::endl;
+    os << "// Standard C includes" << std::endl;
+    os << "#include <cassert>" << std::endl;
+    os << "#include <cmath>" << std::endl;
+    os << "#include <cstdint>" << std::endl;
+    os << "#include <cstring>" << std::endl;
+
 }
 void Backend::genRunnerPreamble(CodeStream &, const ModelSpecMerged &) const
 {
@@ -1836,3 +2192,25 @@ void Backend::genPostsynapticUpdate(EnvironmentExternalBase &env, PostsynapticUp
         }
     }
 }
+
+//--------------------------------------------------------------------------
+void Backend::genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateGroupMerged &cg, const std::string &idxName) const
+{
+    genWriteBackReductions(
+        env, cg, idxName,
+        [&cg](const Models::VarReference &varRef, const std::string &index)
+        {
+            return cg.getVarRefIndex(varRef.getDelayNeuronGroup(), varRef.getDenDelaySynapseGroup(),
+                                     1, varRef.getVarDims(), index, "");
+        });
+}
+//--------------------------------------------------------------------------
+void Backend::genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateWUGroupMergedBase &cg, const std::string &idxName) const
+{
+    genWriteBackReductions(
+        env, cg, idxName,
+        [&cg](const Models::WUVarReference &varRef, const std::string &index)
+        {
+            return cg.getVarRefIndex(1, varRef.getVarDims(), index);
+        });
+}   // namespace GeNN::CodeGenerator::ISPC
