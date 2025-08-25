@@ -209,6 +209,37 @@ private:
     void genPostsynapticUpdate(EnvironmentExternalBase &env, PostsynapticUpdateGroupMerged &sg, 
                                double dt, bool trueSpike) const;
 
+    //! Helper to generate code to copy reduced custom update group variables back to memory
+    void genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateGroupMerged &cg, const std::string &idxName) const;
+
+    //! Helper to generate code to copy reduced custom weight update group variables back to memory
+    void genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateWUGroupMergedBase &cg, const std::string &idxName) const;
+
+    template<typename G, typename R>
+    void genWriteBackReductions(EnvironmentExternalBase &env, G &cg, const std::string &idxName, R getVarRefIndexFn) const
+    {
+        const auto *cm = cg.getArchetype().getModel();
+        for(const auto &v : cm->getVars()) {
+            // If variable is a reduction target, copy value from register straight back into global memory
+            if(v.access & VarAccessModeAttribute::REDUCE) {
+                const std::string idx = env.getName(idxName);
+                const VarAccessDim varAccessDim = getVarAccessDim(v.access, cg.getArchetype().getDims());
+                env.getStream() << "group->" << v.name << "[" << cg.getVarIndex(1, varAccessDim, idx) << "] = " << env[v.name] << ";" << std::endl;
+            }
+        }
+
+        // Loop through all variable references
+        for(const auto &modelVarRef : cm->getVarRefs()) {
+            const auto &varRef = cg.getArchetype().getVarReferences().at(modelVarRef.name);
+
+            // If variable reference is a reduction target, copy value from register straight back into global memory
+            if(modelVarRef.access & VarAccessModeAttribute::REDUCE) {
+                const std::string idx = env.getName(idxName);
+                env.getStream() << "group->" << modelVarRef.name << "[" << getVarRefIndexFn(varRef, idx) << "] = " << env[modelVarRef.name] << ";" << std::endl;
+            }
+        }
+    }
+
     template<typename T>
     void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups) const
     {
