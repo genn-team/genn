@@ -130,7 +130,7 @@ if cuda_installed:
     if MACOS:
         cuda_library_dirs.append(os.path.join(cuda_path, "lib"))
     elif WIN:
-        cuda_library_dirs.append(os.environ.get("CudaLibraryPath", os.path.join(cuda_path, "lib", "x64")))
+        cuda_library_dirs.append(os.environ.get("CUDA_LIBRARY_PATH", os.path.join(cuda_path, "lib", "x64")))
     else:
         cuda_library_dirs.append(os.path.join(cuda_path, "lib64"))
 

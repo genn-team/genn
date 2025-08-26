@@ -85,7 +85,8 @@
     <TargetName>$(ProjectName)_$(Configuration)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition=" $(Configuration.Contains('CUDA')) ">
-    <CudaLibraryPath Condition=" '$(CudaLibraryPath)' == '' ">$(CUDA_PATH)\lib\$(Platform)</CudaLibraryPath>
+    <CudaLibraryPath Condition=" '$(CUDA_LIBRARY_PATH)' == '' ">$(CUDA_PATH)\lib\$(Platform)</CudaLibraryPath>
+    <CudaLibraryPath Condition=" '$(CUDA_LIBRARY_PATH)' != '' ">$(CUDA_LIBRARY_PATH)</CudaLibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

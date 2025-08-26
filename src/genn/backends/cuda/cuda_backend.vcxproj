@@ -48,7 +48,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <CudaLibraryPath Condition=" '$(CudaLibraryPath)' == '' ">$(CUDA_PATH)\lib\$(Platform)</CudaLibraryPath>
+    <CudaLibraryPath Condition=" '$(CUDA_LIBRARY_PATH)' == '' ">$(CUDA_PATH)\lib\$(Platform)</CudaLibraryPath>
+    <CudaLibraryPath Condition=" '$(CUDA_LIBRARY_PATH)' != '' ">$(CUDA_LIBRARY_PATH)</CudaLibraryPath>
     <OutDir>..\..\..\..\lib\</OutDir>
     <IntDir>..\..\..\..\$(Platform)\$(Configuration)\cuda_backend\</IntDir>
     <TargetName>genn_cuda_backend_$(Configuration)</TargetName>
