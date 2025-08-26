@@ -423,15 +423,21 @@ void Backend::genNMakefilePreamble(std::ostream &os) const
     os << "HIPCCFLAGS = " << getNVCCFlags() << std::endl;
     os << "LINKFLAGS = " << linkFlags << std::endl;
 
-    // Prefer explicit CUDALIBRARYPATH (Conda/runtime), then manual CUDA installs, else nothing (fall back to LIB)
-    os << "!IF \"$(CUDALIBRARYPATH)\" != \"\"" << std::endl;
-    os << "LIBCUDA=/LIBPATH:\"$(CUDALIBRARYPATH)\"" << std::endl;
+    // Prefer explicit CUDA_LIBRARY_PATH; otherwise fall back to typical CUDA_PATH layouts on Windows.
+    // Final fallback leaves LIBCUDA empty so the toolchain can use LIB environment paths.
+    os << "!IF DEFINED(CUDA_LIBRARY_PATH)" << std::endl;
+    os << "LIBCUDA=/LIBPATH:\"$(CUDA_LIBRARY_PATH)\"" << std::endl;
+
+    // Fall back to CUDA_PATH default \"lib\\x64\" (common on Windows)
     os << "!ELSEIF EXIST(\"$(CUDA_PATH)\\lib\\x64\\cudart.lib\")" << std::endl;
     os << "LIBCUDA=/LIBPATH:\"$(CUDA_PATH)\\lib\\x64\"" << std::endl;
+
+    // Older CUDA installs may only have \"lib\" (no x64 subdir)
     os << "!ELSEIF EXIST(\"$(CUDA_PATH)\\lib\\cudart.lib\")" << std::endl;
     os << "LIBCUDA=/LIBPATH:\"$(CUDA_PATH)\\lib\"" << std::endl;
+
+    // No explicit CUDA library path found – rely on LIB from toolchain/environment
     os << "!ELSE" << std::endl;
-    // Nothing – rely on LIB if it’s set by the environment/toolchain
     os << "LIBCUDA=" << std::endl;
     os << "!ENDIF" << std::endl;
 }
