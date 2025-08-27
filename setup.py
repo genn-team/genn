@@ -104,6 +104,8 @@ if WIN:
                                         os.path.join(pygenn_path, "libffi" + genn_lib_suffix + ".dll")]
 # Otherwise
 else:
+    # --- Linux/macOS libffi linkage ---
+    genn_extension_kwargs["libraries"].append("ffi")
     # Add GeNN library to dependencies
     if MACOS:
         genn_extension_kwargs["depends"] = [
@@ -119,10 +121,6 @@ else:
     # directories so libGeNN and backends can be found wherever package is installed
     if LINUX:
         genn_extension_kwargs["runtime_library_dirs"] = ["$ORIGIN"]      
-
-# --- Linux/macOS libffi linkage ---
-if LINUX or MACOS:
-    genn_extension_kwargs["libraries"].append("ffi")
 
 if coverage_build:
     if LINUX:
