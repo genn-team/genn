@@ -170,6 +170,7 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
         genHostScalar(definitionsVar, runnerVarDecl, Type::Double, "customUpdate" + g + "Time", "0.0");
         genHostScalar(definitionsVar, runnerVarDecl, Type::Double, "customUpdate" + g + "TransposeTime", "0.0");
         genHostScalar(definitionsVar, runnerVarDecl, Type::Double, "customUpdate" + g + "RemapTime", "0.0");
+        genHostScalar(definitionsVar, runnerVarDecl, Type::Double, "customUpdate" + g + "HostTime", "0.0");
     }
     
     // If timing is actually enabled
@@ -197,6 +198,7 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
         }
 
         // Add timers for each custom update group
+        // **NOTE** no need for backend-specific state of host time
         for(const auto &g : customUpdateGroups) {
             backend.genTimer(definitionsVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                              runnerStepTimeFinalise, "customUpdate" + g, false);

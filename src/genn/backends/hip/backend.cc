@@ -413,78 +413,78 @@ void Backend::genMakefileCompileRule(std::ostream &os) const
     os << "\t@$(HIPCC) -dc $(HIPCCFLAGS) $<" << std::endl;
 }
 //--------------------------------------------------------------------------
+void Backend::genNMakefilePreamble(std::ostream &os) const
+{
+    const std::string architecture = "sm_" + std::to_string(getChosenHIPDevice().major) + std::to_string(getChosenHIPDevice().minor);
+    std::string linkFlags = "--shared -arch " + architecture;
+    
+    // Write variables to preamble
+    os << "HIPCC = \"$(HIP_PATH)/bin/hipcc.exe\"" << std::endl;
+    os << "HIPCCFLAGS = " << getHIPCCFlags() << std::endl;
+    os << "LINKFLAGS = " << linkFlags << std::endl;
+
+    // Prefer explicit CUDA_LIBRARY_PATH; otherwise fall back to typical CUDA_PATH layouts on Windows.
+    // Final fallback leaves LIBCUDA empty so the toolchain can use LIB environment paths.
+    os << "!IF DEFINED(CUDA_LIBRARY_PATH)" << std::endl;
+    os << "LIBCUDA=/LIBPATH:\"$(CUDA_LIBRARY_PATH)\"" << std::endl;
+
+    // Fall back to CUDA_PATH default \"lib\\x64\" (common on Windows)
+    os << "!ELSEIF EXIST(\"$(CUDA_PATH)\\lib\\x64\\cudart.lib\")" << std::endl;
+    os << "LIBCUDA=/LIBPATH:\"$(CUDA_PATH)\\lib\\x64\"" << std::endl;
+
+    // Older CUDA installs may only have \"lib\" (no x64 subdir)
+    os << "!ELSEIF EXIST(\"$(CUDA_PATH)\\lib\\cudart.lib\")" << std::endl;
+    os << "LIBCUDA=/LIBPATH:\"$(CUDA_PATH)\\lib\"" << std::endl;
+
+    // No explicit CUDA library path found – rely on LIB from toolchain/environment
+    os << "!ELSE" << std::endl;
+    os << "LIBCUDA=" << std::endl;
+    os << "!ENDIF" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genNMakefileLinkRule(std::ostream &os) const
+{
+    // Use Visual C++ linker to link objects with device object code
+    // **YUCK** there should be some way to do this with $(CXX) /LINK
+    os << "runner.dll: $(OBJECTS) runner_dlink.obj" << std::endl;
+    os << "\t@link.exe /OUT:runner.dll $(LIBCUDA) cudart.lib cuda.lib cudadevrt.lib /DLL $(OBJECTS) runner_dlink.obj\n";
+    os << std::endl;
+
+    // Use HIPCC to link the device code
+    os << "runner_dlink.obj: $(OBJECTS)" << std::endl;
+    os << "\t@$(HIPCC) $(LINKFLAGS) -dlink $(OBJECTS) -o runner_dlink.obj" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genNMakefileCompileRule(std::ostream &os) const
+{
+    // Add rule to build object files from cc files
+    os << ".cc.obj:" << std::endl;
+    os << "\t@$(HIPCC) -dc $(HIPCCFLAGS) $< -o $@" << std::endl;
+}
+//--------------------------------------------------------------------------
 void Backend::genMSBuildConfigProperties(std::ostream&) const
 {
     throw std::runtime_error("The HIP backend does not currently support the MSBuild build system");
-    // Add property to extract CUDA path
-    /*os << "\t\t<!-- **HACK** determine the installed CUDA version by regexing CUDA path -->" << std::endl;
-    os << "\t\t<CudaVersion>$([System.Text.RegularExpressions.Regex]::Match($(CUDA_PATH), \"\\\\v([0-9.]+)$\").Groups[1].Value)</CudaVersion>" << std::endl;*/
 }
 //--------------------------------------------------------------------------
 void Backend::genMSBuildImportProps(std::ostream&) const
 {
     throw std::runtime_error("The HIP backend does not currently support the MSBuild build system");
-    // Import CUDA props file
-    /*os << "\t<ImportGroup Label=\"ExtensionSettings\">" << std::endl;
-    os << "\t\t<Import Project=\"$(CUDA_PATH)\\extras\\visual_studio_integration\\MSBuildExtensions\\CUDA $(CudaVersion).props\" />" << std::endl;
-    os << "\t</ImportGroup>" << std::endl;*/
 }
 //--------------------------------------------------------------------------
 void Backend::genMSBuildItemDefinitions(std::ostream&) const
 {
     throw std::runtime_error("The HIP backend does not currently support the MSBuild build system");
-    // Add item definition for host compilation
-    /*os << "\t\t<ClCompile>" << std::endl;
-    os << "\t\t\t<WarningLevel>Level3</WarningLevel>" << std::endl;
-    os << "\t\t\t<Optimization Condition=\"'$(Configuration)'=='Release'\">MaxSpeed</Optimization>" << std::endl;
-    os << "\t\t\t<Optimization Condition=\"'$(Configuration)'=='Debug'\">Disabled</Optimization>" << std::endl;
-    os << "\t\t\t<FunctionLevelLinking Condition=\"'$(Configuration)'=='Release'\">true</FunctionLevelLinking>" << std::endl;
-    os << "\t\t\t<IntrinsicFunctions Condition=\"'$(Configuration)'=='Release'\">true</IntrinsicFunctions>" << std::endl;
-    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">WIN32;WIN64;NDEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
-    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">WIN32;WIN64;_DEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
-    os << "\t\t\t<MultiProcessorCompilation>true</MultiProcessorCompilation>" << std::endl;
-    os << "\t\t</ClCompile>" << std::endl;
-
-    // Add item definition for linking
-    os << "\t\t<Link>" << std::endl;
-    os << "\t\t\t<GenerateDebugInformation>true</GenerateDebugInformation>" << std::endl;
-    os << "\t\t\t<EnableCOMDATFolding Condition=\"'$(Configuration)'=='Release'\">true</EnableCOMDATFolding>" << std::endl;
-    os << "\t\t\t<OptimizeReferences Condition=\"'$(Configuration)'=='Release'\">true</OptimizeReferences>" << std::endl;
-    os << "\t\t\t<SubSystem>Console</SubSystem>" << std::endl;
-    os << "\t\t\t<AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>" << std::endl;
-    os << "\t\t</Link>" << std::endl;
-
-    // Add item definition for CUDA compilation
-    // **YUCK** the CUDA Visual Studio plugin build system demands that you specify both a virtual an actual architecture 
-    // (which NVCC itself doesn't require). While, in general, actual architectures are usable as virtual architectures, 
-    // there is no compute_21 so we need to replace that with compute_20
-    const std::string architecture = std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
-    const std::string virtualArchitecture = (architecture == "21") ? "20" : architecture;
-    os << "\t\t<CudaCompile>" << std::endl;
-    os << "\t\t\t<TargetMachinePlatform>64</TargetMachinePlatform>" << std::endl;
-    os << "\t\t\t<GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>" << std::endl;
-    os << "\t\t\t<CodeGeneration>compute_" << virtualArchitecture <<",sm_" << architecture << "</CodeGeneration>" << std::endl;
-    os << "\t\t\t<FastMath>" << (getPreferences().optimizeCode ? "true" : "false") << "</FastMath>" << std::endl;
-    os << "\t\t\t<GenerateLineInfo>" << (getPreferences<Preferences>().generateLineInfo ? "true" : "false") << "</GenerateLineInfo>" << std::endl;
-    os << "\t\t</CudaCompile>" << std::endl;*/
 }
 //--------------------------------------------------------------------------
 void Backend::genMSBuildCompileModule(const std::string&, std::ostream&) const
 {
     throw std::runtime_error("The HIP backend does not currently support the MSBuild build system");
-    /*os << "\t\t<CudaCompile Include=\"" << moduleName << ".cc\" >" << std::endl;
-    // **YUCK** for some reasons you can't call .Contains on %(BaseCommandLineTemplate) directly
-    // Solution suggested by https://stackoverflow.com/questions/9512577/using-item-functions-on-metadata-values
-    os << "\t\t\t<AdditionalOptions Condition=\" !$([System.String]::new('%(BaseCommandLineTemplate)').Contains('-x cu')) \">-x cu %(AdditionalOptions)</AdditionalOptions>" << std::endl;
-    os << "\t\t</CudaCompile>" << std::endl;*/
 }
 //--------------------------------------------------------------------------
 void Backend::genMSBuildImportTarget(std::ostream&) const
 {
     throw std::runtime_error("The HIP backend does not currently support the MSBuild build system");
-    /*os << "\t<ImportGroup Label=\"ExtensionTargets\">" << std::endl;
-    os << "\t\t<Import Project=\"$(CUDA_PATH)\\extras\\visual_studio_integration\\MSBuildExtensions\\CUDA $(CudaVersion).targets\" />" << std::endl;
-    os << "\t</ImportGroup>" << std::endl;*/
 }
 //--------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const

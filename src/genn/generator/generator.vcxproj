@@ -85,7 +85,8 @@
     <TargetName>$(ProjectName)_$(Configuration)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition=" $(Configuration.Contains('CUDA')) ">
-    <CudaLibraryPath Condition=" '$(CudaLibraryPath)' == '' ">$(CUDA_PATH)\lib\$(Platform)</CudaLibraryPath>
+    <CudaLibraryPath Condition=" '$(CUDA_LIBRARY_PATH)' == '' ">$(CUDA_PATH)\lib\$(Platform)</CudaLibraryPath>
+    <CudaLibraryPath Condition=" '$(CUDA_LIBRARY_PATH)' != '' ">$(CUDA_LIBRARY_PATH)</CudaLibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -93,7 +94,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>$(BuildModelSDLCheck)</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\genn;..\..\..\include\genn\third_party;..\..\..\include\genn\third_party\libffi;..\..\..\include\genn\backends\single_threaded_cpu;$(BuildModelInclude)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_CRT_SECURE_NO_WARNINGS;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -108,7 +109,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>$(BuildModelSDLCheck)</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\backends\cuda;..\..\..\include\genn\genn;..\..\..\include\genn\third_party;..\..\..\include\genn\third_party\libffi;$(CUDA_PATH)\include;$(BuildModelInclude)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -123,7 +124,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>$(BuildModelSDLCheck)</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\backends\ispc;..\..\..\include\genn\genn;..\..\..\include\genn\third_party;..\..\..\include\genn\third_party\libffi;$(BuildModelInclude)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=ISPC;BACKEND_NAME=ispc;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=ISPC;BACKEND_NAME=ispc;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -140,7 +141,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>$(BuildModelSDLCheck)</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\genn;..\..\..\include\genn\third_party;..\..\..\include\genn\third_party\libffi;..\..\..\include\genn\backends\single_threaded_cpu;$(BuildModelInclude)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -159,7 +160,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>$(BuildModelSDLCheck)</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\backends\cuda;..\..\..\include\genn\genn;..\..\..\include\genn\third_party;..\..\..\include\genn\third_party\libffi;$(CUDA_PATH)\include;$(BuildModelInclude)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -178,7 +179,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>$(BuildModelSDLCheck)</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\backends\ispc;..\..\..\include\genn\genn;..\..\..\include\genn\third_party;..\..\..\include\genn\third_party\libffi;$(BuildModelInclude)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=ISPC;BACKEND_NAME=ispc;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=ISPC;BACKEND_NAME=ispc;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
