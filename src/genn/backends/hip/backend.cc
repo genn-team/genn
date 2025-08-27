@@ -422,6 +422,24 @@ void Backend::genNMakefilePreamble(std::ostream &os) const
     os << "HIPCC = \"$(HIP_PATH)/bin/hipcc.exe\"" << std::endl;
     os << "HIPCCFLAGS = " << getNVCCFlags() << std::endl;
     os << "LINKFLAGS = " << linkFlags << std::endl;
+
+    // Prefer explicit CUDA_LIBRARY_PATH; otherwise fall back to typical CUDA_PATH layouts on Windows.
+    // Final fallback leaves LIBCUDA empty so the toolchain can use LIB environment paths.
+    os << "!IF DEFINED(CUDA_LIBRARY_PATH)" << std::endl;
+    os << "LIBCUDA=/LIBPATH:\"$(CUDA_LIBRARY_PATH)\"" << std::endl;
+
+    // Fall back to CUDA_PATH default \"lib\\x64\" (common on Windows)
+    os << "!ELSEIF EXIST(\"$(CUDA_PATH)\\lib\\x64\\cudart.lib\")" << std::endl;
+    os << "LIBCUDA=/LIBPATH:\"$(CUDA_PATH)\\lib\\x64\"" << std::endl;
+
+    // Older CUDA installs may only have \"lib\" (no x64 subdir)
+    os << "!ELSEIF EXIST(\"$(CUDA_PATH)\\lib\\cudart.lib\")" << std::endl;
+    os << "LIBCUDA=/LIBPATH:\"$(CUDA_PATH)\\lib\"" << std::endl;
+
+    // No explicit CUDA library path found – rely on LIB from toolchain/environment
+    os << "!ELSE" << std::endl;
+    os << "LIBCUDA=" << std::endl;
+    os << "!ENDIF" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genNMakefileLinkRule(std::ostream &os) const
@@ -429,7 +447,7 @@ void Backend::genNMakefileLinkRule(std::ostream &os) const
     // Use Visual C++ linker to link objects with device object code
     // **YUCK** there should be some way to do this with $(CXX) /LINK
     os << "runner.dll: $(OBJECTS) runner_dlink.obj" << std::endl;
-    os << "\t@link.exe /OUT:runner.dll /LIBPATH:\"$(CUDA_PATH)\\lib\\x64\" cudart_static.lib  cudart.lib cudadevrt.lib /DLL $(OBJECTS) runner_dlink.obj" << std::endl;
+    os << "\t@link.exe /OUT:runner.dll $(LIBCUDA) cudart.lib cuda.lib cudadevrt.lib /DLL $(OBJECTS) runner_dlink.obj\n";
     os << std::endl;
 
     // Use HIPCC to link the device code
