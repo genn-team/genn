@@ -114,8 +114,7 @@ else:
     else:
         genn_extension_kwargs["depends"] = [
             os.path.join(pygenn_path, "libgenn" + genn_lib_suffix + ".so"),
-            os.path.join(pygenn_src, "docStrings.h"),
-        ]
+            os.path.join(pygenn_src, "docStrings.h")]
     # If this is Linux, we want to add extension directory i.e. $ORIGIN to runtime
     # directories so libGeNN and backends can be found wherever package is installed
     if LINUX:
