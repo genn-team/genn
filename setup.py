@@ -251,8 +251,7 @@ for module_stem, source_stem, kwargs in backends:
         package_data.append("genn_" + module_stem + "_backend" + genn_lib_suffix + ".dll")
     elif MACOS:
         backend_extension_kwargs["depends"].append(
-            os.path.join(pygenn_path, "libgenn_" + module_stem + "_backend" + genn_lib_suffix + ".dylib")
-        )
+            os.path.join(pygenn_path, "libgenn_" + module_stem + "_backend" + genn_lib_suffix + ".dylib"))
         package_data.append("libgenn_" + module_stem + "_backend" + genn_lib_suffix + ".dylib")    
     else:
         backend_extension_kwargs["depends"].append(
