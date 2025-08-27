@@ -108,8 +108,7 @@ else:
     if MACOS:
         genn_extension_kwargs["depends"] = [
             os.path.join(pygenn_path, "libgenn" + genn_lib_suffix + ".dylib"),
-            os.path.join(pygenn_src, "docStrings.h"),
-        ]
+            os.path.join(pygenn_src, "docStrings.h")]
         # macOS: ensure extensions can find bundled dylibs next to them
         genn_extension_kwargs["extra_link_args"].extend(["-Wl,-rpath,@loader_path"])
     else:
