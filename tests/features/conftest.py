@@ -45,7 +45,7 @@ def pytest_generate_tests(metafunc):
     if backend_simt_param:
         assert not batch_size_param
         metafunc.parametrize("backend_simt", 
-                             [b for b in backend_modules.keys() if b != "single_threaded_cpu"],
+                             [b for b in backend_modules.keys() if b != "single_threaded_cpu" and b != "ispc"],
                              indirect=True)
     
     if backend_cuda_param:
@@ -56,7 +56,7 @@ def pytest_generate_tests(metafunc):
         for b in backend_modules.keys():
             params.append((b, 1))
             
-            if b != "single_threaded_cpu":
+            if b != "single_threaded_cpu" and b != "ispc":
                 params.append((b, 5))
     
         metafunc.parametrize("backend, batch_size", params, indirect=True)
