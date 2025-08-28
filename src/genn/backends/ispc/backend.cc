@@ -39,6 +39,10 @@ namespace
 {
 const EnvironmentLibrary::Library backendFunctions = {
     {"clz", {Type::ResolvedType::createFunction(Type::Int32, {Type::Uint32}), "clz($(0))"}},
+    {"fmax", {Type::ResolvedType::createFunction(Type::Float, {Type::Float, Type::Float}), "max($(0), $(1))"}},
+    {"fmin", {Type::ResolvedType::createFunction(Type::Float, {Type::Float, Type::Float}), "min($(0), $(1))"}},
+    {"fmaxf", {Type::ResolvedType::createFunction(Type::Float, {Type::Float, Type::Float}), "max($(0), $(1))"}},
+    {"fminf", {Type::ResolvedType::createFunction(Type::Float, {Type::Float, Type::Float}), "min($(0), $(1))"}},
 };
 
 //--------------------------------------------------------------------------
@@ -1726,6 +1730,24 @@ std::string Backend::getAtomicOperation(const std::string &lhsPointer, const std
     }
     else {
         throw std::runtime_error("Unsupported atomic operation in ISPC backend");
+    }
+}
+//--------------------------------------------------------------------------
+std::string Backend::getReductionOperation(const std::string &reduction, const std::string &value,
+                                          VarAccessMode access, const Type::ResolvedType &type) const
+{
+    // In ISPC, we need to handle uniform/varying conversions for reductions
+    if(access == VarAccessMode::REDUCE_SUM) {
+        // For sum reductions, use reduce_add
+        return reduction + " += reduce_add(" + value + ")";
+    }
+    else if(access == VarAccessMode::REDUCE_MAX) {
+        // For max reductions, use reduce_max
+        return reduction + " = max(" + reduction + ", reduce_max(" + value + "))";
+    }
+    else {
+        // Fallback to base implementation for other cases
+        return BackendBase::getReductionOperation(reduction, value, access, type);
     }
 }
 

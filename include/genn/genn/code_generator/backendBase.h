@@ -258,6 +258,10 @@ public:
     //! "restricted" i.e. not aliased. What keyword should be used to indicate this?
     virtual std::string getRestrictKeyword() const = 0;
 
+    //! Some backends like ISPC require explicit uniform keyword for reduction variables.
+    //! What keyword should be used to indicate this?
+    virtual std::string getUniformKeyword() const { return ""; }
+
     //! Generate a single RNG instance
     /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free) const = 0;
@@ -452,7 +456,7 @@ private:
             // If variable is a reduction target, define variable initialised to correct initial value for reduction
             if (v.access & VarAccessModeAttribute::REDUCE) {
                 const auto resolvedType = v.type.resolve(cg.getTypeContext());
-                os << resolvedType.getName() << " _lr" << v.name << " = " << getReductionInitialValue(getVarAccessMode(v.access), resolvedType) << ";" << std::endl;
+                os << getUniformKeyword() << resolvedType.getName() << " _lr" << v.name << " = " << getReductionInitialValue(getVarAccessMode(v.access), resolvedType) << ";" << std::endl;
                 const VarAccessDim varAccessDim = getVarAccessDim(v.access, cg.getArchetype().getDims());
                 reductionTargets.push_back({v.name, resolvedType, getVarAccessMode(v.access),
                                             cg.getVarIndex(batchSize, varAccessDim, idx)});
@@ -466,7 +470,7 @@ private:
             // If variable reference is a reduction target, define variable initialised to correct initial value for reduction
             if (modelVarRef.access & VarAccessModeAttribute::REDUCE) {
                 const auto resolvedType = modelVarRef.type.resolve(cg.getTypeContext());
-                os << resolvedType.getName() << " _lr" << modelVarRef.name << " = " << getReductionInitialValue(modelVarRef.access, resolvedType) << ";" << std::endl;
+                os << getUniformKeyword() << resolvedType.getName() << " _lr" << modelVarRef.name << " = " << getReductionInitialValue(modelVarRef.access, resolvedType) << ";" << std::endl;
                 reductionTargets.push_back({modelVarRef.name, resolvedType, modelVarRef.access,
                                             getVarRefIndexFn(varRef, idx)});
             }
