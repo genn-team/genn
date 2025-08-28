@@ -7,6 +7,9 @@
 // CUDA includes
 #include <curand_kernel.h>
 
+// Filesystem includes
+#include "path.h"
+
 // GeNN includes
 #include "gennUtils.h"
 #include "logging.h"
@@ -364,6 +367,27 @@ void Backend::genLazyVariableDynamicAllocation(CodeStream &os, const Type::Resol
     }
 }
 //--------------------------------------------------------------------------
+bool Backend::shouldUseNMakeBuildSystem() const
+{
+     // Get CUDA_PATH environment variable
+    filesystem::path nvccPath;
+    if(const char *cudaPath = std::getenv("CUDA_PATH")) {
+        // Get CUDA version
+        int cudaVersion;
+        CHECK_CUDA_ERRORS(cudaRuntimeGetVersion(&cudaVersion));
+
+        // Split into major and minor version
+        const auto majorMinor = std::div(cudaVersion, 1000);
+
+        // Determine if props file exists
+        const std::string propsFile = "CUDA " + std::to_string(majorMinor.quot) + "." + std::to_string(majorMinor.rem / 10) + ".props";
+        return !(filesystem::path(cudaPath) / "extras" / "visual_studio_integration" / "MSBuildExtensions" / propsFile).exists();
+    }
+    else {
+        throw std::runtime_error("CUDA_PATH environment variable not set - ");
+    }
+}
+//--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream &os) const
 {
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
@@ -397,6 +421,58 @@ void Backend::genMakefileCompileRule(std::ostream &os) const
     os << "\t@$(NVCC) -dc $(NVCCFLAGS) $<" << std::endl;
 }
 //--------------------------------------------------------------------------
+void Backend::genNMakefilePreamble(std::ostream &os) const
+{
+    const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
+    std::string linkFlags = "--shared -arch " + architecture;
+
+    // Write variables to preamble
+    os << "NVCC = \"$(CUDA_PATH)/bin/nvcc.exe\"" << std::endl;
+    os << "NVCCFLAGS = " << getNVCCFlags() << std::endl;
+    os << "LINKFLAGS = " << linkFlags << std::endl;
+
+    // Prefer explicit CUDA_LIBRARY_PATH; otherwise fall back to typical CUDA_PATH layouts on Windows.
+    // Final fallback leaves LIBCUDA empty so the toolchain can use LIB environment paths.
+    os << "!IF DEFINED(CUDA_LIBRARY_PATH)" << std::endl;
+    os << "LIBCUDA=/LIBPATH:\"$(CUDA_LIBRARY_PATH)\"" << std::endl;
+
+    // Fall back to CUDA_PATH default \"lib\\x64\" (common on Windows)
+    os << "!ELSEIF EXIST(\"$(CUDA_PATH)\\lib\\x64\\cudart.lib\")" << std::endl;
+    os << "LIBCUDA=/LIBPATH:\"$(CUDA_PATH)\\lib\\x64\"" << std::endl;
+
+    // Older CUDA installs may only have \"lib\" (no x64 subdir)
+    os << "!ELSEIF EXIST(\"$(CUDA_PATH)\\lib\\cudart.lib\")" << std::endl;
+    os << "LIBCUDA=/LIBPATH:\"$(CUDA_PATH)\\lib\"" << std::endl;
+
+    // No explicit CUDA library path found – rely on LIB from toolchain/environment
+    os << "!ELSE" << std::endl;
+    os << "LIBCUDA=" << std::endl;
+    os << "!ENDIF" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genNMakefileLinkRule(std::ostream &os) const
+{
+    // Use Visual C++ linker to link objects with device object code
+    // **NOTE** link.exe doesn't seem to care if LIBPATH exists or not.
+    // Anaconda adds its library directory to the LIB environment variable
+    // which gets searched after /LIBPATH
+    // **YUCK** there should be some way to do this with $(CXX) /LINK
+    os << "runner.dll: $(OBJECTS) runner_dlink.obj" << std::endl;
+	os << "\t@link.exe /OUT:runner.dll $(LIBCUDA) cudart.lib cuda.lib cudadevrt.lib /DLL $(OBJECTS) runner_dlink.obj\n";
+    os << std::endl;
+
+    // Use NVCC to link the device code
+    os << "runner_dlink.obj: $(OBJECTS)" << std::endl;
+	os << "\t@$(NVCC) $(LINKFLAGS) -dlink $(OBJECTS) -o runner_dlink.obj" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genNMakefileCompileRule(std::ostream &os) const
+{
+    // Add rule to build object files from cc files
+    os << ".cc.obj:" << std::endl;
+	os << "\t@$(NVCC) -dc $(NVCCFLAGS) $< -o $@" << std::endl;
+}
+//--------------------------------------------------------------------------
 void Backend::genMSBuildConfigProperties(std::ostream &os) const
 {
     // Add property to extract CUDA path
@@ -421,8 +497,8 @@ void Backend::genMSBuildItemDefinitions(std::ostream &os) const
     os << "\t\t\t<Optimization Condition=\"'$(Configuration)'=='Debug'\">Disabled</Optimization>" << std::endl;
     os << "\t\t\t<FunctionLevelLinking Condition=\"'$(Configuration)'=='Release'\">true</FunctionLevelLinking>" << std::endl;
     os << "\t\t\t<IntrinsicFunctions Condition=\"'$(Configuration)'=='Release'\">true</IntrinsicFunctions>" << std::endl;
-    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">WIN32;WIN64;NDEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
-    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">WIN32;WIN64;_DEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
+    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
+    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
     os << "\t\t\t<MultiProcessorCompilation>true</MultiProcessorCompilation>" << std::endl;
     os << "\t\t</ClCompile>" << std::endl;
 

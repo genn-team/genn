@@ -51,13 +51,8 @@ void GeNN::CodeGenerator::generateRunner(const filesystem::path &outputPath, Mod
     definitions << "#pragma once" << std::endl;
 
 #ifdef _WIN32
-    definitions << "#ifdef BUILDING_GENERATED_CODE" << std::endl;
     definitions << "#define EXPORT_VAR __declspec(dllexport) extern" << std::endl;
     definitions << "#define EXPORT_FUNC __declspec(dllexport)" << std::endl;
-    definitions << "#else" << std::endl;
-    definitions << "#define EXPORT_VAR __declspec(dllimport) extern" << std::endl;
-    definitions << "#define EXPORT_FUNC __declspec(dllimport)" << std::endl;
-    definitions << "#endif" << std::endl;
 #else
     definitions << "#define EXPORT_VAR extern" << std::endl;
     definitions << "#define EXPORT_FUNC" << std::endl;
