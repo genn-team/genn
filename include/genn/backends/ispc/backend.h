@@ -145,6 +145,9 @@ public:
     virtual std::string getAtomicOperation(const std::string &lhsPointer, const std::string &rhsValue,
                                            const Type::ResolvedType &type, AtomicOperation op = AtomicOperation::ADD) const final;
 
+    virtual std::string getReductionOperation(const std::string &reduction, const std::string &value,
+                                              VarAccessMode access, const Type::ResolvedType &type) const final;
+
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free) const final;
     virtual void genTimer(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise, 
                           const std::string &name, bool updateInStepTime) const final;
@@ -185,6 +188,8 @@ public:
     virtual size_t getDeviceMemoryBytes() const final;
 
     virtual std::string getRestrictKeyword() const override{ return ""; }
+    
+    virtual std::string getUniformKeyword() const override{ return "uniform "; }
     
     virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const final;
     
