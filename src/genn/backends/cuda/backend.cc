@@ -425,19 +425,41 @@ void Backend::genNMakefilePreamble(std::ostream &os, const std::vector<std::stri
 {
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
     std::string linkFlags = "--shared -arch " + architecture;
-    
+
     // Write variables to preamble
     os << "NVCC = \"$(CUDA_PATH)/bin/nvcc.exe\"" << std::endl;
     os << "NVCCFLAGS = " << getNVCCFlags() << std::endl;
     os << "LINKFLAGS = " << linkFlags << std::endl;
+
+    // Prefer explicit CUDA_LIBRARY_PATH; otherwise fall back to typical CUDA_PATH layouts on Windows.
+    // Final fallback leaves LIBCUDA empty so the toolchain can use LIB environment paths.
+    os << "!IF DEFINED(CUDA_LIBRARY_PATH)" << std::endl;
+    os << "LIBCUDA=/LIBPATH:\"$(CUDA_LIBRARY_PATH)\"" << std::endl;
+
+    // Fall back to CUDA_PATH default \"lib\\x64\" (common on Windows)
+    os << "!ELSEIF EXIST(\"$(CUDA_PATH)\\lib\\x64\\cudart.lib\")" << std::endl;
+    os << "LIBCUDA=/LIBPATH:\"$(CUDA_PATH)\\lib\\x64\"" << std::endl;
+
+    // Older CUDA installs may only have \"lib\" (no x64 subdir)
+    os << "!ELSEIF EXIST(\"$(CUDA_PATH)\\lib\\cudart.lib\")" << std::endl;
+    os << "LIBCUDA=/LIBPATH:\"$(CUDA_PATH)\\lib\"" << std::endl;
+
+    // No explicit CUDA library path found – rely on LIB from toolchain/environment
+    os << "!ELSE" << std::endl;
+    os << "LIBCUDA=" << std::endl;
+    os << "!ENDIF" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genNMakefileLinkRule(std::ostream &os) const
 {
     // Use Visual C++ linker to link objects with device object code
+
+    // **NOTE** link.exe doesn't seem to care if LIBPATH exists or not.
+    // Anaconda adds its library directory to the LIB environment variable
+    // which gets searched after /LIBPATH
     // **YUCK** there should be some way to do this with $(CXX) /LINK
     os << "runner.dll: $(OBJECTS) runner_dlink.obj" << std::endl;
-	os << "\t@link.exe /OUT:runner.dll /LIBPATH:\"$(CUDA_PATH)\\lib\\x64\" cudart_static.lib  cudart.lib cudadevrt.lib /DLL $(OBJECTS) runner_dlink.obj" << std::endl;
+	os << "\t@link.exe /OUT:runner.dll $(LIBCUDA) cudart.lib cuda.lib cudadevrt.lib /DLL $(OBJECTS) runner_dlink.obj" << std::endl;
     os << std::endl;
 
     // Use NVCC to link the device code

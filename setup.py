@@ -75,6 +75,8 @@ genn_third_party_include = os.path.join(genn_path, "include", "genn", "third_par
 if WIN:
     package_data = ["genn" + genn_lib_suffix + ".dll",
                     "libffi" + genn_lib_suffix + ".dll"]
+elif MACOS:
+    package_data = ["libgenn" + genn_lib_suffix + ".dylib"]
 else:
     package_data = ["libgenn" + genn_lib_suffix + ".so"]
 
@@ -92,7 +94,7 @@ genn_extension_kwargs = {
 if WIN:
     # Turn off warnings about dll-interface being required for stuff to be
     # used by clients and prevent windows.h exporting TOO many awful macros
-    genn_extension_kwargs["extra_compile_args"].extend(["/wd4251", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX"])
+    genn_extension_kwargs["extra_compile_args"].extend(["/wd4251", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX", "-D_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR"])
 
     # Add include directory for FFI as it's built from source
     genn_extension_kwargs["include_dirs"].append(os.path.join(genn_third_party_include, "libffi"))
@@ -106,21 +108,29 @@ if WIN:
                                         os.path.join(pygenn_path, "libffi" + genn_lib_suffix + ".dll")]
 # Otherwise
 else:
+    # --- Linux/macOS libffi linkage ---
+    genn_extension_kwargs["libraries"].append("ffi")
     # Add GeNN library to dependencies
-    genn_extension_kwargs["depends"] = [os.path.join(pygenn_path, "libgenn" + genn_lib_suffix + ".so"),
-                                        os.path.join(pygenn_src, "docStrings.h")]
-
+    if MACOS:
+        genn_extension_kwargs["depends"] = [
+            os.path.join(pygenn_path, "libgenn" + genn_lib_suffix + ".dylib"),
+            os.path.join(pygenn_src, "docStrings.h")]
+        # macOS: ensure extensions can find bundled dylibs next to them
+        genn_extension_kwargs["extra_link_args"].extend(["-Wl,-rpath,@loader_path"])
+    else:
+        genn_extension_kwargs["depends"] = [
+            os.path.join(pygenn_path, "libgenn" + genn_lib_suffix + ".so"),
+            os.path.join(pygenn_src, "docStrings.h")]
     # If this is Linux, we want to add extension directory i.e. $ORIGIN to runtime
     # directories so libGeNN and backends can be found wherever package is installed
     if LINUX:
-        genn_extension_kwargs["runtime_library_dirs"] = ["$ORIGIN"]
-        genn_extension_kwargs["libraries"].append("ffi")
+        genn_extension_kwargs["runtime_library_dirs"] = ["$ORIGIN"]      
 
 if coverage_build:
     if LINUX:
         genn_extension_kwargs["extra_compile_args"].append("--coverage")
         genn_extension_kwargs["extra_link_args"].append("--coverage")
-    elif MAC:
+    elif MACOS:
         genn_extension_kwargs["extra_compile_args"].extend(["-fprofile-instr-generate", "-fcoverage-mapping"])
 
 # By default build single-threaded CPU backend
@@ -129,11 +139,12 @@ backends = [("single_threaded_cpu", "singleThreadedCPU", {})]
 # If CUDA was found, add backend configuration
 if cuda_installed:
     # Get CUDA library directory
+    # **NOTE** $(CUDA_PATH)/lib/x64 is correct for system CUDA installs on Windows but not conda
     cuda_library_dirs = []
     if MACOS:
         cuda_library_dirs.append(os.path.join(cuda_path, "lib"))
     elif WIN:
-        cuda_library_dirs.append(os.path.join(cuda_path, "lib", "x64"))
+        cuda_library_dirs.append(os.environ.get("CUDA_LIBRARY_PATH", os.path.join(cuda_path, "lib", "x64")))
     else:
         cuda_library_dirs.append(os.path.join(cuda_path, "lib64"))
 
@@ -245,6 +256,10 @@ for module_stem, source_stem, kwargs in backends:
             os.path.join(pygenn_path, "genn_" + module_stem + "_backend" + genn_lib_suffix + ".dll"))
 
         package_data.append("genn_" + module_stem + "_backend" + genn_lib_suffix + ".dll")
+    elif MACOS:
+        backend_extension_kwargs["depends"].append(
+            os.path.join(pygenn_path, "libgenn_" + module_stem + "_backend" + genn_lib_suffix + ".dylib"))
+        package_data.append("libgenn_" + module_stem + "_backend" + genn_lib_suffix + ".dylib")    
     else:
         backend_extension_kwargs["depends"].append(
             os.path.join(pygenn_path, "libgenn_" + module_stem + "_backend" + genn_lib_suffix + ".so"))
@@ -296,7 +311,7 @@ setup(
     packages = find_packages(),
     package_data={"pygenn": package_data},
 
-    url="https://github.com/genn_team/genn",
+    url="https://github.com/genn-team/genn",
     ext_package="pygenn",
     ext_modules=ext_modules,
     zip_safe=False,

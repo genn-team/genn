@@ -61,8 +61,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\..\include\genn\genn;..\..\..\..\include\genn\third_party;..\..\..\..\include\genn\third_party\libffi;..\..\..\..\include\genn\backends\single_threaded_cpu</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions Condition=" !$(Configuration.Contains('DLL')) ">WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition=" $(Configuration.Contains('DLL')) ">WIN32_LEAN_AND_MEAN;NOMINMAX;BUILDING_BACKEND_DLL;LINKING_GENN_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" !$(Configuration.Contains('DLL')) ">WIN32_LEAN_AND_MEAN;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;NOMINMAX;FFI_BUILDING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" $(Configuration.Contains('DLL')) ">WIN32_LEAN_AND_MEAN;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;NOMINMAX;BUILDING_BACKEND_DLL;LINKING_GENN_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings Condition=" $(Configuration.Contains('DLL')) ">4251</DisableSpecificWarnings>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>

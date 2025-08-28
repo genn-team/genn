@@ -48,6 +48,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
+    <CudaLibraryPath Condition=" '$(CUDA_LIBRARY_PATH)' == '' ">$(CUDA_PATH)\lib\$(Platform)</CudaLibraryPath>
+    <CudaLibraryPath Condition=" '$(CUDA_LIBRARY_PATH)' != '' ">$(CUDA_LIBRARY_PATH)</CudaLibraryPath>
     <OutDir>..\..\..\..\lib\</OutDir>
     <IntDir>..\..\..\..\$(Platform)\$(Configuration)\cuda_backend\</IntDir>
     <TargetName>genn_cuda_backend_$(Configuration)</TargetName>
@@ -61,8 +63,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\..\include\genn\backends\cuda;..\..\..\..\include\genn\genn;..\..\..\..\include\genn\third_party;..\..\..\..\include\genn\third_party\libffi;$(CUDA_PATH)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions Condition=" !$(Configuration.Contains('DLL')) ">_MBCS;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;NOMINMAX;FFI_BUILDING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition=" $(Configuration.Contains('DLL')) ">WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;NOMINMAX;BUILDING_BACKEND_DLL;LINKING_GENN_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" !$(Configuration.Contains('DLL')) ">_MBCS;WIN32_LEAN_AND_MEAN;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;_CRT_SECURE_NO_WARNINGS;NOMINMAX;FFI_BUILDING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" $(Configuration.Contains('DLL')) ">WIN32_LEAN_AND_MEAN;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;_CRT_SECURE_NO_WARNINGS;NOMINMAX;BUILDING_BACKEND_DLL;LINKING_GENN_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings Condition=" $(Configuration.Contains('DLL')) ">4251</DisableSpecificWarnings>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -73,7 +75,7 @@
       <OptimizeReferences Condition=" $(Configuration.Contains('Debug')) ">true</OptimizeReferences>
       <AdditionalDependencies Condition=" '$(Configuration)'=='Release_DLL' ">libffi_Release_DLL.lib;genn_Release_DLL.lib;cudart.lib;cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalDependencies Condition=" '$(Configuration)'=='Debug_DLL' ">libffi_Debug_DLL.lib;genn_Debug_DLL.lib;cudart.lib;cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories Condition=" $(Configuration.Contains('DLL')) ">$(OutDir);$(CUDA_PATH)\lib\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition=" $(Configuration.Contains('DLL')) ">$(OutDir);$(CudaLibraryPath);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
