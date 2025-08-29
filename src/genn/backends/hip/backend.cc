@@ -420,7 +420,7 @@ void Backend::genNMakefilePreamble(std::ostream &os) const
     
     // Write variables to preamble
     os << "HIPCC = \"$(HIP_PATH)/bin/hipcc.exe\"" << std::endl;
-    os << "HIPCCFLAGS = " << getNVCCFlags() << std::endl;
+    os << "HIPCCFLAGS = " << getHIPCCFlags() << std::endl;
     os << "LINKFLAGS = " << linkFlags << std::endl;
 
     // Prefer explicit CUDA_LIBRARY_PATH; otherwise fall back to typical CUDA_PATH layouts on Windows.
