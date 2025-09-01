@@ -320,8 +320,8 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, M
                     buildStandardEnvironment(groupEnv, 1);
 
                     if(n.getArchetype().isDelayRequired()) {
-                        groupEnv.printLine("const unsigned int lastTimestepDelaySlot = *$(_spk_que_ptr);");
-                        groupEnv.printLine("const unsigned int lastTimestepDelayOffset = lastTimestepDelaySlot * $(num_neurons);");
+                        groupEnv.printLine("const uniform unsigned int lastTimestepDelaySlot = *$(_spk_que_ptr);");
+                        groupEnv.printLine("const uniform unsigned int lastTimestepDelayOffset = lastTimestepDelaySlot * $(num_neurons);");
                     }
 
                     // Generate code to update previous spike times
