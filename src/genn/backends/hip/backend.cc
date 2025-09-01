@@ -401,18 +401,14 @@ void Backend::genMakefilePreamble(std::ostream &os) const
 
     // If NCCL reductions are enabled, link NCCL
     if(getPreferences<Preferences>().enableNCCLReductions) {
-#if defined(__HIP_PLATFORM_NVIDIA__)
         linkFlags += " -lnccl";
-#elif defined(__HIP_PLATFORM_AMD__)
-        linkFlags += " -lrccl";
-#endif
     }
-    
     // Write variables to preamble
     os << "HIP_PATH ?=/opt/rocm" << std::endl;
     os << "HIPCC := $(HIP_PATH)/bin/hipcc" << std::endl;
     os << "HIPCCFLAGS := " << getHIPCCFlags() << std::endl;
     os << "LINKFLAGS := " << linkFlags << std::endl;
+
 }
 //--------------------------------------------------------------------------
 void Backend::genMakefileLinkRule(std::ostream &os) const
@@ -438,9 +434,6 @@ void Backend::genMakefileCompileRule(std::ostream &os) const
 //--------------------------------------------------------------------------
 void Backend::genNMakefilePreamble(std::ostream &os) const
 {
-#if defined(__HIP_PLATFORM_AMD__)
-    throw std::runtime_error("NMake build system is not supported on AMD HIP platform");
-#else
     const std::string architecture = "sm_" + std::to_string(getChosenHIPDevice().major) + std::to_string(getChosenHIPDevice().minor);
     std::string linkFlags = "--shared -arch " + architecture;
     
@@ -466,14 +459,10 @@ void Backend::genNMakefilePreamble(std::ostream &os) const
     os << "!ELSE" << std::endl;
     os << "LIBCUDA=" << std::endl;
     os << "!ENDIF" << std::endl;
-#endif
 }
 //--------------------------------------------------------------------------
 void Backend::genNMakefileLinkRule(std::ostream &os) const
 {
-#if defined(__HIP_PLATFORM_AMD__)
-    throw std::runtime_error("NMake build system is not supported on AMD HIP platform");
-#else
     // Use Visual C++ linker to link objects with device object code
     // **YUCK** there should be some way to do this with $(CXX) /LINK
     os << "runner.dll: $(OBJECTS) runner_dlink.obj" << std::endl;
@@ -483,18 +472,13 @@ void Backend::genNMakefileLinkRule(std::ostream &os) const
     // Use HIPCC to link the device code
     os << "runner_dlink.obj: $(OBJECTS)" << std::endl;
     os << "\t@$(HIPCC) $(LINKFLAGS) -dlink $(OBJECTS) -o runner_dlink.obj" << std::endl;
-#endif
 }
 //--------------------------------------------------------------------------
 void Backend::genNMakefileCompileRule(std::ostream &os) const
 {
-#if defined(__HIP_PLATFORM_AMD__)
-    throw std::runtime_error("NMake build system is not supported on AMD HIP platform");
-#else
     // Add rule to build object files from cc files
     os << ".cc.obj:" << std::endl;
     os << "\t@$(HIPCC) -dc $(HIPCCFLAGS) $< -o $@" << std::endl;
-#endif
 }
 //--------------------------------------------------------------------------
 void Backend::genMSBuildConfigProperties(std::ostream&) const
@@ -599,11 +583,20 @@ const EnvironmentLibrary::Library &Backend::getRNGFunctions(const Type::Resolved
 void Backend::genDefinitionsPreambleInternal(CodeStream &os, const ModelSpecMerged &) const
 {
     os << "// HIP includes" << std::endl;
-    os << "#include <hip/hip_runtime.h>" << std::endl;
-    os << "#include <hip/hip_fp16.h>" << std::endl;
+    // **YUCK** disable the myriad of warning produced by HIP NVIDIA backend
+#if defined(__HIP_PLATFORM_NVIDIA__) && defined(__GNUC__)
+    os << "#pragma GCC diagnostic push" << std::endl;
+    os << "#pragma GCC diagnostic ignored \"-Wdeprecated-declarations\"" << std::endl;
+    os << "#pragma GCC diagnostic ignored \"-Wmissing-field-initializers\"" << std::endl;
+    os << "#pragma GCC diagnostic ignored \"-Wsign-compare\"" << std::endl;
+    os << "#pragma GCC diagnostic ignored \"-Wreturn-local-addr\"" << std::endl;
+#endif
+    os <<"#include <hip/hip_runtime.h>" << std::endl;
+    os <<"#include <hip/hip_fp16.h>" << std::endl;
     os << "#include <hiprand/hiprand_kernel.h>" << std::endl;
-
-#if defined(__HIP_PLATFORM_AMD__)
+#if defined(__HIP_PLATFORM_NVIDIA__) && defined(__GNUC__)
+    os << "#pragma GCC diagnostic pop" << std::endl;
+#endif
     // If NCCL is enabled
     if(getPreferences<Preferences>().enableNCCLReductions) {
         // Include RCCL header
@@ -632,11 +625,10 @@ void Backend::genDefinitionsPreambleInternal(CodeStream &os, const ModelSpecMerg
         os << "EXPORT_FUNC unsigned char *ncclGetUniqueID();" << std::endl;
         os << "}" << std::endl;
     }
-#endif
 
     os << std::endl;
     os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// Helper macro for error-checking HIP calls" << std::endl;
+    os << "// Helper macro for error-checking CUDA calls" << std::endl;
     os << "#define CHECK_RUNTIME_ERRORS(call) {\\" << std::endl;
     os << "    hipError_t error = call;\\" << std::endl;
     os << "    if (error != hipSuccess) {\\" << std::endl;
@@ -663,4 +655,4 @@ void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThrea
         os << "const dim3 grid(" << gridSize << ", " << batchSize << ");" << std::endl;
     }
 }
-}   // namespace GeNN::CodeGenerator::HIP
+}   // namespace GeNN::CodeGenerator::CUDA
