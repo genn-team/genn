@@ -52,7 +52,7 @@ const EnvironmentLibrary::Library doubleRandomFunctions = {
 };
 
 // HIP random number generator state types
-const Type::ResolvedType HIPRandState = Type::ResolvedType::createValue<hiprandState>("hiprandState", false, nullptr, true);
+const Type::ResolvedType HIPRandState = Type::ResolvedType::createValue<hiprandState>("hiprandState_t", false, nullptr, true);
 const Type::ResolvedType HIPRandStatePhilox43210 = Type::ResolvedType::createValue<hiprandStatePhilox4_32_10_t>("hiprandStatePhilox4_32_10_t", false, nullptr, true);
 
 //--------------------------------------------------------------------------
@@ -546,7 +546,7 @@ std::string Backend::getHIPCCFlags() const
     }
     return nvccFlags;
 #elif defined(__HIP_PLATFORM_AMD__)
-    const std::string architecture = "--amdgpu-target=gfx1100";
+    const std::string architecture = "--offload-arch=gfx1100";
     std::string hipccFlags = "-fPIC " + architecture + " -I\"$(HIP_PATH)/include\"";
 #ifndef _WIN32
     hipccFlags += " -std=c++11";
