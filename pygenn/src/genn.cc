@@ -30,6 +30,7 @@
 #include "code_generator/generateMakefile.h"
 #include "code_generator/generateModules.h"
 #include "code_generator/generateMSBuild.h"
+#include "code_generator/generateNMakefile.h"
 #include "code_generator/modelSpecMerged.h"
 
 // GeNN runtime includes
@@ -225,22 +226,27 @@ public:
 };
 
 const CodeGenerator::ModelSpecMerged *generateCode(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, 
-                                                   const std::string &sharePathStr, const std::string &outputPathStr,
-                                                   bool forceRebuild, bool neverRebuild)
+                                                   const std::string &outputPathStr, bool forceRebuild,
+                                                   bool neverRebuild)
 {
     const filesystem::path outputPath(outputPathStr);
 
     // Create merged model and generate code
     auto *modelMerged = new CodeGenerator::ModelSpecMerged(backend, model);
     const auto output = CodeGenerator::generateAll(
-        *modelMerged, backend, 
-        filesystem::path(sharePathStr), outputPath, 
+        *modelMerged, backend, outputPath, 
         forceRebuild, neverRebuild);
 
 #ifdef _WIN32
-    // Create MSBuild project to compile and link all generated modules
-    std::ofstream makefile((outputPath / "runner.vcxproj").str());
-    CodeGenerator::generateMSBuild(makefile, model, backend, "", output);
+    if(backend.shouldUseNMakeBuildSystem()) {
+        std::ofstream nmake((outputPath / "Makefile").str());
+        CodeGenerator::generateNMakefile(nmake, backend, output);
+    }
+    // Otherwise, create MSBuild project to compile and link all generated modules
+    else {
+        std::ofstream makefile((outputPath / "runner.vcxproj").str());
+        CodeGenerator::generateMSBuild(makefile, backend, output);
+    }
 #else
     // Create makefile to compile and link all generated modules
     std::ofstream makefile((outputPath / "Makefile").str());
@@ -660,6 +666,13 @@ PYBIND11_MODULE(_genn, m)
         .def_property_readonly("_wu_post_model_fused", &SynapseGroupInternal::isWUPostModelFused)
         .def_property_readonly("_sparse_ind_type", &SynapseGroupInternal::getSparseIndType)
         
+        .def_property_readonly("_any_ccu_references", 
+            [](const SynapseGroup &sg)
+            {
+                const auto &sgInternal = static_cast<const SynapseGroupInternal&>(sg);
+                return !sgInternal.getCustomConnectivityUpdateReferences().empty();
+            })
+
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
@@ -1012,8 +1025,9 @@ PYBIND11_MODULE(_genn, m)
     //------------------------------------------------------------------------
     // genn.BackendBase
     //------------------------------------------------------------------------
-    pybind11::class_<CodeGenerator::BackendBase>(m, "BackendBase");
-    
+    pybind11::class_<CodeGenerator::BackendBase>(m, "BackendBase")
+        .def_property_readonly("should_use_nmake_build_system", &CodeGenerator::BackendBase::shouldUseNMakeBuildSystem);
+
     //------------------------------------------------------------------------
     // genn.ModelSpecMerged
     //------------------------------------------------------------------------

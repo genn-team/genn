@@ -806,7 +806,7 @@ TEST(NeuronGroup, CompareNeuronModels)
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
     // Generate code but don't actually write any files
-    CodeGenerator::generateAll(modelSpecMerged, backend, ".", ".", false, true);
+    CodeGenerator::generateAll(modelSpecMerged, backend, ".", false, true);
 
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 1);
@@ -859,7 +859,7 @@ TEST(NeuronGroup, CompareHeterogeneousParamVarState)
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
     // Generate code but don't actually write any files
-    CodeGenerator::generateAll(modelSpecMerged, backend, ".", ".", false, true);
+    CodeGenerator::generateAll(modelSpecMerged, backend, ".", false, true);
 
     // Check all groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 1);
@@ -961,7 +961,7 @@ TEST(NeuronGroup, CompareCurrentSources)
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
     // Generate code but don't actually write any files
-    CodeGenerator::generateAll(modelSpecMerged, backend, ".", ".", false, true);
+    CodeGenerator::generateAll(modelSpecMerged, backend, ".", false, true);
 
     // Check neurons are merged into two groups
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
@@ -1091,7 +1091,7 @@ TEST(NeuronGroup, ComparePostsynapticModels)
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
     // Generate code but don't actually write any files
-    CodeGenerator::generateAll(modelSpecMerged, backend, ".", ".", false, true);
+    CodeGenerator::generateAll(modelSpecMerged, backend, ".", false, true);
 
     // Check neurons are merged into three groups
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 3);
@@ -1299,7 +1299,7 @@ TEST(NeuronGroup, CompareWUPreUpdate)
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
     // Generate code but don't actually write any files
-    CodeGenerator::generateAll(modelSpecMerged, backend, ".", ".", false, true);
+    CodeGenerator::generateAll(modelSpecMerged, backend, ".", false, true);
 
     // Check neuron init and update is merged into three groups (NG0 with no outsyns, NG1, NG2, NG3 and NG5 with 1 outsyn and NG4with 2 outsyns)
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 3);
@@ -1409,7 +1409,7 @@ TEST(NeuronGroup, CompareWUPostUpdate)
     CodeGenerator::ModelSpecMerged modelSpecMerged(backend, model);
 
     // Generate code but don't actually write any files
-    CodeGenerator::generateAll(modelSpecMerged, backend, ".", ".", false, true);
+    CodeGenerator::generateAll(modelSpecMerged, backend, ".", false, true);
 
     // Check neurons are merged into three groups
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 3);

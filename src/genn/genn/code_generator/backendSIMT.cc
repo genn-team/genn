@@ -391,7 +391,7 @@ void BackendSIMT::genNeuronSpikeQueueUpdateKernel(EnvironmentExternalBase &env, 
                 CodeStream::Scope b(env.getStream());
 
                 // Use this to get reference to merged group structure
-                env.getStream() << getPointerPrefix() << "struct MergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << " *group = &d_mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[id - " << idStart << "]; " << std::endl;
+                env.getStream() << "struct MergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << " *group = &d_mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[id - " << idStart << "]; " << std::endl;
             
                 // Create matching environment
                 EnvironmentGroupMergedField<NeuronSpikeQueueUpdateGroupMerged> neuronEnv(env, n);
@@ -508,7 +508,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
 
                 // Generate neuron update
                 ng.generateNeuronUpdate(
-                    *this, validEnv, batchSize,
+                    validEnv, batchSize,
                     // Emit true spikes
                     [&ng, this](EnvironmentExternalBase &env)
                     {
@@ -681,7 +681,7 @@ void BackendSIMT::genSynapseDendriticDelayUpdateKernel(EnvironmentExternalBase &
                 CodeStream::Scope b(env.getStream());
 
                 // Use this to get reference to merged group structure
-                env.getStream() << getPointerPrefix() << "struct MergedSynapseDendriticDelayUpdateGroup" << sg.getIndex() << " *group = &d_mergedSynapseDendriticDelayUpdateGroup" << sg.getIndex() << "[id - " << idStart << "]; " << std::endl;
+                env.getStream() << "struct MergedSynapseDendriticDelayUpdateGroup" << sg.getIndex() << " *group = &d_mergedSynapseDendriticDelayUpdateGroup" << sg.getIndex() << "[id - " << idStart << "]; " << std::endl;
                 EnvironmentGroupMergedField<SynapseDendriticDelayUpdateGroupMerged> groupEnv(env, sg);
                 buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
                 sg.generateSynapseUpdate(groupEnv);

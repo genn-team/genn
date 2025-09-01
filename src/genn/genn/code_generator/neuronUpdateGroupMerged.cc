@@ -63,8 +63,8 @@ void NeuronUpdateGroupMerged::CurrentSource::updateHash(boost::uuids::detail::sh
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::InSynPSM
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, EnvironmentExternalBase &env,
-                                                 NeuronUpdateGroupMerged &ng, unsigned int batchSize)
+void NeuronUpdateGroupMerged::InSynPSM::generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+                                                 unsigned int batchSize)
 {
     const std::string fieldSuffix =  "InSyn" + std::to_string(getIndex());
     const auto *psm = getArchetype().getPSInitialiser().getSnippet();
@@ -91,7 +91,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
 
         // Get reference to dendritic delay buffer input for this timestep
         const std::string denOffset = (batchSize > 1) ? "($(_batch_offset) * " + std::to_string(getArchetype().getMaxDendriticDelayTimesteps()) + ") + $(id)" : "$(id)";
-        psmEnv.printLine(backend.getPointerPrefix() + getScalarType().getName() + " *denDelayFront = &$(_den_delay)[(*$(_den_delay_ptr) * $(num_neurons)) + " + denOffset + "];");
+        psmEnv.printLine(getScalarType().getName() + " *denDelayFront = &$(_den_delay)[(*$(_den_delay_ptr) * $(num_neurons)) + " + denOffset + "];");
 
         // Add delayed input from buffer into inSyn
         psmEnv.getStream() << "linSyn += *denDelayFront;" << std::endl;
@@ -549,7 +549,7 @@ boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest()
     return hash.get_digest();
 }
 //--------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize,
+void NeuronUpdateGroupMerged::generateNeuronUpdate(EnvironmentExternalBase &env, unsigned int batchSize,
                                                    BackendBase::HandlerEnv genEmitTrueSpike,
                                                    BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged::SynSpikeEvent> genEmitSpikeLikeEvent)
 {
@@ -585,7 +585,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // Loop through incoming synapse groups
     for(auto &sg : m_MergedInSynPSMGroups) {
         CodeStream::Scope b(neuronChildVarEnv.getStream());
-        sg.generate(backend, neuronChildVarEnv, *this, batchSize);
+        sg.generate(neuronChildVarEnv, *this, batchSize);
     }
 
     // Loop through outgoing synapse groups with presynaptic output

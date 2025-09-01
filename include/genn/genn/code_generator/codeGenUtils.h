@@ -37,10 +37,26 @@ class ErrorHandler;
 }
 
 //--------------------------------------------------------------------------
-// GeNN::CodeGenerator
+// GeNN::CodeGenerator::HostTimer
 //--------------------------------------------------------------------------
+//! RAII helper class to generate timing code
 namespace GeNN::CodeGenerator
 {
+class GENN_EXPORT HostTimer
+{
+public:
+    HostTimer(CodeStream &codeStream, const std::string &name, bool timingEnabled);
+    ~HostTimer();
+
+private:
+    //--------------------------------------------------------------------------
+    // Members
+    //--------------------------------------------------------------------------
+    std::reference_wrapper<CodeStream> m_CodeStream;
+    std::string m_Name;
+    bool m_TimingEnabled;
+};
+
 //! Divide two integers, rounding up i.e. effectively taking ceil
 template<typename A, typename B, typename = std::enable_if_t<std::is_integral_v<A> && std::is_integral_v<B>>>
 inline auto ceilDivide(A numerator, B denominator)
@@ -56,6 +72,10 @@ inline auto padSize(A size, B blockSize)
 }
 
 GENN_EXPORT void genTypeRange(CodeStream &os, const Type::ResolvedType &type, const std::string &prefix);
+
+//! GeNN knows that pointers used in some places in the code e.g. in merged groups are
+    //! "restricted" i.e. not aliased. What keyword should be used to indicate this?
+GENN_EXPORT std::string getHostRestrictKeyword();
 
 //! Parse, type check and pretty print previously scanned vector of tokens representing an expression
 GENN_EXPORT void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, 

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -18,18 +18,18 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <PropertyGroup Label="Globals">
-    <ProjectGuid>{F7026BD9-7181-4F28-A2F0-41C41FAC1018}</ProjectGuid>
-  </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="backend.cc" />
     <ClCompile Include="optimiser.cc" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\include\genn\backends\cuda\backend.h" />
-    <ClInclude Include="..\..\..\..\include\genn\backends\cuda\optimiser.h" />
-    <ClInclude Include="..\..\..\..\include\genn\backends\cuda\utils.h" />
+    <ClInclude Include="..\..\..\..\include\genn\backends\ispc\backend.h" />
+    <ClInclude Include="..\..\..\..\include\genn\backends\ispc\optimiser.h" />
   </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{14E2399B-B5DB-4F3F-AFF5-8CB4E92E5C22}</ProjectGuid>
+    <RootNamespace>ispc_backend</RootNamespace>
+  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
     <ConfigurationType Condition=" !$(Configuration.Contains('DLL')) ">StaticLibrary</ConfigurationType>
@@ -48,10 +48,9 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <CudaLibraryPath Condition=" '$(CudaLibraryPath)' == '' ">$(CUDA_PATH)\lib\$(Platform)</CudaLibraryPath>
     <OutDir>..\..\..\..\lib\</OutDir>
-    <IntDir>..\..\..\..\$(Platform)\$(Configuration)\cuda_backend\</IntDir>
-    <TargetName>genn_cuda_backend_$(Configuration)</TargetName>
+    <IntDir>..\..\..\..\$(Platform)\$(Configuration)\ispc_backend\</IntDir>
+    <TargetName>genn_ispc_backend_$(Configuration)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -61,9 +60,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\..\..\include\genn\backends\cuda;..\..\..\..\include\genn\genn;..\..\..\..\include\genn\third_party;..\..\..\..\include\genn\third_party\libffi;$(CUDA_PATH)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions Condition=" !$(Configuration.Contains('DLL')) ">_MBCS;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;NOMINMAX;FFI_BUILDING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition=" $(Configuration.Contains('DLL')) ">WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;NOMINMAX;BUILDING_BACKEND_DLL;LINKING_GENN_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\..\..\include\genn\genn;..\..\..\..\include\genn\third_party;..\..\..\..\include\genn\third_party\libffi;..\..\..\..\include\genn\backends\ispc</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions Condition=" !$(Configuration.Contains('DLL')) ">WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" $(Configuration.Contains('DLL')) ">WIN32_LEAN_AND_MEAN;NOMINMAX;BUILDING_BACKEND_DLL;LINKING_GENN_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings Condition=" $(Configuration.Contains('DLL')) ">4251</DisableSpecificWarnings>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -72,9 +71,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding Condition=" $(Configuration.Contains('Debug')) ">true</EnableCOMDATFolding>
       <OptimizeReferences Condition=" $(Configuration.Contains('Debug')) ">true</OptimizeReferences>
-      <AdditionalDependencies Condition=" '$(Configuration)'=='Release_DLL' ">libffi_Release_DLL.lib;genn_Release_DLL.lib;cudart.lib;cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalDependencies Condition=" '$(Configuration)'=='Debug_DLL' ">libffi_Debug_DLL.lib;genn_Debug_DLL.lib;cudart.lib;cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories Condition=" $(Configuration.Contains('DLL')) ">$(OutDir);$(CudaLibraryPath);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies Condition=" '$(Configuration)'=='Release_DLL' ">libffi_Release_DLL.lib;genn_Release_DLL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition=" '$(Configuration)'=='Debug_DLL' ">libffi_Debug_DLL.lib;genn_Debug_DLL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories Condition=" $(Configuration.Contains('DLL')) ">$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <list>
 #include <map>
 #include <mutex>
 #include <numeric>
@@ -335,9 +336,9 @@ void analyseModule(const Module &module, unsigned int r, CUcontext context,
 
 #ifdef _WIN32
     // **YUCK** extra outer quotes required to workaround gross windowsness https://stackoverflow.com/questions/9964865/c-system-not-working-when-there-are-spaces-in-two-different-parameters
-    const std::string nvccCommand = "\"\"" + nvccPath.str() + "\" -cubin " + backend.getNVCCFlags() + " -DBUILDING_GENERATED_CODE -o \"" + sourcePath + ".cubin\" \"" + sourcePath + "\"\"";
+    const std::string nvccCommand = "\"\"" + nvccPath.str() + "\" -cubin " + backend.getNVCCFlags() + "-o \"" + sourcePath + ".cubin\" \"" + sourcePath + "\"\"";
 #else
-    const std::string nvccCommand = "\"" + nvccPath.str() + "\" -cubin " + backend.getNVCCFlags() + " -DBUILDING_GENERATED_CODE -o \"" + sourcePath + ".cubin\" \"" + sourcePath + "\"";
+    const std::string nvccCommand = "\"" + nvccPath.str() + "\" -cubin " + backend.getNVCCFlags() + " -o \"" + sourcePath + ".cubin\" \"" + sourcePath + "\"";
 #endif
 
     if(system(nvccCommand.c_str()) != 0) {
@@ -483,14 +484,17 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         // **NOTE** we don't really need to generate all the code but, on windows, generating code selectively seems to result in werid b
         const std::string dryRunSuffix = "CUDAOptim";
         {
-            std::ofstream neuronUpdateStream((outputPath / "neuronUpdateCUDAOptim.cc").str());
-            std::ofstream customUpdateStream((outputPath / "customUpdateCUDAOptim.cc").str());
-            std::ofstream synapseUpdateStream((outputPath / "synapseUpdateCUDAOptim.cc").str());
-            std::ofstream initStream((outputPath / "initCUDAOptim.cc").str());
-            generateSynapseUpdate(synapseUpdateStream, modelMerged, backend, memorySpaces, dryRunSuffix);
-            generateNeuronUpdate(neuronUpdateStream, modelMerged, backend, memorySpaces, dryRunSuffix);
-            generateCustomUpdate(customUpdateStream, modelMerged, backend, memorySpaces, dryRunSuffix);
-            generateInit(initStream, modelMerged, backend, memorySpaces, dryRunSuffix);
+            std::list<std::ofstream> fileStreams;
+            auto fileStreamCreator =
+                [&dryRunSuffix, &fileStreams, &outputPath](const std::string &title, const std::string &extension) -> std::ostream &
+                {
+                    fileStreams.emplace_back((outputPath / (title + "CUDAOptim." + extension)).str());
+                    return fileStreams.back();
+                };
+            generateSynapseUpdate(fileStreamCreator, modelMerged, backend, memorySpaces, dryRunSuffix);
+            generateNeuronUpdate(fileStreamCreator, modelMerged, backend, memorySpaces, dryRunSuffix);
+            generateCustomUpdate(fileStreamCreator, modelMerged, backend, memorySpaces, dryRunSuffix);
+            generateInit(fileStreamCreator, modelMerged, backend, memorySpaces, dryRunSuffix);
             generateRunner(outputPath, modelMerged, backend, dryRunSuffix);
         }
 

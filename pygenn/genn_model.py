@@ -105,7 +105,7 @@ if system() == "Windows":
 
 # Loop through backends in preferential order
 backend_modules = OrderedDict()
-for b in ["cuda", "hip", "single_threaded_cpu"]:
+for b in ["cuda", "hip", "single_threaded_cpu", "ispc"]:
     # Try and import
     try:
         m = import_module("." + b + "_backend", "pygenn")
@@ -330,7 +330,7 @@ class GeNNModel(ModelSpec):
         Only available if :attr:`.ModelSpec.timing_enabled` is set.
     
         Args:
-            name:   Name of custom update
+            name:   Name of custom update group
         """
         return self._runtime.get_custom_update_time(name)
 
@@ -339,7 +339,7 @@ class GeNNModel(ModelSpec):
         Only available if :attr:`.ModelSpec.timing_enabled` is set.
     
         Args:
-            name:   Name of custom update
+            name:   Name of custom update group
         """
         return self._runtime.get_custom_update_transpose_time(name)
     
@@ -348,9 +348,18 @@ class GeNNModel(ModelSpec):
         Only available if :attr:`.ModelSpec.timing_enabled` is set.
     
         Args:
-            name:   Name of custom update
+            name:   Name of custom update group
         """
         return self._runtime.get_custom_update_remap_time(name)
+    
+    def get_custom_update_host_time(self, name: str) -> float:
+        """Get time in seconds spent in host custom update.
+        Only available if :attr:`.ModelSpec.timing_enabled` is set.
+    
+        Args:
+            name:   Name of custom update group
+        """
+        return self._runtime.get_custom_update_host_time(name)
 
     def add_neuron_population(self, pop_name: str, num_neurons: int, 
                               neuron: Union[NeuronModelBase, str],
@@ -657,7 +666,6 @@ class GeNNModel(ModelSpec):
 
         # Create output path
         output_path = path.join(path_to_model, self.name + "_CODE")
-        share_path = path.join(path.split(__file__)[0], "share")
 
         # Finalize model
         self._finalise()
@@ -677,18 +685,21 @@ class GeNNModel(ModelSpec):
             self, output_path, self.backend_log_level, self._preferences)
 
         # Generate code
-        self._model_merged = generate_code(self, self._backend, share_path,
-                                           output_path, always_rebuild, never_rebuild)
+        self._model_merged = generate_code(self, self._backend, output_path,
+                                           always_rebuild, never_rebuild)
 
         # Build code
         if not never_rebuild:
             if system() == "Windows":
-                debug = self._preference_kwargs.get("debug_code", False)
-                check_call(
-                    [_msbuild, 
-                     f"/p:Configuration={'Debug' if debug else 'Release'}",
-                     "/m", "/verbosity:quiet",
-                     path.join(output_path, "runner.vcxproj")])
+                if self._backend.should_use_nmake_build_system:
+                    check_call(["nmake", "/NOLOGO"], cwd=output_path)
+                else:
+                    debug = self._preference_kwargs.get("debug_code", False)
+                    check_call(
+                        [_msbuild, 
+                         f"/p:Configuration={'Debug' if debug else 'Release'}",
+                         "/m", "/verbosity:quiet",
+                         path.join(output_path, "runner.vcxproj")])
             else:
                 check_call(["make", "-j", str(cpu_count(logical=False)), "-C", output_path])
 

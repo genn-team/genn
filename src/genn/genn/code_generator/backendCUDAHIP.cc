@@ -302,8 +302,8 @@ void BackendCUDAHIP::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<C
     ::buildPopulationRNGEnvironment(env, getRandPrefix(), getPopulationRNGInternalType());
 }
 //--------------------------------------------------------------------------
-void BackendCUDAHIP::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
-                                     HostHandler preambleHandler) const
+void BackendCUDAHIP::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelMerged, 
+                                     BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -447,8 +447,8 @@ void BackendCUDAHIP::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerge
     os << neuronUpdateStream.str();
 }
 //--------------------------------------------------------------------------
-void BackendCUDAHIP::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
-                                      HostHandler preambleHandler) const
+void BackendCUDAHIP::genSynapseUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelMerged,
+                                      BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
     // Generate stream with synapse update code
     std::ostringstream synapseUpdateStream;
@@ -619,8 +619,8 @@ void BackendCUDAHIP::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerg
 
 }
 //--------------------------------------------------------------------------
-void BackendCUDAHIP::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
-                                     HostHandler preambleHandler) const
+void BackendCUDAHIP::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelMerged,
+                                     BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -760,12 +760,18 @@ void BackendCUDAHIP::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerge
                         {funcEnv.addInitialiser("const " + model.getTimePrecision().getName() + " t = timestep * " + Type::writeNumeric(model.getDT(), model.getTimePrecision()) + ";")});
 
             // Loop through host update groups and generate code for those in this custom update group
-            modelMerged.genMergedCustomConnectivityHostUpdateGroups(
-                *this, memorySpaces, g, 
-                [this, &funcEnv](auto &c)
-                {
-                    c.generateUpdate(*this, funcEnv);
-                });
+            if(std::any_of(modelMerged.getMergedCustomConnectivityHostUpdateGroups().cbegin(), 
+                           modelMerged.getMergedCustomConnectivityHostUpdateGroups().cend(),
+                           [&g](const auto &cg){ return cg.getArchetype().getUpdateGroupName() == g; }))
+            {
+                HostTimer t(funcEnv.getStream(), "customUpdate" + g + "Host", modelMerged.getModel().isTimingEnabled());
+                modelMerged.genMergedCustomConnectivityHostUpdateGroups(
+                    *this, memorySpaces, g, 
+                    [this, &funcEnv](auto &c)
+                    {
+                        c.generateUpdate(*this, funcEnv);
+                    });
+            }
 
             // Launch custom update kernel if required
             if(idCustomUpdateStart > 0) {
@@ -876,8 +882,8 @@ void BackendCUDAHIP::genCustomUpdate(CodeStream &os, ModelSpecMerged &modelMerge
     os << customUpdateStream.str();
 }
 //--------------------------------------------------------------------------
-void BackendCUDAHIP::genInit(CodeStream &os, ModelSpecMerged &modelMerged, BackendBase::MemorySpaces &memorySpaces, 
-                             HostHandler preambleHandler) const
+void BackendCUDAHIP::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelMerged, 
+                             BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -1066,6 +1072,7 @@ void BackendCUDAHIP::genInit(CodeStream &os, ModelSpecMerged &modelMerged, Backe
 void BackendCUDAHIP::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
     os << "// Standard C++ includes" << std::endl;
+    os << "#include <chrono>" << std::endl;
     os << "#include <random>" << std::endl;
     os << "#include <string>" << std::endl;
     os << "#include <stdexcept>" << std::endl;
@@ -1455,9 +1462,9 @@ void BackendCUDAHIP::genMergedDynamicVariablePush(CodeStream &os, const std::str
     os << getRuntimePrefix() << "MemcpyHostToDevice, 0));" << std::endl;
 }
 //--------------------------------------------------------------------------
-std::string BackendCUDAHIP::getMergedGroupFieldHostTypeName(const Type::ResolvedType &type) const
+std::string BackendCUDAHIP::getRestrictKeyword() const
 {
-    return type.getName();
+    return " __restrict__";
 }
 //--------------------------------------------------------------------------
 void BackendCUDAHIP::genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner,

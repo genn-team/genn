@@ -3,19 +3,34 @@
 // Standard C includes
 #include <cstdlib>
 
+// Platform-specific includes
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <limits.h>
+#include <stdlib.h>
+#endif
+
+// Standard C++ includes
+#include <set>
+#include <string>
+#include <sstream>
+#include <vector>
+
 // GeNN includes
 #include "gennUtils.h"
+#include "path.h"
 
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/codeStream.h"
-#include "code_generator/environment.h"
 #include "code_generator/modelSpecMerged.h"
 #include "code_generator/standardLibrary.h"
 
 using namespace GeNN;
 using namespace GeNN::CodeGenerator;
 using namespace GeNN::Transpiler;
+using namespace GeNN::CodeGenerator::ISPC;
 
 //--------------------------------------------------------------------------
 // Anonymous namespace
@@ -23,93 +38,75 @@ using namespace GeNN::Transpiler;
 namespace
 {
 const EnvironmentLibrary::Library backendFunctions = {
-    {"clz", {Type::ResolvedType::createFunction(Type::Int32, {Type::Uint32}), "gennCLZ($(0))"}},
-    {"atomic_or", {Type::ResolvedType::createFunction(Type::Void, {Type::Uint32.createPointer(), Type::Uint32}), "(*($(0)) |= ($(1)))"}}
+    {"clz", {Type::ResolvedType::createFunction(Type::Int32, {Type::Uint32}), "clz($(0))"}},
+    {"fmax", {Type::ResolvedType::createFunction(Type::Float, {Type::Float, Type::Float}), "max($(0), $(1))"}},
+    {"fmin", {Type::ResolvedType::createFunction(Type::Float, {Type::Float, Type::Float}), "min($(0), $(1))"}},
+    {"fmaxf", {Type::ResolvedType::createFunction(Type::Float, {Type::Float, Type::Float}), "max($(0), $(1))"}},
+    {"fminf", {Type::ResolvedType::createFunction(Type::Float, {Type::Float, Type::Float}), "min($(0), $(1))"}},
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::SingleThreadedCPU::Array
+// Timer
 //--------------------------------------------------------------------------
-class Array : public Runtime::ArrayBase
+class Timer
 {
 public:
-    Array(const Type::ResolvedType &type, size_t count, 
-          VarLocation location, bool uninitialized)
-    :   ArrayBase(type, count, location, uninitialized)
+    Timer(CodeStream &codeStream, const std::string &name, bool timingEnabled)
+    :   m_CodeStream(codeStream), m_Name(name), m_TimingEnabled(timingEnabled)
     {
-        if(count > 0) {
-            allocate(count);
+        // Record start event
+        if(m_TimingEnabled) {
+            m_CodeStream << "const uniform int64 " << m_Name << "Start = clock();" << std::endl;
         }
     }
-    
-    virtual ~Array()
+
+    ~Timer()
     {
-        if(getCount() > 0) {
-            free();
+        // Record stop event
+        if(m_TimingEnabled) {
+            m_CodeStream << m_Name << "Time += (double)(clock() - " << m_Name << "Start);" << std::endl;
         }
     }
-    
-    //------------------------------------------------------------------------
-    // ArrayBase virtuals
-    //------------------------------------------------------------------------
-    //! Allocate array
-    virtual void allocate(size_t count) final
+
+private:
+    //--------------------------------------------------------------------------
+    // Members
+    //--------------------------------------------------------------------------
+    CodeStream &m_CodeStream;
+    const std::string m_Name;
+    const bool m_TimingEnabled;
+};
+
+//--------------------------------------------------------------------------
+// TimerHost
+//--------------------------------------------------------------------------
+class TimerHost
+{
+public:
+    TimerHost(CodeStream &codeStream, const std::string &name, bool timingEnabled)
+    :   m_CodeStream(codeStream), m_Name(name), m_TimingEnabled(timingEnabled)
     {
-        // Malloc host pointer
-        setCount(count);
-        setHostPointer(new std::byte[getSizeBytes()]);
+        // Record start event
+        if(m_TimingEnabled) {
+            m_CodeStream << "const auto " << m_Name << "Start = std::chrono::high_resolution_clock::now();" << std::endl;
+        }
     }
 
-    //! Free array
-    virtual void free() final
+    ~TimerHost()
     {
-        delete [] getHostPointer();
-        setHostPointer(nullptr);
-        setCount(0);
+        // Record stop event
+        if(m_TimingEnabled) {
+            m_CodeStream << m_Name << "Time += std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - " << m_Name << "Start).count();" << std::endl;
+        }
     }
 
-
-    //! Copy entire array to device
-    virtual void pushToDevice() final
-    {
-    }
-
-    //! Copy entire array from device
-    virtual void pullFromDevice() final
-    {
-    }
-
-    //! Copy a 1D slice of elements to device 
-    /*! \param offset   Offset in elements to start copying from
-        \param count    Number of elements to copy*/
-    virtual void pushSlice1DToDevice(size_t, size_t) final
-    {
-    }
-
-    //! Copy a 1D slice of elements from device 
-    /*! \param offset   Offset in elements to start copying from
-        \param count    Number of elements to copy*/
-    virtual void pullSlice1DFromDevice(size_t, size_t) final
-    {
-    }
-    
-    //! Memset the host pointer
-    virtual void memsetDeviceObject(int) final
-    {
-        throw std::runtime_error("Single-threaded CPU arrays have no device objects");
-    }
-
-    //! Serialise backend-specific device object to bytes
-    virtual void serialiseDeviceObject(std::vector<std::byte>&, bool) const final
-    {
-        throw std::runtime_error("Single-threaded CPU arrays have no device objects");
-    }
-
-    //! Serialise backend-specific host object to bytes
-    virtual void serialiseHostObject(std::vector<std::byte>&, bool) const
-    {
-        throw std::runtime_error("Single-threaded CPU arrays have no host objects");
-    }
+private:
+    //--------------------------------------------------------------------------
+    // Members
+    //--------------------------------------------------------------------------
+    CodeStream &m_CodeStream;
+    const std::string m_Name;
+    const bool m_TimingEnabled;
 };
 
 //-----------------------------------------------------------------------
@@ -152,56 +149,144 @@ void genKernelIteration(EnvironmentExternalBase &env, G &g, size_t numKernelDims
     // Generate loops through kernel indices recursively
     generateRecursive(env, 0);
 }
+}
+
 //--------------------------------------------------------------------------
-void genRemap(EnvironmentExternalBase &env)
+// GeNN::CodeGenerator::ISPC::Preferences
+//--------------------------------------------------------------------------
+void ISPC::Preferences::updateHash(boost::uuids::detail::sha1 &hash) const
 {
-    env.printLine("// Loop through synapses in corresponding matrix row");
-    env.print("for(unsigned int j = 0; j < $(_row_length)[i]; j++)");
-    {
-        CodeStream::Scope b(env.getStream());
+    PreferencesBase::updateHash(hash);
+    GeNN::Utils::updateHash(targetISA, hash);
+}
 
-        // Calculate column length and remapping
-        env.printLine("// Calculate index of this synapse in the row-major matrix");
-        env.printLine("const unsigned int rowMajorIndex = (i * $(_row_stride)) + j;");
 
-        env.printLine("// Using this, lookup postsynaptic target");
-        env.printLine("const unsigned int postIndex = $(_ind)[rowMajorIndex];");
+//--------------------------------------------------------------------------
+// GeNN::CodeGenerator::ISPC::State
+//--------------------------------------------------------------------------
+State::State(const GeNN::Runtime::Runtime &)
+{
+}
 
-        env.printLine("// From this calculate index of this synapse in the column-major matrix)");
-        env.printLine("const unsigned int colMajorIndex = (postIndex * $(_col_stride)) + $(_col_length)[postIndex];");
-
-        env.printLine("// Increment column length corresponding to this postsynaptic neuron");
-        env.printLine("$(_col_length)[postIndex]++;");
-
-        env.printLine("// Add remapping entry");
-        env.printLine("$(_remap)[colMajorIndex] = rowMajorIndex;");
+//--------------------------------------------------------------------------
+// GeNN::CodeGenerator::ISPC::Array
+//--------------------------------------------------------------------------
+Array::Array(const Type::ResolvedType &type, size_t count, 
+             VarLocation location, bool uninitialized, size_t alignment)
+:   Runtime::ArrayBase(type, count, location, uninitialized), m_Alignment(alignment)
+{
+    if(count > 0) {
+        allocate(count);
     }
 }
+    
+Array::~Array()
+{
+    if(getCount() > 0) {
+        free();
+    }
+}
+
+void Array::allocate(size_t count)
+{
+    setCount(count);
+    const size_t sizeBytes = getSizeBytes();
+    
+    // Using std::aligned_alloc
+    // Size must be a multiple of alignment
+    const size_t alignedSizeBytes = padSize(sizeBytes, m_Alignment);
+    setHostPointer(reinterpret_cast<std::byte*>(
+#ifdef _WIN32
+        _aligned_malloc(alignedSizeBytes, m_Alignment)
+#else
+        std::aligned_alloc(m_Alignment, alignedSizeBytes)
+#endif
+        ));
+    if (!getHostPointer()) {
+        throw std::bad_alloc();
+    }
+}
+
+void Array::free()
+{
+    // std::free is used to deallocate memory allocated by std::aligned_alloc
+#ifdef _WIN32
+    _aligned_free(getHostPointer());
+#else
+    std::free(getHostPointer());
+#endif
+    setHostPointer(nullptr);
+    setCount(0);
+}
+
+void Array::pushToDevice()
+{
+    // ISPC runs on the CPU (host), so no transfer is needed
+}
+
+void Array::pullFromDevice()
+{
+    // ISPC runs on the CPU (host), so no transfer is needed
+}
+
+void Array::pushSlice1DToDevice(size_t, size_t)
+{
+    // ISPC runs on the CPU (host), so no transfer is needed
+}
+
+void Array::pullSlice1DFromDevice(size_t, size_t)
+{
+    // ISPC runs on the CPU (host), so no transfer is needed
+}
+
+void Array::memsetDeviceObject(int)
+{
+    throw std::runtime_error("ISPC arrays have no device object");
+}
+
+void Array::serialiseDeviceObject(std::vector<std::byte>&, bool) const
+{
+    throw std::runtime_error("ISPC arrays have no device object");
+}
+
+void Array::serialiseHostObject(std::vector<std::byte>& result, bool) const
+{
+    const size_t sizeBytes = getSizeBytes();
+    
+    result.resize(sizeBytes);
+    
+    if(sizeBytes > 0) {
+        std::memcpy(result.data(), getHostPointer(), sizeBytes);
+    }
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::SingleThreadedCPU::Backend
+// GeNN::CodeGenerator::ISPC::Backend
 //--------------------------------------------------------------------------
-namespace GeNN::CodeGenerator::SingleThreadedCPU
+Backend::Backend(const Preferences &preferences)
+:   BackendBase(preferences)
 {
-void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelMerged, 
+}
+
+void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged, 
                               BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
     if(modelMerged.getModel().getBatchSize() != 1) {
-        throw std::runtime_error("The single-threaded CPU backend only supports simulations with a batch size of 1");
+        throw std::runtime_error("The ISPC backend only supports simulations with a batch size of 1");
     }
-   
+    
     // Generate stream with neuron update code
     std::ostringstream neuronUpdateStream;
     CodeStream neuronUpdate(neuronUpdateStream);
 
-    // Begin environment with standard library
+    // Begin environment with standard library in ISPC file
     EnvironmentLibrary backendEnv(neuronUpdate, backendFunctions);
-    EnvironmentLibrary neuronUpdateEnv(backendEnv, StandardLibrary::getMathsFunctions());
-
-    neuronUpdateEnv.getStream() << "void updateNeurons(" << modelMerged.getModel().getTimePrecision().getName() << " t";
+    EnvironmentLibrary neuronUpdateEnv(neuronUpdate, StandardLibrary::getMathsFunctions());
+    
+    // ISPC code for neuron update
+    neuronUpdateEnv.getStream() << "export void updateNeurons(uniform " << modelMerged.getModel().getTimePrecision().getName() << " t";
     if(modelMerged.getModel().isRecordingInUse()) {
-        neuronUpdateEnv.getStream() << ", unsigned int recordingTimestep";
+        neuronUpdateEnv.getStream() << ", uniform unsigned int recordingTimestep";
     }
     neuronUpdateEnv.getStream() << ")";
     {
@@ -213,27 +298,30 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
         funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
                     Type::writeNumeric(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
         
-        HostTimer t(funcEnv.getStream(), "neuronUpdate", modelMerged.getModel().isTimingEnabled());
+        Timer t(funcEnv.getStream(), "neuronUpdate", modelMerged.getModel().isTimingEnabled());
+        
+        // Process neuron spike time updates
         modelMerged.genMergedNeuronPrevSpikeTimeUpdateGroups(
             *this, memorySpaces,
             [this, &funcEnv](auto &n)
             {
                 CodeStream::Scope b(funcEnv.getStream());
                 funcEnv.getStream() << "// merged neuron prev spike update group " << n.getIndex() << std::endl;
-                funcEnv.getStream() << "for(unsigned int g = 0; g < " << n.getGroups().size() << "; g++)";
+                funcEnv.getStream() << "for(uniform unsigned int g = 0; g < " << n.getGroups().size() << "; g++)";
                 {
                     CodeStream::Scope b(funcEnv.getStream());
 
-                    // Get reference to group
-                    funcEnv.getStream() << "const auto *group = &mergedNeuronPrevSpikeTimeUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
+                    // Get reference to group -  auto replaced with uniform
+                    funcEnv.getStream() << "const uniform MergedNeuronPrevSpikeTimeUpdateGroup" << n.getIndex() 
+                                      << " * uniform group = &mergedNeuronPrevSpikeTimeUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
                     
                     // Create matching environment
                     EnvironmentGroupMergedField<NeuronPrevSpikeTimeUpdateGroupMerged> groupEnv(funcEnv, n);
                     buildStandardEnvironment(groupEnv, 1);
 
                     if(n.getArchetype().isDelayRequired()) {
-                        groupEnv.printLine("const unsigned int lastTimestepDelaySlot = *$(_spk_que_ptr);");
-                        groupEnv.printLine("const unsigned int lastTimestepDelayOffset = lastTimestepDelaySlot * $(num_neurons);");
+                        groupEnv.printLine("const uniform unsigned int lastTimestepDelaySlot = *$(_spk_que_ptr);");
+                        groupEnv.printLine("const uniform unsigned int lastTimestepDelayOffset = lastTimestepDelaySlot * $(num_neurons);");
                     }
 
                     // Generate code to update previous spike times
@@ -265,12 +353,13 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
             {
                 CodeStream::Scope b(funcEnv.getStream());
                 funcEnv.getStream() << "// merged neuron spike queue update group " << n.getIndex() << std::endl;
-                funcEnv.getStream() << "for(unsigned int g = 0; g < " << n.getGroups().size() << "; g++)";
+                funcEnv.getStream() << "for(uniform unsigned int g = 0; g < " << n.getGroups().size() << "; g++)";
                 {
                     CodeStream::Scope b(funcEnv.getStream());
 
-                    // Get reference to group
-                    funcEnv.getStream() << "const auto *group = &mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
+                    // Get reference to group - auto replaced with uniform
+                    funcEnv.getStream() << "const uniform MergedNeuronSpikeQueueUpdateGroup" << n.getIndex() 
+                                      << " * uniform group = &mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<NeuronSpikeQueueUpdateGroupMerged> groupEnv(funcEnv, n);
                     buildStandardEnvironment(groupEnv, 1);
 
@@ -286,50 +375,51 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
             {
                 CodeStream::Scope b(funcEnv.getStream());
                 funcEnv.getStream() << "// merged neuron update group " << n.getIndex() << std::endl;
-                funcEnv.getStream() << "for(unsigned int g = 0; g < " << n.getGroups().size() << "; g++)";
+                funcEnv.getStream() << "for(uniform unsigned int g = 0; g < " << n.getGroups().size() << "; g++)";
                 {
                     CodeStream::Scope b(funcEnv.getStream());
 
-                    // Get reference to group
-                    funcEnv.getStream() << "const auto *group = &mergedNeuronUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
+                    // Get reference to group - auto replaced with uniform
+                    funcEnv.getStream() << "const uniform MergedNeuronUpdateGroup" << n.getIndex() 
+                                      << " * uniform group = &mergedNeuronUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<NeuronUpdateGroupMerged> groupEnv(funcEnv, n);
                     buildStandardEnvironment(groupEnv, 1);
 
-                    // If spike or spike-like event recording is in use
+                    // Calculate number of words which will be used to record this population's spikes
                     if(n.getArchetype().isSpikeRecordingEnabled() || n.getArchetype().isSpikeEventRecordingEnabled()) {
-                        // Calculate number of words which will be used to record this population's spikes
-                        groupEnv.printLine("const unsigned int numRecordingWords = ($(num_neurons) + 31) / 32;");
+                        groupEnv.printLine("const uniform unsigned int numRecordingWords = ($(num_neurons) + 31) / 32;");
+                        
+                        // Foreach to enable SIMD parallelism
+	                groupEnv.print("foreach(i = 0 ... numRecordingWords)");
+	                {
+	                    CodeStream::Scope b(groupEnv.getStream());
+	                    
+	                    // Zero spike recording buffer - this goes in C++ code
+                            if(n.getArchetype().isSpikeRecordingEnabled()) {
+                                groupEnv.printLine("group->recordSpk[(recordingTimestep * numRecordingWords) + i] = 0;");
+                            }
 
-                        // Zero spike recording buffer
-                        if(n.getArchetype().isSpikeRecordingEnabled()) {
-                            groupEnv.printLine("std::fill_n(&$(_record_spk)[recordingTimestep * numRecordingWords], numRecordingWords, 0);");
-                        }
-
-                        // Zero spike-like-event recording buffer
-                        if(n.getArchetype().isSpikeEventRecordingEnabled()) {
-                            n.generateSpikeEvents(
-                                groupEnv,
-                                [](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent&)
-                                {
-                                    env.printLine("std::fill_n(&$(_record_spk_event)[recordingTimestep * numRecordingWords], numRecordingWords, 0);");
-                                });
-                        }
+                            // Zero spike-like-event recording buffer - this goes in C++ code  
+                            if(n.getArchetype().isSpikeEventRecordingEnabled()) {
+                                groupEnv.printLine("group->recordSpkEvent[(recordingTimestep * numRecordingWords) + i] = 0;");
+                            }
+	                }
                     }
+   
 
                     groupEnv.getStream() << std::endl;
 
-                    groupEnv.print("for(unsigned int i = 0; i < $(num_neurons); i++)");
+                    // ISPC
+                    // Foreach to enable SIMD parallelism
+                    groupEnv.print("foreach(i = 0 ... $(num_neurons))");
                     {
                         CodeStream::Scope b(groupEnv.getStream());
 
                         groupEnv.add(Type::Uint32, "id", "i");
 
-                        // Add RNG libray
-                        EnvironmentLibrary rngEnv(groupEnv, StandardLibrary::getHostRNGFunctions(modelMerged.getModel().getPrecision()));
-
                         // Generate neuron update
                         n.generateNeuronUpdate(
-                            rngEnv, 1,
+                            groupEnv, 1,
                             // Emit true spikes
                             [&n, this](EnvironmentExternalBase &env)
                             {
@@ -338,7 +428,7 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
 
                                 // If recording is enabled
                                 if(n.getArchetype().isSpikeRecordingEnabled()) {
-                                    env.printLine("$(_record_spk)[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));");
+                                    env.printLine("atomic_or_local(&($(_record_spk)[(recordingTimestep * numRecordingWords) + ($(id) / 32)]), (1 << ($(id) % 32)));");
                                 }
 
                                 // Update event time
@@ -347,7 +437,7 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
                                     env.printLine("$(_st)[" + queueOffset + "$(id)] = $(t);");
                                 }
 
-                                // Generate spike dagta structure updates
+                                // Generate spike data structure updates
                                 n.generateSpikes(
                                     env,
                                     [&n, this](EnvironmentExternalBase &env)
@@ -372,7 +462,7 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
 
                                         // If recording is enabled
                                         if(n.getArchetype().isSpikeEventRecordingEnabled()) {
-                                            env.printLine("$(_record_spk_event)[(recordingTimestep * numRecordingWords) + ($(id) / 32)] |= (1 << ($(id) % 32));");
+                                            env.printLine("atomic_or_local(&($(_record_spk_event)[(recordingTimestep * numRecordingWords) + ($(id) / 32)]), (1 << ($(id) % 32)));");
                                         }
                                     });
                             });
@@ -381,38 +471,59 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
             });
     }
 
-    // Generate struct definitions
-    modelMerged.genMergedNeuronUpdateGroupStructs(os, *this);
-    modelMerged.genMergedNeuronSpikeQueueUpdateStructs(os, *this);
-    modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(os, *this);
-
+    
+    // Create stream for ISPC file
+    CodeStream neuronUpdateISPC(streamCreator("neuronUpdate", "ispc"));
+   
+    // Integer type definitions for ISPC
+    neuronUpdateISPC << "typedef uint8 uint8_t;" << std::endl;
+    neuronUpdateISPC << "typedef uint16 uint16_t;" << std::endl;
+    neuronUpdateISPC << "typedef uint32 uint32_t;" << std::endl;
+    neuronUpdateISPC << "typedef uint64 uint64_t;" << std::endl;
+    neuronUpdateISPC << "typedef int8 int8_t;" << std::endl;
+    neuronUpdateISPC << "typedef int16 int16_t;" << std::endl;
+    neuronUpdateISPC << "typedef int32 int32_t;" << std::endl;
+    neuronUpdateISPC << "typedef int64 int64_t;" << std::endl;
+    neuronUpdateISPC << std::endl;
+    
+    // Timing variables
+    if(modelMerged.getModel().isTimingEnabled()) {
+        neuronUpdateISPC << "extern uniform double neuronUpdateTime;" << std::endl;
+    }
+    neuronUpdateISPC << std::endl;
+    
+    // Struct definitions in the ISPC file
+    neuronUpdateISPC << std::endl << "// Merged neuron group structures" << std::endl;
+    modelMerged.genMergedNeuronUpdateGroupStructs(neuronUpdateISPC, *this);
+    modelMerged.genMergedNeuronSpikeQueueUpdateStructs(neuronUpdateISPC, *this);
+    modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(neuronUpdateISPC, *this);
+    
     // Generate arrays of merged structs and functions to set them
-    modelMerged.genMergedNeuronUpdateGroupHostStructArrayPush(os, *this);
-    modelMerged.genMergedNeuronSpikeQueueUpdateHostStructArrayPush(os, *this);
-    modelMerged.genMergedNeuronPrevSpikeTimeUpdateHostStructArrayPush(os, *this);
+    genMergedStructArrayPush(neuronUpdateISPC, modelMerged.getMergedNeuronUpdateGroups());
+    genMergedStructArrayPush(neuronUpdateISPC, modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
+    genMergedStructArrayPush(neuronUpdateISPC, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups());
 
-    // Generate preamble
+    neuronUpdateISPC << neuronUpdateStream.str();
+    
     preambleHandler(os);
-
-    os << neuronUpdateStream.str();
 }
-//--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelMerged, 
+
+void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
                                BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
     if (modelMerged.getModel().getBatchSize() != 1) {
-        throw std::runtime_error("The single-threaded CPU backend only supports simulations with a batch size of 1");
+        throw std::runtime_error("The ISPC backend only supports simulations with a batch size of 1");
     }
-    
     // Generate stream with synapse update code
     std::ostringstream synapseUpdateStream;
     CodeStream synapseUpdate(synapseUpdateStream);
 
-    // Begin environment with standard library
+    // Begin environment with standard library in ISPC file
     EnvironmentLibrary backendEnv(synapseUpdate, backendFunctions);
-    EnvironmentLibrary synapseUpdateEnv(backendEnv, StandardLibrary::getMathsFunctions());
+    EnvironmentLibrary synapseUpdateEnv(synapseUpdate, StandardLibrary::getMathsFunctions());
 
-    synapseUpdateEnv.getStream() << "void updateSynapses(" << modelMerged.getModel().getTimePrecision().getName() << " t)";
+    // ISPC code for synapse update
+    synapseUpdateEnv.getStream() << "export void updateSynapses(uniform " << modelMerged.getModel().getTimePrecision().getName() << " t)";
     {
         CodeStream::Scope b(synapseUpdateEnv.getStream());
 
@@ -429,12 +540,13 @@ void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerge
             {
                 // Loop through groups
                 funcEnv.getStream() << "// merged synapse dendritic delay update group " << sg.getIndex() << std::endl;
-                funcEnv.getStream() << "for(unsigned int g = 0; g < " << sg.getGroups().size() << "; g++)";
+                funcEnv.getStream() << "for(uniform unsigned int g = 0; g < " << sg.getGroups().size() << "; g++)";
                 {
                     CodeStream::Scope b(funcEnv.getStream());
 
                     // Use this to get reference to merged group structure
-                    funcEnv.getStream() << "const auto *group = &mergedSynapseDendriticDelayUpdateGroup" << sg.getIndex() << "[g]; " << std::endl;
+                    funcEnv.getStream() << "const uniform MergedSynapseDendriticDelayUpdateGroup" << sg.getIndex() 
+                                      << " * uniform group = &mergedSynapseDendriticDelayUpdateGroup" << sg.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<SynapseDendriticDelayUpdateGroupMerged> groupEnv(funcEnv, sg);
                     buildStandardEnvironment(groupEnv, 1);
                     sg.generateSynapseUpdate(groupEnv);
@@ -443,35 +555,36 @@ void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerge
 
         // Synapse dynamics
         {
-            HostTimer t(funcEnv.getStream(), "synapseDynamics", modelMerged.getModel().isTimingEnabled());
+            Timer t(funcEnv.getStream(), "synapseDynamics", modelMerged.getModel().isTimingEnabled());
             modelMerged.genMergedSynapseDynamicsGroups(
                 *this, memorySpaces,
                 [this, &funcEnv, &modelMerged](auto &s)
                 {
                     CodeStream::Scope b(funcEnv.getStream());
                     funcEnv.getStream() << "// merged synapse dynamics group " << s.getIndex() << std::endl;
-                    funcEnv.getStream() << "for(unsigned int g = 0; g < " << s.getGroups().size() << "; g++)";
+                    funcEnv.getStream() << "for(uniform unsigned int g = 0; g < " << s.getGroups().size() << "; g++)";
                     {
                         CodeStream::Scope b(funcEnv.getStream());
 
                         // Get reference to group
-                        funcEnv.getStream() << "const auto *group = &mergedSynapseDynamicsGroup" << s.getIndex() << "[g]; " << std::endl;
+                        funcEnv.getStream() << "const uniform MergedSynapseDynamicsGroup" << s.getIndex() 
+                                          << " * uniform group = &mergedSynapseDynamicsGroup" << s.getIndex() << "[g]; " << std::endl;
 
                         // Create matching environment
                         EnvironmentGroupMergedField<SynapseDynamicsGroupMerged> groupEnv(funcEnv, s);
                         buildStandardEnvironment(groupEnv, 1);
 
                         // Loop through presynaptic neurons
-                        groupEnv.print("for(unsigned int i = 0; i < $(num_pre); i++)");
+                        groupEnv.print("for(uniform unsigned int i = 0; i < $(num_pre); i++)");
                         {
                             // If this synapse group has sparse connectivity, loop through length of this row
                             CodeStream::Scope b(groupEnv.getStream());
                             if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                groupEnv.print("for(unsigned int s = 0; s < $(_row_length)[i]; s++)");
+                                groupEnv.print("foreach(s = 0 ... $(_row_length)[i])");
                             }
                             // Otherwise, if it's dense, loop through each postsynaptic neuron
                             else if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::DENSE) {
-                                groupEnv.print("for (unsigned int j = 0; j < $(num_post); j++)");
+                                groupEnv.print("foreach(j = 0 ... $(num_post))");
                             }
                             else {
                                 throw std::runtime_error("Only DENSE and SPARSE format connectivity can be used for synapse dynamics");
@@ -517,19 +630,20 @@ void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerge
 
         // Presynaptic update
         {
-            HostTimer t(funcEnv.getStream(), "presynapticUpdate", modelMerged.getModel().isTimingEnabled());
+            Timer t(funcEnv.getStream(), "presynapticUpdate", modelMerged.getModel().isTimingEnabled());
             modelMerged.genMergedPresynapticUpdateGroups(
                 *this, memorySpaces,
                 [this, &funcEnv, &modelMerged](auto &s)
                 {
                     CodeStream::Scope b(funcEnv.getStream());
                     funcEnv.getStream() << "// merged presynaptic update group " << s.getIndex() << std::endl;
-                    funcEnv.getStream() << "for(unsigned int g = 0; g < " << s.getGroups().size() << "; g++)";
+                    funcEnv.getStream() << "for(uniform unsigned int g = 0; g < " << s.getGroups().size() << "; g++)";
                     {
                         CodeStream::Scope b(funcEnv.getStream());
 
-                        // Get reference to group
-                        funcEnv.getStream() << "const auto *group = &mergedPresynapticUpdateGroup" << s.getIndex() << "[g]; " << std::endl;
+                        // Get reference to group - auto replaced with uniform
+                        funcEnv.getStream() << "const uniform MergedPresynapticUpdateGroup" << s.getIndex() 
+                                          << " * uniform group = &mergedPresynapticUpdateGroup" << s.getIndex() << "[g]; " << std::endl;
                         
                         // Create matching environment
                         EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(funcEnv, s);
@@ -549,60 +663,83 @@ void Backend::genSynapseUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerge
                 });
         }
 
+        
         // Postsynaptic update
         {
-            HostTimer t(funcEnv.getStream(), "postsynapticUpdate", modelMerged.getModel().isTimingEnabled());
+            Timer t(funcEnv.getStream(), "postsynapticUpdate", modelMerged.getModel().isTimingEnabled());
             modelMerged.genMergedPostsynapticUpdateGroups(
                 *this, memorySpaces,
                 [this, &funcEnv, &modelMerged](auto &s)
                 {
                     CodeStream::Scope b(funcEnv.getStream());
                     funcEnv.getStream() << "// merged postsynaptic update group " << s.getIndex() << std::endl;
-                    funcEnv.getStream() << "for(unsigned int g = 0; g < " << s.getGroups().size() << "; g++)";
+                    funcEnv.getStream() << "for(uniform unsigned int g = 0; g < " << s.getGroups().size() << "; g++)";
                     {
                         CodeStream::Scope b(funcEnv.getStream());
 
                         // Get reference to group
-                        funcEnv.getStream() << "const auto *group = &mergedPostsynapticUpdateGroup" << s.getIndex() << "[g]; " << std::endl;
+                        funcEnv.getStream() << "const uniform MergedPostsynapticUpdateGroup" << s.getIndex() 
+                                          << " * uniform group = &mergedPostsynapticUpdateGroup" << s.getIndex() << "[g]; " << std::endl;
 
                         // Create matching environment
                         EnvironmentGroupMergedField<PostsynapticUpdateGroupMerged> groupEnv(funcEnv, s);
                         buildStandardEnvironment(groupEnv, 1);
 
-                        // generate the code for processing spike-like events
-                        if (s.getArchetype().isPostSpikeEventRequired()) {
-                            genPostsynapticUpdate(groupEnv, s, modelMerged.getModel().getDT(), false);
-                        }
-
-                        // generate the code for processing true spike events
-                        if (s.getArchetype().isPostSpikeRequired()) {
-                            genPostsynapticUpdate(groupEnv, s, modelMerged.getModel().getDT(), true);
-                        }
-                        groupEnv.getStream() << std::endl;
+                        // Generate postsynaptic update code
+                        genPostsynapticUpdate(groupEnv, s, modelMerged.getModel().getDT(), true);
+                        funcEnv.getStream() << std::endl;
                     }
                 });
         }
     }
 
-    // Generate struct definitions
-    modelMerged.genMergedSynapseDendriticDelayUpdateStructs(os, *this);
-    modelMerged.genMergedPresynapticUpdateGroupStructs(os, *this);
-    modelMerged.genMergedPostsynapticUpdateGroupStructs(os, *this);
-    modelMerged.genMergedSynapseDynamicsGroupStructs(os, *this);
+    // Create stream for ISPC file
+    CodeStream synapseUpdateISPC(streamCreator("synapseUpdate", "ispc"));
+
+    // Integer type definitions for ISPC
+    synapseUpdateISPC << "typedef uint8 uint8_t;" << std::endl;
+    synapseUpdateISPC << "typedef uint16 uint16_t;" << std::endl;
+    synapseUpdateISPC << "typedef uint32 uint32_t;" << std::endl;
+    synapseUpdateISPC << "typedef uint64 uint64_t;" << std::endl;
+    synapseUpdateISPC << "typedef int8 int8_t;" << std::endl;
+    synapseUpdateISPC << "typedef int16 int16_t;" << std::endl;
+    synapseUpdateISPC << "typedef int32 int32_t;" << std::endl;
+    synapseUpdateISPC << "typedef int64 int64_t;" << std::endl;
+    synapseUpdateISPC << std::endl;
+    
+    // Timing variables
+    if(modelMerged.getModel().isTimingEnabled()) {
+        synapseUpdateISPC << "extern uniform double synapseDynamicsTime;" << std::endl;
+        synapseUpdateISPC << "extern uniform double presynapticUpdateTime;" << std::endl;
+        synapseUpdateISPC << "extern uniform double postsynapticUpdateTime;" << std::endl;
+    }
+    synapseUpdateISPC << std::endl;
+
+    // Struct definitions in the ISPC file
+    synapseUpdateISPC << std::endl << "// Merged synapse group structures" << std::endl;
+    modelMerged.genMergedSynapseDendriticDelayUpdateStructs(synapseUpdateISPC, *this);
+    modelMerged.genMergedSynapseDynamicsGroupStructs(synapseUpdateISPC, *this);
+    modelMerged.genMergedPresynapticUpdateGroupStructs(synapseUpdateISPC, *this);
+    modelMerged.genMergedPostsynapticUpdateGroupStructs(synapseUpdateISPC, *this);
+    modelMerged.genMergedSynapseConnectivityInitGroupStructs(synapseUpdateISPC, *this);
 
     // Generate arrays of merged structs and functions to set them
-    modelMerged.genMergedSynapseDendriticDelayUpdateHostStructArrayPush(os, *this);
-    modelMerged.genMergedPresynapticUpdateGroupHostStructArrayPush(os, *this);
-    modelMerged.genMergedPostsynapticUpdateGroupHostStructArrayPush(os, *this);
-    modelMerged.genMergedSynapseDynamicsGroupHostStructArrayPush(os, *this);
+    genMergedStructArrayPush(synapseUpdateISPC, modelMerged.getMergedSynapseDendriticDelayUpdateGroups());
+    genMergedStructArrayPush(synapseUpdateISPC, modelMerged.getMergedSynapseDynamicsGroups());
+    genMergedStructArrayPush(synapseUpdateISPC, modelMerged.getMergedPresynapticUpdateGroups());
+    genMergedStructArrayPush(synapseUpdateISPC, modelMerged.getMergedPostsynapticUpdateGroups());
+    genMergedStructArrayPush(synapseUpdateISPC, modelMerged.getMergedSynapseConnectivityInitGroups());
+
+    synapseUpdateISPC << synapseUpdateStream.str();
+
+    // Include the ISPC header
+    os << "#include \"synapseUpdateISPC.h\"" << std::endl << std::endl;
 
     // Generate preamble
     preambleHandler(os);
-
-    os << synapseUpdateStream.str();
 }
-//--------------------------------------------------------------------------
-void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelMerged, 
+
+void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
                               BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -622,52 +759,47 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
     // Generate stream with custom update code
     std::ostringstream customUpdateStream;
     CodeStream customUpdate(customUpdateStream);
-    
-    // Begin environment with standard library
+
+    // Begin environment with standard library in ISPC file
     EnvironmentLibrary backendEnv(customUpdate, backendFunctions);
-    EnvironmentLibrary customUpdateEnv(backendEnv, StandardLibrary::getMathsFunctions());
+    EnvironmentLibrary customUpdateEnv(customUpdate, StandardLibrary::getMathsFunctions());
 
     // Loop through custom update groups
     for(const auto &g : customUpdateGroups) {
-        customUpdateEnv.getStream() << "void update" << g << "(unsigned long long timestep)";
+        customUpdateEnv.getStream() << "export void update" << g << "(uniform uint64 timestep)";
         {
             CodeStream::Scope b(customUpdateEnv.getStream());
 
-             EnvironmentExternal funcEnv(customUpdateEnv);
-             funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t",
-                         {funcEnv.addInitialiser("const " + model.getTimePrecision().getName() + " t = timestep * " + Type::writeNumeric(model.getDT(), model.getTimePrecision()) + ";")});
-             funcEnv.add(Type::Uint32.addConst(), "batch", "0");
-             funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
-                    Type::writeNumeric(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
+            EnvironmentExternal funcEnv(customUpdateEnv);
+            funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "t", "t",
+                        {funcEnv.addInitialiser("const uniform " + model.getTimePrecision().getName() + " t = timestep * " + Type::writeNumeric(model.getDT(), model.getTimePrecision()) + ";")});
+            funcEnv.add(Type::Uint32.addConst(), "batch", "0");
+            funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
+                   Type::writeNumeric(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
 
             // Loop through host update groups and generate code for those in this custom update group
-            if(std::any_of(modelMerged.getMergedCustomConnectivityHostUpdateGroups().cbegin(), 
-                           modelMerged.getMergedCustomConnectivityHostUpdateGroups().cend(),
-                           [&g](const auto &cg){ return cg.getArchetype().getUpdateGroupName() == g; }))
-            {
-                HostTimer t(funcEnv.getStream(), "customUpdate" + g + "Host", modelMerged.getModel().isTimingEnabled());
-                modelMerged.genMergedCustomConnectivityHostUpdateGroups(
-                    *this, memorySpaces, g, 
-                    [this, &funcEnv](auto &c)
-                    {
-                        c.generateUpdate(*this, funcEnv);
-                    });
-             }
+            modelMerged.genMergedCustomConnectivityHostUpdateGroups(
+                *this, memorySpaces, g, 
+                [this, &funcEnv](auto &c)
+                {
+                    c.generateUpdate(*this, funcEnv);
+                });
             
             {
-                HostTimer t(funcEnv.getStream(), "customUpdate" + g, model.isTimingEnabled());
+                Timer t(funcEnv.getStream(), "customUpdate" + g, model.isTimingEnabled());
                 modelMerged.genMergedCustomUpdateGroups(
                     *this, memorySpaces, g,
                     [this, &funcEnv](auto &c)
                     {
                         CodeStream::Scope b(funcEnv.getStream());
                         funcEnv.getStream() << "// merged custom update group " << c.getIndex() << std::endl;
-                        funcEnv.getStream() << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                        funcEnv.getStream() << "for(uniform unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
                         {
                             CodeStream::Scope b(funcEnv.getStream());
 
                             // Get reference to group
-                            funcEnv.getStream() << "const auto *group = &mergedCustomUpdateGroup" << c.getIndex() << "[g]; " << std::endl;
+                            funcEnv.getStream() << "const uniform MergedCustomUpdateGroup" << c.getIndex() 
+                                              << " * uniform group = &mergedCustomUpdateGroup" << c.getIndex() << "[g]; " << std::endl;
                             
                             // Create matching environment
                             EnvironmentGroupMergedField<CustomUpdateGroupMerged> groupEnv(funcEnv, c);
@@ -682,7 +814,7 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
                                 // Loop through group members
                                 EnvironmentGroupMergedField<CustomUpdateGroupMerged> memberEnv(groupEnv, c);
                                 if (c.getArchetype().getDims() & VarAccessDim::ELEMENT) {
-                                    memberEnv.print("for(unsigned int i = 0; i < $(num_neurons); i++)");
+                                    memberEnv.print("foreach(i = 0 ... $(num_neurons))");
                                     memberEnv.add(Type::Uint32.addConst(), "id", "i");
                                 }
                                 else {
@@ -710,7 +842,7 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
                                 // Loop through group members
                                 EnvironmentGroupMergedField<CustomUpdateGroupMerged> memberEnv(groupEnv, c);
                                 if (c.getArchetype().getDims() & VarAccessDim::ELEMENT) {
-                                    memberEnv.print("for(unsigned int i = 0; i < $(num_neurons); i++)");
+                                    memberEnv.print("foreach(i = 0 ... $(num_neurons))");
                                     memberEnv.add(Type::Uint32.addConst(), "id", "i");
                                 }
                                 else {
@@ -739,12 +871,13 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
                     {
                         CodeStream::Scope b(funcEnv.getStream());
                         funcEnv.getStream() << "// merged custom WU update group " << c.getIndex() << std::endl;
-                        funcEnv.getStream() << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                        funcEnv.getStream() << "for(uniform unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
                         {
                             CodeStream::Scope b(funcEnv.getStream());
 
-                            // Get reference to group
-                            funcEnv.getStream() << "const auto *group = &mergedCustomUpdateWUGroup" << c.getIndex() << "[g]; " << std::endl;
+                            // Get reference to group - auto replaced with uniform
+                            funcEnv.getStream() << "const uniform MergedCustomUpdateWUGroup" << c.getIndex() 
+                                              << " * uniform group = &mergedCustomUpdateWUGroup" << c.getIndex() << "[g]; " << std::endl;
 
                             // Create matching environment
                             EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> groupEnv(funcEnv, c);
@@ -769,16 +902,16 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
                             }
                             else {
                                 // Loop through presynaptic neurons
-                                groupEnv.print("for(unsigned int i = 0; i < $(num_pre); i++)");
+                                groupEnv.print("for(uniform unsigned int i = 0; i < $(num_pre); i++)");
                                 {
                                     // If this synapse group has sparse connectivity, loop through length of this row
                                     CodeStream::Scope b(groupEnv.getStream());
                                     if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                        groupEnv.print("for(unsigned int s = 0; s < $(_row_length)[i]; s++)");
+                                        groupEnv.print("foreach(s = 0 ... $(_row_length)[i])");
                                     }
                                     // Otherwise, if it's dense, loop through each postsynaptic neuron
                                     else if (sg->getMatrixType() & SynapseMatrixConnectivity::DENSE) {
-                                        groupEnv.print("for (unsigned int j = 0; j < $(num_post); j++)");
+                                        groupEnv.print("foreach(j = 0 ... $(num_post))");
                                     }
                                     else {
                                         throw std::runtime_error("Only DENSE and SPARSE format connectivity can be used for custom updates");
@@ -790,21 +923,23 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
                                         EnvironmentGroupMergedField<CustomUpdateWUGroupMerged> synEnv(groupEnv, c);
                                         synEnv.add(Type::Uint32.addConst(), "id_pre", "i");
                                         
+                                        const auto indexType = getSynapseIndexType(c);
+                                        const auto indexTypeName = indexType.getName();
                                         // If connectivity is sparse
                                         if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                                             // Add initialisers to calculate synaptic index and thus lookup postsynaptic index
-                                            const size_t idSynInit = synEnv.addInitialiser("const unsigned int idSyn = (i * $(_row_stride)) + s;");
+                                            const size_t idSynInit = synEnv.addInitialiser("const " + indexTypeName + " idSyn = ((" + indexTypeName + ")i * $(_row_stride)) + s;");
                                             const size_t jInit = synEnv.addInitialiser("const unsigned int j = $(_ind)[idSyn];");
 
                                             // Add substitutions
-                                            synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", {idSynInit});
+                                            synEnv.add(indexType.addConst(), "id_syn", "idSyn", {idSynInit});
                                             synEnv.add(Type::Uint32.addConst(), "id_post", "j", {jInit, idSynInit});
                                         }
                                         else {
                                             synEnv.add(Type::Uint32.addConst(), "id_post", "j");
 
-                                            synEnv.add(Type::Uint32.addConst(), "id_syn", "idSyn", 
-                                                       {synEnv.addInitialiser("const unsigned int idSyn = (i * $(num_post)) + j;")});
+                                            synEnv.add(indexType.addConst(), "id_syn", "idSyn", 
+                                                       {synEnv.addInitialiser("const " + indexTypeName + " idSyn = ((" + indexTypeName + ")i * $(num_post)) + j;")});
                                         }
 
                                         // Generate custom update
@@ -828,12 +963,13 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
                     {
                         CodeStream::Scope b(funcEnv.getStream());
                         funcEnv.getStream() << "// merged custom connectivity update group " << c.getIndex() << std::endl;
-                        funcEnv.getStream() << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                        funcEnv.getStream() << "for(uniform unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
                         {
                             CodeStream::Scope b(funcEnv.getStream());
 
-                            // Get reference to group
-                            funcEnv.getStream() << "const auto *group = &mergedCustomConnectivityUpdateGroup" << c.getIndex() << "[g]; " << std::endl;
+                            // Get reference to group - auto replaced with uniform
+                            funcEnv.getStream() << "const uniform MergedCustomConnectivityUpdateGroup" << c.getIndex() 
+                                              << " * uniform group = &mergedCustomConnectivityUpdateGroup" << c.getIndex() << "[g]; " << std::endl;
                             
                             // Add host RNG functions
                             EnvironmentLibrary rngEnv(funcEnv, StandardLibrary::getHostRNGFunctions(c.getScalarType()));
@@ -843,7 +979,7 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
                             buildStandardEnvironment(groupEnv);
            
                             // Loop through presynaptic neurons
-                            groupEnv.print("for(unsigned int i = 0; i < $(num_pre); i++)");
+                            groupEnv.print("for(uniform unsigned int i = 0; i < $(num_pre); i++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
                             
@@ -858,26 +994,27 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
 
             // Loop through merged custom connectivity remap update groups
             {
-                HostTimer t(funcEnv.getStream(), "customUpdate" + g + "Remap", model.isTimingEnabled());
+                Timer t(funcEnv.getStream(), "customUpdate" + g + "Remap", model.isTimingEnabled());
                 modelMerged.genMergedCustomConnectivityRemapUpdateGroups(
                     *this, memorySpaces, g,
                     [this, &funcEnv](auto &c)
                     {
                         CodeStream::Scope b(funcEnv.getStream());
                         funcEnv.getStream() << "// merged custom connectivity remap update group " << c.getIndex() << std::endl;
-                        funcEnv.getStream() << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                        funcEnv.getStream() << "for(uniform unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
                         {
                             CodeStream::Scope b(funcEnv.getStream());
 
-                            // Get reference to group
-                            funcEnv.getStream() << "const auto *group = &mergedCustomConnectivityRemapUpdateGroup" << c.getIndex() << "[g]; " << std::endl;
+                            // Get reference to group - auto replaced with uniform
+                            funcEnv.getStream() << "const uniform MergedCustomConnectivityRemapUpdateGroup" << c.getIndex() 
+                                              << " * uniform group = &mergedCustomConnectivityRemapUpdateGroup" << c.getIndex() << "[g]; " << std::endl;
                      
                             // Create matching environment
                             EnvironmentGroupMergedField<CustomConnectivityRemapUpdateGroupMerged> groupEnv(funcEnv, c);
                             buildStandardEnvironment(groupEnv);
                             
                             groupEnv.printLine("// Loop through presynaptic neurons");
-                            groupEnv.print("for (unsigned int i = 0; i < $(num_pre); i++)");
+                            groupEnv.print("for (uniform unsigned int i = 0; i < $(num_pre); i++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
 
@@ -889,19 +1026,20 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
 
             // Loop through merged custom WU transpose update groups
             {
-                HostTimer t(funcEnv.getStream(), "customUpdate" + g + "Transpose", model.isTimingEnabled());
+                Timer t(funcEnv.getStream(), "customUpdate" + g + "Transpose", model.isTimingEnabled());
                 modelMerged.genMergedCustomUpdateTransposeWUGroups(
                     *this, memorySpaces, g,
                     [this, &funcEnv](auto &c)
                     {
                         CodeStream::Scope b(funcEnv.getStream());
                         funcEnv.getStream() << "// merged custom WU transpose update group " << c.getIndex() << std::endl;
-                        funcEnv.getStream() << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                        funcEnv.getStream() << "for(uniform unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
                         {
                             CodeStream::Scope b(funcEnv.getStream());
 
-                            // Get reference to group
-                            funcEnv.getStream() << "const auto *group = &mergedCustomUpdateTransposeWUGroup" << c.getIndex() << "[g]; " << std::endl;
+                            // Get reference to group - auto replaced with uniform
+                            funcEnv.getStream() << "const uniform MergedCustomUpdateTransposeWUGroup" << c.getIndex() 
+                                              << " * uniform group = &mergedCustomUpdateTransposeWUGroup" << c.getIndex() << "[g]; " << std::endl;
 
                             // Create matching environment
                             EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> groupEnv(funcEnv, c);
@@ -912,12 +1050,12 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
                             const std::string transposeVarName = c.addTransposeField(groupEnv);
 
                             // Loop through presynaptic neurons
-                            groupEnv.print("for(unsigned int i = 0; i < $(num_pre); i++)");
+                            groupEnv.print("for(uniform unsigned int i = 0; i < $(num_pre); i++)");
                             {
                                 CodeStream::Scope b(groupEnv.getStream());
 
-                                // Loop through each postsynaptic neuron
-                                groupEnv.print("for (unsigned int j = 0; j < $(num_post); j++)");
+                                // Loop through each postsynaptic neuron using foreach for SIMD
+                                groupEnv.print("foreach(j = 0 ... $(num_post))");
                                 {
                                     CodeStream::Scope b(groupEnv.getStream());
                                     EnvironmentGroupMergedField<CustomUpdateTransposeWUGroupMerged> synEnv(groupEnv, c);
@@ -947,38 +1085,65 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
         }
     }
 
-    // Generate struct definitions
-    modelMerged.genMergedCustomUpdateStructs(os, *this);
-    modelMerged.genMergedCustomUpdateWUStructs(os, *this);
-    modelMerged.genMergedCustomUpdateTransposeWUStructs(os, *this);
-    modelMerged.genMergedCustomConnectivityUpdateStructs(os, *this);
-    modelMerged.genMergedCustomConnectivityRemapUpdateStructs(os, *this);
-    modelMerged.genMergedCustomConnectivityHostUpdateStructs(os, *this);
+    // Create stream for ISPC file
+    CodeStream customUpdateISPC(streamCreator("customUpdate", "ispc"));
+
+    // Integer type definitions for ISPC
+    customUpdateISPC << "typedef uint8 uint8_t;" << std::endl;
+    customUpdateISPC << "typedef uint16 uint16_t;" << std::endl;
+    customUpdateISPC << "typedef uint32 uint32_t;" << std::endl;
+    customUpdateISPC << "typedef uint64 uint64_t;" << std::endl;
+    customUpdateISPC << "typedef int8 int8_t;" << std::endl;
+    customUpdateISPC << "typedef int16 int16_t;" << std::endl;
+    customUpdateISPC << "typedef int32 int32_t;" << std::endl;
+    customUpdateISPC << "typedef int64 int64_t;" << std::endl;
+    customUpdateISPC << std::endl;
+
+    // Timing variables
+    if(model.isTimingEnabled()) {
+        for(const auto &g : customUpdateGroups) {
+            customUpdateISPC << "extern uniform double customUpdate" << g << "Time;" << std::endl;
+            customUpdateISPC << "extern uniform double customUpdate" << g << "RemapTime;" << std::endl;
+            customUpdateISPC << "extern uniform double customUpdate" << g << "TransposeTime;" << std::endl;
+        }
+    }
+    customUpdateISPC << std::endl;
+
+    // Struct definitions in the ISPC file
+    customUpdateISPC << std::endl << "// Merged custom update group structures" << std::endl;
+    modelMerged.genMergedCustomUpdateStructs(customUpdateISPC, *this);
+    modelMerged.genMergedCustomUpdateWUStructs(customUpdateISPC, *this);
+    modelMerged.genMergedCustomUpdateTransposeWUStructs(customUpdateISPC, *this);
+    modelMerged.genMergedCustomConnectivityUpdateStructs(customUpdateISPC, *this);
+    modelMerged.genMergedCustomConnectivityRemapUpdateStructs(customUpdateISPC, *this);
+    modelMerged.genMergedCustomConnectivityHostUpdateStructs(customUpdateISPC, *this);
 
     // Generate arrays of merged structs and functions to set them
-    modelMerged.genMergedCustomUpdateHostStructArrayPush(os, *this);
-    modelMerged.genMergedCustomUpdateWUHostStructArrayPush(os, *this);
-    modelMerged.genMergedCustomUpdateTransposeWUHostStructArrayPush(os, *this);
-    modelMerged.genMergedCustomConnectivityUpdateHostStructArrayPush(os, *this);
-    modelMerged.genMergedCustomConnectivityRemapUpdateHostStructArrayPush(os, *this);
-    modelMerged.genMergedCustomConnectivityHostUpdateStructArrayPush(os, *this);
+    genMergedStructArrayPush(customUpdateISPC, modelMerged.getMergedCustomUpdateGroups());
+    genMergedStructArrayPush(customUpdateISPC, modelMerged.getMergedCustomUpdateWUGroups());
+    genMergedStructArrayPush(customUpdateISPC, modelMerged.getMergedCustomUpdateTransposeWUGroups());
+    genMergedStructArrayPush(customUpdateISPC, modelMerged.getMergedCustomConnectivityUpdateGroups());
+    genMergedStructArrayPush(customUpdateISPC, modelMerged.getMergedCustomConnectivityRemapUpdateGroups());
+    genMergedStructArrayPush(customUpdateISPC, modelMerged.getMergedCustomConnectivityHostUpdateGroups());
+
+    customUpdateISPC << customUpdateStream.str();
+
+    // Include the ISPC header
+    os << "#include \"customUpdateISPC.h\"" << std::endl << std::endl;
 
     // Generate preamble
     preambleHandler(os);
-
-    os << customUpdateStream.str();
-
 }
-//--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelMerged,
+
+void Backend::genInit(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
                       BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
     if(model.getBatchSize() != 1) {
-        throw std::runtime_error("The single-threaded CPU backend only supports simulations with a batch size of 1");
+        throw std::runtime_error("The ISPC backend only supports simulations with a batch size of 1");
     }
 
-    // Generate stream with neuron update code
+    // Generate stream with initialization code
     std::ostringstream initStream;
     CodeStream init(initStream);
 
@@ -994,7 +1159,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelM
         funcEnv.add(modelMerged.getModel().getTimePrecision().addConst(), "dt", 
                     Type::writeNumeric(modelMerged.getModel().getDT(), modelMerged.getModel().getTimePrecision()));
 
-        HostTimer t(funcEnv.getStream(), "init", model.isTimingEnabled());
+        TimerHost t(funcEnv.getStream(), "init", model.isTimingEnabled());
 
         funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
         funcEnv.getStream() << "// Neuron groups" << std::endl;
@@ -1009,7 +1174,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelM
                     CodeStream::Scope b(funcEnv.getStream());
 
                     // Get reference to group
-                    funcEnv.getStream() << "const auto *group = &mergedNeuronInitGroup" << n.getIndex() << "[g]; " << std::endl;
+                    funcEnv.getStream() << "const MergedNeuronInitGroup" << n.getIndex() << " *group = &mergedNeuronInitGroup" << n.getIndex() << "[g]; " << std::endl;
 
                     EnvironmentGroupMergedField<NeuronInitGroupMerged> groupEnv(funcEnv, n);
                     buildStandardEnvironment(groupEnv, 1);
@@ -1030,7 +1195,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelM
                     CodeStream::Scope b(funcEnv.getStream());
 
                     // Get reference to group
-                    funcEnv.getStream() << "const auto *group = &mergedSynapseInitGroup" << s.getIndex() << "[g]; " << std::endl;
+                    funcEnv.getStream() << "const MergedSynapseInitGroup" << s.getIndex() << " *group = &mergedSynapseInitGroup" << s.getIndex() << "[g]; " << std::endl;
 
                     EnvironmentGroupMergedField<SynapseInitGroupMerged> groupEnv(funcEnv, s);
                     buildStandardEnvironment(groupEnv, 1);
@@ -1051,7 +1216,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelM
                     CodeStream::Scope b(funcEnv.getStream());
 
                     // Get reference to group
-                    funcEnv.getStream() << "const auto *group = &mergedCustomUpdateInitGroup" << c.getIndex() << "[g]; " << std::endl;
+                    funcEnv.getStream() << "const MergedCustomUpdateInitGroup" << c.getIndex() << " *group = &mergedCustomUpdateInitGroup" << c.getIndex() << "[g]; " << std::endl;
 
                     EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> groupEnv(funcEnv, c);
                     buildStandardEnvironment(groupEnv, 1);
@@ -1072,7 +1237,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelM
                     CodeStream::Scope b(funcEnv.getStream());
 
                     // Get reference to group
-                    funcEnv.getStream() << "const auto *group = &mergedCustomConnectivityUpdatePreInitGroup" << c.getIndex() << "[g]; " << std::endl;
+                    funcEnv.getStream() << "const MergedCustomConnectivityUpdatePreInitGroup" << c.getIndex() << " *group = &mergedCustomConnectivityUpdatePreInitGroup" << c.getIndex() << "[g]; " << std::endl;
 
                     EnvironmentGroupMergedField<CustomConnectivityUpdatePreInitGroupMerged> groupEnv(funcEnv, c);
                     buildStandardEnvironment(groupEnv);
@@ -1093,7 +1258,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelM
                     CodeStream::Scope b(funcEnv.getStream());
 
                     // Get reference to group
-                    funcEnv.getStream() << "const auto *group = &mergedCustomConnectivityUpdatePostInitGroup" << c.getIndex() << "[g]; " << std::endl;
+                    funcEnv.getStream() << "const MergedCustomConnectivityUpdatePostInitGroup" << c.getIndex() << " *group = &mergedCustomConnectivityUpdatePostInitGroup" << c.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<CustomConnectivityUpdatePostInitGroupMerged> groupEnv(funcEnv, c);
                     buildStandardEnvironment(groupEnv);
                     c.generateInit(*this, groupEnv, 1);
@@ -1113,7 +1278,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelM
                     CodeStream::Scope b(funcEnv.getStream());
 
                     // Get reference to group
-                    funcEnv.getStream() << "const auto *group = &mergedCustomWUUpdateInitGroup" << c.getIndex() << "[g]; " << std::endl;
+                    funcEnv.getStream() << "const MergedCustomWUUpdateInitGroup" << c.getIndex() << " *group = &mergedCustomWUUpdateInitGroup" << c.getIndex() << "[g]; " << std::endl;
 
                     EnvironmentGroupMergedField<CustomWUUpdateInitGroupMerged> groupEnv(funcEnv, c);
                     buildStandardEnvironment(groupEnv, 1);
@@ -1134,7 +1299,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelM
                     CodeStream::Scope b(funcEnv.getStream());
 
                     // Get reference to group
-                    funcEnv.getStream() << "const auto *group = &mergedSynapseConnectivityInitGroup" << s.getIndex() << "[g]; " << std::endl;
+                    funcEnv.getStream() << "const MergedSynapseConnectivityInitGroup" << s.getIndex() << " *group = &mergedSynapseConnectivityInitGroup" << s.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> groupEnv(funcEnv, s);
                     buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
 
@@ -1238,7 +1403,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelM
                         }
                         
 
-                        const auto addSynapseType = Type::ResolvedType::createFunction(Type::Void, std::vector<Type::ResolvedType>{1ull + s.getArchetype().getKernelSize().size(), Type::Uint32});
+                        const Type::ResolvedType addSynapseType = Type::ResolvedType::createFunction(Type::Void, std::vector<Type::ResolvedType>{1ull + s.getArchetype().getKernelSize().size(), Type::Uint32});
                         groupEnv.add(addSynapseType, "addSynapse", addSynapseStream.str());
 
                         // Call appropriate connectivity handler
@@ -1258,7 +1423,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelM
         CodeStream::Scope b(initEnv.getStream());
         EnvironmentExternal funcEnv(initEnv);
 
-        HostTimer t(funcEnv.getStream(), "initSparse", model.isTimingEnabled());
+        TimerHost t(funcEnv.getStream(), "initSparse", model.isTimingEnabled());
 
         funcEnv.getStream() << "// ------------------------------------------------------------------------" << std::endl;
         funcEnv.getStream() << "// Synapse groups with sparse connectivity" << std::endl;
@@ -1273,7 +1438,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelM
                     CodeStream::Scope b(funcEnv.getStream());
 
                     // Get reference to group
-                    funcEnv.getStream() << "const auto *group = &mergedSynapseSparseInitGroup" << s.getIndex() << "[g]; " << std::endl;
+                    funcEnv.getStream() << "const MergedSynapseSparseInitGroup" << s.getIndex() << " *group = &mergedSynapseSparseInitGroup" << s.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<SynapseSparseInitGroupMerged> groupEnv(funcEnv, s);
                     buildStandardEnvironment(groupEnv, modelMerged.getModel().getBatchSize());
 
@@ -1310,7 +1475,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelM
                     CodeStream::Scope b(funcEnv.getStream());
 
                     // Get reference to group
-                    funcEnv.getStream() << "const auto *group = &mergedCustomWUUpdateSparseInitGroup" << c.getIndex() << "[g]; " << std::endl;
+                    funcEnv.getStream() << "const MergedCustomWUUpdateSparseInitGroup" << c.getIndex() << " *group = &mergedCustomWUUpdateSparseInitGroup" << c.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<CustomWUUpdateSparseInitGroupMerged> groupEnv(funcEnv, c);
                     buildStandardEnvironment(groupEnv, 1);
 
@@ -1340,7 +1505,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelM
                     CodeStream::Scope b(funcEnv.getStream());
 
                     // Get reference to group
-                    funcEnv.getStream() << "const auto *group = &mergedCustomConnectivityUpdateSparseInitGroup" << c.getIndex() << "[g]; " << std::endl;
+                    funcEnv.getStream() << "const MergedCustomConnectivityUpdateSparseInitGroup" << c.getIndex() << " *group = &mergedCustomConnectivityUpdateSparseInitGroup" << c.getIndex() << "[g]; " << std::endl;
                     EnvironmentGroupMergedField<CustomConnectivityUpdateSparseInitGroupMerged> groupEnv(funcEnv, c);
                     buildStandardEnvironment(groupEnv);
 
@@ -1357,9 +1522,8 @@ void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelM
                 }
             });
     }
-
     
-    // Generate struct definitions
+    // Struct definitions in the ISPC file
     modelMerged.genMergedNeuronInitGroupStructs(os, *this);
     modelMerged.genMergedSynapseInitGroupStructs(os, *this);
     modelMerged.genMergedCustomUpdateInitGroupStructs(os, *this);
@@ -1382,14 +1546,13 @@ void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelM
     modelMerged.genMergedCustomConnectivityUpdatePreInitHostStructArrayPush(os, *this);
     modelMerged.genMergedCustomConnectivityUpdatePostInitHostStructArrayPush(os, *this);
     modelMerged.genMergedCustomConnectivityUpdateSparseInitHostStructArrayPush(os, *this);
-    
+
     // Generate preamble
     preambleHandler(os);
 
     os << initStream.str();
 
 }
-//--------------------------------------------------------------------------
 size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
 {
     if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) || (sg.getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ)) {
@@ -1402,7 +1565,7 @@ size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
         return sg.getTrgNeuronGroup()->getNumNeurons();
     }
 }
-//--------------------------------------------------------------------------
+
 void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -1422,104 +1585,77 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &mode
     os << "#include <cstdint>" << std::endl;
     os << "#include <cstring>" << std::endl;
 
-    
-    // On windows, define an inline function, matching the signature of __builtin_clz which counts leading zeros
-#ifdef _WIN32
-    os << "#include <intrin.h>" << std::endl;
-    os << std::endl;
-    os << "int inline gennCLZ(unsigned int value)";
-    {
-        CodeStream::Scope b(os);
-        os << "unsigned long leadingZero = 0;" << std::endl;
-        os << "if( _BitScanReverse(&leadingZero, value))";
-        {
-            CodeStream::Scope b(os);
-            os << "return 31 - leadingZero;" << std::endl;
-        }
-        os << "else";
-        {
-            CodeStream::Scope b(os);
-            os << "return 32;" << std::endl;
-        }
-    }
-    // Otherwise, on *nix, use __builtin_clz intrinsic
-#else
-    os << "#define gennCLZ __builtin_clz" << std::endl;
-#endif
-    os << std::endl;
-
-    // CUDA and OpenCL both provide generic min and max functions 
-    // to match this, bring std::min and std::max into global namespace
-    os << "using std::min;" << std::endl;
-    os << "using std::max;" << std::endl;
 }
-//--------------------------------------------------------------------------
 void Backend::genRunnerPreamble(CodeStream &, const ModelSpecMerged &) const
 {
 }
-//--------------------------------------------------------------------------
-void Backend::genAllocateMemPreamble(CodeStream&, const ModelSpecMerged&) const
+void Backend::genAllocateMemPreamble(CodeStream &, const ModelSpecMerged &) const
 {
 }
-//--------------------------------------------------------------------------
-void Backend::genFreeMemPreamble(CodeStream&, const ModelSpecMerged&) const
+void Backend::genFreeMemPreamble(CodeStream &, const ModelSpecMerged &) const
 {
 }
-//--------------------------------------------------------------------------
 void Backend::genStepTimeFinalisePreamble(CodeStream &, const ModelSpecMerged &) const
 {
 }
-//--------------------------------------------------------------------------
-std::unique_ptr<GeNN::Runtime::StateBase> Backend::createState(const Runtime::Runtime&) const
+
+std::unique_ptr<GeNN::Runtime::StateBase> Backend::createState(const Runtime::Runtime &runtime) const
 {
-    return std::make_unique<State>();
+    return std::make_unique<State>(runtime);
 }
-//--------------------------------------------------------------------------
+
 std::unique_ptr<Runtime::ArrayBase> Backend::createArray(const Type::ResolvedType &type, size_t count, 
-                                                         VarLocation location, bool uninitialized) const
+                                                        VarLocation location, bool uninitialized) const
 {
-    return std::make_unique<Array>(type, count, location, uninitialized);
-}
-//--------------------------------------------------------------------------
-void Backend::genLazyVariableDynamicAllocation(CodeStream &os, 
-                                               const Type::ResolvedType &type, const std::string &name, VarLocation, 
-                                               const std::string &countVarName) const
-{
-    if (type.isPointer()) {
-        os << "*$(_" << name <<  ") = new " << type.getPointer().valueType->getValue().name << "[" << countVarName << "];" << std::endl;
+    const auto &prefs = getPreferences<Preferences>();
+    
+    // Determine alignment based on target ISA
+    // AVX-512 requires 64-byte alignment, AVX/AVX2 use 32, SSE uses 16
+    size_t alignment = 16;
+    if(prefs.targetISA.find("avx512") != std::string::npos) {
+        alignment = 64;
     }
-    else {
-        os << "$(_" << name <<  ") = new " << type.getValue().name << "[" << countVarName << "];" << std::endl;
+    else if(prefs.targetISA.find("avx") != std::string::npos) {
+        alignment = 32;
     }
+    
+    return std::make_unique<Array>(type, count, location, uninitialized, alignment);
 }
-//--------------------------------------------------------------------------
-void Backend::genLazyVariableDynamicPush(CodeStream&, 
-                                         const Type::ResolvedType&, const std::string&,
-                                         VarLocation, const std::string&) const
+
+std::unique_ptr<Runtime::ArrayBase> Backend::createPopulationRNG(size_t) const
+{
+    return nullptr;
+}
+
+void Backend::genLazyVariableDynamicAllocation(CodeStream &, const Type::ResolvedType &, const std::string &, VarLocation, const std::string &) const
 {
 }
-//--------------------------------------------------------------------------
-void Backend::genLazyVariableDynamicPull(CodeStream&, 
-                                         const Type::ResolvedType&, const std::string&,
-                                         VarLocation, const std::string&) const
+
+void Backend::genLazyVariableDynamicPush(CodeStream &, const Type::ResolvedType &, const std::string &, VarLocation, const std::string &) const
 {
 }
-//--------------------------------------------------------------------------
-void Backend::genMergedDynamicVariablePush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
-                                           const std::string &groupIdx, const std::string &fieldName,
-                                           const std::string &egpName) const
+
+void Backend::genLazyVariableDynamicPull(CodeStream &, const Type::ResolvedType &, const std::string &, VarLocation, const std::string &) const
 {
-    os << "merged" << suffix << "Group" << mergedGroupIdx << "[" << groupIdx << "]." << fieldName << " = " << egpName << ";" << std::endl;
 }
-//--------------------------------------------------------------------------
+
+void Backend::genMergedDynamicVariablePush(CodeStream &, const std::string &, size_t, const std::string &, const std::string &, const std::string &) const
+{
+}
+
+std::string Backend::getMergedGroupFieldHostTypeName(const Type::ResolvedType &type) const
+{
+    return type.getName();
+}
+
 void Backend::genPopVariableInit(EnvironmentExternalBase &env, HandlerEnv handler) const
 {
+    // **NOTE** because initialisation is currently done in serial code, these should match single-threaded CPU backend
     handler(env);
 }
-//--------------------------------------------------------------------------
 void Backend::genVariableInit(EnvironmentExternalBase &env, const std::string &count, const std::string &indexVarName, HandlerEnv handler) const
 {
-    // **TODO** loops like this should be generated like CUDA threads
+    // **NOTE** because initialisation is currently done in serial code, these should match single-threaded CPU backend
     env.getStream() << "for (unsigned int i = 0; i < (" << env[count] << "); i++)";
     {
         CodeStream::Scope b(env.getStream());
@@ -1529,9 +1665,9 @@ void Backend::genVariableInit(EnvironmentExternalBase &env, const std::string &c
         handler(varEnv);
     }
 }
-//--------------------------------------------------------------------------
 void Backend::genSparseSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const
 {
+    // **NOTE** because initialisation is currently done in serial code, these should match single-threaded CPU backend
     env.print("for (unsigned int j = 0; j < $(_row_length)[$(id_pre)]; j++)");
     {
         CodeStream::Scope b(env.getStream());
@@ -1545,9 +1681,9 @@ void Backend::genSparseSynapseVariableRowInit(EnvironmentExternalBase &env, Hand
         handler(varEnv);
      }
 }
-//--------------------------------------------------------------------------
 void Backend::genDenseSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const
 {
+    // **NOTE** because initialisation is currently done in serial code, these should match single-threaded CPU backend
     env.print("for (unsigned int j = 0; j < $(num_post); j++)");
     {
         CodeStream::Scope b(env.getStream());
@@ -1560,59 +1696,80 @@ void Backend::genDenseSynapseVariableRowInit(EnvironmentExternalBase &env, Handl
         handler(varEnv);
     }
 }
-//--------------------------------------------------------------------------
 void Backend::genKernelSynapseVariableInit(EnvironmentExternalBase &env, SynapseInitGroupMerged &sg, HandlerEnv handler) const
 {
+    // **NOTE** because initialisation is currently done in serial code, these should match single-threaded CPU backend
     genKernelIteration(env, sg, sg.getArchetype().getKernelSize().size(), handler);
 }
-//--------------------------------------------------------------------------
 void Backend::genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const
 {
+    // **NOTE** because initialisation is currently done in serial code, these should match single-threaded CPU backend
     genKernelIteration(env, cu, cu.getArchetype().getSynapseGroup()->getKernelSize().size(), handler);
 }
-//--------------------------------------------------------------------------
+
 std::string Backend::getAtomicOperation(const std::string &lhsPointer, const std::string &rhsValue,
-                                        const Type::ResolvedType &type, AtomicOperation op) const
+                                       const Type::ResolvedType &type, AtomicOperation op) const
 {
     if(op == AtomicOperation::ADD) {
-        return "(*(" + lhsPointer + ") += (" + rhsValue + "))";
+        // atomic_add_global for different types
+        if(type == Type::Float || type == Type::Double || type == Type::Uint32 || type == Type::Int32) {
+            return "atomic_add_local(" + lhsPointer + ", " + rhsValue + ")";
+        }
+        else {
+            throw std::runtime_error("Unsupported type for atomic add operation in ISPC backend");
+        }
     }
     else if(op == AtomicOperation::OR) {
-        assert(type == Type::Uint32 || type == Type::Int32);
-        return "(*(" + lhsPointer + ") |= (" + rhsValue + "))";
+        // atomic_or_global for different types
+        if(type == Type::Uint32 || type == Type::Int32) {
+            return "atomic_or_local(" + lhsPointer + ", " + rhsValue + ")";
+        }
+        else {
+            throw std::runtime_error("Atomic OR operation only supported for integer types in ISPC backend");
+        }
     }
     else {
-        assert(false);
+        throw std::runtime_error("Unsupported atomic operation in ISPC backend");
     }
 }
 //--------------------------------------------------------------------------
-std::string Backend::getRestrictKeyword() const
+std::string Backend::getReductionOperation(const std::string &reduction, const std::string &value,
+                                          VarAccessMode access, const Type::ResolvedType &type) const
 {
-    return getHostRestrictKeyword();
+    // In ISPC, we need to handle uniform/varying conversions for reductions
+    if(access == VarAccessMode::REDUCE_SUM) {
+        // For sum reductions, use reduce_add
+        return reduction + " += reduce_add(" + value + ")";
+    }
+    else if(access == VarAccessMode::REDUCE_MAX) {
+        // For max reductions, use reduce_max
+        return reduction + " = max(" + reduction + ", reduce_max(" + value + "))";
+    }
+    else {
+        // Fallback to base implementation for other cases
+        return BackendBase::getReductionOperation(reduction, value, access, type);
+    }
 }
-//--------------------------------------------------------------------------
-void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&) const
+
+void Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &, CodeStream &, CodeStream &) const
 {
-    assert(false);
 }
-//--------------------------------------------------------------------------
+
 void Backend::genTimer(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &, const std::string &, bool) const
 {
-    // Timing single-threaded CPU backends don't require any additional state
 }
-//--------------------------------------------------------------------------
+
 void Backend::genReturnFreeDeviceMemoryBytes(CodeStream &os) const
 {
-    // There is no 'device' when using single-threaded CPU backend
     os << "return 0;" << std::endl;
 }
-//--------------------------------------------------------------------------
+
 void Backend::genAssert(CodeStream &os, const std::string &condition) const
 {
     os << "assert(" << condition << ");" << std::endl;
 }
-//--------------------------------------------------------------------------
-void Backend::genMakefilePreamble(std::ostream &os, const std::vector<std::string>&) const
+
+void Backend::genMakefilePreamble(std::ostream &os, const std::vector<std::string> &moduleNames) const
 {
     std::string linkFlags = "-shared ";
     std::string cxxFlags = "-c -fPIC -std=c++11 -MMD -MP";
@@ -1627,164 +1784,265 @@ void Backend::genMakefilePreamble(std::ostream &os, const std::vector<std::strin
         cxxFlags += " -O0 -g";
     }
 
+    // Get ISPC preferences
+    const auto &ispcPrefs = getPreferences<Preferences>();
+    
     // Write variables to preamble
     os << "CXXFLAGS := " << cxxFlags << std::endl;
     os << "LINKFLAGS := " << linkFlags << std::endl;
+    os << "ISPC := ispc" << std::endl;
+    os << "ISPCFLAGS := -O2 --pic --target=" << ispcPrefs.targetISA << std::endl;
+    
+    // Add ISPC objects
+    os << "OBJECTS += ";
+    for(const auto &m : moduleNames) {
+        if(m != "runner" && m != "init") {
+            os << m << "ISPC.o ";
+        }
+    }
+    os << std::endl;
+}
 
+void Backend::genMakefileLinkRule(std::ostream &os) const
+{
+    // Use the OBJECTS variable defined in preamble
+    os << "\t@$(CXX) $(LINKFLAGS) -o $@ $(OBJECTS)" << std::endl;
+}
+
+void Backend::genMakefileCompileRule(std::ostream &os) const
+{
+    // Rule for compiling C++ files
+    // **NOTE** needs top depend on ISPC for auto-generated header
+    os << "%.o: %.cc %.d %ISPC.o" << std::endl;
+    os << "\t@$(CXX) $(CXXFLAGS) -o $@ $<" << std::endl;
+    
+    // Rule for compiling ISPC files
+    os << "%ISPC.o: %.ispc" << std::endl;
+    os << "\t@$(ISPC) $(ISPCFLAGS) -o $@ -h $(@:.o=.h) $<" << std::endl;
+    
+    // Add dependency generation rule
+    // **NOTE** needs top depend on ISPC for auto-generated header
+    os << "%.d: %.cc %ISPC.o" << std::endl;
+    os << "\t@$(CXX) $(CXXFLAGS) -MM -o $@ $<" << std::endl;
+}
+
+void Backend::genNMakefilePreamble(std::ostream &os, const std::vector<std::string> &moduleNames) const
+{
+    std::string cxxFlags = "/EHsc";
+    std::string ispcFlags = "-O2 --dllexport --target=" + getPreferences<Preferences>().targetISA;
+    std::string linkFlags = "/DLL";
+    if (getPreferences().optimizeCode) {
+        ispcFlags += " -O3";
+        cxxFlags += " /O2";
+    }
+    if (getPreferences().debugCode) {
+        ispcFlags += " -O0 -g";
+        cxxFlags += " /Od /Zi";
+        linkFlags += " /DEBUG";
+    }
+
+    // Write variables to preamble
+    os << "CXXFLAGS = " << cxxFlags << std::endl;
+    os << "LINKFLAGS = " << linkFlags << std::endl;
+    os << "ISPCFLAGS = " << ispcFlags << std::endl;
+
+    // Add ISPC objects
+    os << "OBJECTS = $(OBJECTS) ";
+    for(const auto &m : moduleNames) {
+        if(m != "runner" && m != "init") {
+            os << m << "ISPC.obj ";
+        }
+    }
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genMakefileLinkRule(std::ostream &os) const
+void Backend::genNMakefileLinkRule(std::ostream &os) const
 {
-    os << "\t@$(CXX) $(LINKFLAGS) -o $@ $(OBJECTS)" << std::endl;
+    os << "runner.dll: $(OBJECTS)" << std::endl;
+	os << "\t@link.exe /OUT:runner.dll $(LINKFLAGS) $(OBJECTS)" << std::endl;
+    os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genMakefileCompileRule(std::ostream &os) const
+void Backend::genNMakefileCompileRule(std::ostream &os) const
 {
-    os << "%.o: %.cc %.d" << std::endl;
-    os << "\t@$(CXX) $(CXXFLAGS) -o $@ $<" << std::endl;
+     // Rules for compiling C++ files
+    // **NOTE** needs top depend on ISPC for auto-generated header
+    os << "neuronUpdate.obj: neuronUpdate.cc neuronUpdateISPC.obj" << std::endl;
+    os << "\t@$(CXX) $(CXXFLAGS) /c /Fo$@ neuronUpdate.cc" << std::endl;
+
+    os << "synapseUpdate.obj: synapseUpdate.cc synapseUpdateISPC.obj" << std::endl;
+    os << "\t@$(CXX) $(CXXFLAGS) /c /Fo$@ synapseUpdate.cc" << std::endl;
+
+    os << "customUpdate.obj: customUpdate.cc customUpdateISPC.obj" << std::endl;
+    os << "\t@$(CXX) $(CXXFLAGS) /c /Fo$@ customUpdate.cc" << std::endl;
+
+    os << "init.obj: init.cc" << std::endl;
+    os << "\t@$(CXX) $(CXXFLAGS) /c /Fo$@ init.cc" << std::endl;
+    
+    // Rules for compiling ISPC files
+    // **YUCK** I don't think NMAKE inference rules are smart enough to do this properly
+    os << "neuronUpdateISPC.obj: neuronUpdate.ispc" << std::endl;
+    os << "\t@ispc.exe $(ISPCFLAGS) -o $@ -h neuronUpdateISPC.h neuronUpdate.ispc" << std::endl;
+    os << std::endl;
+
+    os << "synapseUpdateISPC.obj: synapseUpdate.ispc" << std::endl;
+    os << "\t@ispc.exe $(ISPCFLAGS) -o $@ -h synapseUpdateISPC.h synapseUpdate.ispc" << std::endl;
+    os << std::endl;
+
+    os << "customUpdateISPC.obj: customUpdate.ispc" << std::endl;
+    os << "\t@ispc.exe $(ISPCFLAGS) -o $@ -h customUpdateISPC.h customUpdate.ispc" << std::endl;
+    os << std::endl;
 }
-//--------------------------------------------------------------------------
-void Backend::genNMakefilePreamble(std::ostream&, const std::vector<std::string>&) const
+
+void Backend::genMSBuildConfigProperties(std::ostream &) const
 {
     assert(false);
 }
-//--------------------------------------------------------------------------
-void Backend::genNMakefileLinkRule(std::ostream&) const
+
+void Backend::genMSBuildImportProps(std::ostream &) const
 {
     assert(false);
 }
-//--------------------------------------------------------------------------
-void Backend::genNMakefileCompileRule(std::ostream&) const
+
+void Backend::genMSBuildItemDefinitions(std::ostream &) const
 {
     assert(false);
 }
-//--------------------------------------------------------------------------
-void Backend::genMSBuildConfigProperties(std::ostream&) const
-{
-}
-//--------------------------------------------------------------------------
-void Backend::genMSBuildImportProps(std::ostream&) const
-{
-}
-//--------------------------------------------------------------------------
-void Backend::genMSBuildItemDefinitions(std::ostream &os) const
-{
-    // Add item definition for host compilation
-    os << "\t\t<ClCompile>" << std::endl;
-    os << "\t\t\t<WarningLevel>Level3</WarningLevel>" << std::endl;
-    os << "\t\t\t<Optimization Condition=\"'$(Configuration)'=='Release'\">MaxSpeed</Optimization>" << std::endl;
-    os << "\t\t\t<Optimization Condition=\"'$(Configuration)'=='Debug'\">Disabled</Optimization>" << std::endl;
-    os << "\t\t\t<FunctionLevelLinking Condition=\"'$(Configuration)'=='Release'\">true</FunctionLevelLinking>" << std::endl;
-    os << "\t\t\t<IntrinsicFunctions Condition=\"'$(Configuration)'=='Release'\">true</IntrinsicFunctions>" << std::endl;
-    os << "\t\t\t<ExceptionHandling>SyncCThrow</ExceptionHandling>" << std::endl;
-    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
-    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
-    os << "\t\t\t<FloatingPointModel>" << (getPreferences().optimizeCode ? "Fast" : "Precise") << "</FloatingPointModel>" << std::endl;
-    os << "\t\t\t<MultiProcessorCompilation>true</MultiProcessorCompilation>" << std::endl;
-    os << "\t\t</ClCompile>" << std::endl;
 
-    // Add item definition for linking
-    os << "\t\t<Link>" << std::endl;
-    os << "\t\t\t<GenerateDebugInformation>true</GenerateDebugInformation>" << std::endl;
-    os << "\t\t\t<EnableCOMDATFolding Condition=\"'$(Configuration)'=='Release'\">true</EnableCOMDATFolding>" << std::endl;
-    os << "\t\t\t<OptimizeReferences Condition=\"'$(Configuration)'=='Release'\">true</OptimizeReferences>" << std::endl;
-    os << "\t\t\t<SubSystem>Console</SubSystem>" << std::endl;
-    os << "\t\t\t<AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>" << std::endl;
-    os << "\t\t</Link>" << std::endl;
-}
-//--------------------------------------------------------------------------
-void Backend::genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const
+void Backend::genMSBuildCompileModule(const std::string &, std::ostream &) const
 {
-    os << "\t\t<ClCompile Include=\"" << moduleName << ".cc\" />" << std::endl;
+    assert(false);
 }
-//--------------------------------------------------------------------------
-void Backend::genMSBuildImportTarget(std::ostream&) const
+
+void Backend::genMSBuildImportTarget(std::ostream &) const
 {
+    assert(false);
 }
-//--------------------------------------------------------------------------
-bool Backend::isGlobalHostRNGRequired(const ModelSpecInternal &model) const
+
+bool Backend::isArrayDeviceObjectRequired() const
 {
-    // If any neuron groups require simulation RNGs or require RNG for initialisation, return true
-    // **NOTE** this takes postsynaptic model initialisation into account
-    if(std::any_of(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
-                   [](const ModelSpec::NeuronGroupValueType &n)
-                   {
-                       return n.second.isSimRNGRequired() || n.second.isInitRNGRequired();
-                   }))
-    {
-        return true;
-    }
-
-    // If any synapse groups require an RNG for weight update model initialisation, return true
-    if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
-                   [](const ModelSpec::SynapseGroupValueType &s)
-                   {
-                       return (s.second.isWUInitRNGRequired() || s.second.getSparseConnectivityInitialiser().isHostRNGRequired());
-                   }))
-    {
-        return true;
-    }
-
-    // If any custom updates require an RNG fo initialisation, return true
-    if(std::any_of(model.getCustomUpdates().cbegin(), model.getCustomUpdates().cend(),
-                   [](const ModelSpec::CustomUpdateValueType &c)
-                   {
-                       return (c.second.isInitRNGRequired());
-                   }))
-    {
-        return true;
-    }
-
-    // If any custom WU updates require an RNG fo initialisation, return true
-    if(std::any_of(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
-                   [](const ModelSpec::CustomUpdateWUValueType &c)
-                   {
-                       return (c.second.isInitRNGRequired());
-                   }))
-    {
-        return true;
-    }
-
-    // If any custom connectivity updates require an RNG fo initialisation or per-row, return true
-    if(std::any_of(model.getCustomConnectivityUpdates().cbegin(), model.getCustomConnectivityUpdates().cend(),
-                   [](const ModelSpec::CustomConnectivityUpdateValueType &c)
-                   {
-                       return (Utils::isRNGRequired(c.second.getVarInitialisers())
-                               || Utils::isRNGRequired(c.second.getPreVarInitialisers())
-                               || Utils::isRNGRequired(c.second.getPostVarInitialisers())
-                               || Utils::isRNGRequired(c.second.getRowUpdateCodeTokens())
-                               || Utils::isRNGRequired(c.second.getHostUpdateCodeTokens()));
-                   }))
-    {
-        return true;
-    }
     return false;
 }
-//--------------------------------------------------------------------------
+
+bool Backend::isArrayHostObjectRequired() const
+{
+    return false;
+}
+
+bool Backend::isGlobalHostRNGRequired(const ModelSpecInternal &) const
+{
+    return true;
+}
+
 bool Backend::isGlobalDeviceRNGRequired(const ModelSpecInternal &) const
 {
     return false;
 }
-//--------------------------------------------------------------------------
-Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged &) const
+
+bool Backend::isPopulationRNGInitialisedOnDevice() const
+{
+    return false;
+}
+
+bool Backend::isPostsynapticRemapRequired() const
+{
+    return true;
+}
+
+bool Backend::isHostReductionRequired() const
+{
+    return false;
+}
+
+size_t Backend::getDeviceMemoryBytes() const
+{
+    return 0;
+}
+
+BackendBase::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged &) const
 {
     return {};
 }
-//--------------------------------------------------------------------------
+
 boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
 {
-    boost::uuids::detail::sha1 hash;
-
-    // Update hash was name of backend
-    Utils::updateHash("SingleThreadedCPU", hash);
-    
-    // Update hash with preferences
-    getPreferences<Preferences>().updateHash(hash);
-
-    return hash.get_digest();
+    return {};
 }
-//--------------------------------------------------------------------------
+
+void Backend::genRemap(EnvironmentExternalBase &env) const
+{
+    env.printLine("// Loop through synapses in corresponding matrix row");
+    env.print("for(unsigned int j = 0; j < $(_row_length)[i]; j++)");
+    {
+        CodeStream::Scope b(env.getStream());
+
+        // Calculate column length and remapping
+        env.printLine("// Calculate index of this synapse in the row-major matrix");
+        env.printLine("const unsigned int rowMajorIndex = (i * $(_row_stride)) + j;");
+
+        env.printLine("// Using this, lookup postsynaptic target");
+        env.printLine("const unsigned int postIndex = $(_ind)[rowMajorIndex];");
+
+        env.printLine("// From this calculate index of this synapse in the column-major matrix");
+        env.printLine("const unsigned int colMajorIndex = (postIndex * $(_col_stride)) + $(_col_length)[postIndex];");
+
+        env.printLine("// Increment column length corresponding to this postsynaptic neuron");
+        env.printLine("$(_col_length)[postIndex]++;");
+
+        env.printLine("// Add remapping entry");
+        env.printLine("$(_remap)[colMajorIndex] = rowMajorIndex;");
+    }
+}
+
+void Backend::genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng, bool trueSpike) const
+{
+    const std::string suffix = trueSpike ? "" : "_event";
+    const std::string time = trueSpike ? "st" : "set";
+    if(trueSpike ? ng.getArchetype().isSpikeDelayRequired() : ng.getArchetype().isSpikeEventDelayRequired()) {
+        // Loop through neurons which spiked last timestep in parallel using foreach
+        env.print("foreach(i = 0 ... $(_spk_cnt" + suffix + ")[lastTimestepDelaySlot])");
+        {
+            CodeStream::Scope b(env.getStream());
+            env.printLine("$(_prev_" + time + ")[lastTimestepDelayOffset + $(_spk" + suffix + ")[lastTimestepDelayOffset + i]] = $(t) - $(dt);");
+        }
+    }
+    else {
+        // Loop through neurons which spiked last timestep in parallel using foreach
+        env.print("foreach(i = 0 ... $(_spk_cnt" + suffix + ")[0])");
+        {
+            CodeStream::Scope b(env.getStream());
+            env.printLine("$(_prev_" + time + ")[$(_spk" + suffix + ")[i]] = $(t) - $(dt);");
+        }
+    }
+}
+
+void Backend::genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike) const
+{
+    const bool delayRequired = (trueSpike ? ng.getArchetype().isSpikeDelayRequired()
+                                : ng.getArchetype().isSpikeEventDelayRequired());
+    const std::string suffix = trueSpike ? "" : "_event";
+
+    if(!delayRequired) {
+        // Atomically increment spike counter to get a unique index for this spike
+        // atomic_add_global returns the old value, so we use it directly as the index
+        env.printLine("const unsigned int spkIdx = atomic_add_local(&($(_spk_cnt" + suffix + ")[0]), 1u);");
+        
+        // Write spike to this unique location
+        env.printLine("$(_spk" + suffix + ")[spkIdx] = $(id);");
+    }
+    else {
+        // For delayed spikes, the logic is similar but uses the spike queue pointer
+        const std::string queueOffset = "$(_write_delay_offset) + ";
+        
+        // Atomically increment spike counter for the correct delay slot
+        // atomic_add_global returns the old value, so we use it directly as the index
+        env.printLine("const unsigned int spkIdx = atomic_add_local(&($(_spk_cnt" + suffix + ")[*$(_spk_que_ptr)]), 1u);");
+        
+        // Write spike to this unique location in the correct delay slot
+        env.printLine("$(_spk" + suffix + ")[" + queueOffset + "spkIdx] = $(id);");
+    }
+}
+
 void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
                                    double dt, bool trueSpike) const
 {
@@ -1793,241 +2051,104 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
 
     const bool delayRequired = (trueSpike ? sg.getArchetype().getSrcNeuronGroup()->isSpikeDelayRequired()
                                 : sg.getArchetype().getSrcNeuronGroup()->isSpikeEventDelayRequired());
+
+    // Asserts
     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ) {
-        // Create environment for generating presynaptic update code into seperate CodeStream
-        std::ostringstream preUpdateStream;
-        CodeStream preUpdate(preUpdateStream);
-        {
-            CodeStream::Scope b(preUpdate);
-            EnvironmentExternal preUpdateEnv(env, preUpdate);
-            preUpdateEnv.add(Type::Uint32.addConst(), "id_pre", "ipre");
+        assert(false);
+    }
+    if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
+        assert(false);
+    }
+    if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+        assert(false);
+    }
 
-            // Replace $(id_post) with first 'function' parameter as simulation code is
-            // going to be, in turn, substituted into Toeplitz connectivity generation code
-            // **YUCK** we need to do this in an initialiser so the $(0) doesn't get confused with those used in AddToXXXX
-            preUpdateEnv.add(Type::Uint32.addConst(), "id_post", "idPost",
-                             {preUpdateEnv.addInitialiser("const unsigned int idPost = $(0);")});
+    // SPARSE and DENSE connectivity
+    if(!(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) &&
+       !(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::DENSE)) {
+        throw std::runtime_error("Only SPARSE and DENSE connectivity are supported");
+    }
 
-            // Replace kernel indices with the subsequent 'function' parameters
-            // **YUCK** these also need doing in initialisers so the $(1) doesn't get confused with those used in addToPostDelay
-            for(size_t i = 0; i < sg.getArchetype().getKernelSize().size(); i++) {
-                const std::string iStr = std::to_string(i);
-                preUpdateEnv.add(Type::Uint32.addConst(), "id_kernel_" + iStr, "idKernel" + iStr,
-                                 {preUpdateEnv.addInitialiser("const unsigned int idKernel" + iStr + " = $(" + std::to_string(i + 1) + ");")});
-            }
-                    
-            // Add correct functions for apply synaptic input
-            preUpdateEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay", "$(_den_delay)[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");
-            preUpdateEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
-            preUpdateEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
-
-            // Generate spike update
-            if(trueSpike) {
-                sg.generateSpikeUpdate(*this, preUpdateEnv, 1, dt);
-            }
-            else {
-                sg.generateSpikeEventUpdate(*this, preUpdateEnv, 1, dt);
-            }
-        }
-
-        // Loop through Toeplitz matrix diagonals
-        env.print("for(unsigned int j = 0; j < $(_row_stride); j++)");
-        {
-            CodeStream::Scope b(env.getStream());
-
-            // Create second environment for initialising Toeplitz connectivity
-            EnvironmentExternal toeplitzEnv(env);
-            toeplitzEnv.add(Type::Uint32.addConst(), "id_diag", "j");
-            
-            // Define type
-            const auto addSynapseType = Type::ResolvedType::createFunction(
-                Type::Void, std::vector<Type::ResolvedType>{1ull + sg.getArchetype().getKernelSize().size(), Type::Uint32});
-
-            // Generate toeplitz connectivity generation code using custom for_each_synapse loop
-            sg.generateToeplitzConnectivity(
-                toeplitzEnv,
-                // Within for_each_synapse loops, define addSynapse function and id_pre
-                [addSynapseType](auto &env, auto &errorHandler)
-                {
-                    env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "addSynapse", 0}, addSynapseType, errorHandler);
-                    env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_pre", 0}, Type::Uint32.addConst(), errorHandler);
-                },
-                [addSynapseType, delayRequired, trueSpike, &eventSuffix, &preUpdateStream](auto &env, auto generateBody)
-                {
-                    // Detect spike events or spikes and do the update
-                    env.getStream() << "// process presynaptic events: " << (trueSpike ? "True Spikes" : "Spike type events") << std::endl;
-                    if(delayRequired) {
-                        env.print("for (unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[$(_pre_delay_slot)]; i++)");
-                    }
-                    else {
-                        env.print("for (unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[0]; i++)");
-                    }
-                    {
-                        CodeStream::Scope b(env.getStream());
-                        EnvironmentExternal bodyEnv(env);
-
-                        const std::string queueOffset = delayRequired ? "$(_pre_delay_offset) + " : "";
-                        bodyEnv.printLine("const unsigned int ipre = $(_src_spk" + eventSuffix + ")[" + queueOffset + "i];");
-                        
-                        // Add presynaptic index
-                        bodyEnv.add(Type::Uint32.addConst(), "id_pre", "ipre");
-
-                        // Add function substitution with parameters to add 
-                        bodyEnv.add(addSynapseType, "addSynapse", preUpdateStream.str());
-
-                        // Generate body of for_each_synapse loop within this new environment
-                        generateBody(bodyEnv);
-                    }
-                });
-        }
+    // Detect spike events or spikes and do the update
+    env.getStream() << "// process presynaptic events: " << (trueSpike ? "True Spikes" : "Spike type events") << std::endl;
+    if(delayRequired) {
+        env.print("for (uniform unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[$(_pre_delay_slot)]; i++)");
     }
     else {
-        // Detect spike events or spikes and do the update
-        env.getStream() << "// process presynaptic events: " << (trueSpike ? "True Spikes" : "Spike type events") << std::endl;
-        if(delayRequired) {
-            env.print("for (unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[$(_pre_delay_slot)]; i++)");
-        }
-        else {
-            env.print("for (unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[0]; i++)");
-        }
-        {
-            CodeStream::Scope b(env.getStream());
-            EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(env, sg);
+        env.print("for (uniform unsigned int i = 0; i < $(_src_spk_cnt" + eventSuffix + ")[0]; i++)");
+    }
+    {
+        CodeStream::Scope b(env.getStream());
+        EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(env, sg);
 
+        const std::string queueOffset = delayRequired ? "$(_pre_delay_offset) + " : "";
+        groupEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
+                     {groupEnv.addInitialiser("const uniform unsigned int idPre = $(_src_spk" + eventSuffix + ")[" + queueOffset + "i];")});
 
-            const std::string queueOffset = delayRequired ? "$(_pre_delay_offset) + " : "";
-            groupEnv.add(Type::Uint32.addConst(), "id_pre", "idPre",
-                         {groupEnv.addInitialiser("const unsigned int idPre = $(_src_spk" + eventSuffix + ")[" + queueOffset + "i];")});
-
-            // If connectivity is sparse
-            if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                groupEnv.printLine("const unsigned int npost = $(_row_length)[$(id_pre)];");
-                groupEnv.getStream() << "for (unsigned int j = 0; j < npost; j++)";
-                {
-                    CodeStream::Scope b(groupEnv.getStream());
-                    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(groupEnv, sg);
-
-                    const auto indexType = getSynapseIndexType(sg);
-                    const auto indexTypeName = indexType.getName();
-                    synEnv.add(indexType.addConst(), "id_syn", "idSyn",
-                               {synEnv.addInitialiser("const " + indexTypeName + " idSyn = ((" + indexTypeName + ")$(id_pre) * $(_row_stride)) + j;")});
-                    synEnv.add(Type::Uint32.addConst(), "id_post", "idPost",
-                               {synEnv.addInitialiser("const unsigned int idPost = $(_ind)[$(id_syn)];")});
-                    
-                    // Add correct functions for apply synaptic input
-                    synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay", "$(_den_delay)[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");
-                    synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
-                    synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
-
-                    if(trueSpike) {
-                        sg.generateSpikeUpdate(*this, synEnv, 1, dt);
-                    }
-                    else {
-                        sg.generateSpikeEventUpdate(*this, synEnv, 1, dt);
-                    }
-                }
-            }
-            else if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
-                throw std::runtime_error("The single-threaded CPU backend does not support procedural connectivity.");
-            }
-            else if((sg.getArchetype().getParallelismHint() == SynapseGroup::ParallelismHint::WORD_PACKED_BITMASK)
-                    && (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK))
+        // If connectivity is sparse
+        if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            groupEnv.printLine("const uniform unsigned int npost = $(_row_length)[$(id_pre)];");
+            
+            // ISPC
+            groupEnv.print("foreach (j = 0 ... npost)");
             {
-                // Determine the number of words in each row
-                groupEnv.printLine("const unsigned int rowWords = $(_row_stride) / 32;");
-                groupEnv.print("for(unsigned int w = 0; w < rowWords; w++)");
-                {
-                    CodeStream::Scope b(groupEnv.getStream());
+                CodeStream::Scope b(groupEnv.getStream());
+                EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(groupEnv, sg);
 
-                    // Read row word
-                    groupEnv.printLine("uint32_t connectivityWord = $(_gp)[($(id_pre) * rowWords) + w];");
+                const auto indexType = getSynapseIndexType(sg);
+                const auto indexTypeName = indexType.getName();
+                synEnv.add(indexType.addConst(), "id_syn", "idSyn",
+                           {synEnv.addInitialiser("const " + indexTypeName + " idSyn = ((" + indexTypeName + ")$(id_pre) * $(_row_stride)) + j;")});
+                synEnv.add(Type::Uint32.addConst(), "id_post", "idPost",
+                           {synEnv.addInitialiser("const unsigned int idPost = $(_ind)[$(id_syn)];")});
+                
+                // Add correct functions for apply synaptic input - atomic operations
+                synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay", 
+                           getAtomicOperation("&$(_den_delay)[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "]", "$(0)", sg.getScalarType(), AtomicOperation::ADD));
+                synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", 
+                           getAtomicOperation("&$(_out_post)[" + sg.getPostISynIndex(1, "$(id_post)") + "]", "$(0)", sg.getScalarType(), AtomicOperation::ADD));
+                synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
 
-                    // Set ipost to first synapse in connectivity word
-                    groupEnv.getStream() << "unsigned int ipost = w * 32;" << std::endl;
-                    groupEnv.add(Type::Uint32.addConst(), "id_post", "ipost");
-                    
-                    // Add correct functions for apply synaptic input
-                    groupEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay", "$(_den_delay)[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");
-                    groupEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
-                    groupEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
-
-                    // While there any bits left
-                    groupEnv.getStream() << "while(connectivityWord != 0)";
-                    {
-                        CodeStream::Scope b(groupEnv.getStream());
-
-                        // Cound leading zeros (as bits are indexed backwards this is index of next synapse)
-                        groupEnv.printLine("const int numLZ = gennCLZ(connectivityWord);");
-
-                        // Shift off zeros and the one just discovered
-                        // **NOTE** << 32 appears to result in undefined behaviour
-                        groupEnv.printLine("connectivityWord = (numLZ == 31) ? 0 : (connectivityWord << (numLZ + 1));");
-
-                        // Add to ipost
-                        groupEnv.printLine("ipost += numLZ;");
-
-                        // If we aren't in padding region
-                        // **TODO** don't bother checking if there is no padding
-                        groupEnv.print("if(ipost < $(num_post))");
-                        {
-                            CodeStream::Scope b(env.getStream());
-                            if(trueSpike) {
-                                sg.generateSpikeUpdate(*this, groupEnv, 1, dt);
-                            }
-                            else {
-                                sg.generateSpikeEventUpdate(*this, groupEnv, 1, dt);
-                            }
-                        }
-
-                        // Increment ipost to take into account fact the next CLZ will go from bit AFTER synapse
-                        groupEnv.printLine("ipost++;");
-                    }
+                if(trueSpike) {
+                    sg.generateSpikeUpdate(*this, synEnv, 1, dt);
+                }
+                else {
+                    sg.generateSpikeEventUpdate(*this, synEnv, 1, dt);
                 }
             }
-            // Otherwise (DENSE or BITMASK)
-            else {
-                groupEnv.print("for (unsigned int ipost = 0; ipost < $(num_post); ipost++)");
-                {
-                    CodeStream::Scope b(groupEnv.getStream());
-                    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(groupEnv, sg);
-                    synEnv.add(Type::Uint32, "id_post", "ipost");
-                    
-                    // Add correct functions for apply synaptic input
-                    synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay", "$(_den_delay)[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");
-                    synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
-                    synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
+        }
+        // Otherwise (DENSE)
+        else {
+            // ISPC
+            groupEnv.print("foreach (ipost = 0 ... $(num_post))");
+            {
+                CodeStream::Scope b(groupEnv.getStream());
+                EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(groupEnv, sg);
+                synEnv.add(Type::Uint32, "id_post", "ipost");
+                
+                // Add correct functions for apply synaptic input - use atomic operations for addToPost and addToPostDelay
+                synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay", "$(_den_delay)[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");
+                synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPost", "$(_out_post)[" + sg.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
+                synEnv.add(Type::getAddToPrePost(sg.getScalarType()), "addToPre", "$(_out_pre)[" + sg.getPreISynIndex(1, "$(id_pre)") + "] += $(0)");
 
-                    const auto indexType = getSynapseIndexType(sg);
-                    const auto indexTypeName = indexType.getName();
-                    if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                        synEnv.printLine("const " + indexTypeName + " gid = ((" + indexTypeName + ")$(id_pre) * $(_row_stride)) + $(id_post);");
+                const auto indexType = getSynapseIndexType(sg);
+                const auto indexTypeName = indexType.getName();
+                synEnv.add(indexType.addConst(), "id_syn", "idSyn",
+                           {synEnv.addInitialiser("const " + indexTypeName + " idSyn = ((" + indexTypeName + ")$(id_pre) * $(num_post)) + $(id_post);")});
 
-                        synEnv.print("if($(_gp)[gid / 32] & (0x80000000 >> (gid & 31)))");
-                        synEnv.getStream() << CodeStream::OB(20);
-                    }
-                    else {
-                        synEnv.add(indexType.addConst(), "id_syn", "idSyn",
-                                   {synEnv.addInitialiser("const " + indexTypeName + " idSyn = ((" + indexTypeName + ")$(id_pre) * $(num_post)) + $(id_post);")});
-                    }
-
-                    if(trueSpike) {
-                        sg.generateSpikeUpdate(*this, synEnv, 1, dt);
-                    }
-                    else {
-                        sg.generateSpikeEventUpdate(*this, synEnv, 1, dt);
-                    }
-
-                    if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                        synEnv.getStream() << CodeStream::CB(20);
-                    }
+                if(trueSpike) {
+                    sg.generateSpikeUpdate(*this, synEnv, 1, dt);
+                }
+                else {
+                    sg.generateSpikeEventUpdate(*this, synEnv, 1, dt);
                 }
             }
         }
     }
 }
-//--------------------------------------------------------------------------
+
 void Backend::genPostsynapticUpdate(EnvironmentExternalBase &env, PostsynapticUpdateGroupMerged &sg, 
-                                    double dt, bool trueSpike) const
+                                     double dt, bool trueSpike) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "_event";
@@ -2036,28 +2157,28 @@ void Backend::genPostsynapticUpdate(EnvironmentExternalBase &env, PostsynapticUp
     const bool delayRequired = (trueSpike ? sg.getArchetype().getTrgNeuronGroup()->isSpikeDelayRequired()
                                 : sg.getArchetype().getTrgNeuronGroup()->isSpikeEventDelayRequired());
     if (delayRequired) {
-        env.printLine("const unsigned int numSpikes = $(_trg_spk_cnt" + eventSuffix + ")[$(_post_delay_slot)];");
+        env.printLine("const uniform unsigned int numSpikes = $(_trg_spk_cnt" + eventSuffix + ")[$(_post_delay_slot)];");
     }
     else {
-        env.printLine("const unsigned int numSpikes = $(_trg_spk_cnt" + eventSuffix + ")[0];");
+        env.printLine("const uniform unsigned int numSpikes = $(_trg_spk_cnt" + eventSuffix + ")[0];");
     }
 
     // Loop through postsynaptic spikes
-    env.getStream() << "for (unsigned int j = 0; j < numSpikes; j++)";
+    env.getStream() << "for (uniform unsigned int j = 0; j < numSpikes; j++)";
     {
         CodeStream::Scope b(env.getStream());
 
         // **TODO** prod types
         const std::string offsetTrueSpkPost = delayRequired ? "$(_post_delay_offset) + " : "";
-        env.printLine("const unsigned int spike = $(_trg_spk" + eventSuffix + ")[" + offsetTrueSpkPost + "j];");
+        env.printLine("const uniform unsigned int spike = $(_trg_spk" + eventSuffix + ")[" + offsetTrueSpkPost + "j];");
 
         // Loop through column of presynaptic neurons
         if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            env.printLine("const unsigned int npre = $(_col_length)[spike];");
-            env.getStream() << "for (unsigned int i = 0; i < npre; i++)";
+            env.printLine("const uniform unsigned int npre = $(_col_length)[spike];");
+            env.getStream() << "foreach (i = 0 ... npre)";
         }
         else {
-            env.print("for (unsigned int i = 0; i < $(num_pre); i++)");
+            env.print("foreach (i = 0 ... $(num_pre))");
         }
         {
             CodeStream::Scope b(env.getStream());
@@ -2093,44 +2214,7 @@ void Backend::genPostsynapticUpdate(EnvironmentExternalBase &env, PostsynapticUp
         }
     }
 }
-//--------------------------------------------------------------------------
-void Backend::genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng, bool trueSpike) const
-{
-    const std::string suffix = trueSpike ? "" : "_event";
-    const std::string time = trueSpike ? "st" : "set";
-    if(trueSpike ? ng.getArchetype().isSpikeDelayRequired() : ng.getArchetype().isSpikeEventDelayRequired()) {
-        // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-        env.print("for(unsigned int i = 0; i < $(_spk_cnt" + suffix + ")[lastTimestepDelaySlot]; i++)");
-        {
-            CodeStream::Scope b(env.getStream());
-            env.printLine("$(_prev_" + time + ")[lastTimestepDelayOffset + $(_spk" + suffix + ")[lastTimestepDelayOffset + i]] = $(t) - $(dt);");
-        }
-    }
-    else {
-        // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-        env.print("for(unsigned int i = 0; i < $(_spk_cnt" + suffix + ")[0]; i++)");
-        {
-            CodeStream::Scope b(env.getStream());
-            env.printLine("$(_prev_" + time + ")[$(_spk" + suffix + ")[i]] = $(t) - $(dt);");
-        }
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike) const
-{
-    const bool delayRequired = (trueSpike ? ng.getArchetype().isSpikeDelayRequired()
-                                : ng.getArchetype().isSpikeEventDelayRequired());
-    const std::string queueOffset = delayRequired ? "$(_write_delay_offset) + " : "";
-    const std::string suffix = trueSpike ? "" : "_event";
-    env.print("$(_spk" + suffix + ")[" + queueOffset + "$(_spk_cnt" + suffix + ")");
-    if(delayRequired) {
-        env.print("[*$(_spk_que_ptr)]++]");
-    }
-    else {
-        env.getStream() << "[0]++]";
-    }
-    env.printLine(" = $(id);");
-}
+
 //--------------------------------------------------------------------------
 void Backend::genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateGroupMerged &cg, const std::string &idxName) const
 {
@@ -2151,5 +2235,4 @@ void Backend::genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateW
         {
             return cg.getVarRefIndex(1, varRef.getVarDims(), index);
         });
-}
-}   // namespace GeNN::CodeGenerator::SingleThreadedCPU
+}   // namespace GeNN::CodeGenerator::ISPC

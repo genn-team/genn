@@ -11,6 +11,12 @@ ifdef HIP_PATH
 	BACKENDS	+=hip_backend
 endif
 
+# Check if ISPC compiler is available
+ISPC_AVAILABLE := $(shell which ispc 2>/dev/null)
+ifdef ISPC_AVAILABLE
+	BACKENDS	+=ispc_backend
+endif
+
 # Build list of libraries
 BACKEND_LIBS		:=$(BACKENDS:%=$(LIBRARY_DIRECTORY)/libgenn_%$(GENN_PREFIX).$(LIBRARY_EXTENSION))
 
@@ -32,6 +38,9 @@ cuda_backend: genn
 
 hip_backend: genn
 	$(MAKE) -C src/genn/backends/hip
+
+ispc_backend: genn
+	$(MAKE) -C src/genn/backends/ispc
 
 clean:
 	@# Delete all objects, dependencies and coverage files if object directory exists

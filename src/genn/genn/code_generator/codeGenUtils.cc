@@ -23,12 +23,39 @@
 //----------------------------------------------------------------------------
 namespace GeNN::CodeGenerator
 {
+HostTimer::HostTimer(CodeStream &codeStream, const std::string &name, bool timingEnabled)
+:   m_CodeStream(codeStream), m_Name(name), m_TimingEnabled(timingEnabled)
+{
+    // Record start event
+    if(m_TimingEnabled) {
+        m_CodeStream.get() << "const auto " << m_Name << "Start = std::chrono::high_resolution_clock::now();" << std::endl;
+    }
+}
+//----------------------------------------------------------------------------
+HostTimer::~HostTimer()
+{
+    // Record stop event
+    if(m_TimingEnabled) {
+        m_CodeStream.get() << m_Name << "Time += std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - " << m_Name << "Start).count();" << std::endl;
+    }
+}
+//----------------------------------------------------------------------------
 void genTypeRange(CodeStream &os, const Type::ResolvedType &type, const std::string &prefix)
 {
     const auto &numeric = type.getNumeric();
     os << "#define " << prefix << "_MIN " << Type::writeNumeric(numeric.min, type) << std::endl;
 
     os << "#define " << prefix << "_MAX " << Type::writeNumeric(numeric.max, type) << std::endl;
+}
+//----------------------------------------------------------------------------
+std::string getHostRestrictKeyword()
+{
+    // **YUCK** restrict isn't standardised in C++
+#ifdef _WIN32
+    return " __restrict";
+#else
+    return " __restrict__";
+#endif
 }
 //----------------------------------------------------------------------------
 void prettyPrintExpression(const std::vector<Transpiler::Token> &tokens, const Type::TypeContext &typeContext, 

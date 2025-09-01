@@ -1,9 +1,9 @@
 import os
+import shutil
 import sys
 from copy import deepcopy
 from platform import system, uname
 from psutil import cpu_count
-from shutil import copytree, rmtree
 from subprocess import check_call
 from pybind11.setup_helpers import Pybind11Extension, build_ext, WIN, MACOS
 from setuptools import find_packages, setup
@@ -39,6 +39,9 @@ hip_path = os.environ.get("HIP_PATH")
 # Is HIP installed
 hip_installed = hip_path is not None and os.path.exists(hip_path)
 
+# Is ISPC compiler available?
+ispc_installed = shutil.which("ispc") is not None
+
 # Are we on Linux?
 # **NOTE** Pybind11Extension provides WIN and MAC
 LINUX = system() == "Linux"
@@ -67,8 +70,6 @@ pygenn_src = os.path.join(pygenn_path, "src")
 pygenn_include = os.path.join(pygenn_path, "include")
 genn_include = os.path.join(genn_path, "include", "genn", "genn")
 genn_third_party_include = os.path.join(genn_path, "include", "genn", "third_party")
-genn_share = os.path.join(genn_path, "share", "genn")
-pygenn_share = os.path.join(pygenn_path, "share")
 
 # Always package LibGeNN
 if WIN:
@@ -76,17 +77,6 @@ if WIN:
                     "libffi" + genn_lib_suffix + ".dll"]
 else:
     package_data = ["libgenn" + genn_lib_suffix + ".so"]
-
-
-# Copy GeNN 'share' tree into pygenn and add all files to package
-# **THINK** this could be done on a per-backend basis
-rmtree(pygenn_share, ignore_errors=True)
-copytree(genn_share, pygenn_share)
-for root, _, filenames in os.walk(pygenn_share):
-    for f in filenames:
-        f_path = os.path.join(root, f)
-        if os.path.isfile(f_path):
-            package_data.append(f_path)
 
 # Define standard kwargs for building all extensions
 genn_extension_kwargs = {
@@ -139,11 +129,12 @@ backends = [("single_threaded_cpu", "singleThreadedCPU", {})]
 # If CUDA was found, add backend configuration
 if cuda_installed:
     # Get CUDA library directory
+    # **NOTE** $(CUDA_PATH)/lib/x64 is correct for system CUDA installs on Windows but not conda
     cuda_library_dirs = []
     if MACOS:
         cuda_library_dirs.append(os.path.join(cuda_path, "lib"))
     elif WIN:
-        cuda_library_dirs.append(os.path.join(cuda_path, "lib", "x64"))
+        cuda_library_dirs.append(os.environ.get("CudaLibraryPath", os.path.join(cuda_path, "lib", "x64")))
     else:
         cuda_library_dirs.append(os.path.join(cuda_path, "lib64"))
 
@@ -196,6 +187,10 @@ if hip_installed:
                       "include_dirs": hip_include_dirs,
                       "library_dirs": hip_library_dirs,
                       "extra_compile_args": hip_extra_compile_args}))
+
+# If ISPC compiler was found, add backend configuration
+if ispc_installed:
+    backends.append(("ispc", "ispc", {}))
 
 ext_modules = [
     Pybind11Extension("_runtime",

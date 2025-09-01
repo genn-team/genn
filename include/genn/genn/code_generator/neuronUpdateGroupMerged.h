@@ -42,8 +42,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(const BackendBase &backend, EnvironmentExternalBase &env,
-                      NeuronUpdateGroupMerged &ng, unsigned int batchSize);
+        void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+                      unsigned int batchSize);
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -170,7 +170,7 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
     
-    void generateNeuronUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize,
+    void generateNeuronUpdate(EnvironmentExternalBase &env, unsigned int batchSize,
                               BackendBase::HandlerEnv genEmitTrueSpike,
                               BackendBase::GroupHandlerEnv<SynSpikeEvent> genEmitSpikeLikeEvent);
     

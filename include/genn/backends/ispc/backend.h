@@ -16,7 +16,10 @@
 // Forward declarations
 namespace GeNN::CodeGenerator
 {
+    class ModelSpecMerged;
+    class CustomUpdateGroupMerged;
     class CustomUpdateWUGroupMergedBase;
+    struct KernelBlockSize;
 }
 namespace filesystem
 {
@@ -24,31 +27,65 @@ namespace filesystem
 }
 
 //--------------------------------------------------------------------------
-// GeNN::CodeGenerator::SingleThreadedCPU::Preferences
+// GeNN::CodeGenerator::ISPC::Preferences
 //--------------------------------------------------------------------------
-namespace GeNN::CodeGenerator::SingleThreadedCPU
+namespace GeNN::CodeGenerator::ISPC
 {
 struct Preferences : public PreferencesBase
 {
+    //! Which SIMD instruction set to target e.g. sse4, avx, avx2, avx512skx-i32x8
+    std::string targetISA = "avx2";
+
+    //! Update hash with preferences
+    void updateHash(boost::uuids::detail::sha1 &hash) const;
+
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::SingleThreadedCPU::Backend
+// GeNN::CodeGenerator::ISPC::State
 //--------------------------------------------------------------------------
-class State : public Runtime::StateBase
+class State : public GeNN::Runtime::StateBase
 {
+public:
+    State(const GeNN::Runtime::Runtime &runtime);
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::SingleThreadedCPU::Backend
+// GeNN::CodeGenerator::ISPC::Array
+//--------------------------------------------------------------------------
+class Array : public GeNN::Runtime::ArrayBase
+{
+public:
+    Array(const Type::ResolvedType &type, size_t count, 
+          VarLocation location, bool uninitialized, size_t alignment);
+    
+    virtual ~Array();
+    
+    //------------------------------------------------------------------------
+    // ArrayBase virtuals
+    //------------------------------------------------------------------------
+    virtual void allocate(size_t count) final;
+    virtual void free() final;
+    virtual void pushToDevice() final;
+    virtual void pullFromDevice() final;
+    virtual void pushSlice1DToDevice(size_t sliceIndex, size_t sliceSize) final;
+    virtual void pullSlice1DFromDevice(size_t sliceIndex, size_t sliceSize) final;
+    virtual void memsetDeviceObject(int value) final;
+    virtual void serialiseDeviceObject(std::vector<std::byte> &result, bool compress) const final;
+    virtual void serialiseHostObject(std::vector<std::byte> &result, bool compress) const final;
+
+private:
+    size_t m_Alignment;
+};
+
+
+//--------------------------------------------------------------------------
+// GeNN::CodeGenerator::ISPC::Backend
 //--------------------------------------------------------------------------
 class BACKEND_EXPORT Backend : public BackendBase
 {
 public:
-    Backend(const Preferences &preferences)
-    :   BackendBase(preferences)
-    {
-    }
+    Backend(const Preferences &preferences);
 
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
@@ -56,10 +93,10 @@ public:
     virtual void genNeuronUpdate(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged, 
                                  BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const final;
 
-    virtual void genSynapseUpdate(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged, 
+    virtual void genSynapseUpdate(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
                                   BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const final;
 
-    virtual void genCustomUpdate(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged,
+    virtual void genCustomUpdate(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged, 
                                  BackendBase::MemorySpaces &memorySpaces, HostHandler preambleHandler) const final;
 
     virtual void genInit(CodeStream &os, FileStreamCreator streamCreator, ModelSpecMerged &modelMerged, 
@@ -73,40 +110,30 @@ public:
     virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
 
-    //! Create backend-specific runtime state object
-    /*! \param runtime  runtime object */
     virtual std::unique_ptr<GeNN::Runtime::StateBase> createState(const Runtime::Runtime &runtime) const final;
 
-    //! Create backend-specific array object
-    /*! \param type         data type of array
-        \param count        number of elements in array, if non-zero will allocate
-        \param location     location of array e.g. device-only*/
     virtual std::unique_ptr<Runtime::ArrayBase> createArray(const Type::ResolvedType &type, size_t count, 
                                                             VarLocation location, bool uninitialized) const final;
 
-    //! Create array of backend-specific population RNGs (if they are initialised on host this will occur here)
-    /*! \param count        number of RNGs required*/
-    virtual std::unique_ptr<Runtime::ArrayBase> createPopulationRNG(size_t) const final{ return std::unique_ptr<Runtime::ArrayBase>(); }
+    virtual std::unique_ptr<Runtime::ArrayBase> createPopulationRNG(size_t) const final;
 
-    //! Generate code to allocate variable with a size known at runtime
     virtual void genLazyVariableDynamicAllocation(CodeStream &os, 
                                                   const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
                                                   const std::string &countVarName) const final;
 
-    //! Generate code for pushing a variable with a size known at runtime to the 'device'
     virtual void genLazyVariableDynamicPush(CodeStream &os, 
                                             const Type::ResolvedType &type, const std::string &name,
                                             VarLocation loc, const std::string &countVarName) const final;
 
-    //! Generate code for pulling a variable with a size known at runtime from the 'device'
     virtual void genLazyVariableDynamicPull(CodeStream &os, 
                                             const Type::ResolvedType &type, const std::string &name,
                                             VarLocation loc, const std::string &countVarName) const final;
 
-    //! Generate code for pushing a new pointer to a dynamic variable into the merged group structure on 'device'
     virtual void genMergedDynamicVariablePush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
                                               const std::string &groupIdx, const std::string &fieldName,
                                               const std::string &egpName) const final;
+
+    virtual std::string getMergedGroupFieldHostTypeName(const Type::ResolvedType &type) const final;
 
     virtual void genPopVariableInit(EnvironmentExternalBase &env, HandlerEnv handler) const final;
     virtual void genVariableInit(EnvironmentExternalBase &env, const std::string &count, const std::string &indexVarName, HandlerEnv handler) const final;
@@ -115,25 +142,21 @@ public:
     virtual void genKernelSynapseVariableInit(EnvironmentExternalBase &env, SynapseInitGroupMerged &sg, HandlerEnv handler) const final;
     virtual void genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const final;
 
-    //! Get suitable atomic *lhsPointer += rhsValue or *lhsPointer |= rhsValue style operation
     virtual std::string getAtomicOperation(const std::string &lhsPointer, const std::string &rhsValue,
                                            const Type::ResolvedType &type, AtomicOperation op = AtomicOperation::ADD) const final;
 
-    //! GeNN knows that pointers used in some places in the code e.g. in merged groups are
-    //! "restricted" i.e. not aliased. What keyword should be used to indicate this?
-    virtual std::string getRestrictKeyword() const final;
+    virtual std::string getReductionOperation(const std::string &reduction, const std::string &value,
+                                              VarAccessMode access, const Type::ResolvedType &type) const final;
 
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free) const final;
     virtual void genTimer(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise, 
                           const std::string &name, bool updateInStepTime) const final;
-
-    //! Generate code to return amount of free 'device' memory in bytes
+    
     virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const final;
-
-     //! On backends which support it, generate a runtime assert
+    
     virtual void genAssert(CodeStream &os, const std::string &condition) const final;
 
-    virtual bool shouldUseNMakeBuildSystem() const final{ return false; }
+    virtual bool shouldUseNMakeBuildSystem() const final{ return true; }
 
     virtual void genMakefilePreamble(std::ostream &os, const std::vector<std::string> &moduleNames) const final;
     virtual void genMakefileLinkRule(std::ostream &os) const final;
@@ -148,55 +171,53 @@ public:
     virtual void genMSBuildItemDefinitions(std::ostream &os) const final;
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const final;
     virtual void genMSBuildImportTarget(std::ostream &os) const final;
-
-    //! As well as host pointers, are device objects required?
-    virtual bool isArrayDeviceObjectRequired() const final{ return false; }
-
-    //! As well as host pointers, are additional host objects required e.g. for buffers in OpenCL?
-    virtual bool isArrayHostObjectRequired() const final{ return false; }
+    
+    virtual bool isArrayDeviceObjectRequired() const final;
+    
+    virtual bool isArrayHostObjectRequired() const final;
 
     virtual bool isGlobalHostRNGRequired(const ModelSpecInternal &model) const final;
     virtual bool isGlobalDeviceRNGRequired(const ModelSpecInternal &model) const final;
+    
+    virtual bool isPopulationRNGInitialisedOnDevice() const final;
 
-    //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
-    virtual bool isPopulationRNGInitialisedOnDevice() const final { return false; }
+    virtual bool isPostsynapticRemapRequired() const final;
+    
+    virtual bool isHostReductionRequired() const final;
+    
+    virtual size_t getDeviceMemoryBytes() const final;
 
-    virtual bool isPostsynapticRemapRequired() const final{ return true; }
-
-    //! Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels
-    virtual bool isHostReductionRequired() const final { return false; }
-
-    //! How many bytes of memory does 'device' have
-    virtual size_t getDeviceMemoryBytes() const final{ return 0; }
-
-    //! Some backends will have additional small, fast, memory spaces for read-only data which might
-    //! Be well-suited to storing merged group structs. This method returns the prefix required to
-    //! Place arrays in these and their size in preferential order
+    virtual std::string getRestrictKeyword() const override{ return ""; }
+    
+    virtual std::string getUniformKeyword() const override{ return "uniform "; }
+    
     virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const final;
-
-    //! Get hash digest of this backends identification and the preferences it has been configured with
+    
     virtual boost::uuids::detail::sha1::digest_type getHashDigest() const final;
 
+    //--------------------------------------------------------------------------
+    // Public API
+    //--------------------------------------------------------------------------
+    //! Build generated code
+    /*! \param modelSpecMerged     merged model to generate code for
+        \param outputPath          path to which code should be generated
+        \param compiler            compiler to use to build code
+        \param runtimeSymbols      map of symbol names to their addresses in the runtime library */
+    void build(const ModelSpecMerged &modelSpecMerged, const filesystem::path &outputPath,
+               const std::string &compiler, const std::map<std::string, size_t> &runtimeSymbols) const;
+
 private:
-    //--------------------------------------------------------------------------
-    // Private methods
-    //--------------------------------------------------------------------------
-    void genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
-                              double dt, bool trueSpike) const;
+    void genRemap(EnvironmentExternalBase &env) const;
+    void genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng, bool trueSpike) const;
+    void genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike) const;
+    void genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, double dt, bool trueSpike) const;
     void genPostsynapticUpdate(EnvironmentExternalBase &env, PostsynapticUpdateGroupMerged &sg, 
                                double dt, bool trueSpike) const;
 
-    void genPrevEventTimeUpdate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng,
-                                bool trueSpike) const;
-
-    void genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, bool trueSpike) const;
-
     //! Helper to generate code to copy reduced custom update group variables back to memory
-    /*! Because reduction operations are unnecessary in unbatched single-threaded CPU models so there's no need to actually reduce */
     void genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateGroupMerged &cg, const std::string &idxName) const;
 
     //! Helper to generate code to copy reduced custom weight update group variables back to memory
-    /*! Because reduction operations are unnecessary in unbatched single-threaded CPU models so there's no need to actually reduce */
     void genWriteBackReductions(EnvironmentExternalBase &env, CustomUpdateWUGroupMergedBase &cg, const std::string &idxName) const;
 
     template<typename G, typename R>
@@ -223,5 +244,42 @@ private:
             }
         }
     }
+
+    template<typename T>
+    void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups) const
+    {
+        // Loop through groups
+        for(const auto &g : groups) {
+            os << "static uniform Merged" << T::name << "Group" << g.getIndex();
+            os << " merged" << T::name << "Group" << g.getIndex();
+            os << "[" << g.getGroups().size() << "];" << std::endl;
+
+            if(!g.getFields().empty()) {
+                const auto sortedFields = g.getSortedFields(*this);
+
+                os << "export void pushMerged" << T::name << "Group" << g.getIndex() << "ToDevice(uniform unsigned int idx, ";
+                for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
+                    const auto &f = sortedFields[fieldIndex];
+                    os << "uniform " << f.type.getName();
+                    if(f.type.isPointer()) {
+                        os << " uniform";
+                    }
+                    os << " " << f.name;
+                    if(fieldIndex != (sortedFields.size() - 1)) {
+                        os << ", ";
+                    }
+                }
+                os << ")";
+                {
+                    CodeStream::Scope b(os);
+                    // Loop through sorted fields and set array entry
+                    
+                    for(const auto &f : sortedFields) {
+                        os << "merged" << T::name << "Group" << g.getIndex() << "[idx]." << f.name << " = " << f.name << ";" << std::endl;
+                    }
+                }
+            }
+        }
+    }
 };
-}   // namespace GeNN::SingleThreadedCPU::CodeGenerator
+}

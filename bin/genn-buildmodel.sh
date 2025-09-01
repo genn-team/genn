@@ -5,6 +5,7 @@ genn_help () {
     echo "genn-buildmodel.sh script usage:"
     echo "genn-buildmodel.sh [cdho] model"
     echo "-c            generate simulation code for the CPU"
+    echo "-b            generate simulation code for ISCP"
     echo "-p            generate simulation code for HIP"
     echo "-d            enables the debugging mode"
     echo "-m            generate MPI simulation code"
@@ -32,8 +33,9 @@ GENERATOR_MAKEFILE="MakefileCUDA"
 CXX_STANDARD="c++17"
 FORCE_REBUILD=0
 while [[ -n "${!OPTIND}" ]]; do
-    while getopts "clpdvfs:o:i:h" option; do
+    while getopts "cbpdvfs:o:i:h" option; do
     case $option in
+        b) GENERATOR_MAKEFILE="MakefileISPC";;
         c) GENERATOR_MAKEFILE="MakefileSingleThreadedCPU";;
         p) GENERATOR_MAKEFILE="MakefileHIP";;
         d) DEBUG=1;;
