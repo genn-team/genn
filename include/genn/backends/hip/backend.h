@@ -237,10 +237,6 @@ protected:
 
     virtual void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY = 1) const final;
 
-    //! rocRand and cuRand name the internals the XOR shift RNG structure differently - get correct name
-    virtual std::string getXORShiftValueName() const final;
-
-private:
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
