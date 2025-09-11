@@ -347,45 +347,48 @@ std::string Backend::getAtomic(const Type::ResolvedType &type, AtomicOperation o
 //--------------------------------------------------------------------------
 void Backend::genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const
 {
-//#if defined(__HIP_PLATFORM_NVIDIA__)
-//    BackendCUDAHIP::genPopulationRNGInit(os, globalRNG, seed, sequence);
-//#else
+#if defined(__HIP_PLATFORM_NVIDIA__)
+    // Superclass
+    BackendCUDAHIP::genPopulationRNGInit(os, globalRNG, seed, sequence);
+#else
     // Initialise RNG directly
     os << "hiprand_init(" << seed << ", " << sequence << ", 0, &" << globalRNG << ");" << std::endl;
-//#endif
+#endif
 }
 //--------------------------------------------------------------------------
 void Backend::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env) const
 {
-//#if defined(__HIP_PLATFORM_NVIDIA__)
-//    BackendCUDAHIP::buildPopulationRNGEnvironment(env);
-//#else
+#if defined(__HIP_PLATFORM_NVIDIA__)
+    // Superclass
+    BackendCUDAHIP::buildPopulationRNGEnvironment(env);
+#else
     // Use internal RNG directly
     // **NOTE** rocRand tries to be way too smart and hides the internal
     // state of the RNGs in C++ classes so you can't perform this trick
     env.add(getPopulationRNGInternalType(), "_rng", "$(_rng_internal)");
-//#endif
+#endif
 }
 //--------------------------------------------------------------------------
 void Backend::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const
 {
-//#if defined(__HIP_PLATFORM_NVIDIA__)
-//    BackendCUDAHIP::buildPopulationRNGEnvironment(env);
-//#else
+#if defined(__HIP_PLATFORM_NVIDIA__)
+    // Superclass
+    BackendCUDAHIP::buildPopulationRNGEnvironment(env);
+#else
     // Use internal RNG directly
     // **NOTE** rocRand tries to be way too smart and hides the internal
     // state of the RNGs in C++ classes so you can't perform this trick
     env.add(getPopulationRNGInternalType(), "_rng", "$(_rng_internal)");
-//#endif
+#endif
 }
 //--------------------------------------------------------------------------
 Type::ResolvedType Backend::getPopulationRNGType() const
 {
-//#if defined(__HIP_PLATFORM_NVIDIA__)
-//    return BackendCUDAHIP::getPopulationRNGType();
-//#else
+#if defined(__HIP_PLATFORM_NVIDIA__)
+    return BackendCUDAHIP::getPopulationRNGType();
+#else
     return getPopulationRNGInternalType();
-//#endif
+#endif
 }
 //--------------------------------------------------------------------------
 void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
