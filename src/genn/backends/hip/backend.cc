@@ -345,12 +345,13 @@ std::string Backend::getAtomic(const Type::ResolvedType &type, AtomicOperation o
     }
 }
 //--------------------------------------------------------------------------
-Type::ResolvedType Backend::getPopulationRNGType() const
+void Backend::genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const
 {
 //#if defined(__HIP_PLATFORM_NVIDIA__)
-//    return BackendCUDAHIP::getPopulationRNGType();
+//    BackendCUDAHIP::genPopulationRNGInit(os, globalRNG, seed, sequence);
 //#else
-    return getPopulationRNGInternalType();
+    // Initialise RNG directly
+    os << "hiprand_init(" << seed << ", " << sequence << ", 0, &" << globalRNG << ");" << std::endl;
 //#endif
 }
 //--------------------------------------------------------------------------
@@ -359,6 +360,9 @@ void Backend::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<NeuronUp
 //#if defined(__HIP_PLATFORM_NVIDIA__)
 //    BackendCUDAHIP::buildPopulationRNGEnvironment(env);
 //#else
+    // Use internal RNG directly
+    // **NOTE** rocRand tries to be way too smart and hides the internal
+    // state of the RNGs in C++ classes so you can't perform this trick
     env.add(getPopulationRNGInternalType(), "_rng", "$(_rng_internal)");
 //#endif
 }
@@ -368,7 +372,19 @@ void Backend::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomCo
 //#if defined(__HIP_PLATFORM_NVIDIA__)
 //    BackendCUDAHIP::buildPopulationRNGEnvironment(env);
 //#else
+    // Use internal RNG directly
+    // **NOTE** rocRand tries to be way too smart and hides the internal
+    // state of the RNGs in C++ classes so you can't perform this trick
     env.add(getPopulationRNGInternalType(), "_rng", "$(_rng_internal)");
+//#endif
+}
+//--------------------------------------------------------------------------
+Type::ResolvedType Backend::getPopulationRNGType() const
+{
+//#if defined(__HIP_PLATFORM_NVIDIA__)
+//    return BackendCUDAHIP::getPopulationRNGType();
+//#else
+    return getPopulationRNGInternalType();
 //#endif
 }
 //--------------------------------------------------------------------------

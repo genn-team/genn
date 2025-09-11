@@ -81,7 +81,7 @@ public:
     virtual void genSharedMemBarrier(CodeStream &os) const final;
 
     //! For SIMT backends which initialize RNGs on device, initialize population RNG with specified seed and sequence
-    virtual void genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const final;
+    virtual void genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const override;
 
     //! Generate code to skip ahead local copy of global RNG
     virtual std::string genGlobalRNGSkipAhead(CodeStream &os, const std::string &sequence) const final;
