@@ -345,7 +345,7 @@ std::string Backend::getAtomic(const Type::ResolvedType &type, AtomicOperation o
     }
 }
 //--------------------------------------------------------------------------
-Type::ResolvedType getPopulationRNGType() const
+Type::ResolvedType Backend::getPopulationRNGType() const
 {
 //#if defined(__HIP_PLATFORM_NVIDIA__)
 //    return BackendCUDAHIP::getPopulationRNGType();
