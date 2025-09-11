@@ -359,7 +359,7 @@ void Backend::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<NeuronUp
 //#if defined(__HIP_PLATFORM_NVIDIA__)
 //    BackendCUDAHIP::buildPopulationRNGEnvironment(env);
 //#else
-    env.add(getPopulationRNGInternalType(), "_rng", "$(_rng_internal)",
+    env.add(getPopulationRNGInternalType(), "_rng", "$(_rng_internal)");
 //#endif
 }
 //--------------------------------------------------------------------------
@@ -368,7 +368,7 @@ void Backend::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomCo
 //#if defined(__HIP_PLATFORM_NVIDIA__)
 //    BackendCUDAHIP::buildPopulationRNGEnvironment(env);
 //#else
-    env.add(getPopulationRNGInternalType(), "_rng", "$(_rng_internal)",
+    env.add(getPopulationRNGInternalType(), "_rng", "$(_rng_internal)");
 //#endif
 }
 //--------------------------------------------------------------------------
