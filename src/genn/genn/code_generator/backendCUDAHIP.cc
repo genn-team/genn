@@ -186,7 +186,7 @@ size_t getGroupStartIDSize(const std::vector<T> &mergedGroups)
 //-----------------------------------------------------------------------
 template<typename G>
 void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<G> &env, const std::string &randPrefix,
-                                   const Type::ResolvedType &popRNGInternalType)
+                                   const std::string &xorShiftValueName, const Type::ResolvedType &popRNGInternalType)
 {
     // Generate initialiser code to create CURandState from internal RNG state
     std::stringstream init;
@@ -195,7 +195,7 @@ void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<G> &env, const st
     // Copy useful components into full object
     init << "rngState.d = $(_rng_internal).d;" << std::endl;
     for(int i = 0; i < 5; i++) {
-        init << "rngState.v[" << i << "] = $(_rng_internal).v[" << i << "];" << std::endl;
+        init << "rngState." << xorShiftValueName << "[" << i << "] = $(_rng_internal).v[" << i << "];" << std::endl;
     }
 
     // Zero box-muller flag
@@ -207,7 +207,7 @@ void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<G> &env, const st
     // Copy useful components into internal object
     finalise << "$(_rng_internal).d = rngState.d;" << std::endl;
     for(int i = 0; i < 5; i++) {
-        finalise << "$(_rng_internal).v[" << i << "] = rngState.v[" << i << "];" << std::endl;
+        finalise << "$(_rng_internal).v[" << i << "] = rngState." << xorShiftValueName << "[" << i << "];" << std::endl;
     }
 
     // Add alias with initialiser and destructor statements
@@ -275,7 +275,7 @@ void BackendCUDAHIP::genPopulationRNGInit(CodeStream &os, const std::string &glo
     // Copy useful components into internal object
     os << globalRNG << ".d = rngState.d;" << std::endl;
     for(int i = 0; i < 5; i++) {
-        os << globalRNG << ".v[" << i << "] = rngState.v[" << i << "];" << std::endl;
+        os << globalRNG << ".v[" << i << "] = rngState." << getXORShiftValueName() << "[" << i << "];" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
@@ -294,12 +294,14 @@ Type::ResolvedType BackendCUDAHIP::getPopulationRNGType() const
 //--------------------------------------------------------------------------
 void BackendCUDAHIP::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env) const
 {
-    ::buildPopulationRNGEnvironment(env, getRandPrefix(), getPopulationRNGInternalType());
+    ::buildPopulationRNGEnvironment(env, getRandPrefix(), getXORShiftValueName(),
+                                    getPopulationRNGInternalType());
 }
 //--------------------------------------------------------------------------
 void BackendCUDAHIP::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const
 {
-    ::buildPopulationRNGEnvironment(env, getRandPrefix(), getPopulationRNGInternalType());
+    ::buildPopulationRNGEnvironment(env, getRandPrefix(), getXORShiftValueName(),
+                                    getPopulationRNGInternalType());
 }
 //--------------------------------------------------------------------------
 void BackendCUDAHIP::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelMerged, 

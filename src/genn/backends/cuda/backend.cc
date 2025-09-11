@@ -721,6 +721,11 @@ void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThrea
     }
 }
 //--------------------------------------------------------------------------
+std::string Backend::getXORShiftValueName() const 
+{
+    return "v";
+}
+//--------------------------------------------------------------------------
 void Backend::genPushProfilerRange(CodeStream &os, const std::string &name) const
 {
     if(getPreferences<Preferences>().enableNVTX) {

@@ -631,4 +631,13 @@ void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThrea
         os << "const dim3 grid(" << gridSize << ", " << batchSize << ");" << std::endl;
     }
 }
+//--------------------------------------------------------------------------
+std::string Backend::getXORShiftValueName() const 
+{
+#ifdef __HIP_PLATFORM_NVIDIA__
+    return "v";
+#else
+    return "x";
+#endif
+}
 }   // namespace GeNN::CodeGenerator::CUDA
