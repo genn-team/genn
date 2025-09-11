@@ -52,7 +52,7 @@ const EnvironmentLibrary::Library doubleRandomFunctions = {
 };
 
 // HIP random number generator state types
-const Type::ResolvedType HIPRandState = Type::ResolvedType::createValue<hiprandState>("hiprandState_t", false, nullptr, true);
+const Type::ResolvedType HIPRandState = Type::ResolvedType::createValue<hiprandState>("hiprandState", false, nullptr, true);
 const Type::ResolvedType HIPRandStatePhilox43210 = Type::ResolvedType::createValue<hiprandStatePhilox4_32_10_t>("hiprandStatePhilox4_32_10_t", false, nullptr, true);
 
 //--------------------------------------------------------------------------
@@ -397,7 +397,7 @@ void Backend::genMakefilePreamble(std::ostream &os) const
     architecture = "gfx1100";
 #endif
     
-    std::string linkFlags = "--shared -arch " + architecture;
+    std::string linkFlags = "--shared --offload-arch=" + architecture;
 
     // If NCCL reductions are enabled, link NCCL
     if(getPreferences<Preferences>().enableNCCLReductions) {
