@@ -87,13 +87,13 @@ public:
     virtual std::string genGlobalRNGSkipAhead(CodeStream &os, const std::string &sequence) const final;
 
     //! Get type of population RNG
-    virtual Type::ResolvedType getPopulationRNGType() const final;
+    virtual Type::ResolvedType getPopulationRNGType() const override;
 
     //! Generate a preamble to add substitution name for population RNG
-    virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env) const final;
+    virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env) const override;
 
     //! Add $(_rng) to environment based on $(_rng_internal) field with any initialisers and destructors required
-    virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const final;
+    virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const override;
 
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals

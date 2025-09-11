@@ -345,6 +345,33 @@ std::string Backend::getAtomic(const Type::ResolvedType &type, AtomicOperation o
     }
 }
 //--------------------------------------------------------------------------
+Type::ResolvedType getPopulationRNGType() const
+{
+//#if defined(__HIP_PLATFORM_NVIDIA__)
+//    return BackendCUDAHIP::getPopulationRNGType();
+//#else
+    return getPopulationRNGInternalType();
+//#endif
+}
+//--------------------------------------------------------------------------
+void Backend::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env) const
+{
+//#if defined(__HIP_PLATFORM_NVIDIA__)
+//    BackendCUDAHIP::buildPopulationRNGEnvironment(env);
+//#else
+    env.add(getPopulationRNGInternalType(), "_rng", "$(_rng_internal)",
+//#endif
+}
+//--------------------------------------------------------------------------
+void Backend::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const
+{
+//#if defined(__HIP_PLATFORM_NVIDIA__)
+//    BackendCUDAHIP::buildPopulationRNGEnvironment(env);
+//#else
+    env.add(getPopulationRNGInternalType(), "_rng", "$(_rng_internal)",
+//#endif
+}
+//--------------------------------------------------------------------------
 void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
     // If global RNG is required
