@@ -1411,7 +1411,7 @@ void BackendCUDAHIP::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpec
 //--------------------------------------------------------------------------
 std::unique_ptr<Runtime::ArrayBase> BackendCUDAHIP::createPopulationRNG(size_t count) const
 {
-    return createArray(XORWowStateInternal, count, VarLocation::DEVICE, false);
+    return createArray(getPopulationRNGType(), count, VarLocation::DEVICE, false);
 }
 //--------------------------------------------------------------------------
 void BackendCUDAHIP::genLazyVariableDynamicPush(CodeStream &os, 
