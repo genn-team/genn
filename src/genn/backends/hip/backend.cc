@@ -345,6 +345,21 @@ std::string Backend::getAtomic(const Type::ResolvedType &type, AtomicOperation o
     }
 }
 //--------------------------------------------------------------------------
+void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
+{
+    // If global RNG is required
+    if(isGlobalDeviceRNGRequired(modelMerged.getModel())) {
+        CodeStream::Scope b(os);
+
+        // Allocate memory
+        os << "hiprandStatePhilox4_32_10_t *hostPtr;" << std::endl;
+        os << "CHECK_RUNTIME_ERRORS(hipMalloc(&hostPtr, sizeof(hiprandStatePhilox4_32_10_t)));" << std::endl;
+
+        // Copy to device symbol
+        os << "CHECK_RUNTIME_ERRORS(hipMemcpyToSymbol(HIP_SYMBOL(d_rng), &hostPtr, sizeof(void*)));" << std::endl;
+    }
+}
+//--------------------------------------------------------------------------
 std::unique_ptr<GeNN::Runtime::StateBase> Backend::createState(const Runtime::Runtime &runtime) const
 {
     return std::make_unique<State>(runtime);

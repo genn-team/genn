@@ -239,6 +239,8 @@ public:
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
     //--------------------------------------------------------------------------
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+    
     //! Create backend-specific runtime state object
     /*! \param runtime  runtime object */
     virtual std::unique_ptr<GeNN::Runtime::StateBase> createState(const Runtime::Runtime &runtime) const final;

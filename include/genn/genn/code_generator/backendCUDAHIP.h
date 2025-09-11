@@ -112,7 +112,6 @@ public:
 
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
-    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
 
