@@ -184,7 +184,8 @@ if hip_installed:
         # Set platform compile arguments
         hip_extra_compile_args.append("-D__HIP_PLATFORM_NVIDIA__")
     else:
-        assert False
+        hip_libraries.extend(["amdhip64"])
+        hip_extra_compile_args.append("-D__HIP_PLATFORM_AMD__")      
     
     # Add backend
     # **NOTE** on Mac OS X, a)runtime_library_dirs doesn't work b)setting rpath is required to find CUDA
