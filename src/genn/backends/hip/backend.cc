@@ -29,7 +29,6 @@ using namespace GeNN::CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
-// Random number generation functions for float precision
 const EnvironmentLibrary::Library floatRandomFunctions = {
     {"gennrand", {Type::ResolvedType::createFunction(Type::Uint32, {}), "hiprand(&$(_rng))"}},
     {"gennrand_uniform", {Type::ResolvedType::createFunction(Type::Float, {}), "hiprand_uniform(&$(_rng))"}},
@@ -40,7 +39,6 @@ const EnvironmentLibrary::Library floatRandomFunctions = {
     {"gennrand_binomial", {Type::ResolvedType::createFunction(Type::Uint32, {Type::Uint32, Type::Float}), "binomialDistFloat(&$(_rng), $(0), $(1))"}},
 };
 
-// Random number generation functions for double precision
 const EnvironmentLibrary::Library doubleRandomFunctions = {
     {"gennrand", {Type::ResolvedType::createFunction(Type::Uint32, {}), "hiprand(&$(_rng))"}},
     {"gennrand_uniform", {Type::ResolvedType::createFunction(Type::Double, {}), "hiprand_uniform_double(&$(_rng))"}},
@@ -51,7 +49,9 @@ const EnvironmentLibrary::Library doubleRandomFunctions = {
     {"gennrand_binomial", {Type::ResolvedType::createFunction(Type::Uint32, {Type::Uint32, Type::Double}), "binomialDistDouble(&$(_rng), $(0), $(1))"}},
 };
 
-// HIP random number generator state types
+//--------------------------------------------------------------------------
+// CUDADeviceType
+//--------------------------------------------------------------------------
 const Type::ResolvedType HIPRandState = Type::ResolvedType::createValue<hiprandState>("hiprandState", false, nullptr, true);
 const Type::ResolvedType HIPRandStatePhilox43210 = Type::ResolvedType::createValue<hiprandStatePhilox4_32_10_t>("hiprandStatePhilox4_32_10_t", false, nullptr, true);
 
@@ -111,7 +111,7 @@ public:
     //! Free array
     virtual void free() final
     {
-        // **NOTE** because we pinned the variable we need to free it with hipHostFree rather than use free
+        // **NOTE** because we pinned the variable we need to free it with cudaFreeHost rather than use free
         if(getLocation() & VarLocationAttribute::HOST) {
             CHECK_HIP_ERRORS(hipHostFree(getHostPointer()));
             setHostPointer(nullptr);
@@ -197,7 +197,7 @@ public:
 
     }
 
-    //! Memset the device pointer
+    //! Memset the host pointer
     virtual void memsetDeviceObject(int value) final
     {
         CHECK_HIP_ERRORS(hipMemset(m_DevicePointer, value, getSizeBytes()));
@@ -289,15 +289,7 @@ void State::ncclInitCommunicator(int rank, int numRanks)
 //--------------------------------------------------------------------------
 Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences, 
                  int device, bool zeroCopy)
-:   BackendCUDAHIP(kernelBlockSizes, preferences, "hip", "hiprand", 
-#if defined(__HIP_PLATFORM_NVIDIA__)
-                   "hccl"
-#elif defined(__HIP_PLATFORM_AMD__)
-                   "rccl"
-#else
-                   ""
-#endif
-                  ), 
+:   BackendCUDAHIP(kernelBlockSizes, preferences, "hip", "hiprand", "hccl"), 
     m_ChosenDeviceID(device)
 {
     // Set device
@@ -353,6 +345,67 @@ std::string Backend::getAtomic(const Type::ResolvedType &type, AtomicOperation o
     }
 }
 //--------------------------------------------------------------------------
+void Backend::genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const
+{
+#if defined(__HIP_PLATFORM_NVIDIA__)
+    // Superclass
+    BackendCUDAHIP::genPopulationRNGInit(os, globalRNG, seed, sequence);
+#else
+    // Initialise RNG directly
+    os << "hiprand_init(" << seed << ", " << sequence << ", 0, &" << globalRNG << ");" << std::endl;
+#endif
+}
+//--------------------------------------------------------------------------
+void Backend::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env) const
+{
+#if defined(__HIP_PLATFORM_NVIDIA__)
+    // Superclass
+    BackendCUDAHIP::buildPopulationRNGEnvironment(env);
+#else
+    // Use internal RNG directly
+    // **NOTE** rocRand tries to be way too smart and hides the internal
+    // state of the RNGs in C++ classes so you can't perform this trick
+    env.add(getPopulationRNGInternalType(), "_rng", "$(_rng_internal)");
+#endif
+}
+//--------------------------------------------------------------------------
+void Backend::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const
+{
+#if defined(__HIP_PLATFORM_NVIDIA__)
+    // Superclass
+    BackendCUDAHIP::buildPopulationRNGEnvironment(env);
+#else
+    // Use internal RNG directly
+    // **NOTE** rocRand tries to be way too smart and hides the internal
+    // state of the RNGs in C++ classes so you can't perform this trick
+    env.add(getPopulationRNGInternalType(), "_rng", "$(_rng_internal)");
+#endif
+}
+//--------------------------------------------------------------------------
+Type::ResolvedType Backend::getPopulationRNGType() const
+{
+#if defined(__HIP_PLATFORM_NVIDIA__)
+    return BackendCUDAHIP::getPopulationRNGType();
+#else
+    return getPopulationRNGInternalType();
+#endif
+}
+//--------------------------------------------------------------------------
+void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
+{
+    // If global RNG is required
+    if(isGlobalDeviceRNGRequired(modelMerged.getModel())) {
+        CodeStream::Scope b(os);
+
+        // Allocate memory
+        os << "hiprandStatePhilox4_32_10_t *hostPtr;" << std::endl;
+        os << "CHECK_RUNTIME_ERRORS(hipMalloc(&hostPtr, sizeof(hiprandStatePhilox4_32_10_t)));" << std::endl;
+
+        // Copy to device symbol
+        os << "CHECK_RUNTIME_ERRORS(hipMemcpyToSymbol(HIP_SYMBOL(d_rng), &hostPtr, sizeof(void*)));" << std::endl;
+    }
+}
+//--------------------------------------------------------------------------
 std::unique_ptr<GeNN::Runtime::StateBase> Backend::createState(const Runtime::Runtime &runtime) const
 {
     return std::make_unique<State>(runtime);
@@ -397,7 +450,7 @@ void Backend::genMakefilePreamble(std::ostream &os) const
     architecture = "gfx1100";
 #endif
     
-    std::string linkFlags = "--shared --offload-arch=" + architecture;
+    std::string linkFlags = "--shared --offload-arch=" + architecture + " -fgpu-rdc";;
 
     // If NCCL reductions are enabled, link NCCL
     if(getPreferences<Preferences>().enableNCCLReductions) {
@@ -428,7 +481,7 @@ void Backend::genMakefileCompileRule(std::ostream &os) const
 #if defined(__HIP_PLATFORM_NVIDIA__)
     os << "\t@$(HIPCC) -dc $(HIPCCFLAGS) $< -o $@" << std::endl;
 #elif defined(__HIP_PLATFORM_AMD__)
-    os << "\t@$(HIPCC) -c $(HIPCCFLAGS) $< -o $@" << std::endl;
+    os << "\t@$(HIPCC) -c -fgpu-rdc $(HIPCCFLAGS) $< -o $@" << std::endl;
 #endif
 }
 //--------------------------------------------------------------------------
@@ -547,7 +600,7 @@ std::string Backend::getHIPCCFlags() const
     return nvccFlags;
 #elif defined(__HIP_PLATFORM_AMD__)
     const std::string architecture = "--offload-arch=gfx1100";
-    std::string hipccFlags = "-fPIC " + architecture + " -I\"$(HIP_PATH)/include\"";
+    std::string hipccFlags = "-fPIC " + architecture + " -I\"$(HIP_PATH)/include\" -fgpu-rdc";
 #ifndef _WIN32
     hipccFlags += " -std=c++11";
 #endif

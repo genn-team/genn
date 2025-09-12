@@ -282,7 +282,7 @@ void BackendCUDAHIP::genPopulationRNGInit(CodeStream &os, const std::string &glo
 std::string BackendCUDAHIP::genGlobalRNGSkipAhead(CodeStream &os, const std::string &sequence) const
 {
     // Skipahead RNG
-    os << getRandPrefix() <<  "StatePhilox4_32_10_t localRNG = d_rng;" << std::endl;
+    os << getRandPrefix() <<  "StatePhilox4_32_10_t localRNG = *d_rng;" << std::endl;
     os << "skipahead_sequence((unsigned long long)" << sequence << ", &localRNG);" << std::endl;
     return "localRNG";
 }
@@ -904,7 +904,7 @@ void BackendCUDAHIP::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged 
             initEnv.getStream() << "if(threadIdx.x == 0)";
             {
                 CodeStream::Scope b(initEnv.getStream());
-                initEnv.getStream() << getRandPrefix() << "_init(deviceRNGSeed, 0, 0, &d_rng);" << std::endl;
+                initEnv.getStream() << getRandPrefix() << "_init(deviceRNGSeed, 0, 0, d_rng);" << std::endl;
             }
         }
         initEnv.getStream() << std::endl;
@@ -1388,10 +1388,6 @@ void BackendCUDAHIP::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&) c
     }
 }
 //--------------------------------------------------------------------------
-void BackendCUDAHIP::genAllocateMemPreamble(CodeStream&, const ModelSpecMerged&) const
-{
-}
-//--------------------------------------------------------------------------
 void BackendCUDAHIP::genFreeMemPreamble(CodeStream &os, const ModelSpecMerged&) const
 {
     // Free NCCL communicator
@@ -1415,7 +1411,7 @@ void BackendCUDAHIP::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpec
 //--------------------------------------------------------------------------
 std::unique_ptr<Runtime::ArrayBase> BackendCUDAHIP::createPopulationRNG(size_t count) const
 {
-    return createArray(XORWowStateInternal, count, VarLocation::DEVICE, false);
+    return createArray(getPopulationRNGType(), count, VarLocation::DEVICE, false);
 }
 //--------------------------------------------------------------------------
 void BackendCUDAHIP::genLazyVariableDynamicPush(CodeStream &os, 
@@ -1471,11 +1467,12 @@ void BackendCUDAHIP::genGlobalDeviceRNG(CodeStream &definitions, CodeStream &run
                                         CodeStream &, CodeStream &) const
 {
     // Define global Phillox RNG
+    // **YUCK** when using HIP with ROCm backend, these objects are proper classes so these need to be pointers
     // **NOTE** this is actually accessed as a global so, unlike other variables, needs device global
-    definitions << "extern __device__ " << getRandPrefix() << "StatePhilox4_32_10_t d_rng;" << std::endl;
+    definitions << "extern __device__ " << getRandPrefix() << "StatePhilox4_32_10_t *d_rng;" << std::endl;
 
     // Implement global Phillox RNG
-    runner << "__device__ " << getRandPrefix() << "StatePhilox4_32_10_t d_rng;" << std::endl;
+    runner << "__device__ " << getRandPrefix() << "StatePhilox4_32_10_t *d_rng;" << std::endl;
 }
 //--------------------------------------------------------------------------
 void BackendCUDAHIP::genTimer(CodeStream &definitions, CodeStream &runner, CodeStream &allocations, CodeStream &free,
