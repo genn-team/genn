@@ -447,10 +447,11 @@ void Backend::genMakefilePreamble(std::ostream &os) const
 #if defined(__HIP_PLATFORM_NVIDIA__)
     architecture = "sm_" + std::to_string(getChosenHIPDevice().major) + std::to_string(getChosenHIPDevice().minor);
 #elif defined(__HIP_PLATFORM_AMD__)
-    architecture = "gfx1100";
+    // Get AMD GPU architecture directly from device properties
+    architecture = std::string(getChosenHIPDevice().gcnArchName);
 #endif
     
-    std::string linkFlags = "--shared --offload-arch=" + architecture + " -fgpu-rdc";;
+    std::string linkFlags = "--shared --offload-arch=" + architecture + " -fgpu-rdc";
 
     // If NCCL reductions are enabled, link NCCL
     if(getPreferences<Preferences>().enableNCCLReductions) {
@@ -599,8 +600,9 @@ std::string Backend::getHIPCCFlags() const
     }
     return nvccFlags;
 #elif defined(__HIP_PLATFORM_AMD__)
-    const std::string architecture = "--offload-arch=gfx1100";
-    std::string hipccFlags = "-fPIC " + architecture + " -I\"$(HIP_PATH)/include\" -fgpu-rdc";
+    // Get AMD GPU architecture directly from device properties
+    const std::string archFlag = "--offload-arch=" + std::string(getChosenHIPDevice().gcnArchName);
+    std::string hipccFlags = "-fPIC " + archFlag + " -I\"$(HIP_PATH)/include\" -fgpu-rdc";
 #ifndef _WIN32
     hipccFlags += " -std=c++11";
 #endif
@@ -681,7 +683,7 @@ void Backend::genDefinitionsPreambleInternal(CodeStream &os, const ModelSpecMerg
 
     os << std::endl;
     os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// Helper macro for error-checking CUDA calls" << std::endl;
+    os << "// Helper macro for error-checking HIP calls" << std::endl;
     os << "#define CHECK_RUNTIME_ERRORS(call) {\\" << std::endl;
     os << "    hipError_t error = call;\\" << std::endl;
     os << "    if (error != hipSuccess) {\\" << std::endl;

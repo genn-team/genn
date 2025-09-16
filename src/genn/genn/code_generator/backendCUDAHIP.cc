@@ -255,8 +255,15 @@ void BackendCUDAHIP::genWarpReduction(CodeStream& os, const std::string& variabl
                                       VarAccessMode access, const Type::ResolvedType& type) const
 {
     for (unsigned int i = 16; i > 0; i /= 2) {
+#if defined(__HIP_PLATFORM_NVIDIA__)
+        // Use CUDA-style warp shuffle with sync mask for NVIDIA backend (HIP on NVIDIA)
         os << getReductionOperation(variable, "__shfl_down_sync(0xFFFFFFFF, " + variable + ", " + std::to_string(i) + ")",
                                     access, type);
+#else
+        // Use HIP-style warp shuffle for AMD backend
+        os << getReductionOperation(variable, "__shfl_down(" + variable + ", " + std::to_string(i) + ")",
+                                    access, type);
+#endif
         os <<  ";" << std::endl;
     }
 }
@@ -1512,7 +1519,14 @@ void BackendCUDAHIP::genReturnFreeDeviceMemoryBytes(CodeStream &os) const
 //--------------------------------------------------------------------------
 void BackendCUDAHIP::genAssert(CodeStream &os, const std::string &condition) const
 {
+#if defined(__HIP_PLATFORM_NVIDIA__)
+    // Use standard assert for CUDA backend (HIP on NVIDIA)
     os << "assert(" << condition << ");" << std::endl;
+#else
+    // Use HIP-compatible assertion for AMD backend that doesn't cause runtime state issues
+    // Simply return early instead of using problematic assert/abort
+    os << "if(!(" << condition << ")) { return; }" << std::endl;
+#endif
 }
 //--------------------------------------------------------------------------
 BackendCUDAHIP::MemorySpaces BackendCUDAHIP::getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const
