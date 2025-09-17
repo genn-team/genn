@@ -458,7 +458,7 @@ void Backend::genMakefilePreamble(std::ostream &os) const
     // Write variables to preamble
     os << "HIP_PATH ?=/opt/rocm" << std::endl;
     os << "HIPCC := $(HIP_PATH)/bin/hipcc" << std::endl;
-    os << "HIPCCFLAGS := " << getHIPCCFlags() << " -DHIP_ENABLE_WARP_SYNC_BUILTINS" << std::endl;
+    os << "HIPCCFLAGS := " << getHIPCCFlags() << std::endl;
     os << "LINKFLAGS := " << linkFlags << std::endl;
 
 }
@@ -600,7 +600,7 @@ std::string Backend::getHIPCCFlags() const
 #elif defined(__HIP_PLATFORM_AMD__)
     // Get AMD GPU architecture directly from device properties
     const std::string archFlag = "--offload-arch=" + std::string(getChosenHIPDevice().gcnArchName);
-    std::string hipccFlags = "-fPIC " + archFlag + " -I\"$(HIP_PATH)/include\" -fgpu-rdc";
+    std::string hipccFlags = "-fPIC " + archFlag + " -I\"$(HIP_PATH)/include\" -fgpu-rdc -DHIP_ENABLE_WARP_SYNC_BUILTINS";
 #ifndef _WIN32
     hipccFlags += " -std=c++11";
 #endif
