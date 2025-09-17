@@ -444,15 +444,13 @@ void Backend::genLazyVariableDynamicAllocation(CodeStream &os, const Type::Resol
 void Backend::genMakefilePreamble(std::ostream &os) const
 {
     std::string architecture;
+    std::string linkFlags = "--shared -fgpu-rdc";
 #if defined(__HIP_PLATFORM_NVIDIA__)
-    architecture = "sm_" + std::to_string(getChosenHIPDevice().major) + std::to_string(getChosenHIPDevice().minor);
+    linkFlags += " -arch sm_" + std::to_string(getChosenHIPDevice().major) + std::to_string(getChosenHIPDevice().minor;
 #elif defined(__HIP_PLATFORM_AMD__)
     // Get AMD GPU architecture directly from device properties
-    architecture = std::string(getChosenHIPDevice().gcnArchName);
+    linkFlags += " --offload-arch=" +std::string(getChosenHIPDevice().gcnArchName);
 #endif
-    
-    std::string linkFlags = "--shared --offload-arch=" + architecture + " -fgpu-rdc";
-
     // If NCCL reductions are enabled, link NCCL
     if(getPreferences<Preferences>().enableNCCLReductions) {
         linkFlags += " -lnccl";
@@ -460,7 +458,7 @@ void Backend::genMakefilePreamble(std::ostream &os) const
     // Write variables to preamble
     os << "HIP_PATH ?=/opt/rocm" << std::endl;
     os << "HIPCC := $(HIP_PATH)/bin/hipcc" << std::endl;
-    os << "HIPCCFLAGS := " << getHIPCCFlags() << std::endl;
+    os << "HIPCCFLAGS := " << getHIPCCFlags() << " -DHIP_ENABLE_WARP_SYNC_BUILTINS" << std::endl;
     os << "LINKFLAGS := " << linkFlags << std::endl;
 
 }
