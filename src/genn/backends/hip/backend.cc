@@ -446,7 +446,7 @@ void Backend::genMakefilePreamble(std::ostream &os) const
     std::string architecture;
     std::string linkFlags = "--shared -fgpu-rdc";
 #if defined(__HIP_PLATFORM_NVIDIA__)
-    linkFlags += " -arch sm_" + std::to_string(getChosenHIPDevice().major) + std::to_string(getChosenHIPDevice().minor;
+    linkFlags += " -arch sm_" + std::to_string(getChosenHIPDevice().major) + std::to_string(getChosenHIPDevice().minor);
 #elif defined(__HIP_PLATFORM_AMD__)
     // Get AMD GPU architecture directly from device properties
     linkFlags += " --offload-arch=" +std::string(getChosenHIPDevice().gcnArchName);
