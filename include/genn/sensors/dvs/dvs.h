@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <array>
 #include <memory>
 
 // Standard C includes
@@ -44,6 +45,12 @@ public:
     //! Rectangle struct used to 
     struct CropRect
     {
+        CropRect(){}
+        CropRect(const std::array<uint32_t, 4> &cropRect)
+        :   left(cropRect[0]), top(cropRect[1]), right(cropRect[2]), bottom(cropRect[3])
+        {
+        }
+
         uint32_t left;
         uint32_t top;
         uint32_t right;

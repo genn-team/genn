@@ -19,9 +19,11 @@ using namespace GeNN::Sensors;
 //----------------------------------------------------------------------------
 #define DOC_DVS(...) DOC(Sensors, __VA_ARGS__)
 #define WRAP_NS_ENUM(ENUM, NS, VAL) .value(#VAL, NS::ENUM::VAL, DOC_DVS(NS, ENUM, VAL))
+#define WRAP_NS_ATTR(NAME, CLASS, NS, ATTR) .def_readwrite(NAME, &NS::CLASS::ATTR, DOC_DVS(NS, CLASS, ATTR))
 #define WRAP_METHOD(NAME, CLASS, METH) .def(NAME, &CLASS::METH, DOC_DVS(CLASS, METH))
 //#define WRAP_STATIC_METHOD(NAME, CLASS, METH) .def_static(NAME, &CLASS::METH, DOC_DVS(CLASS, METH))
 #define WRAP_PROPERTY_RO(NAME, CLASS, METH_STEM) .def_property_readonly(NAME, &CLASS::get##METH_STEM, DOC_DVS(CLASS, m_##METH_STEM))
+
 
 //----------------------------------------------------------------------------
 // dvs
@@ -40,14 +42,14 @@ PYBIND11_MODULE(dvs, m)
     //------------------------------------------------------------------------
     // dvs.CropRect
     //------------------------------------------------------------------------
-    /*pybind11::class_<DVS::CropRect>(m, "CropRect")
-        //.def(pybind11::init<const std::string&, Snippet::Base::DerivedParam::Func, const std::string&>(),
-        //     pybind11::arg("name"), pybind11::arg("func"), pybind11::arg("type") = "scalar")
+    pybind11::class_<DVS::CropRect>(m, "CropRect")
+        .def(pybind11::init<>())
+        .def(pybind11::init<const std::array<uint32_t, 4>>())
         
-        WRAP_NS_ATTR("left", DVS, CropRect, left)
-        WRAP_NS_ATTR("top", DVS, CropRect, top)
-        WRAP_NS_ATTR("right", DVS, CropRect, right)
-        WRAP_NS_ATTR("bottom", DVS, CropRect, bottom);*/
+        .def_readwrite("left", &DVS::CropRect::left)
+        .def_readwrite("top", &DVS::CropRect::top)
+        .def_readwrite("right", &DVS::CropRect::right)
+        .def_readwrite("bottom", &DVS::CropRect::bottom);
 
     //------------------------------------------------------------------------
     // DVS.DVS
