@@ -12,7 +12,7 @@
 // Doc strings
 #include "dvsDocStrings.h"
 
-using namespace GeNN::DVS;
+using namespace GeNN::EventCamera;
 
 //----------------------------------------------------------------------------
 // Macros
