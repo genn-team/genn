@@ -32,7 +32,7 @@ BACKEND			:=$(LIBRARY_DIRECTORY)/libgenn_$(BACKEND_NAME)_backend$(GENN_PREFIX).a
 
 # If DVS support is enabled, add inclue directories, link DVS library and libcaer
 ifdef DVS
-    CXXFLAGS	+= -I$(GENN_DIR)/include/genn/sensors/dvs -DEVENT_CAMERA $(shell pkg-config --cflags libcaer)
+    CXXFLAGS	+= -I$(GENN_DIR)/include/genn/sensors/dvs -DSENSORS_DVS $(shell pkg-config --cflags libcaer)
     LDFLAGS		+= -lgenn_dvs$(GENN_PREFIX) $(shell pkg-config --libs libcaer)
     
     GENERATOR	:=$(GENERATOR)_dvs
