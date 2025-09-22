@@ -259,7 +259,7 @@ if libcaer_installed:
     package_data.append("libgenn_dvs" + genn_lib_suffix + ".so")
     
     # Add DVS include directory
-    dvs_include_dir = os.path.join(genn_path, "include", "genn", "dvs")
+    dvs_include_dir = os.path.join(genn_path, "include", "genn", "event_camera")
     dvs_extension_kwargs["include_dirs"].append(dvs_include_dir)
     
     ext_modules.append(Pybind11Extension("dvs",
