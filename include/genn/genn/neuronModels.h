@@ -417,4 +417,25 @@ public:
     SET_PARAMS({"gNa", "ENa", "gK", "EK", "gl", "El", "C"});
     SET_VARS({{"V", "scalar"}, {"m", "scalar"}, {"h", "scalar"}, {"n", "scalar"}});
 };
+
+//----------------------------------------------------------------------------
+// GeNN::NeuronModels::EventCamera
+//----------------------------------------------------------------------------
+//! Event camera interface for streaming events into GeNN as efficiently as possible
+/*! Should typically be used with one of the device interfaces in the EventCamera module
+    It has 1 extra global parameter:
+
+    - \c spikeVector - Array with a bit for each neuron. This must be allocated to match number of neurons
+
+  */
+class EventCamera : public Base
+{
+public:
+    DECLARE_SNIPPET(NeuronModels::EventCamera);
+
+    SET_THRESHOLD_CONDITION_CODE("spikeVector[id / 32] & (1 << (id % 32))");
+    SET_EXTRA_GLOBAL_PARAMS( {{"spikeVector", "uint32_t*"}} );
+};
+
+
 } // GeNN::NeuronModels

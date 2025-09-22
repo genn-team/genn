@@ -43,4 +43,5 @@ PYBIND11_MODULE(neuron_models, m)
     WRAP(SpikeSourceArray);
     WRAP(Poisson);
     WRAP(TraubMiles);
+    WRAP(EventCamera);
 }
