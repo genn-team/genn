@@ -12,12 +12,12 @@
 // Doc strings
 #include "dvsDocStrings.h"
 
-using namespace GeNN::EventCamera;
+using namespace GeNN::Sensors;
 
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define DOC_DVS(...) DOC(DVS, __VA_ARGS__)
+#define DOC_DVS(...) DOC(Sensors, __VA_ARGS__)
 #define WRAP_NS_ENUM(ENUM, NS, VAL) .value(#VAL, NS::ENUM::VAL, DOC_DVS(NS, ENUM, VAL))
 #define WRAP_METHOD(NAME, CLASS, METH) .def(NAME, &CLASS::METH, DOC_DVS(CLASS, METH))
 //#define WRAP_STATIC_METHOD(NAME, CLASS, METH) .def_static(NAME, &CLASS::METH, DOC_DVS(CLASS, METH))
@@ -28,7 +28,7 @@ using namespace GeNN::EventCamera;
 //----------------------------------------------------------------------------
 PYBIND11_MODULE(dvs, m) 
 {
-    pybind11::module_::import("pygenn.runtime");
+    pybind11::module_::import("pygenn._runtime");
 
     //------------------------------------------------------------------------
     // dvs.Polarity
@@ -66,12 +66,18 @@ PYBIND11_MODULE(dvs, m)
         //--------------------------------------------------------------------
         WRAP_METHOD("start", DVS, start)
         WRAP_METHOD("stop", DVS, stop)
-        WRAP_METHOD("read_events", DVS, readEvents)
+        .def("read_events", &DVS::readEvents,
+             pybind11::arg("array"), pybind11::arg("polarity") = DVS::Polarity::SEPERATE,
+             pybind11::arg("scale") = 1.0f, pybind11::arg("crop_rect") = nullptr,
+             DOC_DVS(DVS, readEvents))
 
         //--------------------------------------------------------------------
         // Static methods
         //--------------------------------------------------------------------
-        .def_static("create_davis", &DVS::create<libcaer::devices::davis>, pybind11::return_value_policy::reference)
-        .def_static("create_dvs128", &DVS::create<libcaer::devices::dvs128>, pybind11::return_value_policy::reference)
-        .def_static("create_dvxplorer", &DVS::create<libcaer::devices::dvXplorer>, pybind11::return_value_policy::reference);
+        .def_static("create_davis", &DVS::create<libcaer::devices::davis>,
+                    pybind11::arg("device_id") = 1)
+        .def_static("create_dvs128", &DVS::create<libcaer::devices::dvs128>,
+                    pybind11::arg("device_id") = 1)
+        .def_static("create_dvxplorer", &DVS::create<libcaer::devices::dvXplorer>,
+                    pybind11::arg("device_id") = 1);
 }
