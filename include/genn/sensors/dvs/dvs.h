@@ -74,13 +74,16 @@ public:
     //------------------------------------------------------------------------
     //! Create DVS interface for camera type
     template<typename D>
-    static DVS create(uint16_t deviceID = 1)
+    static std::unique_ptr<DVS> create(uint16_t deviceID = 1)
     {
         auto device = std::make_unique<D>(deviceID);
         auto info = device->infoGet();
-        return DVS(std::move(device),
-                   static_cast<uint32_t>(info.dvsSizeX), 
-                   static_cast<uint32_t>(info.dvsSizeY));
+
+        // **NOTE** std::make_unique doesn't work here as constructor private
+        return std::unique_ptr<DVS>(
+            new DVS(std::move(device),
+                    static_cast<uint32_t>(info.dvsSizeX), 
+                    static_cast<uint32_t>(info.dvsSizeY)));
     }
 
 private:
