@@ -30,15 +30,15 @@ CXXFLAGS		+= -I$(GENN_DIR)/include/genn/backends/$(BACKEND_NAME) -DMODEL=\"$(MOD
 GENERATOR		:=$(GENERATOR_PATH)/generator$(GENN_PREFIX)
 BACKEND			:=$(LIBRARY_DIRECTORY)/libgenn_$(BACKEND_NAME)_backend$(GENN_PREFIX).a
 
-# If event camera support is enabled, add inclue directories, link DVS library and libcaer
-ifdef EVENT_CAMERA
-    CXXFLAGS	+= -I$(GENN_DIR)/include/genn/event_camera -DEVENT_CAMERA $(shell pkg-config --cflags libcaer)
-    LDFLAGS		+= -lgenn_event_camera$(GENN_PREFIX) $(shell pkg-config --libs libcaer)
+# If DVS support is enabled, add inclue directories, link DVS library and libcaer
+ifdef DVS
+    CXXFLAGS	+= -I$(GENN_DIR)/include/genn/sensors/dvs -DEVENT_CAMERA $(shell pkg-config --cflags libcaer)
+    LDFLAGS		+= -lgenn_dvs$(GENN_PREFIX) $(shell pkg-config --libs libcaer)
     
-    GENERATOR	:=$(GENERATOR)_event_camera
+    GENERATOR	:=$(GENERATOR)_dvs
 endif
 
-.PHONY: all clean libgenn libevent_camera backend
+.PHONY: all clean libgenn libdvs backend
 
 all: $(GENERATOR)
 
@@ -53,8 +53,8 @@ generator.d: ;
 libgenn:
 	if [ -w $(LIBRARY_DIRECTORY) ]; then $(MAKE) -C $(GENN_DIR)/src/genn/genn; fi;
 
-libevent_camera:
-	if [ -w $(LIBRARY_DIRECTORY) ]; then $(MAKE) -C $(GENN_DIR)/src/genn/event_camera; fi;
+libdvs:
+	if [ -w $(LIBRARY_DIRECTORY) ]; then $(MAKE) -C $(GENN_DIR)/src/genn/sensors/dvs; fi;
 
 backend:
 	if [ -w $(LIBRARY_DIRECTORY) ]; then $(MAKE) -C $(GENN_DIR)/src/genn/backends/$(BACKEND_NAME); fi;

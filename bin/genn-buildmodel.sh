@@ -81,8 +81,8 @@ if [[ -n "$COVERAGE" ]]; then
 fi
 
 if [[ -n "$EVENT_CAMERA" ]]; then
-    MACROS="$MACROS EVENT_CAMERA=1";
-    GENERATOR="$GENERATOR"_event_camera
+    MACROS="$MACROS DVS=1";
+    GENERATOR="$GENERATOR"_dvs
 fi
 
 # If CUDA path isn't set, default to standard path for (at least Ubuntu) Linux systems
