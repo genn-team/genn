@@ -14,5 +14,5 @@ if [[ -n "$HIP_PATH" ]]; then
 fi
 
 if pkg-config --exists libcaer; then
-    python mkdoc.py -o dvsDocStrings.h -std=c++17  -I ../../include/genn/third_party -I ../../include/genn/third_party/plog -I ../../include/genn/genn/ ../../include/genn/dvs/*.h
+    python mkdoc.py -o dvsDocStrings.h -std=c++17  -I ../../include/genn/third_party -I ../../include/genn/third_party/plog -I ../../include/genn/genn/ ../../include/genn/sensors/dvs/*.h
 fi

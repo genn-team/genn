@@ -23,51 +23,49 @@
 #endif
 
 
-static const char *__doc_DVS_DVS = R"doc()doc";
-
-static const char *__doc_DVS_DVS_CropRect = R"doc(Rectangle struct used to)doc";
-
-static const char *__doc_DVS_DVS_CropRect_bottom = R"doc()doc";
-
-static const char *__doc_DVS_DVS_CropRect_left = R"doc()doc";
-
-static const char *__doc_DVS_DVS_CropRect_right = R"doc()doc";
-
-static const char *__doc_DVS_DVS_CropRect_top = R"doc()doc";
-
-static const char *__doc_DVS_DVS_DVS = R"doc()doc";
-
-static const char *__doc_DVS_DVS_Polarity = R"doc(How to handle event polarity)doc";
-
-static const char *__doc_DVS_DVS_Polarity_MERGE = R"doc(Merge together on and off events)doc";
-
-static const char *__doc_DVS_DVS_Polarity_OFF_ONLY = R"doc(Only process off events)doc";
-
-static const char *__doc_DVS_DVS_Polarity_ON_ONLY = R"doc(Only process on events)doc";
-
-static const char *__doc_DVS_DVS_Polarity_SEPERATE = R"doc(Process on and off events seperately)doc";
-
-static const char *__doc_DVS_DVS_createDVS = R"doc(Create DVS interface for camera type)doc";
-
-static const char *__doc_DVS_DVS_getHeight = R"doc(Get vertical resolution of DVS)doc";
-
-static const char *__doc_DVS_DVS_getWidth = R"doc(Get horizontal resolution of DVS)doc";
-
-static const char *__doc_DVS_DVS_m_Device = R"doc()doc";
-
-static const char *__doc_DVS_DVS_m_Height = R"doc()doc";
-
-static const char *__doc_DVS_DVS_m_Width = R"doc()doc";
-
-static const char *__doc_DVS_DVS_readEvents = R"doc(Read all events received since last call to readEvents into array)doc";
-
-static const char *__doc_DVS_DVS_start = R"doc(Start streaming events from DVS)doc";
-
-static const char *__doc_DVS_DVS_stop = R"doc(Stop streaming events from DVS)doc";
-
 static const char *__doc_Runtime_ArrayBase = R"doc()doc";
 
-static const char *__doc_libcaer_devices_device = R"doc()doc";
+static const char *__doc_Sensors_DVS = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_CropRect = R"doc(Rectangle struct used to)doc";
+
+static const char *__doc_Sensors_DVS_CropRect_bottom = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_CropRect_left = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_CropRect_right = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_CropRect_top = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_DVS = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_Polarity = R"doc(How to handle event polarity)doc";
+
+static const char *__doc_Sensors_DVS_Polarity_MERGE = R"doc(Merge together on and off events)doc";
+
+static const char *__doc_Sensors_DVS_Polarity_OFF_ONLY = R"doc(Only process off events)doc";
+
+static const char *__doc_Sensors_DVS_Polarity_ON_ONLY = R"doc(Only process on events)doc";
+
+static const char *__doc_Sensors_DVS_Polarity_SEPERATE = R"doc(Process on and off events seperately)doc";
+
+static const char *__doc_Sensors_DVS_create = R"doc(Create DVS interface for camera type)doc";
+
+static const char *__doc_Sensors_DVS_getHeight = R"doc(Get vertical resolution of DVS)doc";
+
+static const char *__doc_Sensors_DVS_getWidth = R"doc(Get horizontal resolution of DVS)doc";
+
+static const char *__doc_Sensors_DVS_m_Device = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_m_Height = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_m_Width = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_readEvents = R"doc(Read all events received since last call to readEvents into array)doc";
+
+static const char *__doc_Sensors_DVS_start = R"doc(Start streaming events from DVS)doc";
+
+static const char *__doc_Sensors_DVS_stop = R"doc(Stop streaming events from DVS)doc";
 
 #if defined(__GNUG__)
 #pragma GCC diagnostic pop

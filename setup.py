@@ -257,14 +257,31 @@ if libcaer_installed:
     dvs_extension_kwargs["depends"].append(
         os.path.join(pygenn_path, "libgenn_dvs" + genn_lib_suffix + ".so"))
     package_data.append("libgenn_dvs" + genn_lib_suffix + ".so")
+    dvs_extension_kwargs["libraries"].insert(0, "genn_dvs" + genn_lib_suffix)
     
     # Add DVS include directory
-    dvs_include_dir = os.path.join(genn_path, "include", "genn", "event_camera")
+    dvs_include_dir = os.path.join(genn_path, "include", "genn", "sensors", "dvs")
     dvs_extension_kwargs["include_dirs"].append(dvs_include_dir)
     
     ext_modules.append(Pybind11Extension("dvs",
                                          [os.path.join(pygenn_src, "dvs.cc")],
                                          **dvs_extension_kwargs))
+    
+    # If we should build required GeNN libraries
+    if build_genn_libs:
+        # Define make arguments
+        make_arguments = ["make", "DYNAMIC=1",
+                          f"LIBRARY_DIRECTORY={pygenn_path}",
+                          f"--jobs={cpu_count(logical=False)}"]
+        if debug_build:
+            make_arguments.append("DEBUG=1")
+
+        if coverage_build:
+            make_arguments.append("COVERAGE=1")
+
+        # Build
+        check_call(make_arguments, 
+                   cwd=os.path.join(genn_path, "src", "genn", "sensors", "dvs"))
 
 # Loop through namespaces of supported backends
 for module_stem, source_stem, kwargs in backends:
