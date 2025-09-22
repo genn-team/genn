@@ -20,9 +20,9 @@
 #include "code_generator/modelSpecMerged.h"
 
 // GeNN DVS includes
-#ifdef EVENT_CAMERA
+#ifdef SENSORS_DVS
     #include "dvs.h"
-    using namespace GeNN::EventCamera;
+    using namespace GeNN::Sensors;
 #endif
 
 // GeNN runtime includes

@@ -19,10 +19,10 @@ class ArrayBase;
 }
 
 //----------------------------------------------------------------------------
-// GeNN::EventCamera::DVS
+// GeNN::Sensors::DVS
 //----------------------------------------------------------------------------
 //! Simply interface for reading spikes from DVS sensors supported by LibCAER into GeNN
-namespace GeNN::EventCamera
+namespace GeNN::Sensors
 {
 class DVS
 {
