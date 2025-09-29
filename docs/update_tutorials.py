@@ -1,16 +1,16 @@
 import nbformat as nbf
 import re
 
+# Comile regular expressions used to find GeNN installation code
+_gdown_re = re.compile(r"!gdown ([_0-9a-zA-Z]+)")
+_pip_re = re.compile(r"!pip install pygenn-([0-9]+.[0-9]+.[0-9]+)-cp([0-9]+)-cp([0-9]+)-linux_x86_64.whl")
+
 def process_notebooks(notebooks, gdown_hash, pygenn_ver, python_tag, callback=None):
     # Loop through notebooks 
     for notebook_path in argv[1:-3]:
         # Open notebook
         print(f"Processing notebook {notebook_path}")
         notebook = nbf.read(notebook_path, nbf.NO_CONVERT)
-
-        # Comile regular expressions used to find GeNN installation code
-        gdown_re = re.compile(r"!gdown ([_0-9a-zA-Z]+)")
-        pip_re = re.compile(r"!pip install pygenn-([0-9]+.[0-9]+.[0-9]+)-cp([0-9]+)-cp([0-9]+)-linux_x86_64.whl")
 
         # Loop through cells
         for i, c in enumerate(notebook.cells):
@@ -20,8 +20,8 @@ def process_notebooks(notebooks, gdown_hash, pygenn_ver, python_tag, callback=No
             
             # Search for gdown and pip install lines
             source = c["source"]
-            gdown_match = gdown_re.search(source)
-            pip_match = pip_re.search(source)
+            gdown_match = _gdown_re.search(source)
+            pip_match = _pip_re.search(source)
             if gdown_match and pip_match:
                 print(f"\tGeNN installed in cell {i}")
                 print(f"\tWheel hash {gdown_match[1]}")
@@ -31,8 +31,8 @@ def process_notebooks(notebooks, gdown_hash, pygenn_ver, python_tag, callback=No
                 assert pip_match[2] == pip_match[3]
                 
                 # Update gdown and pip lines with new version
-                source = gdown_re.sub(f"!gdown {gdown_hash}", source)
-                source = pip_re.sub(f"!pip install pygenn-{pygenn_ver}-cp{python_tag}-cp{python_tag}-linux_x86_64.whl", source)
+                source = _gdown_re.sub(f"!gdown {gdown_hash}", source)
+                source = _pip_re.sub(f"!pip install pygenn-{pygenn_ver}-cp{python_tag}-cp{python_tag}-linux_x86_64.whl", source)
                 
                 if callback:
                     source = callback(source)
