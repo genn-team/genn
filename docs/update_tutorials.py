@@ -7,7 +7,7 @@ _pip_re = re.compile(r"!pip install pygenn-([0-9]+.[0-9]+.[0-9]+)-cp([0-9]+)-cp(
 
 def process_notebooks(notebooks, gdown_hash, pygenn_ver, python_tag, callback=None):
     # Loop through notebooks 
-    for notebook_path in argv[1:-3]:
+    for notebook_path in notebooks:
         # Open notebook
         print(f"Processing notebook {notebook_path}")
         notebook = nbf.read(notebook_path, nbf.NO_CONVERT)
