@@ -94,7 +94,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>$(BuildModelSDLCheck)</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\genn;..\..\..\include\genn\third_party;..\..\..\include\genn\third_party\libffi;..\..\..\include\genn\backends\single_threaded_cpu;$(BuildModelInclude)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_CRT_SECURE_NO_WARNINGS;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -109,7 +109,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>$(BuildModelSDLCheck)</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\backends\cuda;..\..\..\include\genn\genn;..\..\..\include\genn\third_party;..\..\..\include\genn\third_party\libffi;$(CUDA_PATH)\include;$(BuildModelInclude)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -124,7 +124,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\backends\opencl;..\..\..\include\genn\genn;..\..\..\include\genn\third_party;..\..\..\include\genn\third_party\libffi;$(OPENCL_PATH)\include;$(BuildModelInclude)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=OpenCL;BACKEND_NAME=opencl;CL_HPP_TARGET_OPENCL_VERSION=120;CL_HPP_MINIMUM_OPENCL_VERSION=120;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;NOMINMAX;FFI_BUILDING;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=OpenCL;BACKEND_NAME=opencl;CL_HPP_TARGET_OPENCL_VERSION=120;CL_HPP_MINIMUM_OPENCL_VERSION=120;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -141,7 +141,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>$(BuildModelSDLCheck)</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\genn;..\..\..\include\genn\third_party;..\..\..\include\genn\third_party\libffi;..\..\..\include\genn\backends\single_threaded_cpu;$(BuildModelInclude)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -160,7 +160,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>$(BuildModelSDLCheck)</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\backends\cuda;..\..\..\include\genn\genn;..\..\..\include\genn\third_party;..\..\..\include\genn\third_party\libffi;$(CUDA_PATH)\include;$(BuildModelInclude)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;FFI_BUILDING;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -179,7 +179,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\backends\opencl;..\..\..\include\genn\genn;..\..\..\include\genn\third_party;..\..\..\include\genn\third_party\libffi;$(OPENCL_PATH)\include;$(BuildModelInclude)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;FFI_BUILDING;BACKEND_NAMESPACE=OpenCL;BACKEND_NAME=opencl;CL_HPP_TARGET_OPENCL_VERSION=120;CL_HPP_MINIMUM_OPENCL_VERSION=120;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR;FFI_BUILDING;BACKEND_NAMESPACE=OpenCL;BACKEND_NAME=opencl;CL_HPP_TARGET_OPENCL_VERSION=120;CL_HPP_MINIMUM_OPENCL_VERSION=120;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
