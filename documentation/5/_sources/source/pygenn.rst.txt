@@ -41,14 +41,6 @@ pygenn.custom\_update\_models module
    :undoc-members:
    :show-inheritance:
 
-pygenn.dvs module
------------------
-
-.. automodule:: pygenn.dvs
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 pygenn.genn\_groups module
 --------------------------
 
@@ -85,78 +77,6 @@ pygenn.init\_var\_snippets module
 ---------------------------------
 
 .. automodule:: pygenn.init_var_snippets
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pygenn.libgenn\_cuda\_backend\_dynamic module
----------------------------------------------
-
-.. automodule:: pygenn.libgenn_cuda_backend_dynamic
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pygenn.libgenn\_cuda\_backend\_dynamic\_debug module
-----------------------------------------------------
-
-.. automodule:: pygenn.libgenn_cuda_backend_dynamic_debug
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pygenn.libgenn\_dvs\_dynamic module
------------------------------------
-
-.. automodule:: pygenn.libgenn_dvs_dynamic
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pygenn.libgenn\_dynamic module
-------------------------------
-
-.. automodule:: pygenn.libgenn_dynamic
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pygenn.libgenn\_dynamic\_debug module
--------------------------------------
-
-.. automodule:: pygenn.libgenn_dynamic_debug
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pygenn.libgenn\_hip\_backend\_dynamic module
---------------------------------------------
-
-.. automodule:: pygenn.libgenn_hip_backend_dynamic
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pygenn.libgenn\_hip\_backend\_dynamic\_debug module
----------------------------------------------------
-
-.. automodule:: pygenn.libgenn_hip_backend_dynamic_debug
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pygenn.libgenn\_single\_threaded\_cpu\_backend\_dynamic module
---------------------------------------------------------------
-
-.. automodule:: pygenn.libgenn_single_threaded_cpu_backend_dynamic
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pygenn.libgenn\_single\_threaded\_cpu\_backend\_dynamic\_debug module
----------------------------------------------------------------------
-
-.. automodule:: pygenn.libgenn_single_threaded_cpu_backend_dynamic_debug
    :members:
    :undoc-members:
    :show-inheritance:

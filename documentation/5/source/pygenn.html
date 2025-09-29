@@ -23,7 +23,6 @@
         <script src="../_static/doctools.js?v=9a2dae69"></script>
         <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
@@ -128,6 +127,13 @@
 <span class="sig-name descname"><span class="pre">set_var_location</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pygenn.CurrentSource" title="pygenn._genn.CurrentSource"><span class="pre">pygenn._genn.CurrentSource</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg0</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arg1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pygenn.VarLocation" title="pygenn._genn.VarLocation"><span class="pre">pygenn._genn.VarLocation</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#pygenn.CurrentSource.set_var_location" title="Link to this definition"></a></dt>
 <dd><p>Set location of current source state variable.
 This is ignored for simulations on hardware with a single memory space.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pygenn.CurrentSource.target_var">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">target_var</span></span><a class="headerlink" href="#pygenn.CurrentSource.target_var" title="Link to this definition"></a></dt>
+<dd><p>Name of neuron input variable current source will inject into.
+This should either be ‘Isyn’ or the name of one of the target neuron’s additional input variables.</p>
 </dd></dl>
 
 </dd></dl>
@@ -620,13 +626,28 @@ parameter passed to <a class="reference internal" href="#pygenn.GeNNModel.add_cu
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="pygenn.GeNNModel.get_custom_update_host_time">
+<span class="sig-name descname"><span class="pre">get_custom_update_host_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.GeNNModel.get_custom_update_host_time" title="Link to this definition"></a></dt>
+<dd><p>Get time in seconds spent in host custom update.
+Only available if <a class="reference internal" href="#pygenn.ModelSpec.timing_enabled" title="pygenn.ModelSpec.timing_enabled"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ModelSpec.timing_enabled</span></code></a> is set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – Name of custom update group</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="pygenn.GeNNModel.get_custom_update_remap_time">
 <span class="sig-name descname"><span class="pre">get_custom_update_remap_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pygenn.GeNNModel.get_custom_update_remap_time" title="Link to this definition"></a></dt>
 <dd><p>Get time in seconds spent in remap custom update.
 Only available if <a class="reference internal" href="#pygenn.ModelSpec.timing_enabled" title="pygenn.ModelSpec.timing_enabled"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ModelSpec.timing_enabled</span></code></a> is set.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – Name of custom update</p>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – Name of custom update group</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>float</p>
@@ -641,7 +662,7 @@ Only available if <a class="reference internal" href="#pygenn.ModelSpec.timing_e
 Only available if <a class="reference internal" href="#pygenn.ModelSpec.timing_enabled" title="pygenn.ModelSpec.timing_enabled"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ModelSpec.timing_enabled</span></code></a> is set.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – Name of custom update</p>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – Name of custom update group</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>float</p>
@@ -656,7 +677,7 @@ Only available if <a class="reference internal" href="#pygenn.ModelSpec.timing_e
 Only available if <a class="reference internal" href="#pygenn.ModelSpec.timing_enabled" title="pygenn.ModelSpec.timing_enabled"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ModelSpec.timing_enabled</span></code></a> is set.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – Name of custom update</p>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – Name of custom update group</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>float</p>
@@ -1664,7 +1685,7 @@ Additionally, the code may refer to the following built-in read-only variables</
 </ul>
 <p>Finally, the function <code class="docutils literal notranslate"><span class="pre">injectCurrent(x)</span></code> can be used to inject a current
 <code class="docutils literal notranslate"><span class="pre">x</span></code> into the attached neuron. The variable it goes into can be
-configured using the <code class="xref py py-attr docutils literal notranslate"><span class="pre">CurrentSource.target_var</span></code>. It defaults to <code class="docutils literal notranslate"><span class="pre">Isyn</span></code>.</p>
+configured using the <a class="reference internal" href="#pygenn.CurrentSource.target_var" title="pygenn.CurrentSource.target_var"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CurrentSource.target_var</span></code></a>. It defaults to <code class="docutils literal notranslate"><span class="pre">Isyn</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -2807,6 +2828,12 @@ additional constant cache, increase this</p>
 </dd></dl>
 
 <dl class="py property">
+<dt class="sig sig-object py" id="pygenn.cuda_backend.Preferences.enable_nvtx">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">enable_nvtx</span></span><a class="headerlink" href="#pygenn.cuda_backend.Preferences.enable_nvtx" title="Link to this definition"></a></dt>
+<dd><p>Should NVTX markers be inserted to make profiling easier?</p>
+</dd></dl>
+
+<dl class="py property">
 <dt class="sig sig-object py" id="pygenn.cuda_backend.Preferences.generate_line_info">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">generate_line_info</span></span><a class="headerlink" href="#pygenn.cuda_backend.Preferences.generate_line_info" title="Link to this definition"></a></dt>
 <dd><p>Should line info be included in resultant executable for debugging/profiling purposes?</p>
@@ -2881,9 +2908,6 @@ It has 3 parameters:</p>
 <dd><p>Minimal custom update model for calculating tranpose</p>
 </dd></dl>
 
-</section>
-<section id="pygenn-dvs-module">
-<h2>pygenn.dvs module<a class="headerlink" href="#pygenn-dvs-module" title="Link to this heading"></a></h2>
 </section>
 <section id="module-pygenn.genn_groups">
 <span id="pygenn-genn-groups-module"></span><h2>pygenn.genn_groups module<a class="headerlink" href="#module-pygenn.genn_groups" title="Link to this heading"></a></h2>
@@ -3428,33 +3452,6 @@ This snippet takes 2 parameters:</p>
 <dd><p>Used to mark variables as uninitialised - no initialisation code will be run</p>
 </dd></dl>
 
-</section>
-<section id="pygenn-libgenn-cuda-backend-dynamic-module">
-<h2>pygenn.libgenn_cuda_backend_dynamic module<a class="headerlink" href="#pygenn-libgenn-cuda-backend-dynamic-module" title="Link to this heading"></a></h2>
-</section>
-<section id="pygenn-libgenn-cuda-backend-dynamic-debug-module">
-<h2>pygenn.libgenn_cuda_backend_dynamic_debug module<a class="headerlink" href="#pygenn-libgenn-cuda-backend-dynamic-debug-module" title="Link to this heading"></a></h2>
-</section>
-<section id="pygenn-libgenn-dvs-dynamic-module">
-<h2>pygenn.libgenn_dvs_dynamic module<a class="headerlink" href="#pygenn-libgenn-dvs-dynamic-module" title="Link to this heading"></a></h2>
-</section>
-<section id="pygenn-libgenn-dynamic-module">
-<h2>pygenn.libgenn_dynamic module<a class="headerlink" href="#pygenn-libgenn-dynamic-module" title="Link to this heading"></a></h2>
-</section>
-<section id="pygenn-libgenn-dynamic-debug-module">
-<h2>pygenn.libgenn_dynamic_debug module<a class="headerlink" href="#pygenn-libgenn-dynamic-debug-module" title="Link to this heading"></a></h2>
-</section>
-<section id="pygenn-libgenn-hip-backend-dynamic-module">
-<h2>pygenn.libgenn_hip_backend_dynamic module<a class="headerlink" href="#pygenn-libgenn-hip-backend-dynamic-module" title="Link to this heading"></a></h2>
-</section>
-<section id="pygenn-libgenn-hip-backend-dynamic-debug-module">
-<h2>pygenn.libgenn_hip_backend_dynamic_debug module<a class="headerlink" href="#pygenn-libgenn-hip-backend-dynamic-debug-module" title="Link to this heading"></a></h2>
-</section>
-<section id="pygenn-libgenn-single-threaded-cpu-backend-dynamic-module">
-<h2>pygenn.libgenn_single_threaded_cpu_backend_dynamic module<a class="headerlink" href="#pygenn-libgenn-single-threaded-cpu-backend-dynamic-module" title="Link to this heading"></a></h2>
-</section>
-<section id="pygenn-libgenn-single-threaded-cpu-backend-dynamic-debug-module">
-<h2>pygenn.libgenn_single_threaded_cpu_backend_dynamic_debug module<a class="headerlink" href="#pygenn-libgenn-single-threaded-cpu-backend-dynamic-debug-module" title="Link to this heading"></a></h2>
 </section>
 <section id="module-pygenn.model_preprocessor">
 <span id="pygenn-model-preprocessor-module"></span><h2>pygenn.model_preprocessor module<a class="headerlink" href="#module-pygenn.model_preprocessor" title="Link to this heading"></a></h2>
@@ -4025,7 +4022,7 @@ The model has 2 variables:</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2024, James Knight, Thomas Nowotny.</p>
+    <p>&#169; Copyright 2025, James Knight, Thomas Nowotny.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
