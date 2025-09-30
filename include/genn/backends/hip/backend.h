@@ -165,9 +165,23 @@ public:
                                   AtomicOperation op = AtomicOperation::ADD, 
                                   AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const final;
 
+    //! For SIMT backends which initialize RNGs on device, initialize population RNG with specified seed and sequence
+    virtual void genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const final;
+
+    //! Generate a preamble to add substitution name for population RNG
+    virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env) const final;
+
+    //! Add $(_rng) to environment based on $(_rng_internal) field with any initialisers and destructors required
+    virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const final;
+
+    //! Get type of population RNG
+    virtual Type::ResolvedType getPopulationRNGType() const final;
+
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
     //--------------------------------------------------------------------------
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+
     //! Create backend-specific runtime state object
     /*! \param runtime  runtime object */
     virtual std::unique_ptr<GeNN::Runtime::StateBase> createState(const Runtime::Runtime &runtime) const final;

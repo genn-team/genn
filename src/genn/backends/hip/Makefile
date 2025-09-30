@@ -29,6 +29,7 @@ ifeq ($(HIP_PLATFORM), nvidia)
         CXXFLAGS+=-I$(CUDA_PATH)/include
 else
 	CXXFLAGS+=-D__HIP_PLATFORM_AMD__
+        CXXFLAGS+=-I$(HIP_PATH)/include
 endif
 
 .PHONY: all
