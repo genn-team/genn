@@ -73,7 +73,7 @@ struct Preferences : public PreferencesCUDAHIP
 
     //! Should line info be included in resultant executable for debugging/profiling purposes?
     bool generateLineInfo = false;
-    
+
     //! Should NVTX markers be inserted to make profiling easier?
     bool enableNVTX = false;
 
@@ -127,10 +127,10 @@ public:
     //------------------------------------------------------------------------
     //! To be called on one rank to generate ID before creating communicator
     void ncclGenerateUniqueID();
-    
+
     //! Get pointer to unique ID
     unsigned char *ncclGetUniqueID();
-    
+
     //! Get size of unique ID in bytes
     size_t ncclGetUniqueIDSize() const;
 
@@ -163,38 +163,38 @@ public:
     Array(const Type::ResolvedType &type, size_t count, 
           VarLocation location, bool uninitialized);
     virtual ~Array();
-    
+
     //------------------------------------------------------------------------
     // ArrayBase virtuals
     //------------------------------------------------------------------------
     //! Allocate array
     virtual void allocate(size_t count) final;
-    
+
     //! Free array
     virtual void free() final;
-    
+
     //! Copy entire array to device
     virtual void pushToDevice() final;
-    
+
     //! Copy entire array from device
     virtual void pullFromDevice() final;
-    
+
     //! Copy a 1D slice of elements to device 
     /*! \param offset   Offset in elements to start copying from
         \param count    Number of elements to copy*/
     virtual void pushSlice1DToDevice(size_t offset, size_t count) final;
-    
+
     //! Copy a 1D slice of elements from device 
     /*! \param offset   Offset in elements to start copying from
         \param count    Number of elements to copy*/
     virtual void pullSlice1DFromDevice(size_t offset, size_t count) final;
-    
+
     //! Memset the host pointer
     virtual void memsetDeviceObject(int value) final;
-    
+
     //! Serialise backend-specific device object to bytes
     virtual void serialiseDeviceObject(std::vector<std::byte> &bytes, bool pointerToPointer) const final;
-    
+
     //! Serialise backend-specific host object to bytes
     virtual void serialiseHostObject(std::vector<std::byte>&, bool) const final;
 
@@ -239,6 +239,8 @@ public:
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
     //--------------------------------------------------------------------------
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+
     //! Create backend-specific runtime state object
     /*! \param runtime  runtime object */
     virtual std::unique_ptr<GeNN::Runtime::StateBase> createState(const Runtime::Runtime &runtime) const final;
@@ -279,7 +281,7 @@ public:
 
     //! Generate code to push a profiler range marker 
     virtual void genPushProfilerRange(CodeStream &os, const std::string &name) const final;
-    
+
     //! Generate code to pop the current profiler range marker
     virtual void genPopProfilerRange(CodeStream &os) const final;
 
@@ -301,6 +303,12 @@ protected:
         return m_ChosenDevice.totalConstMem - getPreferences<Preferences>().constantCacheOverhead;
     }
 
+    //! Get mask to use for shuffle operations across all lanes
+    virtual std::string getAllLanesShuffleMask() const final
+    {
+        return "0xFFFFFFFF";
+    }
+
     //! Get internal type population RNG gets loaded into
     virtual Type::ResolvedType getPopulationRNGInternalType() const final;
 
@@ -309,7 +317,7 @@ protected:
 
     //! Generate HIP/CUDA specific bits of definitions preamble
     virtual void genDefinitionsPreambleInternal(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
-    
+
     virtual void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY = 1) const final;
 
     //--------------------------------------------------------------------------
@@ -319,4 +327,4 @@ protected:
     cudaDeviceProp m_ChosenDevice;
     int m_RuntimeVersion;
 };
-}   // GeNN::CUDA::CodeGenerator
+}   // GeNN::CodeGenerator::CUDA

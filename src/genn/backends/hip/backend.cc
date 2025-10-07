@@ -444,12 +444,12 @@ void Backend::genLazyVariableDynamicAllocation(CodeStream &os, const Type::Resol
 void Backend::genMakefilePreamble(std::ostream &os) const
 {
     std::string architecture;
-    std::string linkFlags = "--shared -fgpu-rdc";
+    std::string linkFlags = "--shared";
 #if defined(__HIP_PLATFORM_NVIDIA__)
     linkFlags += " -arch sm_" + std::to_string(getChosenHIPDevice().major) + std::to_string(getChosenHIPDevice().minor);
 #elif defined(__HIP_PLATFORM_AMD__)
     // Get AMD GPU architecture directly from device properties
-    linkFlags += " --offload-arch=" +std::string(getChosenHIPDevice().gcnArchName);
+    linkFlags += " -fgpu-rdc --offload-arch=" +std::string(getChosenHIPDevice().gcnArchName);
 #endif
     // If NCCL reductions are enabled, link NCCL
     if(getPreferences<Preferences>().enableNCCLReductions) {
@@ -488,7 +488,7 @@ void Backend::genNMakefilePreamble(std::ostream &os) const
 {
     const std::string architecture = "sm_" + std::to_string(getChosenHIPDevice().major) + std::to_string(getChosenHIPDevice().minor);
     std::string linkFlags = "--shared -arch " + architecture;
-    
+
     // Write variables to preamble
     os << "HIPCC = \"$(HIP_PATH)/bin/hipcc.exe\"" << std::endl;
     os << "HIPCCFLAGS = " << getHIPCCFlags() << std::endl;
@@ -617,6 +617,17 @@ std::string Backend::getHIPCCFlags() const
 #endif
 }
 //--------------------------------------------------------------------------
+std::string Backend::getAllLanesShuffleMask() const
+{
+    if(getNumLanes() == 32) {
+        return "0xFFFFFFFFull";
+    }
+    else {
+        assert(getNumLanes() == 64);
+        return "0xFFFFFFFFFFFFFFFFull";
+    }
+}
+//--------------------------------------------------------------------------
 Type::ResolvedType Backend::getPopulationRNGInternalType() const
 {
     return HIPRandState;
@@ -708,4 +719,4 @@ void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThrea
         os << "const dim3 grid(" << gridSize << ", " << batchSize << ");" << std::endl;
     }
 }
-}   // namespace GeNN::CodeGenerator::CUDA
+}   // namespace GeNN::CodeGenerator::HIP

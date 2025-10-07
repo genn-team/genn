@@ -12,15 +12,13 @@ include MakefileCommon
 
 # Select platform
 ifeq ($(HIP_PLATFORM), nvidia)
-        CXXFLAGS+=-D__HIP_PLATFORM_NVIDIA__
-        CXXFLAGS+=-I$(CUDA_PATH)/include
+    CXXFLAGS+=-D__HIP_PLATFORM_NVIDIA__ -I$(CUDA_PATH)/include
     LDFLAGS+=-L"$(CUDA_PATH)/lib64" -lcuda -lcudart
 else ifeq ($(HIP_PLATFORM), amd)
-        CXXFLAGS+=-D__HIP_PLATFORM_AMD__
-        CXXFLAGS+=-I$(HIP_PATH)/include
-    LDFLAGS+=-L"$(HIP_PATH)/lib" -lamdhip64
+    CXXFLAGS+=-D__HIP_PLATFORM_AMD__
+    LDFLAGS+=-lamdhip64
 endif
 
 # Add include and link flags for HIP
-
-LDFLAGS	+=-L"$(HIP_PATH)/lib" -lhiprand -pthread
+CXXFLAGS+=-I$(HIP_PATH)/include
+LDFLAGS+=-L"$(HIP_PATH)/lib" -lhiprand -pthread

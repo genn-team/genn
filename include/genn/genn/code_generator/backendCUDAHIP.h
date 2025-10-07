@@ -175,6 +175,9 @@ protected:
     //! Get the safe amount of constant cache we can use
     virtual size_t getChosenDeviceSafeConstMemBytes() const = 0;
 
+    //! Get mask to use for shuffle operations across all lanes
+    virtual std::string getAllLanesShuffleMask() const = 0;
+
     //! Get internal type population RNG gets loaded into
     virtual Type::ResolvedType getPopulationRNGInternalType() const = 0;
 
@@ -257,10 +260,10 @@ private:
                     const auto resolvedType = v.type.resolve(cg.getTypeContext());
                     groupEnv.addField(resolvedType.createPointer(), "_" + v.name, v.name,
                                       [v](const auto &runtime, const auto &g, size_t) 
-                                      { 
+                                      {
                                           return runtime.getArray(g, v.name);
                                       });
-                    
+
                     // Add NCCL reduction
                     groupEnv.print("CHECK_NCCL_ERRORS(ncclAllReduce($(_" + v.name + "), $(_" + v.name + "), $(_size)");
                     groupEnv.printLine(", " + getNCCLType(resolvedType) + ", " + getNCCLReductionType(getVarAccessMode(v.access)) + ", ncclCommunicator, 0));");
@@ -275,7 +278,7 @@ private:
                     const auto resolvedType = v.type.resolve(cg.getTypeContext());
                     groupEnv.addField(resolvedType.createPointer(), "_" + v.name, v.name,
                                       [v](const auto &runtime, const auto &g, size_t) 
-                                      { 
+                                      {
                                           const auto varRef = g.getVarReferences().at(v.name);
                                           return varRef.getTargetArray(runtime);
                                       });
@@ -284,7 +287,7 @@ private:
                     groupEnv.print("CHECK_NCCL_ERRORS(ncclAllReduce($(_" + v.name + "), $(_" + v.name + "), $(_size)");
                     groupEnv.printLine(", " + getNCCLType(v.type.resolve(cg.getTypeContext())) + ", " + getNCCLReductionType(v.access) + ", ncclCommunicator, 0));");
                 }
-            } 
+            }
         }
     }
     //--------------------------------------------------------------------------

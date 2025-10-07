@@ -197,13 +197,13 @@ public:
     virtual void genLazyVariableDynamicAllocation(CodeStream &os, 
                                                   const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
                                                   const std::string &countVarName) const final;
-    
+
     virtual bool shouldUseNMakeBuildSystem() const final{ return true; }
 
     virtual void genMakefilePreamble(std::ostream &os) const final;
     virtual void genMakefileLinkRule(std::ostream &os) const final;
     virtual void genMakefileCompileRule(std::ostream &os) const final;
-    
+
     virtual void genNMakefilePreamble(std::ostream &os) const final;
     virtual void genNMakefileLinkRule(std::ostream &os) const final;
     virtual void genNMakefileCompileRule(std::ostream &os) const final;
@@ -238,9 +238,12 @@ protected:
         return m_ChosenDevice.totalConstMem - getPreferences<Preferences>().constantCacheOverhead;
     }
 
+    //! Get mask to use for shuffle operations across all lanes
+    virtual std::string getAllLanesShuffleMask() const final;
+
     //! Get internal type population RNG gets loaded into
     virtual Type::ResolvedType getPopulationRNGInternalType() const final;
-    
+
     //! Get library of RNG functions to use
     virtual const EnvironmentLibrary::Library &getRNGFunctions(const Type::ResolvedType &precision) const final;
 
@@ -256,4 +259,4 @@ protected:
     hipDeviceProp_t m_ChosenDevice;
     int m_RuntimeVersion;
 };
-}   // GeNN::CUDA::CodeGenerator
+}   // GeNN::CodeGenerator::HIP

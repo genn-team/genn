@@ -254,17 +254,9 @@ std::string BackendCUDAHIP::getBlockID(unsigned int axis) const
 void BackendCUDAHIP::genWarpReduction(CodeStream& os, const std::string& variable,
                                       VarAccessMode access, const Type::ResolvedType& type) const
 {
-    const unsigned int lanes = getNumLanes();
-    std::string mask;
-    if(getNumLanes() == 32) {
-        mask = "0xFFFFFFFFull";
-    }
-    else {
-        assert(getNumLanes() == 64);
-        mask = "0xFFFFFFFFFFFFFFFFull";
-    }
-    for (unsigned int i = (lanes / 2); i > 0; i /= 2) {
-        os << getReductionOperation(variable, "__shfl_down_sync(" + mask + ", " + variable + ", " + std::to_string(i) + ")",
+    for (unsigned int i = (getNumLanes() / 2); i > 0; i /= 2) {
+        os << getReductionOperation(variable,
+                                    "__shfl_down_sync(" + getAllLanesShuffleMask() + ", " + variable + ", " + std::to_string(i) + ")",
                                     access, type);
         os <<  ";" << std::endl;
     }
