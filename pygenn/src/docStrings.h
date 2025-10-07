@@ -143,7 +143,12 @@ R"doc(Generate platform-specific functions to perform custom updates
 
 $Parameter ``os``:
 
-                           CodeStream to write function to
+                           CodeStream to write function
+
+
+$Parameter ``streamCreator``:
+
+            function backend can use to create any additional files required
 
 
 $Parameter ``modelMerged``:
@@ -175,7 +180,12 @@ R"doc(Generate platform-specific function to initialise model
 
 $Parameter ``os``:
 
-                           CodeStream to write function to
+                           CodeStream to write function
+
+
+$Parameter ``streamCreator``:
+
+                function backend can use to create any additional files required
 
 
 $Parameter ``modelMerged``:
@@ -235,6 +245,16 @@ static const char *__doc_CodeGenerator_BackendBase_genMakefilePreamble = R"doc(T
 
 static const char *__doc_CodeGenerator_BackendBase_genMergedDynamicVariablePush = R"doc(Generate code for pushing a new pointer to a dynamic variable into the merged group structure on 'device')doc";
 
+static const char *__doc_CodeGenerator_BackendBase_genNMakefileCompileRule =
+R"doc(The NMAKE build system uses 'inference rules' (https://learn.microsoft.com/en-us/cpp/build/reference/inference-rules?view=msvc-170) to build backend modules into objects.
+This function should generate an NMAKE pattern rule capable of building each module (i.e. compiling .cc file $< into .obj file $@).)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genNMakefileLinkRule =
+R"doc(The NMAKE build system will populate a variable called ``$(OBJECTS)`` with a list of objects to link.
+This function should generate a NMAKE rule to build these objects into a DLL)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genNMakefilePreamble = R"doc(This function can be used to generate a preamble for the NMAKE makefile used to build)doc";
+
 static const char *__doc_CodeGenerator_BackendBase_genNeuronUpdate =
 R"doc(Generate platform-specific function to update the state of all neurons
 
@@ -242,6 +262,11 @@ R"doc(Generate platform-specific function to update the state of all neurons
 $Parameter ``os``:
 
                        CodeStream to write function to
+
+
+$Parameter ``streamCreator``:
+
+            function backend can use to create any additional files required
 
 
 $Parameter ``modelMerged``:
@@ -253,7 +278,11 @@ $Parameter ``preambleHandler``:
 
           callback to write functions for pushing extra-global parameters)doc";
 
+static const char *__doc_CodeGenerator_BackendBase_genPopProfilerRange = R"doc(Generate code to pop the current profiler range marker)doc";
+
 static const char *__doc_CodeGenerator_BackendBase_genPopVariableInit = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_genPushProfilerRange = R"doc(Generate code to push a profiler range marker)doc";
 
 static const char *__doc_CodeGenerator_BackendBase_genReturnFreeDeviceMemoryBytes = R"doc(Generate code to return amount of free 'device' memory in bytes)doc";
 
@@ -270,6 +299,11 @@ R"doc(Generate platform-specific function to update the state of all synapses
 $Parameter ``os``:
 
                            CodeStream to write function to
+
+
+$Parameter ``streamCreator``:
+
+            function backend can use to create any additional files required
 
 
 $Parameter ``modelMerged``:
@@ -289,13 +323,7 @@ static const char *__doc_CodeGenerator_BackendBase_getAtomicOperation = R"doc(Ge
 
 static const char *__doc_CodeGenerator_BackendBase_getDeviceMemoryBytes = R"doc(How many bytes of memory does 'device' have)doc";
 
-static const char *__doc_CodeGenerator_BackendBase_getFilesToCopy =
-R"doc(Get list of files to copy into generated code
-Paths should be relative to share/genn/backends/)doc";
-
 static const char *__doc_CodeGenerator_BackendBase_getHashDigest = R"doc(Get hash digest of this backends identification and the preferences it has been configured with)doc";
-
-static const char *__doc_CodeGenerator_BackendBase_getMergedGroupFieldHostTypeName = R"doc(When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host)doc";
 
 static const char *__doc_CodeGenerator_BackendBase_getMergedGroupMemorySpaces =
 R"doc(Some backends will have additional small, fast, memory spaces for read-only data which might
@@ -304,8 +332,6 @@ Place arrays in these and their size in preferential order)doc";
 
 static const char *__doc_CodeGenerator_BackendBase_getPointerBytes = R"doc(Get backend-specific pointer size in bytes)doc";
 
-static const char *__doc_CodeGenerator_BackendBase_getPointerPrefix = R"doc(Different backends may have different or no pointer prefix (e.g. __global for OpenCL))doc";
-
 static const char *__doc_CodeGenerator_BackendBase_getPreferences = R"doc()doc";
 
 static const char *__doc_CodeGenerator_BackendBase_getPreferences_2 = R"doc()doc";
@@ -313,6 +339,10 @@ static const char *__doc_CodeGenerator_BackendBase_getPreferences_2 = R"doc()doc
 static const char *__doc_CodeGenerator_BackendBase_getReductionInitialValue = R"doc(Get the initial value to start reduction operations from)doc";
 
 static const char *__doc_CodeGenerator_BackendBase_getReductionOperation = R"doc(Generate a reduction operation to reduce value into reduction)doc";
+
+static const char *__doc_CodeGenerator_BackendBase_getRestrictKeyword =
+R"doc(GeNN knows that pointers used in some places in the code e.g. in merged groups are
+"restricted" i.e. not aliased. What keyword should be used to indicate this?)doc";
 
 static const char *__doc_CodeGenerator_BackendBase_getSynapseIndexType = R"doc(Get the type to use for synaptic indices within a merged synapse group)doc";
 
@@ -341,6 +371,10 @@ static const char *__doc_CodeGenerator_BackendBase_m_PointerBytes = R"doc(How la
 static const char *__doc_CodeGenerator_BackendBase_m_Preferences = R"doc(Preferences)doc";
 
 static const char *__doc_CodeGenerator_BackendBase_setPointerBytes = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendBase_shouldUseNMakeBuildSystem =
+R"doc(On Windows, there are two choices of build system MSBuild and NMake. MSBuild is much better, offering parallel builds,
+Dependency tracking etc but various backends do not provide MSBuild plugins and sometimes these don't get installed)doc";
 
 static const char *__doc_CodeGenerator_BackendCUDAHIP = R"doc()doc";
 
@@ -416,8 +450,6 @@ static const char *__doc_CodeGenerator_BackendCUDAHIP_getCLZ = R"doc(Get the nam
 
 static const char *__doc_CodeGenerator_BackendCUDAHIP_getChosenDeviceSafeConstMemBytes = R"doc(Get the safe amount of constant cache we can use)doc";
 
-static const char *__doc_CodeGenerator_BackendCUDAHIP_getMergedGroupFieldHostTypeName = R"doc(When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host)doc";
-
 static const char *__doc_CodeGenerator_BackendCUDAHIP_getMergedGroupMemorySpaces =
 R"doc(Some backends will have additional small, fast, memory spaces for read-only data which might
 Be well-suited to storing merged group structs. This method returns the prefix required to
@@ -434,6 +466,10 @@ static const char *__doc_CodeGenerator_BackendCUDAHIP_getPopulationRNGType = R"d
 static const char *__doc_CodeGenerator_BackendCUDAHIP_getRNGFunctions = R"doc(Get library of RNG functions to use)doc";
 
 static const char *__doc_CodeGenerator_BackendCUDAHIP_getRandPrefix = R"doc()doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_getRestrictKeyword =
+R"doc(GeNN knows that pointers used in some places in the code e.g. in merged groups are
+"restricted" i.e. not aliased. What keyword should be used to indicate this?)doc";
 
 static const char *__doc_CodeGenerator_BackendCUDAHIP_getRuntimePrefix = R"doc()doc";
 
