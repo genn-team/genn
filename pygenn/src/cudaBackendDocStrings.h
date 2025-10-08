@@ -23,6 +23,56 @@
 #endif
 
 
+static const char *__doc_CodeGenerator_CUDA_Array = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CUDA_Array_Array = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CUDA_Array_allocate = R"doc(Allocate array)doc";
+
+static const char *__doc_CodeGenerator_CUDA_Array_free = R"doc(Free array)doc";
+
+static const char *__doc_CodeGenerator_CUDA_Array_getDevicePointer =
+R"doc(Get device pointer
+Returns the pointer to the device memory)doc";
+
+static const char *__doc_CodeGenerator_CUDA_Array_m_DevicePointer = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CUDA_Array_memsetDeviceObject = R"doc(Memset the host pointer)doc";
+
+static const char *__doc_CodeGenerator_CUDA_Array_pullFromDevice = R"doc(Copy entire array from device)doc";
+
+static const char *__doc_CodeGenerator_CUDA_Array_pullSlice1DFromDevice =
+R"doc(Copy a 1D slice of elements from device
+
+
+$Parameter ``offset``:
+
+   Offset in elements to start copying from
+
+
+$Parameter ``count``:
+
+    Number of elements to copy)doc";
+
+static const char *__doc_CodeGenerator_CUDA_Array_pushSlice1DToDevice =
+R"doc(Copy a 1D slice of elements to device
+
+
+$Parameter ``offset``:
+
+   Offset in elements to start copying from
+
+
+$Parameter ``count``:
+
+    Number of elements to copy)doc";
+
+static const char *__doc_CodeGenerator_CUDA_Array_pushToDevice = R"doc(Copy entire array to device)doc";
+
+static const char *__doc_CodeGenerator_CUDA_Array_serialiseDeviceObject = R"doc(Serialise backend-specific device object to bytes)doc";
+
+static const char *__doc_CodeGenerator_CUDA_Array_serialiseHostObject = R"doc(Serialise backend-specific host object to bytes)doc";
+
 static const char *__doc_CodeGenerator_CUDA_Backend = R"doc()doc";
 
 static const char *__doc_CodeGenerator_CUDA_Backend_Backend = R"doc()doc";
@@ -77,6 +127,16 @@ static const char *__doc_CodeGenerator_CUDA_Backend_genMakefileLinkRule = R"doc(
 
 static const char *__doc_CodeGenerator_CUDA_Backend_genMakefilePreamble = R"doc()doc";
 
+static const char *__doc_CodeGenerator_CUDA_Backend_genNMakefileCompileRule = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CUDA_Backend_genNMakefileLinkRule = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CUDA_Backend_genNMakefilePreamble = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CUDA_Backend_genPopProfilerRange = R"doc(Generate code to pop the current profiler range marker)doc";
+
+static const char *__doc_CodeGenerator_CUDA_Backend_genPushProfilerRange = R"doc(Generate code to push a profiler range marker)doc";
+
 static const char *__doc_CodeGenerator_CUDA_Backend_getAtomic = R"doc(Get name of atomic operation)doc";
 
 static const char *__doc_CodeGenerator_CUDA_Backend_getChosenCUDADevice = R"doc()doc";
@@ -106,6 +166,8 @@ static const char *__doc_CodeGenerator_CUDA_Backend_m_ChosenDevice = R"doc()doc"
 static const char *__doc_CodeGenerator_CUDA_Backend_m_ChosenDeviceID = R"doc()doc";
 
 static const char *__doc_CodeGenerator_CUDA_Backend_m_RuntimeVersion = R"doc()doc";
+
+static const char *__doc_CodeGenerator_CUDA_Backend_shouldUseNMakeBuildSystem = R"doc()doc";
 
 static const char *__doc_CodeGenerator_CUDA_BlockSizeSelect = R"doc(Methods for selecting CUDA kernel block size)doc";
 
@@ -137,9 +199,9 @@ additional constant cache, increase this)doc";
 
 static const char *__doc_CodeGenerator_CUDA_Preferences_deviceSelectMethod = R"doc(How to select GPU device)doc";
 
-static const char *__doc_CodeGenerator_CUDA_Preferences_generateLineInfo = R"doc(Should line info be included in resultant executable for debugging/profiling purposes?)doc";
-
 static const char *__doc_CodeGenerator_CUDA_Preferences_enableNVTX = R"doc(Should NVTX markers be inserted to make profiling easier?)doc";
+
+static const char *__doc_CodeGenerator_CUDA_Preferences_generateLineInfo = R"doc(Should line info be included in resultant executable for debugging/profiling purposes?)doc";
 
 static const char *__doc_CodeGenerator_CUDA_Preferences_manualBlockSizes = R"doc(If block size select method is set to BlockSizeSelect::MANUAL, block size to use for each kernel)doc";
 

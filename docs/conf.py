@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath("../pygenn"))
 # -- Project information -----------------------------------------------------
 
 project = "PyGeNN"
-copyright = "2024, James Knight, Thomas Nowotny"
+copyright = "2025, James Knight, Thomas Nowotny"
 author = "James Knight, Thomas Nowotny"
 
 

@@ -49,6 +49,14 @@ pygenn.genn\_groups module
    :undoc-members:
    :show-inheritance:
 
+pygenn.hip\_backend module
+--------------------------
+
+.. automodule:: pygenn.hip_backend
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pygenn.init\_sparse\_connectivity\_snippets module
 --------------------------------------------------
 
