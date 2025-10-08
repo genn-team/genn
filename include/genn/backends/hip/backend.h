@@ -56,7 +56,8 @@ struct Preferences : public PreferencesCUDAHIP
 {
     Preferences()
     {
-        std::fill(manualBlockSizes.begin(), manualBlockSizes.end(), 32);
+        // **NOTE** we zero these as the default should be warpsize and this isn't known here
+        std::fill(manualBlockSizes.begin(), manualBlockSizes.end(), 0);
     }
 
     //! Should PTX assembler information be displayed for each CUDA kernel during compilation?
