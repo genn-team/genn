@@ -215,7 +215,7 @@ size_t BackendSIMT::getPaddedNumCustomUpdateThreads(const CustomUpdateInternal &
     const size_t numCopies = ((cg.getDims() & VarAccessDim::BATCH) && !cg.isBatchReduction()) ? batchSize : 1;
 
     if (cg.isNeuronReduction()) {
-        return padKernelSize(32 * numCopies, KernelCustomUpdate);
+        return padKernelSize(getNumLanes() * numCopies, KernelCustomUpdate);
     }
     else if (cg.getDims() & VarAccessDim::ELEMENT) {
         return numCopies * padKernelSize(cg.getNumNeurons(), KernelCustomUpdate);
@@ -928,14 +928,15 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
             // Otherwise, if this is a neuron reduction
             else if (cg.getArchetype().isNeuronReduction()) {
                 groupEnv.getStream() << "// only do this for existing neurons" << std::endl;
-                groupEnv.getStream() << "if(" << env["id"] << " < " << (32 * batchSize) << ")";
+                groupEnv.getStream() << "if(" << env["id"] << " < " << (getNumLanes() * batchSize) << ")";
                 {
                     CodeStream::Scope b(groupEnv.getStream());
 
                     // Split ID into lane and batch
-                    groupEnv.printLine("const unsigned int lane = $(id) % " + std::to_string(getNumLanes()) + ";");
+                    const std::string numLanesStr = std::to_string(getNumLanes());
+                    groupEnv.printLine("const unsigned int lane = $(id) % " + numLanesStr + ";");
                     groupEnv.add(Type::Uint32.addConst(), "batch", "batch",
-                                 {groupEnv.addInitialiser("const unsigned int batch = $(id) / 32;")});
+                                 {groupEnv.addInitialiser("const unsigned int batch = $(id) / " + numLanesStr +";")});
 
                     EnvironmentGroupMergedField<CustomUpdateGroupMerged> batchEnv(groupEnv, cg);
                     buildStandardEnvironment(batchEnv, batchSize);
@@ -946,7 +947,7 @@ void BackendSIMT::genCustomUpdateKernel(EnvironmentExternal &env, ModelSpecMerge
                     // Loop through warps of data
                     // **TODO** this approach is good for reductions where there are small numbers of neurons but large batches sizes but,
                     // if this isn't thsizee case (TF uses a threshold of 1024), we should do something smarter
-                    batchEnv.print("for(unsigned int idx = lane; idx < $(num_neurons); idx += 32)");
+                    batchEnv.print("for(unsigned int idx = lane; idx < $(num_neurons); idx += " + std::to_string(getNumLanes()) + ")");
                     {
                         CodeStream::Scope b(batchEnv.getStream());
 
@@ -1944,10 +1945,12 @@ void BackendSIMT::genEmitEvent(EnvironmentExternalBase &env, NeuronUpdateGroupMe
     const bool eventRecordingEnabled = trueSpike ? ng.getArchetype().isSpikeRecordingEnabled() : ng.getArchetype().isSpikeEventRecordingEnabled();
     if(eventRecordingEnabled) {
         if(m_KernelBlockSizes[KernelNeuronUpdate] == 32) {
-            env.printLine(getAtomic(Type::Uint32, AtomicOperation::OR, AtomicMemSpace::SHARED) + "(&shSpkRecord" + camelSuffix + "[" + indexStr + "], 1 << " + getThreadID() + ");");
+            env.printLine(getAtomic(Type::Uint32, AtomicOperation::OR, AtomicMemSpace::SHARED) 
+                          + "(&shSpkRecord" + camelSuffix + "[" + indexStr + "], 1 << " + getThreadID() + ");");
         }
         else {
-            env.printLine(getAtomic(Type::Uint32, AtomicOperation::OR, AtomicMemSpace::SHARED) + "(&shSpkRecord" + camelSuffix + "[" + indexStr + "][" + getThreadID() + " / 32], 1 << (" + getThreadID() + " % 32));");
+            env.printLine(getAtomic(Type::Uint32, AtomicOperation::OR, AtomicMemSpace::SHARED) 
+                          + "(&shSpkRecord" + camelSuffix + "[" + indexStr + "][" + getThreadID() + " / 32], 1 << (" + getThreadID() + " % 32));");
         }
     }
 }
