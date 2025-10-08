@@ -81,19 +81,19 @@ public:
     virtual void genSharedMemBarrier(CodeStream &os) const final;
 
     //! For SIMT backends which initialize RNGs on device, initialize population RNG with specified seed and sequence
-    virtual void genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const final;
+    virtual void genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const override;
 
     //! Generate code to skip ahead local copy of global RNG
     virtual std::string genGlobalRNGSkipAhead(CodeStream &os, const std::string &sequence) const final;
 
     //! Get type of population RNG
-    virtual Type::ResolvedType getPopulationRNGType() const final;
+    virtual Type::ResolvedType getPopulationRNGType() const override;
 
     //! Generate a preamble to add substitution name for population RNG
-    virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env) const final;
+    virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env) const override;
 
     //! Add $(_rng) to environment based on $(_rng_internal) field with any initialisers and destructors required
-    virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const final;
+    virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const override;
 
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
@@ -112,7 +112,6 @@ public:
 
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
-    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
 
@@ -175,6 +174,9 @@ protected:
     //--------------------------------------------------------------------------
     //! Get the safe amount of constant cache we can use
     virtual size_t getChosenDeviceSafeConstMemBytes() const = 0;
+
+    //! Get mask to use for shuffle operations across all lanes
+    virtual std::string getAllLanesShuffleMask() const = 0;
 
     //! Get internal type population RNG gets loaded into
     virtual Type::ResolvedType getPopulationRNGInternalType() const = 0;
@@ -258,10 +260,10 @@ private:
                     const auto resolvedType = v.type.resolve(cg.getTypeContext());
                     groupEnv.addField(resolvedType.createPointer(), "_" + v.name, v.name,
                                       [v](const auto &runtime, const auto &g, size_t) 
-                                      { 
+                                      {
                                           return runtime.getArray(g, v.name);
                                       });
-                    
+
                     // Add NCCL reduction
                     groupEnv.print("CHECK_NCCL_ERRORS(ncclAllReduce($(_" + v.name + "), $(_" + v.name + "), $(_size)");
                     groupEnv.printLine(", " + getNCCLType(resolvedType) + ", " + getNCCLReductionType(getVarAccessMode(v.access)) + ", ncclCommunicator, 0));");
@@ -276,7 +278,7 @@ private:
                     const auto resolvedType = v.type.resolve(cg.getTypeContext());
                     groupEnv.addField(resolvedType.createPointer(), "_" + v.name, v.name,
                                       [v](const auto &runtime, const auto &g, size_t) 
-                                      { 
+                                      {
                                           const auto varRef = g.getVarReferences().at(v.name);
                                           return varRef.getTargetArray(runtime);
                                       });
@@ -285,7 +287,7 @@ private:
                     groupEnv.print("CHECK_NCCL_ERRORS(ncclAllReduce($(_" + v.name + "), $(_" + v.name + "), $(_size)");
                     groupEnv.printLine(", " + getNCCLType(v.type.resolve(cg.getTypeContext())) + ", " + getNCCLReductionType(v.access) + ", ncclCommunicator, 0));");
                 }
-            } 
+            }
         }
     }
     //--------------------------------------------------------------------------

@@ -56,7 +56,8 @@ struct Preferences : public PreferencesCUDAHIP
 {
     Preferences()
     {
-        std::fill(manualBlockSizes.begin(), manualBlockSizes.end(), 32);
+        // **NOTE** we zero these as the default should be warpsize and this isn't known here
+        std::fill(manualBlockSizes.begin(), manualBlockSizes.end(), 0);
     }
 
     //! Should PTX assembler information be displayed for each CUDA kernel during compilation?
@@ -75,6 +76,7 @@ struct Preferences : public PreferencesCUDAHIP
     //BlockSizeSelect blockSizeSelectMethod = BlockSizeSelect::OCCUPANCY;
 
     //! If block size select method is set to BlockSizeSelect::MANUAL, block size to use for each kernel
+    /*! These default to zero which signals the HIP backend to replace them with the device warp size. */
     KernelBlockSize manualBlockSizes;
 
     //! How much constant cache is already used and therefore can't be used by GeNN?
@@ -165,9 +167,23 @@ public:
                                   AtomicOperation op = AtomicOperation::ADD, 
                                   AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const final;
 
+    //! For SIMT backends which initialize RNGs on device, initialize population RNG with specified seed and sequence
+    virtual void genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const final;
+
+    //! Generate a preamble to add substitution name for population RNG
+    virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env) const final;
+
+    //! Add $(_rng) to environment based on $(_rng_internal) field with any initialisers and destructors required
+    virtual void buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const final;
+
+    //! Get type of population RNG
+    virtual Type::ResolvedType getPopulationRNGType() const final;
+
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
     //--------------------------------------------------------------------------
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const final;
+
     //! Create backend-specific runtime state object
     /*! \param runtime  runtime object */
     virtual std::unique_ptr<GeNN::Runtime::StateBase> createState(const Runtime::Runtime &runtime) const final;
@@ -183,13 +199,13 @@ public:
     virtual void genLazyVariableDynamicAllocation(CodeStream &os, 
                                                   const Type::ResolvedType &type, const std::string &name, VarLocation loc, 
                                                   const std::string &countVarName) const final;
-    
+
     virtual bool shouldUseNMakeBuildSystem() const final{ return true; }
 
     virtual void genMakefilePreamble(std::ostream &os) const final;
     virtual void genMakefileLinkRule(std::ostream &os) const final;
     virtual void genMakefileCompileRule(std::ostream &os) const final;
-    
+
     virtual void genNMakefilePreamble(std::ostream &os) const final;
     virtual void genNMakefileLinkRule(std::ostream &os) const final;
     virtual void genNMakefileCompileRule(std::ostream &os) const final;
@@ -224,9 +240,12 @@ protected:
         return m_ChosenDevice.totalConstMem - getPreferences<Preferences>().constantCacheOverhead;
     }
 
+    //! Get mask to use for shuffle operations across all lanes
+    virtual std::string getAllLanesShuffleMask() const final;
+
     //! Get internal type population RNG gets loaded into
     virtual Type::ResolvedType getPopulationRNGInternalType() const final;
-    
+
     //! Get library of RNG functions to use
     virtual const EnvironmentLibrary::Library &getRNGFunctions(const Type::ResolvedType &precision) const final;
 
@@ -242,4 +261,4 @@ protected:
     hipDeviceProp_t m_ChosenDevice;
     int m_RuntimeVersion;
 };
-}   // GeNN::CUDA::CodeGenerator
+}   // GeNN::CodeGenerator::HIP

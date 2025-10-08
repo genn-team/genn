@@ -2,37 +2,18 @@
 
 // Standard C++ includes
 #include <algorithm>
-#include <fstream>
-#include <iostream>
-#include <map>
-#include <mutex>
 #include <numeric>
-#include <thread>
-#include <tuple>
-
-// Standard C includes
-#include <cstdlib>
 
 // HIP includes
 #include <hip/hip_runtime.h>
 
 // PLOG includes
 #include <plog/Log.h>
-
-// Filesystem includes
-#include "path.h"
-
 // GeNN includes
 #include "logging.h"
 #include "modelSpecInternal.h"
 
-// GeNN code generator includes
-#include "code_generator/codeGenUtils.h"
-#include "code_generator/generateModules.h"
-#include "code_generator/generateRunner.h"
-#include "code_generator/modelSpecMerged.h"
-
-// CUDA backend includes
+// HIP backend includes
 #include "utils.h"
 
 using namespace GeNN;
@@ -57,6 +38,21 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path&,
         plog::get<Logging::CHANNEL_BACKEND>()->setMaxSeverity(backendLevel);
     }
 
-    return Backend(preferences.manualBlockSizes, preferences, preferences.manualDeviceID, model.zeroCopyInUse());
+    // If any manual block sizes haven't been set
+    KernelBlockSize manualBlockSizes = preferences.manualBlockSizes;
+    if(std::any_of(manualBlockSizes.cbegin(), manualBlockSizes.cend(),
+                   [](size_t s){ return (s == 0); }))
+    {
+        // Get manually selected device properties
+        hipDeviceProp_t deviceProps;
+        CHECK_HIP_ERRORS(hipGetDeviceProperties(&deviceProps, preferences.manualDeviceID));
+
+        // Replace any zeros in block size with warp size
+        std::transform(manualBlockSizes.cbegin(), manualBlockSizes.cend(), manualBlockSizes.begin(),
+                       [&deviceProps](size_t s){ return (s == 0) ? deviceProps.warpSize : s; });
+
+    } 
+
+    return Backend(manualBlockSizes, preferences, preferences.manualDeviceID, model.zeroCopyInUse());
 }
 }   // namespace GeNN::CodeGenerator::HIP::Optimiser

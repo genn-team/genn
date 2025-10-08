@@ -345,6 +345,67 @@ std::string Backend::getAtomic(const Type::ResolvedType &type, AtomicOperation o
     }
 }
 //--------------------------------------------------------------------------
+void Backend::genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const
+{
+#if defined(__HIP_PLATFORM_NVIDIA__)
+    // Superclass
+    BackendCUDAHIP::genPopulationRNGInit(os, globalRNG, seed, sequence);
+#else
+    // Initialise RNG directly
+    os << "hiprand_init(" << seed << ", " << sequence << ", 0, &" << globalRNG << ");" << std::endl;
+#endif
+}
+//--------------------------------------------------------------------------
+void Backend::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<NeuronUpdateGroupMerged> &env) const
+{
+#if defined(__HIP_PLATFORM_NVIDIA__)
+    // Superclass
+    BackendCUDAHIP::buildPopulationRNGEnvironment(env);
+#else
+    // Use internal RNG directly
+    // **NOTE** rocRand tries to be way too smart and hides the internal
+    // state of the RNGs in C++ classes so you can't perform this trick
+    env.add(getPopulationRNGInternalType(), "_rng", "$(_rng_internal)");
+#endif
+}
+//--------------------------------------------------------------------------
+void Backend::buildPopulationRNGEnvironment(EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> &env) const
+{
+#if defined(__HIP_PLATFORM_NVIDIA__)
+    // Superclass
+    BackendCUDAHIP::buildPopulationRNGEnvironment(env);
+#else
+    // Use internal RNG directly
+    // **NOTE** rocRand tries to be way too smart and hides the internal
+    // state of the RNGs in C++ classes so you can't perform this trick
+    env.add(getPopulationRNGInternalType(), "_rng", "$(_rng_internal)");
+#endif
+}
+//--------------------------------------------------------------------------
+Type::ResolvedType Backend::getPopulationRNGType() const
+{
+#if defined(__HIP_PLATFORM_NVIDIA__)
+    return BackendCUDAHIP::getPopulationRNGType();
+#else
+    return getPopulationRNGInternalType();
+#endif
+}
+//--------------------------------------------------------------------------
+void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
+{
+    // If global RNG is required
+    if(isGlobalDeviceRNGRequired(modelMerged.getModel())) {
+        CodeStream::Scope b(os);
+
+        // Allocate memory
+        os << "hiprandStatePhilox4_32_10_t *hostPtr;" << std::endl;
+        os << "CHECK_RUNTIME_ERRORS(hipMalloc(&hostPtr, sizeof(hiprandStatePhilox4_32_10_t)));" << std::endl;
+
+        // Copy to device symbol
+        os << "CHECK_RUNTIME_ERRORS(hipMemcpyToSymbol(HIP_SYMBOL(d_rng), &hostPtr, sizeof(void*)));" << std::endl;
+    }
+}
+//--------------------------------------------------------------------------
 std::unique_ptr<GeNN::Runtime::StateBase> Backend::createState(const Runtime::Runtime &runtime) const
 {
     return std::make_unique<State>(runtime);
@@ -382,9 +443,14 @@ void Backend::genLazyVariableDynamicAllocation(CodeStream &os, const Type::Resol
 //--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream &os) const
 {
-    const std::string architecture = "sm_" + std::to_string(getChosenHIPDevice().major) + std::to_string(getChosenHIPDevice().minor);
-    std::string linkFlags = "--shared -arch " + architecture;
-
+    std::string architecture;
+    std::string linkFlags = "--shared";
+#if defined(__HIP_PLATFORM_NVIDIA__)
+    linkFlags += " -arch sm_" + std::to_string(getChosenHIPDevice().major) + std::to_string(getChosenHIPDevice().minor);
+#elif defined(__HIP_PLATFORM_AMD__)
+    // Get AMD GPU architecture directly from device properties
+    linkFlags += " -fgpu-rdc --offload-arch=" +std::string(getChosenHIPDevice().gcnArchName);
+#endif
     // If NCCL reductions are enabled, link NCCL
     if(getPreferences<Preferences>().enableNCCLReductions) {
         linkFlags += " -lnccl";
@@ -394,6 +460,7 @@ void Backend::genMakefilePreamble(std::ostream &os) const
     os << "HIPCC := $(HIP_PATH)/bin/hipcc" << std::endl;
     os << "HIPCCFLAGS := " << getHIPCCFlags() << std::endl;
     os << "LINKFLAGS := " << linkFlags << std::endl;
+
 }
 //--------------------------------------------------------------------------
 void Backend::genMakefileLinkRule(std::ostream &os) const
@@ -410,14 +477,18 @@ void Backend::genMakefileCompileRule(std::ostream &os) const
 
     // Add another to build object files from cc files
     os << "%.o: %.cc %.d" << std::endl;
-    os << "\t@$(HIPCC) -dc $(HIPCCFLAGS) $<" << std::endl;
+#if defined(__HIP_PLATFORM_NVIDIA__)
+    os << "\t@$(HIPCC) -dc $(HIPCCFLAGS) $< -o $@" << std::endl;
+#elif defined(__HIP_PLATFORM_AMD__)
+    os << "\t@$(HIPCC) -c -fgpu-rdc $(HIPCCFLAGS) $< -o $@" << std::endl;
+#endif
 }
 //--------------------------------------------------------------------------
 void Backend::genNMakefilePreamble(std::ostream &os) const
 {
     const std::string architecture = "sm_" + std::to_string(getChosenHIPDevice().major) + std::to_string(getChosenHIPDevice().minor);
     std::string linkFlags = "--shared -arch " + architecture;
-    
+
     // Write variables to preamble
     os << "HIPCC = \"$(HIP_PATH)/bin/hipcc.exe\"" << std::endl;
     os << "HIPCCFLAGS = " << getHIPCCFlags() << std::endl;
@@ -506,7 +577,7 @@ boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
 //--------------------------------------------------------------------------
 std::string Backend::getHIPCCFlags() const
 {
-#ifdef __HIP_PLATFORM_NVIDIA__
+#if defined(__HIP_PLATFORM_NVIDIA__)
     // **NOTE** now we don't include runner.cc when building standalone modules we get loads of warnings about
     // How you hide device compiler warnings is totally non-documented but https://stackoverflow.com/a/17095910/1476754
     // holds the answer! For future reference --display_error_number option can be used to get warning ids to use in --diag-supress
@@ -519,25 +590,42 @@ std::string Backend::getHIPCCFlags() const
 #endif
     nvccFlags += " -Xcudafe \"--diag_suppress=extern_entity_treated_as_static\"";
     
-    //nvccFlags += " " + getPreferences<Preferences>().userNvccFlags;
     if(getPreferences().optimizeCode) {
         nvccFlags += " -O3 -use_fast_math";
     }
     if(getPreferences().debugCode) {
         nvccFlags += " -O0 -g -G";
     }
-    //if(getPreferences<Preferences>().showPtxInfo) {
-    //    nvccFlags += " -Xptxas \"-v\"";
-    //}
-    //if(getPreferences<Preferences>().generateLineInfo) {
-    //    nvccFlags += " --generate-line-info";
-    //}
-
     return nvccFlags;
+#elif defined(__HIP_PLATFORM_AMD__)
+    // Get AMD GPU architecture directly from device properties
+    const std::string archFlag = "--offload-arch=" + std::string(getChosenHIPDevice().gcnArchName);
+    std::string hipccFlags = "-fPIC " + archFlag + " -I\"$(HIP_PATH)/include\" -fgpu-rdc -DHIP_ENABLE_WARP_SYNC_BUILTINS";
+#ifndef _WIN32
+    hipccFlags += " -std=c++11";
+#endif
+    if(getPreferences().optimizeCode) {
+        hipccFlags += " -O3";
+    }
+    if(getPreferences().debugCode) {
+        hipccFlags += " -O0 -g";
+    }
+    return hipccFlags;
 #else
     assert(false);
     return "";
 #endif
+}
+//--------------------------------------------------------------------------
+std::string Backend::getAllLanesShuffleMask() const
+{
+    if(getNumLanes() == 32) {
+        return "0xFFFFFFFFull";
+    }
+    else {
+        assert(getNumLanes() == 64);
+        return "0xFFFFFFFFFFFFFFFFull";
+    }
 }
 //--------------------------------------------------------------------------
 Type::ResolvedType Backend::getPopulationRNGInternalType() const
@@ -604,7 +692,7 @@ void Backend::genDefinitionsPreambleInternal(CodeStream &os, const ModelSpecMerg
 
     os << std::endl;
     os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// Helper macro for error-checking CUDA calls" << std::endl;
+    os << "// Helper macro for error-checking HIP calls" << std::endl;
     os << "#define CHECK_RUNTIME_ERRORS(call) {\\" << std::endl;
     os << "    hipError_t error = call;\\" << std::endl;
     os << "    if (error != hipSuccess) {\\" << std::endl;
@@ -631,4 +719,4 @@ void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThrea
         os << "const dim3 grid(" << gridSize << ", " << batchSize << ");" << std::endl;
     }
 }
-}   // namespace GeNN::CodeGenerator::CUDA
+}   // namespace GeNN::CodeGenerator::HIP
