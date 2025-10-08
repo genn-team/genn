@@ -76,6 +76,7 @@ struct Preferences : public PreferencesCUDAHIP
     //BlockSizeSelect blockSizeSelectMethod = BlockSizeSelect::OCCUPANCY;
 
     //! If block size select method is set to BlockSizeSelect::MANUAL, block size to use for each kernel
+    /*! These default to zero which signals the HIP backend to replace them with the device warp size. */
     KernelBlockSize manualBlockSizes;
 
     //! How much constant cache is already used and therefore can't be used by GeNN?
