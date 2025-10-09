@@ -165,13 +165,6 @@ public:
     virtual void genPostamble(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, 
                               const BackendSIMT &backend, unsigned int batchSize) const final;
 
-private:
-    //--------------------------------------------------------------------------
-    // Private methods
-    //--------------------------------------------------------------------------
-    //! Are input currents emitted by this presynaptic update accumulated into a register?
-    bool shouldAccumulateInRegister(const PresynapticUpdateGroupMerged &sg) const;
-
 };
 
 //--------------------------------------------------------------------------

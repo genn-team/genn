@@ -281,8 +281,8 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
-    void generateSparseRowInit(EnvironmentExternalBase &env);
-    void generateSparseColumnInit(EnvironmentExternalBase &env);
+    void generateSparseRowInit(const BackendBase &backend, EnvironmentExternalBase &env);
+    void generateSparseColumnInit(const BackendBase &backend, EnvironmentExternalBase &env);
     void generateKernelInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
 
     //----------------------------------------------------------------------------
@@ -295,7 +295,8 @@ private:
     // Private methods
     //----------------------------------------------------------------------------
     //! Generate either row or column connectivity init code
-    void genInitConnectivity(EnvironmentExternalBase &env, bool rowNotColumns);
+    void genInitConnectivity(const BackendBase &backend, EnvironmentExternalBase &env, 
+                             bool rowNotColumns);
 };
 
 

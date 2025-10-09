@@ -169,13 +169,14 @@ public:
 protected:
     using Payload = std::tuple<bool, LazyString, std::optional<typename G::Field>>;
 
-    EnvironmentFieldPolicy(G &group, F &fieldGroup)
-    :   m_Group(group), m_FieldGroup(fieldGroup)
+    EnvironmentFieldPolicy(G &group, F &fieldGroup, const BackendBase &backend)
+    :   m_Group(group), m_FieldGroup(fieldGroup), m_Backend(backend)
     {
     }
 
     // **TODO** only enable if G == F
-    EnvironmentFieldPolicy(G &group) : EnvironmentFieldPolicy(group, group)
+    EnvironmentFieldPolicy(G &group, const BackendBase &backend) 
+    :   EnvironmentFieldPolicy(group, group, backend)
     {
     }
 
@@ -227,6 +228,7 @@ private:
     //------------------------------------------------------------------------
     std::reference_wrapper<G> m_Group;
     std::reference_wrapper<F> m_FieldGroup;
+    std::reference_wrapper<const BackendBase> m_Backend;
 };
 
 //----------------------------------------------------------------------------
@@ -720,12 +722,13 @@ public:
         const A archetypeAdaptor(this->getGroup().getArchetype());
         for(const auto &v : archetypeAdaptor.getDefs()) {
             const auto resolvedType = v.type.resolve(this->getGroup().getTypeContext());
-            const auto qualifiedType = (readOnly || (getVarAccessMode(v.access) & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
+            const auto fieldReadOnly = (readOnly || (getVarAccessMode(v.access) & VarAccessModeAttribute::READ_ONLY));
+            const auto qualifiedType = fieldReadOnly ? resolvedType.addConst() : resolvedType;
             const auto resolvedStorageType = v.storageType.resolve(this->getGroup().getTypeContext());
             const auto name = hidden ? ("_" + v.name) : v.name;
             assert(resolvedType == resolvedStorageType);
             addField(qualifiedType, name,
-                     resolvedType.createPointer(), v.name + fieldSuffix, 
+                     resolvedStorageType.createPointer(), v.name + fieldSuffix, 
                      [v](auto &runtime, const auto &g, size_t) 
                      { 
                          return runtime.getArray(A(g).getTarget(), v.name);

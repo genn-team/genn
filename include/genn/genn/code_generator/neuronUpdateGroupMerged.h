@@ -61,8 +61,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
-                      unsigned int batchSize);
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                      NeuronUpdateGroupMerged &ng, unsigned int batchSize);
     };
 
     //----------------------------------------------------------------------------
@@ -78,8 +78,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
-                      BackendBase::HandlerEnv genUpdate);
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env,
+                      NeuronUpdateGroupMerged &ng, BackendBase::HandlerEnv genUpdate);
     };
 
     //----------------------------------------------------------------------------
@@ -95,8 +95,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
-                      BackendBase::GroupHandlerEnv<SynSpikeEvent> genUpdate);
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                      NeuronUpdateGroupMerged &ng, BackendBase::GroupHandlerEnv<SynSpikeEvent> genUpdate);
 
         void generateEventCondition(const BackendBase &backend, EnvironmentExternalBase &env, 
                                     NeuronUpdateGroupMerged &ng, unsigned int batchSize, 
@@ -128,8 +128,8 @@ public:
         void generate(const BackendBase &backend, EnvironmentExternalBase &env,
                       NeuronUpdateGroupMerged &ng, unsigned int batchSize, bool dynamicsNotSpike);
 
-        void genCopyDelayedVars(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng, 
-                                unsigned int batchSize);
+        void genCopyDelayedVars(const BackendBase &backend, EnvironmentExternalBase &env,
+                                NeuronUpdateGroupMerged &ng, unsigned int batchSize);
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -150,8 +150,8 @@ public:
         void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
                       NeuronUpdateGroupMerged &ng, unsigned int batchSize, bool dynamicsNotSpike);
 
-        void genCopyDelayedVars(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
-                                unsigned int batchSize);
+        void genCopyDelayedVars(const BackendBase &backend, EnvironmentExternalBase &env, 
+                                NeuronUpdateGroupMerged &ng, unsigned int batchSize);
 
         //! Update hash with child groups
         void updateHash(boost::uuids::detail::sha1 &hash) const;
@@ -175,8 +175,10 @@ public:
                               unsigned int batchSize, BackendBase::HandlerEnv genEmitTrueSpike,
                               BackendBase::GroupHandlerEnv<SynSpikeEvent> genEmitSpikeLikeEvent);
     
-    void generateSpikes(EnvironmentExternalBase &env, BackendBase::HandlerEnv genUpdate);
-    void generateSpikeEvents(EnvironmentExternalBase &env, BackendBase::GroupHandlerEnv<SynSpikeEvent> genUpdate);
+    void generateSpikes(const BackendBase &backend, EnvironmentExternalBase &env, 
+                        BackendBase::HandlerEnv genUpdate);
+    void generateSpikeEvents(const BackendBase &backend, EnvironmentExternalBase &env,
+                             BackendBase::GroupHandlerEnv<SynSpikeEvent> genUpdate);
     
     void generateWUVarUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize);
     
@@ -230,8 +232,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(EnvironmentExternalBase &env, NeuronSpikeQueueUpdateGroupMerged &ng,
-                      unsigned int batchSize);
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                      NeuronSpikeQueueUpdateGroupMerged &ng, unsigned int batchSize);
     };
 
     //----------------------------------------------------------------------------
@@ -247,8 +249,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(EnvironmentExternalBase &env, NeuronSpikeQueueUpdateGroupMerged &ng,
-                      unsigned int batchSize);
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env,
+                      NeuronSpikeQueueUpdateGroupMerged &ng, unsigned int batchSize);
     };
 
     NeuronSpikeQueueUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext,
@@ -265,7 +267,8 @@ public:
     const std::vector<SynSpike> &getMergedSpikeGroups() const{ return m_MergedSpikeGroups; }
     const std::vector<SynSpikeEvent> &getMergedSpikeEventGroups() const{ return m_MergedSpikeEventGroups; }
     
-    void genSpikeQueueUpdate(EnvironmentExternalBase &env, unsigned int batchSize);
+    void genSpikeQueueUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                             unsigned int batchSize);
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -298,8 +301,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng,
-                      BackendBase::HandlerEnv genUpdate);
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                      NeuronPrevSpikeTimeUpdateGroupMerged &ng, BackendBase::HandlerEnv genUpdate);
     };
 
     //----------------------------------------------------------------------------
@@ -314,8 +317,8 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng,
-                      BackendBase::HandlerEnv genUpdate);
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                      NeuronPrevSpikeTimeUpdateGroupMerged &ng, BackendBase::HandlerEnv genUpdate);
     };
 
     NeuronPrevSpikeTimeUpdateGroupMerged(size_t index, const Type::TypeContext &typeContext,
@@ -329,8 +332,10 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
 
-    void generateSpikes(EnvironmentExternalBase &env, BackendBase::HandlerEnv genUpdate);
-    void generateSpikeEvents(EnvironmentExternalBase &env, BackendBase::HandlerEnv genUpdate);
+    void generateSpikes(const BackendBase &backend, EnvironmentExternalBase &env, 
+                        BackendBase::HandlerEnv genUpdate);
+    void generateSpikeEvents(const BackendBase &backend, EnvironmentExternalBase &env,
+                             BackendBase::HandlerEnv genUpdate);
     
 
     //----------------------------------------------------------------------------

@@ -52,7 +52,7 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
 {
     const auto *wu = sg.getArchetype().getWUInitialiser().getSnippet();
 
-    EnvironmentGroupMergedField<G> synEnv(env, sg);
+    EnvironmentGroupMergedField<G> synEnv(env, sg, backend);
 
     // Substitute parameter and derived parameter names
     synEnv.addInitialiserParams("", &SynapseGroupInternal::getWUInitialiser, &SynapseGroupInternal::isWUParamDynamic);
@@ -173,7 +173,7 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
 
                         // Substitute in parameters and derived parameters for initialising variables
                         // **THINK** synEnv has quite a lot of unwanted stuff at t
-                        EnvironmentGroupMergedField<G> varInitEnv(synEnv, sg);
+                        EnvironmentGroupMergedField<G> varInitEnv(synEnv, sg, backend);
                         varInitEnv.template addVarInitParams<SynapseWUVarAdapter>(var.name);
                         varInitEnv.template addVarInitDerivedParams<SynapseWUVarAdapter>(var.name);
                         varInitEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), var.name);
@@ -411,10 +411,10 @@ void PresynapticUpdateGroupMerged::generateSpikeUpdate(const BackendBase &backen
                               "sim code", *this, batchSize, dt, wumVarsProvided);
 }
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateProceduralConnectivity(EnvironmentExternalBase &env)
+void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendBase &backend, EnvironmentExternalBase &env)
 {
     // Create environment for group
-    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(env, *this);
+    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(env, *this, backend);
 
     // Substitute in parameters and derived parameters for initialising connectivity
     const auto &connectInit = getArchetype().getSparseConnectivityInitialiser();
@@ -426,11 +426,11 @@ void PresynapticUpdateGroupMerged::generateProceduralConnectivity(EnvironmentExt
     prettyPrintStatements(connectInit.getRowBuildCodeTokens(), getTypeContext(), groupEnv, errorHandler);
 }
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(EnvironmentExternalBase &env, 
+void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(const BackendBase &backend, EnvironmentExternalBase &env, 
                                                                 Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
                                                                 Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler)
 {
-    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(env, *this);
+    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> groupEnv(env, *this, backend);
 
     // Substitute in parameters and derived parameters for initialising connectivity
     const auto &connectInit = getArchetype().getToeplitzConnectivityInitialiser();

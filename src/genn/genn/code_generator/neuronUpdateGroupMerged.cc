@@ -26,7 +26,7 @@ void NeuronUpdateGroupMerged::CurrentSource::generate(const BackendBase &backend
     const auto *cm = getArchetype().getModel();
 
     // Create new environment to add current source fields to neuron update group
-    EnvironmentGroupMergedField<CurrentSource, NeuronUpdateGroupMerged> csEnv(env, *this, ng);
+    EnvironmentGroupMergedField<CurrentSource, NeuronUpdateGroupMerged> csEnv(env, *this, ng, backend);
 
     csEnv.getStream() << "// current source " << getIndex() << std::endl;
 
@@ -72,7 +72,7 @@ void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, Env
     const auto *psm = getArchetype().getPSInitialiser().getSnippet();
 
     // Create new environment to add PSM fields to neuron update group
-    EnvironmentGroupMergedField<InSynPSM, NeuronUpdateGroupMerged> psmEnv(env, *this, ng);
+    EnvironmentGroupMergedField<InSynPSM, NeuronUpdateGroupMerged> psmEnv(env, *this, ng, backend);
 
     // Add inSyn
     psmEnv.addField(getScalarType().createPointer(), "_out_post", "outPost" + fieldSuffix,
@@ -147,13 +147,13 @@ void NeuronUpdateGroupMerged::InSynPSM::updateHash(boost::uuids::detail::sha1 &h
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::OutSynPreOutput
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::OutSynPreOutput::generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
-                                                        unsigned int batchSize)
+void NeuronUpdateGroupMerged::OutSynPreOutput::generate(const BackendBase &backend, EnvironmentExternalBase &env,
+                                                        NeuronUpdateGroupMerged &ng, unsigned int batchSize)
 {
     const std::string fieldSuffix =  "OutSyn" + std::to_string(getIndex());
     
     // Create new environment to add out syn fields to neuron update group 
-    EnvironmentGroupMergedField<OutSynPreOutput, NeuronUpdateGroupMerged> outSynEnv(env, *this, ng);
+    EnvironmentGroupMergedField<OutSynPreOutput, NeuronUpdateGroupMerged> outSynEnv(env, *this, ng, backend);
     
     outSynEnv.addField(getScalarType().createPointer(), "_out_pre", "outPre" + fieldSuffix,
                        [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "outPre"); });
@@ -169,14 +169,14 @@ void NeuronUpdateGroupMerged::OutSynPreOutput::generate(EnvironmentExternalBase 
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::SynSpike
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::SynSpike::generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
-                                                 BackendBase::HandlerEnv genUpdate)
+void NeuronUpdateGroupMerged::SynSpike::generate(const BackendBase &backend, EnvironmentExternalBase &env,
+                                                 NeuronUpdateGroupMerged &ng, BackendBase::HandlerEnv genUpdate)
 {
     CodeStream::Scope b(env.getStream());
     const std::string fieldSuffix =  "SynSpike" + std::to_string(getIndex());
 
     // Add fields to environment
-    EnvironmentGroupMergedField<NeuronUpdateGroupMerged::SynSpike, NeuronUpdateGroupMerged> groupEnv(env, *this, ng);
+    EnvironmentGroupMergedField<NeuronUpdateGroupMerged::SynSpike, NeuronUpdateGroupMerged> groupEnv(env, *this, ng, backend);
 
     groupEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + fieldSuffix,
                       [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getFusedEventArray(ng, i, g, "SpkCnt"); });
@@ -190,14 +190,14 @@ void NeuronUpdateGroupMerged::SynSpike::generate(EnvironmentExternalBase &env, N
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::SynSpikeEvent
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::SynSpikeEvent::generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+void NeuronUpdateGroupMerged::SynSpikeEvent::generate(const BackendBase &backend, EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                                                       BackendBase::GroupHandlerEnv<SynSpikeEvent> genUpdate)
 {
     CodeStream::Scope b(env.getStream());
     const std::string fieldSuffix =  "SynSpikeEvent" + std::to_string(getIndex());
 
     // Add fields to environment
-    EnvironmentGroupMergedField<SynSpikeEvent, NeuronUpdateGroupMerged> groupEnv(env, *this, ng);
+    EnvironmentGroupMergedField<SynSpikeEvent, NeuronUpdateGroupMerged> groupEnv(env, *this, ng, backend);
 
     groupEnv.addField(getTimeType().createPointer(), "_set", "seT" + fieldSuffix,
                       [&ng](const auto &runtime, const auto &g, size_t i){ return runtime.getFusedEventArray(ng, i, g, "SET"); });
@@ -223,7 +223,7 @@ void NeuronUpdateGroupMerged::SynSpikeEvent::generateEventCondition(const Backen
     const auto *wum = getArchetype().getWUInitialiser().getSnippet();
 
     // Create new environment to add out syn fields to neuron update group 
-    EnvironmentGroupMergedField<SynSpikeEvent, NeuronUpdateGroupMerged> synEnv(env, *this, ng);
+    EnvironmentGroupMergedField<SynSpikeEvent, NeuronUpdateGroupMerged> synEnv(env, *this, ng, backend);
 
     synEnv.getStream() << "// spike event condition " << getIndex() << std::endl;
     
@@ -345,7 +345,7 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &back
     const auto &tokens = dynamicsNotSpike ? getArchetype().getWUInitialiser().getPostDynamicsCodeTokens() : getArchetype().getWUInitialiser().getPostSpikeCodeTokens();
     if(!Utils::areTokensEmpty(tokens)) {
         // Create new environment to add out syn fields to neuron update group 
-        EnvironmentGroupMergedField<InSynWUMPostCode, NeuronUpdateGroupMerged> synEnv(env, *this, ng);
+        EnvironmentGroupMergedField<InSynWUMPostCode, NeuronUpdateGroupMerged> synEnv(env, *this, ng, backend);
 
         synEnv.getStream() << "// postsynaptic weight update " << getIndex() << std::endl;
         
@@ -383,13 +383,13 @@ void NeuronUpdateGroupMerged::InSynWUMPostCode::generate(const BackendBase &back
     }
 }
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
-                                                                   unsigned int batchSize)
+void NeuronUpdateGroupMerged::InSynWUMPostCode::genCopyDelayedVars(const BackendBase &backend, EnvironmentExternalBase &env,
+                                                                   NeuronUpdateGroupMerged &ng, unsigned int batchSize)
 {
     // If this group has no postsynaptic dynamics (which will already perform this copying)
     if(Utils::areTokensEmpty(getArchetype().getWUInitialiser().getPostDynamicsCodeTokens())) {
          // Create environment and add fields for variable 
-        EnvironmentGroupMergedField<InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(env, *this, ng);
+        EnvironmentGroupMergedField<InSynWUMPostCode, NeuronUpdateGroupMerged> varEnv(env, *this, ng, backend);
         varEnv.addVarPointers<SynapseWUPostVarAdapter>("InSynWUMPost" + std::to_string(getIndex()), false);
         
         // Loop through variables
@@ -426,7 +426,7 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &back
     const auto &tokens = dynamicsNotSpike ? getArchetype().getWUInitialiser().getPreDynamicsCodeTokens() : getArchetype().getWUInitialiser().getPreSpikeCodeTokens();
     if(!Utils::areTokensEmpty(tokens)) {
         // Create new environment to add out syn fields to neuron update group 
-        EnvironmentGroupMergedField<OutSynWUMPreCode, NeuronUpdateGroupMerged> synEnv(env, *this, ng);
+        EnvironmentGroupMergedField<OutSynWUMPreCode, NeuronUpdateGroupMerged> synEnv(env, *this, ng, backend);
 
         synEnv.getStream() << "// presynaptic weight update " << getIndex() << std::endl;
         
@@ -464,13 +464,13 @@ void NeuronUpdateGroupMerged::OutSynWUMPreCode::generate(const BackendBase &back
     }
 }
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::OutSynWUMPreCode::genCopyDelayedVars(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+void NeuronUpdateGroupMerged::OutSynWUMPreCode::genCopyDelayedVars(const BackendBase &backend, EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                                                                    unsigned int batchSize)
 {
     // If this group has a delay and no presynaptic dynamics (which will already perform this copying)
     if(getArchetype().getAxonalDelaySteps() != 0 && Utils::areTokensEmpty(getArchetype().getWUInitialiser().getPreDynamicsCodeTokens())) {
         // Create environment and add fields for variable 
-        EnvironmentGroupMergedField<OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(env, *this, ng);
+        EnvironmentGroupMergedField<OutSynWUMPreCode, NeuronUpdateGroupMerged> varEnv(env, *this, ng, backend);
         varEnv.addVarPointers<SynapseWUPreVarAdapter>("OutSynWUMPre" + std::to_string(getIndex()), false);
 
         // Loop through variables and copy between read and write delay slots
@@ -563,7 +563,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
  
     // Add default input variable
     // **NOTE** this is hidden as only their chosen target gets exposed to PSM and current source
-    EnvironmentGroupMergedField<NeuronUpdateGroupMerged> neuronChildEnv(env, *this);
+    EnvironmentGroupMergedField<NeuronUpdateGroupMerged> neuronChildEnv(env, *this, backend);
     neuronChildEnv.add(getScalarType(), "_Isyn", "Isyn",
                        {neuronChildEnv.addInitialiser(getScalarType().getName() + " Isyn = 0;")});
 
@@ -598,7 +598,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
     // Loop through outgoing synapse groups with presynaptic output
     for (auto &sg : m_MergedOutSynPreOutputGroups) {
         CodeStream::Scope b(neuronChildVarEnv.getStream());
-        sg.generate(neuronChildVarEnv, *this, batchSize);
+        sg.generate(backend, neuronChildVarEnv, *this, batchSize);
     }
  
     // Loop through all of neuron group's current sources
@@ -607,7 +607,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
         cs.generate(backend, neuronChildVarEnv, *this, batchSize);
     }
 
-    EnvironmentGroupMergedField<NeuronUpdateGroupMerged> neuronEnv(neuronChildVarEnv, *this); 
+    EnvironmentGroupMergedField<NeuronUpdateGroupMerged> neuronEnv(neuronChildVarEnv, *this, backend); 
 
     // Expose read-only Isyn
     neuronEnv.add(getScalarType().addConst(), "Isyn", "$(_Isyn)");
@@ -670,7 +670,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
         // **NOTE** we want to use the child environment where variables etc are hidden but 
         // actually print into the neuron environment so update happens at the right place
         EnvironmentGroupMergedField<NeuronUpdateGroupMerged> neuronWUChildEnv(
-            neuronChildVarEnv, neuronEnv.getStream(), *this);
+            neuronChildVarEnv, neuronEnv.getStream(), *this, backend);
         for (auto &sg : m_MergedOutSynWUMPreCodeGroups) {
             CodeStream::Scope b(neuronWUChildEnv.getStream());
             sg.generate(backend, neuronWUChildEnv, *this, batchSize, true);
@@ -767,31 +767,31 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, E
 
                 // Loop through outgoing synapse groups with some sort of presynaptic code
                 for (auto &sg : m_MergedOutSynWUMPreCodeGroups) {
-                    sg.genCopyDelayedVars(neuronEnv, *this, batchSize);
+                    sg.genCopyDelayedVars(backend, neuronEnv, *this, batchSize);
                 }
 
                 // Loop through incoming synapse groups with some sort of presynaptic code
                 for (auto &sg : m_MergedInSynWUMPostCodeGroups) {
-                    sg.genCopyDelayedVars(neuronEnv, *this, batchSize);
+                    sg.genCopyDelayedVars(backend, neuronEnv, *this, batchSize);
                 }
             }
         }
     }
 }
 //--------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::generateSpikes(EnvironmentExternalBase &env, BackendBase::HandlerEnv genUpdate)
+void NeuronUpdateGroupMerged::generateSpikes(const BackendBase &backend, EnvironmentExternalBase &env, BackendBase::HandlerEnv genUpdate)
 {
     // Loop through merged spike groups
     for(auto &s : m_MergedSpikeGroups) {
-        s.generate(env, *this, genUpdate);
+        s.generate(backend, env, *this, genUpdate);
     }
 }
 //--------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::generateSpikeEvents(EnvironmentExternalBase &env, BackendBase::GroupHandlerEnv<SynSpikeEvent> genUpdate)
+void NeuronUpdateGroupMerged::generateSpikeEvents(const BackendBase &backend, EnvironmentExternalBase &env, BackendBase::GroupHandlerEnv<SynSpikeEvent> genUpdate)
 {
     // Loop through merged spike event groups
     for(auto &s : m_MergedSpikeEventGroups) {
-        s.generate(env, *this, genUpdate);
+        s.generate(backend, env, *this, genUpdate);
     }
 }
 //--------------------------------------------------------------------------
@@ -869,14 +869,14 @@ std::string NeuronUpdateGroupMerged::getWriteVarIndex(bool delay, unsigned int b
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::SynSpike
 //----------------------------------------------------------------------------
-void NeuronSpikeQueueUpdateGroupMerged::SynSpike::generate(EnvironmentExternalBase &env, NeuronSpikeQueueUpdateGroupMerged &ng,
-                                                           unsigned int batchSize)
+void NeuronSpikeQueueUpdateGroupMerged::SynSpike::generate(const BackendBase &backend, EnvironmentExternalBase &env,
+                                                           NeuronSpikeQueueUpdateGroupMerged &ng, unsigned int batchSize)
 {
     env.getStream() << "// spike queue update " << getIndex() << std::endl;
     const std::string fieldSuffix =  "SynSpike" + std::to_string(getIndex());
 
     // Add spike count and spikes to environment
-    EnvironmentGroupMergedField<SynSpike, NeuronSpikeQueueUpdateGroupMerged> synSpkEnv(env, *this, ng);
+    EnvironmentGroupMergedField<SynSpike, NeuronSpikeQueueUpdateGroupMerged> synSpkEnv(env, *this, ng, backend);
     synSpkEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + fieldSuffix,
                         [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getFusedEventArray(ng, i, g, "SpkCnt"); });
     synSpkEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + fieldSuffix,
@@ -903,14 +903,14 @@ void NeuronSpikeQueueUpdateGroupMerged::SynSpike::generate(EnvironmentExternalBa
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::SynSpike
 //----------------------------------------------------------------------------
-void NeuronSpikeQueueUpdateGroupMerged::SynSpikeEvent::generate(EnvironmentExternalBase &env, NeuronSpikeQueueUpdateGroupMerged &ng,
-                                                                unsigned int batchSize)
+void NeuronSpikeQueueUpdateGroupMerged::SynSpikeEvent::generate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                                                                NeuronSpikeQueueUpdateGroupMerged &ng, unsigned int batchSize)
 {
     env.getStream() << "// spike event queue update " << getIndex() << std::endl;
     const std::string fieldSuffix =  "SynSpikeEvent" + std::to_string(getIndex());
 
     // Add spike count and spikes to environment
-    EnvironmentGroupMergedField<SynSpikeEvent, NeuronSpikeQueueUpdateGroupMerged> synSpkEnv(env, *this, ng);
+    EnvironmentGroupMergedField<SynSpikeEvent, NeuronSpikeQueueUpdateGroupMerged> synSpkEnv(env, *this, ng, backend);
     synSpkEnv.addField(Type::Uint32.createPointer(), "_spk_cnt_event", "spkCntEvent" + fieldSuffix,
                         [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getFusedEventArray(ng, i, g, "SpkCntEvent"); });
     synSpkEnv.addField(Type::Uint32.createPointer(), "_spk_event", "spk_event" + fieldSuffix,
@@ -951,7 +951,7 @@ NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMerged(size_t inde
     orderNeuronGroupChildren(m_MergedSpikeEventGroups, getTypeContext(), &NeuronGroupInternal::getFusedSpikeEvent, &SynapseGroupInternal::getWUSpikeEventHashDigest);
 }
 //----------------------------------------------------------------------------
-void NeuronSpikeQueueUpdateGroupMerged::genSpikeQueueUpdate(EnvironmentExternalBase &env, unsigned int batchSize)
+void NeuronSpikeQueueUpdateGroupMerged::genSpikeQueueUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
     // Update spike queue
     if(getArchetype().isDelayRequired()) {
@@ -966,13 +966,13 @@ void NeuronSpikeQueueUpdateGroupMerged::genSpikeQueueUpdate(EnvironmentExternalB
     // Loop through groups with spikes and generate update code
     for (auto &sg : m_MergedSpikeGroups) {
         CodeStream::Scope b(env.getStream());
-        sg.generate(env, *this, batchSize);
+        sg.generate(backend, env, *this, batchSize);
     }
 
     // Loop through groups with spike events and generate update code
     for (auto &sg : m_MergedSpikeEventGroups) {
         CodeStream::Scope b(env.getStream());
-        sg.generate(env, *this, batchSize);
+        sg.generate(backend, env, *this, batchSize);
     }
 
     // End loop around batches if required
@@ -985,14 +985,14 @@ void NeuronSpikeQueueUpdateGroupMerged::genSpikeQueueUpdate(EnvironmentExternalB
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronPrevSpikeTimeUpdateGroupMerged::SynSpike
 //----------------------------------------------------------------------------
-void NeuronPrevSpikeTimeUpdateGroupMerged::SynSpike::generate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng,
+void NeuronPrevSpikeTimeUpdateGroupMerged::SynSpike::generate(const BackendBase &backend, EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng,
                                                               BackendBase::HandlerEnv genUpdate)
 {
     CodeStream::Scope b(env.getStream());
     const std::string fieldSuffix =  "PrevSpikeTime" + std::to_string(getIndex());
 
     // Add fields to environment
-    EnvironmentGroupMergedField<SynSpike, NeuronPrevSpikeTimeUpdateGroupMerged> groupEnv(env, *this, ng);
+    EnvironmentGroupMergedField<SynSpike, NeuronPrevSpikeTimeUpdateGroupMerged> groupEnv(env, *this, ng, backend);
     groupEnv.addField(Type::Uint32.createPointer(), "_spk_cnt", "spkCnt" + fieldSuffix,
                       [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getFusedEventArray(ng, i, g, "SpkCnt"); });
     groupEnv.addField(Type::Uint32.createPointer(), "_spk", "spk" + fieldSuffix,
@@ -1005,14 +1005,14 @@ void NeuronPrevSpikeTimeUpdateGroupMerged::SynSpike::generate(EnvironmentExterna
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronPrevSpikeTimeUpdateGroupMerged::SynSpikeEvent
 //----------------------------------------------------------------------------
-void NeuronPrevSpikeTimeUpdateGroupMerged::SynSpikeEvent::generate(EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng,
+void NeuronPrevSpikeTimeUpdateGroupMerged::SynSpikeEvent::generate(const BackendBase &backend, EnvironmentExternalBase &env, NeuronPrevSpikeTimeUpdateGroupMerged &ng,
                                                                    BackendBase::HandlerEnv genUpdate)
 {
     CodeStream::Scope b(env.getStream());
     const std::string fieldSuffix =  "PrevSpikeEventTime" + std::to_string(getIndex());
 
     // Add fields to environment
-    EnvironmentGroupMergedField<SynSpikeEvent, NeuronPrevSpikeTimeUpdateGroupMerged> groupEnv(env, *this, ng);
+    EnvironmentGroupMergedField<SynSpikeEvent, NeuronPrevSpikeTimeUpdateGroupMerged> groupEnv(env, *this, ng, backend);
     groupEnv.addField(getTimeType().createPointer(), "_prev_set", "prevSET" + fieldSuffix,
                       [&ng](const auto &runtime, const auto &g, size_t i) { return runtime.getFusedEventArray(ng, i, g, "PrevSET"); });
     groupEnv.addField(Type::Uint32.createPointer(), "_spk_cnt_event", "spkCntEvent" + fieldSuffix,
@@ -1040,18 +1040,20 @@ NeuronPrevSpikeTimeUpdateGroupMerged::NeuronPrevSpikeTimeUpdateGroupMerged(size_
     orderNeuronGroupChildren(m_MergedSpikeEventGroups, getTypeContext(), &NeuronGroupInternal::getFusedSpikeEvent, &SynapseGroupInternal::getSpikeHashDigest);
 }
 //----------------------------------------------------------------------------
-void NeuronPrevSpikeTimeUpdateGroupMerged::generateSpikes(EnvironmentExternalBase &env, BackendBase::HandlerEnv genUpdate)
+void NeuronPrevSpikeTimeUpdateGroupMerged::generateSpikes(const BackendBase &backend, EnvironmentExternalBase &env,
+                                                          BackendBase::HandlerEnv genUpdate)
 {
     // Loop through merged groups
     for(auto &s : m_MergedSpikeGroups) {
-        s.generate(env, *this, genUpdate);
+        s.generate(backend, env, *this, genUpdate);
     }
 }
 //----------------------------------------------------------------------------
-void NeuronPrevSpikeTimeUpdateGroupMerged::generateSpikeEvents(EnvironmentExternalBase &env, BackendBase::HandlerEnv genUpdate)
+void NeuronPrevSpikeTimeUpdateGroupMerged::generateSpikeEvents(const BackendBase &backend, EnvironmentExternalBase &env,
+                                                               BackendBase::HandlerEnv genUpdate)
 {
     // Loop through merged groups
     for(auto &s : m_MergedSpikeEventGroups) {
-        s.generate(env, *this, genUpdate);
+        s.generate(backend, env, *this, genUpdate);
     }
 }

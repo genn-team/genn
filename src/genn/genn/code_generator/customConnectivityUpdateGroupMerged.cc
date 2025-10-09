@@ -90,7 +90,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateGroupMerged::get
 void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
     // Create new environment to add current source fields to neuron update group 
-    EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> updateEnv(env, *this);
+    EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> updateEnv(env, *this, backend);
 
     // Calculate index of start of row
     const auto indexType = backend.getSynapseIndexType(*this);
@@ -313,12 +313,13 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                               addTypes(env, getArchetype().getModel()->getVarRefs(), errorHandler);
                               addTypes(env, getArchetype().getModel()->getPostVarRefs(), errorHandler, true);
                           },
-                          [batchSize, &indexType, &indexTypeName, &removeSynapseStream, this](auto &env, auto generateBody)
+                          [batchSize, &backend, &indexType, &indexTypeName, &removeSynapseStream, this]
+                          (auto &env, auto generateBody)
                           {
                               env.print("for(int j = 0; j < $(_row_length)[$(id_pre)]; j++)");
                               {
                                   CodeStream::Scope b(env.getStream());
-                                  EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> bodyEnv(env, *this);
+                                  EnvironmentGroupMergedField<CustomConnectivityUpdateGroupMerged> bodyEnv(env, *this, backend);
 
                                   // Add postsynaptic and synaptic indices
                                   bodyEnv.add(Type::Uint32.addConst(), "id_post", "$(_ind)[$(_row_start_idx) + j]");
@@ -377,7 +378,7 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
         rngEnv.getStream() << "const auto *group = &mergedCustomConnectivityHostUpdateGroup" << getIndex() << "[g]; " << std::endl;
 
         // Create matching environment
-        EnvironmentGroupMergedField<CustomConnectivityHostUpdateGroupMerged> groupEnv(rngEnv, *this);
+        EnvironmentGroupMergedField<CustomConnectivityHostUpdateGroupMerged> groupEnv(rngEnv, *this, backend);
 
         // Add fields for number of pre and postsynaptic neurons
         groupEnv.addField(Type::Uint32.addConst(), "num_pre",

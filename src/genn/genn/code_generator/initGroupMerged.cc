@@ -122,7 +122,7 @@ template<typename G>
 void genInitEventTime(const BackendBase &backend, EnvironmentExternalBase &env, G &group, NeuronInitGroupMerged &fieldGroup, 
                       const std::string &fieldSuffix, const std::string &varName, bool delayRequired, unsigned int batchSize)
 {
-    EnvironmentGroupMergedField<G, NeuronInitGroupMerged> timeEnv(env, group, fieldGroup);
+    EnvironmentGroupMergedField<G, NeuronInitGroupMerged> timeEnv(env, group, fieldGroup, backend);
     timeEnv.addField(group.getTimeType().createPointer(), "_time", varName + fieldSuffix,
                      [&fieldGroup, varName](const auto &runtime, const auto &g, size_t i) { return runtime.getFusedEventArray(fieldGroup, i, g, varName); });
 
@@ -167,7 +167,7 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
             CodeStream::Scope b(env.getStream());
 
             // Substitute in parameters and derived parameters for initialising variables
-            EnvironmentGroupMergedField<G, F> varEnv(env, group, fieldGroup);
+            EnvironmentGroupMergedField<G, F> varEnv(env, group, fieldGroup, backend);
             varEnv.template addVarInitParams<A>(var.name, fieldSuffix);
             varEnv.template addVarInitDerivedParams<A>(var.name, fieldSuffix);
             varEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), var.name, fieldSuffix);
@@ -189,7 +189,7 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
                     (EnvironmentExternalBase &env)
                     {
                         // Generate initial value into temporary variable
-                        EnvironmentGroupMergedField<G, F> varInitEnv(env, group, fieldGroup);
+                        EnvironmentGroupMergedField<G, F> varInitEnv(env, group, fieldGroup, backend);
                         varInitEnv.getStream() << resolvedType.getName() << " initVal;" << std::endl;
                         varInitEnv.add(resolvedType, "value", "initVal");
                         
@@ -212,7 +212,7 @@ void genInitNeuronVarCode(const BackendBase &backend, EnvironmentExternalBase &e
                     (EnvironmentExternalBase &env)
                     {
                         // Generate initial value into temporary variable
-                        EnvironmentGroupMergedField<G, F> varInitEnv(env, group, fieldGroup);
+                        EnvironmentGroupMergedField<G, F> varInitEnv(env, group, fieldGroup, backend);
                         varInitEnv.getStream() << resolvedType.getName() << " initVal;" << std::endl;
                         varInitEnv.add(resolvedType, "value", "initVal");
                         
@@ -256,7 +256,7 @@ void genInitWUVarCode(const BackendBase &backend, EnvironmentExternalBase &env, 
             CodeStream::Scope b(env.getStream());
 
             // Substitute in parameters and derived parameters for initialising variables
-            EnvironmentGroupMergedField<G> varEnv(env, group);
+            EnvironmentGroupMergedField<G> varEnv(env, group, backend);
             varEnv.template addVarInitParams<A>(var.name);
             varEnv.template addVarInitDerivedParams<A>(var.name);
             varEnv.addExtraGlobalParams(varInit.getSnippet()->getExtraGlobalParams(), var.name);
@@ -275,7 +275,7 @@ void genInitWUVarCode(const BackendBase &backend, EnvironmentExternalBase &env, 
                 (EnvironmentExternalBase &env)
                 {
                     // Generate initial value into temporary variable
-                    EnvironmentGroupMergedField<G> varInitEnv(env, group);
+                    EnvironmentGroupMergedField<G> varInitEnv(env, group, backend);
                     varInitEnv.getStream() << resolvedType.getName() << " initVal;" << std::endl;
                     varInitEnv.add(resolvedType, "value", "initVal");
 
@@ -313,7 +313,7 @@ void NeuronInitGroupMerged::SynSpike::generate(const BackendBase &backend, Envir
     const std::string fieldSuffix =  "SynSpike" + std::to_string(getIndex());
 
     // Create environment for group
-    EnvironmentGroupMergedField<SynSpike, NeuronInitGroupMerged> groupEnv(env, *this, ng);
+    EnvironmentGroupMergedField<SynSpike, NeuronInitGroupMerged> groupEnv(env, *this, ng, backend);
 
     // Initialise spikes
     genInitEvents(backend, groupEnv, ng, fieldSuffix, true, 
@@ -330,7 +330,7 @@ void NeuronInitGroupMerged::SynSpikeEvent::generate(const BackendBase &backend, 
     const std::string fieldSuffix =  "SynSpikeEvent" + std::to_string(getIndex());
 
     // Create environment for group
-    EnvironmentGroupMergedField<SynSpikeEvent, NeuronInitGroupMerged> groupEnv(env, *this, ng);
+    EnvironmentGroupMergedField<SynSpikeEvent, NeuronInitGroupMerged> groupEnv(env, *this, ng, backend);
 
     // Initialise spike-like events
     genInitEvents(backend, groupEnv, ng, fieldSuffix, false, 
@@ -358,7 +358,7 @@ void NeuronInitGroupMerged::InSynPSM::generate(const BackendBase &backend, Envir
     const std::string fieldSuffix =  "InSyn" + std::to_string(getIndex());
 
     // Create environment for group
-    EnvironmentGroupMergedField<InSynPSM, NeuronInitGroupMerged> groupEnv(env, *this, ng);
+    EnvironmentGroupMergedField<InSynPSM, NeuronInitGroupMerged> groupEnv(env, *this, ng, backend);
 
     // Add field for InSyn and zero
     groupEnv.addField(getScalarType().createPointer(), "_out_post", "outPost" + fieldSuffix,
@@ -406,7 +406,7 @@ void NeuronInitGroupMerged::OutSynPreOutput::generate(const BackendBase &backend
                                                       NeuronInitGroupMerged &ng, unsigned int batchSize)
 {
     // Create environment for group
-    EnvironmentGroupMergedField<OutSynPreOutput, NeuronInitGroupMerged> groupEnv(env, *this, ng);
+    EnvironmentGroupMergedField<OutSynPreOutput, NeuronInitGroupMerged> groupEnv(env, *this, ng, backend);
 
     // Add 
     groupEnv.addField(getScalarType().createPointer(), "_out_pre", "outPreOutSyn" + std::to_string(getIndex()),
@@ -523,7 +523,7 @@ boost::uuids::detail::sha1::digest_type NeuronInitGroupMerged::getHashDigest() c
 void NeuronInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
     // Create environment for group
-    EnvironmentGroupMergedField<NeuronInitGroupMerged> groupEnv(env, *this);
+    EnvironmentGroupMergedField<NeuronInitGroupMerged> groupEnv(env, *this, backend);
   
     // If neuron group requires delays
     if(getArchetype().isDelayRequired()) {
@@ -604,7 +604,7 @@ boost::uuids::detail::sha1::digest_type SynapseInitGroupMerged::getHashDigest() 
 void SynapseInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
     // Create environment for group
-    EnvironmentGroupMergedField<SynapseInitGroupMerged> groupEnv(env, *this);
+    EnvironmentGroupMergedField<SynapseInitGroupMerged> groupEnv(env, *this, backend);
 
     // If we're using non-kernel weights, generate loop over source neurons
     const bool kernel = (getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL);
@@ -700,20 +700,20 @@ boost::uuids::detail::sha1::digest_type SynapseConnectivityInitGroupMerged::getH
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void SynapseConnectivityInitGroupMerged::generateSparseRowInit(EnvironmentExternalBase &env)
+void SynapseConnectivityInitGroupMerged::generateSparseRowInit(const BackendBase &backend, EnvironmentExternalBase &env)
 {
-    genInitConnectivity(env, true);
+    genInitConnectivity(backend, env, true);
 }
 //----------------------------------------------------------------------------
-void SynapseConnectivityInitGroupMerged::generateSparseColumnInit(EnvironmentExternalBase &env)
+void SynapseConnectivityInitGroupMerged::generateSparseColumnInit(const BackendBase &backend, EnvironmentExternalBase &env)
 {
-    genInitConnectivity(env, false);
+    genInitConnectivity(backend, env, false);
 }
 //----------------------------------------------------------------------------
 void SynapseConnectivityInitGroupMerged::generateKernelInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
     // Create environment for group
-    EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> groupEnv(env, *this);
+    EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> groupEnv(env, *this, backend);
 
     // Add substitution
     // **TODO** dependencies on kernel fields
@@ -729,10 +729,10 @@ void SynapseConnectivityInitGroupMerged::generateKernelInit(const BackendBase &b
         });
 }
 //----------------------------------------------------------------------------
-void SynapseConnectivityInitGroupMerged::genInitConnectivity(EnvironmentExternalBase &env, bool rowNotColumns)
+void SynapseConnectivityInitGroupMerged::genInitConnectivity(const BackendBase &backend, EnvironmentExternalBase &env, bool rowNotColumns)
 {
     // Create environment for group
-    EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> groupEnv(env, *this);
+    EnvironmentGroupMergedField<SynapseConnectivityInitGroupMerged> groupEnv(env, *this, backend);
 
     // Substitute in parameters and derived parameters for initialising connectivity
     const auto &connectInit = getArchetype().getSparseConnectivityInitialiser();
@@ -774,7 +774,7 @@ void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &bac
         envAssert.getStream() << "const auto *group = &mergedSynapseConnectivityHostInitGroup" << getIndex() << "[g]; " << std::endl;
         
         // Create environment for group
-        EnvironmentGroupMergedField<SynapseConnectivityHostInitGroupMerged> groupEnv(envAssert, *this);
+        EnvironmentGroupMergedField<SynapseConnectivityHostInitGroupMerged> groupEnv(envAssert, *this, backend);
         const auto &connectInit = getArchetype().getSparseConnectivityInitialiser();
 
         // If matrix type is procedural then initialized connectivity init snippet will potentially be used with multiple threads per spike. 
@@ -879,7 +879,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateInitGroupMerged::getHashDige
 void CustomUpdateInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
     // Create environment for group
-    EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> groupEnv(env, *this);
+    EnvironmentGroupMergedField<CustomUpdateInitGroupMerged> groupEnv(env, *this, backend);
 
     // Expose batch size
     const unsigned int updateBatchSize = (getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1;
@@ -933,7 +933,7 @@ boost::uuids::detail::sha1::digest_type CustomWUUpdateInitGroupMerged::getHashDi
 // ----------------------------------------------------------------------------
 void CustomWUUpdateInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
-    EnvironmentGroupMergedField<CustomWUUpdateInitGroupMerged> groupEnv(env, *this);
+    EnvironmentGroupMergedField<CustomWUUpdateInitGroupMerged> groupEnv(env, *this, backend);
 
     const bool kernel = (getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL);
     if(!kernel) {
@@ -1002,7 +1002,7 @@ boost::uuids::detail::sha1::digest_type CustomWUUpdateSparseInitGroupMerged::get
 // ----------------------------------------------------------------------------
 void CustomWUUpdateSparseInitGroupMerged::generateInit(const BackendBase &backend, EnvironmentExternalBase &env, unsigned int batchSize)
 {
-    EnvironmentGroupMergedField<CustomWUUpdateSparseInitGroupMerged> groupEnv(env, *this);
+    EnvironmentGroupMergedField<CustomWUUpdateSparseInitGroupMerged> groupEnv(env, *this, backend);
  
     // Expose batch size
     const unsigned int updateBatchSize = (getArchetype().getDims() & VarAccessDim::BATCH) ? batchSize : 1;

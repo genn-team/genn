@@ -82,8 +82,8 @@ public:
                                   unsigned int batchSize, double dt, bool wumVarsProvided);
     void generateSpikeUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
                              unsigned int batchSize, double dt, bool wumVarsProvided);
-    void generateProceduralConnectivity(EnvironmentExternalBase &env);
-    void generateToeplitzConnectivity(EnvironmentExternalBase &env,
+    void generateProceduralConnectivity(const BackendBase &backend, EnvironmentExternalBase &env);
+    void generateToeplitzConnectivity(const BackendBase &backend, EnvironmentExternalBase &env,
                                       Transpiler::TypeChecker::StatementHandler forEachSynapseTypeCheckHandler,
                                       Transpiler::PrettyPrinter::StatementHandler forEachSynapsePrettyPrintHandler);
 

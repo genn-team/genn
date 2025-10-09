@@ -48,7 +48,7 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase &backend, E
                                                    BackendBase::GroupHandlerEnv<CustomUpdateGroupMerged> genPostamble)
 {
     // Add parameters, derived parameters and EGPs to environment
-    EnvironmentGroupMergedField<CustomUpdateGroupMerged> cuEnv(env, *this);
+    EnvironmentGroupMergedField<CustomUpdateGroupMerged> cuEnv(env, *this, backend);
 
     // Substitute parameter and derived parameter names
     const CustomUpdateModels::Base *cm = getArchetype().getModel();
@@ -199,7 +199,7 @@ void CustomUpdateWUGroupMergedBase::generateCustomUpdate(const BackendBase &back
                                                          BackendBase::GroupHandlerEnv<CustomUpdateWUGroupMergedBase> genPostamble)
 {
     // Add parameters, derived parameters and EGPs to environment
-    EnvironmentGroupMergedField<CustomUpdateWUGroupMergedBase> cuEnv(env, *this);
+    EnvironmentGroupMergedField<CustomUpdateWUGroupMergedBase> cuEnv(env, *this, backend);
 
     // Substitute parameter and derived parameter names
     const CustomUpdateModels::Base *cm = getArchetype().getModel();

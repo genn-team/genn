@@ -127,7 +127,7 @@ void PreSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerg
             CodeStream::Scope b(env.getStream());
 
             // Create substitution stack for presynaptic simulation code
-            EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(env, sg);
+            EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(env, sg, backend);
             synEnv.add(Type::Uint32.addConst(), "id_pre", "preInd");
             synEnv.add(Type::Uint32.addConst(), "id_post", "ipost",
                        {synEnv.addInitialiser("const unsigned int ipost = $(_ind)[synAddress];")});
@@ -251,7 +251,7 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
         env.getStream() << "for (unsigned int j = 0; j < numSpikesInBlock; j++)";
         {
             CodeStream::Scope b(env.getStream());
-            EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> spikeEnv(env, sg);
+            EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> spikeEnv(env, sg, backend);
 
             spikeEnv.add(Type::Uint32.addConst(), "id_pre", "$(_sh_spk" + eventSuffix + ")[j]");
 
@@ -264,7 +264,7 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
             spikeEnv.print("if ($(id) < $(_row_stride))");
             {
                 CodeStream::Scope b(spikeEnv.getStream());
-                EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(spikeEnv, sg);
+                EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(spikeEnv, sg, backend);
 
                 const auto indexType = backend.getSynapseIndexType(sg);
                 const auto indexTypeName = indexType.getName();
@@ -477,7 +477,7 @@ void PostSpanVectorised::genUpdate(EnvironmentExternalBase &env, PresynapticUpda
         env.getStream() << "for (unsigned int j = 0; j < numSpikesInBlock; j++)";
         {
             CodeStream::Scope b(env.getStream());
-            EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> spikeEnv(env, sg);
+            EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> spikeEnv(env, sg, backend);
 
             spikeEnv.add(Type::Uint32.addConst(), "id_pre", "$(_sh_spk" + eventSuffix + ")[j]");
 
@@ -493,7 +493,7 @@ void PostSpanVectorised::genUpdate(EnvironmentExternalBase &env, PresynapticUpda
             spikeEnv.print("if ($(id) < numVectors)");
             {
                 CodeStream::Scope b(spikeEnv.getStream());
-                EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> idEnv(spikeEnv, sg);
+                EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> idEnv(spikeEnv, sg, backend);
 
                 const auto indexType = backend.getSynapseIndexType(sg);
                 const auto indexTypeName = indexType.getName();
@@ -517,7 +517,7 @@ void PostSpanVectorised::genUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     const std::string iStr = std::to_string(i);
                     wuVarEnv.printLine("// Unroll " + iStr);
                     CodeStream::Scope b(wuVarEnv.getStream());
-                    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(wuVarEnv, sg);
+                    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(wuVarEnv, sg, backend);
 
                     // Add unrolled vector ID
                     synEnv.add(Type::Uint32.addConst(), "vid", "vid",
@@ -660,7 +660,7 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
         }
 
         // Create environment and add presynaptic index
-        EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(groupEnv, sg);
+        EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(groupEnv, sg, backend);
         synEnv.add(Type::Uint32.addConst(), "id_pre", "preInd",
                    {synEnv.addInitialiser("const unsigned int preInd = $(_src_spk" + eventSuffix + ")[" + sg.getPreVarIndex(delay, batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(_spike)") + "];")});
 
@@ -756,7 +756,7 @@ void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdat
             connEnv.add(addSynapseType, "addSynapse", preUpdateStream.str());
 
             // Generate procedural connectivity code
-            sg.generateProceduralConnectivity(connEnv);
+            sg.generateProceduralConnectivity(backend, connEnv);
 
         }
 
@@ -851,7 +851,7 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
         env.getStream() << "for (unsigned int j = 0; j < numSpikesInBlock; j++)";
         {
             CodeStream::Scope b(env.getStream());
-            EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> spikeEnv(env, sg);
+            EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> spikeEnv(env, sg, backend);
             spikeEnv.add(Type::Uint32.addConst(), "id_pre", "$(_sh_spk" + eventSuffix + ")[j]");
 
             // Create local variable to hold presynaptic output from all threads in warp
@@ -872,7 +872,7 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
                 spikeEnv.getStream() << "while(connectivityWord != 0)";
                 {
                     CodeStream::Scope b(spikeEnv.getStream());
-                    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(spikeEnv, sg);
+                    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(spikeEnv, sg, backend);
 
                     // Cound leading zeros (as bits are indexed backwards this is index of next synapse)
                     synEnv.getStream() << "const int numLZ = " << backend.getCLZ() << "(connectivityWord);" << std::endl;
@@ -888,7 +888,7 @@ void PostSpanBitmask::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateG
                     synEnv.add(Type::Uint32.addConst(), "id_pre", "$(_sh_spk" + eventSuffix + ")[j]");
 
                     // **YUCK** add inner environment so id_post initialisation is inserted at correct place
-                    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> postEnv(synEnv, sg);
+                    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> postEnv(synEnv, sg, backend);
                     postEnv.add(Type::Uint32.addConst(), "id_post", "ipost",
                                 {postEnv.addInitialiser("const unsigned int ipost = ibit + ($(id) * 32);")});
 
@@ -1052,7 +1052,7 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
 
     // Generate toeplitz connectivity generation code using custom for_each_synapse loop
     sg.generateToeplitzConnectivity(
-        toeplitzEnv,
+        backend, toeplitzEnv,
         // Within for_each_synapse loops, define addSynapse function and id_pre
         [addSynapseType](auto &env, auto &errorHandler)
         {
@@ -1087,7 +1087,7 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
                 env.getStream() << "for (unsigned int j = 0; j < numSpikesInBlock; j++)";
                 {
                     CodeStream::Scope b(env.getStream());
-                    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> spikeEnv(env, sg);
+                    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> spikeEnv(env, sg, backend);
                     spikeEnv.add(Type::Uint32.addConst(), "id_pre", "$(_sh_spk" + eventSuffix + ")[j]");
 
                     // Create local variable to hold presynaptic output from all threads in warp
