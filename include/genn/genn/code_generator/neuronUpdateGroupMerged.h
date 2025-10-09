@@ -42,7 +42,7 @@ public:
         //----------------------------------------------------------------------------
         // Public API
         //----------------------------------------------------------------------------
-        void generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+        void generate(const BackendBase &backend, EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                       unsigned int batchSize);
 
         //! Update hash with child groups
@@ -171,8 +171,8 @@ public:
         generateRunnerBase(backend, definitions, name);
     }
     
-    void generateNeuronUpdate(EnvironmentExternalBase &env, unsigned int batchSize,
-                              BackendBase::HandlerEnv genEmitTrueSpike,
+    void generateNeuronUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                              unsigned int batchSize, BackendBase::HandlerEnv genEmitTrueSpike,
                               BackendBase::GroupHandlerEnv<SynSpikeEvent> genEmitSpikeLikeEvent);
     
     void generateSpikes(EnvironmentExternalBase &env, BackendBase::HandlerEnv genUpdate);

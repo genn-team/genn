@@ -1715,7 +1715,7 @@ bool BackendCUDAHIP::isVarTypePermitted(const Type::ResolvedType &type, const Ty
     // CUDA/HIP backend only supports numeric variable types with identical storage type
     // or floating point variables with half or bloat16 storage type
     return (type.isNumeric() && 
-            (type == storageType || (type == Type::Float && (storageType == Type::Half 
+            (type == storageType || (type == Type::Float && storageType == Type::Half)));
 }
 //--------------------------------------------------------------------------
 BackendCUDAHIP::MemorySpaces BackendCUDAHIP::getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const

@@ -65,7 +65,7 @@ void NeuronUpdateGroupMerged::CurrentSource::updateHash(boost::uuids::detail::sh
 //----------------------------------------------------------------------------
 // GeNN::CodeGenerator::NeuronUpdateGroupMerged::InSynPSM
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::InSynPSM::generate(EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
+void NeuronUpdateGroupMerged::InSynPSM::generate(const BackendBase &backend, EnvironmentExternalBase &env, NeuronUpdateGroupMerged &ng,
                                                  unsigned int batchSize)
 {
     const std::string fieldSuffix =  "InSyn" + std::to_string(getIndex());
@@ -555,8 +555,8 @@ boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest()
     return hash.get_digest();
 }
 //--------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::generateNeuronUpdate(EnvironmentExternalBase &env, unsigned int batchSize,
-                                                   BackendBase::HandlerEnv genEmitTrueSpike,
+void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, EnvironmentExternalBase &env, 
+                                                   unsigned int batchSize, BackendBase::HandlerEnv genEmitTrueSpike,
                                                    BackendBase::GroupHandlerEnv<NeuronUpdateGroupMerged::SynSpikeEvent> genEmitSpikeLikeEvent)
 {
     const NeuronModels::Base *nm = getArchetype().getModel();
@@ -592,7 +592,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(EnvironmentExternalBase &env,
     // Loop through incoming synapse groups
     for(auto &sg : m_MergedInSynPSMGroups) {
         CodeStream::Scope b(neuronChildVarEnv.getStream());
-        sg.generate(neuronChildVarEnv, *this, batchSize);
+        sg.generate(backend, neuronChildVarEnv, *this, batchSize);
     }
 
     // Loop through outgoing synapse groups with presynaptic output
