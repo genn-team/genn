@@ -286,7 +286,7 @@ private:
 
             // Get reference to group
             env.getStream() << "const auto *group = &merged" << G::name << "Group" << cg.getIndex() << "[g]; " << std::endl;
-            EnvironmentGroupMergedField<G> groupEnv(env, cg);
+            EnvironmentGroupMergedField<G> groupEnv(env, cg, *this);
             buildSizeEnvironment(groupEnv);
 
             // Loop through variables

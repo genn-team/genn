@@ -390,7 +390,7 @@ private:
         env.print(")");
         {
             CodeStream::Scope b(env.getStream());
-            EnvironmentGroupMergedField<G> initEnv(env, g);
+            EnvironmentGroupMergedField<G> initEnv(env, g, *this);
 
             // If an RNG is required for initialisation,
             // make copy of global phillox RNG and skip ahead by thread id

@@ -114,12 +114,12 @@ public:
 
 //-----------------------------------------------------------------------
 template<typename G>
-void genKernelIteration(EnvironmentExternalBase &env, G &g, size_t numKernelDims, BackendBase::HandlerEnv handler)
+void genKernelIteration(const BackendBase &backend, EnvironmentExternalBase &env, G &g, size_t numKernelDims, BackendBase::HandlerEnv handler)
 {
     // Define recursive function to generate nested kernel initialisation loops
     // **NOTE** this is a std::function as type of auto lambda couldn't be determined inside for recursive call
     std::function<void(EnvironmentExternalBase &env, size_t)> generateRecursive =
-        [&handler, &g, &generateRecursive, numKernelDims]
+        [&backend, &handler, &g, &generateRecursive, numKernelDims]
         (EnvironmentExternalBase &env, size_t depth)
         {
             // Loop through this kernel dimensions
@@ -127,7 +127,7 @@ void genKernelIteration(EnvironmentExternalBase &env, G &g, size_t numKernelDims
             env.print("for(unsigned int " + idxVar + " = 0; " + idxVar + " < " + getKernelSize(g, depth) + "; " + idxVar + "++)");
             {
                 CodeStream::Scope b(env.getStream());
-                EnvironmentGroupMergedField<G> loopEnv(env, g);
+                EnvironmentGroupMergedField<G> loopEnv(env, g, backend);
 
                 // Add substitution for this kernel index
                 loopEnv.add(Type::Uint32.addConst(), "id_kernel_" + std::to_string(depth), idxVar);
@@ -239,7 +239,7 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
                     // Generate code to update previous spike times
                     if(n.getArchetype().isPrevSpikeTimeRequired()) {
                         n.generateSpikes(
-                            groupEnv,
+                            *this, groupEnv,
                             [&n, this](EnvironmentExternalBase &env)
                             {
                                 genPrevEventTimeUpdate(env, n, true);
@@ -249,7 +249,7 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
                     // Generate code to update previous spike-event times
                     if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
                         n.generateSpikeEvents(
-                            groupEnv,
+                            *this, groupEnv,
                             [&n, this](EnvironmentExternalBase &env)
                             {
                                 genPrevEventTimeUpdate(env, n, false);
@@ -275,7 +275,7 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
                     buildStandardEnvironment(groupEnv, 1);
 
                     // Generate spike count reset
-                    n.genSpikeQueueUpdate(groupEnv, 1);
+                    n.genSpikeQueueUpdate(*this, groupEnv, 1);
                 }
             });
 
@@ -308,7 +308,7 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
                         // Zero spike-like-event recording buffer
                         if(n.getArchetype().isSpikeEventRecordingEnabled()) {
                             n.generateSpikeEvents(
-                                groupEnv,
+                                *this, groupEnv,
                                 [](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent&)
                                 {
                                     env.printLine("std::fill_n(&$(_record_spk_event)[recordingTimestep * numRecordingWords], numRecordingWords, 0);");
@@ -329,12 +329,12 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
 
                         // Generate neuron update
                         n.generateNeuronUpdate(
-                            rngEnv, 1,
+                            *this, rngEnv, 1,
                             // Emit true spikes
                             [&n, this](EnvironmentExternalBase &env)
                             {
                                 // Insert code to update WU vars
-                                n.generateWUVarUpdate(env, 1);
+                                n.generateWUVarUpdate(*this, env, 1);
 
                                 // If recording is enabled
                                 if(n.getArchetype().isSpikeRecordingEnabled()) {
@@ -349,7 +349,7 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
 
                                 // Generate spike dagta structure updates
                                 n.generateSpikes(
-                                    env,
+                                    *this, env,
                                     [&n, this](EnvironmentExternalBase &env)
                                     {
                                         genEmitEvent(env, n, true);
@@ -360,7 +360,7 @@ void Backend::genNeuronUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
                             [&n, this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent &sg)
                             {
                                 sg.generate(
-                                    env, n,
+                                    *this, env, n,
                                     [&n, this](EnvironmentExternalBase &env, NeuronUpdateGroupMerged::SynSpikeEvent&)
                                     {
                                         genEmitEvent(env, n, false);
@@ -745,11 +745,11 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
                             // **TODO** add fields
                             const SynapseGroupInternal *sg = c.getArchetype().getSynapseGroup();
                             if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
-                                genKernelIteration(groupEnv, c, c.getArchetype().getSynapseGroup()->getKernelSize().size(), 
+                                genKernelIteration(*this, groupEnv, c, c.getArchetype().getSynapseGroup()->getKernelSize().size(), 
                                                    [&c, this](EnvironmentExternalBase &env)
                                                    {
                                                        // Call custom update handler
-                                                       c.generateCustomUpdate(env, 1,
+                                                       c.generateCustomUpdate(*this, env, 1,
                                                                               [this](auto &env, CustomUpdateWUGroupMergedBase &c)
                                                                               {        
                                                                                   // Write back reductions
@@ -799,7 +799,7 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
                                         }
 
                                         // Generate custom update
-                                        c.generateCustomUpdate(synEnv, 1,
+                                        c.generateCustomUpdate(*this, synEnv, 1,
                                                                [this](auto &env, auto &c)
                                                                {        
                                                                    // Write back reductions
@@ -923,7 +923,7 @@ void Backend::genCustomUpdate(CodeStream &os, FileStreamCreator, ModelSpecMerged
                                 
                                     // Generate custom update
                                     c.generateCustomUpdate(
-                                        synEnv, 1,
+                                        *this, synEnv, 1,
                                         [&transposeVarName](auto &env, const auto&)
                                         {        
                                             // Update transpose variable
@@ -1381,7 +1381,7 @@ void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelM
 
 }
 //--------------------------------------------------------------------------
-size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const Type::TypeContext) const
+size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg, const Type::TypeContext&) const
 {
     if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) || (sg.getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ)) {
         return sg.getMaxConnections();
@@ -1559,12 +1559,12 @@ void Backend::genDenseSynapseVariableRowInit(EnvironmentExternalBase &env, Handl
 //--------------------------------------------------------------------------
 void Backend::genKernelSynapseVariableInit(EnvironmentExternalBase &env, SynapseInitGroupMerged &sg, HandlerEnv handler) const
 {
-    genKernelIteration(env, sg, sg.getArchetype().getKernelSize().size(), handler);
+    genKernelIteration(*this, env, sg, sg.getArchetype().getKernelSize().size(), handler);
 }
 //--------------------------------------------------------------------------
 void Backend::genKernelCustomUpdateVariableInit(EnvironmentExternalBase &env, CustomWUUpdateInitGroupMerged &cu, HandlerEnv handler) const
 {
-    genKernelIteration(env, cu, cu.getArchetype().getSynapseGroup()->getKernelSize().size(), handler);
+    genKernelIteration(*this, env, cu, cu.getArchetype().getSynapseGroup()->getKernelSize().size(), handler);
 }
 //--------------------------------------------------------------------------
 std::string Backend::getAtomicOperation(const std::string &lhsPointer, const std::string &rhsValue,
@@ -1590,11 +1590,13 @@ std::string Backend::getRestrictKeyword() const
 std::string Backend::getStorageToTypeConversion(const Type::ResolvedType&, const Type::ResolvedType&, const std::string&) const
 {
     assert(false);
+    return "";
 }
 //--------------------------------------------------------------------------
 std::string Backend::getTypeToStorageConversion(const Type::ResolvedType&, const Type::ResolvedType&, const std::string&) const
 {
     assert(false);
+    return "";
 }
 //--------------------------------------------------------------------------
 void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&) const
@@ -1917,7 +1919,7 @@ void Backend::genPresynapticUpdate(EnvironmentExternalBase &env, PresynapticUpda
                 groupEnv.getStream() << "for (unsigned int j = 0; j < npost; j++)";
                 {
                     CodeStream::Scope b(groupEnv.getStream());
-                    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(groupEnv, s, *this);
+                    EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> synEnv(groupEnv, sg, *this);
 
                     const auto indexType = getSynapseIndexType(sg);
                     const auto indexTypeName = indexType.getName();
