@@ -549,10 +549,12 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                         ng, ng, *this, ng.getTypeContext(), validEnv, "", "l",
                         [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
                         {
+                            assert(!delayed);
                             return ng.getReadVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
                         },
                         [batchSize, &ng](const std::string&, VarAccess d, bool delayed)
                         {
+                            assert(!delayed);
                             return ng.getWriteVarIndex(delayed, batchSize, getVarAccessDim(d), "$(id)") ;
                         });
 
