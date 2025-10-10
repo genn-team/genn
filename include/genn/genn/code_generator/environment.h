@@ -144,7 +144,7 @@ class EnvironmentSubstitutionPolicy
 protected:
     using Payload = LazyString;
 
-    std::string getNameInternal(const LazyString &payload)
+    std::string getNameInternal(const Type::ResolvedType&, const LazyString &payload)
     {
         return payload.str();
     }
@@ -180,19 +180,31 @@ protected:
     {
     }
 
-    std::string getNameInternal(const Payload &payload)
+    std::string getNameInternal(const Type::ResolvedType &type, const Payload &payload)
     {
         // If a field is specified
         const auto str = std::get<1>(payload).str();
-        if(std::get<2>(payload)) {
-            // If there is no value specified, access field directly
-            if(str.empty()) {
-                 return "group->" + std::get<2>(payload).value().name;
+        const auto &field = std::get<2>(payload);
+        if(field.has_value()) {
+            // If there is a value specified, treat as index
+            std::string fieldAccessor = "group->" + field.value().name;
+            if(!str.empty()) {
+                 fieldAccessor += "[" + str + "]";
+
+                 // If value type of field differs from result type
+                 const auto &fieldValueType = *field.value().type.getPointer().valueType;
+                 const auto resultType = type.removeConst();
+                 if(fieldValueType != resultType) {
+                     // Check the result is const
+                     assert(type.isConst);
+
+                     // Use backend to generate storage to type conversion
+                     return m_Backend.get().getStorageToTypeConversion(resultType, fieldValueType, fieldAccessor);
+                 }
             }
-            // Otherwise, treat value as index
-            else {
-                return "group->" + std::get<2>(payload).value().name + "[" + str + "]"; 
-            }
+
+            return fieldAccessor;
+            
         }
         // Otherwise, use value directly
         else {
@@ -343,7 +355,7 @@ public:
             // Perform any type-specific logic to mark this identifier as required
             this->setRequired(std::get<3>(env->second));
 
-            return this->getNameInternal(std::get<3>(env->second));
+            return this->getNameInternal(std::get<0>(env->second), std::get<3>(env->second));
         }
     }
 
@@ -726,7 +738,7 @@ public:
             const auto qualifiedType = fieldReadOnly ? resolvedType.addConst() : resolvedType;
             const auto resolvedStorageType = v.storageType.resolve(this->getGroup().getTypeContext());
             const auto name = hidden ? ("_" + v.name) : v.name;
-            assert(resolvedType == resolvedStorageType);
+            assert(fieldReadOnly || (resolvedType == resolvedStorageType));
             addField(qualifiedType, name,
                      resolvedStorageType.createPointer(), v.name + fieldSuffix, 
                      [v](auto &runtime, const auto &g, size_t) 
