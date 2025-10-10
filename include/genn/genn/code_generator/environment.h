@@ -192,6 +192,7 @@ protected:
                  fieldAccessor += "[" + str + "]";
 
                  // If value type of field differs from result type
+                 assert(field.value().type.isPointer());
                  const auto &fieldValueType = *field.value().type.getPointer().valueType;
                  const auto resultType = type.removeConst();
                  if(fieldValueType != resultType) {

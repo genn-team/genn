@@ -520,9 +520,10 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
             const std::string vectorWidthMinus1Str = std::to_string(vectorWidth - 1);
             if(vectorWidth > 1) {
                 // Add population RNG field
-                // **NOTE** This is fine to share between unrolls because they are processed in parallel.
+                // **NOTE** This is fine to share between unrolls because they are processed serially
                 // **NOTE** Halving the number of RNG state loads can actually be the biggest memory bandwidth saving!
-                groupEnv.addField(getPopulationRNGType().createPointer(), "_rng_internal", "rng",
+                groupEnv.addField(getPopulationRNGType(), "_rng_internal", 
+                                  getPopulationRNGType().createPointer(), "rng",
                                   [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rng"); },
                                   ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)"));    
 
@@ -604,7 +605,8 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
                     EnvironmentGroupMergedField<NeuronUpdateGroupMerged> validEnv(groupEnv, ng, *this);
 
                     // Add population RNG field
-                    validEnv.addField(getPopulationRNGType().createPointer(), "_rng_internal", "rng",
+                    validEnv.addField(getPopulationRNGType(), "_rng_internal", 
+                                      getPopulationRNGType().createPointer(), "rng",
                                       [](const auto &runtime, const auto &g, size_t) { return runtime.getArray(g, "rng"); },
                                       ng.getVarIndex(batchSize, VarAccessDim::BATCH | VarAccessDim::ELEMENT, "$(id)"));
 
