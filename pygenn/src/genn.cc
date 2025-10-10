@@ -822,11 +822,16 @@ PYBIND11_MODULE(_genn, m)
     //------------------------------------------------------------------------
     pybind11::class_<Models::Base::Var>(m, "Var")
         .def(pybind11::init<const std::string&, const std::string&, VarAccess>())
+        .def(pybind11::init<const std::string&, const std::string&, const std::string&,VarAccess>())
         .def(pybind11::init<const std::string&, const std::string&>())
+        .def(pybind11::init<const std::string&, const std::string&, const std::string>())
         .def(pybind11::init<const std::string&, const Type::ResolvedType&, VarAccess>())
+        .def(pybind11::init<const std::string&, const Type::ResolvedType&, const Type::ResolvedType&, VarAccess>())
         .def(pybind11::init<const std::string&, const Type::ResolvedType&>())
+        .def(pybind11::init<const std::string&, const Type::ResolvedType&, const Type::ResolvedType&>())
         .def_readonly("name", &Models::Base::Var::name)
         .def_readonly("type", &Models::Base::Var::type)
+        .def_readonly("storage_type", &Models::Base::Var::storageType)
         .def_readonly("access", &Models::Base::Var::access);
 
     //------------------------------------------------------------------------
@@ -834,11 +839,16 @@ PYBIND11_MODULE(_genn, m)
     //------------------------------------------------------------------------
     pybind11::class_<Models::Base::CustomUpdateVar>(m, "CustomUpdateVar")
         .def(pybind11::init<const std::string&, const std::string&, CustomUpdateVarAccess>())
+        .def(pybind11::init<const std::string&, const std::string&, const std::string&,CustomUpdateVarAccess>())
         .def(pybind11::init<const std::string&, const std::string&>())
+        .def(pybind11::init<const std::string&, const std::string&, const std::string>())
         .def(pybind11::init<const std::string&, const Type::ResolvedType&, CustomUpdateVarAccess>())
+        .def(pybind11::init<const std::string&, const Type::ResolvedType&, const Type::ResolvedType&, CustomUpdateVarAccess>())
         .def(pybind11::init<const std::string&, const Type::ResolvedType&>())
+        .def(pybind11::init<const std::string&, const Type::ResolvedType&, const Type::ResolvedType&>())
         .def_readonly("name", &Models::Base::CustomUpdateVar::name)
         .def_readonly("type", &Models::Base::CustomUpdateVar::type)
+        .def_readonly("storage_type", &Models::Base::CustomUpdateVar::storageType)
         .def_readonly("access", &Models::Base::CustomUpdateVar::access);
 
     //------------------------------------------------------------------------
