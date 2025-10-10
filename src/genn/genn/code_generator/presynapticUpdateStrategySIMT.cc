@@ -553,6 +553,10 @@ void PostSpanVectorised::genUpdate(EnvironmentExternalBase &env, PresynapticUpda
                     else {
                         sg.generateSpikeEventUpdate(backend, synEnv, batchSize, dt, true);
                     }
+
+                    if(i > 0) {
+                        synEnv.getStream() << CodeStream::CB(140);
+                    }
                 }
             }
 
