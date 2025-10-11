@@ -38,13 +38,13 @@ class ArrayBase:
             view_shape: shape to reshape array with
         """
         self._array = array
-        
+
         # Get numpy data type corresponding to type
         model = self.group._model
         resolved_type = (self.type if isinstance(self.type, ResolvedType)
                          else self.type.resolve(model._type_context))
         dtype = model.genn_types[resolved_type]
-        
+
         # Get dtype view of host memoryview
         self._view = np.asarray(array.host_view).view(dtype)
         assert not self._view.flags["OWNDATA"]
@@ -64,7 +64,7 @@ class ArrayBase:
     def _unload(self):
         self._view = None
         self._array = None
-        
+
     @property
     def __cuda_array_interface__(self):
         """CUDA array interface property for interoperability with other Python libraries.
@@ -73,15 +73,15 @@ class ArrayBase:
         """
         if self._array is None:
             raise RuntimeError("Array is not initialized")
-            
+
         if hasattr(self._array, "_device_pointer"):
             model = self.group._model
             resolved_type = (self.type if isinstance(self.type, ResolvedType)
                             else self.type.resolve(model._type_context))
             dtype = np.dtype(model.genn_types[resolved_type])
-            
+
             shape = self._view.shape
-            
+
             return {
                 "data": (self._array._device_pointer, False),
                 "shape": shape,
@@ -372,7 +372,7 @@ def _prepare_param_vals(params):
     return {n: NumericValue(v) for n, v in params.items()}
 
 def _prepare_vars(vars, var_space, group, var_type=Variable):
-    return {v.name: var_type(v.name, v.type, var_space[v.name], group)
+    return {v.name: var_type(v.name, v.storage_type, var_space[v.name], group)
             for v in vars}
 
 def _prepare_egps(egps, group):

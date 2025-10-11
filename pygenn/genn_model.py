@@ -226,6 +226,7 @@ class GeNNModel(ModelSpec):
         # Build dictionary containing conversions 
         # between GeNN C++ types and numpy types
         self.genn_types = {
+            types.Half:     np.float16,
             types.Float:    np.float32,
             types.Double:   np.float64,
             types.Int64:    np.int64,
