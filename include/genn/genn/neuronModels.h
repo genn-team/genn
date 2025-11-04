@@ -147,7 +147,7 @@ public:
     \frac{dV}{dt} &=& 0.04 V^2 + 5 V + 140 - U + I, \\
     \frac{dU}{dt} &=& a (bV-U),
     \f}
-    I is an external input current and the voltage V is reset to parameter c and U incremented by parameter d, whenever V >= 30 mV. This is paired with a particular integration procedure of two 0.5 ms Euler time steps for the V equation followed by one 1 ms time step of the U equation. Because of its popularity we provide this model in this form here event though due to the details of the usual implementation it is strictly speaking inconsistent with the displayed equations.
+    I is the input current and the voltage V is reset to parameter c and U incremented by parameter d, whenever V >= 30 mV. This is paired with a particular integration procedure of two 0.5 ms Euler time steps for the V equation followed by one 1 ms time step of the U equation. Because of its popularity we provide this model in this form here event though due to the details of the usual implementation it is strictly speaking inconsistent with the displayed equations.
 
     Variables are:
 
@@ -217,6 +217,28 @@ public:
 //----------------------------------------------------------------------------
 // GeNN::NeuronModels::LIF
 //----------------------------------------------------------------------------
+//! Leaky integrate-and-fire neuron with a refractory timer.
+/*! It is usually described as
+    \f{eqnarray*}
+    \tau_m \frac{dV}{dt} &=& V_{\text{rest}}-V + R I, \\
+    \f}
+    I is the input current and the voltage V is reset to parameter Vreset and RefracTime is set to TauRefrac whenever V >= Vthresh mV and RefracTime <= 0.0. 
+    This model
+
+    Variables are:
+
+    - \c V - Membrane potential
+    - \c RefracTime - Membrane recovery variable
+
+    Parameters are:
+
+    - \c C - Membrane capacitance
+    - \c TauM - Membrane time constant [ms]
+    - \c Vrest - Resting membrane potential [mV]
+    - \c Vreset - Reset voltage [mV]
+    - \c Vthresh - after-spike reset value of U
+    - \c Ioffset" - Spiking threshold [mV]
+    - \c TauRefrac - after-spike reset value of U*/
 class LIF : public Base
 {
 public:
