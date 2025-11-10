@@ -224,7 +224,8 @@ bool shouldVectoriseVar(const Type::UnresolvedType &type, const Type::Unresolved
     const auto resolvedStorageType = storageType.resolve(context);
 
     // We can vectorise v
-    return (resolvedType == Type::Float && (resolvedStorageType == Type::Half || resolvedStorageType == Type::Bfloat16));
+    return ((resolvedType == Type::Float && (resolvedStorageType == Type::Half || resolvedStorageType == Type::Bfloat16))
+            || resolvedType == Type::Uint16 || resolvedType == Type::Int16 || resolvedType == Type::Uint8 || resolvedType == Type::Uint16);
 }
 //-----------------------------------------------------------------------
 template<typename A, typename G>
@@ -376,6 +377,17 @@ std::string BackendCUDAHIP::getVectorTypeName(const Type::ResolvedType &storageT
             throw std::runtime_error("Unsupported 'ushort' vector width " + std::to_string(vectorWidth));
         }
     }
+     else if(storageType == Type::Int16) {
+        if(vectorWidth == 2) {
+            return "short2";
+        }
+        else if(vectorWidth == 4) {
+            return "short4";
+        }
+        else {
+            throw std::runtime_error("Unsupported 'short' vector width " + std::to_string(vectorWidth));
+        }
+    }
     else if(storageType == Type::Uint8) {
         if(vectorWidth == 2) {
             return "uchar2";
@@ -385,6 +397,17 @@ std::string BackendCUDAHIP::getVectorTypeName(const Type::ResolvedType &storageT
         }
         else {
             throw std::runtime_error("Unsupported 'uchar' vector width " + std::to_string(vectorWidth));
+        }
+    }
+    else if(storageType == Type::Int8) {
+        if(vectorWidth == 2) {
+            return "char2";
+        }
+        else if(vectorWidth == 4) {
+            return "char4";
+        }
+        else {
+            throw std::runtime_error("Unsupported 'char' vector width " + std::to_string(vectorWidth));
         }
     }
     else {
@@ -410,7 +433,7 @@ std::string BackendCUDAHIP::getExtractVector(const Type::ResolvedType &type, con
             throw std::runtime_error("Invalid lane for 16-bit vector '" + std::to_string(lane) + "'");
         }   
     }
-    else if((type == Type::Uint16 || type == Type::Uint8) && type == storageType) {
+    else if((type == Type::Uint16 || type == Type::Uint8 || type == Type::Int16 || type == Type::Int8) && type == storageType) {
         const char fields[] = "xyzw";
         if(lane < 4) {
             return value + "." + std::string{fields[lane]};
@@ -439,7 +462,7 @@ std::string BackendCUDAHIP::getRecombineVector(const Type::ResolvedType &type, c
             return "__floats2bfloat162_rn(" + valuePrefix + "_0, " + valuePrefix + "_1)";
         }
         else {
-            throw std::runtime_error("Unsupported storage type '" + storageType.getName() + "'");
+            throw std::runtime_error("Unsupported 'float# storage type '" + storageType.getName() + "'");
         }
     }
     else if(type == storageType && type == Type::Uint16) {
@@ -450,7 +473,18 @@ std::string BackendCUDAHIP::getRecombineVector(const Type::ResolvedType &type, c
             return "make_ushort4(" + valuePrefix + "_0, " + valuePrefix + "_1, " + valuePrefix + "_2, " + valuePrefix + "_3)";
         }
         else {
-            throw std::runtime_error("Unsupported vector width " + std::to_string(vectorWidth));
+            throw std::runtime_error("Unsupported 'ushort' vector width " + std::to_string(vectorWidth));
+        }
+    }
+    else if(type == storageType && type == Type::Int16) {
+        if(vectorWidth == 2) {
+            return "make_short2(" + valuePrefix + "_0, " + valuePrefix + "_1)";
+        }
+        else if(vectorWidth == 4) {
+            return "make_short4(" + valuePrefix + "_0, " + valuePrefix + "_1, " + valuePrefix + "_2, " + valuePrefix + "_3)";
+        }
+        else {
+            throw std::runtime_error("Unsupported  'short' vector width " + std::to_string(vectorWidth));
         }
     }
     else if(type == storageType && type == Type::Uint8) {
@@ -461,7 +495,18 @@ std::string BackendCUDAHIP::getRecombineVector(const Type::ResolvedType &type, c
             return "make_uchar4(" + valuePrefix + "_0, " + valuePrefix + "_1, " + valuePrefix + "_2, " + valuePrefix + "_3)";
         }
         else {
-            throw std::runtime_error("Unsupported vector width " + std::to_string(vectorWidth));
+            throw std::runtime_error("Unsupported 'uchar' vector width " + std::to_string(vectorWidth));
+        }
+    }
+    else if(type == storageType && type == Type::Int8) {
+        if(vectorWidth == 2) {
+            return "make_char2(" + valuePrefix + "_0, " + valuePrefix + "_1)";
+        }
+        else if(vectorWidth == 4) {
+            return "make_char4(" + valuePrefix + "_0, " + valuePrefix + "_1, " + valuePrefix + "_2, " + valuePrefix + "_3)";
+        }
+        else {
+            throw std::runtime_error("Unsupported 'char' vector width " + std::to_string(vectorWidth));
         }
     }
     else {
