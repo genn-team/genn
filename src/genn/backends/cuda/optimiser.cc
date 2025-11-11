@@ -435,11 +435,11 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     CUdevice cuDevice;
     CUcontext cuContext;
     CHECK_CU_ERRORS(cuDeviceGet(&cuDevice, deviceID));
-    #if CUDA_VERSION < 13000
-        CHECK_CU_ERRORS(cuCtxCreate(&cuContext, 0, cuDevice));
-    #else
-	CHECK_CU_ERRORS(cuCtxCreate(&cuContext, NULL, 0, cuDevice));
-    #endif
+#if CUDA_VERSION < 13000
+    CHECK_CU_ERRORS(cuCtxCreate(&cuContext, 0, cuDevice));
+#else
+    CHECK_CU_ERRORS(cuCtxCreate(&cuContext, NULL, 0, cuDevice));
+#endif
     // Get CUDA_PATH environment variable
     // **NOTE** adding CUDA_PATH/bin to path is a REQUIRED post-installation action when installing CUDA so this shouldn't be required
     filesystem::path nvccPath;
