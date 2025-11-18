@@ -16,22 +16,6 @@ Point your browser to https://github.com/genn-team/genn/releases
 and download a release from the list by clicking the relevant source
 code button. After downloading continue to install GeNN as described in the [GitHub installing section](#installing-genn) below.
 
-### Obtaining a Git snapshot
-
-If it is not yet installed on your system, download and install Git
-(http://git-scm.com/). Then clone the GeNN repository from Github
-```bash
-git clone https://github.com/genn-team/genn.git
-```
-The github url of GeNN in the command above can be copied from the
-HTTPS clone URL displayed on the GeNN Github page (https://github.com/genn-team/genn).
-
-This will clone the entire repository, including all open branches.
-By default git will check out the master branch which contains the
-source version upon which the next release will be based. There are other 
-branches in the repository that are used for specific development 
-purposes and are opened and closed without warning.
-
 ### Installing GeNN
 
 In future we plan on providing binary builds of GeNN via conda. However, for now, GeNN
@@ -66,7 +50,7 @@ needs to be installed from source.
 4.  On Linux, install the development version of libffi. For example, on Ubuntu you can do this
     by running ``sudo apt-get install libffi-dev``.
 
-### Building with pip
+### Installation using pip
 The easiest way to install GeNN is directly from github using pip. 
 For example, to install the latest development version you can use:
 ``pip install https://github.com/genn-team/genn/archive/refs/heads/master.zip`` or to install the 5.3.0 release you can use: 
@@ -74,13 +58,13 @@ For example, to install the latest development version you can use:
 
 ### Creating an editable install with pip
 If you want to develop GeNN yourself, it is helpful to create an 'editable' install. 
-The easiest way to do this is first clone GeNN using git from https://github.com/genn-team/genn.
+The easiest way to do this is first clone GeNN using git using ``git clone https://github.com/genn-team/genn.git``.
 Then navigate to the GeNN directory and install using ``pip install -e .``.
 
 ### Building with setup.py (LEGACY)
 Although it is not recommended, in order to build special development versions you sometimes need to install the old fashioned way!
-1.  Install the pybind11, psutil and numpy packages with pip i.e. ``pip install pybind11 psutil numpy``.
-2.  Clone GeNN using git from https://github.com/genn-team/genn.
+1.  Manually install PyGeNN's dependencies using pip i.e. ``pip install pybind11 psutil numpy``.
+2.  Clone GeNN using git i.e. using ``git clone https://github.com/genn-team/genn.git``
 3.  From the GeNN directory, build PyGeNN using ``python setup.py develop``. 
     You can build a debug version of GeNN with ``python setup.py build_ext --debug develop``.
 
