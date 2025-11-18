@@ -274,7 +274,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         }
 
                         // Archive wheel itself
-                        archive "*.whl"
+                        archive "dist/*.whl"
                     }
                 }
 
