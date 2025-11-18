@@ -1,0 +1,8 @@
+[build-system]
+requires = ["setuptools", "pybind11", "psutil"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pygenn"
+requires-python = ">=3.6"
+dynamic = ["version"]
