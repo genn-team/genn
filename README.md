@@ -63,26 +63,26 @@ needs to be installed from source.
     assuming CUDA is installed in /usr/local/cuda (the standard location 
     on Ubuntu Linux). Again, to make this change persistent, this can
     be added to your login script (e.g. ``.profile`` or ``.bashrc``)
-4.  Either download the latest release of GeNN and extract into your 
-    home directory or clone using git from https://github.com/genn-team/genn
-5.  On Linux, install the development version of libffi. For example, on Ubuntu you can do this
+4.  On Linux, install the development version of libffi. For example, on Ubuntu you can do this
     by running ``sudo apt-get install libffi-dev``.
-6.  Install the pybind11, psutil and numpy packages with pip i.e. ``pip install pybind11 psutil numpy``.
 
+### Building with pip
+The easiest way to install GeNN is directly from github using pip. 
+For example, to install the latest development version you can use:
+``pip install https://github.com/genn-team/genn/archive/refs/heads/master.zip`` or to install the 5.3.0 release you can use: 
+``pip install https://github.com/genn-team/genn/archive/refs/tags/5.3.0.zip``.
 
-#### Building with setup.py
-From the GeNN directory, the GeNN libraries and python package can be built
-with ``python setup.py install``. If you wish to create an editable install
-(most useful if you are intending to modify GeNN yourself) you can also used
-``python setup.py develop``. On Linux (or Windows if you have a debug version
-of the python libraries installed) you can build a debug version of GeNN with
-``python setup.py build_ext --debug develop``.
+### Creating an editable install with pip
+If you want to develop GeNN yourself, it is helpful to create an 'editable' install. 
+The easiest way to do this is first clone GeNN using git from https://github.com/genn-team/genn.
+Then navigate to the GeNN directory and install using ``pip install -e .``.
 
-#### Building with pip
-From the GeNN directory, the GeNN libraries and python package can be built
-with ``pip install .``. If you wish to create an editable install
-(most useful if you are intending to modify GeNN yourself) you can also used
-``pip install --editable .``.
+### Building with setup.py (LEGACY)
+Although it is not recommended, in order to build special development versions you sometimes need to install the old fashioned way!
+1.  Install the pybind11, psutil and numpy packages with pip i.e. ``pip install pybind11 psutil numpy``.
+2.  Clone GeNN using git from https://github.com/genn-team/genn.
+3.  From the GeNN directory, build PyGeNN using ``python setup.py develop``. 
+    You can build a debug version of GeNN with ``python setup.py build_ext --debug develop``.
 
 ### Docker
 You can also use GeNN through our CUDA-enabled docker container which comes with GeNN pre-installed.
