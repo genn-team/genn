@@ -4,7 +4,7 @@
 
 # GPU-enhanced Neuronal Networks (GeNN)
 
-GeNN is a GPU-enhanced Neuronal Network simulation environment based on code generation for Nvidia CUDA.
+GeNN is a GPU-enhanced Neuronal Network simulation environment based on code generation for NVIDIA CUDA and AMD HIP.
 
 ## Installation
 
