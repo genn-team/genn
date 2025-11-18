@@ -8,20 +8,7 @@ GeNN is a GPU-enhanced Neuronal Network simulation environment based on code gen
 
 ## Installation
 
-You can download GeNN either as a zip file of a stable release, checkout the development
-version using the Git version control system or use our Docker container.
-
-### Downloading a release
-Point your browser to https://github.com/genn-team/genn/releases
-and download a release from the list by clicking the relevant source
-code button. After downloading continue to install GeNN as described in the [GitHub installing section](#installing-genn) below.
-
-### Installing GeNN
-
-In future we plan on providing binary builds of GeNN via conda. However, for now, GeNN
-needs to be installed from source.
-
-#### Pre-installation
+### Pre-installation
 
 1.  Install the C++ compiler on the machine, if not already present.
     For Windows, Visual Studio 2019 or above is required. The Microsoft Visual Studio 
@@ -72,7 +59,7 @@ Although it is not recommended, in order to build special development versions y
 3.  From the GeNN directory, build PyGeNN using ``python setup.py develop``. 
     You can build a debug version of GeNN with ``python setup.py build_ext --debug develop``.
 
-### Docker
+## Docker
 You can also use GeNN through our CUDA-enabled docker container which comes with GeNN pre-installed.
 To work with such CUDA-enabled containers, you need to first install CUDA on your host system as described above and then install docker and the NVIDIA Container Toolkit as described in https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker.
 You can then build the GeNN container yourself or download it from Dockerhub.
