@@ -268,7 +268,7 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                             python -m build  --wheel . 1>> "${outputFilename}" 2>&1
                             """
-                        def wheelStatusCode = sh script:"python -m build --wheel" returnStatus:true
+                        def wheelStatusCode = sh script:script, returnStatus:true;
                         if(wheelStatusCode != 0) {
                             setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
                         }
