@@ -48,7 +48,7 @@ For example, to install the latest development version you can use:
 ``pip install https://github.com/genn-team/genn/archive/refs/tags/5.3.0.zip``.
 
 ### Creating an editable install with pip
-If you want to develop GeNN yourself, it is helpful to create an 'editable' install. 
+If you want to develop GeNN yourself or run userprojects from the GeNN repository, it is helpful to create an 'editable' install. 
 The easiest way to do this to first 'clone' GeNN from github using ``git clone https://github.com/genn-team/genn.git``.
 Then, navigate to the GeNN directory and install using ``pip install -e .``.
 
