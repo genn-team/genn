@@ -282,7 +282,7 @@ for module_stem, source_stem, kwargs in backends:
         else:
             # Define make arguments
             make_arguments = ["make", f"{module_stem}_backend", "DYNAMIC=1",
-                              f"LIBRARY_DIRECTORY={pygenn_path}",
+                              f"LIBRARY_DIRECTORY={os.path.join(abs_genn_path, 'pygenn')}",
                               f"--jobs={cpu_count(logical=False)}"]
             if debug_build:
                 make_arguments.append("DEBUG=1")
