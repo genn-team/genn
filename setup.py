@@ -59,13 +59,12 @@ else:
     else:
         genn_lib_suffix = "_dynamic"
 
-genn_path = os.path.dirname(os.path.abspath(__file__))
-
-pygenn_path = os.path.join(genn_path, "pygenn")
+abs_genn_path = os.path.dirname(os.path.abspath(__file__))
+genn_include = os.path.join(".", "include", "genn", "genn")
+genn_third_party_include = os.path.join(".", "include", "genn", "third_party")
+pygenn_path = os.path.join(".", "pygenn")
 pygenn_src = os.path.join(pygenn_path, "src")
 pygenn_include = os.path.join(pygenn_path, "include")
-genn_include = os.path.join(genn_path, "include", "genn", "genn")
-genn_third_party_include = os.path.join(genn_path, "include", "genn", "third_party")
 
 # Always package LibGeNN
 if WIN:
@@ -260,7 +259,7 @@ for module_stem, source_stem, kwargs in backends:
         package_data.append("libgenn_" + module_stem + "_backend" + genn_lib_suffix + ".so")
 
     # Add backend include directory to both SWIG and C++ compiler options
-    backend_include_dir = os.path.join(genn_path, "include", "genn", "backends", module_stem)
+    backend_include_dir = os.path.join(".", "include", "genn", "backends", module_stem)
     backend_extension_kwargs["libraries"].insert(0, "genn_" + module_stem + "_backend" + genn_lib_suffix)
     backend_extension_kwargs["include_dirs"].append(backend_include_dir)
 
@@ -274,12 +273,12 @@ for module_stem, source_stem, kwargs in backends:
         # If compiler is MSVC
         if WIN:
             # **NOTE** ensure pygenn_path has trailing slash to make MSVC happy
-            out_dir = os.path.join(pygenn_path, "")
+            out_dir = os.path.join(abs_genn_path, "pygenn", "")
             check_call(["msbuild", "genn.sln", f"/t:{module_stem}_backend",
                         f"/p:Configuration={genn_lib_suffix[1:]}",
                         "/m", "/verbosity:quiet",
                         f"/p:OutDir={out_dir}"],
-                        cwd=genn_path)
+                        cwd=abs_genn_path)
         else:
             # Define make arguments
             make_arguments = ["make", f"{module_stem}_backend", "DYNAMIC=1",
@@ -292,10 +291,10 @@ for module_stem, source_stem, kwargs in backends:
                 make_arguments.append("COVERAGE=1")
 
             # Build
-            check_call(make_arguments, cwd=genn_path)
+            check_call(make_arguments, cwd=abs_genn_path)
 
 # Read version from txt file
-with open(os.path.join(genn_path, "version.txt")) as version_file:
+with open(os.path.join(abs_genn_path, "version.txt")) as version_file:
     version = version_file.read().strip()
 
 setup(
