@@ -50,7 +50,8 @@ For example, to install the latest development version you can use:
 ### Creating an editable install with pip
 If you want to develop GeNN yourself or run userprojects from the GeNN repository, it is helpful to create an 'editable' install. 
 The easiest way to do this to first 'clone' GeNN from github using ``git clone https://github.com/genn-team/genn.git``.
-Then, navigate to the GeNN directory and install using ``pip install -e .``.
+Then, navigate to the GeNN directory and install using ``pip install -e .``. If you wish to install the additional dependencies needed 
+to run the userprojects, you can do so using ``pip install -e .[userproject]``.
 
 ### Building with setup.py (LEGACY)
 Although it is not recommended, in order to build special development versions you sometimes need to install the old fashioned way!
