@@ -55,7 +55,7 @@ to run the userprojects, you can do so using ``pip install -e .[userproject]``.
 
 ### Building with setup.py (LEGACY)
 Although it is not recommended, in order to build special development versions you sometimes need to install the old fashioned way!
-1.  Manually install PyGeNN's dependencies using pip i.e. ``pip install pybind11 psutil numpy``.
+1.  Manually install PyGeNN's dependencies using pip i.e. ``pip install pybind11 psutil numpy pkgconfig``.
 2.  Clone GeNN using git i.e. using ``git clone https://github.com/genn-team/genn.git``
 3.  From the GeNN directory, build PyGeNN using ``python setup.py develop``. 
     You can build a debug version of GeNN with ``python setup.py build_ext --debug develop``.

@@ -192,7 +192,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                     ${env.PYTHON} -m venv ${WORKSPACE}/venv
                     . ${WORKSPACE}/venv/bin/activate
                     pip install -U pip
-                    pip install numpy scipy pybind11 pytest flaky pytest-cov wheel flake8 bitarray psutil build ${cupy}
+                    pip install numpy scipy pybind11 pytest flaky pytest-cov wheel flake8 bitarray psutil build pkgconfig ${cupy}
                     """;
                 }
 
