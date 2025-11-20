@@ -1,4 +1,5 @@
 import os
+import pkgconfig
 import sys
 from copy import deepcopy
 from platform import system, uname
@@ -103,6 +104,11 @@ if WIN:
                                         os.path.join(pygenn_path, "libffi" + genn_lib_suffix + ".dll")]
 # Otherwise
 else:
+    # Add whatever configuration libffi requires
+    ffi_config = pkgconfig.parse("libffi")
+    for k, v in ffi_config.items():
+        genn_extension_kwargs[k].extend(v)
+    
     # --- Linux/macOS libffi linkage ---
     genn_extension_kwargs["libraries"].append("ffi")
     # Add GeNN library to dependencies
