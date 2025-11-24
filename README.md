@@ -4,40 +4,11 @@
 
 # GPU-enhanced Neuronal Networks (GeNN)
 
-GeNN is a GPU-enhanced Neuronal Network simulation environment based on code generation for Nvidia CUDA.
+GeNN is a GPU-enhanced Neuronal Network simulation environment based on code generation for NVIDIA CUDA and AMD HIP.
 
 ## Installation
 
-You can download GeNN either as a zip file of a stable release, checkout the development
-version using the Git version control system or use our Docker container.
-
-### Downloading a release
-Point your browser to https://github.com/genn-team/genn/releases
-and download a release from the list by clicking the relevant source
-code button. After downloading continue to install GeNN as described in the [GitHub installing section](#installing-genn) below.
-
-### Obtaining a Git snapshot
-
-If it is not yet installed on your system, download and install Git
-(http://git-scm.com/). Then clone the GeNN repository from Github
-```bash
-git clone https://github.com/genn-team/genn.git
-```
-The github url of GeNN in the command above can be copied from the
-HTTPS clone URL displayed on the GeNN Github page (https://github.com/genn-team/genn).
-
-This will clone the entire repository, including all open branches.
-By default git will check out the master branch which contains the
-source version upon which the next release will be based. There are other 
-branches in the repository that are used for specific development 
-purposes and are opened and closed without warning.
-
-### Installing GeNN
-
-In future we plan on providing binary builds of GeNN via conda. However, for now, GeNN
-needs to be installed from source.
-
-#### Pre-installation
+### Pre-installation
 
 1.  Install the C++ compiler on the machine, if not already present.
     For Windows, Visual Studio 2019 or above is required. The Microsoft Visual Studio 
@@ -53,38 +24,47 @@ needs to be installed from source.
     https://developer.nvidia.com/cuda-downloads
     Be sure to pick CUDA and C++ compiler versions which are compatible
     with each other. The latest C++ compiler need not necessarily be
-    compatible with the latest CUDA toolkit.
+    compatible with the latest CUDA toolkit. Similarly, if your machine 
+    has an AMD GPU and you haven't installed HIP yet, follow the instructions at
+    https://rocm.docs.amd.com/projects/HIP/en/latest/install/install.html.
 3.  GeNN uses the ``CUDA_PATH`` environment variable to determine which 
     version of CUDA to build against. On Windows, this is set automatically when 
     installing CUDA. However, if you choose, you can verify which version is 
-    selected by running ``echo $CUDA_PATH`` in a command prompt.
+    selected by running ``echo %CUDA_PATH%`` in a command prompt.
     However, on Linux, you need to set ``CUDA_PATH`` manually with:
     ``export CUDA_PATH=/usr/local/cuda``
     assuming CUDA is installed in /usr/local/cuda (the standard location 
-    on Ubuntu Linux). Again, to make this change persistent, this can
-    be added to your login script (e.g. ``.profile`` or ``.bashrc``)
-4.  Either download the latest release of GeNN and extract into your 
-    home directory or clone using git from https://github.com/genn-team/genn
-5.  On Linux, install the development version of libffi. For example, on Ubuntu you can do this
+    on Ubuntu Linux). Similarly, if you are using HIP, you need to set the 
+    ``HIP_PATH`` variable manually and also specify your platform with either
+    ``export HIP_PLATFORM='nvidia'`` if you wish to use HIP with an NVIDIA GPU
+    or ``export HIP_PLATFORM='amd'`` if you wish to use an AMD GPU.
+    To make any of these changes persistent, these commands should be added to your login 
+    script (e.g. ``.profile`` or ``.bashrc``).
+4.  On Linux, install the development version of libffi. For example, on Ubuntu you can do this
     by running ``sudo apt-get install libffi-dev``.
-6.  Install the pybind11, psutil and numpy packages with pip i.e. ``pip install pybind11 psutil numpy``.
 
+### Installation using pip
+The easiest way to install GeNN is directly from github using pip. 
+First of all make sure pip is up to date using :
+``pip install -U pip``
+Then, to install the latest development version you can use:
+``pip install https://github.com/genn-team/genn/archive/refs/heads/master.zip`` or, to install the 5.3.0 release, you can use: 
+``pip install https://github.com/genn-team/genn/archive/refs/tags/5.3.0.zip``.
 
-#### Building with setup.py
-From the GeNN directory, the GeNN libraries and python package can be built
-with ``python setup.py install``. If you wish to create an editable install
-(most useful if you are intending to modify GeNN yourself) you can also used
-``python setup.py develop``. On Linux (or Windows if you have a debug version
-of the python libraries installed) you can build a debug version of GeNN with
-``python setup.py build_ext --debug develop``.
+### Creating an editable install with pip
+If you want to develop GeNN yourself or run userprojects from the GeNN repository, it is helpful to create an 'editable' install. 
+The easiest way to do this to first 'clone' GeNN from github using ``git clone https://github.com/genn-team/genn.git``.
+Then, navigate to the GeNN directory and install using ``pip install -e .``. If you wish to install the additional dependencies needed 
+to run the userprojects, you can do so using ``pip install -e .[userproject]``.
 
-#### Building with pip
-From the GeNN directory, the GeNN libraries and python package can be built
-with ``pip install .``. If you wish to create an editable install
-(most useful if you are intending to modify GeNN yourself) you can also used
-``pip install --editable .``.
+### Building with setup.py (LEGACY)
+Although it is not recommended, in order to build special development versions you sometimes need to install the old fashioned way!
+1.  Manually install PyGeNN's build dependencies using pip i.e. ``pip install pybind11 psutil pkgconfig setuptools>=61``.
+2.  Clone GeNN using git i.e. using ``git clone https://github.com/genn-team/genn.git``
+3.  From the GeNN directory, build PyGeNN using ``python setup.py develop``. 
+    You can build a debug version of GeNN with ``python setup.py build_ext --debug develop``.
 
-### Docker
+## Docker
 You can also use GeNN through our CUDA-enabled docker container which comes with GeNN pre-installed.
 To work with such CUDA-enabled containers, you need to first install CUDA on your host system as described above and then install docker and the NVIDIA Container Toolkit as described in https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker.
 You can then build the GeNN container yourself or download it from Dockerhub.

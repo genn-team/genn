@@ -192,7 +192,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                     ${env.PYTHON} -m venv ${WORKSPACE}/venv
                     . ${WORKSPACE}/venv/bin/activate
                     pip install -U pip
-                    pip install numpy scipy pybind11 pytest flaky pytest-cov wheel flake8 bitarray psutil ${cupy}
+                    pip install numpy scipy pybind11 pytest flaky pytest-cov wheel flake8 bitarray psutil build pkgconfig ${cupy}
                     """;
                 }
 
@@ -263,77 +263,18 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                 buildStep("Building Python wheels (${NODE_NAME})") {
                     dir("genn") {
-                        if(isUnix()) {
-                            // Create virtualenv, install numpy and pybind11; and make Python wheel
-                            echo "Creating Python wheels";
-                            script = """
+                        script = """
                             . ${WORKSPACE}/venv/bin/activate
 
-                            python setup.py clean --all 1>> "${outputFilename}" 2>&1
-                            python setup.py bdist_wheel -d . 1>> "${outputFilename}" 2>&1
+                            python -m build  --wheel . 1>> "${outputFilename}" 2>&1
                             """
-
-                            def wheelStatusCode = sh script:script, returnStatus:true
-                            if(wheelStatusCode != 0) {
-                                setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
-                            }
-                        }
-                        else {
-                            // Build set of dynamic libraries for single-threaded CPU backend
-                            echo "Creating dynamic libraries";
-                            msbuildCommand = """
-                            CALL %VC_VARS_BAT%
-                            msbuild genn.sln /m /verbosity:quiet /p:Configuration=Release_DLL /t:single_threaded_cpu_backend >> "${outputFilename}" 2>&1
-                            """;
-
-                            // If node has suitable CUDA, also build CUDA backend
-                            if("cuda10" in nodeLabel || "cuda11" in nodeLabel || "cuda12" in nodeLabel) {
-                                msbuildCommand += """
-                                msbuild genn.sln /m /verbosity:quiet  /p:Configuration=Release_DLL /t:cuda_backend >> "${outputFilename}" 2>&1
-                                """;
-                            }
-                            // If this node has OpenCL, also build OpenCL backend
-                            if(nodeLabel.contains("opencl")) {
-                                msbuildCommand += """
-                                msbuild genn.sln /m /verbosity:quiet  /p:Configuration=Release_DLL /t:opencl_backend >> "${outputFilename}" 2>&1
-                                """;
-                            }
-
-                            def msbuildStatusCode = bat script:msbuildCommand, returnStatus:true
-                            if(msbuildStatusCode != 0) {
-                                setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
-                            }
-
-                            // Remove existing virtualenv
-                            bat script:"rmdir /S /Q virtualenv", returnStatus:true;
-
-                            echo "Creating Python wheels";
-                            script = """
-                            CALL %VC_VARS_BAT%
-                            CALL %ANACONDA_ACTIVATE_BAT%
-
-                            ${env.PYTHON} -m venv virtualenv
-                            pushd virtualenv\\Scripts
-                            call activate
-                            popd
-
-                            pip install --upgrade pip
-                            pip install wheel "numpy>=1.17" pybind11
-
-                            copy /Y lib\\genn*Release_DLL.* pygenn
-
-                            python setup.py clean --all
-                            python setup.py bdist_wheel -d . >> "${outputFilename}" 2>&1
-                            """
-
-                            def wheelStatusCode = bat script:script, returnStatus:true
-                            if(wheelStatusCode != 0) {
-                                setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
-                            }
+                        def wheelStatusCode = sh script:script, returnStatus:true;
+                        if(wheelStatusCode != 0) {
+                            setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
                         }
 
                         // Archive wheel itself
-                        archive "*.whl"
+                        archive "dist/*.whl"
                     }
                 }
 
