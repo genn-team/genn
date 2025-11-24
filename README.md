@@ -24,7 +24,9 @@ GeNN is a GPU-enhanced Neuronal Network simulation environment based on code gen
     https://developer.nvidia.com/cuda-downloads
     Be sure to pick CUDA and C++ compiler versions which are compatible
     with each other. The latest C++ compiler need not necessarily be
-    compatible with the latest CUDA toolkit.
+    compatible with the latest CUDA toolkit. Similarly, if your machine 
+    has an AMD GPU and you haven't installed HIP yet, follow the instructions at
+    https://rocm.docs.amd.com/projects/HIP/en/latest/install/install.html.
 3.  GeNN uses the ``CUDA_PATH`` environment variable to determine which 
     version of CUDA to build against. On Windows, this is set automatically when 
     installing CUDA. However, if you choose, you can verify which version is 
