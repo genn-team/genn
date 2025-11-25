@@ -33,11 +33,11 @@ public:
 };
 
 //! Parse expression from tokens
-Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, const Type::TypeContext &context, ErrorHandlerBase &errorHandler);
+Expression::ExpressionPtr<> parseExpression(const std::vector<Token> &tokens, const Type::TypeContext &context, ErrorHandlerBase &errorHandler);
 
 //! Parse block item list from tokens
 /*! Block item lists are function body scope list of statements */
-Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, const Type::TypeContext &context, ErrorHandlerBase &errorHandler);
+Statement::StatementList<> parseBlockItemList(const std::vector<Token> &tokens, const Type::TypeContext &context, ErrorHandlerBase &errorHandler);
 
 //! Parse type from tokens
 const GeNN::Type::ResolvedType parseNumericType(const std::vector<Token> &tokens, const Type::TypeContext &context, ErrorHandlerBase &errorHandler);

@@ -13,80 +13,126 @@
 // Forward declarations
 namespace GeNN::Transpiler::Expression 
 {
+template<typename>
 class ArraySubscript;
+
+template<typename>
 class Assignment;
+
+template<typename>
 class Binary;
+
+template<typename>
 class Call;
+
+template<typename>
 class Cast;
+
+template<typename>
 class Conditional;
+
+template<typename>
 class Grouping;
+
+template<typename>
 class Literal;
+
+template<typename>
 class Logical;
+
+template<typename>
 class PostfixIncDec;
+
+template<typename>
 class PrefixIncDec;
+
+template<typename>
 class Identifier;
+
+template<typename>
 class Unary;
 }
 
 //---------------------------------------------------------------------------
-// GeNN::Transpiler::Expression::Visitor
+// GeNN::Transpiler::Expression::NoAnnotation
 //---------------------------------------------------------------------------
+//! Default AST annotation type - no annotation!
 namespace GeNN::Transpiler::Expression
 {
+class NoAnnotation
+{
+};
+
+//---------------------------------------------------------------------------
+// GeNN::Transpiler::Expression::Visitor
+//---------------------------------------------------------------------------
+template<typename A = NoAnnotation>
 class Visitor
 {
 public:
-    virtual void visit(const ArraySubscript &arraySubscript) = 0;
-    virtual void visit(const Assignment &assignement) = 0;
-    virtual void visit(const Binary &binary) = 0;
-    virtual void visit(const Call &call) = 0;
-    virtual void visit(const Cast &cast) = 0;
-    virtual void visit(const Conditional &conditional) = 0;
-    virtual void visit(const Grouping &grouping) = 0;
-    virtual void visit(const Literal &literal) = 0;
-    virtual void visit(const Logical &logical) = 0;
-    virtual void visit(const PostfixIncDec &postfixIncDec) = 0;
-    virtual void visit(const PrefixIncDec &postfixIncDec) = 0;
-    virtual void visit(const Identifier &variable) = 0;
-    virtual void visit(const Unary &unary) = 0;
+    virtual void visit(const ArraySubscript<A> &arraySubscript) = 0;
+    virtual void visit(const Assignment<A> &assignement) = 0;
+    virtual void visit(const Binary<A> &binary) = 0;
+    virtual void visit(const Call<A> &call) = 0;
+    virtual void visit(const Cast<A> &cast) = 0;
+    virtual void visit(const Conditional<A> &conditional) = 0;
+    virtual void visit(const Grouping<A> &grouping) = 0;
+    virtual void visit(const Literal<A> &literal) = 0;
+    virtual void visit(const Logical<A> &logical) = 0;
+    virtual void visit(const PostfixIncDec<A> &postfixIncDec) = 0;
+    virtual void visit(const PrefixIncDec<A> &postfixIncDec) = 0;
+    virtual void visit(const Identifier<A> &variable) = 0;
+    virtual void visit(const Unary<A> &unary) = 0;
 };
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Base
 //---------------------------------------------------------------------------
-class Base
+template<typename A = NoAnnotation>
+class Base : public A
 {
 public:
+    using A::A;
     virtual ~Base(){}
 
-    virtual void accept(Visitor &visitor) const = 0;
+    virtual void accept(Visitor<A> &visitor) const = 0;
     virtual bool isLValue() const{ return false; }
 };
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Acceptable
 //---------------------------------------------------------------------------
-template<typename T>
-class Acceptable : public Base
+template<typename T, typename A = NoAnnotation>
+class Acceptable : public Base<A>
 {
 public:
-    virtual void accept(Visitor &visitor) const final
+    using Base<A>::Base;
+
+    virtual void accept(Visitor<A> &visitor) const final
     {
         visitor.visit(static_cast<const T&>(*this));
     }
 };
 
-typedef std::unique_ptr<Base const> ExpressionPtr;
-typedef std::vector<ExpressionPtr> ExpressionList;
+template<typename A = NoAnnotation>
+using ExpressionPtr = std::unique_ptr<Base<A> const> ;
+
+template<typename A = NoAnnotation>
+using ExpressionList = std::vector<ExpressionPtr<A>>;
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::ArraySubscript
 //---------------------------------------------------------------------------
-class ArraySubscript : public Acceptable<ArraySubscript>
+template<typename A>
+class ArraySubscript : public Acceptable<ArraySubscript<A>, A>
 {
 public:
-    ArraySubscript(ExpressionPtr array, Token closingSquareBracket, ExpressionPtr index)
-    :  m_Array(std::move(array)), m_ClosingSquareBracket(closingSquareBracket), m_Index(std::move(index))
+    template<typename... AnnotationArgs>
+    ArraySubscript(ExpressionPtr<A> array, Token closingSquareBracket,
+                   ExpressionPtr<A> index, AnnotationArgs&&... annotationArgs)
+    :   Acceptable<ArraySubscript<A>, A>(std::forward<AnnotationArgs>(annotationArgs)...), 
+        m_Array(std::move(array)), m_ClosingSquareBracket(closingSquareBracket), 
+        m_Index(std::move(index))
     {}
 
     //------------------------------------------------------------------------
@@ -94,126 +140,149 @@ public:
     //------------------------------------------------------------------------
     virtual bool isLValue() const{ return true; }
 
-    const Base *getArray() const { return m_Array.get(); }
-    const Token &getClosingSquareBracket() const { return m_ClosingSquareBracket; }
-    const Base *getIndex() const { return m_Index.get(); }
+    const auto *getArray() const { return m_Array.get(); }
+    const auto &getClosingSquareBracket() const { return m_ClosingSquareBracket; }
+    const auto *getIndex() const { return m_Index.get(); }
 
 private:
-    ExpressionPtr m_Array;
+    ExpressionPtr<A> m_Array;
     Token m_ClosingSquareBracket;
-    ExpressionPtr m_Index;
+    ExpressionPtr<A> m_Index;
 };
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Assignment
 //---------------------------------------------------------------------------
-class Assignment : public Acceptable<Assignment>
+template<typename A>
+class Assignment : public Acceptable<Assignment<A>, A>
 {
 public:
-    Assignment(ExpressionPtr assignee, Token op, ExpressionPtr value)
-    :  m_Assignee(std::move(assignee)), m_Operator(op), m_Value(std::move(value))
+    template<typename... AnnotationArgs>
+    Assignment(ExpressionPtr<A> assignee, Token op, ExpressionPtr<A> value, 
+               AnnotationArgs&&... annotationArgs)
+    :  Acceptable<Assignment<A>, A>(std::forward<AnnotationArgs>(annotationArgs)...),
+        m_Assignee(std::move(assignee)), m_Operator(op), m_Value(std::move(value))
     {}
 
-    const Base *getAssignee() const { return m_Assignee.get(); }
-    const Token &getOperator() const { return m_Operator; }
-    const Base *getValue() const { return m_Value.get(); }
+    const auto *getAssignee() const { return m_Assignee.get(); }
+    const auto &getOperator() const { return m_Operator; }
+    const auto *getValue() const { return m_Value.get(); }
 
 private:
-    ExpressionPtr m_Assignee;
+    ExpressionPtr<A> m_Assignee;
     Token m_Operator;
-    ExpressionPtr m_Value;
+    ExpressionPtr<A> m_Value;
 };
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Binary
 //---------------------------------------------------------------------------
-class Binary : public Acceptable<Binary>
+template<typename A>
+class Binary : public Acceptable<Binary<A>, A>
 {
 public:
-    Binary(ExpressionPtr left, Token op, ExpressionPtr right)
-    :  m_Left(std::move(left)), m_Operator(op), m_Right(std::move(right))
+    template<typename... AnnotationArgs>
+    Binary(ExpressionPtr<A> left, Token op, ExpressionPtr<A> right,
+           AnnotationArgs&&... annotationArgs)
+    :  Acceptable<Binary<A>, A>(std::forward<AnnotationArgs>(annotationArgs)...),
+        m_Left(std::move(left)), m_Operator(op), m_Right(std::move(right))
     {}
 
-    const Base *getLeft() const { return m_Left.get(); }
-    const Token &getOperator() const { return m_Operator; }
-    const Base *getRight() const { return m_Right.get(); }
+    const auto *getLeft() const { return m_Left.get(); }
+    const auto &getOperator() const { return m_Operator; }
+    const auto *getRight() const { return m_Right.get(); }
 
 private:
-    ExpressionPtr m_Left;
+    ExpressionPtr<A> m_Left;
     Token m_Operator;
-    ExpressionPtr m_Right;
+    ExpressionPtr<A> m_Right;
 };
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Call
 //---------------------------------------------------------------------------
-class Call : public Acceptable<Call>
+template<typename A>
+class Call : public Acceptable<Call<A>, A>
 {
 public:
-    Call(ExpressionPtr callee, Token closingParen, ExpressionList arguments)
-    :  m_Callee(std::move(callee)), m_ClosingParen(closingParen), m_Arguments(std::move(arguments))
+    template<typename... AnnotationArgs>
+    Call(ExpressionPtr<A> callee, Token closingParen, ExpressionList<A> arguments,
+         AnnotationArgs&&... annotationArgs)
+    :   Acceptable<Call<A>, A>(std::forward<AnnotationArgs>(annotationArgs)...),
+        m_Callee(std::move(callee)), m_ClosingParen(closingParen), m_Arguments(std::move(arguments))
     {}
 
-    const Base *getCallee() const { return m_Callee.get(); }
-    const Token &getClosingParen() const { return m_ClosingParen; }
-    const ExpressionList &getArguments() const { return m_Arguments; }
+    const auto *getCallee() const { return m_Callee.get(); }
+    const auto &getClosingParen() const { return m_ClosingParen; }
+    const auto &getArguments() const { return m_Arguments; }
 
 private:
-    ExpressionPtr m_Callee;
+    ExpressionPtr<A> m_Callee;
     Token m_ClosingParen;
-    ExpressionList m_Arguments;
+    ExpressionList<A> m_Arguments;
 };
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Cast
 //---------------------------------------------------------------------------
-class Cast : public Acceptable<Cast>
+template<typename A>
+class Cast : public Acceptable<Cast<A>, A>
 {
 public:
-    Cast(const Type::ResolvedType &type, ExpressionPtr expression, Token closingParen)
-    :  m_Type(type), m_Expression(std::move(expression)), m_ClosingParen(closingParen)
+    template<typename... AnnotationArgs>
+    Cast(const Type::ResolvedType &type, ExpressionPtr<A> expression,
+         Token closingParen, AnnotationArgs&&... annotationArgs)
+    :   Acceptable<Cast<A>, A>(std::forward<AnnotationArgs>(annotationArgs)...),
+        m_Type(type), m_Expression(std::move(expression)), m_ClosingParen(closingParen)
     {}
 
-    const Type::ResolvedType &getType() const{ return m_Type; }
-    const Base *getExpression() const { return m_Expression.get(); }
-    const Token &getClosingParen() const { return m_ClosingParen; }
+    const auto &getType() const{ return m_Type; }
+    const auto *getExpression() const { return m_Expression.get(); }
+    const auto &getClosingParen() const { return m_ClosingParen; }
     
 private:
     Type::ResolvedType m_Type;
-    ExpressionPtr m_Expression;
+    ExpressionPtr<A> m_Expression;
     Token m_ClosingParen;
 };
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Conditional
 //---------------------------------------------------------------------------
-class Conditional : public Acceptable<Conditional>
+template<typename A>
+class Conditional : public Acceptable<Conditional<A>, A>
 {
 public:
-    Conditional(ExpressionPtr condition, Token question, ExpressionPtr trueExpression, ExpressionPtr falseExpression)
-    :  m_Condition(std::move(condition)), m_Question(question), m_True(std::move(trueExpression)), m_False(std::move(falseExpression))
+    template<typename... AnnotationArgs>
+    Conditional(ExpressionPtr<A> condition, Token question, ExpressionPtr<A> trueExpression, 
+                ExpressionPtr<A> falseExpression, AnnotationArgs&&... annotationArgs)
+    :   Acceptable<Conditional<A>, A>(std::forward<AnnotationArgs>(annotationArgs)...),
+        m_Condition(std::move(condition)), m_Question(question), m_True(std::move(trueExpression)), m_False(std::move(falseExpression))
     {}
 
-    const Base *getCondition() const { return m_Condition.get(); }
-    const Token &getQuestion() const { return m_Question; }
-    const Base *getTrue() const { return m_True.get(); }
-    const Base *getFalse() const { return m_False.get(); }
+    const auto *getCondition() const { return m_Condition.get(); }
+    const auto &getQuestion() const { return m_Question; }
+    const auto *getTrue() const { return m_True.get(); }
+    const auto *getFalse() const { return m_False.get(); }
 
 private:
-    ExpressionPtr m_Condition;
+    ExpressionPtr<A> m_Condition;
     Token m_Question;
-    ExpressionPtr m_True;
-    ExpressionPtr m_False;
+    ExpressionPtr<A> m_True;
+    ExpressionPtr<A> m_False;
 };
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Grouping
 //---------------------------------------------------------------------------
-class Grouping : public Acceptable<Grouping>
+template<typename A>
+class Grouping : public Acceptable<Grouping<A>, A>
 {
 public:
-    Grouping(ExpressionPtr expression)
-    :  m_Expression(std::move(expression))
+    template<typename... AnnotationArgs>
+    Grouping(ExpressionPtr<A> expression, AnnotationArgs&&... annotationArgs)
+    :   Acceptable<Grouping<A>, A>(std::forward<AnnotationArgs>(annotationArgs)...),
+        m_Expression(std::move(expression))
     {}
 
     //------------------------------------------------------------------------
@@ -221,20 +290,23 @@ public:
     //------------------------------------------------------------------------
     virtual bool isLValue() const{ return m_Expression->isLValue(); }
 
-    const Base *getExpression() const { return m_Expression.get(); }
+    const auto *getExpression() const { return m_Expression.get(); }
 
 private:
-    ExpressionPtr m_Expression;
+    ExpressionPtr<A> m_Expression;
 };
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Literal
 //---------------------------------------------------------------------------
-class Literal : public Acceptable<Literal>
+template<typename A>
+class Literal : public Acceptable<Literal<A>, A>
 {
 public:
-    Literal(Token value)
-    :  m_Value(value)
+    template<typename... AnnotationArgs>
+    Literal(Token value, AnnotationArgs&&... annotationArgs)
+    :   Acceptable<Literal<A>, A>(std::forward<AnnotationArgs>(annotationArgs)...),
+        m_Value(value)
     {}
 
     //------------------------------------------------------------------------
@@ -242,76 +314,89 @@ public:
     //------------------------------------------------------------------------
     virtual bool isLValue() const{ return (m_Value.type == Token::Type::STRING); }
 
-    Token getValue() const { return m_Value; }
+    const auto &getValue() const { return m_Value; }
 
 private:
-    const Token m_Value;
+    Token m_Value;
 };
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Logical
 //---------------------------------------------------------------------------
-class Logical : public Acceptable<Logical>
+template<typename A>
+class Logical : public Acceptable<Logical<A>, A>
 {
 public:
-    Logical(ExpressionPtr left, Token op, ExpressionPtr right)
-    :  m_Left(std::move(left)), m_Operator(op), m_Right(std::move(right))
+    template<typename... AnnotationArgs>
+    Logical(ExpressionPtr<A> left, Token op, ExpressionPtr<A> right,
+            AnnotationArgs&&... annotationArgs)
+    :   Acceptable<Logical<A>, A>(std::forward<AnnotationArgs>(annotationArgs)...),
+        m_Left(std::move(left)), m_Operator(op), m_Right(std::move(right))
     {}
 
-    const Base *getLeft() const { return m_Left.get(); }
-    const Token &getOperator() const { return m_Operator; }
-    const Base *getRight() const { return m_Right.get(); }
+    const auto *getLeft() const { return m_Left.get(); }
+    const auto &getOperator() const { return m_Operator; }
+    const auto *getRight() const { return m_Right.get(); }
 
 private:
-    ExpressionPtr m_Left;
+    ExpressionPtr<A> m_Left;
     Token m_Operator;
-    ExpressionPtr m_Right;
+    ExpressionPtr<A> m_Right;
 };
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::PostfixIncDec
 //---------------------------------------------------------------------------
-class PostfixIncDec : public Acceptable<PostfixIncDec>
+template<typename A>
+class PostfixIncDec : public Acceptable<PostfixIncDec<A>, A>
 {
 public:
-    PostfixIncDec(ExpressionPtr target, Token op)
-    :  m_Target(std::move(target)), m_Operator(op)
+    template<typename... AnnotationArgs>
+    PostfixIncDec(ExpressionPtr<A> target, Token op, AnnotationArgs&&... annotationArgs)
+    :   Acceptable<PostfixIncDec<A>, A>(std::forward<AnnotationArgs>(annotationArgs)...),
+        m_Target(std::move(target)), m_Operator(op)
     {}
 
-    const Base *getTarget() const { return m_Target.get(); }
-    const Token &getOperator() const { return m_Operator; }
+    const auto *getTarget() const { return m_Target.get(); }
+    const auto &getOperator() const { return m_Operator; }
 
 private:
-    ExpressionPtr m_Target;
+    ExpressionPtr<A> m_Target;
     Token m_Operator;
 };
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::PrefixIncDec
 //---------------------------------------------------------------------------
-class PrefixIncDec : public Acceptable<PrefixIncDec>
+template<typename A>
+class PrefixIncDec : public Acceptable<PrefixIncDec<A>, A>
 {
 public:
-    PrefixIncDec(ExpressionPtr target, Token op)
-    :  m_Target(std::move(target)), m_Operator(op)
+    template<typename... AnnotationArgs>
+    PrefixIncDec(ExpressionPtr<A> target, Token op, AnnotationArgs&&... annotationArgs)
+    :   Acceptable<PrefixIncDec<A>, A>(std::forward<AnnotationArgs>(annotationArgs)...),
+        m_Target(std::move(target)), m_Operator(op)
     {}
 
-    const Base *getTarget() const { return m_Target.get(); }
-    const Token &getOperator() const { return m_Operator; }
+    const auto *getTarget() const { return m_Target.get(); }
+    const auto &getOperator() const { return m_Operator; }
 
 private:
-    ExpressionPtr m_Target;
+    ExpressionPtr<A> m_Target;
     Token m_Operator;
 };
 
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Identifier
 //---------------------------------------------------------------------------
-class Identifier : public Acceptable<Identifier>
+template<typename A>
+class Identifier : public Acceptable<Identifier<A>, A>
 {
 public:
-    Identifier(Token name)
-    :  m_Name(name)
+    template<typename... AnnotationArgs>
+    Identifier(Token name, AnnotationArgs&&... annotationArgs)
+    :   Acceptable<Identifier<A>, A>(std::forward<AnnotationArgs>(annotationArgs)...),
+        m_Name(name)
     {}
 
     //------------------------------------------------------------------------
@@ -319,7 +404,7 @@ public:
     //------------------------------------------------------------------------
     virtual bool isLValue() const{ return true; }
 
-    const Token &getName() const { return m_Name; }
+    const auto &getName() const { return m_Name; }
 
 private:
     Token m_Name;
@@ -328,11 +413,14 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Unary
 //---------------------------------------------------------------------------
-class Unary : public Acceptable<Unary>
+template<typename A>
+class Unary : public Acceptable<Unary<A>, A>
 {
 public:
-    Unary(Token op, ExpressionPtr right)
-    :  m_Operator(op), m_Right(std::move(right))
+    template<typename... AnnotationArgs>
+    Unary(Token op, ExpressionPtr<A> right, AnnotationArgs&&... annotationArgs)
+    :   Acceptable<Unary<A>, A>(std::forward<AnnotationArgs>(annotationArgs)...),
+        m_Operator(op), m_Right(std::move(right))
     {}
 
     //------------------------------------------------------------------------
@@ -340,11 +428,11 @@ public:
     //------------------------------------------------------------------------
     virtual bool isLValue() const{ return (m_Operator.type == Token::Type::STAR); }
 
-    const Token &getOperator() const { return m_Operator; }
-    const Base *getRight() const { return m_Right.get(); }
+    const auto &getOperator() const { return m_Operator; }
+    const auto *getRight() const { return m_Right.get(); }
 
 private:
     Token m_Operator;
-    ExpressionPtr m_Right;
+    ExpressionPtr<A> m_Right;
 };
 }   // namespace GeNN::Transpiler::Expression

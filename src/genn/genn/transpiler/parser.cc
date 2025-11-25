@@ -235,17 +235,17 @@ void synchronise(ParserState &parserState)
 }
 
 // Forward declarations
-Expression::ExpressionPtr parseCast(ParserState &parserState);
-Expression::ExpressionPtr parseAssignment(ParserState &parserState);
-Expression::ExpressionPtr parseExpression(ParserState &parserState);
-Statement::StatementPtr parseBlockItem(ParserState &parserState);
-Statement::StatementPtr parseDeclaration(ParserState &parserState);
-Statement::StatementPtr parseStatement(ParserState &parserState);
+Expression::ExpressionPtr<> parseCast(ParserState &parserState);
+Expression::ExpressionPtr<> parseAssignment(ParserState &parserState);
+Expression::ExpressionPtr<> parseExpression(ParserState &parserState);
+Statement::StatementPtr<> parseBlockItem(ParserState &parserState);
+Statement::StatementPtr<> parseDeclaration(ParserState &parserState);
+Statement::StatementPtr<> parseStatement(ParserState &parserState);
 
 // Helper to parse binary expressions
 // **THINK I think this COULD be variadic but not clear if that's a good idea or not
 template<typename N>
-Expression::ExpressionPtr parseBinary(ParserState &parserState, N nonTerminal, std::initializer_list<Token::Type> types)
+Expression::ExpressionPtr<> parseBinary(ParserState &parserState, N nonTerminal, std::initializer_list<Token::Type> types)
 {
     auto expression = nonTerminal(parserState);
     while(parserState.match(types)) {
@@ -309,7 +309,7 @@ GeNN::Type::ResolvedType parseDeclarationSpecifiers(ParserState &parserState)
     return type;
 }
 
-Expression::ExpressionPtr parsePrimary(ParserState &parserState)
+Expression::ExpressionPtr<> parsePrimary(ParserState &parserState)
 {
     // primary-expression ::=
     //      identifier
@@ -319,23 +319,23 @@ Expression::ExpressionPtr parsePrimary(ParserState &parserState)
                            Token::Type::DOUBLE_NUMBER, Token::Type::FLOAT_NUMBER, 
                            Token::Type::SCALAR_NUMBER, Token::Type::INT32_NUMBER, 
                            Token::Type::UINT32_NUMBER})) {
-        return std::make_unique<Expression::Literal>(parserState.previous());
+        return std::make_unique<Expression::Literal<>>(parserState.previous());
     }
     else if(parserState.match(Token::Type::IDENTIFIER)) {
-        return std::make_unique<Expression::Identifier>(parserState.previous());
+        return std::make_unique<Expression::Identifier<>>(parserState.previous());
     }
     else if(parserState.match(Token::Type::LEFT_PAREN)) {
         auto expression = parseExpression(parserState);
 
         parserState.consume(Token::Type::RIGHT_PAREN, "Expect ')' after expression");
-        return std::make_unique<Expression::Grouping>(std::move(expression));
+        return std::make_unique<Expression::Grouping<>>(std::move(expression));
     }
 
     parserState.error("Expect expression");
     throw ParseError();
 }
 
-Expression::ExpressionPtr parsePostfix(ParserState &parserState)
+Expression::ExpressionPtr<> parsePostfix(ParserState &parserState)
 {
     // postfix-expression ::=
     //      primary-expression
@@ -354,7 +354,7 @@ Expression::ExpressionPtr parsePostfix(ParserState &parserState)
         // If this is a function call
         if(parserState.match(Token::Type::LEFT_PAREN)) {
             // Build list of arguments
-            Expression::ExpressionList arguments;
+            Expression::ExpressionList<> arguments;
             if(!parserState.check(Token::Type::RIGHT_PAREN)) {
                 do {
                     arguments.emplace_back(parseAssignment(parserState));
@@ -364,9 +364,9 @@ Expression::ExpressionPtr parsePostfix(ParserState &parserState)
             Token closingParen = parserState.consume(Token::Type::RIGHT_PAREN,
                                                      "Expect ')' after arguments.");
 
-            expression = std::make_unique<Expression::Call>(std::move(expression),
-                                                            closingParen,
-                                                            std::move(arguments));
+            expression = std::make_unique<Expression::Call<>>(std::move(expression),
+                                                              closingParen,
+                                                              std::move(arguments));
         }
         // Otherwise, if this is an array index
         if(parserState.match(Token::Type::LEFT_SQUARE_BRACKET)) {
@@ -374,9 +374,9 @@ Expression::ExpressionPtr parsePostfix(ParserState &parserState)
             Token closingSquareBracket = parserState.consume(Token::Type::RIGHT_SQUARE_BRACKET,
                                                              "Expect ']' after index.");
 
-            expression = std::make_unique<Expression::ArraySubscript>(std::move(expression),
-                                                                      closingSquareBracket,
-                                                                      std::move(index));
+            expression = std::make_unique<Expression::ArraySubscript<>>(std::move(expression),
+                                                                        closingSquareBracket,
+                                                                        std::move(index));
         }
         // Otherwise if this is an increment or decrement
         else if(parserState.match({Token::Type::PLUS_PLUS, Token::Type::MINUS_MINUS})) {
@@ -384,7 +384,7 @@ Expression::ExpressionPtr parsePostfix(ParserState &parserState)
 
             // If expression is a valid l-value, 
             if(expression->isLValue()) {
-                expression = std::make_unique<Expression::PostfixIncDec>(std::move(expression), op);
+                expression = std::make_unique<Expression::PostfixIncDec<>>(std::move(expression), op);
             }
             else {
                 parserState.error(op, "Expression is not assignable");
@@ -399,7 +399,7 @@ Expression::ExpressionPtr parsePostfix(ParserState &parserState)
 }
 
 
-Expression::ExpressionPtr parseUnary(ParserState &parserState)
+Expression::ExpressionPtr<> parseUnary(ParserState &parserState)
 {
     // unary-expression ::=
     //      postfix-expression
@@ -416,7 +416,7 @@ Expression::ExpressionPtr parseUnary(ParserState &parserState)
                           Token::Type::TILDA, Token::Type::NOT}))
     {
         Token op = parserState.previous();
-        return std::make_unique<Expression::Unary>(op, parseCast(parserState));
+        return std::make_unique<Expression::Unary<>>(op, parseCast(parserState));
     }
     else if(parserState.match({Token::Type::PLUS_PLUS, Token::Type::MINUS_MINUS})) {
         Token op = parserState.previous();
@@ -424,7 +424,7 @@ Expression::ExpressionPtr parseUnary(ParserState &parserState)
 
         // If expression is a valid l-value, 
         if(expression->isLValue()) {
-            return std::make_unique<Expression::PrefixIncDec>(std::move(expression), op);
+            return std::make_unique<Expression::PrefixIncDec<>>(std::move(expression), op);
         }
         else {
             parserState.error(op, "Expression is not assignable");
@@ -434,7 +434,7 @@ Expression::ExpressionPtr parseUnary(ParserState &parserState)
     return parsePostfix(parserState);
 }
 
-Expression::ExpressionPtr parseCast(ParserState &parserState)
+Expression::ExpressionPtr<> parseCast(ParserState &parserState)
 {
     // cast-expression ::=
     //      unary-expression
@@ -449,7 +449,7 @@ Expression::ExpressionPtr parseCast(ParserState &parserState)
 
             const auto closingParen = parserState.consume(Token::Type::RIGHT_PAREN, "Expect ')' after cast type.");
 
-            return std::make_unique<Expression::Cast>(type, parseCast(parserState), closingParen);
+            return std::make_unique<Expression::Cast<>>(type, parseCast(parserState), closingParen);
         }
         // Otherwise, rewind parser state so left parenthesis can be parsed again
         // **YUCK**
@@ -461,7 +461,7 @@ Expression::ExpressionPtr parseCast(ParserState &parserState)
     return parseUnary(parserState);
 }
 
-Expression::ExpressionPtr parseMultiplicative(ParserState &parserState)
+Expression::ExpressionPtr<> parseMultiplicative(ParserState &parserState)
 {
     // multiplicative-expression ::=
     //      cast-expression
@@ -472,7 +472,7 @@ Expression::ExpressionPtr parseMultiplicative(ParserState &parserState)
                        {Token::Type::STAR, Token::Type::SLASH, Token::Type::PERCENT});
 }
 
-Expression::ExpressionPtr parseAdditive(ParserState &parserState)
+Expression::ExpressionPtr<> parseAdditive(ParserState &parserState)
 {
     // additive-expression ::=
     //      multiplicative-expression
@@ -482,7 +482,7 @@ Expression::ExpressionPtr parseAdditive(ParserState &parserState)
                        {Token::Type::MINUS, Token::Type::PLUS});
 }
 
-Expression::ExpressionPtr parseShift(ParserState &parserState)
+Expression::ExpressionPtr<> parseShift(ParserState &parserState)
 {
     // shift-expression ::=
     //      additive-expression
@@ -492,7 +492,7 @@ Expression::ExpressionPtr parseShift(ParserState &parserState)
                        {Token::Type::SHIFT_LEFT, Token::Type::SHIFT_RIGHT});
 }
 
-Expression::ExpressionPtr parseRelational(ParserState &parserState)
+Expression::ExpressionPtr<> parseRelational(ParserState &parserState)
 {
     // relational-expression ::=
     //      shift-expression
@@ -505,7 +505,7 @@ Expression::ExpressionPtr parseRelational(ParserState &parserState)
                         Token::Type::LESS, Token::Type::LESS_EQUAL});
 }
 
-Expression::ExpressionPtr parseEquality(ParserState &parserState)
+Expression::ExpressionPtr<> parseEquality(ParserState &parserState)
 {
     // equality-expression ::=
     //      relational-expression
@@ -514,7 +514,7 @@ Expression::ExpressionPtr parseEquality(ParserState &parserState)
     return parseBinary(parserState, parseRelational, 
                        {Token::Type::NOT_EQUAL, Token::Type::EQUAL_EQUAL});
 }
-Expression::ExpressionPtr parseAnd(ParserState &parserState)
+Expression::ExpressionPtr<> parseAnd(ParserState &parserState)
 {
     // AND-expression ::=
     //      equality-expression
@@ -522,7 +522,7 @@ Expression::ExpressionPtr parseAnd(ParserState &parserState)
     return parseBinary(parserState, parseEquality, {Token::Type::AMPERSAND});
 }
 
-Expression::ExpressionPtr parseXor(ParserState &parserState)
+Expression::ExpressionPtr<> parseXor(ParserState &parserState)
 {
     // exclusive-OR-expression ::=
     //      AND-expression
@@ -530,7 +530,7 @@ Expression::ExpressionPtr parseXor(ParserState &parserState)
     return parseBinary(parserState, parseAnd, {Token::Type::CARET});
 }
 
-Expression::ExpressionPtr parseOr(ParserState &parserState)
+Expression::ExpressionPtr<> parseOr(ParserState &parserState)
 {
     // inclusive-OR-expression ::=
     //      exclusive-OR-expression
@@ -538,7 +538,7 @@ Expression::ExpressionPtr parseOr(ParserState &parserState)
     return parseBinary(parserState, parseXor, {Token::Type::PIPE});
 }
 
-Expression::ExpressionPtr parseLogicalAnd(ParserState &parserState)
+Expression::ExpressionPtr<> parseLogicalAnd(ParserState &parserState)
 {
     // logical-AND-expression ::=
     //      inclusive-OR-expression
@@ -549,12 +549,13 @@ Expression::ExpressionPtr parseLogicalAnd(ParserState &parserState)
     while(parserState.match(Token::Type::AMPERSAND_AMPERSAND)) {
         Token op = parserState.previous();
         auto right = parseOr(parserState);
-        expression = std::make_unique<Expression::Logical>(std::move(expression), op, std::move(right));
+        expression = std::make_unique<Expression::Logical<>>(std::move(expression), op, 
+                                                             std::move(right));
     }
     return expression;
 }
 
-Expression::ExpressionPtr parseLogicalOr(ParserState &parserState)
+Expression::ExpressionPtr<> parseLogicalOr(ParserState &parserState)
 {
     // logical-OR-expression ::=
     //      logical-AND-expression
@@ -565,12 +566,12 @@ Expression::ExpressionPtr parseLogicalOr(ParserState &parserState)
     while(parserState.match(Token::Type::PIPE_PIPE)) {
         Token op = parserState.previous();
         auto right = parseLogicalAnd(parserState);
-        expression = std::make_unique<Expression::Logical>(std::move(expression), op, std::move(right));
+        expression = std::make_unique<Expression::Logical<>>(std::move(expression), op, std::move(right));
     }
     return expression;
 }
 
-Expression::ExpressionPtr parseConditional(ParserState &parserState)
+Expression::ExpressionPtr<> parseConditional(ParserState &parserState)
 {
     // conditional-expression ::=
     //      logical-OR-expression
@@ -581,14 +582,14 @@ Expression::ExpressionPtr parseConditional(ParserState &parserState)
         auto trueExpression = parseExpression(parserState);
         parserState.consume(Token::Type::COLON, "Expect ':' in conditional expression.");
         auto falseExpression = parseConditional(parserState);
-        return std::make_unique<Expression::Conditional>(std::move(cond), question, std::move(trueExpression), 
-                                                         std::move(falseExpression));
+        return std::make_unique<Expression::Conditional<>>(std::move(cond), question, std::move(trueExpression), 
+                                                           std::move(falseExpression));
     }
 
     return cond;
 }
 
-Expression::ExpressionPtr parseAssignment(ParserState &parserState)
+Expression::ExpressionPtr<> parseAssignment(ParserState &parserState)
 {
     // assignment-expression ::=
     //      conditional-expression
@@ -604,7 +605,7 @@ Expression::ExpressionPtr parseAssignment(ParserState &parserState)
 
         // If expression is a valid l-value, 
         if(expression->isLValue()) {
-            return std::make_unique<Expression::Assignment>(std::move(expression), op, std::move(value));
+            return std::make_unique<Expression::Assignment<>>(std::move(expression), op, std::move(value));
         }
         else {
             parserState.error(op, "Expression is not assignable");
@@ -614,7 +615,7 @@ Expression::ExpressionPtr parseAssignment(ParserState &parserState)
     return expression;
 }
 
-Expression::ExpressionPtr parseExpression(ParserState &parserState)
+Expression::ExpressionPtr<> parseExpression(ParserState &parserState)
 {
     // expression ::=
     //      assignment-expression
@@ -623,25 +624,25 @@ Expression::ExpressionPtr parseExpression(ParserState &parserState)
                        {Token::Type::COMMA});
 }
 
-Statement::StatementPtr parseLabelledStatement(ParserState &parserState)
+Statement::StatementPtr<> parseLabelledStatement(ParserState &parserState)
 {
     // labeled-statement ::=
     //      "case" constant-expression ":" statement
     //      "default" ":" statement
     const auto keyword = parserState.previous();
 
-    Expression::ExpressionPtr value;
+    Expression::ExpressionPtr<> value;
     if(keyword.type == Token::Type::CASE) {
         value = parseConditional(parserState);
     }
 
     parserState.consume(Token::Type::COLON, "Expect ':' after labelled statement."); 
  
-    return std::make_unique<Statement::Labelled>(keyword, std::move(value), 
-                                                 parseStatement(parserState));
+    return std::make_unique<Statement::Labelled<>>(keyword, std::move(value), 
+                                                   parseStatement(parserState));
 }
 
-Statement::StatementPtr parseCompoundStatement(ParserState &parserState)
+Statement::StatementPtr<> parseCompoundStatement(ParserState &parserState)
 {
     // compound-statement ::=
     //      "{" block-item-list? "}"
@@ -651,31 +652,31 @@ Statement::StatementPtr parseCompoundStatement(ParserState &parserState)
     // block-item ::=
     //      declaration
     //      statement
-    Statement::StatementList statements;
+    Statement::StatementList<> statements;
     while(!parserState.check(Token::Type::RIGHT_BRACE) && !parserState.isAtEnd()) {
         statements.emplace_back(parseBlockItem(parserState));
     }
     parserState.consume(Token::Type::RIGHT_BRACE, "Expect '}' after compound statement.");
 
-    return std::make_unique<Statement::Compound>(std::move(statements));
+    return std::make_unique<Statement::Compound<>>(std::move(statements));
 }
 
-Statement::StatementPtr parseExpressionStatement(ParserState &parserState)
+Statement::StatementPtr<> parseExpressionStatement(ParserState &parserState)
 {
     //  expression-statement ::=
     //      expression? ";"
     if(parserState.match(Token::Type::SEMICOLON)) {
-        return std::make_unique<Statement::Expression>(nullptr);
+        return std::make_unique<Statement::Expression<>>(nullptr);
     }
     else {
         auto expression = parseExpression(parserState);
     
         parserState.consume(Token::Type::SEMICOLON, "Expect ';' after expression");
-        return std::make_unique<Statement::Expression>(std::move(expression));
+        return std::make_unique<Statement::Expression<>>(std::move(expression));
     }
 }
 
-Statement::StatementPtr parseSelectionStatement(ParserState &parserState)
+Statement::StatementPtr<> parseSelectionStatement(ParserState &parserState)
 {
     // selection-statement ::=
     //      "if" "(" expression ")" statement
@@ -689,25 +690,25 @@ Statement::StatementPtr parseSelectionStatement(ParserState &parserState)
     // If this is an if statement
     if(keyword.type == Token::Type::IF) {
         auto thenBranch = parseStatement(parserState);
-        Statement::StatementPtr elseBranch;
+        Statement::StatementPtr<> elseBranch;
         if(parserState.match(Token::Type::ELSE)) {
             elseBranch = parseStatement(parserState);
         }
 
-        return std::make_unique<Statement::If>(keyword, std::move(condition),
-                                               std::move(thenBranch),
-                                               std::move(elseBranch));
+        return std::make_unique<Statement::If<>>(keyword, std::move(condition),
+                                                 std::move(thenBranch),
+                                                 std::move(elseBranch));
     }
     // Otherwise (switch statement)
     else {
         // **NOTE** this is a slight simplification of the C standard where any type of statement can be used as the body of the switch
         parserState.consume(Token::Type::LEFT_BRACE, "Expect '{' after switch statement.");
         auto body = parseCompoundStatement(parserState);
-        return std::make_unique<Statement::Switch>(keyword, std::move(condition), std::move(body));
+        return std::make_unique<Statement::Switch<>>(keyword, std::move(condition), std::move(body));
     }
 }
 
-Statement::StatementPtr parseIterationStatement(ParserState &parserState)
+Statement::StatementPtr<> parseIterationStatement(ParserState &parserState)
 {
     // iteration-statement ::=
     //      "while" "(" expression ")" statement
@@ -725,8 +726,8 @@ Statement::StatementPtr parseIterationStatement(ParserState &parserState)
         parserState.consume(Token::Type::RIGHT_PAREN, "Expect ')' after 'while'");
         auto body = parseStatement(parserState);
 
-        return std::make_unique<Statement::While>(whileToken, std::move(condition), 
-                                                  std::move(body));
+        return std::make_unique<Statement::While<>>(whileToken, std::move(condition), 
+                                                    std::move(body));
     }
     // Otherwise, if this is a do statement 
     else if(parserState.previous().type == Token::Type::DO) {
@@ -737,15 +738,15 @@ Statement::StatementPtr parseIterationStatement(ParserState &parserState)
         auto condition = parseExpression(parserState);
         parserState.consume(Token::Type::RIGHT_PAREN, "Expect ')' after 'while'");
         parserState.consume(Token::Type::SEMICOLON, "Expect ';' after while");
-        return std::make_unique<Statement::Do>(whileToken, std::move(condition), 
-                                               std::move(body));
+        return std::make_unique<Statement::Do<>>(whileToken, std::move(condition), 
+                                                 std::move(body));
     }
     // Otherwise, if this is a for_each_synapse statement
     else if(parserState.previous().type == Token::Type::FOR_EACH_SYNAPSE) {
         const auto forEachSynapse = parserState.previous();
         auto body = parseStatement(parserState);
-        return std::make_unique<Statement::ForEachSynapse>(forEachSynapse,
-                                                           std::move(body));
+        return std::make_unique<Statement::ForEachSynapse<>>(forEachSynapse,
+                                                             std::move(body));
     }
     // Otherwise, it's a for statement
     else {
@@ -753,7 +754,7 @@ Statement::StatementPtr parseIterationStatement(ParserState &parserState)
         parserState.consume(Token::Type::LEFT_PAREN, "Expect '(' after 'for'");
 
         // If statement starts with a semicolon - no initialiser
-        Statement::StatementPtr initialiser;
+        Statement::StatementPtr<> initialiser;
         if(parserState.match(Token::Type::SEMICOLON)) {
             initialiser = nullptr;
         }
@@ -767,14 +768,14 @@ Statement::StatementPtr parseIterationStatement(ParserState &parserState)
         }
 
         // Parse condition
-        Expression::ExpressionPtr condition = nullptr;
+        Expression::ExpressionPtr<> condition = nullptr;
         if(!parserState.check(Token::Type::SEMICOLON)) {
             condition = parseExpression(parserState);
         }
         parserState.consume(Token::Type::SEMICOLON, "Expect ';' after loop condition");
 
         // Parse increment
-        Expression::ExpressionPtr increment = nullptr;
+        Expression::ExpressionPtr<> increment = nullptr;
         if(!parserState.check(Token::Type::RIGHT_PAREN)) {
             increment = parseExpression(parserState);
         }
@@ -784,14 +785,14 @@ Statement::StatementPtr parseIterationStatement(ParserState &parserState)
 
         // Return for statement
         // **NOTE** we could "de-sugar" into a while statement but this makes pretty-printing easier
-        return std::make_unique<Statement::For>(forToken, std::move(initialiser), 
-                                                std::move(condition),
-                                                std::move(increment),
-                                                std::move(body));
+        return std::make_unique<Statement::For<>>(forToken, std::move(initialiser), 
+                                                  std::move(condition),
+                                                  std::move(increment),
+                                                  std::move(body));
     }
 }
 
-Statement::StatementPtr parseJumpStatement(ParserState &parserState)
+Statement::StatementPtr<> parseJumpStatement(ParserState &parserState)
 {
     // jump-statement ::=
     //      "continue" ";"
@@ -800,11 +801,11 @@ Statement::StatementPtr parseJumpStatement(ParserState &parserState)
     const Token token = parserState.previous();
     if(token.type == Token::Type::CONTINUE) {
         parserState.consume(Token::Type::SEMICOLON, "Expect ';' after continue");
-        return std::make_unique<Statement::Continue>(token);
+        return std::make_unique<Statement::Continue<>>(token);
     }
     else if(token.type == Token::Type::BREAK) {
         parserState.consume(Token::Type::SEMICOLON, "Expect ';' after break");
-        return std::make_unique<Statement::Break>(token);
+        return std::make_unique<Statement::Break<>>(token);
     }
     // Otherwise (return statement)
     else {
@@ -813,7 +814,7 @@ Statement::StatementPtr parseJumpStatement(ParserState &parserState)
     }
 }
 
-Statement::StatementPtr parseStatement(ParserState &parserState)
+Statement::StatementPtr<> parseStatement(ParserState &parserState)
 {
     // statement ::=
     //      labeled-statement
@@ -843,7 +844,7 @@ Statement::StatementPtr parseStatement(ParserState &parserState)
     }
 }
 
-Statement::StatementPtr parseDeclaration(ParserState &parserState)
+Statement::StatementPtr<> parseDeclaration(ParserState &parserState)
 {
     // declaration ::=
     //      declaration-specifiers init-declarator-list? ";"
@@ -873,7 +874,7 @@ Statement::StatementPtr parseDeclaration(ParserState &parserState)
     const auto type = parseDeclarationSpecifiers(parserState);
 
     // Read init declarator list
-    std::vector<std::tuple<Token, Expression::ExpressionPtr>> initDeclaratorList;
+    std::vector<std::tuple<Token, Expression::ExpressionPtr<>>> initDeclaratorList;
     do {
         // init-declarator-list ::=
         //      init-declarator
@@ -886,7 +887,7 @@ Statement::StatementPtr parseDeclaration(ParserState &parserState)
         // declarator ::=
         //      identifier
         Token identifier = parserState.consume(Token::Type::IDENTIFIER, "Expect variable name");
-        Expression::ExpressionPtr initialiser;
+        Expression::ExpressionPtr<> initialiser;
         if(parserState.match(Token::Type::EQUAL)) {
             initialiser = parseAssignment(parserState);
         }
@@ -894,10 +895,10 @@ Statement::StatementPtr parseDeclaration(ParserState &parserState)
     } while(!parserState.isAtEnd() && parserState.match(Token::Type::COMMA));
 
     parserState.consume(Token::Type::SEMICOLON, "Expect ';' after variable declaration");
-    return std::make_unique<Statement::VarDeclaration>(type, std::move(initDeclaratorList));
+    return std::make_unique<Statement::VarDeclaration<>>(type, std::move(initDeclaratorList));
 }
 
-std::unique_ptr<const Statement::Base> parseBlockItem(ParserState &parserState)
+std::unique_ptr<const Statement::Base<>> parseBlockItem(ParserState &parserState)
 {
     // block-item ::=
     //      declaration
@@ -923,7 +924,7 @@ std::unique_ptr<const Statement::Base> parseBlockItem(ParserState &parserState)
 //---------------------------------------------------------------------------
 namespace GeNN::Transpiler::Parser
 {
-Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
+Expression::ExpressionPtr<> parseExpression(const std::vector<Token> &tokens, const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
 {
     // Parse expression
     ParserState parserState(tokens, context, errorHandler);
@@ -943,10 +944,10 @@ Expression::ExpressionPtr parseExpression(const std::vector<Token> &tokens, cons
     }
 }
 //---------------------------------------------------------------------------
-Statement::StatementList parseBlockItemList(const std::vector<Token> &tokens, const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
+Statement::StatementList<> parseBlockItemList(const std::vector<Token> &tokens, const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
 {
     ParserState parserState(tokens, context, errorHandler);
-    std::vector<std::unique_ptr<const Statement::Base>> statements;
+    std::vector<Statement::StatementPtr<>> statements;
 
     while(!parserState.isAtEnd()) {
         statements.emplace_back(parseBlockItem(parserState));
