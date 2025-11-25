@@ -73,13 +73,12 @@ private:
 //---------------------------------------------------------------------------
 // Visitor
 //---------------------------------------------------------------------------
-class Visitor : public Expression::Visitor, public Statement::Visitor
+class Visitor : public Expression::Visitor<TypeChecker::TypeAnnotation>, public Statement::Visitor<TypeChecker::TypeAnnotation>
 {
 public:
-    Visitor(const Statement::StatementList &statements, EnvironmentInternal &environment,
-            const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes,
-            StatementHandler forEachSynapseHandler)
-    :   m_Environment(environment), m_Context(context), m_ResolvedTypes(resolvedTypes), m_ForEachSynapseHandler(forEachSynapseHandler)
+    Visitor(const Statement::StatementList<TypeChecker::TypeAnnotation> &statements, 
+            EnvironmentInternal &environment, const Type::TypeContext &context, StatementHandler forEachSynapseHandler)
+    :   m_Environment(environment), m_Context(context), m_ForEachSynapseHandler(forEachSynapseHandler)
     {
          for(auto &s : statements) {
             s.get()->accept(*this);
@@ -87,9 +86,9 @@ public:
         }
     }
 
-    Visitor(const Expression::ExpressionPtr &expression, EnvironmentInternal &environment,
-            const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes)
-    :   m_Environment(environment), m_Context(context), m_ResolvedTypes(resolvedTypes) , m_ForEachSynapseHandler(nullptr)
+    Visitor(const Expression::ExpressionPtr<TypeChecker::TypeAnnotation> &expression, 
+            EnvironmentInternal &environment, const Type::TypeContext &context)
+    :   m_Environment(environment), m_Context(context), m_ForEachSynapseHandler(nullptr)
     {
         expression.get()->accept(*this);
     }
@@ -98,7 +97,7 @@ private:
     //---------------------------------------------------------------------------
     // Expression::Visitor virtuals
     //---------------------------------------------------------------------------
-    virtual void visit(const Expression::ArraySubscript &arraySubscript) final
+    virtual void visit(const Expression::ArraySubscript<TypeChecker::TypeAnnotation> &arraySubscript) final
     {
         // Cache reference to current reference
         std::reference_wrapper<EnvironmentBase> oldEnvironment = m_Environment; 
@@ -128,21 +127,21 @@ private:
         m_CallArguments.pop();
     }
 
-    virtual void visit(const Expression::Assignment &assignement) final
+    virtual void visit(const Expression::Assignment<TypeChecker::TypeAnnotation> &assignement) final
     {
         assignement.getAssignee()->accept(*this);
         m_Environment.get().getStream() << " " << assignement.getOperator().lexeme << " ";
         assignement.getValue()->accept(*this);
     }
 
-    virtual void visit(const Expression::Binary &binary) final
+    virtual void visit(const Expression::Binary<TypeChecker::TypeAnnotation> &binary) final
     {
         binary.getLeft()->accept(*this);
         m_Environment.get().getStream() << " " << binary.getOperator().lexeme << " ";
         binary.getRight()->accept(*this);
     }
 
-    virtual void visit(const Expression::Call &call) final
+    virtual void visit(const Expression::Call<TypeChecker::TypeAnnotation> &call) final
     {
         // Cache reference to current reference
         std::reference_wrapper<EnvironmentBase> oldEnvironment = m_Environment; 
@@ -178,13 +177,13 @@ private:
 
     }
 
-    virtual void visit(const Expression::Cast &cast) final
+    virtual void visit(const Expression::Cast<TypeChecker::TypeAnnotation> &cast) final
     {
         m_Environment.get().getStream() << "(" << cast.getType().getName() << ")";
         cast.getExpression()->accept(*this);
     }
 
-    virtual void visit(const Expression::Conditional &conditional) final
+    virtual void visit(const Expression::Conditional<TypeChecker::TypeAnnotation> &conditional) final
     {
         conditional.getCondition()->accept(*this);
         m_Environment.get().getStream() << " ? ";
@@ -193,14 +192,14 @@ private:
         conditional.getFalse()->accept(*this);
     }
 
-    virtual void visit(const Expression::Grouping &grouping) final
+    virtual void visit(const Expression::Grouping<TypeChecker::TypeAnnotation> &grouping) final
     {
         m_Environment.get().getStream() << "(";
         grouping.getExpression()->accept(*this);
         m_Environment.get().getStream() << ")";
     }
 
-    virtual void visit(const Expression::Literal &literal) final
+    virtual void visit(const Expression::Literal<TypeChecker::TypeAnnotation> &literal) final
     {
         // Write out lexeme
         m_Environment.get().getStream() << literal.getValue().lexeme;
@@ -219,29 +218,29 @@ private:
         }
     }
 
-    virtual void visit(const Expression::Logical &logical) final
+    virtual void visit(const Expression::Logical<TypeChecker::TypeAnnotation> &logical) final
     {
         logical.getLeft()->accept(*this);
         m_Environment.get().getStream() << " " << logical.getOperator().lexeme << " ";
         logical.getRight()->accept(*this);
     }
 
-    virtual void visit(const Expression::PostfixIncDec &postfixIncDec) final
+    virtual void visit(const Expression::PostfixIncDec<TypeChecker::TypeAnnotation> &postfixIncDec) final
     {
         postfixIncDec.getTarget()->accept(*this);
         m_Environment.get().getStream() <<  postfixIncDec.getOperator().lexeme;
     }
 
-    virtual void visit(const Expression::PrefixIncDec &prefixIncDec) final
+    virtual void visit(const Expression::PrefixIncDec<TypeChecker::TypeAnnotation> &prefixIncDec) final
     {
         m_Environment.get().getStream() << prefixIncDec.getOperator().lexeme;
         prefixIncDec.getTarget()->accept(*this);
     }
 
-    virtual void visit(const Expression::Identifier &variable) final
+    virtual void visit(const Expression::Identifier<TypeChecker::TypeAnnotation> &variable) final
     {
         // Get name of identifier
-        const auto &type = m_ResolvedTypes.at(&variable);
+        const auto &type = variable.getType();
         std::string name = m_Environment.get().getName(variable.getName().lexeme, type);
 
         // If identifier is function i.e. name is a function template
@@ -307,7 +306,7 @@ private:
         m_Environment.get().print(name);
     }
 
-    virtual void visit(const Expression::Unary &unary) final
+    virtual void visit(const Expression::Unary<TypeChecker::TypeAnnotation> &unary) final
     {
         m_Environment.get().getStream() << unary.getOperator().lexeme;
         unary.getRight()->accept(*this);
@@ -316,12 +315,12 @@ private:
     //---------------------------------------------------------------------------
     // Statement::Visitor virtuals
     //---------------------------------------------------------------------------
-    virtual void visit(const Statement::Break&) final
+    virtual void visit(const Statement::Break<TypeChecker::TypeAnnotation>&) final
     {
         m_Environment.get().getStream() << "break;";
     }
 
-    virtual void visit(const Statement::Compound &compound) final
+    virtual void visit(const Statement::Compound<TypeChecker::TypeAnnotation> &compound) final
     {
         // Cache reference to current reference
         std::reference_wrapper<EnvironmentBase> oldEnvironment = m_Environment; 
@@ -340,12 +339,12 @@ private:
         m_Environment = oldEnvironment;
     }
 
-    virtual void visit(const Statement::Continue&) final
+    virtual void visit(const Statement::Continue<TypeChecker::TypeAnnotation>&) final
     {
         m_Environment.get().getStream() << "continue;";
     }
 
-    virtual void visit(const Statement::Do &doStatement) final
+    virtual void visit(const Statement::Do<TypeChecker::TypeAnnotation> &doStatement) final
     {
         m_Environment.get().getStream() << "do";
         doStatement.getBody()->accept(*this);
@@ -354,7 +353,7 @@ private:
         m_Environment.get().getStream() << ");" << std::endl;
     }
 
-    virtual void visit(const Statement::Expression &expression) final
+    virtual void visit(const Statement::Expression<TypeChecker::TypeAnnotation> &expression) final
     {
         if(expression.getExpression()) {
             expression.getExpression()->accept(*this);
@@ -362,7 +361,7 @@ private:
         m_Environment.get().getStream() << ";";
     }
 
-    virtual void visit(const Statement::For &forStatement) final
+    virtual void visit(const Statement::For<TypeChecker::TypeAnnotation> &forStatement) final
     {
         // Cache reference to current reference
         std::reference_wrapper<EnvironmentBase> oldEnvironment = m_Environment; 
@@ -395,7 +394,7 @@ private:
         m_Environment = oldEnvironment;
     }
 
-    virtual void visit(const Statement::ForEachSynapse &forEachSynapseStatement) final
+    virtual void visit(const Statement::ForEachSynapse<TypeChecker::TypeAnnotation> &forEachSynapseStatement) final
     {
         // Cache reference to current reference
         std::reference_wrapper<EnvironmentBase> oldEnvironment = m_Environment; 
@@ -414,7 +413,7 @@ private:
         m_Environment = oldEnvironment;
     }
 
-    virtual void visit(const Statement::If &ifStatement) final
+    virtual void visit(const Statement::If<TypeChecker::TypeAnnotation> &ifStatement) final
     {
         m_Environment.get().getStream() << "if(";
         ifStatement.getCondition()->accept(*this);
@@ -426,7 +425,7 @@ private:
         }
     }
 
-    virtual void visit(const Statement::Labelled &labelled) final
+    virtual void visit(const Statement::Labelled<TypeChecker::TypeAnnotation> &labelled) final
     {
         m_Environment.get().getStream() << labelled.getKeyword().lexeme << " ";
         if(labelled.getValue()) {
@@ -436,7 +435,7 @@ private:
         labelled.getBody()->accept(*this);
     }
 
-    virtual void visit(const Statement::Switch &switchStatement) final
+    virtual void visit(const Statement::Switch<TypeChecker::TypeAnnotation> &switchStatement) final
     {
         m_Environment.get().getStream() << "switch(";
         switchStatement.getCondition()->accept(*this);
@@ -444,7 +443,7 @@ private:
         switchStatement.getBody()->accept(*this);
     }
 
-    virtual void visit(const Statement::VarDeclaration &varDeclaration) final
+    virtual void visit(const Statement::VarDeclaration<TypeChecker::TypeAnnotation> &varDeclaration) final
     {
         m_Environment.get().getStream() << varDeclaration.getType().getName() << " ";
 
@@ -463,7 +462,7 @@ private:
         m_Environment.get().getStream() << ";";
     }
 
-    virtual void visit(const Statement::While &whileStatement) final
+    virtual void visit(const Statement::While<TypeChecker::TypeAnnotation> &whileStatement) final
     {
         m_Environment.get().getStream() << "while(";
         whileStatement.getCondition()->accept(*this);
@@ -477,7 +476,6 @@ private:
     //---------------------------------------------------------------------------
     std::reference_wrapper<EnvironmentBase> m_Environment;
     const Type::TypeContext &m_Context;
-    const TypeChecker::ResolvedTypeMap &m_ResolvedTypes;
     StatementHandler m_ForEachSynapseHandler;
     std::stack<std::pair<bool, std::vector<std::string>>> m_CallArguments;
 };
@@ -521,15 +519,15 @@ std::string EnvironmentInternal::getName(const std::string &name, std::optional<
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::PrettyPrinter
 //---------------------------------------------------------------------------
-void GeNN::Transpiler::PrettyPrinter::print(const Statement::StatementList &statements, EnvironmentInternal &environment, 
-                                            const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes,
+void GeNN::Transpiler::PrettyPrinter::print(const Statement::StatementList<TypeChecker::TypeAnnotation> &statements, 
+                                            EnvironmentInternal &environment, const Type::TypeContext &context,
                                             StatementHandler forEachSynapseHandler)
 {
-    Visitor visitor(statements, environment, context, resolvedTypes, forEachSynapseHandler);
+    Visitor visitor(statements, environment, context, forEachSynapseHandler);
 }
 //---------------------------------------------------------------------------
-void GeNN::Transpiler::PrettyPrinter::print(const Expression::ExpressionPtr &expression, EnvironmentInternal &environment,
-                                            const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes)
+void GeNN::Transpiler::PrettyPrinter::print(const Expression::ExpressionPtr<TypeChecker::TypeAnnotation> &expression,
+                                            EnvironmentInternal &environment, const Type::TypeContext &context)
 {
-    Visitor visitor(expression, environment, context, resolvedTypes);
+    Visitor visitor(expression, environment, context);
 }

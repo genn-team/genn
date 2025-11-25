@@ -89,9 +89,8 @@ typedef std::function<void(EnvironmentBase&, std::function<void(EnvironmentBase&
 //---------------------------------------------------------------------------
 // Free functions
 //---------------------------------------------------------------------------
-void print(const Statement::StatementList &statements, EnvironmentInternal &environment, 
-           const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes,
-           StatementHandler forEachSynapseHandler = nullptr);
-void print(const Expression::ExpressionPtr &expression, EnvironmentInternal &environment, 
-           const Type::TypeContext &context, const TypeChecker::ResolvedTypeMap &resolvedTypes);
+void print(const Statement::StatementList<GeNN::Transpiler::TypeChecker::TypeAnnotation> &statements, 
+           EnvironmentInternal &environment, const Type::TypeContext &context, StatementHandler forEachSynapseHandler = nullptr);
+void print(const Expression::ExpressionPtr<GeNN::Transpiler::TypeChecker::TypeAnnotation> &expression,
+           EnvironmentInternal &environment, const Type::TypeContext &context);
 }
