@@ -131,40 +131,38 @@ bool checkImplicitConversion(const Type::ResolvedType &rightType, const Type::Re
 //---------------------------------------------------------------------------
 // Visitor
 //---------------------------------------------------------------------------
-class Visitor : public Expression::Visitor, public Statement::Visitor
+class Visitor : public Expression::Visitor<>, public Statement::Visitor<>
 {
 public:
-    Visitor(const Statement::StatementList &statements, EnvironmentInternal &environment, 
-            ResolvedTypeMap &resolvedTypes, const Type::TypeContext &context, 
-            ErrorHandlerBase &errorHandler, StatementHandler forEachSynapseHandler)
-    :   Visitor(environment, resolvedTypes, context, errorHandler, forEachSynapseHandler)
+    Visitor(const Statement::StatementList<> &statements, EnvironmentInternal &environment, 
+            const Type::TypeContext &context, ErrorHandlerBase &errorHandler, 
+            StatementHandler forEachSynapseHandler)
+    :   Visitor(environment, context, errorHandler, forEachSynapseHandler)
     {
         for (auto &s : statements) {
             s.get()->accept(*this);
         }
     }
     
-    Visitor(const Expression::Base *expression, EnvironmentInternal &environment, 
-            ResolvedTypeMap &resolvedTypes, const Type::TypeContext &context, 
-            ErrorHandlerBase &errorHandler)
-    :   Visitor(environment, resolvedTypes, context, errorHandler, nullptr)
+    Visitor(const Expression::Base<> *expression, EnvironmentInternal &environment, 
+            const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
+    :   Visitor(environment, context, errorHandler, nullptr)
     {
         expression->accept(*this);
     }
     
 private:
-    Visitor(EnvironmentInternal &environment, ResolvedTypeMap &resolvedTypes, 
-            const Type::TypeContext &context, ErrorHandlerBase &errorHandler, 
-            StatementHandler forEachSynapseHandler)
+    Visitor(EnvironmentInternal &environment, const Type::TypeContext &context, 
+            ErrorHandlerBase &errorHandler, StatementHandler forEachSynapseHandler)
     :   m_Environment(environment), m_Context(context), m_ErrorHandler(errorHandler), 
-        m_ForEachSynapseHandler(forEachSynapseHandler), m_ResolvedTypes(resolvedTypes)
+        m_ForEachSynapseHandler(forEachSynapseHandler)
     {
     }
 
     //---------------------------------------------------------------------------
     // Expression::Visitor virtuals
     //---------------------------------------------------------------------------
-    virtual void visit(const Expression::ArraySubscript &arraySubscript) final
+    virtual void visit(const Expression::ArraySubscript<> &arraySubscript) final
     {
         // Evaluate index type
         auto indexType = evaluateType(arraySubscript.getIndex());
@@ -203,7 +201,7 @@ private:
         }
     }
 
-    virtual void visit(const Expression::Assignment &assignment) final
+    virtual void visit(const Expression::Assignment<> &assignment) final
     {
         const auto leftType = evaluateType(assignment.getAssignee());
         const auto rightType = evaluateType(assignment.getValue());
@@ -232,7 +230,7 @@ private:
         setExpressionType(&assignment, leftType);
     }
 
-    virtual void visit(const Expression::Binary &binary) final
+    virtual void visit(const Expression::Binary<> &binary) final
     {
         const auto opType = binary.getOperator().type;
         const auto leftType = evaluateType(binary.getLeft());
@@ -344,7 +342,7 @@ private:
         }
     }
 
-    virtual void visit(const Expression::Call &call) final
+    virtual void visit(const Expression::Call<> &call) final
     {
         // Evaluate argument types and store in top of stack
         std::vector<Type::ResolvedType> arguments;
@@ -382,7 +380,7 @@ private:
         }
     }
 
-    virtual void visit(const Expression::Cast &cast) final
+    virtual void visit(const Expression::Cast<> &cast) final
     {
         // Evaluate type of expression we're casting
         const auto rightType = evaluateType(cast.getExpression());
@@ -430,7 +428,7 @@ private:
         }
     }
 
-    virtual void visit(const Expression::Conditional &conditional) final
+    virtual void visit(const Expression::Conditional<> &conditional) final
     {
         const auto conditionType = evaluateType(conditional.getCondition());
         if(!conditionType.isScalar()) {
@@ -457,47 +455,54 @@ private:
         }
     }
 
-    virtual void visit(const Expression::Grouping &grouping) final
+    virtual void visit(const Expression::Grouping<> &grouping) final
     {
-        setExpressionType(&grouping, evaluateType(grouping.getExpression()));
+        const auto type = evaluateType(grouping.getExpression());
+        setAnnotatedExpression<Expression::Grouping<TypeAnnotation>>(std::move(m_AnnotatedExpression), type);
     }
 
-    virtual void visit(const Expression::Literal &literal) final
+    virtual void visit(const Expression::Literal<> &literal) final
     {
         // Convert literal token type to type
         if (literal.getValue().type == Token::Type::DOUBLE_NUMBER) {
-            setExpressionType(&literal, Type::Double);
+            setAnnotatedExpression<Expression::Literal<TypeAnnotation>>(literal.getValue(), Type::Double);
         }
         else if (literal.getValue().type == Token::Type::FLOAT_NUMBER) {
-            setExpressionType(&literal, Type::Float);
+            setAnnotatedExpression<Expression::Literal<TypeAnnotation>>(literal.getValue(), Type::Float);
         }
         else if (literal.getValue().type == Token::Type::SCALAR_NUMBER) {
-            setExpressionType(&literal, m_Context.at("scalar"));
+            setAnnotatedExpression<Expression::Literal<TypeAnnotation>>(literal.getValue(), m_Context.at("scalar"));
         }
         else if (literal.getValue().type == Token::Type::INT32_NUMBER) {
-            setExpressionType(&literal, Type::Int32);
+            setAnnotatedExpression<Expression::Literal<TypeAnnotation>>(literal.getValue(), Type::Int32);
         }
         else if (literal.getValue().type == Token::Type::UINT32_NUMBER) {
-            setExpressionType(&literal, Type::Uint32);
+            setAnnotatedExpression<Expression::Literal<TypeAnnotation>>(literal.getValue(), Type::Uint32);
         }
         else if(literal.getValue().type == Token::Type::BOOLEAN) {
-            setExpressionType(&literal, Type::Bool);
+            setAnnotatedExpression<Expression::Literal<TypeAnnotation>>(literal.getValue(), Type::Bool);
         }
         else if(literal.getValue().type == Token::Type::STRING) {
-            setExpressionType(&literal, Type::Int8.createPointer(true));
+            setAnnotatedExpression<Expression::Literal<TypeAnnotation>>(literal.getValue(), Type::Int8.createPointer(true));
         }
         else {
             assert(false);
         }
     }
 
-    virtual void visit(const Expression::Logical &logical) final
+    virtual void visit(const Expression::Logical<> &logical) final
     {
-        const auto leftType = evaluateType(logical.getLeft());
-        const auto rightType = evaluateType(logical.getRight());
+        auto left = annotateExpression(logical.getLeft());
+        const auto &leftType = left->getType();
+
+        auto right = annotateExpression(logical.getRight());
+        const auto &rightType = right->getType();
 
         if(leftType.isScalar() && rightType.isScalar()) {
-            setExpressionType(&logical, Type::Int32);
+            setAnnotatedExpression<Expression::Logical<TypeAnnotation>>(std::move(left),
+                                                                        logical.getOperator(),
+                                                                        std::move(right),
+                                                                        Type::Int32);
         }
         else {
             m_ErrorHandler.error(logical.getOperator(), "Invalid operand types '" + leftType.getName() + "' and '" + rightType.getName());
@@ -505,33 +510,37 @@ private:
         }
     }
 
-    virtual void visit(const Expression::PostfixIncDec &postfixIncDec) final
+    virtual void visit(const Expression::PostfixIncDec<> &postfixIncDec) final
     {
         // **TODO** more general lvalue thing
-        const auto lhsType = evaluateType(postfixIncDec.getTarget());
+        auto lhs = annotateExpression(postfixIncDec.getTarget());
+        const auto &lhsType = lhs->getType();
         if(lhsType.isConst || !lhsType.isScalar()) {
             m_ErrorHandler.error(postfixIncDec.getOperator(),"Invalid operand type '" + lhsType.getName() + "'");
             throw TypeCheckError();
         }
         else {
-            setExpressionType(&postfixIncDec, lhsType);
+            setAnnotatedExpression<Expression::PostfixIncDec<TypeAnnotation>>(postfixIncDec.getOperator(),
+                                                                              std::move(lhs), lhsType);
         }
     }
 
-    virtual void visit(const Expression::PrefixIncDec &prefixIncDec) final
+    virtual void visit(const Expression::PrefixIncDec<> &prefixIncDec) final
     {
         // **TODO** more general lvalue thing
-        const auto rhsType = evaluateType(prefixIncDec.getTarget());
+        auto rhs = annotateExpression(prefixIncDec.getTarget());
+        const auto &rhsType = rhs->getType();
         if(rhsType.isConst || !rhsType.isScalar()) {
             m_ErrorHandler.error(prefixIncDec.getOperator(),"Invalid operand type '" + rhsType.getName() + "'");
             throw TypeCheckError();
         }
         else {
-            setExpressionType(&prefixIncDec, rhsType);
+            setAnnotatedExpression<Expression::PrefixIncDec<TypeAnnotation>>(prefixIncDec.getOperator(),
+                                                                             std::move(rhs), rhsType);
         }
     }
 
-    virtual void visit(const Expression::Identifier &variable)
+    virtual void visit(const Expression::Identifier<> &variable)
     {
         // If type is unambiguous and not a function
         const auto varTypes = m_Environment.get().getTypes(variable.getName(), m_ErrorHandler);
@@ -641,14 +650,16 @@ private:
         }
     }
 
-    virtual void visit(const Expression::Unary &unary) final
+    virtual void visit(const Expression::Unary<> &unary) final
     {
-        const auto rightType = evaluateType(unary.getRight());
+        auto right = annotateExpression(unary.getRight());
+        const auto &rightType = right->getType();
 
         // If operator is pointer de-reference
          if (unary.getOperator().type == Token::Type::STAR) {
             if (rightType.isPointer()) {
-                 setExpressionType(&unary, *rightType.getPointer().valueType);
+                setAnnotatedExpression<Expression::Unary<TypeAnnotation>>(unary.getOperator(), std::move(right), 
+                                                                          *rightType.getPointer().valueType);
             }
             else {
                 m_ErrorHandler.error(unary.getOperator(),
@@ -661,14 +672,16 @@ private:
             // If operator is arithmetic, return promoted type
             if (unary.getOperator().type == Token::Type::PLUS || unary.getOperator().type == Token::Type::MINUS) {
                 // **THINK** const through these?
-                setExpressionType(&unary, Type::getPromotedType(rightType));
+                setAnnotatedExpression<Expression::Unary<TypeAnnotation>>(unary.getOperator(), std::move(right), 
+                                                                          Type::getPromotedType(rightType));
             }
             // Otherwise, if operator is bitwise
             else if (unary.getOperator().type == Token::Type::TILDA) {
                 // If type is integer, return promoted type
                 if (rightType.getNumeric().isIntegral) {
                     // **THINK** const through these?
-                    setExpressionType(&unary, Type::getPromotedType(rightType));
+                    setAnnotatedExpression<Expression::Unary<TypeAnnotation>>(unary.getOperator(), std::move(right), 
+                                                                              Type::getPromotedType(rightType));
                 }
                 else {
                     m_ErrorHandler.error(unary.getOperator(),
@@ -678,7 +691,8 @@ private:
             }
             // Otherwise, if operator is logical
             else if (unary.getOperator().type == Token::Type::NOT) {
-                setExpressionType(&unary, Type::Int32);
+                setAnnotatedExpression<Expression::Unary<TypeAnnotation>>(unary.getOperator(), std::move(right), 
+                                                                          Type::Int32);
             }
             else {
                 m_ErrorHandler.error(unary.getOperator(),
@@ -696,7 +710,7 @@ private:
     //---------------------------------------------------------------------------
     // Statement::Visitor virtuals
     //---------------------------------------------------------------------------
-    virtual void visit(const Statement::Break &breakStatement) final
+    virtual void visit(const Statement::Break<> &breakStatement) final
     {
         if (m_ActiveLoopStatements.empty() && m_ActiveSwitchStatements.empty()) {
             m_ErrorHandler.error(breakStatement.getToken(), "Statement not within loop");
@@ -704,7 +718,7 @@ private:
         }
     }
 
-    virtual void visit(const Statement::Compound &compound) final
+    virtual void visit(const Statement::Compound<> &compound) final
     {
         // Cache reference to current reference
         std::reference_wrapper<EnvironmentInternal> oldEnvironment = m_Environment; 
@@ -721,7 +735,7 @@ private:
         m_Environment = oldEnvironment;
     }
 
-    virtual void visit(const Statement::Continue &continueStatement) final
+    virtual void visit(const Statement::Continue<> &continueStatement) final
     {
         if (m_ActiveLoopStatements.empty()) {
             m_ErrorHandler.error(continueStatement.getToken(), "Statement not within loop");
@@ -729,7 +743,7 @@ private:
         }
     }
 
-    virtual void visit(const Statement::Do &doStatement) final
+    virtual void visit(const Statement::Do<> &doStatement) final
     {
         m_ActiveLoopStatements.emplace(&doStatement);
         doStatement.getBody()->accept(*this);
@@ -743,14 +757,14 @@ private:
         }
     }
 
-    virtual void visit(const Statement::Expression &expression) final
+    virtual void visit(const Statement::Expression<> &expression) final
     {
         if(expression.getExpression()) {
             expression.getExpression()->accept(*this);
         }
     }
 
-    virtual void visit(const Statement::For &forStatement) final
+    virtual void visit(const Statement::For<> &forStatement) final
     {
         // Cache reference to current environment
         std::reference_wrapper<EnvironmentInternal> oldEnvironment = m_Environment; 
@@ -789,7 +803,7 @@ private:
         m_Environment = oldEnvironment;
     }
 
-    virtual void visit(const Statement::ForEachSynapse &forEachSynapseStatement) final
+    virtual void visit(const Statement::ForEachSynapse<> &forEachSynapseStatement) final
     {
         if(!m_ForEachSynapseHandler) {
             m_ErrorHandler.error(forEachSynapseStatement.getForEachSynapse(), 
@@ -815,7 +829,7 @@ private:
         m_Environment = oldEnvironment;
     }
 
-    virtual void visit(const Statement::If &ifStatement) final
+    virtual void visit(const Statement::If<> &ifStatement) final
     {
         const auto conditionType = evaluateType(ifStatement.getCondition());
         if(!conditionType.isScalar()) {
@@ -829,7 +843,7 @@ private:
         }
     }
 
-    virtual void visit(const Statement::Labelled &labelled) final
+    virtual void visit(const Statement::Labelled<> &labelled) final
     {
         if (m_ActiveSwitchStatements.empty()) {
             m_ErrorHandler.error(labelled.getKeyword(), "Statement not within switch statement");
@@ -848,7 +862,7 @@ private:
         labelled.getBody()->accept(*this);
     }
 
-    virtual void visit(const Statement::Switch &switchStatement) final
+    virtual void visit(const Statement::Switch<> &switchStatement) final
     {
         auto condType = evaluateType(switchStatement.getCondition());
         if (!condType.isNumeric() || !condType.getNumeric().isIntegral || condType.getValue().isWriteOnly) {
@@ -863,7 +877,7 @@ private:
         m_ActiveSwitchStatements.pop();
     }
 
-    virtual void visit(const Statement::VarDeclaration &varDeclaration) final
+    virtual void visit(const Statement::VarDeclaration<> &varDeclaration) final
     {
         const auto decType = varDeclaration.getType();
         for (const auto &var : varDeclaration.getInitDeclaratorList()) {
@@ -881,7 +895,7 @@ private:
         }
     }
 
-    virtual void visit(const Statement::While &whileStatement) final
+    virtual void visit(const Statement::While<> &whileStatement) final
     {
         const auto conditionType = evaluateType(whileStatement.getCondition());
         if(!conditionType.isScalar()) {
@@ -899,19 +913,17 @@ private:
     //---------------------------------------------------------------------------
     // Private methods
     //---------------------------------------------------------------------------
-    Type::ResolvedType evaluateType(const Expression::Base *expression)
+    Expression::ExpressionPtr<TypeAnnotation> annotateExpression(const Expression::Base<> *expression)
     {
         expression->accept(*this);
-        return m_ResolvedTypes.at(expression);
-    }
-   
-    void setExpressionType(const Expression::Base *expression, const Type::ResolvedType &type)
-    {
-        if (!m_ResolvedTypes.emplace(expression, type).second) {
-            throw std::runtime_error("Expression type resolved multiple times");
-        }
+        return std::move(m_AnnotatedExpression);
     }
 
+    template<typename T, typename... ExpressionArgs>
+    void setAnnotatedExpression(ExpressionArgs&&... expressionArgs)
+    {
+        m_AnnotatedExpression = std::make_unique<T>(std::forward<AnnotationArgs>(expressionArgs)...);
+    }
     //---------------------------------------------------------------------------
     // Members
     //---------------------------------------------------------------------------
@@ -919,10 +931,10 @@ private:
     const Type::TypeContext &m_Context;
     ErrorHandlerBase &m_ErrorHandler;
     StatementHandler m_ForEachSynapseHandler;
-    ResolvedTypeMap &m_ResolvedTypes;
     std::stack<std::vector<Type::ResolvedType>> m_CallArguments;
-    std::stack<const Statement::Base*> m_ActiveLoopStatements;
-    std::stack<const Statement::Base*> m_ActiveSwitchStatements;
+    std::stack<const Statement::Base<>*> m_ActiveLoopStatements;
+    std::stack<const Statement::Base<>*> m_ActiveSwitchStatements;
+    Expression::ExpressionPtr<TypeAnnotation> m_AnnotatedExpression;
 };
 }   // Anonymous namespace
 
@@ -966,20 +978,21 @@ std::vector<Type::ResolvedType> EnvironmentInternal::getTypes(const Token &name,
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::TypeChecker
 //---------------------------------------------------------------------------
-ResolvedTypeMap GeNN::Transpiler::TypeChecker::typeCheck(const Statement::StatementList &statements, EnvironmentInternal &environment, 
-                                                         const Type::TypeContext &context, ErrorHandlerBase &errorHandler,
-                                                         StatementHandler forEachSynapseHandler)
+Statement::StatementList<TypeAnnotation> GeNN::Transpiler::TypeChecker::typeCheck(
+    const Statement::StatementList<> &statements, EnvironmentInternal &environment, 
+    const Type::TypeContext &context, ErrorHandlerBase &errorHandler,
+    StatementHandler forEachSynapseHandler)
 {
     ResolvedTypeMap expressionTypes;
-    Visitor visitor(statements, environment, expressionTypes, 
-                    context, errorHandler, forEachSynapseHandler);
+    Visitor visitor(statements, environment, context, errorHandler, forEachSynapseHandler);
     return expressionTypes;
 }
 //---------------------------------------------------------------------------
-ResolvedTypeMap GeNN::Transpiler::TypeChecker::typeCheck(const Expression::Base *expression, EnvironmentInternal &environment,
-                                                         const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
+Expression::ExpressionPtr<TypeAnnotation> GeNN::Transpiler::TypeChecker::typeCheck(
+    const Expression::Base<> *expression, EnvironmentInternal &environment,
+    const Type::TypeContext &context, ErrorHandlerBase &errorHandler)
 {
     ResolvedTypeMap expressionTypes;
-    Visitor visitor(expression, environment, expressionTypes, context, errorHandler);
+    Visitor visitor(expression, environment, context, errorHandler);
     return expressionTypes;
 }

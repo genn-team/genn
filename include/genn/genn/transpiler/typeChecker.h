@@ -35,6 +35,20 @@ public:
 };
 
 //---------------------------------------------------------------------------
+// GeNN::Transpiler::TypeChecker::TypeAnnotation
+//---------------------------------------------------------------------------
+class TypeAnnotation
+{
+public:
+    TypeAnnotation(const Type::ResolvedType &type) : m_Type(type)
+    {}
+    const auto &getType() const{ return m_Type; }
+    
+private:
+    Type::ResolvedType m_Type;
+};
+
+//---------------------------------------------------------------------------
 // GeNN::Transpiler::TypeChecker::EnvironmentBase
 //---------------------------------------------------------------------------
 class GENN_EXPORT EnvironmentBase
@@ -81,16 +95,19 @@ private:
 //---------------------------------------------------------------------------
 // Typedefines
 //---------------------------------------------------------------------------
-typedef std::unordered_map<const Expression::Base*, Type::ResolvedType> ResolvedTypeMap;
 typedef std::function<void(EnvironmentBase&, ErrorHandlerBase&)> StatementHandler;
 
 //---------------------------------------------------------------------------
 // Free functions
 //---------------------------------------------------------------------------
-ResolvedTypeMap typeCheck(const Statement::StatementList &statements, EnvironmentInternal &environment, 
-                          const Type::TypeContext &context, ErrorHandlerBase &errorHandler, 
-                          StatementHandler forEachSynapseHandler = nullptr);
+Statement::StatementList<TypeAnnotation> typeCheck(const Statement::StatementList<> &statements, 
+                                                   EnvironmentInternal &environment, 
+                                                   const Type::TypeContext &context, 
+                                                   ErrorHandlerBase &errorHandler, 
+                                                   StatementHandler forEachSynapseHandler = nullptr);
 
-ResolvedTypeMap typeCheck(const Expression::Base *expression, EnvironmentInternal &environment, 
-                          const Type::TypeContext &context, ErrorHandlerBase &errorHandler);
+Expression::ExpressionPtr<TypeAnnotation> typeCheck(const Expression::Base<> *expression, 
+                                                    EnvironmentInternal &environment, 
+                                                    const Type::TypeContext &context, 
+                                                    ErrorHandlerBase &errorHandler);
 }   // namespace GeNN::Transpiler::TypeChecker
