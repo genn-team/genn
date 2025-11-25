@@ -123,7 +123,7 @@ using ExpressionList = std::vector<ExpressionPtr<A>>;
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::ArraySubscript
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = NoAnnotation>
 class ArraySubscript : public Acceptable<ArraySubscript<A>, A>
 {
 public:
@@ -153,7 +153,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Assignment
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = NoAnnotation>
 class Assignment : public Acceptable<Assignment<A>, A>
 {
 public:
@@ -177,7 +177,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Binary
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = NoAnnotation>
 class Binary : public Acceptable<Binary<A>, A>
 {
 public:
@@ -201,7 +201,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Call
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = NoAnnotation>
 class Call : public Acceptable<Call<A>, A>
 {
 public:
@@ -225,7 +225,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Cast
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = NoAnnotation>
 class Cast : public Acceptable<Cast<A>, A>
 {
 public:
@@ -249,7 +249,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Conditional
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = NoAnnotation>
 class Conditional : public Acceptable<Conditional<A>, A>
 {
 public:
@@ -275,7 +275,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Grouping
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = NoAnnotation>
 class Grouping : public Acceptable<Grouping<A>, A>
 {
 public:
@@ -299,7 +299,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Literal
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = NoAnnotation>
 class Literal : public Acceptable<Literal<A>, A>
 {
 public:
@@ -323,7 +323,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Logical
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = NoAnnotation>
 class Logical : public Acceptable<Logical<A>, A>
 {
 public:
@@ -347,7 +347,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::PostfixIncDec
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = NoAnnotation>
 class PostfixIncDec : public Acceptable<PostfixIncDec<A>, A>
 {
 public:
@@ -368,7 +368,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::PrefixIncDec
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = NoAnnotation>
 class PrefixIncDec : public Acceptable<PrefixIncDec<A>, A>
 {
 public:
@@ -389,7 +389,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Identifier
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = NoAnnotation>
 class Identifier : public Acceptable<Identifier<A>, A>
 {
 public:
@@ -413,7 +413,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Expression::Unary
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = NoAnnotation>
 class Unary : public Acceptable<Unary<A>, A>
 {
 public:

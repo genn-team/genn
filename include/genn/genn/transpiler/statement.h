@@ -107,7 +107,7 @@ using StatementList = std::vector<StatementPtr<A>>;
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::Break
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = GeNN::Transpiler::Expression::NoAnnotation>
 class Break : public Acceptable<Break<A>, A>
 {
 public:
@@ -124,7 +124,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::Compound
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = GeNN::Transpiler::Expression::NoAnnotation>
 class Compound : public Acceptable<Compound<A>, A>
 {
 public:
@@ -141,7 +141,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::Continue
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = GeNN::Transpiler::Expression::NoAnnotation>
 class Continue : public Acceptable<Continue<A>, A>
 {
 public:
@@ -158,7 +158,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::Do
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = GeNN::Transpiler::Expression::NoAnnotation>
 class Do : public Acceptable<Do<A>, A>
 {
     using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr<A>;
@@ -180,7 +180,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::Expression
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = GeNN::Transpiler::Expression::NoAnnotation>
 class Expression : public Acceptable<Expression<A>, A>
 {
     using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr<A>;
@@ -198,7 +198,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::For
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = GeNN::Transpiler::Expression::NoAnnotation>
 class For : public Acceptable<For<A>, A>
 {
     using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr<A>;
@@ -226,7 +226,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::ForEachSynapse
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = GeNN::Transpiler::Expression::NoAnnotation>
 class ForEachSynapse : public Acceptable<ForEachSynapse<A>, A>
 {
 public:
@@ -245,7 +245,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::If
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = GeNN::Transpiler::Expression::NoAnnotation>
 class If : public Acceptable<If<A>, A>
 {
     using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr<A>;
@@ -269,7 +269,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::Labelled
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = GeNN::Transpiler::Expression::NoAnnotation>
 class Labelled : public Acceptable<Labelled<A>, A>
 {
     using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr<A>;
@@ -292,7 +292,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::Switch
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = GeNN::Transpiler::Expression::NoAnnotation>
 class Switch : public Acceptable<Switch<A>, A>
 {
     using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr<A>;
@@ -316,7 +316,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::VarDeclaration
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = GeNN::Transpiler::Expression::NoAnnotation>
 class VarDeclaration : public Acceptable<VarDeclaration<A>, A>
 {
     typedef std::vector<std::tuple<Token, GeNN::Transpiler::Expression::ExpressionPtr<A>>> InitDeclaratorList;
@@ -337,7 +337,7 @@ private:
 //---------------------------------------------------------------------------
 // GeNN::Transpiler::Statement::If
 //---------------------------------------------------------------------------
-template<typename A>
+template<typename A = GeNN::Transpiler::Expression::NoAnnotation>
 class While : public Acceptable<While<A>, A>
 {
     using ExpressionPtr = GeNN::Transpiler::Expression::ExpressionPtr<A>;
