@@ -122,41 +122,82 @@ void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &
         regAllocGran = 256;
         maxBlocksPerSM = 32;
     }
+    // Geforce RTX 20 series
     else if(deviceProps.major == 7) {
         smemAllocGran = 256;
         warpAllocGran = 4;
         regAllocGran = 256;
         maxBlocksPerSM = (deviceProps.minor == 5) ? 16 : 32;
     }
+    // A100, Geforce RTX 30 and 40 series and Jetson Orin
     else if (deviceProps.major == 8) {
         smemAllocGran = 128;
         warpAllocGran = 4;
         regAllocGran = 256;
 
+        // A100
         if (deviceProps.minor == 0) {
             maxBlocksPerSM = 32;
         }
+        // Geforce RTX 40 series
         else if (deviceProps.minor == 9) {
             maxBlocksPerSM = 24;
         }
+        // Geforce RTX 30 series and Jetson Orin
         else {
             maxBlocksPerSM = 16;
         }
     }
-    else {
-        smemAllocGran = 128;
-        warpAllocGran = 4;
-        regAllocGran = 256;
+    // H100, G200
+    else if (deviceProps.major == 9) {
+        smemAllocGran = 128;    // Not publicised - copying from 8.6
+        warpAllocGran = 4;      // Not publicised - copying from 8.6
+        regAllocGran = 256;     // Not publicised - copying from 8.6
         maxBlocksPerSM = 32;
+
         if(deviceProps.minor != 0) {
             LOGW_BACKEND << "Unsupported CUDA device version: 9." << deviceProps.minor;
             LOGW_BACKEND << "This is a bug! Please report it at https://github.com/genn-team/genn.";
             LOGW_BACKEND << "Falling back to SM 9.0 parameters.";
         }
-        if(deviceProps.major > 9) {
-            LOGW_BACKEND << "Unsupported CUDA device major version: " << deviceProps.major;
+    }
+    // B200, B300
+    else if(deviceProps.major == 10) {
+        smemAllocGran = 128;    // Not publicised - copying from 8.6
+        warpAllocGran = 4;      // Not publicised - copying from 8.6
+        regAllocGran = 256;     // Not publicised - copying from 8.6
+        maxBlocksPerSM = 32;
+
+        if(deviceProps.minor != 0 && deviceProps.minor != 3) {
+            LOGW_BACKEND << "Unsupported CUDA device version: 10." << deviceProps.minor;
             LOGW_BACKEND << "This is a bug! Please report it at https://github.com/genn-team/genn.";
-            LOGW_BACKEND << "Falling back to next latest SM version parameters.";
+            LOGW_BACKEND << "Falling back to SM 10.0 parameters.";
+        }
+    }
+    // Jetson T
+    else if(deviceProps.major == 11) {
+        smemAllocGran = 128;    // Not publicised - copying from 8.6
+        warpAllocGran = 4;      // Not publicised - copying from 8.6
+        regAllocGran = 256;     // Not publicised - copying from 8.6
+        maxBlocksPerSM = 24;
+
+        if(deviceProps.minor != 0) {
+            LOGW_BACKEND << "Unsupported CUDA device version: 11." << deviceProps.minor;
+            LOGW_BACKEND << "This is a bug! Please report it at https://github.com/genn-team/genn.";
+            LOGW_BACKEND << "Falling back to SM 11.0 parameters.";
+        }
+    }
+    // Geforce RTX 50 series
+    else {
+        smemAllocGran = 128;    // Not publicised - copying from 8.6
+        warpAllocGran = 4;      // Not publicised - copying from 8.6
+        regAllocGran = 256;     // Not publicised - copying from 8.6
+        maxBlocksPerSM = 24;
+
+        if(deviceProps.minor != 0 || deviceProps.major > 12) {
+            LOGW_BACKEND << "Unsupported CUDA device version: " << deviceProps.major << "." << deviceProps.minor;
+            LOGW_BACKEND << "This is a bug! Please report it at https://github.com/genn-team/genn.";
+            LOGW_BACKEND << "Falling back to SM 12.0 parameters.";
         }
     }
 }
