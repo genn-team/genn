@@ -403,7 +403,8 @@ void BackendSIMT::genNeuronSpikeQueueUpdateKernel(EnvironmentExternalBase &env, 
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
-                                        BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const
+                                        BackendBase::MemorySpaces &memorySpaces, AllocateSharedMemFn allocateSharedMem,
+                                        size_t &idStart) const
 {
     const unsigned int batchSize = modelMerged.getModel().getBatchSize();
 
@@ -431,7 +432,7 @@ void BackendSIMT::genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecM
     if(std::any_of(modelMerged.getModel().getNeuronGroups().cbegin(), modelMerged.getModel().getNeuronGroups().cend(),
                    [](const auto &n) { return n.second.isSpikeRecordingEnabled(); }))
     {
-        genRecordingSharedMemInit(env.getStream(), "", 1);
+        genRecordingSharedMemInit(env, allocateSharedMem, "", 1);
     }
 
     // If there are any neuron update groups
@@ -692,7 +693,8 @@ void BackendSIMT::genSynapseDendriticDelayUpdateKernel(EnvironmentExternalBase &
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
-                                             BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const
+                                             BackendBase::MemorySpaces &memorySpaces, 
+                                             AllocateSharedMemFn allocateSharedMem, size_t &idStart) const
 {
     EnvironmentExternal kernelEnv(env);
 
@@ -764,7 +766,8 @@ void BackendSIMT::genPresynapticUpdateKernel(EnvironmentExternalBase &env, Model
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genPostsynapticUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
-                                              BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const
+                                              BackendBase::MemorySpaces &memorySpaces, 
+                                              AllocateSharedMemFn allocateSharedMem, size_t &idStart) const
 {
     EnvironmentExternal kernelEnv(env);
 
@@ -1154,11 +1157,13 @@ void BackendSIMT::genCustomUpdateWUKernel(EnvironmentExternal &env, ModelSpecMer
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, ModelSpecMerged &modelMerged,
-                                                   BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const
+                                                   BackendBase::MemorySpaces &memorySpaces, AllocateSharedMemFn allocateSharedMem,
+                                                   const std::string &updateGroup, size_t &idStart) const
 {
     // Generate 2D array
     const unsigned int batchSize = modelMerged.getModel().getBatchSize();
     const size_t blockSize = getKernelBlockSize(KernelCustomTransposeUpdate);
+    allocateSharedMem("_tile", Type::Float, blockSize * (blockSize + 1));
     env.getStream() << getSharedPrefix() << " float shTile[" << blockSize << "][" << (blockSize + 1) << "];" << std::endl;
     genParallelGroup<CustomUpdateTransposeWUGroupMerged>(
         env, modelMerged, memorySpaces, updateGroup, idStart, &ModelSpecMerged::genMergedCustomUpdateTransposeWUGroups,
@@ -1305,12 +1310,12 @@ void BackendSIMT::genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genCustomConnectivityRemapUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
-                                                         BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const
+                                                         BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, 
+                                                         AllocateSharedMemFn allocateSharedMem, size_t &idStart) const
 {
     EnvironmentExternal envKernel(env);
-    envKernel.add(Type::Void, "_sh_row_length", "shRowLength",
-                  { envKernel.addInitialiser(getSharedPrefix() + "unsigned int shRowLength[" + std::to_string(getKernelBlockSize(KernelInitializeSparse)) + "];") });
-
+    allocateSharedMem("_row_length", Type::Uint32, getKernelBlockSize(KernelInitializeSparse));
+    
     // Parallelise across presynaptic neurons
     genParallelGroup<CustomConnectivityRemapUpdateGroupMerged>(
         envKernel, modelMerged, memorySpaces, updateGroup, idStart, &ModelSpecMerged::genMergedCustomConnectivityRemapUpdateGroups,
@@ -1693,12 +1698,12 @@ void BackendSIMT::genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMer
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genInitializeSparseKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
-                                            size_t numInitializeThreads, BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const
+                                            size_t numInitializeThreads, BackendBase::MemorySpaces &memorySpaces,
+                                            AllocateSharedMemFn allocateSharedMemFn, size_t &idStart) const
 {
     EnvironmentExternal envKernel(env);
-    envKernel.add(Type::Void, "_sh_row_length", "shRowLength",
-                  {envKernel.addInitialiser(getSharedPrefix() + "unsigned int shRowLength[" + std::to_string(getKernelBlockSize(KernelInitializeSparse)) + "];")});
-   
+    allocateSharedMemFn("_row_length", Type::Uint32, getKernelBlockSize(KernelInitializeSparse));
+
     // Initialise weight update variables for synapse groups with sparse connectivity
     const unsigned int batchSize = modelMerged.getModel().getBatchSize();
     genParallelGroup<SynapseSparseInitGroupMerged>(
@@ -1783,25 +1788,27 @@ size_t BackendSIMT::padKernelSize(size_t size, Kernel kernel) const
     return padSize(size, getKernelBlockSize(kernel)); 
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genRecordingSharedMemInit(CodeStream &os, const std::string &suffix, size_t numArrays) const
-{
-    os << getSharedPrefix() << "uint32_t shSpkRecord" << suffix << "[" << numArrays << "]";
-
+void BackendSIMT::genRecordingSharedMemInit(EnvironmentExternalBase &env, AllocateSharedMemFn allocateSharedMemFn, 
+                                            const std::string &suffix, size_t numArrays) const
+{    
     if(m_KernelBlockSizes[KernelNeuronUpdate] == 32) {
-        os << ";" << std::endl;
-        os << "if (" << getThreadID() << " == 0)";
+        allocateSharedMemFn("_spk_record" + suffix, Type::Uint32, numArrays);
+
+        env.print("if (" + getThreadID() + " == 0)");
         {
-            CodeStream::Scope b(os);
+            CodeStream::Scope b(env.getStream());
             for(size_t i = 0; i < numArrays; i++) {
-                os << "shSpkRecord" << suffix << "[" << i << "] = 0;" << std::endl;
+                env.printLine("$(_spk_record" + suffix + ")[" + std::to_string(i) + "] = 0;");
             }
         }
     }
     else {
-        os << "[" << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << "];" << std::endl;
-        os << "if (" << getThreadID() << " < " << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << ")";
+        allocateSharedMemFn("_spk_record" + suffix, Type::Uint32,
+                            numArrays * (m_KernelBlockSizes[KernelNeuronUpdate] / 32));
+
+        env.print("if (" + getThreadID() + " < " + std::to_string(m_KernelBlockSizes[KernelNeuronUpdate] / 32) + ")");
         {
-            CodeStream::Scope b(os);
+            CodeStream::Scope b(env.getStream());
             for(size_t i = 0; i < numArrays; i++) {
                 os << "shSpkRecord" << suffix << "[" << i << "][" << getThreadID() << "] = 0;" << std::endl;
             }

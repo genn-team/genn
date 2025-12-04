@@ -60,9 +60,6 @@ public:
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendSIMT virtuals
     //--------------------------------------------------------------------------
-    //! Get the prefix to use for shared memory variables
-    virtual std::string getSharedPrefix() const final{ return "__shared__ "; }
-
     //! Get the ID of the current thread within the threadblock
     virtual std::string getThreadID(unsigned int axis = 0) const final;
 

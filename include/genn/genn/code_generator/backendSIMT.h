@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <array>
+#include <functional>
 #include <numeric>
 #include <unordered_set>
 
@@ -44,6 +45,9 @@ enum Kernel
 //! Array of block sizes for each kernel
 using KernelBlockSize = std::array<size_t, KernelMax>;
 
+//! Function provided by backend for allocating shard memory
+using AllocateSharedMemFn = std::function<void(const std::string&, const Type::ResolvedType&, size_t)>;
+
 //--------------------------------------------------------------------------
 // GeNN::CodeGenerator::BackendSIMT
 //--------------------------------------------------------------------------
@@ -71,9 +75,6 @@ public:
     //------------------------------------------------------------------------
     //! On some older devices, shared memory atomics are actually slower than global memory atomics so should be avoided
     virtual bool areSharedMemAtomicsSlow() const = 0;
-
-    //! Get the prefix to use for shared memory variables
-    virtual std::string getSharedPrefix() const = 0;
 
     //! Get the ID of the current thread within the threadblock
     virtual std::string getThreadID(unsigned int axis = 0) const = 0;
@@ -190,14 +191,14 @@ protected:
     void genNeuronSpikeQueueUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
                                          BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const;
     void genNeuronUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
-                               BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const;
+                               BackendBase::MemorySpaces &memorySpaces, AllocateSharedMemFn allocateSharedMem, size_t &idStart) const;
 
     void genSynapseDendriticDelayUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
                                               BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const;
     void genPresynapticUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
-                                    BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const;
+                                    BackendBase::MemorySpaces &memorySpaces, AllocateSharedMemFn allocateSharedMem, size_t &idStart) const;
     void genPostsynapticUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
-                                     BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const;
+                                     BackendBase::MemorySpaces &memorySpaces, AllocateSharedMemFn allocateSharedMem, size_t &idStart) const;
     void genSynapseDynamicsKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
                                   BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const;
 
@@ -208,19 +209,22 @@ protected:
                                  BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const;
     
     void genCustomTransposeUpdateWUKernel(EnvironmentExternal &env, ModelSpecMerged &modelMerged,
-                                          BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const;
+                                          BackendBase::MemorySpaces &memorySpaces, AllocateSharedMemFn allocateSharedMem,
+                                          const std::string &updateGroup, size_t &idStart) const;
 
     void genCustomConnectivityUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
                                            BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const;
 
     void genCustomConnectivityRemapUpdateKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
-                                                BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, size_t &idStart) const;
+                                                BackendBase::MemorySpaces &memorySpaces, const std::string &updateGroup, 
+                                                AllocateSharedMemFn allocateSharedMem, size_t &idStart) const;
 
     void genInitializeKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged, 
                              BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const;
    
     void genInitializeSparseKernel(EnvironmentExternalBase &env, ModelSpecMerged &modelMerged,
-                                   size_t numInitializeThreads, BackendBase::MemorySpaces &memorySpaces, size_t &idStart) const;
+                                   size_t numInitializeThreads, BackendBase::MemorySpaces &memorySpaces,
+                                   AllocateSharedMemFn allocateSharedMem, size_t &idStart) const;
 
     //! Helper wrapper around padSize to pad size to a kernel size
     size_t padKernelSize(size_t size, Kernel kernel) const;
@@ -468,7 +472,8 @@ private:
         }
     }
 
-    void genRecordingSharedMemInit(CodeStream &os, const std::string &suffix, size_t numArrays) const;
+    void genRecordingSharedMemInit(EnvironmentExternalBase &env, AllocateSharedMemFn allocateSharedMem, 
+                                   const std::string &suffix, size_t numArrays) const;
 
     void genSynapseVariableRowInit(EnvironmentExternalBase &env, HandlerEnv handler) const;
 

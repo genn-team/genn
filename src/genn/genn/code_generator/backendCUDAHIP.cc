@@ -75,6 +75,143 @@ private:
     bool m_SynchroniseOnStop;
 };
 
+
+
+//----------------------------------------------------------------------------
+// GeNN::CodeGenerator::EnvironmentExternal
+//----------------------------------------------------------------------------
+//! Minimal external environment, not tied to any sort of group - just lets you define things
+class EnvironmentSharedMemory : public EnvironmentExternalBase
+{
+public:
+    EnvironmentSharedMemory(EnvironmentExternalBase &enclosing, size_t &size)
+    :   EnvironmentExternalBase(enclosing), m_Contents(m_ContentsStream), m_Size(size)
+    {
+    }
+
+    EnvironmentSharedMemory(Transpiler::PrettyPrinter::EnvironmentBase &enclosing, size_t &size)
+    :   EnvironmentExternalBase(enclosing), m_Contents(m_ContentsStream), m_Size(size)
+    {
+    }
+
+    EnvironmentSharedMemory(CodeStream &os, size_t &size)
+    :   EnvironmentExternalBase(os), m_Contents(m_ContentsStream), m_Size(size)
+    {
+    }
+
+    EnvironmentSharedMemory(EnvironmentExternalBase &enclosing, CodeStream &os, size_t &size)
+    :   EnvironmentExternalBase(enclosing, os), m_Contents(m_ContentsStream), m_Size(size)
+    {
+    }
+    
+    ~EnvironmentSharedMemory()
+    {
+        // Copy environment entries which have been used
+        std::vector<decltype(m_Environment)::value_type> sortedEnvironment;
+        std::copy_if(m_Environment.cbegin(), m_Environment.cend(),
+                     std::back_inserter(sortedEnvironment),
+                     [](const auto &v){ return std::get<0>(v); });
+
+
+        // Sort based on the size of their underlying types
+        std::sort(sortedEnvironment.begin(), sortedEnvironment.end(),
+                 [](const auto &a, const auto &b)
+                 {
+                     return std::get<1>(a).getSize(0) > std::get<1>(b).getSize(0);
+                 });
+
+        
+        // If there are any shared memory variables, declare array
+        if(!sortedEnvironment.empty()) {
+            getContextStream() << "extern __shared__ std::byte _sharedMem[];" << std::endl;
+
+            // Loop through shared memory allocations
+            m_Size.get() = 0;
+            for(const auto &s : sortedEnvironment) {
+                // Ensure start is padded
+                const auto &type = std::get<1>(s.second);
+                const size_t elementSize = type.getSize(0);
+                m_Size.get() = padSize(m_Size.get(), elementSize);
+
+                // Cast correct bit of shared memory to type
+                getContextStream() << type.getName() << " *_sh" << s.first << " = (" << type.getName() << "*)(_sharedMem + " << m_Size.get() << ");" << std::endl;
+
+                // Add size
+                m_Size.get() += (elementSize * std::get<2>(s.second));
+            }
+        }
+        // Write contents to context stream
+        getContextStream() << m_ContentsStream.str();
+    }
+
+    //------------------------------------------------------------------------
+    // PrettyPrinter::EnvironmentBase virtuals
+    //------------------------------------------------------------------------
+    virtual std::string getName(const std::string &name, std::optional<Type::ResolvedType> type = std::nullopt) final
+    {
+        // If name isn't found in environment
+        auto env = m_Environment.find(name);
+        if (env == m_Environment.end()) {
+            return getContextName(name, type);
+        }
+        // Otherwise
+        else {
+            // Mark shared memory value as being required
+            std::get<0>(env->second) = true;
+
+            // Add standard prefix and return
+            return "_sh" + env->first;
+        }
+    }
+
+    virtual CodeStream &getStream() final { return m_Contents; }
+
+    //------------------------------------------------------------------------
+    // TypeChecker::EnvironmentBase virtuals
+    //------------------------------------------------------------------------
+    virtual std::vector<Type::ResolvedType> getTypes(const Transpiler::Token &name, Transpiler::ErrorHandlerBase &errorHandler) final
+    {
+        // If name isn't found in environment
+        auto env = m_Environment.find(name.lexeme);
+        if (env == m_Environment.end()) {
+            return getContextTypes(name, errorHandler);
+        }
+        // Otherwise
+        else {
+            /// Mark shared memory value as being required
+            std::get<0>(env->second) = true;
+
+            // Return pointer to variable
+            return {std::get<1>(env->second).createPointer()};
+        }
+    }
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void declareSharedMemory(const std::string &name, const Type::ResolvedType &type, size_t count)
+    {
+        assert(!type.isPointer());
+
+        // Add tuple to environment
+        if(!m_Environment.try_emplace(name, false, type, count).second) {
+            throw std::runtime_error("Redeclaration of '" + std::string{name} + "'");
+        }
+    }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    std::ostringstream m_ContentsStream;
+    CodeStream m_Contents;
+
+    std::reference_wrapper<size_t> m_Size;
+
+    //! Map of names to shared memory allocations
+    std::unordered_map<std::string, std::tuple<bool, Type::ResolvedType, size_t>> m_Environment;
+};
+
 template<typename T, typename G>
 void genGroupStartID(CodeStream &os, size_t &idStart, size_t &totalConstMem,
                      const T &m, G getPaddedNumThreads)
