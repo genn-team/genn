@@ -7,7 +7,7 @@ ifndef CUDA_PATH
 endif
 
 # Add backend and CUDA include directories to compiler flags
-CXXFLAGS		+=-I$(GENN_DIR)/include/genn/backends/cuda -I"$(CUDA_PATH)/include" -pthread
+CXXFLAGS		+=-I$(GENN_DIR)/include/genn/backends/cuda -I"$(CUDA_PATH)/include" -pthread -D__NV_NO_VECTOR_DEPRECATION_DIAG
 
 # Add prefix to object directory and library name
 BACKEND			:=$(LIBRARY_DIRECTORY)/libgenn_cuda_backend$(GENN_PREFIX).$(LIBRARY_EXTENSION)
