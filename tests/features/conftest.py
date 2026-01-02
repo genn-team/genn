@@ -14,9 +14,14 @@ def make_model():
 
     yield _make_model
 
-    # Unload models
+    # Unload models with error handling
     for model in created_models:
-        model.unload()
+        try:
+            if model._loaded:
+                model.unload()
+        except Exception:
+            # Ignore cleanup errors - model may not have loaded successfully
+            pass
 
 @pytest.fixture
 def backend(request):

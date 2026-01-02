@@ -52,6 +52,118 @@ For example, the previous example could be extended to record spikes from a :cla
 
 If batching was enabled, spike recording data from batch ``b`` would be accessed with e.g. ``pop.spike_recording_data[b]``.
 
+.. _section-monitoring-activity:
+
+------------------------------
+Monitoring simulation activity
+------------------------------
+When running simulations, you often need to verify that your model is active and progressing correctly.
+GeNN provides several mechanisms for monitoring simulation activity:
+
+Timestep and time
+-----------------
+The current simulation timestep and time can be accessed at any point:
+
+..  code-block:: python
+
+    model.load()
+
+    while model.timestep < 1000:
+        model.step_time()
+
+        # Print progress every 100 timesteps
+        if model.timestep % 100 == 0:
+            print(f"Timestep: {model.timestep}, Time: {model.t} ms")
+
+The :attr:`.GeNNModel.timestep` attribute is an integer counter (starting from 0) that increments
+with each call to :meth:`.GeNNModel.step_time`. The :attr:`.GeNNModel.t` attribute gives the
+current simulation time in milliseconds, calculated as ``timestep * dt``.
+
+Spike counts
+------------
+To count the total number of spikes emitted by a population, you can enable spike recording
+(see :ref:`section-spike-recording`) and count the recorded spikes:
+
+..  code-block:: python
+
+    pop.spike_recording_enabled = True
+    model.load(num_recording_timesteps=100)
+
+    while model.timestep < 100:
+        model.step_time()
+
+    model.pull_recording_buffers_from_device()
+    spike_times, spike_ids = pop.spike_recording_data[0]
+
+    # Count spikes per neuron
+    spike_counts = np.bincount(spike_ids, minlength=pop.size)
+    print(f"Total spikes: {len(spike_times)}")
+    print(f"Spikes per neuron: {spike_counts}")
+
+Similarly, spike-like events can be counted by enabling :attr:`.NeuronGroup.spike_event_recording_enabled`
+and accessing :attr:`.SynapseGroupMixin.pre_spike_event_recording_data` or
+:attr:`.SynapseGroupMixin.post_spike_event_recording_data`.
+
+Variable updates
+----------------
+You can track how state variables evolve over time by pulling them from the device at regular intervals:
+
+..  code-block:: python
+
+    model.load()
+
+    # Store membrane potential over time
+    v_history = []
+
+    while model.timestep < 100:
+        model.step_time()
+
+        # Sample every 10 timesteps
+        if model.timestep % 10 == 0:
+            pop.vars["V"].pull_from_device()
+            v_history.append(pop.vars["V"].current_values.copy())
+
+    # Convert to numpy array: (timesteps, neurons)
+    v_history = np.array(v_history)
+
+For more details on accessing variables, see :ref:`section-pull-push`.
+
+Custom activity counters
+------------------------
+For more sophisticated activity monitoring, you can add counter variables to your models:
+
+..  code-block:: python
+
+    neuron_model = create_neuron_model(
+        "neuron_with_counter",
+        vars=[("V", "scalar"), ("spike_count", "unsigned int")],
+        sim_code="""
+        V += ...;  // Normal dynamics
+        """,
+        threshold_condition_code="V >= 10.0",
+        reset_code="""
+        V = 0.0;
+        spike_count++;  // Increment counter on each spike
+        """)
+
+    pop = model.add_neuron_population("Neurons", 100, neuron_model,
+                                      {}, {"V": 0.0, "spike_count": 0})
+
+    # After simulation
+    pop.vars["spike_count"].pull_from_device()
+    total_spikes = np.sum(pop.vars["spike_count"].current_values)
+
+This approach works for any custom metric: spike counts, event counts, number of updates, etc.
+
+..  note::
+
+    When monitoring simulation activity on GPU backends (CUDA, HIP), note that:
+
+    - Kernels execute asynchronously with the CPU
+    - Pulling variables from device triggers synchronization
+    - Pulling too frequently can impact performance
+    - For production runs, consider sampling at longer intervals
+
 ---------
 Variables
 ---------
