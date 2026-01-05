@@ -347,7 +347,7 @@ def test_activity_spike_events(make_model, backend_simt, precision):
                                        {}, {"V": 0.0})
 
     # Set spike times as EGP
-    event_source.set_extra_global_param("spikeTimes", event_times)
+    event_source.extra_global_params["spikeTimes"].set_init_values(event_times)
 
     # Create synapse with event-based weight update
     syn = model.add_synapse_population(
