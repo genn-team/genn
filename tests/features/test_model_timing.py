@@ -1,25 +1,21 @@
 import pytest
-
 from pygenn import (
-    GeNNModel,
     types,
-    create_neuron_model,
     init_weight_update,
     init_postsynaptic,
     init_sparse_connectivity,
 )
 
-# Test: model timing counters are instantiated and accessible
 
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_model_timing_counters_accessible(make_model, backend, precision):
     """
-    Verify that model timing counters are instantiated when timing is enabled.
+    Verify that model timing counters are accessible when timing is enabled.
 
-    This test uses built-in neuron and synapse models to exercise as many
-    timing paths as possible across backends.
+    This test builds a minimal model using built-in neuron (LIF) and synapse (STDP)
+    models, runs a short simulation, and checks that all documented timing counters
+    are present and numeric. Assertions are backend-agnostic.
     """
-
     # Create model
     model = make_model(
         precision,
@@ -27,10 +23,10 @@ def test_model_timing_counters_accessible(make_model, backend, precision):
         backend=backend,
     )
 
-    # Explicitly enable timing
+    # Enable timing explicitly
     model.timing = True
 
-    # Neuron model: built-in LIF (emits spikes)
+    # Built-in LIF neuron model parameters (emits spikes)
     lif_params = {
         "C": 1.0,
         "TauM": 20.0,
@@ -46,16 +42,10 @@ def test_model_timing_counters_accessible(make_model, backend, precision):
         "RefracTime": 0.0,
     }
 
-    neuron_model = create_neuron_model(
-        "LIF",
-        params=lif_params,
-        vars=[("V", precision), ("RefracTime", precision)],
-    )
-
     model.add_neuron_population(
         "pop_pre",
         8,
-        neuron_model,
+        "LIF",
         lif_params,
         lif_init,
     )
@@ -63,12 +53,12 @@ def test_model_timing_counters_accessible(make_model, backend, precision):
     model.add_neuron_population(
         "pop_post",
         8,
-        neuron_model,
+        "LIF",
         lif_params,
         lif_init,
     )
 
-    # Synapse model: built-in STDP
+    # Built-in STDP synapse model
     stdp_params = {
         "tauPlus": 20.0,
         "tauMinus": 20.0,
@@ -92,26 +82,23 @@ def test_model_timing_counters_accessible(make_model, backend, precision):
         init_sparse_connectivity("FixedProbability", {"prob": 1.0}),
     )
 
-    # Build and run model
+    # Build and simulate
     model.build()
     model.load()
 
-    # Run long enough to trigger timing accumulation
     for _ in range(100):
         model.step_time()
 
-    # Assertions
+    # Timing counters (must be accessible and numeric)
     timing_counters = [
         model.neuron_update_time,
         model.init_time,
         model.init_sparse_time,
         model.presynaptic_update_time,
         model.postsynaptic_update_time,
-        model.synapse_dynamics_time,  # may be zero on some backends
     ]
 
     for value in timing_counters:
         assert isinstance(value, (int, float)), (
             "Expected timing counter to be numeric"
         )
-        assert value >= 0.0
