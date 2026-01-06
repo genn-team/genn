@@ -204,9 +204,18 @@ void applySynapseSubstitutions(const BackendBase &backend, EnvironmentExternalBa
             synEnv.add(resolvedType.addConst(), v.name, var);
 
             // If variable is read-write, also add function to add to it atomically
-            if(getVarAccessMode(v.access) & VarAccessModeAttribute::READ_WRITE) {
-                synEnv.add(Type::ResolvedType::createFunction(resolvedType, {resolvedType}), "atomic_add_" + v.name,
-                           backend.getAtomicOperation("&" + var, "$(0)", resolvedType));
+          if(getVarAccessMode(v.access) & VarAccessModeAttribute::READ_WRITE) {
+    // Agar postsynaptic parallelism hai, toh atomic ki zaroorat nahi
+    if (sg.isPostsynapticParallelism()) {
+        synEnv.add(Type::ResolvedType::createFunction(resolvedType, {resolvedType}), "atomic_add_" + v.name,
+                   "*(&" + var + ") += $(0)");
+    }
+    else {
+        // Purana atomic logic baki cases ke liye
+        synEnv.add(Type::ResolvedType::createFunction(resolvedType, {resolvedType}), "atomic_add_" + v.name,
+                   backend.getAtomicOperation("&" + var, "$(0)", resolvedType));
+    }
+}
             }
         }
     }
