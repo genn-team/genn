@@ -100,5 +100,8 @@ def test_model_timing_counters_accessible(make_model, backend, precision):
 
     for value in timing_counters:
         assert isinstance(value, (int, float)), (
-            "Expected timing counter to be numeric"
-        )
+        "Expected timing counter to be numeric"
+    )
+        assert value >= 0.0, (
+        "Expected timing counter to be non-negative"
+    )
