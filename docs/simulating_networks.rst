@@ -154,7 +154,7 @@ After allocation, extra global parameters can be accessed just like variables, f
 ---------------------
 Performance profiling
 ---------------------
-GeNN provides timing counters to profile the performance of different simulation phases.
+GeNN provides timers to profile the performance of different simulation phases.
 This is useful for identifying bottlenecks and optimizing your models.
 To enable timing measurements, set :attr:`.ModelSpec.timing` to ``True`` before building the model:
 
