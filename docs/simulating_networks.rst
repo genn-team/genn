@@ -151,6 +151,67 @@ After allocation, extra global parameters can be accessed just like variables, f
     pop.extra_global_params["X"].current_view[:] = 1.0
     pop.extra_global_params["X"].push_to_device()
 
+---------------------
+Performance profiling
+---------------------
+GeNN provides timing counters to profile the performance of different simulation phases.
+This is useful for identifying bottlenecks and optimizing your models.
+To enable timing measurements, set :attr:`.ModelSpec.timing` to ``True`` before building the model:
+
+..  code-block:: python
+
+    model = GeNNModel("float", "profiled_model")
+    model.timing = True
+
+    # ... add populations and synapses ...
+
+    model.build()
+    model.load()
+
+Once timing is enabled, you can access timing counters after running the simulation:
+
+..  code-block:: python
+
+    # Run simulation
+    for i in range(1000):
+        model.step_time()
+
+    # Access timing counters (all return time in seconds)
+    print(f"Neuron update time: {model.neuron_update_time:.6f}s")
+    print(f"Presynaptic update time: {model.presynaptic_update_time:.6f}s")
+    print(f"Postsynaptic update time: {model.postsynaptic_update_time:.6f}s")
+    print(f"Synapse dynamics time: {model.synapse_dynamics_time:.6f}s")
+
+Available timing properties
+---------------------------
+The following timing counters are available on :class:`.GeNNModel`:
+
+.. autoproperty:: pygenn.GeNNModel.neuron_update_time
+    :noindex:
+
+.. autoproperty:: pygenn.GeNNModel.init_time
+    :noindex:
+
+.. autoproperty:: pygenn.GeNNModel.init_sparse_time
+    :noindex:
+
+.. autoproperty:: pygenn.GeNNModel.presynaptic_update_time
+    :noindex:
+
+.. autoproperty:: pygenn.GeNNModel.postsynaptic_update_time
+    :noindex:
+
+.. autoproperty:: pygenn.GeNNModel.synapse_dynamics_time
+    :noindex:
+
+All timing values accumulate over the lifetime of the model and are returned in seconds.
+
+..  note::
+
+    Enabling timing adds synchronization overhead on GPU backends which may affect
+    performance. Timing counters are only meaningful when ``timing`` is set to
+    ``True`` before building the model.
+
 .. _section-dynamic-parameters:
 
 ------------------

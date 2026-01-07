@@ -4,6 +4,9 @@ from pygenn import (
     init_weight_update,
     init_postsynaptic,
     init_sparse_connectivity,
+    create_weight_update_model,
+    create_custom_update_model,
+    create_var_ref,
 )
 
 
@@ -82,12 +85,51 @@ def test_model_timing_counters_accessible(make_model, backend, precision):
         init_sparse_connectivity("FixedProbability", {"prob": 1.0}),
     )
 
+    # Add synapse population with dynamics to test synapse_dynamics_time
+    stdp_dyn_model = create_weight_update_model(
+        "stdp_with_dynamics",
+        vars=[("g", "scalar")],
+        pre_spike_syn_code="",  # Weight update happens in synapse_dynamics
+        synapse_dynamics_code="g *= 0.99;"  # Simple decay
+    )
+
+    model.add_synapse_population(
+        "syn_dynamics",
+        "DENSE",
+        model.neuron_populations["pop_pre"],
+        model.neuron_populations["pop_post"],
+        init_weight_update(stdp_dyn_model, {}, {"g": 1.0}),
+        init_postsynaptic("DeltaCurr", {}),
+    )
+
+    # Add custom update to test custom update timing
+    cu_model = create_custom_update_model(
+        "test_update",
+        update_code="V *= 0.99;",
+        var_refs=[("V", "scalar")]
+    )
+
+    model.add_custom_update(
+        "TestUpdate",
+        "CustomUpdate",
+        cu_model,
+        {},
+        {},  # No vars for the custom update itself
+        var_refs={"V": create_var_ref(model.neuron_populations["pop_pre"], "V")},
+    )
+
     # Build and simulate
     model.build()
     model.load()
 
+    # Capture initial timing values for accumulation test
+    initial_neuron_time = model.neuron_update_time
+
     for _ in range(100):
         model.step_time()
+
+    # Run custom update to generate timing data
+    model.custom_update("CustomUpdate")
 
     # Timing counters (must be accessible and numeric)
     timing_counters = [
@@ -96,6 +138,7 @@ def test_model_timing_counters_accessible(make_model, backend, precision):
         model.init_sparse_time,
         model.presynaptic_update_time,
         model.postsynaptic_update_time,
+        model.synapse_dynamics_time,
     ]
 
     for value in timing_counters:
@@ -105,3 +148,13 @@ def test_model_timing_counters_accessible(make_model, backend, precision):
         assert value >= 0.0, (
         "Expected timing counter to be non-negative"
     )
+
+    # Timing should accumulate over simulation
+    assert model.neuron_update_time >= initial_neuron_time, (
+        "Timing should accumulate over simulation"
+    )
+
+    # Custom update timing check
+    custom_time = model.get_custom_update_time("CustomUpdate")
+    assert isinstance(custom_time, (int, float))
+    assert custom_time >= 0.0
