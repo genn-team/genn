@@ -122,8 +122,19 @@ def test_model_timing_counters_accessible(make_model, backend, precision):
     model.build()
     model.load()
 
+    # Define lambda functions to access timing counters
+    get_timing_counters = [
+        lambda: model.neuron_update_time,
+        lambda: model.init_time,
+        lambda: model.init_sparse_time,
+        lambda: model.presynaptic_update_time,
+        lambda: model.postsynaptic_update_time,
+        lambda: model.synapse_dynamics_time,
+        lambda: model.get_custom_update_time("CustomUpdate"),
+    ]
+
     # Capture initial timing values for accumulation test
-    initial_neuron_time = model.neuron_update_time
+    initial_times = [get_time() for get_time in get_timing_counters]
 
     for _ in range(100):
         model.step_time()
@@ -131,30 +142,20 @@ def test_model_timing_counters_accessible(make_model, backend, precision):
     # Run custom update to generate timing data
     model.custom_update("CustomUpdate")
 
-    # Timing counters (must be accessible and numeric)
-    timing_counters = [
-        model.neuron_update_time,
-        model.init_time,
-        model.init_sparse_time,
-        model.presynaptic_update_time,
-        model.postsynaptic_update_time,
-        model.synapse_dynamics_time,
-    ]
+    # Get final timing values
+    final_times = [get_time() for get_time in get_timing_counters]
 
-    for value in timing_counters:
-        assert isinstance(value, (int, float)), (
-        "Expected timing counter to be numeric"
-    )
-        assert value >= 0.0, (
-        "Expected timing counter to be non-negative"
-    )
-
-    # Timing should accumulate over simulation
-    assert model.neuron_update_time >= initial_neuron_time, (
-        "Timing should accumulate over simulation"
-    )
-
-    # Custom update timing check
-    custom_time = model.get_custom_update_time("CustomUpdate")
-    assert isinstance(custom_time, (int, float))
-    assert custom_time >= 0.0
+    # Check all timing counters
+    for initial, final in zip(initial_times, final_times):
+        # Must be numeric
+        assert isinstance(final, (int, float)), (
+            "Expected timing counter to be numeric"
+        )
+        # Must be non-negative
+        assert final >= 0.0, (
+            "Expected timing counter to be non-negative"
+        )
+        # Must accumulate over simulation
+        assert final >= initial, (
+            "Timing should accumulate over simulation"
+        )
