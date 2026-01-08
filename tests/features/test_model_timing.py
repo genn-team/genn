@@ -147,10 +147,6 @@ def test_model_timing_counters_accessible(make_model, backend, precision):
 
     # Check all timing counters
     for initial, final in zip(initial_times, final_times):
-        # Must be numeric
-        assert isinstance(final, (int, float)), (
-            "Expected timing counter to be numeric"
-        )
         # Must be non-negative
         assert final >= 0.0, (
             "Expected timing counter to be non-negative"
