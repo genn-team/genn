@@ -325,13 +325,11 @@ class SynapseGroupMixin(GroupMixin):
     and handling connectivity
     
     Attributes:
-        src:                        NeuronGroup
-                                    Source (presynaptic) neuron group from which spikes originate.
+        src (NeuronGroup):          Source (presynaptic) neuron group from which spikes originate.
                                     This attribute is set internally during construction and is read-only.
-        trg:                        NeuronGroup
-                                    Target (postsynaptic) neuron group to which spikes are delivered.
+        trg (NeuronGroup):          Target (postsynaptic) neuron group to which spikes are delivered.
                                     This attribute is set internally during construction and is read-only.
-        out_post:                   Variable or None
+        out_post:                   Array or None
                                     Postsynaptic output variable (e.g. synaptic current) written by the
                                     synapse group. This is created during model loading if the output is
                                     accessible on the host; otherwise it remains ``None``.
