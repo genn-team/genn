@@ -325,6 +325,14 @@ class SynapseGroupMixin(GroupMixin):
     and handling connectivity
     
     Attributes:
+        src (NeuronGroup):          Source (presynaptic) neuron group.
+                                    This attribute is set internally during construction and is read-only.
+        trg (NeuronGroup):          Target (postsynaptic) neuron group to which output is delivered.
+                                    This attribute is set internally during construction and is read-only.
+        out_post (Array):           Postsynaptic output variable (e.g. synaptic current) written by the
+                                    synapse group. This is created during model loading if the output is
+                                    accessible on the host; otherwise it remains ``None``.
+                                    This attribute is managed internally and should be treated as read-only.
         pre_vars:                   Dictionary mapping presynapatic weight
                                     update model variable names to 
                                     :class:`pygenn.model_preprocessor.Variable` objects
