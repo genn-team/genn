@@ -425,6 +425,18 @@ void PreSpanProcedural::genPreamble(EnvironmentExternalBase&, PresynapticUpdateG
 void PreSpanProcedural::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend, 
                                   unsigned int batchSize, double dt, bool trueSpike) const
 {
+    if(isPresynapticOutputRequired(sg, trueSpike)) {
+    const auto matrixType = sg.getArchetype().getMatrixType();
+
+    if((matrixType & SynapseMatrixConnectivity::PROCEDURAL)
+       && (matrixType & SynapseMatrixWeight::KERNEL)) {
+        throw std::logic_error(
+            "SIMT presynaptic updates with procedural connectivity and kernel "
+            "weights cannot safely generate presynaptic output (addToPre)."
+        );
+    }
+}
+
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "_event";
     const size_t numThreadsPerSpike = sg.getArchetype().getNumThreadsPerSpike();
