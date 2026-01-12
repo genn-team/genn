@@ -16,10 +16,16 @@ void GeNN::CodeGenerator::generateMakefile(std::ostream &os, const BackendBase &
                                            const std::vector<std::string> &moduleNames)
 {
     //**TODO** deal with standard include paths e.g. MPI here
+    // Allow external/system include paths (e.g. MPI) to be injected via environment
+    os << "ifneq ($(GENN_EXTRA_INCLUDE_PATHS),)" << std::endl;
+    os << "EXTRA_CXXFLAGS += $(GENN_EXTRA_INCLUDE_PATHS)" << std::endl;
+    os << "endif" << std::endl;
+    os << std::endl;
 
     // List objects in makefile
     os << "OBJECTS := ";
-    for(const auto &m : moduleNames) {
+    for (const auto &m : moduleNames)
+    {
         os << m << ".o ";
     }
     os << std::endl;

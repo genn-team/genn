@@ -1642,7 +1642,7 @@ void Backend::genMakefileLinkRule(std::ostream &os) const
 void Backend::genMakefileCompileRule(std::ostream &os) const
 {
     os << "%.o: %.cc %.d" << std::endl;
-    os << "\t@$(CXX) $(CXXFLAGS) -o $@ $<" << std::endl;
+    os << "\t@$(CXX) $(CXXFLAGS) $(EXTRA_CXXFLAGS) -o $@ $<" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genNMakefilePreamble(std::ostream&) const
