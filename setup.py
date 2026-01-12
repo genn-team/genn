@@ -318,6 +318,7 @@ setup(
                       "importlib-metadata>=1.0;python_version<'3.8'",
                       "setuptools"],
     extras_require={
-        "doc": ["sphinx", "sphinx-gallery", "sphinx-argparse"],
+        "doc": ["sphinx", "sphinx-gallery", "sphinx-argparse", "nbsphinx",
+                "sphinx-rtd-theme"],
         "userproject": ["mnist", "tqdm", "scipy", "matplotlib"],
         "test": ["bitarray", "pytest", "flaky", "pytest-cov", "cupy-cuda12x"]})
