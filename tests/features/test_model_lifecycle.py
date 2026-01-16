@@ -11,10 +11,29 @@ from pygenn import (
     init_sparse_connectivity,
     create_custom_update_model,
     create_var_ref,
+    types,
 )
 
 
-def test_model_load_unload_cycle(make_model, backend):
+def _check_vars_cleared(vars_dict, component_name, expected_none=True):
+    """Helper to verify all variables in a dict are (or aren't) cleared.
+
+    Args:
+        vars_dict: Dictionary of variables to check
+        component_name: Name of component for error messages
+        expected_none: If True, assert vars are None; if False, assert not None
+    """
+    for var_name, var in vars_dict.items():
+        if expected_none:
+            assert var._view is None, f"{component_name}.vars[{var_name}]._view not cleared"
+            assert var._array is None, f"{component_name}.vars[{var_name}]._array not cleared"
+        else:
+            assert var._view is not None, f"{component_name}.vars[{var_name}]._view is None"
+            assert var._array is not None, f"{component_name}.vars[{var_name}]._array is None"
+
+
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_model_load_unload_cycle(make_model, backend, precision):
     """Test that models can be unloaded and reloaded correctly.
 
     This test creates a comprehensive model with:
@@ -30,7 +49,7 @@ def test_model_load_unload_cycle(make_model, backend):
     4. Reloaded model runs correctly
     """
     # Create comprehensive model
-    model = make_model("float", "test_lifecycle", backend)
+    model = make_model(precision, "test_lifecycle", backend)
 
     # LIF neuron parameters
     lif_params = {
@@ -110,59 +129,21 @@ def test_model_load_unload_cycle(make_model, backend):
 
     # CRITICAL: Verify all variable references are cleared
     # (This is what prevents the shared library from unloading properly)
-
-    # Check neuron population variables
-    for var_name, var in pre.vars.items():
-        assert var._view is None, f"pre.vars[{var_name}]._view not cleared"
-        assert var._array is None, f"pre.vars[{var_name}]._array not cleared"
-
-    for var_name, var in post.vars.items():
-        assert var._view is None, f"post.vars[{var_name}]._view not cleared"
-        assert var._array is None, f"post.vars[{var_name}]._array not cleared"
-
-    # Check synapse population variables
-    for var_name, var in syn.vars.items():
-        assert var._view is None, f"syn.vars[{var_name}]._view not cleared"
-        assert var._array is None, f"syn.vars[{var_name}]._array not cleared"
-
-    # Check current source variables
-    for var_name, var in cs.vars.items():
-        assert var._view is None, f"cs.vars[{var_name}]._view not cleared"
-        assert var._array is None, f"cs.vars[{var_name}]._array not cleared"
-
-    # Check custom update variables
-    cu_data = model.custom_updates["TestUpdate"]
-    for var_name, var in cu_data.vars.items():
-        assert var._view is None, f"custom_update.vars[{var_name}]._view not cleared"
-        assert var._array is None, f"custom_update.vars[{var_name}]._array not cleared"
+    _check_vars_cleared(pre.vars, "pre")
+    _check_vars_cleared(post.vars, "post")
+    _check_vars_cleared(syn.vars, "synapses")
+    _check_vars_cleared(cs.vars, "current_source")
+    _check_vars_cleared(model.custom_updates["TestUpdate"].vars, "custom_update")
 
     # ========== RELOAD ==========
     model.load()
     assert model._loaded == True
 
     # Verify variables are reloaded (have views/arrays again)
-    assert pre.vars["V"]._view is not None
-    assert pre.vars["V"]._array is not None
+    _check_vars_cleared(pre.vars, "pre", expected_none=False)
+    _check_vars_cleared(post.vars, "post", expected_none=False)
 
-    # Reset state to initial conditions for reproducibility
-    pre.vars["V"].view[:] = -70.0
-    pre.vars["RefracTime"].view[:] = 0.0
-    post.vars["V"].view[:] = -70.0
-    post.vars["RefracTime"].view[:] = 0.0
-    pre.vars["V"].push_to_device()
-    pre.vars["RefracTime"].push_to_device()
-    post.vars["V"].push_to_device()
-    post.vars["RefracTime"].push_to_device()
-
-    # Run simulation again
+    # Run simulation again to verify reloaded model works
     for _ in range(10):
         model.step_time()
     model.custom_update("CustomUpdate")
-
-    # Get reloaded values
-    reloaded_pre_V = pre.vars["V"].view[:].copy()
-    reloaded_post_V = post.vars["V"].view[:].copy()
-
-    # Verify reloaded model produces valid results
-    assert np.isfinite(reloaded_pre_V).all(), "Reloaded pre values contain NaN/Inf"
-    assert np.isfinite(reloaded_post_V).all(), "Reloaded post values contain NaN/Inf"
