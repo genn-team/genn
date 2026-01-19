@@ -295,10 +295,21 @@ void PostSpan::genUpdate(EnvironmentExternalBase &env, PresynapticUpdateGroupMer
                 else { // DENSE
                     synEnv.add(Type::Uint32.addConst(), "id_post", "$(id)");
                 }
-       
-                // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
-                synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay",
-                           backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
+                
+                // If postsynaptic model is fused (so multiple synapse groups are accumulating inputs 
+                // in the same buffer) or connectivity is sparse (so multiple threads are accumulating
+                // inputs for the same postsynaptic neuron, use atomic operation to update dendritic delay buffer
+                if(sg.getArchetype().isPSModelFused()
+                   || (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE)) 
+                {
+                    synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay",
+                               backend.getAtomic(sg.getScalarType()) + "(&$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
+                }
+                // Otherwise, it's totally safe to update delays non-atomically
+                else {
+                    synEnv.add(Type::getAddToPrePostDelay(sg.getScalarType()), "addToPostDelay",
+                               "$(_den_delay)[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "] += $(0)");
+                }
                 
                 // If we should accumulate in register, add parameter to register
                 if(shouldAccumulateInRegister(sg)) {
