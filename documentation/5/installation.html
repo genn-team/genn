@@ -106,7 +106,9 @@ obtain a fresh installation of the NVIDIA CUDA toolkit from
 <a class="reference external" href="https://developer.nvidia.com/cuda-downloads">https://developer.nvidia.com/cuda-downloads</a>.
 Be sure to pick CUDA and C++ compiler versions which are compatible
 with each other. The latest C++ compiler need not necessarily be
-compatible with the latest CUDA toolkit.</p></li>
+compatible with the latest CUDA toolkit. Similarly, if your machine
+has an AMD GPU and you haven’t installed HIP yet, follow the instructions at
+<a class="reference external" href="https://rocm.docs.amd.com/projects/HIP/en/latest/install/install.html">https://rocm.docs.amd.com/projects/HIP/en/latest/install/install.html</a>.</p></li>
 <li><p>GeNN uses the <code class="docutils literal notranslate"><span class="pre">CUDA_PATH</span></code> environment variable to determine which
 version of CUDA to build against. On Windows, this is set automatically when
 installing CUDA. However, if you choose, you can verify which version is
@@ -114,30 +116,41 @@ selected by running <code class="docutils literal notranslate"><span class="pre"
 However, on Linux, you need to set <code class="docutils literal notranslate"><span class="pre">CUDA_PATH</span></code> manually with:
 <code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">CUDA_PATH=/usr/local/cuda</span></code>
 assuming CUDA is installed in /usr/local/cuda (the standard location
-on Ubuntu Linux). Again, to make this change persistent, this can
-be added to your login script (e.g. <code class="docutils literal notranslate"><span class="pre">.profile</span></code>, <code class="docutils literal notranslate"><span class="pre">.bash_profile</span></code> or <code class="docutils literal notranslate"><span class="pre">.bashrc</span></code>)</p></li>
-<li><p>Either download the latest release of GeNN and extract it into your
-home directory or clone using git from <a class="reference external" href="https://github.com/genn-team/genn">https://github.com/genn-team/genn</a></p></li>
+on Ubuntu Linux). Similarly, if you are using HIP, you need to set the
+<code class="docutils literal notranslate"><span class="pre">HIP_PATH</span></code> variable manually and also specify your platform with either
+<code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">HIP_PLATFORM='nvidia'</span></code> if you wish to use HIP with an NVIDIA GPU
+or <code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">HIP_PLATFORM='amd'</span></code> if you wish to use an AMD GPU.
+To make any of these changes persistent, these commands should be added to your login
+script (e.g. <code class="docutils literal notranslate"><span class="pre">.profile</span></code> or <code class="docutils literal notranslate"><span class="pre">.bashrc</span></code>).</p></li>
 <li><p>On Linux, install the development version of libffi. For example, on Ubuntu you can do this
 by running <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">libffi-dev</span></code>.</p></li>
-<li><p>Install the pybind11, psutil and numpy packages with pip, i.e. <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">pybind11</span> <span class="pre">psutil</span> <span class="pre">numpy</span></code>.</p></li>
 </ol>
 </section>
-<section id="building-with-setup-py">
-<h2>Building with setup.py<a class="headerlink" href="#building-with-setup-py" title="Link to this heading"></a></h2>
-<p>From the GeNN directory, the GeNN libraries and python package can be built
-with <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span></code>. If you wish to create an editable install
-(most useful if you are intending to modify GeNN yourself) you can also use
-<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">develop</span></code>. On Linux (or Windows if you have a debug version
-of the python libraries installed) you can build a debug version of GeNN with
-<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">build_ext</span> <span class="pre">--debug</span> <span class="pre">develop</span></code>.</p>
+<section id="installation-using-pip">
+<h2>Installation using pip<a class="headerlink" href="#installation-using-pip" title="Link to this heading"></a></h2>
+<p>The easiest way to install GeNN is directly from github using pip.
+First of all make sure pip is up to date using :
+<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-U</span> <span class="pre">pip</span></code>
+Then, to install the latest development version you can use:
+<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">https://github.com/genn-team/genn/archive/refs/heads/master.zip</span></code> or, to install the 5.3.0 release, you can use:
+<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">https://github.com/genn-team/genn/archive/refs/tags/5.3.0.zip</span></code>.</p>
 </section>
-<section id="building-with-pip">
-<h2>Building with pip<a class="headerlink" href="#building-with-pip" title="Link to this heading"></a></h2>
-<p>From the GeNN directory, the GeNN libraries and python package can be built
-with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code>. If you wish to create an editable install
-(most useful if you are intending to modify GeNN yourself) you can also use
-<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">--editable</span> <span class="pre">.</span></code>.</p>
+<section id="creating-an-editable-install-with-pip">
+<h2>Creating an editable install with pip<a class="headerlink" href="#creating-an-editable-install-with-pip" title="Link to this heading"></a></h2>
+<p>If you want to develop GeNN yourself or run userprojects from the GeNN repository, it is helpful to create an ‘editable’ install.
+The easiest way to do this to first ‘clone’ GeNN from github using <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/genn-team/genn.git</span></code>.
+Then, navigate to the GeNN directory and install using <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.</span></code>. If you wish to install the additional dependencies needed
+to run the userprojects, you can do so using <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.[userproject]</span></code>.</p>
+</section>
+<section id="building-with-setup-py-legacy">
+<h2>Building with setup.py (LEGACY)<a class="headerlink" href="#building-with-setup-py-legacy" title="Link to this heading"></a></h2>
+<p>Although it is not recommended, in order to build special development versions you sometimes need to install the old fashioned way!</p>
+<ol class="arabic simple">
+<li><p>Manually install PyGeNN’s build dependencies using pip i.e. <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">pybind11</span> <span class="pre">psutil</span> <span class="pre">pkgconfig</span> <span class="pre">setuptools&gt;=61</span></code>.</p></li>
+<li><p>Clone GeNN using git i.e. using <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/genn-team/genn.git</span></code></p></li>
+<li><p>From the GeNN directory, build PyGeNN using <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">develop</span></code>.
+You can build a debug version of GeNN with <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">build_ext</span> <span class="pre">--debug</span> <span class="pre">develop</span></code>.</p></li>
+</ol>
 </section>
 </section>
 

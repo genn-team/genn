@@ -204,10 +204,90 @@ called “X” to hold 100 elements which are initially all zero you could do th
 </pre></div>
 </div>
 </section>
+<section id="performance-profiling">
+<h2>Performance profiling<a class="headerlink" href="#performance-profiling" title="Link to this heading"></a></h2>
+<p>GeNN provides timers to profile the performance of different simulation phases.
+This is useful for identifying bottlenecks and optimizing your models.
+To enable timing measurements, set <a class="reference internal" href="source/pygenn.html#pygenn.ModelSpec.timing_enabled" title="pygenn.ModelSpec.timing_enabled"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ModelSpec.timing_enabled</span></code></a> to <code class="docutils literal notranslate"><span class="pre">True</span></code> before building the model:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">GeNNModel</span><span class="p">(</span><span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="s2">&quot;profiled_model&quot;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">timing_enabled</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="c1"># ... add populations and synapses ...</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Once timing is enabled, you can access timing counters after running the simulation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Run simulation</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">step_time</span><span class="p">()</span>
+
+<span class="c1"># Access timing counters (all return time in seconds)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Neuron update time: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">neuron_update_time</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Presynaptic update time: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">presynaptic_update_time</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Postsynaptic update time: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">postsynaptic_update_time</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Synapse dynamics time: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">synapse_dynamics_time</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="available-timing-properties">
+<h3>Available timing properties<a class="headerlink" href="#available-timing-properties" title="Link to this heading"></a></h3>
+<p>The following timing counters are available on <a class="reference internal" href="source/pygenn.html#pygenn.GeNNModel" title="pygenn.GeNNModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">GeNNModel</span></code></a>:</p>
+<dl class="py property">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">GeNNModel.</span></span><span class="sig-name descname"><span class="pre">neuron_update_time</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em></dt>
+<dd><p>Time in seconds spent in neuron update kernel.
+Only available if <a class="reference internal" href="source/pygenn.html#pygenn.ModelSpec.timing_enabled" title="pygenn.ModelSpec.timing_enabled"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ModelSpec.timing_enabled</span></code></a> is set</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">GeNNModel.</span></span><span class="sig-name descname"><span class="pre">init_time</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em></dt>
+<dd><p>Time in seconds spent initialisation kernel.
+Only available if <a class="reference internal" href="source/pygenn.html#pygenn.ModelSpec.timing_enabled" title="pygenn.ModelSpec.timing_enabled"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ModelSpec.timing_enabled</span></code></a> is set</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">GeNNModel.</span></span><span class="sig-name descname"><span class="pre">init_sparse_time</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em></dt>
+<dd><p>Time in seconds spent in sparse initialisation kernel.
+Only available if <a class="reference internal" href="source/pygenn.html#pygenn.ModelSpec.timing_enabled" title="pygenn.ModelSpec.timing_enabled"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ModelSpec.timing_enabled</span></code></a> is set</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">GeNNModel.</span></span><span class="sig-name descname"><span class="pre">presynaptic_update_time</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em></dt>
+<dd><p>Time in seconds spent in presynaptic update kernel.
+Only available if <a class="reference internal" href="source/pygenn.html#pygenn.ModelSpec.timing_enabled" title="pygenn.ModelSpec.timing_enabled"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ModelSpec.timing_enabled</span></code></a> is set</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">GeNNModel.</span></span><span class="sig-name descname"><span class="pre">postsynaptic_update_time</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em></dt>
+<dd><p>Time in seconds spent in postsynaptic update kernel.
+Only available if <a class="reference internal" href="source/pygenn.html#pygenn.ModelSpec.timing_enabled" title="pygenn.ModelSpec.timing_enabled"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ModelSpec.timing_enabled</span></code></a> is set</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">GeNNModel.</span></span><span class="sig-name descname"><span class="pre">synapse_dynamics_time</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em></dt>
+<dd><p>Time in seconds spent in synapse dynamics kernel.
+Only available if <a class="reference internal" href="source/pygenn.html#pygenn.ModelSpec.timing_enabled" title="pygenn.ModelSpec.timing_enabled"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ModelSpec.timing_enabled</span></code></a> is set</p>
+</dd></dl>
+
+<p>All timing values accumulate over the lifetime of the model and are returned in seconds.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Enabling timing adds synchronization overhead on GPU backends which may affect
+performance. Timing counters are only meaningful when <code class="docutils literal notranslate"><span class="pre">timing_enabled</span></code> is set to
+<code class="docutils literal notranslate"><span class="pre">True</span></code> before building the model.</p>
+</div>
+</section>
+</section>
 <section id="dynamic-parameters">
 <span id="section-dynamic-parameters"></span><h2>Dynamic parameters<a class="headerlink" href="#dynamic-parameters" title="Link to this heading"></a></h2>
 <p>As discussed previously, when building a model, parameters can be made dynamic e.g. by calling <a class="reference internal" href="source/pygenn.html#pygenn.NeuronGroup.set_param_dynamic" title="pygenn.NeuronGroup.set_param_dynamic"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pygenn.NeuronGroup.set_param_dynamic()</span></code></a> on a <a class="reference internal" href="source/pygenn.html#pygenn.NeuronGroup" title="pygenn.NeuronGroup"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronGroup</span></code></a>.
-The values of these parameters can then be set at runtime using the <code class="xref py py-meth docutils literal notranslate"><span class="pre">pygenn.GroupMixin.set_dynamic_param_value()</span></code> method. For example to increase the value of a
+The values of these parameters can then be set at runtime using the <a class="reference internal" href="source/pygenn.html#pygenn.genn_groups.GroupMixin.set_dynamic_param_value" title="pygenn.genn_groups.GroupMixin.set_dynamic_param_value"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pygenn.genn_groups.GroupMixin.set_dynamic_param_value()</span></code></a> method. For example to increase the value of a
 parameter called “tau” on a population <code class="docutils literal notranslate"><span class="pre">pop</span></code>, you could do the following:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">...</span>
 <span class="n">pop</span><span class="o">.</span><span class="n">set_param_dynamic</span><span class="p">(</span><span class="s2">&quot;tau&quot;</span><span class="p">)</span>
