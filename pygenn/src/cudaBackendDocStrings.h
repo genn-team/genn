@@ -105,6 +105,8 @@ $Parameter ``runtime``:
 
   runtime object)doc";
 
+static const char *__doc_CodeGenerator_CUDA_Backend_genAllocateMemPreamble = R"doc()doc";
+
 static const char *__doc_CodeGenerator_CUDA_Backend_genDefinitionsPreambleInternal = R"doc(Generate HIP/CUDA specific bits of definitions preamble)doc";
 
 static const char *__doc_CodeGenerator_CUDA_Backend_genKernelDimensions = R"doc()doc";
@@ -136,6 +138,8 @@ static const char *__doc_CodeGenerator_CUDA_Backend_genNMakefilePreamble = R"doc
 static const char *__doc_CodeGenerator_CUDA_Backend_genPopProfilerRange = R"doc(Generate code to pop the current profiler range marker)doc";
 
 static const char *__doc_CodeGenerator_CUDA_Backend_genPushProfilerRange = R"doc(Generate code to push a profiler range marker)doc";
+
+static const char *__doc_CodeGenerator_CUDA_Backend_getAllLanesShuffleMask = R"doc(Get mask to use for shuffle operations across all lanes)doc";
 
 static const char *__doc_CodeGenerator_CUDA_Backend_getAtomic = R"doc(Get name of atomic operation)doc";
 

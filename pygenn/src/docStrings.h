@@ -392,8 +392,6 @@ $Parameter ``count``:
 
         number of RNGs required)doc";
 
-static const char *__doc_CodeGenerator_BackendCUDAHIP_genAllocateMemPreamble = R"doc()doc";
-
 static const char *__doc_CodeGenerator_BackendCUDAHIP_genAssert = R"doc(On backends which support it, generate a runtime assert)doc";
 
 static const char *__doc_CodeGenerator_BackendCUDAHIP_genCustomUpdate = R"doc()doc";
@@ -441,6 +439,8 @@ static const char *__doc_CodeGenerator_BackendCUDAHIP_genSynapseUpdate = R"doc()
 static const char *__doc_CodeGenerator_BackendCUDAHIP_genTimer = R"doc()doc";
 
 static const char *__doc_CodeGenerator_BackendCUDAHIP_genWarpReduction = R"doc(Generate a warp reduction across getNumLanes lanes into lane 0)doc";
+
+static const char *__doc_CodeGenerator_BackendCUDAHIP_getAllLanesShuffleMask = R"doc(Get mask to use for shuffle operations across all lanes)doc";
 
 static const char *__doc_CodeGenerator_BackendCUDAHIP_getBlockID = R"doc(Get the ID of the current thread block)doc";
 

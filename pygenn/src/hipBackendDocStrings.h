@@ -29,6 +29,10 @@ static const char *__doc_CodeGenerator_HIP_Backend_Backend = R"doc()doc";
 
 static const char *__doc_CodeGenerator_HIP_Backend_areSharedMemAtomicsSlow = R"doc(On some older devices, shared memory atomics are actually slower than global memory atomics so should be avoided)doc";
 
+static const char *__doc_CodeGenerator_HIP_Backend_buildPopulationRNGEnvironment = R"doc(Generate a preamble to add substitution name for population RNG)doc";
+
+static const char *__doc_CodeGenerator_HIP_Backend_buildPopulationRNGEnvironment_2 = R"doc(Add $(_rng) to environment based on $(_rng_internal) field with any initialisers and destructors required)doc";
+
 static const char *__doc_CodeGenerator_HIP_Backend_createArray =
 R"doc(Create backend-specific array object
 
@@ -55,6 +59,8 @@ $Parameter ``runtime``:
 
   runtime object)doc";
 
+static const char *__doc_CodeGenerator_HIP_Backend_genAllocateMemPreamble = R"doc()doc";
+
 static const char *__doc_CodeGenerator_HIP_Backend_genDefinitionsPreambleInternal = R"doc(Generate HIP/CUDA specific bits of definitions preamble)doc";
 
 static const char *__doc_CodeGenerator_HIP_Backend_genKernelDimensions = R"doc()doc";
@@ -77,6 +83,16 @@ static const char *__doc_CodeGenerator_HIP_Backend_genMakefileLinkRule = R"doc()
 
 static const char *__doc_CodeGenerator_HIP_Backend_genMakefilePreamble = R"doc()doc";
 
+static const char *__doc_CodeGenerator_HIP_Backend_genNMakefileCompileRule = R"doc()doc";
+
+static const char *__doc_CodeGenerator_HIP_Backend_genNMakefileLinkRule = R"doc()doc";
+
+static const char *__doc_CodeGenerator_HIP_Backend_genNMakefilePreamble = R"doc()doc";
+
+static const char *__doc_CodeGenerator_HIP_Backend_genPopulationRNGInit = R"doc(For SIMT backends which initialize RNGs on device, initialize population RNG with specified seed and sequence)doc";
+
+static const char *__doc_CodeGenerator_HIP_Backend_getAllLanesShuffleMask = R"doc(Get mask to use for shuffle operations across all lanes)doc";
+
 static const char *__doc_CodeGenerator_HIP_Backend_getAtomic = R"doc(Get name of atomic operation)doc";
 
 static const char *__doc_CodeGenerator_HIP_Backend_getChosenDeviceID = R"doc()doc";
@@ -97,6 +113,8 @@ This is typically used for warp-shuffle algorithms)doc";
 
 static const char *__doc_CodeGenerator_HIP_Backend_getPopulationRNGInternalType = R"doc(Get internal type population RNG gets loaded into)doc";
 
+static const char *__doc_CodeGenerator_HIP_Backend_getPopulationRNGType = R"doc(Get type of population RNG)doc";
+
 static const char *__doc_CodeGenerator_HIP_Backend_getRNGFunctions = R"doc(Get library of RNG functions to use)doc";
 
 static const char *__doc_CodeGenerator_HIP_Backend_getRuntimeVersion = R"doc()doc";
@@ -106,6 +124,8 @@ static const char *__doc_CodeGenerator_HIP_Backend_m_ChosenDevice = R"doc()doc";
 static const char *__doc_CodeGenerator_HIP_Backend_m_ChosenDeviceID = R"doc()doc";
 
 static const char *__doc_CodeGenerator_HIP_Backend_m_RuntimeVersion = R"doc()doc";
+
+static const char *__doc_CodeGenerator_HIP_Backend_shouldUseNMakeBuildSystem = R"doc()doc";
 
 static const char *__doc_CodeGenerator_HIP_Optimiser_createBackend = R"doc()doc";
 
@@ -119,7 +139,9 @@ Each of the four modules which includes CUDA headers(neuronUpdate, synapseUpdate
 Takes 72 bytes of constant memory for a lookup table used by cuRAND. If your application requires
 additional constant cache, increase this)doc";
 
-static const char *__doc_CodeGenerator_HIP_Preferences_manualBlockSizes = R"doc(If block size select method is set to BlockSizeSelect::MANUAL, block size to use for each kernel)doc";
+static const char *__doc_CodeGenerator_HIP_Preferences_manualBlockSizes =
+R"doc(If block size select method is set to BlockSizeSelect::MANUAL, block size to use for each kernel
+These default to zero which signals the HIP backend to replace them with the device warp size.)doc";
 
 static const char *__doc_CodeGenerator_HIP_Preferences_manualDeviceID = R"doc(If device select method is set to DeviceSelect::MANUAL, id of device to use)doc";
 
