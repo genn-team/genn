@@ -156,12 +156,12 @@ Performance profiling
 ---------------------
 GeNN provides timers to profile the performance of different simulation phases.
 This is useful for identifying bottlenecks and optimizing your models.
-To enable timing measurements, set :attr:`.ModelSpec.timing` to ``True`` before building the model:
+To enable timing measurements, set :attr:`.ModelSpec.timing_enabled` to ``True`` before building the model:
 
 ..  code-block:: python
 
     model = GeNNModel("float", "profiled_model")
-    model.timing = True
+    model.timing_enabled = True
 
     # ... add populations and synapses ...
 
@@ -209,7 +209,7 @@ All timing values accumulate over the lifetime of the model and are returned in 
 ..  note::
 
     Enabling timing adds synchronization overhead on GPU backends which may affect
-    performance. Timing counters are only meaningful when ``timing`` is set to
+    performance. Timing counters are only meaningful when ``timing_enabled`` is set to
     ``True`` before building the model.
 
 .. _section-dynamic-parameters:
@@ -218,7 +218,7 @@ All timing values accumulate over the lifetime of the model and are returned in 
 Dynamic parameters
 ------------------
 As discussed previously, when building a model, parameters can be made dynamic e.g. by calling :meth:`pygenn.NeuronGroup.set_param_dynamic` on a :class:`.NeuronGroup`.
-The values of these parameters can then be set at runtime using the :meth:`pygenn.GroupMixin.set_dynamic_param_value` method. For example to increase the value of a
+The values of these parameters can then be set at runtime using the :meth:`pygenn.genn_groups.GroupMixin.set_dynamic_param_value` method. For example to increase the value of a
 parameter called "tau" on a population ``pop``, you could do the following:
 
 ..  code-block:: python
