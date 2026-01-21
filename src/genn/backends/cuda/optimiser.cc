@@ -494,9 +494,8 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     }
     else {
         throw std::runtime_error(
-        "CUDA_PATH environment variable not set. "
-        "Please ensure the CUDA toolkit is installed and CUDA_PATH points to its root directory."
-);
+            "CUDA_PATH environment variable not set. Please ensure the CUDA "
+            "toolkit is installed and CUDA_PATH points to its root directory.");
     }
 
     // Arrays of kernel attributes gathered across block sizes
