@@ -1,0 +1,114 @@
+name: GeNN CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [Ubuntu-latest, windows-latest, macos-latest]
+        # Focus on CPU backend for now, exclude CUDA and AMD
+        backend: [cpu]  # Placeholder for CPU-only testing
+      exclude:
+        - os: macos-latest
+          backend: cpu  # Exclude macOS if CPU testing isn’t viable yet (adjust based on feedback)
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies (Ubuntu)
+        if: matrix.os == 'Ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3 python3-pip libgtest-dev libffi-dev
+
+      - name: Install system dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install python --version=3.9
+          pip install --upgrade pip
+
+      - name: Install system dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install python libomp libffi
+          export LDFLAGS="-L/opt/homebrew/opt/libomp/lib -L/opt/homebrew/opt/libffi/lib"
+          export CPPFLAGS="-I/opt/homebrew/opt/libomp/include -I/opt/homebrew/opt/libffi/include"
+          export PKG_CONFIG_PATH="/opt/homebrew/opt/libffi/lib/pkgconfig"
+          export PATH="/opt/homebrew/opt/python@3.13/libexec/bin:$PATH"
+          python3 --version
+
+      - name: Download Google Test
+        run: |
+          curl -L -o release-1.11.0.zip https://github.com/google/googletest/archive/refs/tags/release-1.11.0.zip
+          unzip release-1.11.0.zip
+          mv googletest-release-1.11.0 googletest
+
+      - name: Build GeNN and Unit Tests (Unix)
+        if: matrix.os != 'windows-latest'
+        env:
+          GTEST_DIR: ${{ github.workspace }}/googletest/googletest
+        run: |
+          # Debug: List directory contents
+          ls -la ${{ github.workspace }}
+          # Create build directory and run make directly
+          mkdir -p build
+          cd build
+          make -j$(nproc) -C ${{ github.workspace }}/tests/unit clean all COVERAGE=1
+          ./test_coverage --gtest_output=xml:test_results_unit.xml
+
+      - name: Build GeNN and Unit Tests (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: cmd
+        run: |
+          mkdir build
+          cd build
+          msbuild ${{ github.workspace }}\genn.sln /m /t:single_threaded_cpu_backend /p:Configuration=Release
+          msbuild ${{ github.workspace }}\tests\tests.sln /m /p:Configuration=Release
+          cd tests/unit
+          unit_Release.exe --gtest_output="xml:test_results_unit.xml"
+
+      - name: Set up Python virtualenv
+        run: |
+          python3 -m venv venv
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            source venv/Scripts/activate
+          else
+            source venv/bin/activate
+          fi
+          pip install numpy scipy pybind11 pytest flaky pytest-cov wheel flake8 bitarray psutil
+
+      - name: Install PyGeNN
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            source venv/Scripts/activate
+          else
+            source venv/bin/activate
+          fi
+          python setup.py develop --coverage
+
+      - name: Run Python Feature Tests
+        working-directory: tests/features
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            source ../../venv/Scripts/activate
+          else
+            source ../../venv/bin/activate
+          fi
+          pytest -s -v --cov ../../pygenn --cov-report=xml:coverage_python.xml --junitxml=test_results_feature.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}-${{ backend }}
+          path: |
+            tests/unit/test_results_unit.xml
+            tests/features/test_results_feature.xml
