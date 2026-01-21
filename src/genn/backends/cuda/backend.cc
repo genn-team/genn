@@ -399,7 +399,10 @@ bool Backend::shouldUseNMakeBuildSystem() const
         return !(filesystem::path(cudaPath) / "extras" / "visual_studio_integration" / "MSBuildExtensions" / propsFile).exists();
     }
     else {
-        throw std::runtime_error("CUDA_PATH environment variable not set - ");
+        throw std::runtime_error(
+            "CUDA_PATH environment variable not set. "
+            "Please ensure the CUDA toolkit is installed and CUDA_PATH points to its root directory."
+);
     }
 }
 //--------------------------------------------------------------------------
