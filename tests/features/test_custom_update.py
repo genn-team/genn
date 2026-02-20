@@ -548,7 +548,7 @@ def test_custom_update_internal_spike_count(make_model, backend, precision, batc
         init_sparse_connectivity("OneToOne"))
     s_pop_delay.axonal_delay_steps = 5
 
-    # Add one custom update to crete
+    # Add custom updates to zero spike counts
     model.add_custom_update(
         "ZeroSpikeCount", "Reset", zero_spike_count_model,
         {}, {}, {"SpikeCount": create_src_spike_count_var_ref(s_pop)})
