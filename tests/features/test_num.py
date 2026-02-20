@@ -199,8 +199,9 @@ def test_num(make_model, backend, precision, batch_size):
         v.pull_from_device()
         
         # Check p-value exceed our confidence internal
-        if not np.allclose(v.values, val):
-            assert False, f"'{v.group.name}' '{v.name}' has wrong value ({v.values} rather than {val}"
+        assert np.allclose(
+            v.values, val
+        ), f"'{v.group.name}' '{v.name}' has wrong value ({v.values} rather than {val})"
 
     # Simulate one timestep
     model.step_time()
@@ -211,5 +212,6 @@ def test_num(make_model, backend, precision, batch_size):
         v.pull_from_device()
         
         # Check variables are now updated to DOUBLE value
-        if not np.allclose(v.values, val * 2):
-            assert False, f"'{v.group.name}' '{v.name}' has wrong value ({v.values} rather than {val}"
+        assert np.allclose(
+            v.values, val * 2
+        ), f"'{v.group.name}' '{v.name}' has wrong value ({v.values} rather than {val * 2})"
