@@ -532,6 +532,7 @@ def test_custom_update_internal_spike_count(make_model, backend, precision, batc
     post_n_pop = model.add_neuron_population("PostNeurons", 10, empty_neuron_model)
     
     # Connect with one-to-one connectivity and exponential synapse
+    # **NOTE** exponential synapses required so out_post doens't get zeroed
     s_pop = model.add_synapse_population(
         "Synapses", "SPARSE",
         pre_n_pop, post_n_pop,
@@ -563,8 +564,10 @@ def test_custom_update_internal_spike_count(make_model, backend, precision, batc
     # Simulate timestep where spikes will be emitted
     model.step_time()
 
+    # Run reset to zero all spike counts
     model.custom_update("Reset")
-    # Simulate for 6 more timesteps to ensure delay buffers has been fully processed
+
+    # Simulate for 10 more timesteps to ensure no PSCs occur
     for i in range(10):
         model.step_time()
 
