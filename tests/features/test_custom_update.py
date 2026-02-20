@@ -12,6 +12,7 @@ from pygenn import (create_current_source_model,
                     create_out_post_var_ref,
                     create_postsynaptic_model,
                     create_prev_spike_time_var_ref,
+                    create_src_spike_count_var_ref,
                     create_spike_time_var_ref,
                     create_weight_update_model,
                     create_var_ref,
@@ -380,6 +381,14 @@ def test_custom_update_internal(make_model, backend, precision, batch_size):
         ST = {st_init};
         PrevST = {st_init};
         """)
+    
+    zero_spike_count_model = create_custom_update_model(
+        "zero_spike_count",
+        var_refs=[("SpikeCount", "uint32_t", VarAccessMode.BROADCAST)],
+        update_code=
+        """
+        SpikeCount = 0;
+        """)
 
     weight_update_model = create_weight_update_model(
         "weight_update",
@@ -446,6 +455,15 @@ def test_custom_update_internal(make_model, backend, precision, batch_size):
         "ZeroSTDelay", "Reset", reset_st_custom_update_model,
         {}, {}, {"ST": create_spike_time_var_ref(pre_n_pop_2),
                  "PrevST": create_prev_spike_time_var_ref(pre_n_pop_2)})
+    
+    model.add_custom_update(
+        "ZeroSpikeCount", "Reset", zero_spike_count_model,
+        {}, {}, {"SpikeCount": create_src_spike_count_var_ref(s_pop)})
+ 
+    model.add_custom_update(
+        "ZeroSpikeCountDelay", "Reset", zero_spike_count_model,
+        {}, {}, {"SpikeCount": create_src_spike_count_var_ref(s_pop_spike_time_delay)})
+
 
     # Build model and load
     model.build()
