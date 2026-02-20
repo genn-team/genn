@@ -381,14 +381,6 @@ def test_custom_update_internal(make_model, backend, precision, batch_size):
         ST = {st_init};
         PrevST = {st_init};
         """)
-    
-    zero_spike_count_model = create_custom_update_model(
-        "zero_spike_count",
-        var_refs=[("SpikeCount", "uint32_t", VarAccessMode.BROADCAST)],
-        update_code=
-        """
-        SpikeCount = 0;
-        """)
 
     weight_update_model = create_weight_update_model(
         "weight_update",
@@ -403,9 +395,9 @@ def test_custom_update_internal(make_model, backend, precision, batch_size):
     model.batch_size = batch_size
     
     # Create pre and postsynaptic populations
-    pre_n_pop = model.add_neuron_population("PreNeurons", 100, neuron_model);
-    pre_n_pop_2 = model.add_neuron_population("PreNeurons2", 100, neuron_model);
-    post_n_pop = model.add_neuron_population("PostNeurons", 100, empty_neuron_model); 
+    pre_n_pop = model.add_neuron_population("PreNeurons", 100, neuron_model)
+    pre_n_pop_2 = model.add_neuron_population("PreNeurons2", 100, neuron_model)
+    post_n_pop = model.add_neuron_population("PostNeurons", 100, empty_neuron_model)
     
     # Connect with one-to-one connectivity and exponential synapse
     s_pop = model.add_synapse_population(
@@ -455,15 +447,6 @@ def test_custom_update_internal(make_model, backend, precision, batch_size):
         "ZeroSTDelay", "Reset", reset_st_custom_update_model,
         {}, {}, {"ST": create_spike_time_var_ref(pre_n_pop_2),
                  "PrevST": create_prev_spike_time_var_ref(pre_n_pop_2)})
-    
-    model.add_custom_update(
-        "ZeroSpikeCount", "Reset", zero_spike_count_model,
-        {}, {}, {"SpikeCount": create_src_spike_count_var_ref(s_pop)})
- 
-    model.add_custom_update(
-        "ZeroSpikeCountDelay", "Reset", zero_spike_count_model,
-        {}, {}, {"SpikeCount": create_src_spike_count_var_ref(s_pop_spike_time_delay)})
-
 
     # Build model and load
     model.build()
@@ -521,6 +504,76 @@ def test_custom_update_internal(make_model, backend, precision, batch_size):
         assert np.allclose(s_pop.out_post.view, 0.0)
         assert np.allclose(s_pop_den_delay.out_post.view, 0.0)
 
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_custom_update_internal_spike_count(make_model, backend, precision, batch_size):
+    # Create neuron model to spike in first time step
+    neuron_model = create_neuron_model(
+        "neuron_model",
+        threshold_condition_code=
+        """
+        round(t) == 0.0
+        """)
+    
+    zero_spike_count_model = create_custom_update_model(
+        "zero_spike_count",
+        var_refs=[("SpikeCount", "uint32_t", VarAccessMode.BROADCAST)],
+        update_code=
+        """
+        SpikeCount = 0;
+        """)
+
+    model = make_model(precision, "test_custom_update_internal_spike_count", backend=backend)
+    model.dt = 1.0
+    model.batch_size = batch_size
+    
+    # Create pre and postsynaptic populations
+    pre_n_pop = model.add_neuron_population("PreNeurons", 10, neuron_model)
+    pre_n_pop_2 = model.add_neuron_population("PreNeurons2", 10, neuron_model)
+    post_n_pop = model.add_neuron_population("PostNeurons", 10, empty_neuron_model)
+    
+    # Connect with one-to-one connectivity and exponential synapse
+    s_pop = model.add_synapse_population(
+        "Synapses", "SPARSE",
+        pre_n_pop, post_n_pop,
+        init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
+        init_postsynaptic("ExpCurr", {"tau": 10.0}),
+        init_sparse_connectivity("OneToOne"))
+
+    s_pop_delay = model.add_synapse_population(
+        "DelaySynapses", "SPARSE",
+        pre_n_pop_2, post_n_pop,
+        init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
+        init_postsynaptic("ExpCurr", {"tau": 10.0}),
+        init_sparse_connectivity("OneToOne"))
+    s_pop_delay.axonal_delay_steps = 5
+
+    # Add one custom update to crete
+    model.add_custom_update(
+        "ZeroSpikeCount", "Reset", zero_spike_count_model,
+        {}, {}, {"SpikeCount": create_src_spike_count_var_ref(s_pop)})
+ 
+    model.add_custom_update(
+        "ZeroSpikeCountDelay", "Reset", zero_spike_count_model,
+        {}, {}, {"SpikeCount": create_src_spike_count_var_ref(s_pop_delay)})
+
+    # Build model and load
+    model.build()
+    model.load()
+
+    # Simulate timestep where spikes will be emitted
+    model.step_time()
+
+    model.custom_update("Reset")
+    # Simulate for 6 more timesteps to ensure delay buffers has been fully processed
+    for i in range(10):
+        model.step_time()
+
+        # Check out_post is zeroed
+        s_pop.out_post.pull_from_device()
+        s_pop_delay.out_post.pull_from_device()
+        assert np.allclose(s_pop.out_post.view, 0.0)
+        assert np.allclose(s_pop_delay.out_post.view, 0.0)
+        
 
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_custom_update_transpose(make_model, backend, precision, batch_size):
@@ -538,8 +591,8 @@ def test_custom_update_transpose(make_model, backend, precision, batch_size):
     model.batch_size = batch_size
     
     # Create pre and postsynaptic populations
-    pre_n_pop = model.add_neuron_population("PreNeurons", 100, empty_neuron_model); 
-    post_n_pop = model.add_neuron_population("PostNeurons", 100, empty_neuron_model); 
+    pre_n_pop = model.add_neuron_population("PreNeurons", 100, empty_neuron_model)
+    post_n_pop = model.add_neuron_population("PostNeurons", 100, empty_neuron_model)
     
     # Create forward and transpose synapse populations between populations
     g = (np.random.normal(size=(batch_size, 100 * 100)) if batch_size > 1 
@@ -684,7 +737,7 @@ def test_custom_update_batch_reduction(make_model, backend, precision, batch_siz
     model.batch_size = batch_size
     
     # Create a variety of models to attach custom updates to
-    ss_pop = model.add_neuron_population("SpikeSource", 10, empty_neuron_model);
+    ss_pop = model.add_neuron_population("SpikeSource", 10, empty_neuron_model)
     
     x_n = (np.random.uniform(high=100.0, size=(batch_size, 100)) if batch_size > 1
            else np.random.uniform(high=100.0, size=100))
