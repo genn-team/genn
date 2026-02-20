@@ -32,7 +32,8 @@ Type::UnresolvedType VarReference::getVarType() const
         Utils::Overload{
             [](const InternalSGRef &ref) 
             {
-                return (ref.type == InternalSGRef::Type::SPIKE_COUNT) ? Type::Uint32 : Type::UnresolvedType("scalar"); 
+                return Type::UnresolvedType((ref.type == InternalSGRef::Type::SPIKE_COUNT) 
+                                            ? "uint32_t" : "scalar"); 
             },
             [](const InternalNGRef&) { return Type::UnresolvedType("timepoint"); },
             [](const auto &ref){ return ref.var.type; }},
