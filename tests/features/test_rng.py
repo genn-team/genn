@@ -164,8 +164,8 @@ def test_init(make_model, backend, precision):
         
     model = make_model(precision, "test_init", backend=backend)
 
-    ss1_pop = model.add_neuron_population("SpikeSource1", 1, empty_neuron_model);
-    ss2_pop = model.add_neuron_population("SpikeSource2", 50000, empty_neuron_model);
+    ss1_pop = model.add_neuron_population("SpikeSource1", 1, empty_neuron_model)
+    ss2_pop = model.add_neuron_population("SpikeSource2", 50000, empty_neuron_model)
     
     # Create populations with randomly-initialised variables
     n_pop = model.add_neuron_population("Neurons", 50000, nop_neuron_model, {}, init_vars())

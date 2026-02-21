@@ -175,6 +175,12 @@ inline Models::VarReference createWUPostVarRef(SynapseGroup *sg, const std::stri
     return Models::VarReference::createWUPostVarRef(sg, varName);
 }
 
+//! Creates a reference to a synapse group's input spike count
+inline Models::VarReference createSrcSpikeCountVarRef(SynapseGroup *sg)
+{
+    return Models::VarReference::createSrcSpikeCountVarRef(sg);
+}
+
 //! Creates a reference to a synapse group's postsynaptic output buffer
 inline Models::VarReference createOutPostVarRef(SynapseGroup *sg)
 {

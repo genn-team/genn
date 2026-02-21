@@ -400,6 +400,7 @@ PYBIND11_MODULE(_genn, m)
     m.def("create_pre_var_ref", &createPreVarRef, pybind11::return_value_policy::move, DOC(createPreVarRef));
     m.def("create_post_var_ref", &createPostVarRef, pybind11::return_value_policy::move, DOC(createPostVarRef));
     m.def("create_out_post_var_ref", &createOutPostVarRef, pybind11::return_value_policy::move, DOC(createOutPostVarRef));
+    m.def("create_src_spike_count_var_ref", &createSrcSpikeCountVarRef, pybind11::return_value_policy::move, DOC(createSrcSpikeCountVarRef));
     m.def("create_den_delay_var_ref", &createDenDelayVarRef, pybind11::return_value_policy::move, DOC(createDenDelayVarRef));    
     m.def("create_spike_time_var_ref", &createSpikeTimeVarRef, pybind11::return_value_policy::move, DOC(createSpikeTimeVarRef));
     m.def("create_prev_spike_time_var_ref", &createPrevSpikeTimeVarRef, pybind11::return_value_policy::move, DOC(createPrevSpikeTimeVarRef));    

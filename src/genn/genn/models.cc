@@ -30,7 +30,11 @@ Type::UnresolvedType VarReference::getVarType() const
 {
     return std::visit(
         Utils::Overload{
-            [](const InternalSGRef&) { return Type::UnresolvedType("scalar"); },
+            [](const InternalSGRef &ref) 
+            {
+                return Type::UnresolvedType((ref.type == InternalSGRef::Type::SPIKE_COUNT) 
+                                            ? "uint32_t" : "scalar"); 
+            },
             [](const InternalNGRef&) { return Type::UnresolvedType("timepoint"); },
             [](const auto &ref){ return ref.var.type; }},
         m_Detail);
@@ -64,9 +68,12 @@ VarAccessDim VarReference::getVarDims() const
                 return static_cast<VarAccessDim>(static_cast<unsigned int>(VarAccessDim::ELEMENT) | static_cast<unsigned int>(VarAccessDim::BATCH));
             },
             // Otherwise, if reference is internal
-            [](const InternalSGRef&) 
+            [](const InternalSGRef &ref) 
             {
-                return static_cast<VarAccessDim>(static_cast<unsigned int>(VarAccessDim::ELEMENT) | static_cast<unsigned int>(VarAccessDim::BATCH));
+                return static_cast<VarAccessDim>(
+                    (ref.type == InternalSGRef::Type::SPIKE_COUNT) 
+                    ? static_cast<unsigned int>(VarAccessDim::BATCH)
+                    : static_cast<unsigned int>(VarAccessDim::ELEMENT) | static_cast<unsigned int>(VarAccessDim::BATCH));
             },
             // Otherwise, use dimensionality directly
             [](const auto &ref) { return getVarAccessDim(ref.var.access); }},
@@ -91,6 +98,9 @@ std::string VarReference::getVarName() const
                 if(ref.type == InternalSGRef::Type::OUT_POST) {
                     return "outPost";
                 }
+                else if(ref.type == InternalSGRef::Type::SPIKE_COUNT) {
+                    return "SpkCnt";
+                }
                 else {
                     return "denDelay";
                 }
@@ -112,7 +122,15 @@ unsigned int VarReference::getNumNeurons() const
             [](const CCUPreRef &ref) { return ref.group->getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); },
             [](const CCUPostRef &ref) { return ref.group->getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); },
             [](const InternalNGRef &ref) { return ref.group->getNumNeurons(); },
-            [](const InternalSGRef &ref) { return ref.group->getTrgNeuronGroup()->getNumNeurons(); }},
+            [](const InternalSGRef &ref) 
+            { 
+                if(ref.type == InternalSGRef::Type::SPIKE_COUNT) {
+                    return ref.group->getSrcNeuronGroup()->getNumNeurons(); 
+                }
+                else {
+                    return ref.group->getTrgNeuronGroup()->getNumNeurons(); 
+                }
+            }},
         m_Detail);
 }
 //----------------------------------------------------------------------------
@@ -133,13 +151,6 @@ bool VarReference::isTargetSynapseGroupPSM(const SynapseGroupInternal *sg) const
             [](const auto&) { return false; }},
         m_Detail);
 }
-/*// PSM variables are only delayed if they are referenced in synapse code and either
-        // there is a homogeneous backpropation delay or they are referenced with a heterogeneous delay
-        if(m_SG.isPSMVarQueueRequired(varName) 
-           && (m_SG.getBackPropDelaySteps() != 0 || m_SG.isPSMVarHeterogeneouslyDelayed(varName))) 
-        {
-            return m_SG.getTrgNeuronGroup()->getNumDelaySlots();
-        }*/
 //----------------------------------------------------------------------------
 NeuronGroup *VarReference::getDelayNeuronGroup() const
 { 
@@ -163,6 +174,14 @@ NeuronGroup *VarReference::getDelayNeuronGroup() const
             },
             [](const InternalNGRef &ref)->NeuronGroup* {
                 return ref.group->isSpikeQueueRequired() ? ref.group : nullptr;
+            },
+            [](const InternalSGRef &ref)->NeuronGroup* {
+                if(ref.type == InternalSGRef::Type::SPIKE_COUNT) {
+                    return ref.group->getSrcNeuronGroup()->isSpikeQueueRequired() ? ref.group->getSrcNeuronGroup() : nullptr;
+                }
+                else {
+                    return nullptr;
+                }
             },
             [](const auto&)->NeuronGroup* { return nullptr; }},
         m_Detail);
@@ -205,6 +224,9 @@ const Runtime::ArrayBase *VarReference::getTargetArray(const Runtime::Runtime &r
             {
                 if(ref.type == InternalSGRef::Type::OUT_POST) {
                     return runtime.getArray(ref.group->getFusedPSTarget(), "outPost");
+                }
+                else if(ref.type == InternalSGRef::Type::SPIKE_COUNT) {
+                    return runtime.getFusedSrcSpikeArray(*ref.group, "SpkCnt");
                 }
                 else {
                     return runtime.getArray(ref.group->getFusedPSTarget(), "denDelay");
@@ -329,6 +351,12 @@ VarReference VarReference::createOutPostVarRef(SynapseGroup *sg)
                                       InternalSGRef::Type::OUT_POST});
 }
 //----------------------------------------------------------------------------
+VarReference VarReference::createSrcSpikeCountVarRef(SynapseGroup *sg)
+{
+    return VarReference(InternalSGRef{static_cast<SynapseGroupInternal*>(sg),
+                                      InternalSGRef::Type::SPIKE_COUNT});
+}
+//----------------------------------------------------------------------------
 VarReference VarReference::createDenDelayVarRef(SynapseGroup *sg)
 {
     auto *sgInternal = static_cast<SynapseGroupInternal*>(sg);
@@ -361,7 +389,12 @@ const std::string &VarReference::getTargetName() const
             [](const WUPostRef &ref) { return std::cref(ref.group->getFusedWUPostTarget().getName()); },
             [](const InternalSGRef &ref) 
             {
-                return std::cref(ref.group->getFusedPSTarget().getName());
+                if(ref.type == InternalSGRef::Type::SPIKE_COUNT) {
+                    return std::cref(ref.group->getFusedSpikeTarget(ref.group->getSrcNeuronGroup()).getName());
+                }
+                else {
+                    return std::cref(ref.group->getFusedPSTarget().getName());
+                }
             },
             [](const auto &ref) { return std::cref(ref.group->getName()); }},
         m_Detail);

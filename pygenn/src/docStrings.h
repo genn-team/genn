@@ -2670,6 +2670,8 @@ static const char *__doc_Models_VarReference_InternalSGRef_Type_DEN_DELAY = R"do
 
 static const char *__doc_Models_VarReference_InternalSGRef_Type_OUT_POST = R"doc()doc";
 
+static const char *__doc_Models_VarReference_InternalSGRef_Type_SPIKE_COUNT = R"doc()doc";
+
 static const char *__doc_Models_VarReference_InternalSGRef_group = R"doc()doc";
 
 static const char *__doc_Models_VarReference_InternalSGRef_type = R"doc()doc";
@@ -2697,6 +2699,8 @@ static const char *__doc_Models_VarReference_createPreVarRef = R"doc()doc";
 static const char *__doc_Models_VarReference_createPrevSpikeTimeVarRef = R"doc()doc";
 
 static const char *__doc_Models_VarReference_createSpikeTimeVarRef = R"doc()doc";
+
+static const char *__doc_Models_VarReference_createSrcSpikeCountVarRef = R"doc()doc";
 
 static const char *__doc_Models_VarReference_createVarRef = R"doc()doc";
 
@@ -5004,6 +5008,8 @@ static const char *__doc_createPreVarRef = R"doc(Creates a reference to a presyn
 static const char *__doc_createPrevSpikeTimeVarRef = R"doc(Creates a reference to a neuron group's previous spike times)doc";
 
 static const char *__doc_createSpikeTimeVarRef = R"doc(Creates a reference to a neuron group's spike times)doc";
+
+static const char *__doc_createSrcSpikeCountVarRef = R"doc(Creates a reference to a synapse group's input spike count)doc";
 
 static const char *__doc_createVarRef = R"doc(Creates a reference to a neuron group variable.)doc";
 

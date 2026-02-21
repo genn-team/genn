@@ -219,6 +219,7 @@ public:
     static VarReference createPSMVarRef(SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPreVarRef(SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPostVarRef(SynapseGroup *sg, const std::string &varName);
+    static VarReference createSrcSpikeCountVarRef(SynapseGroup *sg);
     static VarReference createOutPostVarRef(SynapseGroup *sg);
     static VarReference createDenDelayVarRef(SynapseGroup *sg);
     static VarReference createSpikeTimeVarRef(NeuronGroup *ng);
@@ -249,6 +250,7 @@ private:
         {
             OUT_POST,
             DEN_DELAY,
+            SPIKE_COUNT,
         };
 
         SynapseGroupInternal *group;

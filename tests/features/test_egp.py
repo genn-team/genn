@@ -66,7 +66,7 @@ def test_egp_var_init(make_model, backend, precision):
     
     model = make_model(precision, "test_egp_var_init", backend=backend)
 
-    ss_pop = model.add_neuron_population("SpikeSource", 20, empty_neuron_model);
+    ss_pop = model.add_neuron_population("SpikeSource", 20, empty_neuron_model)
     
     # Create populations with randomly-initialised variables
     correct = np.arange(10.0)
