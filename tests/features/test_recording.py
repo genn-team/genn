@@ -132,3 +132,65 @@ def test_event_recording(make_model, backend, precision, batch_size):
     # Verify spikes and spike_events are recorded correctly
     compare_events(rec_spikes, spike_times, spike_ids)
     compare_events(rec_spike_events, spike_times, spike_ids)
+
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_spike_recording_does_not_enable_event_recording(make_model, backend, precision, batch_size):
+    model = make_model(precision, "test_spike_recording_no_event", backend=backend)
+    model.dt = 1.0
+    model.batch_size = batch_size
+
+    ss_end_spikes = np.empty((batch_size, 10), dtype=int)
+    ss_start_spikes = np.empty((batch_size, 10), dtype=int)
+
+    spike_times = []
+    id_offset = 0
+    for b in range(batch_size):
+        ids = np.arange(10)
+        times = b + ids.astype(float)
+
+        spike_times.append(times)
+
+        ss_end_spikes[b, :] = id_offset + np.cumsum(np.ones(10, dtype=int))
+        ss_start_spikes[b, 0] = id_offset
+        ss_start_spikes[b, 1:] = ss_end_spikes[b, :-1]
+
+        id_offset += 10
+
+    # Spike source (recording ENABLED)
+    ss = model.add_neuron_population(
+        "SpikeSource", 10, "SpikeSourceArray",
+        {}, {"startSpike": ss_start_spikes, "endSpike": ss_end_spikes}
+    )
+    ss.extra_global_params["spikeTimes"].set_init_values(np.concatenate(spike_times))
+    ss.spike_recording_enabled = True
+
+    # Spike-event source (recording NOT enabled)
+    es = model.add_neuron_population(
+        "SpikeEventSource", 10, spike_event_source_array_model,
+        {}, {"startSpike": ss_start_spikes, "endSpike": ss_end_spikes, "output": False}
+    )
+    es.extra_global_params["spikeTimes"].set_init_values(np.concatenate(spike_times))
+
+    post = model.add_neuron_population("Post", 1, empty_neuron_model)
+    sg = model.add_synapse_population(
+        "Synapses", "DENSE",
+        es, post,
+        init_weight_update(static_event_pulse_model, {"g": 1.0},
+                           pre_var_refs={"output": create_var_ref(es, "output")}),
+        init_postsynaptic("DeltaCurr")
+    )
+
+    model.build()
+    model.load(num_recording_timesteps=20)
+
+    while model.timestep < 20:
+        model.step_time()
+
+    model.pull_recording_buffers_from_device()
+
+    # Spike recording should work
+    _ = ss.spike_recording_data
+
+    # Spike-event recording should NOT be enabled
+    with pytest.raises(Exception):
+        _ = sg.pre_spike_event_recording_data
