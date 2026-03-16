@@ -132,3 +132,70 @@ def test_event_recording(make_model, backend, precision, batch_size):
     # Verify spikes and spike_events are recorded correctly
     compare_events(rec_spikes, spike_times, spike_ids)
     compare_events(rec_spike_events, spike_times, spike_ids)
+
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_event_recording_disabled(make_model, backend, precision, batch_size):
+    model = make_model(precision, "test_event_recording_disabled", backend=backend)
+    model.dt = 1.0
+    model.batch_size = batch_size
+
+    ss_end_spikes = np.empty((batch_size, 100), dtype=int)
+    ss_start_spikes = np.empty((batch_size, 100), dtype=int)
+    neuron_ids = np.arange(100)
+    spike_times = []
+    id_offset = 0
+
+    for b in range(batch_size):
+        batch_spike_ids = np.tile(neuron_ids, 2)
+        batch_spike_times = np.concatenate((b + neuron_ids,
+                                            b + 99.0 - neuron_ids))
+
+        valid = (batch_spike_times >= 0.0) & (batch_spike_times < 100.0)
+        batch_spike_ids = batch_spike_ids[valid]
+        batch_spike_times = batch_spike_times[valid]
+
+        ordering = np.lexsort((batch_spike_times, batch_spike_ids))
+        batch_spike_ids = batch_spike_ids[ordering]
+        batch_spike_times = batch_spike_times[ordering]
+
+        spike_times.append(batch_spike_times)
+
+        ss_end_spikes[b, :] = id_offset + np.cumsum(
+            np.bincount(batch_spike_ids, minlength=100))
+        ss_start_spikes[b, 0] = id_offset
+        ss_start_spikes[b, 1:] = ss_end_spikes[b, :-1]
+        id_offset += len(batch_spike_ids)
+
+    ss = model.add_neuron_population(
+        "SpikeSource", 100, "SpikeSourceArray",
+        {}, {"startSpike": ss_start_spikes, "endSpike": ss_end_spikes})
+    ss.extra_global_params["spikeTimes"].set_init_values(
+        np.concatenate(spike_times))
+    # recording intentionally NOT enabled
+
+    es = model.add_neuron_population(
+        "SpikeEventSource", 100, spike_event_source_array_model,
+        {}, {"startSpike": ss_start_spikes,
+             "endSpike": ss_end_spikes,
+             "output": False})
+    es.extra_global_params["spikeTimes"].set_init_values(
+        np.concatenate(spike_times))
+    # spike_event_recording intentionally NOT enabled
+
+    post = model.add_neuron_population("Post", 1, empty_neuron_model)
+    sg = model.add_synapse_population(
+        "Synapses", "DENSE",
+        es, post,
+        init_weight_update(static_event_pulse_model, {"g": 1.0},
+                           pre_var_refs={"output": create_var_ref(es, "output")}),
+        init_postsynaptic("DeltaCurr"))
+
+    model.build()
+    model.load(num_recording_timesteps=100)
+
+    while model.timestep < 100:
+        model.step_time()
+
+    with pytest.raises(Exception, match="recording system is not in use"):
+        model.pull_recording_buffers_from_device()
+
