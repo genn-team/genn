@@ -53,15 +53,16 @@ struct Token
         END_OF_FILE,
     };
 
-    Token(Type type, std::string_view lexeme, size_t line,
+    Token(Type type, std::string_view lexeme, size_t line, size_t index,
           std::optional<GeNN::Type::ResolvedType> numberType = std::nullopt)
-    :   type(type), lexeme(lexeme), line(line), numberType(numberType)
+    :   type(type), lexeme(lexeme), line(line), index(index), numberType(numberType)
     {
     }
 
     Type type;
     std::string lexeme;
     size_t line;
+    size_t index;
     std::optional<GeNN::Type::ResolvedType> numberType;
 };
 }   // namespace GeNN::Transpiler

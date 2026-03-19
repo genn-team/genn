@@ -79,7 +79,7 @@ private:
         for(const auto &v : vars) {
             const auto resolvedType = v.type.resolve(getTypeContext());
             const auto qualifiedType = (readOnly || (v.access & VarAccessModeAttribute::READ_ONLY)) ? resolvedType.addConst() : resolvedType;
-            env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, v.name, 0}, qualifiedType, errorHandler);
+            env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, v.name, 0, 0}, qualifiedType, errorHandler);
         }
     }
 

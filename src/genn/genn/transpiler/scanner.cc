@@ -182,7 +182,7 @@ bool isodigit(char c)
 //---------------------------------------------------------------------------
 void emplaceToken(std::vector<Token> &tokens, Token::Type type, const ScanState &scanState)
 {
-    tokens.emplace_back(type, scanState.getLexeme(), scanState.getLine());
+    tokens.emplace_back(type, scanState.getLexeme(), scanState.getLine(), tokens.size());
 }
 //---------------------------------------------------------------------------
 void emplaceNumber(std::vector<Token> &tokens, std::optional<GeNN::Type::ResolvedType> numberType, const ScanState &scanState)
@@ -190,7 +190,8 @@ void emplaceNumber(std::vector<Token> &tokens, std::optional<GeNN::Type::Resolve
     if(numberType) {
         assert(numberType->isNumeric());
     }
-    tokens.emplace_back(Token::Type::NUMBER, scanState.getLexeme(), scanState.getLine(), numberType);
+    tokens.emplace_back(Token::Type::NUMBER, scanState.getLexeme(), 
+                        scanState.getLine(), tokens.size(), numberType);
 }
 //---------------------------------------------------------------------------
 void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
@@ -306,7 +307,7 @@ void scanNumber(char c, ScanState &scanState, std::vector<Token> &tokens)
                     if(numFractional >= 1 && numFractional <= 15) {
                         // Create (non-isSaturating) 16-bit fixed-point type
                         tokens.emplace_back(
-                            Token::Type::NUMBER, numberLexeme, scanState.getLine(), 
+                            Token::Type::NUMBER, numberLexeme, scanState.getLine(), tokens.size(),
                             Type::ResolvedType::createFixedPointNumeric<int16_t>("s" + std::to_string(numInteger) + "_" + std::to_string(numFractional) + "_t", 
                                                                                  Type::S0_15.getNumeric().rank + numInteger, false, numFractional, &ffi_type_sint16));
                     }

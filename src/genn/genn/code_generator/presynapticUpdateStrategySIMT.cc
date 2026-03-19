@@ -848,8 +848,8 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
         // Within for_each_synapse loops, define addSynapse function and id_pre
         [addSynapseType](auto &env, auto &errorHandler)
         {
-            env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "addSynapse", 0}, addSynapseType, errorHandler);
-            env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_pre", 0}, Type::Uint32.addConst(), errorHandler);
+            env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "addSynapse", 0, 0}, addSynapseType, errorHandler);
+            env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_pre", 0, 0}, Type::Uint32.addConst(), errorHandler);
         },
         [addSynapseType, batchSize, delay, trueSpike, &preUpdateStream, &backend, &sg]
         (auto &env, auto generateBody)

@@ -300,11 +300,11 @@ void CustomConnectivityUpdateGroupMerged::generateUpdate(const BackendBase &back
                           [&indexType, this](auto &env, auto &errorHandler)
                           {
                               // Add type of remove synapse function
-                              env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "remove_synapse", 0}, Type::ResolvedType::createFunction(Type::Void, {}), errorHandler);
+                              env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "remove_synapse", 0, 0}, Type::ResolvedType::createFunction(Type::Void, {}), errorHandler);
 
                               // Add typed indices
-                              env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_post", 0}, Type::Uint32.addConst(), errorHandler);
-                              env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_syn", 0}, indexType.addConst(), errorHandler);
+                              env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_post", 0, 0}, Type::Uint32.addConst(), errorHandler);
+                              env.define(Transpiler::Token{Transpiler::Token::Type::IDENTIFIER, "id_syn", 0, 0}, indexType.addConst(), errorHandler);
 
                               // Add types for variables and variable references accessible within loop
                               // **NOTE** postsynaptic variables and variable references are read-only as many rows will access simultaneously
