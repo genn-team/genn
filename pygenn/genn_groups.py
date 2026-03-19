@@ -807,9 +807,9 @@ class CustomUpdateWUMixin(GroupMixin):
         self._custom_update_model = self.model
 
     def _load(self):
-        # Assert that population doesn't have procedural connectivity
+        # Assert that population doesn't have procedural weights
         assert not (self.synapse_group.matrix_type 
-                    & SynapseMatrixConnectivity.PROCEDURAL)
+                    & SynapseMatrixWeight.PROCEDURAL)
 
         # Load variables
         batch_size = (self._model.batch_size
