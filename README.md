@@ -35,7 +35,12 @@ Install the C++ compiler on the machine, if not already present.
 - Specify your platform with ``export HIP_PLATFORM='amd'`` if you wish to use an AMD GPU or ``export HIP_PLATFORM='nvidia'`` if you wish to use HIP with an NVIDIA GPU
 - To make any of these changes persistent, these commands should be added to your login script (e.g. ``.profile`` or ``.bashrc``).
 
-### Installation using pip
+### Installation
+In order to install GeNN on Windows you need to run the following commands from a command prompt with the Visual Studio environment variables correctly configured. 
+Typically this is added to the start menu during Visual Studio installataion and is called something like "x64 Native Tools Command Prompt for VS 2022".
+Once installation is complete, GeNN can be used from a normal command prompt.
+
+#### Using pip
 The easiest way to install GeNN is directly from github using pip. 
 First of all make sure pip is up to date using :
 ``pip install -U pip``
@@ -43,13 +48,13 @@ Then, to install the latest development version you can use:
 ``pip install https://github.com/genn-team/genn/archive/refs/heads/master.zip`` or, to install the 5.4.0 release, you can use: 
 ``pip install https://github.com/genn-team/genn/archive/refs/tags/5.4.0.zip``.
 
-### Creating an editable install with pip
+#### Editable with pip
 If you want to develop GeNN yourself or run userprojects from the GeNN repository, it is helpful to create an 'editable' install. 
 The easiest way to do this to first 'clone' GeNN from github using ``git clone https://github.com/genn-team/genn.git``.
 Then, navigate to the GeNN directory and install using ``pip install -e .``. If you wish to install the additional dependencies needed 
 to run the userprojects, you can do so using ``pip install -e .[userproject]``.
 
-### Building with setup.py (LEGACY)
+#### setup.py (LEGACY)
 Although it is not recommended, in order to build special development versions you sometimes need to install the old fashioned way!
 1.  Manually install PyGeNN's build dependencies using pip i.e. ``pip install pybind11 psutil pkgconfig setuptools>=61``.
 2.  Clone GeNN using git i.e. using ``git clone https://github.com/genn-team/genn.git``
