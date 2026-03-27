@@ -9,39 +9,40 @@ GeNN is a GPU-enhanced Neuronal Network simulation environment based on code gen
 ## Installation
 
 ### Pre-installation
+#### C/C++ Compiler and system dependencies
+Install the C++ compiler on the machine, if not already present.
 
-1.  Install the C++ compiler on the machine, if not already present.
-    For Windows, Visual Studio 2019 or above is required. The Microsoft Visual Studio 
-    Community Edition can be downloaded from
-    https://www.visualstudio.com/en-us/downloads/download-visual-studio-vs.aspx.
-    When installing Visual Studio, one should select the 'Desktop 
-    development with C++' configuration. On Linux, the GNU Compiler 
-    Collection (GCC) 7.5 or above is required. This can be obtained from your
-    Linux distribution repository, for example on Ubuntu by running ``sudo apt-get install g++``, 
-    or alternatively from https://gcc.gnu.org/index.html.
-2.  If your machine has an NVIDIA GPU and you haven't installed CUDA already, 
-    obtain a fresh installation of the NVIDIA CUDA toolkit from
+##### Windows native
+- Download Visual Studio 2019 or above. The Microsoft Visual Studio Community Edition can be downloaded from https://www.visualstudio.com/en-us/downloads/download-visual-studio-vs.aspx.
+- Select the 'Desktop development with C++' configuration during the installation process.
+
+##### Linux or Windows with WSL 2
+-  On Linux, the GNU Compiler Collection (GCC) 7.5 or above is required. This can be obtained from your Linux distribution repository, 
+-  For example on Ubuntu by running ``sudo apt-get install g++``
+-  Install the development version of libffi. For example, on Ubuntu you can do this by running ``sudo apt-get install libffi-dev``.
+
+#### CUDA (NVIDIA GPU only)
+-  If your machine has an NVIDIA GPU and you haven't installed CUDA already, obtain a fresh installation of the NVIDIA CUDA toolkit from
     https://developer.nvidia.com/cuda-downloads
-    Be sure to pick CUDA and C++ compiler versions which are compatible
-    with each other. The latest C++ compiler need not necessarily be
-    compatible with the latest CUDA toolkit. Similarly, if your machine 
-    has an AMD GPU and you haven't installed HIP yet, follow the instructions at
-    https://rocm.docs.amd.com/projects/HIP/en/latest/install/install.html.
-3.  GeNN uses the ``CUDA_PATH`` environment variable to determine which 
-    version of CUDA to build against. On Windows, this is set automatically when 
+- Be sure to pick CUDA and C++ compiler versions which are compatible - the latest C++ compiler need not necessarily be compatible with the latest CUDA toolkit.
+- GeNN uses the ``CUDA_PATH`` environment variable to determine which version of CUDA to build against.
+    - On Windows, this is set automatically when 
     installing CUDA. However, if you choose, you can verify which version is 
-    selected by running ``echo %CUDA_PATH%`` in a command prompt.
-    However, on Linux, you need to set ``CUDA_PATH`` manually with:
+    selected by running ``$env:CUDA_PATH`` in a PowerShell prompt.
+    - On Linux, you need to set ``CUDA_PATH`` manually with:
     ``export CUDA_PATH=/usr/local/cuda``
     assuming CUDA is installed in /usr/local/cuda (the standard location 
-    on Ubuntu Linux). Similarly, if you are using HIP, you need to set the 
-    ``HIP_PATH`` variable manually and also specify your platform with either
-    ``export HIP_PLATFORM='nvidia'`` if you wish to use HIP with an NVIDIA GPU
-    or ``export HIP_PLATFORM='amd'`` if you wish to use an AMD GPU.
-    To make any of these changes persistent, these commands should be added to your login 
+    on Ubuntu Linux). To make any of these changes persistent, add this command to your login 
     script (e.g. ``.profile`` or ``.bashrc``).
-4.  On Linux, install the development version of libffi. For example, on Ubuntu you can do this
-    by running ``sudo apt-get install libffi-dev``.
+# HIP (AMD or NVIDIA GPU)
+- If your machine has an AMD GPU and you haven't installed HIP yet, follow the instructions
+    at https://rocm.docs.amd.com/projects/HIP/en/latest/install/install.html.
+- Set the ``HIP_PATH`` variable manually and also specify your platform with ``export HIP_PLATFORM='amd'`` if you wish to use an AMD GPU.
+    - ``HIP_PATH`` may be obtained running ``hipconfig -p`` if everything is set up properly, but ``echo $HIP_PATH`` returns an empty string.
+    - For example, the official installation uses ``/opt/rocm``, whereas Fedora's package manager uses ``/usr`` as ``HIP_PATH``
+- HIP is also compatible with NVIDIA. Set ``export HIP_PLATFORM='nvidia'`` if you wish to use HIP with an NVIDIA GPU
+- To make any of these changes persistent, these commands should be added to your login 
+    script (e.g. ``.profile`` or ``.bashrc``).
 
 ### Installation using pip
 The easiest way to install GeNN is directly from github using pip. 
@@ -49,7 +50,7 @@ First of all make sure pip is up to date using :
 ``pip install -U pip``
 Then, to install the latest development version you can use:
 ``pip install https://github.com/genn-team/genn/archive/refs/heads/master.zip`` or, to install the 5.3.0 release, you can use: 
-``pip install https://github.com/genn-team/genn/archive/refs/tags/5.3.0.zip``.
+``pip install https://github.com/genn-team/genn/archive/refs/tags/5.4.0.zip``.
 
 ### Creating an editable install with pip
 If you want to develop GeNN yourself or run userprojects from the GeNN repository, it is helpful to create an 'editable' install. 
