@@ -32,8 +32,7 @@ Install the C++ compiler on the machine, if not already present.
 - If your machine has an AMD GPU and you haven't installed HIP yet, follow the instructions
     at https://rocm.docs.amd.com/projects/HIP/en/latest/install/install.html.
 - Set the ``HIP_PATH`` variable manually using ``export HIP_PATH=/opt/rocm``, assuming HIP is installed  using the official installer.
-- Specify your platform with ``export HIP_PLATFORM='amd'`` if you wish to use an AMD GPU.
-- HIP is also compatible with NVIDIA. Set ``export HIP_PLATFORM='nvidia'`` if you wish to use HIP with an NVIDIA GPU
+- Specify your platform with ``export HIP_PLATFORM='amd'`` if you wish to use an AMD GPU or ``export HIP_PLATFORM='nvidia'`` if you wish to use HIP with an NVIDIA GPU
 - To make any of these changes persistent, these commands should be added to your login script (e.g. ``.profile`` or ``.bashrc``).
 
 ### Installation using pip
