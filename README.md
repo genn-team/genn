@@ -28,7 +28,7 @@ Install the C++ compiler on the machine, if not already present.
     - On Windows, this is set automatically when installing CUDA. However, if you choose, you can verify which version is selected by running ``echo %CUDA_PATH%`` in a commmand prompt.
     - On Linux, you need to set ``CUDA_PATH`` manually using ``export CUDA_PATH=/usr/local/cuda``, assuming CUDA is installed in /usr/local/cuda (the standard location on Ubuntu Linux). To make any of these changes persistent, add this command to your login script (e.g. ``.profile`` or ``.bashrc``).
 
-# HIP (AMD or NVIDIA GPU)
+#### HIP (AMD or NVIDIA GPU)
 - If your machine has an AMD GPU and you haven't installed HIP yet, follow the instructions
     at https://rocm.docs.amd.com/projects/HIP/en/latest/install/install.html.
 - Set the ``HIP_PATH`` variable manually using ``export HIP_PATH=/opt/rocm``, assuming HIP is installed  using the official installer.
