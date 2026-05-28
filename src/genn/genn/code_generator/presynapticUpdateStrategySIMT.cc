@@ -880,8 +880,7 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
                 {
                     CodeStream::Scope b(env.getStream());
                     EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> spikeEnv(env, sg);
-                    spikeEnv.add(Type::Uint32.addConst(), "id_pre", "$(_sh_spk" + eventSuffix + ")[j]");
-
+                    
                     // Create local variable to hold presynaptic output from all threads in warp
                     if (isPresynapticOutputRequired(sg, trueSpike)) {
                         spikeEnv.printLine(sg.getScalarType().getName() + " lOutPre = " + Type::writeNumeric(0.0, sg.getScalarType()) + ";");
@@ -892,6 +891,9 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
                     {
                         CodeStream::Scope b(spikeEnv.getStream());
                         EnvironmentExternal bodyEnv(spikeEnv);
+
+                        bodyEnv.printLine("const unsigned int ipre = $(_sh_spk" + eventSuffix + ")[j];");
+                        bodyEnv.add(Type::Uint32.addConst(), "id_pre", "ipre");
 
                         // Add function substitution with parameters to add 
                         bodyEnv.add(addSynapseType, "addSynapse", preUpdateStream.str());
