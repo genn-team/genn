@@ -8,6 +8,7 @@ from pygenn import (create_neuron_model, create_var_ref,
                     create_weight_update_model,
                     init_postsynaptic,
                     init_sparse_connectivity,
+                    init_toeplitz_connectivity,
                     init_weight_update, init_var)
 
 # Weight update models which copy a PRESYNAPTIC neuron variables
@@ -81,7 +82,38 @@ post_event_weight_update_model = create_weight_update_model(
     """
     t >= (scalar)id && fmod(t - (scalar)id, 10.0) < 1e-4
     """)
-    
+
+post_neuron_model = create_neuron_model(
+    "post_neuron",
+    sim_code=
+    """
+    x = Isyn;
+    """,
+    vars=[("x", "scalar")])
+ 
+spike_source_array_extra_var_neuron_model = create_neuron_model(
+    "spike_source_array_extra_var",
+    threshold_condition_code=
+    """
+    startSpike != endSpike && t >= spikeTimes[startSpike]
+    """,
+    reset_code=
+    """
+    startSpike++;
+    """,
+    vars=[("constant", "scalar"),
+          ("startSpike", "unsigned int"), 
+          ("endSpike", "unsigned int", VarAccess.READ_ONLY_DUPLICATE)],
+     extra_global_params=[("spikeTimes", "scalar*")])
+
+scaled_weight_update_model = create_weight_update_model(
+        "scaled_weight_update",
+        vars=[("g", "scalar", VarAccess.READ_ONLY)],
+        pre_neuron_var_refs=[("x", "scalar", VarAccessMode.READ_ONLY)],
+        pre_spike_syn_code=
+        """
+        addToPost(g * x);
+        """)
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 @pytest.mark.parametrize("delay", [0, 20])
 def test_pre_post_neuron_var(make_model, backend, precision, delay):
@@ -205,3 +237,79 @@ def test_pre_post_neuron_var(make_model, backend, precision, delay):
             w_value = s.vars["w"].values
             if not np.allclose(delayed_time, w_value):
                 assert False, f"{s.name} var has wrong value ({w_value} rather than {delayed_time})"
+
+
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_pre_neuron_var_kernel(make_model, backend, precision):
+    model = make_model(precision, "test_pre_neuron_var_kernel", backend=backend)
+    model.dt = 1.0
+
+
+    # (Normalised) horizontal Sobel convolution kernel
+    vertical_kernel = np.asarray([[1.0,   0.0,    -1.0],
+                                [2.0,   0.0,    -2.0],
+                                [1.0,   0.0,    -1.0]])
+
+    # (Normalised) vertical Sobel convolution kernel
+    horizontal_kernel = np.asarray([[1.0,     2.0,    1.0],
+                                    [0.0,     0.0,    0.0],
+                                    [-1.0,    -2.0,   -1.0]])
+
+    # Create spike source array to present test pattern
+    test_pattern = np.load("test_pattern.npy")
+    end_spikes = np.cumsum(np.bincount(test_pattern, minlength=64 * 64))
+    start_spikes = np.concatenate(([0,], end_spikes[:-1]))
+    pre_pop = model.add_neuron_population("SpikeSource", 64 * 64, spike_source_array_extra_var_neuron_model,
+                                          {}, {"startSpike": start_spikes, "endSpike": end_spikes, "constant": 1.0})
+    pre_pop.extra_global_params["spikeTimes"].set_init_values(np.zeros_like(test_pattern))
+
+    # Add postsynaptic populations to receive horizontal and vertical edges
+    post_toeplitz_horiz_pop = model.add_neuron_population(
+        "PostHorizNeurons", 62 * 62, post_neuron_model, 
+        {}, {"x": 0.0})
+
+    post_toeplitz_vert_pop = model.add_neuron_population(
+        "PostVertNeurons", 62 * 62, post_neuron_model, 
+        {}, {"x": 0.0})
+    
+    # Add convolutional toeplitz connectivity
+    conv_toeplitz_params = {"conv_kh": 3, "conv_kw": 3,
+                            "conv_ih": 64, "conv_iw": 64, "conv_ic": 1,
+                            "conv_oh": 62, "conv_ow": 62, "conv_oc": 1}
+    model.add_synapse_population(
+        "ToeplitzHorizSynapse", "TOEPLITZ",
+        pre_pop, post_toeplitz_horiz_pop,
+ 
+        init_weight_update(scaled_weight_update_model, {}, {"g": horizontal_kernel.flatten()},
+                           pre_var_refs={"x": create_var_ref(pre_pop, "constant")}),
+        init_postsynaptic("DeltaCurr"),
+        init_toeplitz_connectivity("Conv2D", conv_toeplitz_params))
+    model.add_synapse_population(
+        "ToeplitzVertSynapse", "TOEPLITZ",
+        pre_pop, post_toeplitz_vert_pop,
+ 
+        init_weight_update(scaled_weight_update_model, {}, {"g": vertical_kernel.flatten()},
+                           pre_var_refs={"x": create_var_ref(pre_pop, "constant")}),
+        init_postsynaptic("DeltaCurr"),
+        init_toeplitz_connectivity("Conv2D", conv_toeplitz_params))
+
+    # Build model and load
+    model.build()
+    model.load()
+    
+    # Step time twice - in first timestep spikes will be emitted 
+    # by pre_pop. In second, they will be received by the post_pops
+    model.step_time()
+    model.step_time()
+    
+    # Download output variables from device
+    post_toeplitz_horiz_pop.vars["x"].pull_from_device()
+    post_toeplitz_vert_pop.vars["x"].pull_from_device()
+
+    # Check against correct convolutions
+    correct_horizontal = np.load("horizontal_output.npy") 
+    correct_vertical = np.load("vertical_output.npy")
+    assert np.allclose(post_toeplitz_horiz_pop.vars["x"].view, 
+                       correct_horizontal)
+    assert np.allclose(post_toeplitz_vert_pop.vars["x"].view, 
+                       correct_vertical)
