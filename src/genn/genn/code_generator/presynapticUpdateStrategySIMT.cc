@@ -886,14 +886,14 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
                         spikeEnv.printLine(sg.getScalarType().getName() + " lOutPre = " + Type::writeNumeric(0.0, sg.getScalarType()) + ";");
                     }
 
+                    spikeEnv.printLine("const unsigned int ipre = $(_sh_spk" + eventSuffix + ")[j];");
+                    spikeEnv.add(Type::Uint32.addConst(), "id_pre", "ipre");
+
                     spikeEnv.getStream() << "// only work on existing neurons" << std::endl;
                     spikeEnv.print("if ($(id) < $(_row_stride))");
                     {
                         CodeStream::Scope b(spikeEnv.getStream());
                         EnvironmentExternal bodyEnv(spikeEnv);
-
-                        bodyEnv.printLine("const unsigned int ipre = $(_sh_spk" + eventSuffix + ")[j];");
-                        bodyEnv.add(Type::Uint32.addConst(), "id_pre", "ipre");
 
                         // Add function substitution with parameters to add 
                         bodyEnv.add(addSynapseType, "addSynapse", preUpdateStream.str());
