@@ -880,12 +880,14 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
                 {
                     CodeStream::Scope b(env.getStream());
                     EnvironmentGroupMergedField<PresynapticUpdateGroupMerged> spikeEnv(env, sg);
-                    spikeEnv.add(Type::Uint32.addConst(), "id_pre", "$(_sh_spk" + eventSuffix + ")[j]");
-
+                    
                     // Create local variable to hold presynaptic output from all threads in warp
                     if (isPresynapticOutputRequired(sg, trueSpike)) {
                         spikeEnv.printLine(sg.getScalarType().getName() + " lOutPre = " + Type::writeNumeric(0.0, sg.getScalarType()) + ";");
                     }
+
+                    spikeEnv.printLine("const unsigned int ipre = $(_sh_spk" + eventSuffix + ")[j];");
+                    spikeEnv.add(Type::Uint32.addConst(), "id_pre", "ipre");
 
                     spikeEnv.getStream() << "// only work on existing neurons" << std::endl;
                     spikeEnv.print("if ($(id) < $(_row_stride))");
