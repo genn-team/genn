@@ -827,10 +827,10 @@ void PostSpanToeplitz::genUpdate(EnvironmentExternalBase &env, PresynapticUpdate
 
         // Generate spike update
         if(trueSpike) {
-            sg.generateSpikeUpdate(backend, preUpdateEnv, 1, dt);
+            sg.generateSpikeUpdate(backend, preUpdateEnv, batchSize, dt);
         }
         else {
-            sg.generateSpikeEventUpdate(backend, preUpdateEnv, 1, dt);
+            sg.generateSpikeEventUpdate(backend, preUpdateEnv, batchSize, dt);
         }
     }
 

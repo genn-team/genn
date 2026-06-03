@@ -111,8 +111,8 @@ public:
     SET_PARAMS({{"conv_kh", "int"}, {"conv_kw", "int"},
                 {"conv_ih", "int"}, {"conv_iw", "int"}, {"conv_ic", "int"},
                 {"conv_oh", "int"}, {"conv_ow", "int"}, {"conv_oc", "int"}});
-    SET_DERIVED_PARAMS({{"conv_bw", [](const ParamValues &pars, double){ return ((pars.at("conv_iw").cast<int>() + pars.at("conv_kw").cast<int>() - 1) - pars.at("conv_ow").cast<int>()) / 2; }},
-                        {"conv_bh", [](const ParamValues &pars, double){ return ((pars.at("conv_ih").cast<int>() + pars.at("conv_kh").cast<int>() - 1) - pars.at("conv_oh").cast<int>()) / 2; }}});
+    SET_DERIVED_PARAMS({{"conv_bw", [](const ParamValues &pars, double){ return ((pars.at("conv_iw").cast<int>() + pars.at("conv_kw").cast<int>() - 1) - pars.at("conv_ow").cast<int>()) / 2; }, "int"},
+                        {"conv_bh", [](const ParamValues &pars, double){ return ((pars.at("conv_ih").cast<int>() + pars.at("conv_kh").cast<int>() - 1) - pars.at("conv_oh").cast<int>()) / 2; }, "int"}});
 
     SET_DIAGONAL_BUILD_CODE(
         "const int kernRow = (id_diag / conv_oc) / conv_kw;\n"
@@ -180,8 +180,8 @@ public:
                 {"pool_sh", "int"}, {"pool_sw", "int"},
                 {"pool_ih", "int"}, {"pool_iw", "int"}, {"pool_ic", "int"},
                 {"conv_oh", "int"}, {"conv_ow", "int"}, {"conv_oc", "int"}});
-    SET_DERIVED_PARAMS({{"conv_bw", [](const ParamValues &pars, double){ return (int(ceil((pars.at("pool_iw").cast<double>() - pars.at("pool_kw").cast<double>() + 1.0) / pars.at("pool_sw").cast<double>())) + pars.at("conv_kw").cast<int>() - 1 - pars.at("conv_ow").cast<int>()) / 2; }},
-                        {"conv_bh", [](const ParamValues &pars, double){ return (int(ceil((pars.at("pool_ih").cast<double>() - pars.at("pool_kh").cast<double>() + 1.0) / pars.at("pool_sh").cast<double>())) + pars.at("conv_kh").cast<int>() - 1 - pars.at("conv_oh").cast<int>()) / 2; }}});
+    SET_DERIVED_PARAMS({{"conv_bw", [](const ParamValues &pars, double){ return (int(ceil((pars.at("pool_iw").cast<double>() - pars.at("pool_kw").cast<double>() + 1.0) / pars.at("pool_sw").cast<double>())) + pars.at("conv_kw").cast<int>() - 1 - pars.at("conv_ow").cast<int>()) / 2; }, "int"},
+                        {"conv_bh", [](const ParamValues &pars, double){ return (int(ceil((pars.at("pool_ih").cast<double>() - pars.at("pool_kh").cast<double>() + 1.0) / pars.at("pool_sh").cast<double>())) + pars.at("conv_kh").cast<int>() - 1 - pars.at("conv_oh").cast<int>()) / 2; }, "int"}});
 
     SET_DIAGONAL_BUILD_CODE(
         "const int kernRow = (id_diag / conv_oc) / conv_kw;\n"
