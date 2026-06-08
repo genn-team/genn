@@ -100,21 +100,6 @@ GENN_EXPORT void prettyPrintStatements(const std::vector<Transpiler::Token> &tok
 GENN_EXPORT std::string printSubs(const std::string &format, Transpiler::PrettyPrinter::EnvironmentBase &env);
 
 template<typename G>
-bool isKernelSizeHeterogeneous(const G &group, size_t dimensionIndex)
-{
-    // Get size of this kernel dimension for archetype
-    const unsigned archetypeValue = group.getArchetype().getKernelSize().at(dimensionIndex);
-
-    // Return true if any of the other groups have a different value
-    return std::any_of(group.getGroups().cbegin(), group.getGroups().cend(),
-                       [archetypeValue, dimensionIndex]
-                       (const typename G::GroupInternal& g)
-                       {
-                           return (g.getKernelSize().at(dimensionIndex) != archetypeValue);
-                       });
-}
-
-template<typename G>
 std::string getKernelIndex(const G &group)
 {
     // Loop through kernel dimensions to calculate array index
