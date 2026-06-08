@@ -378,7 +378,7 @@ private:
                         // Loop backwards through other kernel and generate code to divide by product of subsequent dimensions
                         kernelIDInit << " / (";
                         for (size_t j = (kernelDimensions - 1); j > i; j--) {
-                            kernelIDInit << getKernelSize(g, j);
+                            kernelIDInit << "$(_kernel_size_" << j <<  ")";
 
                             if (j != (i + 1)) {
                                 kernelIDInit << " * ";
@@ -390,7 +390,7 @@ private:
 
                     // If this isn't the first dimension, take modulus of kernel size
                     if (i > 0) {
-                        kernelIDInit << " % " << getKernelSize(g, i);
+                        kernelIDInit << " % $(_kernel_size_" << i <<  ")";
                     }
 
                     kernelIDInit << ";" << std::endl;

@@ -115,19 +115,6 @@ bool isKernelSizeHeterogeneous(const G &group, size_t dimensionIndex)
 }
 
 template<typename G>
-std::string getKernelSize(const G &group, size_t dimensionIndex)
-{
-    // If kernel size if heterogeneous in this dimension, return group structure entry
-    if (isKernelSizeHeterogeneous(group, dimensionIndex)) {
-        return "$(_kernel_size_" + std::to_string(dimensionIndex) + ")";
-    }
-    // Otherwise, return literal
-    else {
-        return std::to_string(group.getArchetype().getKernelSize().at(dimensionIndex));
-    }
-}
-
-template<typename G>
 std::string getKernelIndex(const G &group)
 {
     // Loop through kernel dimensions to calculate array index
@@ -137,7 +124,7 @@ std::string getKernelIndex(const G &group)
         kernelIndex << "($(id_kernel_" << i << ")";
         // Loop through remainining dimensions of kernel and multiply
         for (size_t j = i + 1; j < kernelSize.size(); j++) {
-            kernelIndex << " * " << getKernelSize(group, j);
+            kernelIndex << " * $(_kernel_size_" << j << ")";
         }
         kernelIndex << ")";
 

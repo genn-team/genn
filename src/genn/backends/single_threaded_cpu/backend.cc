@@ -124,7 +124,7 @@ void genKernelIteration(EnvironmentExternalBase &env, G &g, size_t numKernelDims
         {
             // Loop through this kernel dimensions
             const std::string idxVar = "k" + std::to_string(depth);
-            env.print("for(unsigned int " + idxVar + " = 0; " + idxVar + " < " + getKernelSize(g, depth) + "; " + idxVar + "++)");
+            env.print("for(unsigned int " + idxVar + " = 0; " + idxVar + " < $(_kernel_size_" + std::to_string(depth) +  "); " + idxVar + "++)");
             {
                 CodeStream::Scope b(env.getStream());
                 EnvironmentGroupMergedField<G> loopEnv(env, g);

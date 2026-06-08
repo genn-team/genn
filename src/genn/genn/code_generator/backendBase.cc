@@ -58,20 +58,17 @@ void buildCustomUpdateWUSizeEnvironment(const BackendBase &backend, EnvironmentG
     const auto *sg = env.getGroup().getArchetype().getSynapseGroup();
     if(sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
         // Loop through kernel size dimensions
-        // **TODO** automatic heterogeneity detection on all fields would make this much nicer
         std::ostringstream kernSizeInit;
         kernSizeInit << "const unsigned int kernelSize = ";
         const auto &kernelSize = env.getGroup().getArchetype().getKernelSize();
         for (size_t d = 0; d < kernelSize.size(); d++) {
-            // If this dimension has a heterogeneous size, add it to struct
-            if (isKernelSizeHeterogeneous(env.getGroup(), d)) {
-                env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), 
-                             Type::Uint32, "kernelSize" + std::to_string(d),
-                             [d](const auto &g, size_t) { return g.getSynapseGroup()->getKernelSize().at(d); });
-            }
+            // Add kernel size to environment
+            env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), 
+                         Type::Uint32, "kernelSize" + std::to_string(d),
+                         [d](const auto &g, size_t) { return g.getSynapseGroup()->getKernelSize().at(d); });
 
             // Multiply size by dimension
-            kernSizeInit << getKernelSize(env.getGroup(), d);
+            kernSizeInit << "$(_kernel_size_" << d <<  ")";
             if (d != (kernelSize.size() - 1)) {
                 kernSizeInit << " * ";
             }
@@ -252,20 +249,17 @@ void buildStandardSynapseEnvironment(const BackendBase &backend, EnvironmentGrou
                      [](const auto &runtime, const auto &sg, size_t) { return runtime.getArray(sg, "remap"); });
     }
     else if(env.getGroup().getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
-        // **TODO** automatic heterogeneity detection on all fields would make this much nicer
         std::ostringstream kernSizeInit;
         kernSizeInit << "const unsigned int kernelSize = ";
         const auto &kernelSize = env.getGroup().getArchetype().getKernelSize();
         for (size_t d = 0; d < kernelSize.size(); d++) {
-            // If this dimension has a heterogeneous size, add it to struct
-            if (isKernelSizeHeterogeneous(env.getGroup(), d)) {
-                env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), 
-                             Type::Uint32, "kernelSize" + std::to_string(d),
-                             [d](const auto &g, size_t) { return g.getKernelSize().at(d); });
-            }
+            // Add kernel size to environment
+            env.addField(Type::Uint32.addConst(), "_kernel_size_" + std::to_string(d), 
+                            Type::Uint32, "kernelSize" + std::to_string(d),
+                            [d](const auto &g, size_t) { return g.getKernelSize().at(d); });
 
             // Multiply size by dimension
-            kernSizeInit << getKernelSize(env.getGroup(), d);
+            kernSizeInit << "$(_kernel_size_" << d <<  ")";
             if (d != (kernelSize.size() - 1)) {
                 kernSizeInit << " * ";
             }
