@@ -1208,6 +1208,11 @@ void Backend::genInit(CodeStream &os, FileStreamCreator, ModelSpecMerged &modelM
                                         const std::string iStr = std::to_string(i);
                                         kernelInitEnv.add(Type::Uint32.addConst(), "id_kernel_" + iStr, "idKernel" + iStr,
                                                         {kernelInitEnv.addInitialiser("const unsigned int idKernel" + iStr + " = $(" + std::to_string(i + 1) + ");")});
+
+                                        // Add kernel size to environment
+                                        kernelInitEnv.addField(Type::Uint32.addConst(), "_kernel_size_" + iStr, 
+                                                               Type::Uint32, "kernelSize" + iStr,
+                                                               [i](const auto &g, size_t) { return g.getKernelSize().at(i); });
                                     }
 
                                     // Call handler to initialize variables
