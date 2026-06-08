@@ -28,12 +28,6 @@ using namespace GeNN::CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
-void writeStringStream(const filesystem::path &file, const std::ostringstream &stream)
-{
-    std::ofstream fileStream(file.str());
-    fileStream << stream.str();
-}
-//--------------------------------------------------------------------------
 bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::detail::sha1::digest_type &hashDigest)
 {
     try
