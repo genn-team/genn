@@ -997,16 +997,35 @@ const GeNN::Type::ResolvedType parseNumericType(const std::vector<Token> &tokens
     // Parse type specifiers
     ParserState parserState(tokens, context, errorHandler);
     std::multiset<std::string> typeSpecifiers;
-    while(parserState.match(Token::Type::TYPE_SPECIFIER)) {
-        typeSpecifiers.insert(parserState.previous().lexeme);
-    };
+    std::set<std::string> typeQualifiers;
 
+    while(true) {
+        if(parserState.match(Token::Type::TYPE_SPECIFIER)) {
+            typeSpecifiers.insert(parserState.previous().lexeme);
+        }
+        else if(parserState.match(Token::Type::TYPE_QUALIFIER)) {
+            typeQualifiers.insert(parserState.previous().lexeme);
+        }
+        else {
+            break;
+        }
+    
+    }
+    
     // If there are more tokens, raise error
     if(!parserState.isAtEnd()) {
         parserState.error(parserState.peek(), "Unexpected token after type");
     }
     
-    // Return numeric type
-    return getNumericType(typeSpecifiers, context);
+    // Lookup numeric type
+    auto type = getNumericType(typeSpecifiers, context);
+
+    // If there are any type qualifiers, add const
+    // **THINK** this relies of const being only qualifier
+    if(!typeQualifiers.empty()) {
+        type = type.addConst();
+    }
+
+    return type;
 }
 }
