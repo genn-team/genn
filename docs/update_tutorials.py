@@ -2,7 +2,7 @@ import nbformat as nbf
 import re
 
 # Comile regular expressions used to find GeNN installation code
-_gdown_re = re.compile(r"!gdown ([_0-9a-zA-Z]+)")
+_gdown_re = re.compile(r"!gdown ([_0-9a-zA-Z\-]+)")
 _pip_re = re.compile(r"!pip install pygenn-([0-9]+.[0-9]+.[0-9]+)-cp([0-9]+)-cp([0-9]+)-linux_x86_64.whl")
 
 def process_notebooks(notebooks, gdown_hash, pygenn_ver, python_tag, callback=None):
