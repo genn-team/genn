@@ -1,5 +1,4 @@
 import os
-import pkgconfig
 import sys
 from copy import deepcopy
 from platform import system, uname
@@ -76,6 +75,8 @@ elif MACOS:
 else:
     package_data = ["libgenn" + genn_lib_suffix + ".so"]
 
+package_data.append("./version.txt")
+
 # Define standard kwargs for building all extensions
 genn_extension_kwargs = {
     "include_dirs": [pygenn_include, genn_include, genn_third_party_include],
@@ -105,6 +106,7 @@ if WIN:
 # Otherwise
 else:
     # Add whatever configuration libffi requires
+    import pkgconfig
     ffi_config = pkgconfig.parse("libffi")
     for k, v in ffi_config.items():
         genn_extension_kwargs[k].extend(v)
