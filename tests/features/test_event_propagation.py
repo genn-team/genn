@@ -574,7 +574,7 @@ def test_forward_kernel_procedural(make_model, backend_simt, precision):
         pre_pop, downsample_pop,
         init_weight_update("StaticPulse", {}, {"g": init_var(avg_pool2d_dense, pool_params)}),
         init_postsynaptic("DeltaCurr"))
-    dense_procedural_s_pop.vars["g"].extra_global_params["weights"].set_init_values(np.eye(1024).flatten())
+    dense_procedural_s_pop.vars["g"].extra_global_params["weights"].set_init_values(np.eye(1024).flatten() * 0.25)
 
     # Build model and load
     model.build()
@@ -589,7 +589,7 @@ def test_forward_kernel_procedural(make_model, backend_simt, precision):
     post_horiz_pop.vars["x"].pull_from_device()
     post_vert_pop.vars["x"].pull_from_device()
     downsample_pop.vars["x"].pull_from_device()
-    
+
     # Check against correct convolutions
     assert np.allclose(post_horiz_pop.vars["x"].view, 
                        np.load("horizontal_output.npy"))
