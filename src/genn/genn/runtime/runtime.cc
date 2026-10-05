@@ -326,6 +326,19 @@ void Runtime::allocate(std::optional<size_t> numRecordingTimesteps)
                     return getNumSynapseVarElements(varDims, m_Backend.get(), s.second);
                 });
         }
+        // Otherwise, if the synapse group has procedural weights
+        else if (s.second.getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
+            // Loop through variables
+            for(const auto &var : s.second.getWUInitialiser().getSnippet()->getVars()) {
+                // Add arrays for any EGPs required for this initialisation
+                const auto &varInit = s.second.getWUInitialiser().getVarInitialisers().at(var.name);
+                for(const auto &egp : varInit.getSnippet()->getExtraGlobalParams()) {
+                    const auto resolvedType = egp.type.resolve(getModel().getTypeContext());
+                    createArray(&s.second, egp.name + var.name, resolvedType, 0, 
+                                VarLocation::HOST_DEVICE, false, 1);
+                }
+            }
+        }
 
         // Create destinations for any dynamic parameters
         createDynamicParamDestinations<SynapseGroupInternal>(s.second, s.second.getWUInitialiser().getSnippet()->getParams(),
