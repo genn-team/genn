@@ -52,6 +52,41 @@ static_event_pulse_model = create_weight_update_model(
     addToPost(g);
     """)
 
+avg_pool2d_dense = create_var_init_snippet(
+    "avgpool2d_dense",
+    params=[("pool_kh", "int"), ("pool_kw", "int"),
+            ("pool_sh", "int"), ("pool_sw", "int"),
+            ("pool_ih", "int"), ("pool_iw", "int"), ("pool_ic", "int"),
+            ("dense_ih", "int"), ("dense_iw", "int"), ("dense_ic", "int"),
+            ("dense_units", "int")],
+
+    extra_global_params=[("weights", "scalar*")],
+
+    var_init_code=
+        """
+        // Convert presynaptic neuron ID to row, column and channel in pool input
+        const int poolInRow = (id_pre / pool_ic) / pool_iw;
+        const int poolInCol = (id_pre / pool_ic) % pool_iw;
+        const int poolInChan = id_pre % pool_ic;
+
+        // Calculate corresponding pool output
+        const int poolOutRow = poolInRow / pool_sh;
+        const int poolStrideRow = poolOutRow * pool_sh;
+        const int poolOutCol = poolInCol / pool_sw;
+        const int poolStrideCol = poolOutCol * pool_sw;
+
+        value = 0.0;
+        if ((poolInRow < (poolStrideRow + pool_kh)) && (poolInCol < (poolStrideCol + pool_kw))) {
+            if ((poolOutRow < dense_ih) && (poolOutCol < dense_iw)) {
+                const int dense_in_unit = poolOutRow * (dense_iw * dense_ic) + poolOutCol * (dense_ic) + poolInChan;
+
+                value = weights[
+                    dense_in_unit * (dense_units) +
+                    id_post];
+            }
+        }
+        """)
+        
 # (Normalised) horizontal Sobel convolution kernel
 vertical_kernel = np.asarray([[1.0,   0.0,    -1.0],
                               [2.0,   0.0,    -2.0],
@@ -505,6 +540,10 @@ def test_forward_kernel_procedural(make_model, backend_simt, precision):
     post_vert_pop = model.add_neuron_population(
         "PostVertNeurons", 62 * 62, post_neuron_model, 
         {}, {"x": 0.0})
+    
+    downsample_pop = model.add_neuron_population(
+        "PostDownsampleNeurons", 32 * 32, post_neuron_model, 
+        {}, {"x": 0.0})
 
     # Add convolutional toeplitz connectivity
     conv_params = {"conv_kh": 3, "conv_kw": 3,
@@ -524,6 +563,18 @@ def test_forward_kernel_procedural(make_model, backend_simt, precision):
         init_weight_update("StaticPulse", {}, {"g": vertical_kernel.flatten()}),
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity("Conv2D", conv_params))
+    
+    # Add downsample connectivity
+    pool_params={"pool_kh": 2, "pool_kw": 2, "pool_sh": 2, "pool_sw": 2,
+                 "pool_ih": 64, "pool_iw": 64, "pool_ic": 1,
+                 "dense_ih": 32, "dense_iw": 32, "dense_ic": 1,
+                 "dense_units": 1024}
+    dense_procedural_s_pop = model.add_synapse_population(
+        "DownsampleSynapse", "DENSE_PROCEDURALG",
+        pre_pop, downsample_pop,
+        init_weight_update("StaticPulse", {}, {"g": init_var(avg_pool2d_dense, pool_params)}),
+        init_postsynaptic("DeltaCurr"))
+    dense_procedural_s_pop.vars["g"].extra_global_params["weights"].set_init_values(np.eye(1024).flatten())
 
     # Build model and load
     model.build()
@@ -537,12 +588,15 @@ def test_forward_kernel_procedural(make_model, backend_simt, precision):
     # Download output variables from device
     post_horiz_pop.vars["x"].pull_from_device()
     post_vert_pop.vars["x"].pull_from_device()
+    downsample_pop.vars["x"].pull_from_device()
     
     # Check against correct convolutions
     assert np.allclose(post_horiz_pop.vars["x"].view, 
                        np.load("horizontal_output.npy"))
     assert np.allclose(post_vert_pop.vars["x"].view, 
                        np.load("vertical_output.npy"))
+    assert np.allclose(downsample_pop.vars["x"].view, 
+                       np.load("downsample_output.npy"))
 
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_reverse(make_model, backend, precision):
