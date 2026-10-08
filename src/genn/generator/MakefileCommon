@@ -44,7 +44,7 @@ all: $(GENERATOR)
 
 -include $(DEPS)
 
-$(GENERATOR): generator.cc generator.d libgenn backend
+$(GENERATOR): generator.cc generator.d libgenn backend $(if $(DVS), libdvs)
 	mkdir -p $(@D)
 	$(CXX) -std=$(CXX_STANDARD) $(CXXFLAGS) generator.cc -o $@ $(LDFLAGS)
 
