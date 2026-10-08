@@ -278,7 +278,7 @@ if libcaer_installed:
         dvs_extension_kwargs["runtime_library_dirs"].extend(
             l for l in libcaer_config["library_dirs"])
 
-    ext_modules.append(Pybind11Extension("dvs",
+    ext_modules.append(Pybind11Extension("_dvs",
                                          [os.path.join(pygenn_src, "dvs.cc")],
                                          **dvs_extension_kwargs))
     
