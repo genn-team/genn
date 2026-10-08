@@ -3154,6 +3154,19 @@ static const char *__doc_NeuronModels_Base_isAutoRefractoryRequired = R"doc(Does
 
 static const char *__doc_NeuronModels_Base_validate = R"doc(Validate names of parameters etc)doc";
 
+static const char *__doc_NeuronModels_EventCamera =
+R"doc(Event camera interface for streaming events into GeNN as efficiently as possible
+Should typically be used with one of the device interfaces in the EventCamera module
+It has 1 extra global parameter:
+
+- ``spikeVector`` - Array with a bit for each neuron. This must be allocated to match number of neurons)doc";
+
+static const char *__doc_NeuronModels_EventCamera_getExtraGlobalParams = R"doc()doc";
+
+static const char *__doc_NeuronModels_EventCamera_getInstance = R"doc()doc";
+
+static const char *__doc_NeuronModels_EventCamera_getThresholdConditionCode = R"doc()doc";
+
 static const char *__doc_NeuronModels_Izhikevich =
 R"doc(Izhikevich neuron with fixed parameters  [Izhikevich2003]_.
 It is usually described as

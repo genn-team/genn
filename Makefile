@@ -17,7 +17,7 @@ BACKEND_LIBS		:=$(BACKENDS:%=$(LIBRARY_DIRECTORY)/libgenn_%$(GENN_PREFIX).$(LIBR
 # Default install location
 PREFIX 			?= /usr/local
 
-.PHONY: all clean genn $(BACKENDS)
+.PHONY: all clean genn dvs $(BACKENDS)
 
 all: genn $(BACKENDS)
 
@@ -32,6 +32,9 @@ cuda_backend: genn
 
 hip_backend: genn
 	$(MAKE) -C src/genn/backends/hip
+
+dvs: genn
+	$(MAKE) -C $(GENN_DIR)/src/genn/sensors/dvs
 
 clean:
 	@# Delete all objects, dependencies and coverage files if object directory exists

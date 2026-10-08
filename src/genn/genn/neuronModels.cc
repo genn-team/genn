@@ -15,6 +15,7 @@ IMPLEMENT_SNIPPET(LIF);
 IMPLEMENT_SNIPPET(SpikeSourceArray);
 IMPLEMENT_SNIPPET(Poisson);
 IMPLEMENT_SNIPPET(TraubMiles);
+IMPLEMENT_SNIPPET(EventCamera);
 
 //----------------------------------------------------------------------------
 // GeNN::NeuronModels::Base
