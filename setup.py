@@ -255,7 +255,8 @@ if libcaer_installed:
     dvs_extension_kwargs = deepcopy(genn_extension_kwargs)
     
     # Extend any settings specified by libcaer
-    for n, v in pkgconfig.parse("libcaer").items():
+    libcaer_config = pkgconfig.parse("libcaer")
+    for n, v in libcaer_config.items():
         dvs_extension_kwargs[n].extend(v)
         
     # Add DVS library as dependency and package
@@ -268,6 +269,15 @@ if libcaer_installed:
     dvs_include_dir = os.path.join(".", "include", "genn", "sensors", "dvs")
     dvs_extension_kwargs["include_dirs"].append(dvs_include_dir)
     
+    # If MAC, add libcaer to rpath via linker magic
+    if MACOS:
+        dvs_extension_kwargs["extra_link_args"].extend(
+            "-Wl,-rpath," + l for l in libcaer_config["library_dirs"])
+    # Otherwise, on Linux, use the builtin mechanism
+    else:
+        dvs_extension_kwargs["runtime_library_dirs"].extend(
+            l for l in libcaer_config["library_dirs"])
+
     ext_modules.append(Pybind11Extension("dvs",
                                          [os.path.join(pygenn_src, "dvs.cc")],
                                          **dvs_extension_kwargs))
