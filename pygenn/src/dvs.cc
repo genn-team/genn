@@ -44,12 +44,13 @@ PYBIND11_MODULE(dvs, m)
     //------------------------------------------------------------------------
     pybind11::class_<DVS::CropRect>(m, "CropRect")
         .def(pybind11::init<>())
-        .def(pybind11::init<const std::array<uint32_t, 4>>())
+        .def(pybind11::init<const std::array<uint32_t, 4>&>())
         
         .def_readwrite("left", &DVS::CropRect::left)
         .def_readwrite("top", &DVS::CropRect::top)
         .def_readwrite("right", &DVS::CropRect::right)
         .def_readwrite("bottom", &DVS::CropRect::bottom);
+    pybind11::implicitly_convertible<const std::array<uint32_t, 4>&, DVS::CropRect>();
 
     //------------------------------------------------------------------------
     // DVS.DVS
