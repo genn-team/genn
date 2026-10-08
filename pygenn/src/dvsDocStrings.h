@@ -29,6 +29,10 @@ static const char *__doc_Sensors_DVS = R"doc()doc";
 
 static const char *__doc_Sensors_DVS_CropRect = R"doc(Rectangle struct used to)doc";
 
+static const char *__doc_Sensors_DVS_CropRect_CropRect = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_CropRect_CropRect_2 = R"doc()doc";
+
 static const char *__doc_Sensors_DVS_CropRect_bottom = R"doc()doc";
 
 static const char *__doc_Sensors_DVS_CropRect_left = R"doc()doc";
@@ -51,17 +55,41 @@ static const char *__doc_Sensors_DVS_Polarity_SEPERATE = R"doc(Process on and of
 
 static const char *__doc_Sensors_DVS_create = R"doc(Create DVS interface for camera type)doc";
 
-static const char *__doc_Sensors_DVS_getHeight = R"doc(Get vertical resolution of DVS)doc";
+static const char *__doc_Sensors_DVS_getOutputArrayWords = R"doc(Get correct size of output array for this DVS in words)doc";
 
-static const char *__doc_Sensors_DVS_getWidth = R"doc(Get horizontal resolution of DVS)doc";
+static const char *__doc_Sensors_DVS_getOutputChannels = R"doc(Get number of output channels of DVS after scaling cropping etc)doc";
+
+static const char *__doc_Sensors_DVS_getOutputHeight = R"doc(Get vertical resolution of DVS after scaling, cropping etc)doc";
+
+static const char *__doc_Sensors_DVS_getOutputWidth = R"doc(Get horizontal resolution of DVS output after scaling, cropping etc)doc";
+
+static const char *__doc_Sensors_DVS_isInCrop = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_isPolarityCorrect = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_m_CropRect = R"doc()doc";
 
 static const char *__doc_Sensors_DVS_m_Device = R"doc()doc";
 
-static const char *__doc_Sensors_DVS_m_Height = R"doc()doc";
+static const char *__doc_Sensors_DVS_m_OutputArrayWords = R"doc()doc";
 
-static const char *__doc_Sensors_DVS_m_Width = R"doc()doc";
+static const char *__doc_Sensors_DVS_m_OutputChannels = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_m_OutputHeight = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_m_OutputWidth = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_m_Polarity = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_m_Scale = R"doc()doc";
 
 static const char *__doc_Sensors_DVS_readEvents = R"doc(Read all events received since last call to readEvents into array)doc";
+
+static const char *__doc_Sensors_DVS_scaleEvent = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_setEvent = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_setEvent_2 = R"doc()doc";
 
 static const char *__doc_Sensors_DVS_start = R"doc(Start streaming events from DVS)doc";
 

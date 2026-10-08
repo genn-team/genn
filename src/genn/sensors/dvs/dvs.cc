@@ -17,45 +17,9 @@ using namespace GeNN::Sensors;
 //----------------------------------------------------------------------------
 namespace
 {
-inline bool isPolarityCorrect(const libcaer::events::PolarityEvent &event, DVS::Polarity polarity)
-{
-    // On event - correct if not set to OFF_ONLY
-    if(event.getPolarity()) {
-        return (polarity != DVS::Polarity::OFF_ONLY);
-    }
-    // Off event - correct if not set to ON_ONLY
-    else {
-        return (polarity != DVS::Polarity::ON_ONLY);
-    }
-}
-
-inline bool isInCrop(const libcaer::events::PolarityEvent &event, const DVS::CropRect *cropRect) 
-{
-    return ((event.getX() >= cropRect->left) && (event.getX() < cropRect->right)
-            && (event.getY() >= cropRect->top) && (event.getY() < cropRect->bottom));
-}
-
-std::tuple<uint32_t, uint32_t> scaleEvent(uint32_t x, uint32_t y,  float scale)
-{
-    return std::make_tuple(static_cast<uint32_t>(std::round(x * scale)),
-                           static_cast<uint32_t>(std::round(y * scale)));
-}
-
-inline void setEvent(uint32_t x, uint32_t y, bool polarity, uint32_t outputWidth, uint32_t *array)
-{
-    const size_t address = (polarity ? 1 : 0) + (x * 2) + (y * 2 * outputWidth);
-    array[address / 32] |= (1 << (address % 32));
-}
-
-inline void setEvent(uint32_t x, uint32_t y, uint32_t outputWidth, uint32_t *array)
-{
-    const size_t address = x + (y * outputWidth);
-    array[address / 32] |= (1 << (address % 32));
-}
-
 template<typename P>
 inline void forEachPolarityEvent(const libcaer::events::EventPacketContainer &eventPacketContainer,
-                          P onPolarityEventFn)
+                                 P onPolarityEventFn)
 {
     // Loop through packets
     for(auto &packet : eventPacketContainer) {
@@ -82,6 +46,30 @@ inline void forEachPolarityEvent(const libcaer::events::EventPacketContainer &ev
 //----------------------------------------------------------------------------
 namespace GeNN::Sensors
 {
+DVS::DVS(std::unique_ptr<libcaer::devices::device> device,
+         unsigned int width, unsigned int height, Polarity polarity,
+         float scale, std::optional<CropRect> cropRect)
+:   m_Device(std::move(device)), m_Polarity(polarity), m_Scale(scale), m_CropRect(cropRect)
+{
+    // Applying cropping
+    const uint32_t preScaleWidth = m_CropRect ? (m_CropRect->right - m_CropRect->left) : width;
+    const uint32_t preScaleHeight = m_CropRect ? (m_CropRect->bottom - m_CropRect->top) : height;
+
+    // Apply scale
+    m_OutputWidth = static_cast<uint32_t>(std::round(preScaleWidth * m_Scale));
+    m_OutputHeight = static_cast<uint32_t>(std::round(preScaleHeight * m_Scale));
+    
+    // Determine number of channels based on polarity
+    m_OutputChannels = (polarity == Polarity::SEPERATE) ? 2 : 1;
+    
+    // Calculate correct size of output array in words
+    m_OutputArrayWords =  CodeGenerator::ceilDivide(m_OutputWidth * m_OutputHeight * m_OutputChannels, 32);
+    
+    // Send the default configuration before using the device.
+    // No configuration is sent automatically!
+    m_Device->sendDefaultConfig();
+}
+//----------------------------------------------------------------------------
 void DVS::start()
 {
     m_Device->dataStart(nullptr, nullptr, nullptr, nullptr, nullptr);
@@ -92,19 +80,8 @@ void DVS::stop()
     m_Device->dataStop();
 }
 //----------------------------------------------------------------------------
-void DVS::readEvents(GeNN::Runtime::ArrayBase *array, Polarity polarity,
-                     float scale, const CropRect *cropRect)
+void DVS::readEvents(GeNN::Runtime::ArrayBase *array)
 {
-    // Determine the output width before scaling
-    const uint32_t preScaleWidth = cropRect ? (cropRect->right - cropRect->left) : m_Width;
-    const uint32_t preScaleHeight = cropRect ? (cropRect->bottom - cropRect->top) : m_Height;
-
-    // Apply scale
-    const uint32_t outputWidth = static_cast<uint32_t>(std::round(preScaleWidth * scale));
-    const uint32_t outputHeight = static_cast<uint32_t>(std::round(preScaleHeight * scale));
-    const uint32_t outputChannels = (polarity == Polarity::SEPERATE) ? 2 : 1;
-    const uint32_t outputPixels = outputWidth * outputHeight * outputChannels;
-
     // Cast array pointer
     uint32_t *arrayPointer = array->getHostPointer<uint32_t>();
 
@@ -116,9 +93,9 @@ void DVS::readEvents(GeNN::Runtime::ArrayBase *array, Polarity polarity,
     }
 
     // Check count
-    if(array->getCount() != GeNN::CodeGenerator::ceilDivide(outputPixels, 32)) {
-        throw std::runtime_error("DVS interface trying to write " + std::to_string(outputPixels)
-                                 + " to array with space for " + std::to_string(array->getCount() * 32));
+    if(array->getCount() != m_OutputArrayWords) {
+        throw std::runtime_error("DVS interface trying to write " + std::to_string(m_OutputArrayWords)
+                                 + " words to array with space for " + std::to_string(array->getCount()));
     }
 
     
@@ -129,42 +106,42 @@ void DVS::readEvents(GeNN::Runtime::ArrayBase *array, Polarity polarity,
     }
 
     // If output will have one polarity channel
-    if(polarity != Polarity::SEPERATE) {
+    if(m_Polarity != Polarity::SEPERATE) {
         // If we're scaling AND cropping
-        if(scale != 1.0f && cropRect) {
+        if(m_Scale != 1.0f && m_CropRect) {
             forEachPolarityEvent(
                 *packetContainer,
                 [=](const auto &event)
                 {
-                    if(isPolarityCorrect(event, polarity) && isInCrop(event, cropRect)) {
-                        const auto [x, y] = scaleEvent(event.getX() - cropRect->left, 
-                                                       event.getY() - cropRect->top, scale);
-                        setEvent(x, y, outputWidth, arrayPointer);
+                    if(isPolarityCorrect(event) && isInCrop(event)) {
+                        const auto [x, y] = scaleEvent(event.getX() - m_CropRect->left, 
+                                                       event.getY() - m_CropRect->top);
+                        setEvent(x, y, arrayPointer);
                     }
                 });
         }
         // If we're cropping
-        else if(cropRect) {
+        else if(m_CropRect) {
             forEachPolarityEvent(
                 *packetContainer,
                 [=](const auto &event)
                 {
-                    if(isPolarityCorrect(event, polarity) && isInCrop(event, cropRect)) {
-                        setEvent(event.getX() - cropRect->left, event.getY() - cropRect->top, 
-                                 outputWidth, arrayPointer);
+                    if(isPolarityCorrect(event) && isInCrop(event)) {
+                        setEvent(event.getX() - m_CropRect->left, event.getY() - m_CropRect->top, 
+                                 arrayPointer);
                     }
                 });
 
         }
         // If we're scaling
-        else if(scale != 1.0f) {
+        else if(m_Scale != 1.0f) {
             forEachPolarityEvent(
                 *packetContainer,
                 [=](const auto &event)
                 {
-                    if(isPolarityCorrect(event, polarity)) {
-                        const auto [x, y] = scaleEvent(event.getX(), event.getY(), scale);
-                        setEvent(x, y, outputWidth, arrayPointer);
+                    if(isPolarityCorrect(event)) {
+                        const auto [x, y] = scaleEvent(event.getX(), event.getY());
+                        setEvent(x, y, arrayPointer);
                     }
                 });
         }
@@ -174,8 +151,8 @@ void DVS::readEvents(GeNN::Runtime::ArrayBase *array, Polarity polarity,
                 *packetContainer,
                 [=](const auto &event)
                 {
-                    if(isPolarityCorrect(event, polarity)) {
-                        setEvent(event.getX(), event.getY(), outputWidth, arrayPointer);
+                    if(isPolarityCorrect(event)) {
+                        setEvent(event.getX(), event.getY(), arrayPointer);
                     }
                 });
         }
@@ -183,41 +160,41 @@ void DVS::readEvents(GeNN::Runtime::ArrayBase *array, Polarity polarity,
     // Otherwise, if output will have two polarity channels
     else {
         // If we're scaling AND cropping
-        if(scale != 1.0f && cropRect) {
+        if(m_Scale != 1.0f && m_CropRect) {
             forEachPolarityEvent(
                 *packetContainer,
                 [=](const auto &event)
                 {
-                    if(isInCrop(event, cropRect)) {
-                        const auto [x, y] = scaleEvent(event.getX() - cropRect->left, 
-                                                       event.getY() - cropRect->top, scale);
+                    if(isInCrop(event)) {
+                        const auto [x, y] = scaleEvent(event.getX() - m_CropRect->left, 
+                                                       event.getY() - m_CropRect->top);
                         setEvent(x, y, event.getPolarity(), 
-                                 outputWidth, arrayPointer);
+                                 arrayPointer);
                     }
                 });
         }
         // If we're cropping
-        else if(cropRect) {
+        else if(m_CropRect) {
             forEachPolarityEvent(
                 *packetContainer,
                 [=](const auto &event)
                 {
-                    if(isInCrop(event, cropRect)) {
-                        setEvent(event.getX() - cropRect->left, event.getY() - cropRect->top, 
-                                 event.getPolarity(), outputWidth, arrayPointer);
+                    if(isInCrop(event)) {
+                        setEvent(event.getX() - m_CropRect->left, event.getY() - m_CropRect->top, 
+                                 event.getPolarity(), arrayPointer);
                     }
                 });
 
         }
         // If we're scaling
-        else if(scale != 1.0f) {
+        else if(m_Scale != 1.0f) {
             forEachPolarityEvent(
                 *packetContainer,
                 [=](const auto &event)
                 {
-                    const auto [x, y] = scaleEvent(event.getX(), event.getY(), scale);
+                    const auto [x, y] = scaleEvent(event.getX(), event.getY());
                     setEvent(x, y, event.getPolarity(), 
-                                outputWidth, arrayPointer);
+                                arrayPointer);
                 });
         }
         // If we're doing nothing
@@ -227,18 +204,46 @@ void DVS::readEvents(GeNN::Runtime::ArrayBase *array, Polarity polarity,
                 [=](const auto &event)
                 {
                     setEvent(event.getX(), event.getY(), event.getPolarity(), 
-                             outputWidth, arrayPointer);
+                             arrayPointer);
                 });
         }
     }  
 }
 //----------------------------------------------------------------------------
-DVS::DVS(std::unique_ptr<libcaer::devices::device> device,
-         unsigned int width, unsigned int height)
-:   m_Device(std::move(device)), m_Width(width), m_Height(height)
+bool DVS::isPolarityCorrect(const libcaer::events::PolarityEvent &event) const
 {
-    // Send the default configuration before using the device.
-    // No configuration is sent automatically!
-    m_Device->sendDefaultConfig();
+    // On event - correct if not set to OFF_ONLY
+    if(event.getPolarity()) {
+        return (m_Polarity != DVS::Polarity::OFF_ONLY);
+    }
+    // Off event - correct if not set to ON_ONLY
+    else {
+        return (m_Polarity != DVS::Polarity::ON_ONLY);
+    }
 }
+//----------------------------------------------------------------------------
+bool DVS::isInCrop(const libcaer::events::PolarityEvent &event) const
+{
+    return ((event.getX() >= m_CropRect->left) && (event.getX() < m_CropRect->right)
+            && (event.getY() >= m_CropRect->top) && (event.getY() < m_CropRect->bottom));
+}
+//----------------------------------------------------------------------------
+std::tuple<uint32_t, uint32_t> DVS::scaleEvent(uint32_t x, uint32_t y) const
+{
+    return std::make_tuple(static_cast<uint32_t>(std::round(x * m_Scale)),
+                           static_cast<uint32_t>(std::round(y * m_Scale)));
+}
+//----------------------------------------------------------------------------
+void DVS::setEvent(uint32_t x, uint32_t y, bool polarity, uint32_t *array) const
+{
+    const size_t address = (polarity ? 1 : 0) + (x * 2) + (y * 2 * m_OutputWidth);
+    array[address / 32] |= (1 << (address % 32));
+}
+//----------------------------------------------------------------------------
+void DVS::setEvent(uint32_t x, uint32_t y, uint32_t *array) const
+{
+    const size_t address = x + (y * m_OutputWidth);
+    array[address / 32] |= (1 << (address % 32));
+}
+
 }

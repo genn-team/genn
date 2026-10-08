@@ -59,26 +59,28 @@ PYBIND11_MODULE(dvs, m)
         //--------------------------------------------------------------------
         // Properties
         //--------------------------------------------------------------------
-        WRAP_PROPERTY_RO("width", DVS, Width)
-        WRAP_PROPERTY_RO("height", DVS, Height)
+        WRAP_PROPERTY_RO("output_width", DVS, OutputWidth)
+        WRAP_PROPERTY_RO("output_height", DVS, OutputHeight)
+        WRAP_PROPERTY_RO("output_channels", DVS, OutputChannels)
+        WRAP_PROPERTY_RO("output_array_words", DVS, OutputArrayWords)
 
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
         WRAP_METHOD("start", DVS, start)
         WRAP_METHOD("stop", DVS, stop)
-        .def("read_events", &DVS::readEvents,
-             pybind11::arg("array"), pybind11::arg("polarity") = DVS::Polarity::SEPERATE,
-             pybind11::arg("scale") = 1.0f, pybind11::arg("crop_rect") = nullptr,
-             DOC_DVS(DVS, readEvents))
+        .def("read_events", &DVS::readEvents, pybind11::arg("array"), DOC_DVS(DVS, readEvents))
 
         //--------------------------------------------------------------------
         // Static methods
         //--------------------------------------------------------------------
         .def_static("create_davis", &DVS::create<libcaer::devices::davis>,
-                    pybind11::arg("device_id") = 1)
+                    pybind11::arg("polarity") = DVS::Polarity::SEPERATE, pybind11::arg("scale") = 1.0f, 
+                    pybind11::arg("crop_rect") = nullptr, pybind11::arg("device_id") = 1)
         .def_static("create_dvs128", &DVS::create<libcaer::devices::dvs128>,
-                    pybind11::arg("device_id") = 1)
+                    pybind11::arg("polarity") = DVS::Polarity::SEPERATE, pybind11::arg("scale") = 1.0f, 
+                    pybind11::arg("crop_rect") = nullptr, pybind11::arg("device_id") = 1)
         .def_static("create_dvxplorer", &DVS::create<libcaer::devices::dvXplorer>,
-                    pybind11::arg("device_id") = 1);
+                    pybind11::arg("polarity") = DVS::Polarity::SEPERATE, pybind11::arg("scale") = 1.0f, 
+                    pybind11::arg("crop_rect") = nullptr, pybind11::arg("device_id") = 1);
 }

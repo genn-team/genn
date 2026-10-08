@@ -3,6 +3,7 @@
 // Standard C++ includes
 #include <array>
 #include <memory>
+#include <optional>
 
 // Standard C includes
 #include <cstdint>
@@ -57,6 +58,10 @@ public:
         uint32_t bottom;
     };
     
+    DVS(std::unique_ptr<libcaer::devices::device> device, 
+        uint32_t width, uint32_t height, Polarity polarity,
+        float scale, std::optional<CropRect> cropRect);
+
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
@@ -67,41 +72,56 @@ public:
     void stop();
 
     //! Read all events received since last call to readEvents into array
-    void readEvents(GeNN::Runtime::ArrayBase *array, Polarity polarity = Polarity::SEPERATE,
-                    float scale = 1.0f, const CropRect *cropRect = nullptr);
+    void readEvents(GeNN::Runtime::ArrayBase *array);
 
-    //! Get horizontal resolution of DVS
-    uint32_t getWidth() const{ return m_Width; }
+    //! Get horizontal resolution of DVS output after scaling, cropping etc
+    uint32_t getOutputWidth() const{ return m_OutputWidth; }
 
-    //! Get vertical resolution of DVS
-    uint32_t getHeight() const{ return m_Height; }
-
+    //! Get vertical resolution of DVS after scaling, cropping etc
+    uint32_t getOutputHeight() const{ return m_OutputHeight; }
+    
+    //! Get number of output channels of DVS after scaling cropping etc
+    uint32_t getOutputChannels() const{ return m_OutputChannels; }
+    
+    //! Get correct size of output array for this DVS in words
+    uint32_t getOutputArrayWords() const{ return m_OutputArrayWords; }
+    
     //------------------------------------------------------------------------
     // Static API
     //------------------------------------------------------------------------
     //! Create DVS interface for camera type
     template<typename D>
-    static std::unique_ptr<DVS> create(uint16_t deviceID = 1)
+    static std::unique_ptr<DVS> create(Polarity polarity = Polarity::SEPERATE, float scale = 1.0f, 
+                                       std::optional<CropRect> cropRect = std::nullopt,
+                                       uint16_t deviceID = 1)
     {
         auto device = std::make_unique<D>(deviceID);
         auto info = device->infoGet();
 
-        // **NOTE** std::make_unique doesn't work here as constructor private
-        return std::unique_ptr<DVS>(
-            new DVS(std::move(device),
-                    static_cast<uint32_t>(info.dvsSizeX), 
-                    static_cast<uint32_t>(info.dvsSizeY)));
+        return std::make_unique<DVS>(std::move(device), static_cast<uint32_t>(info.dvsSizeX), 
+                                     static_cast<uint32_t>(info.dvsSizeY), polarity, scale, cropRect);
     }
 
 private:
-    DVS(std::unique_ptr<libcaer::devices::device> device,
-        uint32_t width, uint32_t height);
-
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+    bool isPolarityCorrect(const libcaer::events::PolarityEvent &event) const;
+    bool isInCrop(const libcaer::events::PolarityEvent &event) const;
+    std::tuple<uint32_t, uint32_t> scaleEvent(uint32_t x, uint32_t y) const;
+    void setEvent(uint32_t x, uint32_t y, bool polarity, uint32_t *array) const;
+    void setEvent(uint32_t x, uint32_t y, uint32_t *array) const;
+    
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     std::unique_ptr<libcaer::devices::device> m_Device;
-    uint32_t m_Width;
-    uint32_t m_Height;
+    uint32_t m_OutputWidth;
+    uint32_t m_OutputHeight;
+    uint32_t m_OutputChannels;
+    uint32_t m_OutputArrayWords;
+    Polarity m_Polarity;
+    float m_Scale;
+    std::optional<CropRect> m_CropRect;
 };
 }
