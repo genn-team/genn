@@ -74,16 +74,9 @@ public:
     //! Read all events received since last call to readEvents into array
     void readEvents(GeNN::Runtime::ArrayBase *array);
 
-    //! Get horizontal resolution of DVS output after scaling, cropping etc
     uint32_t getOutputWidth() const{ return m_OutputWidth; }
-
-    //! Get vertical resolution of DVS after scaling, cropping etc
     uint32_t getOutputHeight() const{ return m_OutputHeight; }
-    
-    //! Get number of output channels of DVS after scaling cropping etc
     uint32_t getOutputChannels() const{ return m_OutputChannels; }
-    
-    //! Get correct size of output array for this DVS in words
     uint32_t getOutputArrayWords() const{ return m_OutputArrayWords; }
     
     //------------------------------------------------------------------------
@@ -116,10 +109,19 @@ private:
     // Members
     //------------------------------------------------------------------------
     std::unique_ptr<libcaer::devices::device> m_Device;
+
+    //! Horizontal resolution of DVS output after scaling, cropping etc
     uint32_t m_OutputWidth;
+
+    //! Vertical resolution of DVS after scaling, cropping etc
     uint32_t m_OutputHeight;
+
+    //! Number of output channels of DVS after scaling cropping etc
     uint32_t m_OutputChannels;
+
+    //! Correct size of output array for this DVS in words
     uint32_t m_OutputArrayWords;
+
     Polarity m_Polarity;
     float m_Scale;
     std::optional<CropRect> m_CropRect;

@@ -76,11 +76,26 @@ PYBIND11_MODULE(_dvs, m)
         //--------------------------------------------------------------------
         .def_static("create_davis", &DVS::create<libcaer::devices::davis>,
                     pybind11::arg("polarity") = DVS::Polarity::SEPERATE, pybind11::arg("scale") = 1.0f, 
-                    pybind11::arg("crop_rect") = nullptr, pybind11::arg("device_id") = 1)
+                    pybind11::arg("crop_rect") = nullptr, pybind11::arg("device_id") = 1,
+                    R"doc(Create a DVS device for use with a iniVation DAVIS.
+                    
+                    Args:
+                        genn_model: GeNN model to add DVS population to
+                        name:       Name to give DVS population)doc")
         .def_static("create_dvs128", &DVS::create<libcaer::devices::dvs128>,
                     pybind11::arg("polarity") = DVS::Polarity::SEPERATE, pybind11::arg("scale") = 1.0f, 
-                    pybind11::arg("crop_rect") = nullptr, pybind11::arg("device_id") = 1)
+                    pybind11::arg("crop_rect") = nullptr, pybind11::arg("device_id") = 1,
+                    R"doc(Create a DVS device for use with a iniVation DVS128.
+                    
+                    Args:
+                        genn_model: GeNN model to add DVS population to
+                        name:       Name to give DVS population)doc")
         .def_static("create_dvxplorer", &DVS::create<libcaer::devices::dvXplorer>,
                     pybind11::arg("polarity") = DVS::Polarity::SEPERATE, pybind11::arg("scale") = 1.0f, 
-                    pybind11::arg("crop_rect") = nullptr, pybind11::arg("device_id") = 1);
+                    pybind11::arg("crop_rect") = nullptr, pybind11::arg("device_id") = 1,
+                    R"doc(Create a DVS device for use with a iniVation DVXplorer.
+                    
+                    Args:
+                        genn_model: GeNN model to add DVS population to
+                        name:       Name to give DVS population)doc");
 }

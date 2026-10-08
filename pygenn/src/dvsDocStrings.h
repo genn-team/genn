@@ -53,15 +53,42 @@ static const char *__doc_Sensors_DVS_Polarity_ON_ONLY = R"doc(Only process on ev
 
 static const char *__doc_Sensors_DVS_Polarity_SEPERATE = R"doc(Process on and off events seperately)doc";
 
-static const char *__doc_Sensors_DVS_create = R"doc(Create DVS interface for camera type)doc";
+static const char *__doc_Sensors_DVS_create =
+R"doc(Create a DVS device
 
-static const char *__doc_Sensors_DVS_getOutputArrayWords = R"doc(Get correct size of output array for this DVS in words)doc";
 
-static const char *__doc_Sensors_DVS_getOutputChannels = R"doc(Get number of output channels of DVS after scaling cropping etc)doc";
+$Parameter ``polarity``:
 
-static const char *__doc_Sensors_DVS_getOutputHeight = R"doc(Get vertical resolution of DVS after scaling, cropping etc)doc";
+     how to handle event polarity
 
-static const char *__doc_Sensors_DVS_getOutputWidth = R"doc(Get horizontal resolution of DVS output after scaling, cropping etc)doc";
+
+$Parameter ``scale``:
+
+        scale factor to apply to event coordinates
+
+
+$Parameter ``cropRect``:
+
+     crop rectangle used to select region of interest:
+
+
+$Parameter ``deviceID``:
+
+     when multiple devices are connected, id of device to use
+
+
+
+$Returns:
+
+DVS object``)doc";
+
+static const char *__doc_Sensors_DVS_getOutputArrayWords = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_getOutputChannels = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_getOutputHeight = R"doc()doc";
+
+static const char *__doc_Sensors_DVS_getOutputWidth = R"doc()doc";
 
 static const char *__doc_Sensors_DVS_isInCrop = R"doc()doc";
 
@@ -71,13 +98,13 @@ static const char *__doc_Sensors_DVS_m_CropRect = R"doc()doc";
 
 static const char *__doc_Sensors_DVS_m_Device = R"doc()doc";
 
-static const char *__doc_Sensors_DVS_m_OutputArrayWords = R"doc()doc";
+static const char *__doc_Sensors_DVS_m_OutputArrayWords = R"doc(Correct size of output array for this DVS in words)doc";
 
-static const char *__doc_Sensors_DVS_m_OutputChannels = R"doc()doc";
+static const char *__doc_Sensors_DVS_m_OutputChannels = R"doc(Number of output channels of DVS after scaling cropping etc)doc";
 
-static const char *__doc_Sensors_DVS_m_OutputHeight = R"doc()doc";
+static const char *__doc_Sensors_DVS_m_OutputHeight = R"doc(Vertical resolution of DVS after scaling, cropping etc)doc";
 
-static const char *__doc_Sensors_DVS_m_OutputWidth = R"doc()doc";
+static const char *__doc_Sensors_DVS_m_OutputWidth = R"doc(Horizontal resolution of DVS output after scaling, cropping etc)doc";
 
 static const char *__doc_Sensors_DVS_m_Polarity = R"doc()doc";
 
