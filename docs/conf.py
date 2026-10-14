@@ -47,7 +47,9 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+# Sphinx-Gallery's notebooks are downloads; use its reST pages for the gallery
+# so nbsphinx does not replace them and lose the example cross-reference labels.
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "userproject/*.ipynb"]
 
 # Mock imports for readthedocs
 autodoc_mock_imports = []
