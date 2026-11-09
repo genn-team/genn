@@ -157,6 +157,7 @@ if cuda_installed:
         cuda_library_dirs.append(os.environ.get("CUDA_LIBRARY_PATH", os.path.join(cuda_path, "lib", "x64")))
     else:
         cuda_library_dirs.append(os.path.join(cuda_path, "lib64"))
+        cuda_library_dirs.append(os.path.join(cuda_path, "lib64", "stubs"))
 
     # If we're running on WSL, add additional library path so libcuda can be found
     if WSL:
