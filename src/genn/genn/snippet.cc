@@ -33,7 +33,8 @@ void Base::validate(const std::map<std::string, Type::NumericValue> &paramValues
 
     // If there are a different number of sizes than values, give error
     if(params.size() != paramValues.size()) {
-        throw std::runtime_error(description + " expected " + std::to_string(params.size()) + " parameters but got " + std::to_string(paramValues.size()));
+        throw std::runtime_error(description + " expected " + std::to_string(params.size()) + " parameters but got " + std::to_string(paramValues.size())
+                                 + Utils::getNameMismatchDescription(params, paramValues));
     }
 
     // Loop through names

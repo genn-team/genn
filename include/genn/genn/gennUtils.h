@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <algorithm>
 #include <array>
 #include <iomanip>
 #include <limits>
@@ -68,6 +69,37 @@ GENN_EXPORT std::string handleLegacyEGPType(const std::string &type);
 //! Count leading zeros
 GENN_EXPORT int clz(unsigned int value);
 
+//! Describes which of the item names in the vector have no value and which values don't correspond to an item name
+template<typename T, typename V>
+std::string getNameMismatchDescription(const std::vector<T> &vec, const std::map<std::string, V> &values)
+{
+    // Build list of item names without values
+    std::string missing;
+    for(const auto &v : vec) {
+        if(values.find(v.name) == values.cend()) {
+            missing += (missing.empty() ? "'" : ", '") + v.name + "'";
+        }
+    }
+
+    // Build list of values without item names
+    std::string unexpected;
+    for(const auto &v : values) {
+        if(std::none_of(vec.cbegin(), vec.cend(), [&v](const T &i){ return i.name == v.first; })) {
+            unexpected += (unexpected.empty() ? "'" : ", '") + v.first + "'";
+        }
+    }
+
+    // Combine into description
+    std::string description;
+    if(!missing.empty()) {
+        description += "missing: " + missing;
+    }
+    if(!unexpected.empty()) {
+        description += (description.empty() ? "unexpected: " : "; unexpected: ") + unexpected;
+    }
+    return description.empty() ? "" : (" (" + description + ")");
+}
+
 //! Checks that initialisers provided for all of the the item names in the vector?
 template<typename T, typename V>
 void validateInitialisers(const std::vector<T> &vec, const std::map<std::string, V> &values, 
@@ -75,7 +107,8 @@ void validateInitialisers(const std::vector<T> &vec, const std::map<std::string,
 {
     // If there are a different number of sizes than values, give error
     if(vec.size() != values.size()) {
-        throw std::runtime_error(description + " expected " + std::to_string(vec.size()) + " " + type + " but got " + std::to_string(values.size()));
+        throw std::runtime_error(description + " expected " + std::to_string(vec.size()) + " " + type + "s but got " + std::to_string(values.size())
+                                 + getNameMismatchDescription(vec, values));
     }
 
     // Loop through variables
