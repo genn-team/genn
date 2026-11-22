@@ -147,3 +147,61 @@ def test_model_load_unload_cycle(make_model, backend, precision):
     for _ in range(10):
         model.step_time()
     model.custom_update("CustomUpdate")
+
+
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_access_before_load(make_model, backend, precision):
+    """Test that accessing simulation state before the model is
+    loaded (or after it is unloaded) gives explicit errors."""
+    model = make_model(precision, "test_access_before_load", backend)
+    model.dt = 1.0
+
+    pop = model.add_neuron_population("pop", 10, "SpikeSourceArray", {},
+                                      {"startSpike": 0, "endSpike": 0})
+    pop.extra_global_params["spikeTimes"].set_init_values(np.zeros(1))
+
+    def check_not_loaded():
+        # Simulation time
+        with pytest.raises(Exception, match="has to be loaded"):
+            model.t
+        with pytest.raises(Exception, match="has to be loaded"):
+            model.timestep
+        with pytest.raises(Exception, match="has to be loaded"):
+            model.timestep = 0
+
+        # Variables and extra global parameters
+        for array in [pop.vars["startSpike"],
+                      pop.extra_global_params["spikeTimes"]]:
+            with pytest.raises(RuntimeError, match="has to be loaded"):
+                array.values
+            with pytest.raises(RuntimeError, match="has to be loaded"):
+                array.values = 0
+            with pytest.raises(RuntimeError, match="has to be loaded"):
+                array.push_to_device()
+            with pytest.raises(RuntimeError, match="has to be loaded"):
+                array.pull_from_device()
+
+    # Check errors are given before model is built and before it is loaded
+    check_not_loaded()
+    model.build()
+    check_not_loaded()
+
+    # Load model and check everything can now be accessed
+    model.load()
+    model.step_time()
+    assert model.t == 1.0
+    assert model.timestep == 1
+    model.timestep = 0
+    assert model.timestep == 0
+    pop.vars["startSpike"].values = 1
+    pop.vars["startSpike"].push_to_device()
+    pop.vars["startSpike"].pull_from_device()
+    assert np.all(pop.vars["startSpike"].values == 1)
+    assert np.all(pop.extra_global_params["spikeTimes"].values == 0.0)
+
+    # Unload model and check errors are given again
+    model.unload()
+    check_not_loaded()
+
+    # Reload so model can be unloaded when test finishes
+    model.load()

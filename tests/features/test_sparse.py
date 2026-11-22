@@ -241,4 +241,69 @@ def test_device_sparsity_ccu(make_model, backend, precision, batch_size):
 
     # Check g values are correct
     _safe_check(sg.vars["g"].values, g_values)
-    
+
+
+
+@pytest.mark.parametrize("precision", [types.Double, types.Float])
+def test_sparse_var_broadcast(make_model, backend, precision, batch_size):
+    model = make_model(precision, "test_sparse_var_broadcast", backend=backend)
+    model.dt = 1.0
+    model.batch_size = batch_size
+
+    # Add empty pre and postsynatic populations
+    pre_pop = model.add_neuron_population("Pre", 10, empty_neuron_model)
+    post_pop = model.add_neuron_population("Post", 10, empty_neuron_model)
+
+    pre_ind = np.random.randint(10, size=20)
+    post_ind = np.random.randint(10, size=20)
+
+    # Connect with sparse and dense synapse populations
+    # with variable which is duplicated across batches
+    sparse_sg = model.add_synapse_population(
+        "SparseSynapses", "SPARSE",
+        pre_pop, post_pop,
+        init_weight_update("StaticPulse", {}, {"g": 0.0}),
+        init_postsynaptic("DeltaCurr"))
+    sparse_sg.set_sparse_connections(pre_ind, post_ind)
+
+    dense_sg = model.add_synapse_population(
+        "DenseSynapses", "DENSE",
+        pre_pop, post_pop,
+        init_weight_update("StaticPulse", {}, {"g": 0.0}),
+        init_postsynaptic("DeltaCurr"))
+
+    # Add custom updates to double weights
+    model.add_custom_update("SparseDoubleG", "Double", double_custom_update_model,
+                            {}, {}, {"X": create_wu_var_ref(sparse_sg, "g")})
+    model.add_custom_update("DenseDoubleG", "Double", double_custom_update_model,
+                            {}, {}, {"X": create_wu_var_ref(dense_sg, "g")})
+
+    # Build model and load
+    model.build()
+    model.load()
+
+    # Loop through synapse groups and number of synapses in each
+    for sg, num in [(sparse_sg, 20), (dense_sg, 100)]:
+        # Assign scalar to variable and push
+        sg.vars["g"].values = 3.0
+        sg.vars["g"].push_to_device()
+
+        # Run custom update to double
+        model.custom_update("Double")
+
+        # Pull g and check all synapses were set and doubled
+        sg.vars["g"].pull_from_device()
+        assert sg.vars["g"].values.shape == (num,)
+        assert np.allclose(sg.vars["g"].values, 6.0)
+
+        # Check that assigning array with one element per synapse still works
+        correct = np.arange(num, dtype=float)
+        sg.vars["g"].values = correct
+        assert np.allclose(sg.vars["g"].values, correct)
+
+        # Check that assigning incorrectly sized arrays gives an error
+        with pytest.raises(ValueError):
+            sg.vars["g"].values = np.zeros(num - 1)
+
+        with pytest.raises(ValueError):
+            sg.vars["g"].values = np.zeros(num + 1)

@@ -273,16 +273,25 @@ class GeNNModel(ModelSpec):
     @property
     def t(self) -> float:
         """Simulation time in ms"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before accessing time")
+
         return self._runtime.time
 
     @property
     def timestep(self) -> int:
         """Simulation time step"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before accessing timestep")
+
         return self._runtime.timestep
 
     @timestep.setter
     def timestep(self, timestep: int):
         """Simulation time in timesteps"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before setting timestep")
+
         self._runtime.timestep = timestep
 
     #@property

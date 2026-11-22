@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 from pygenn import types
 
+from pygenn import GeNNModel
 from pygenn import (create_current_source_model, 
                     create_custom_update_model,
                     create_egp_ref,
@@ -132,6 +133,36 @@ def test_egp_var_init(make_model, backend, precision):
     sparse_s_pop.vars["repeat"].pull_from_device()
     if not np.allclose(sparse_s_pop.vars["repeat"].values, tiled_correct):
         assert False, f"'{sparse_s_pop.name}' initialisation incorrect"
+
+def test_egp_init_values_shape(backend):
+    neuron_model = create_neuron_model(
+        "neuron",
+        extra_global_params=[("e", "scalar*")])
+
+    # **NOTE** model is never loaded so it isn't created using make_model
+    model = GeNNModel(types.Float, "test_egp_init_values_shape",
+                      backend=backend)
+    n_pop = model.add_neuron_population("Neurons", 10, neuron_model)
+    egp = n_pop.extra_global_params["e"]
+
+    # Check that initialising EGP with anything other than
+    # a 1D array gives an error naming EGP and showing shape
+    with pytest.raises(ValueError, match=r"'e'.*\(2, 5\)"):
+        egp.set_init_values(np.zeros((2, 5)))
+
+    with pytest.raises(ValueError, match=r"'e'.*\(1, 10\)"):
+        egp.set_init_values([list(range(10))])
+
+    # Check that 1D arrays and lists are still accepted
+    egp.set_init_values(np.zeros(10))
+    assert egp.init_values.shape == (10,)
+
+    egp.set_init_values(list(range(10)))
+    assert egp.init_values.shape == (10,)
+
+    # Check that flattened 2D array is accepted
+    egp.set_init_values(np.zeros((2, 5)).flatten())
+    assert egp.init_values.shape == (10,)
 
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_egp_ref(make_model, backend, precision):
