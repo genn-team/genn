@@ -1684,7 +1684,7 @@ def create_current_source_model(class_name: str, params: ModelParamsType = None,
     
     if neuron_var_refs is not None:
         body["get_neuron_var_refs"] =\
-            lambda self: [VarRef(*v) for v in var_refs]
+            lambda self: [VarRef(*v) for v in neuron_var_refs]
 
     return _create_model(class_name, CurrentSourceModelBase, params,
                          param_names, derived_params,
