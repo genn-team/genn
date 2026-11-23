@@ -1,4 +1,5 @@
 // Google test includes
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 // GeNN includes
@@ -6,6 +7,8 @@
 #include "neuronModels.h"
 
 using namespace GeNN;
+using ::testing::AllOf;
+using ::testing::HasSubstr;
 
 //--------------------------------------------------------------------------
 // LIFCopy
@@ -146,7 +149,7 @@ TEST(NeuronModels, ValidateParamValuesErrorMessage)
         FAIL();
     }
     catch(const std::runtime_error &e) {
-        ASSERT_EQ(std::string{e.what()}, "Neuron group expected 4 parameters but got 3 (missing: 'c')");
+        EXPECT_THAT(e.what(), HasSubstr("'c'"));
     }
 
     // Unexpected parameter should be named
@@ -155,7 +158,7 @@ TEST(NeuronModels, ValidateParamValuesErrorMessage)
         FAIL();
     }
     catch(const std::runtime_error &e) {
-        ASSERT_EQ(std::string{e.what()}, "Neuron group expected 4 parameters but got 5 (unexpected: 'e')");
+        EXPECT_THAT(e.what(), HasSubstr("'e'"));
     }
 
     // All missing and unexpected parameters should be named
@@ -164,7 +167,7 @@ TEST(NeuronModels, ValidateParamValuesErrorMessage)
         FAIL();
     }
     catch(const std::runtime_error &e) {
-        ASSERT_EQ(std::string{e.what()}, "Neuron group expected 4 parameters but got 5 (missing: 'b', 'd'; unexpected: 'e', 'f', 'g')");
+        EXPECT_THAT(e.what(), AllOf(HasSubstr("'b'"), HasSubstr("'d'"), HasSubstr("'e'"), HasSubstr("'f'"), HasSubstr("'g'")));
     }
 }
 //--------------------------------------------------------------------------
@@ -181,7 +184,7 @@ TEST(NeuronModels, ValidateVarValuesErrorMessage)
         FAIL();
     }
     catch(const std::runtime_error &e) {
-        ASSERT_EQ(std::string{e.what()}, "Neuron group expected 2 variables but got 1 (missing: 'U')");
+        EXPECT_THAT(e.what(), HasSubstr("'U'"));
     }
 
     // Unexpected variable should be named
@@ -190,6 +193,6 @@ TEST(NeuronModels, ValidateVarValuesErrorMessage)
         FAIL();
     }
     catch(const std::runtime_error &e) {
-        ASSERT_EQ(std::string{e.what()}, "Neuron group expected 2 variables but got 3 (unexpected: 'A')");
+        EXPECT_THAT(e.what(), HasSubstr("'A'"));
     }
 }

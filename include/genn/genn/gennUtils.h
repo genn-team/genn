@@ -74,30 +74,33 @@ template<typename T, typename V>
 std::string getNameMismatchDescription(const std::vector<T> &vec, const std::map<std::string, V> &values)
 {
     // Build list of item names without values
-    std::string missing;
+    std::ostringstream missing;
     for(const auto &v : vec) {
         if(values.find(v.name) == values.cend()) {
-            missing += (missing.empty() ? "'" : ", '") + v.name + "'";
+            missing << ((missing.tellp() == 0) ? "'" : ", '") << v.name << "'";
         }
     }
 
     // Build list of values without item names
-    std::string unexpected;
+    std::ostringstream unexpected;
     for(const auto &v : values) {
         if(std::none_of(vec.cbegin(), vec.cend(), [&v](const T &i){ return i.name == v.first; })) {
-            unexpected += (unexpected.empty() ? "'" : ", '") + v.first + "'";
+            unexpected << ((unexpected.tellp() == 0) ? "'" : ", '") << v.first << "'";
         }
     }
 
     // Combine into description
-    std::string description;
-    if(!missing.empty()) {
-        description += "missing: " + missing;
+    std::ostringstream description;
+    if(missing.tellp() != 0) {
+        description << " (missing: " << missing.str();
     }
-    if(!unexpected.empty()) {
-        description += (description.empty() ? "unexpected: " : "; unexpected: ") + unexpected;
+    if(unexpected.tellp() != 0) {
+        description << ((description.tellp() == 0) ? " (unexpected: " : "; unexpected: ") << unexpected.str();
     }
-    return description.empty() ? "" : (" (" + description + ")");
+    if(description.tellp() != 0) {
+        description << ")";
+    }
+    return description.str();
 }
 
 //! Checks that initialisers provided for all of the the item names in the vector?

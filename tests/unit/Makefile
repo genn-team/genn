@@ -11,7 +11,7 @@ DEPS			:=$(OBJECTS:.o=.d)
 
 # Add compiler and linker flags to link libGeNN and pthreads
 LDFLAGS			+= -L$(LIBRARY_DIRECTORY) -lgenn_single_threaded_cpu_backend$(GENN_PREFIX) -lgenn$(GENN_PREFIX) -lpthread -ldl $(shell pkg-config libffi --libs)
-CXXFLAGS		+= -I$(GENN_DIR)/include/genn/backends/single_threaded_cpu -I "$(GTEST_DIR)" -isystem "$(GTEST_DIR)/include" 
+CXXFLAGS		+= -I$(GENN_DIR)/include/genn/backends/single_threaded_cpu -I "$(GTEST_DIR)" -isystem "$(GTEST_DIR)/include" -isystem "$(GTEST_DIR)/../googlemock/include"
 
 # Determine full path to generator and backend
 TEST			:=$(UNIT_TEST_PATH)/test$(GENN_PREFIX)
