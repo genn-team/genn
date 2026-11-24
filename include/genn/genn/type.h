@@ -410,7 +410,7 @@ inline static const ResolvedType Bool = CREATE_NUMERIC(bool, 0, nullptr, "");
 inline static const ResolvedType Int8 = CREATE_NUMERIC(int8_t, 10, &ffi_type_sint8, "");
 inline static const ResolvedType Int16 = CREATE_NUMERIC(int16_t, 20, &ffi_type_sint16, "");
 inline static const ResolvedType Int32 = CREATE_NUMERIC(int32_t, 30, &ffi_type_sint32, "");
-inline static const ResolvedType Int64 = CREATE_NUMERIC(int64_t, 40, &ffi_type_sint32, "");
+inline static const ResolvedType Int64 = CREATE_NUMERIC(int64_t, 40, &ffi_type_sint64, "");
 
 inline static const ResolvedType Uint8 = CREATE_NUMERIC(uint8_t, 10, &ffi_type_uint8, "u");
 inline static const ResolvedType Uint16 = CREATE_NUMERIC(uint16_t, 20, &ffi_type_uint16, "u");
