@@ -71,6 +71,24 @@ private:
 };
 
 //---------------------------------------------------------------------------
+// Because arguments get substituted into templates, parenthesise any which contain
+// operators so their meaning isn't changed by operators surrounding the placeholder
+std::string parenthesiseArgument(const Expression::Base *argument, const std::string &argumentString)
+{
+    if(dynamic_cast<const Expression::ArraySubscript*>(argument)
+       || dynamic_cast<const Expression::Call*>(argument)
+       || dynamic_cast<const Expression::Grouping*>(argument)
+       || dynamic_cast<const Expression::Identifier*>(argument)
+       || dynamic_cast<const Expression::Literal*>(argument))
+    {
+        return argumentString;
+    }
+    else {
+        return "(" + argumentString + ")";
+    }
+}
+
+//---------------------------------------------------------------------------
 // Visitor
 //---------------------------------------------------------------------------
 class Visitor : public Expression::Visitor, public Statement::Visitor
@@ -117,7 +135,7 @@ private:
         m_CallArguments.emplace(std::piecewise_construct,
                                 std::forward_as_tuple(true),
                                 std::forward_as_tuple());
-        m_CallArguments.top().second.push_back(environment.getString());
+        m_CallArguments.top().second.push_back(parenthesiseArgument(arraySubscript.getIndex(), environment.getString()));
 
         // Pretty print array
         // **NOTE** like with Expression::Call, when this reaches an
@@ -159,7 +177,7 @@ private:
             a->accept(*this);
             
             // Add pretty printed argument to vector
-            arguments.push_back(environment.getString());
+            arguments.push_back(parenthesiseArgument(a.get(), environment.getString()));
          }
 
         // Restore old environment
