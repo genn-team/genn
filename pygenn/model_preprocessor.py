@@ -55,11 +55,21 @@ class ArrayBase:
 
     def push_to_device(self):
         """Copy array from host to device"""
+        self._check_loaded()
         self._array.push_to_device()
 
     def pull_from_device(self):
         """Copy array device to host"""
+        self._check_loaded()
         self._array.pull_from_device()
+
+    def _check_loaded(self):
+        # Arrays are only assigned when model is loaded and only if they
+        # are accessible from the host so, otherwise, give a clear error
+        if self._array is None:
+            raise RuntimeError("Array cannot be accessed as it has not "
+                               "been loaded. GeNN model has to be loaded "
+                               "and array has to be located on host")
 
     def _unload(self):
         self._view = None
@@ -205,10 +215,12 @@ class Variable(VariableBase):
     def values(self) -> np.ndarray:
         """Copy of entire variable. If variable is 
         delayed this will contain multiple delayed values."""
+        self._check_loaded()
         return np.copy(self._view)
     
     @values.setter
     def values(self, vals: np.ndarray):
+        self._check_loaded()
         self._view[:] = vals
 
     @property
@@ -246,6 +258,7 @@ class SynapseVariable(VariableBase):
     def values(self) -> np.ndarray:
         """Copy of variable's values. Variables associated with 
         :attr:`SynapseMatrixConnectivity.SPARSE`"""
+        self._check_loaded()
         sg = self.group.synapse_group
         if sg.matrix_type & SynapseMatrixConnectivity.DENSE:
             return np.copy(self._view)
@@ -279,6 +292,8 @@ class SynapseVariable(VariableBase):
     
     @values.setter
     def values(self, vals: np.ndarray):
+        self._check_loaded()
+
         # If connectivity is dense,
         # copy variables  directly into view
         # **NOTE** we assume order is row-major
@@ -299,6 +314,12 @@ class SynapseVariable(VariableBase):
             row_ls = (sg.row_lengths 
                       if not sg._any_ccu_references and sg.connections_set
                       else sg._row_lengths.view)
+
+            # Broadcast values to one per synapse so that, like with dense
+            # connectivity, scalars and values shared across batches can be
+            # assigned. This also gives an error if size of values is wrong
+            vals = np.broadcast_to(
+                vals, self._view.shape[:-1] + (int(np.sum(row_ls)),))
 
             # Loop through sparse matrix rows
             syn = 0
@@ -353,6 +374,14 @@ class ExtraGlobalParameter(Array):
             except TypeError:
                 raise ValueError("extra global variables can only be "
                                  "initialised with iterables")
+
+            # Extra global parameters are flat arrays so, as the number of
+            # elements to allocate is taken from first dimension, give error
+            if self.init_values.ndim != 1:
+                raise ValueError(f"extra global parameter '{self.name}' can "
+                                 f"only be initialised with 1D arrays but "
+                                 f"array with shape {self.init_values.shape} "
+                                 f"was provided. Please flatten it first.")
     
     @property
     def view(self) -> np.ndarray:
@@ -362,10 +391,12 @@ class ExtraGlobalParameter(Array):
     @property
     def values(self) -> np.ndarray:
         """Copy of extra global parameter values"""
+        self._check_loaded()
         return np.copy(self._view)
     
     @values.setter
     def values(self, vals: np.ndarray):
+        self._check_loaded()
         self._view[:] = vals
 
 def _prepare_param_vals(params):
