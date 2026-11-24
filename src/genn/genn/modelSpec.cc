@@ -262,6 +262,12 @@ CustomUpdate *ModelSpec::addCustomUpdate(const std::string &name, const std::str
                                          const ParamValues &paramValues, const VarValues &varInitialisers,
                                          const VarReferences &varReferences, const EGPReferences &egpReferences)
 {
+    // **NOTE** custom updates and custom WU updates are stored in
+    // separate maps but names should be unique across both
+    if(m_CustomWUUpdates.count(name) > 0) {
+        throw std::runtime_error("Cannot add a custom update with duplicate name:" + name);
+    }
+
     // Add neuron group to map
     auto result = m_CustomUpdates.try_emplace(
         name,
@@ -304,6 +310,12 @@ CustomUpdateWU *ModelSpec::addCustomUpdate(const std::string &name, const std::s
                                            const ParamValues &paramValues, const VarValues &varInitialisers,
                                            const WUVarReferences &varReferences, const EGPReferences &egpReferences)
 {
+    // **NOTE** custom updates and custom WU updates are stored in
+    // separate maps but names should be unique across both
+    if(m_CustomUpdates.count(name) > 0) {
+        throw std::runtime_error("Cannot add a custom update with duplicate name:" + name);
+    }
+
     // Add neuron group to map
     auto result = m_CustomWUUpdates.try_emplace(
         name,

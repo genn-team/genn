@@ -565,12 +565,6 @@ class GeNNModel(ModelSpec):
         if self._built:
             raise Exception("GeNN model already built")
         
-        # **NOTE** GeNN checks for duplicate names separately for custom updates
-        # on neuron and on synapse variables but they share this dictionary
-        if cu_name in self.custom_updates:
-            raise RuntimeError(f"Cannot add a custom update with "
-                               f"duplicate name '{cu_name}'")
-
         # Resolve custom update model
         custom_update_model = _get_snippet(custom_update_model, CustomUpdateModelBase,
                                            custom_update_models)

@@ -166,3 +166,57 @@ TEST(ModelSpec, CustomConnectivityUpdateZeroCopy)
     cu->setVarLocation("a", VarLocation::HOST_DEVICE_ZERO_COPY);
     ASSERT_TRUE(model.zeroCopyInUse());
 }
+//--------------------------------------------------------------------------
+TEST(ModelSpec, CustomUpdateDuplicateName)
+{
+    ModelSpecInternal model;
+
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
+    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
+
+    auto *sg = model.addSynapsePopulation(
+        "Synapse", SynapseMatrixType::DENSE,
+        pre, post,
+        initWeightUpdate<WeightUpdateModels::StaticPulse>({}, {{"g", 1.0}}),
+        initPostsynaptic<PostsynapticModels::DeltaCurr>());
+
+    VarReferences varRefs{{"a", createVarRef(pre, "V")}, {"b", createVarRef(pre, "U")}};
+    WUVarReferences wuVarRefs{{"a", createWUVarRef(sg, "g")}, {"b", createWUVarRef(sg, "g")}};
+
+    model.addCustomUpdate<Sum>("Sum", "Test", {}, {{"sum", 0.0}}, varRefs);
+    model.addCustomUpdate<Sum>("SumWU", "Test", {}, {{"sum", 0.0}}, wuVarRefs);
+
+    // Names of custom updates should be unique
+    try {
+        model.addCustomUpdate<Sum>("Sum", "Test", {}, {{"sum", 0.0}}, varRefs);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+
+    // Names of custom WU updates should be unique
+    try {
+        model.addCustomUpdate<Sum>("SumWU", "Test", {}, {{"sum", 0.0}}, wuVarRefs);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+
+    // Custom WU update can't have same name as custom update
+    try {
+        model.addCustomUpdate<Sum>("Sum", "Test", {}, {{"sum", 0.0}}, wuVarRefs);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+
+    // Custom update can't have same name as custom WU update
+    try {
+        model.addCustomUpdate<Sum>("SumWU", "Test", {}, {{"sum", 0.0}}, varRefs);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+}
