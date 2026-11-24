@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from pygenn import types
 
-from pygenn import CustomUpdateVarAccess, VarAccess, VarAccessMode
+from pygenn import CustomUpdateVarAccess, GeNNModel, VarAccess, VarAccessMode
 
 from scipy.special import softmax
 from pygenn import (create_current_source_model, 
@@ -824,3 +824,31 @@ def test_custom_update_batch_reduction(make_model, backend, precision, batch_siz
         max_value = max_pop.vars["MaxX"].values
         if not np.allclose(max_correct, max_value):
             assert False, f"{max_pop.name} var MaxX has wrong value ({max_value} rather than {max_correct})"
+
+def test_custom_update_duplicate_name(backend):
+    # **NOTE** model is never built so it isn't created using make_model
+    model = GeNNModel(types.Float, "test_custom_update_duplicate_name",
+                      backend=backend)
+
+    neuron_model = create_neuron_model("neuron", vars=[("X", "scalar")])
+    pop = model.add_neuron_population("Pop", 10, neuron_model,
+                                      {}, {"X": 0.0})
+    syn = model.add_synapse_population(
+        "Syn", "DENSE", pop, pop,
+        init_weight_update("StaticPulse", {}, {"g": 0.0}),
+        init_postsynaptic("DeltaCurr"))
+
+    set_model = create_custom_update_model(
+        "set",
+        var_refs=[("V", "scalar")],
+        update_code="V = 1.0;")
+
+    # Custom updates on neuron and on synapse variables are stored in
+    # separate maps in C++ but in one dictionary in PyGeNN, so a duplicate
+    # name across the two kinds must be rejected rather than overwriting
+    cu = model.add_custom_update("Set", "Group", set_model, {}, {},
+                                 {"V": create_var_ref(pop, "X")})
+    with pytest.raises(RuntimeError, match="duplicate name 'Set'"):
+        model.add_custom_update("Set", "Group", set_model, {}, {},
+                                {"V": create_wu_var_ref(syn, "g")})
+    assert model.custom_updates["Set"] is cu
