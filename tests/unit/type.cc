@@ -39,3 +39,19 @@ TEST(Type, writeNumeric)
     catch(const std::runtime_error &) {
     }
 }
+//--------------------------------------------------------------------------
+TEST(Type, FFIType)
+{
+    ASSERT_EQ(Type::Int8.getFFIType(), &ffi_type_sint8);
+    ASSERT_EQ(Type::Int16.getFFIType(), &ffi_type_sint16);
+    ASSERT_EQ(Type::Int32.getFFIType(), &ffi_type_sint32);
+    ASSERT_EQ(Type::Int64.getFFIType(), &ffi_type_sint64);
+
+    ASSERT_EQ(Type::Uint8.getFFIType(), &ffi_type_uint8);
+    ASSERT_EQ(Type::Uint16.getFFIType(), &ffi_type_uint16);
+    ASSERT_EQ(Type::Uint32.getFFIType(), &ffi_type_uint32);
+    ASSERT_EQ(Type::Uint64.getFFIType(), &ffi_type_uint64);
+
+    ASSERT_EQ(Type::Float.getFFIType(), &ffi_type_float);
+    ASSERT_EQ(Type::Double.getFFIType(), &ffi_type_double);
+}
