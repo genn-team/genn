@@ -264,7 +264,7 @@ CustomUpdate *ModelSpec::addCustomUpdate(const std::string &name, const std::str
 {
     // **NOTE** custom updates and custom WU updates are stored in
     // separate maps but names should be unique across both
-    if(m_CustomWUUpdates.count(name) > 0) {
+    if(m_CustomWUUpdates.find(name) != m_CustomWUUpdates.cend()) {
         throw std::runtime_error("Cannot add a custom update with duplicate name:" + name);
     }
 
@@ -312,7 +312,7 @@ CustomUpdateWU *ModelSpec::addCustomUpdate(const std::string &name, const std::s
 {
     // **NOTE** custom updates and custom WU updates are stored in
     // separate maps but names should be unique across both
-    if(m_CustomUpdates.count(name) > 0) {
+    if(m_CustomUpdates.find(name) != m_CustomUpdates.cend()) {
         throw std::runtime_error("Cannot add a custom update with duplicate name:" + name);
     }
 

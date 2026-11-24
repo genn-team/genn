@@ -189,34 +189,30 @@ TEST(ModelSpec, CustomUpdateDuplicateName)
     model.addCustomUpdate<Sum>("SumWU", "Test", {}, {{"sum", 0.0}}, wuVarRefs);
 
     // Names of custom updates should be unique
-    try {
-        model.addCustomUpdate<Sum>("Sum", "Test", {}, {{"sum", 0.0}}, varRefs);
-        FAIL();
-    }
-    catch(const std::runtime_error &) {
-    }
+    EXPECT_THROW(
+        {
+            model.addCustomUpdate<Sum>("Sum", "Test", {}, {{"sum", 0.0}}, varRefs);
+        },
+        std::runtime_error);
 
     // Names of custom WU updates should be unique
-    try {
-        model.addCustomUpdate<Sum>("SumWU", "Test", {}, {{"sum", 0.0}}, wuVarRefs);
-        FAIL();
-    }
-    catch(const std::runtime_error &) {
-    }
+    EXPECT_THROW(
+        {
+            model.addCustomUpdate<Sum>("SumWU", "Test", {}, {{"sum", 0.0}}, wuVarRefs);
+        },
+        std::runtime_error);
 
     // Custom WU update can't have same name as custom update
-    try {
-        model.addCustomUpdate<Sum>("Sum", "Test", {}, {{"sum", 0.0}}, wuVarRefs);
-        FAIL();
-    }
-    catch(const std::runtime_error &) {
-    }
+    EXPECT_THROW(
+        {
+            model.addCustomUpdate<Sum>("Sum", "Test", {}, {{"sum", 0.0}}, wuVarRefs);
+        },
+        std::runtime_error);
 
     // Custom update can't have same name as custom WU update
-    try {
-        model.addCustomUpdate<Sum>("SumWU", "Test", {}, {{"sum", 0.0}}, varRefs);
-        FAIL();
-    }
-    catch(const std::runtime_error &) {
-    }
+    EXPECT_THROW(
+        {
+            model.addCustomUpdate<Sum>("SumWU", "Test", {}, {{"sum", 0.0}}, varRefs);
+        },
+        std::runtime_error);
 }
