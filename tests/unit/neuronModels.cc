@@ -1,4 +1,5 @@
 // Google test includes
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 // GeNN includes
@@ -6,6 +7,8 @@
 #include "neuronModels.h"
 
 using namespace GeNN;
+using ::testing::AllOf;
+using ::testing::HasSubstr;
 
 //--------------------------------------------------------------------------
 // LIFCopy
@@ -130,4 +133,66 @@ TEST(NeuronModels, ValidateVarValues)
     }
     catch(const std::runtime_error &) {
     } 
+}
+//--------------------------------------------------------------------------
+TEST(NeuronModels, ValidateParamValuesErrorMessage)
+{
+    const VarValues varVals{{"V", uninitialisedVar()}, {"U", uninitialisedVar()}};
+
+    const ParamValues paramValsMissing{{"a", 0.02}, {"b", 0.2}, {"d", 8.0}};
+    const ParamValues paramValsExtra{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}, {"e", 8.0}};
+    const ParamValues paramValsMissingExtra{{"a", 0.02}, {"c", -65.0}, {"e", 8.0}, {"f", 8.0}, {"g", 8.0}};
+
+    // Missing parameter should be named
+    try {
+        NeuronModels::Izhikevich::getInstance()->validate(paramValsMissing, varVals, "Neuron group");
+        FAIL();
+    }
+    catch(const std::runtime_error &e) {
+        EXPECT_THAT(e.what(), HasSubstr("'c'"));
+    }
+
+    // Unexpected parameter should be named
+    try {
+        NeuronModels::Izhikevich::getInstance()->validate(paramValsExtra, varVals, "Neuron group");
+        FAIL();
+    }
+    catch(const std::runtime_error &e) {
+        EXPECT_THAT(e.what(), HasSubstr("'e'"));
+    }
+
+    // All missing and unexpected parameters should be named
+    try {
+        NeuronModels::Izhikevich::getInstance()->validate(paramValsMissingExtra, varVals, "Neuron group");
+        FAIL();
+    }
+    catch(const std::runtime_error &e) {
+        EXPECT_THAT(e.what(), AllOf(HasSubstr("'b'"), HasSubstr("'d'"), HasSubstr("'e'"), HasSubstr("'f'"), HasSubstr("'g'")));
+    }
+}
+//--------------------------------------------------------------------------
+TEST(NeuronModels, ValidateVarValuesErrorMessage)
+{
+    const ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+
+    const VarValues varValsMissing{{"V", 0.0}};
+    const VarValues varValsExtra{{"V", 0.0}, {"U", 0.0}, {"A", 0.0}};
+
+    // Missing variable should be named
+    try {
+        NeuronModels::Izhikevich::getInstance()->validate(paramVals, varValsMissing, "Neuron group");
+        FAIL();
+    }
+    catch(const std::runtime_error &e) {
+        EXPECT_THAT(e.what(), HasSubstr("'U'"));
+    }
+
+    // Unexpected variable should be named
+    try {
+        NeuronModels::Izhikevich::getInstance()->validate(paramVals, varValsExtra, "Neuron group");
+        FAIL();
+    }
+    catch(const std::runtime_error &e) {
+        EXPECT_THAT(e.what(), HasSubstr("'A'"));
+    }
 }
