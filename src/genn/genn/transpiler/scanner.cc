@@ -343,7 +343,7 @@ void scanToken(ScanState &scanState, std::vector<Token> &tokens)
             if(scanState.match('=')) {
                 emplaceToken(tokens, Token::Type::GREATER_EQUAL, scanState);
             }
-            else if(scanState.match('<')) {
+            else if(scanState.match('>')) {
                 if(scanState.match('=')) {
                     emplaceToken(tokens, Token::Type::SHIFT_RIGHT_EQUAL, scanState);
                 }
