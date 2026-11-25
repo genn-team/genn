@@ -172,6 +172,19 @@ def test_custom_connectivity_update(make_model, backend, precision, batch_size):
         pushpostIndToDevice();
         """)
 
+    # Custom connectivity update which sets postsynaptic variable in host code
+    host_post_var_model = create_custom_connectivity_update_model(
+        "host_post_var",
+        post_vars=[("postInd", "unsigned int")],
+        row_update_code="",
+        host_update_code=
+        """
+        for(unsigned int i = 0; i < num_post; i++) {
+            postInd[i] = i;
+        }
+        pushpostIndToDevice();
+        """)
+
     # Custom connectivity update which adds a synapse on diagonal to each row
     add_synapse_model = create_custom_connectivity_update_model(
         "add_synapse",
@@ -190,6 +203,7 @@ def test_custom_connectivity_update(make_model, backend, precision, batch_size):
     # Create pre and postsynaptic populations
     pre_n_pop = model.add_neuron_population("PreNeurons", 64, empty_neuron_model); 
     post_n_pop = model.add_neuron_population("PostNeurons", 64, empty_neuron_model); 
+    large_post_n_pop = model.add_neuron_population("LargePostNeurons", 100, empty_neuron_model)
 
     # Create synapse groups
     s_pop_1 = model.add_synapse_population(
@@ -213,6 +227,13 @@ def test_custom_connectivity_update(make_model, backend, precision, batch_size):
         init_postsynaptic("DeltaCurr"),
         init_sparse_connectivity(triangle_connect_init_snippet))
 
+    s_pop_4 = model.add_synapse_population(
+        "Syn4", "SPARSE",
+        pre_n_pop, large_post_n_pop,
+        init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity("OneToOne"))
+
     # Create custom connectivity updates
     remove_synapse_ccu = model.add_custom_connectivity_update(
         "RemoveSynapse", "RemoveSynapse", s_pop_1,
@@ -233,6 +254,12 @@ def test_custom_connectivity_update(make_model, backend, precision, batch_size):
         "RemoveSynapseHostPreVar", "RemoveSynapse", s_pop_3,
         remove_synapse_host_pre_var_model,
         {}, {}, {"postInd": 0}, {}, 
+        {}, {}, {})
+
+    host_post_var_ccu = model.add_custom_connectivity_update(
+        "HostPostVar", "RemoveSynapse", s_pop_4,
+        host_post_var_model,
+        {}, {}, {}, {"postInd": 0},
         {}, {}, {})
 
     add_synapse_ccu = model.add_custom_connectivity_update(
@@ -263,6 +290,10 @@ def test_custom_connectivity_update(make_model, backend, precision, batch_size):
         _check_connectivity(pop, lambda i: 0 if i > 63 else (63 - i),
                             lambda i: hex2ba("7FFFFFFFFFFFFFFF") >> i,
                             var_checks)
+
+    # Check that host code set variable for all postsynaptic neurons
+    host_post_var_ccu.post_vars["postInd"].pull_from_device()
+    assert np.array_equal(host_post_var_ccu.post_vars["postInd"].view, np.arange(100))
 
     # Run custom update to add diagonal synapses back again
     model.custom_update("AddSynapse")

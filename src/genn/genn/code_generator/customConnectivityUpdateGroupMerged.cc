@@ -392,7 +392,7 @@ void CustomConnectivityHostUpdateGroupMerged::generateUpdate(const BackendBase &
                           [](const auto &cg, size_t) 
                           { 
                               const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                              return sgInternal->getSrcNeuronGroup()->getNumNeurons();
+                              return sgInternal->getTrgNeuronGroup()->getNumNeurons();
                           });
 
         // Expose row stride        
