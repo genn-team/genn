@@ -26,11 +26,16 @@ def desiredBuilds = [
 void buildStep(String message, Closure closure) {
     stage(message)
     {
-        try {
-            setBuildStatus(message, "PENDING");
-            closure();
-        } catch (Exception e) {
-            setBuildStatus(message, "FAILURE");
+        // **NOTE** catchError marks this stage and the whole build as failed but lets
+        // subsequent stages run so test results and output still get gathered and archived
+        catchError(buildResult: "FAILURE", stageResult: "FAILURE") {
+            try {
+                setBuildStatus(message, "PENDING");
+                closure();
+            } catch (Exception e) {
+                setBuildStatus(message, "FAILURE");
+                throw e;
+            }
         }
     }
 }
@@ -137,22 +142,31 @@ for(b = 0; b < builderNodes.size(); b++) {
                     // Run automatic tests
                     dir("genn") {
                         if (isUnix()) {
-                            // Run tests
-                            def runTestsCommand = """
+                            // Build tests
+                            def buildTestsCommand = """
                             rm -f "${outputFilename}"
 
                             # Clean and build unit tests
                             cd tests/unit
                             make clean all COVERAGE=1 1>> "${outputFilename}" 2>&1
+                            """;
+                            def buildTestsStatus = sh script:buildTestsCommand, returnStatus:true;
 
-                            # Run tests
+                            // If tests failed to build, fail stage
+                            if(buildTestsStatus != 0) {
+                                error("Building unit tests failed");
+                            }
+
+                            // Run tests
+                            def runTestsCommand = """
+                            cd tests/unit
                             ./test_coverage --gtest_output="xml:test_results_unit.xml" 1>> "${outputFilename}" 2>&1
                             """;
                             def runTestsStatus = sh script:runTestsCommand, returnStatus:true;
 
-                            // If tests failed, set failure status
+                            // If tests failed, fail stage
                             if(runTestsStatus != 0) {
-                                setBuildStatus("Running unit tests (" + env.NODE_NAME + ")", "FAILURE");
+                                error("Unit tests failed");
                             }
 
                         }
@@ -163,20 +177,21 @@ for(b = 0; b < builderNodes.size(); b++) {
                             DEL "${outputFilename}"
 
                             msbuild genn.sln /m /t:single_threaded_cpu_backend /verbosity:quiet /p:Configuration=Release
+                            IF ERRORLEVEL 1 EXIT /B 1
 
                             msbuild tests/tests.sln /m /verbosity:quiet /p:Configuration=Release
+                            IF ERRORLEVEL 1 EXIT /B 1
 
-                            PUSHD tests/unit
+                            PUSHD tests\\unit
                             unit_Release.exe --gtest_output="xml:test_results_unit.xml"
+                            IF ERRORLEVEL 1 EXIT /B 1
                             POPD
-
-                            CALL run_tests.bat >> "${outputFilename}" 2>&1;
                             """;
                             def runTestsStatus = bat script:runTestsCommand, returnStatus:true;
 
-                            // If tests failed, set failure status
+                            // If tests failed to build or run, fail stage
                             if(runTestsStatus != 0) {
-                                setBuildStatus("Running unit tests (" + env.NODE_NAME + ")", "FAILURE");
+                                error("Building or running unit tests failed");
                             }
                         }
                     }
@@ -202,11 +217,16 @@ for(b = 0; b < builderNodes.size(); b++) {
                         echo "Building and installing PyGeNN";
                         def commandsPyGeNN = """
                         . ${WORKSPACE}/venv/bin/activate
-                        python setup.py develop --coverage 2>&1 | tee -a "${compileOutputFilename}" >> "${outputFilename}"
+
+                        # **NOTE** not piped through tee as the shell would then return the exit status of tee
+                        status=0
+                        python setup.py develop --coverage > "${compileOutputFilename}" 2>&1 || status=\$?
+                        cat "${compileOutputFilename}" >> "${outputFilename}"
+                        exit \$status
                         """;
                         def statusPyGeNN = sh script:commandsPyGeNN, returnStatus:true;
                         if (statusPyGeNN != 0) {
-                            setBuildStatus("Building PyGeNN (${NODE_NAME})", "FAILURE");
+                            error("Building PyGeNN failed");
                         }
                     }
                 }
@@ -221,7 +241,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         """;
                         def statusTests = sh script:commandsTest, returnStatus:true;
                         if (statusTests != 0) {
-                            setBuildStatus("Running tests (${NODE_NAME})", "FAILURE");
+                            error("Feature tests failed");
                         }
                     }
                 }
@@ -270,7 +290,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             """
                         def wheelStatusCode = sh script:script, returnStatus:true;
                         if(wheelStatusCode != 0) {
-                            setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
+                            error("Building Python wheels failed");
                         }
 
                         // Archive wheel itself
