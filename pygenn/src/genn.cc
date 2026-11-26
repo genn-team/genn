@@ -701,8 +701,11 @@ PYBIND11_MODULE(_genn, m)
     // genn.NumericValue
     //------------------------------------------------------------------------
     pybind11::class_<Type::NumericValue>(m, "NumericValue")
+        // **NOTE** integer constructor is registered first as, since pybind11 3.1.0, double arguments
+        // also match Python integers. Its argument is not converted so floating point values
+        // which aren't Python floats (e.g. numpy.float32) reach the double constructor rather than being truncated
+        .def(pybind11::init<int64_t>(), pybind11::arg("value").noconvert())
         .def(pybind11::init<double>())
-        .def(pybind11::init<int64_t>())
 
         .def_property_readonly("value", &Type::NumericValue::get);
 
