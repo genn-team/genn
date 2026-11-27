@@ -5,6 +5,7 @@ from pygenn import types
 from pygenn import VarAccessMode
 
 from pygenn import (create_current_source_model, 
+                    create_custom_connectivity_update_model,
                     create_custom_update_model,
                     create_neuron_model,
                     create_postsynaptic_model,
@@ -107,6 +108,23 @@ def test_num(make_model, backend, precision, batch_size):
         num_batch_syn_test = num_batch * 2;
         """)
 
+    custom_connectivity_update_model = create_custom_connectivity_update_model(
+        "custom_connectivity_update",
+        pre_vars=[("num_pre_ccu_test", "unsigned int")],
+        post_vars=[("num_post_ccu_test", "unsigned int")],
+        row_update_code="",
+        host_update_code=
+        """
+        for(unsigned int i = 0; i < num_pre; i++) {
+            num_pre_ccu_test[i] = num_pre * 2;
+        }
+        for(unsigned int i = 0; i < num_post; i++) {
+            num_post_ccu_test[i] = num_post * 2;
+        }
+        pushnum_pre_ccu_testToDevice();
+        pushnum_post_ccu_testToDevice();
+        """)
+
     # Snippets to initialise variables to num_XXX variables
     num_neurons_snippet = create_var_init_snippet(
         "num_neurons",
@@ -170,6 +188,17 @@ def test_num(make_model, backend, precision, batch_size):
     cuw = model.add_custom_update("CUW", "Test", custom_update_wu_model,
                                   {}, synapse_var_init, wu_var_refs)
 
+    sparse_syn = model.add_synapse_population(
+        "SparseSyn", "SPARSE",
+        ss_pop, n_pop,
+        init_weight_update("StaticPulseConstantWeight", {"g": 1.0}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity("OneToOne"))
+    ccu = model.add_custom_connectivity_update(
+        "CCU", "Test", sparse_syn, custom_connectivity_update_model,
+        {}, {}, {"num_pre_ccu_test": init_var(num_neurons_snippet)},
+        {"num_post_ccu_test": init_var(num_neurons_snippet)})
+
     # Build model and load
     model.build()
     model.load()
@@ -192,7 +221,9 @@ def test_num(make_model, backend, precision, batch_size):
             (cu.vars["num_batch_test"], batch_size),
             (cuw.vars["num_pre_syn_test"], 2),
             (cuw.vars["num_post_syn_test"], 4),
-            (cuw.vars["num_batch_syn_test"], batch_size)]
+            (cuw.vars["num_batch_syn_test"], batch_size),
+            (ccu.pre_vars["num_pre_ccu_test"], 2),
+            (ccu.post_vars["num_post_ccu_test"], 4)]
 
     # Check variables after initialisation
     for v, val in vars:
