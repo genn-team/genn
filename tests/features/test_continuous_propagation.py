@@ -28,6 +28,15 @@ post_neuron_model = create_neuron_model(
     """,
     vars=[("x", "scalar")])
 
+post_additional_neuron_model = create_neuron_model(
+    "post_additional_neuron",
+    sim_code=
+    """
+    x = IsynA;
+    """,
+    vars=[("x", "scalar")],
+    additional_input_vars=[("IsynA", "scalar", 0.0)])
+
 decoder_model = create_sparse_connect_init_snippet(
     "decoder",
     row_build_code=
@@ -185,6 +194,20 @@ def test_forward(make_model, backend, precision):
         init_sparse_connectivity(decoder_model, {}))
     manual_sparse_s_pop.set_sparse_connections(pre_inds, post_inds)
 
+    # Create one output neuron pop with sparse decoder
+    # population targetting additional input variable
+    sparse_additional_n_pop = model.add_neuron_population(
+        "PostSparseAdditionalNeuron", 4, post_additional_neuron_model,
+        {}, {"x": 0.0})
+    sparse_additional_s_pop = model.add_synapse_population(
+        "SparseAdditionalSynapse", "SPARSE",
+        pre_pop, sparse_additional_n_pop,
+        init_weight_update(continous_weight_update_model, vars={"g": 1.0},
+                           pre_var_refs={"x": create_var_ref(pre_pop, "x")}),
+        init_postsynaptic("DeltaCurr"),
+        init_sparse_connectivity(decoder_model, {}))
+    sparse_additional_s_pop.post_target_var = "IsynA"
+
     # Create one output neuron pop with dense decoder population
     dense_n_pop = model.add_neuron_population(
         "PostDenseNeuron", 4, post_neuron_model, 
@@ -217,8 +240,8 @@ def test_forward(make_model, backend, precision):
                           sparse_constant_weight_pre_n_pop,
                           manual_sparse_constant_weight_n_pop,
                           sparse_n_pop, sparse_pre_n_pop, sparse_hybrid_n_pop,
-                          manual_sparse_n_pop, dense_n_pop, 
-                          manual_dense_n_pop]
+                          manual_sparse_n_pop, sparse_additional_n_pop,
+                          dense_n_pop, manual_dense_n_pop]
     while model.timestep < 15:
         model.step_time()
 
@@ -325,6 +348,16 @@ def test_reverse(make_model, backend, precision):
         """,
         vars=[("x", "scalar"), ("y", "scalar")])
 
+    pre_reverse_additional_neuron_model = create_neuron_model(
+        "pre_reverse_additional_neuron",
+        sim_code=
+        """
+        y = IsynB;
+        x = (id == (int)t) ? 1.0 : 0.0;
+        """,
+        vars=[("x", "scalar"), ("y", "scalar")],
+        additional_input_vars=[("IsynB", "scalar", 0.0)])
+
     continous_reverse_model = create_weight_update_model(
         "continous_reverse",
         vars=[("g", "scalar", VarAccess.READ_ONLY)],
@@ -344,6 +377,9 @@ def test_reverse(make_model, backend, precision):
         {}, {"x": 0.0, "y": 0.0})
     pre_pre_n_pop = model.add_neuron_population(
         "PreSpikeSource", 16, pre_reverse_neuron_model,
+        {}, {"x": 0.0, "y": 0.0})
+    pre_additional_n_pop = model.add_neuron_population(
+        "AdditionalSpikeSource", 16, pre_reverse_additional_neuron_model,
         {}, {"x": 0.0, "y": 0.0})
 
     # Add postsynptic population to connect to
@@ -385,6 +421,16 @@ def test_reverse(make_model, backend, precision):
     s_pre_pop.set_sparse_connections(pre_inds, post_inds)
     s_pre_pop.parallelism_hint = ParallelismHint.PRESYNAPTIC
 
+    # Add connectivity targetting additional input variable
+    s_additional_pop = model.add_synapse_population(
+        "SparseAdditionalSynapse", "SPARSE",
+        pre_additional_n_pop, post_n_pop,
+        init_weight_update(continous_reverse_model, {}, {"g": weights},
+                           pre_var_refs={"x": create_var_ref(pre_additional_n_pop, "x")}),
+        init_postsynaptic("DeltaCurr"))
+    s_additional_pop.set_sparse_connections(pre_inds, post_inds)
+    s_additional_pop.pre_target_var = "IsynB"
+
     # Build model and load
     model.build()
     model.load()
@@ -395,9 +441,11 @@ def test_reverse(make_model, backend, precision):
 
         pre_n_pop.vars["y"].pull_from_device()
         pre_pre_n_pop.vars["y"].pull_from_device()
+        pre_additional_n_pop.vars["y"].pull_from_device()
 
         assert np.sum(pre_n_pop.vars["y"].view) == (model.timestep - 1)
         assert np.sum(pre_pre_n_pop.vars["y"].view) == (model.timestep - 1)
+        assert np.sum(pre_additional_n_pop.vars["y"].view) == (model.timestep - 1)
 
 @pytest.mark.parametrize("precision", [types.Double, types.Float])
 def test_reverse_den_delay(make_model, backend, precision):
